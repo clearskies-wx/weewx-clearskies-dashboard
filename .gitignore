@@ -1,0 +1,25 @@
+# JavaScript / TypeScript / Vite
+node_modules/
+dist/
+dist-ssr/
+build/
+.vite/
+*.local
+
+# Test / lint cache
+coverage/
+.eslintcache
+.tsbuildinfo
+
+# Secrets
+.env
+.env.local
+.env.*.local
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
