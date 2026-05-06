@@ -1,0 +1,30 @@
+name: dep-audit
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * *'
+
+jobs:
+  audit:
+    name: npm audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+        with:
+          node-version: '22'
+
+      - name: Audit (skip if no manifest yet)
+        run: |
+          set -eu
+          if [ -f package.json ] && [ -f package-lock.json ]; then
+            npm ci
+            npm audit --audit-level=high
+          else
+            echo "No package.json + package-lock.json yet — placeholder repo. Audit will run automatically once dependencies are added."
+          fi
