@@ -111,3 +111,5 @@ export function ForecastPage() {
     </div>
   );
 }
+
+export default ForecastPage;

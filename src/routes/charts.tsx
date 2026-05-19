@@ -154,3 +154,5 @@ export function ChartsPage() {
     </div>
   );
 }
+
+export default ChartsPage;

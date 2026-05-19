@@ -21,6 +21,7 @@ export interface Observation {
   heatindex: number | null;
   rainRate: number | null;
   rain: number | null;
+  barometerTrend: number | null;
   radiation: number | null;
   UV: number | null;
   inTemp: number | null;
@@ -49,6 +50,9 @@ export interface TodayStats {
   high: number;
   low: number;
   peakGust: number;
+  rainSoFar: number;
+  peakAQI: number;
+  recordsBrokenToday: string[];
 }
 
 export const mockObservation: Observation = {
@@ -67,6 +71,7 @@ export const mockObservation: Observation = {
   heatindex: 73.1,
   rainRate: 0,
   rain: 0,
+  barometerTrend: -0.02,
   radiation: 842,
   UV: 6.2,
   inTemp: null,
@@ -95,6 +100,9 @@ export const mockTodayStats: TodayStats = {
   high: 78.2,
   low: 61.5,
   peakGust: 22.3,
+  rainSoFar: 0.12,
+  peakAQI: 58,
+  recordsBrokenToday: [],
 };
 
 // Units block per ADR-019 / OpenAPI UnitsBlock schema.

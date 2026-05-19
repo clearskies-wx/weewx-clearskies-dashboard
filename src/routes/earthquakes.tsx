@@ -73,3 +73,5 @@ export function EarthquakesPage() {
     </div>
   );
 }
+
+export default EarthquakesPage;

@@ -39,7 +39,7 @@ export interface DailyForecastPoint {
 export interface ForecastBundle {
   hourly: HourlyForecastPoint[];
   daily: DailyForecastPoint[];
-  discussion: null;
+  discussion: string | null;
   source: string;
   generatedAt: string;
 }
@@ -58,6 +58,8 @@ const HOURLY_TEXTS = [
   'Mostly Sunny',
   'Partly Cloudy',
 ];
+
+const HOURLY_CODES = [2, 1, 2, 3, 2, 1, 0, 2, 1, 2, 1, 2];
 
 // Base time: 2026-05-18T15:00:00Z, 12 hourly points
 const BASE_HOUR = new Date('2026-05-18T15:00:00Z');
@@ -78,7 +80,7 @@ function buildHourly(): HourlyForecastPoint[] {
       precipAmount: null,
       precipType: null,
       cloudCover: [30, 40, 35, 60, 45, 30, 20, 25, 15, 30, 40, 35][i],
-      weatherCode: null,
+      weatherCode: String(HOURLY_CODES[i]),
       weatherText: HOURLY_TEXTS[i],
       source: 'nws',
       extras: {},
@@ -95,7 +97,17 @@ const DAILY_TEXTS = [
   'Mostly Sunny',
   'Clear',
 ];
+const DAILY_CODES = [2, 1, 80, 95, 2, 1, 0];
 const DAILY_PRECIP = [20, 10, 50, 70, 30, 15, 5];
+const DAILY_NARRATIVES = [
+  'Partly cloudy with a slight chance of afternoon showers. Highs near 82.',
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+];
 
 // Starting 2026-05-19 for 7 days
 function buildDaily(): DailyForecastPoint[] {
@@ -115,9 +127,9 @@ function buildDaily(): DailyForecastPoint[] {
       sunrise: null,
       sunset: null,
       uvIndexMax: 6 + (i % 3),
-      weatherCode: null,
+      weatherCode: String(DAILY_CODES[i]),
       weatherText: DAILY_TEXTS[i],
-      narrative: null,
+      narrative: DAILY_NARRATIVES[i],
       source: 'nws',
       extras: {},
     };
@@ -128,7 +140,7 @@ function buildDaily(): DailyForecastPoint[] {
 export const mockForecast: ForecastBundle = {
   hourly: buildHourly(),
   daily: buildDaily(),
-  discussion: null,
+  discussion: 'High pressure will continue to dominate through midweek, keeping conditions mostly dry. A weak cold front approaching Thursday may bring scattered showers.',
   source: 'nws',
   generatedAt: '2026-05-18T14:00:00Z',
 };

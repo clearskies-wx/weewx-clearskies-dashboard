@@ -153,3 +153,5 @@ export function NowPage() {
     </div>
   );
 }
+
+export default NowPage;

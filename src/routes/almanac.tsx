@@ -158,3 +158,5 @@ export function AlmanacPage() {
     </div>
   );
 }
+
+export default AlmanacPage;

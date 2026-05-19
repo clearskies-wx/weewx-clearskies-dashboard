@@ -15,6 +15,10 @@ import { mockRecords } from './records';
 import type { RecordsBundle } from './records';
 import { mockStation, mockCapabilities } from './station';
 import type { StationMetadata, CapabilityRegistry } from './station';
+import { mockLightning } from './lightning';
+import type { LightningData } from './lightning';
+import { mockArchiveData } from './archive';
+import type { ArchiveRecord } from './archive';
 
 export type {
   Observation,
@@ -27,6 +31,8 @@ export type {
   RecordsBundle,
   StationMetadata,
   CapabilityRegistry,
+  LightningData,
+  ArchiveRecord,
 };
 
 export interface MockData {
@@ -41,6 +47,8 @@ export interface MockData {
   records: RecordsBundle;
   station: StationMetadata;
   capabilities: CapabilityRegistry;
+  lightning: LightningData;
+  archiveData: ArchiveRecord[];
 }
 
 export function useMockData(): MockData {
@@ -56,5 +64,7 @@ export function useMockData(): MockData {
     records: mockRecords,
     station: mockStation,
     capabilities: mockCapabilities,
+    lightning: mockLightning,
+    archiveData: mockArchiveData,
   };
 }

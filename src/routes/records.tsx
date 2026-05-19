@@ -91,3 +91,5 @@ export function RecordsPage() {
     </div>
   );
 }
+
+export default RecordsPage;
