@@ -84,7 +84,7 @@ export function ChartsPage() {
                   tickFormatter={(v) => `${v}°`}
                 />
                 <Tooltip
-                  formatter={(value: number) => [`${value}°F`, 'Temperature']}
+                  formatter={(value) => [typeof value === "number" ? `${value}°F` : String(value), "Temperature"]}
                   contentStyle={{
                     background: 'var(--color-popover)',
                     border: '1px solid var(--color-border)',

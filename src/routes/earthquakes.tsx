@@ -4,8 +4,6 @@
 import { useMockData } from '../mock/index';
 import {
   Card,
-  CardHeader,
-  CardTitle,
   CardContent,
 } from '../components/ui/card';
 
