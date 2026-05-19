@@ -1,13 +1,10 @@
-// earthquakes.tsx — Earthquakes page (/earthquakes)
-// List of recent earthquakes per mock data.
-
 import { useMockData } from '../mock/index';
 import {
   Card,
   CardContent,
 } from '../components/ui/card';
 
-function formatTime(isoString: string): string {
+function formatTime(isoString: string, timeZone: string): string {
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
@@ -15,12 +12,12 @@ function formatTime(isoString: string): string {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
-    timeZone: 'America/New_York',
+    timeZone,
   }).format(new Date(isoString));
 }
 
 export function EarthquakesPage() {
-  const { earthquakes } = useMockData();
+  const { earthquakes, station } = useMockData();
 
   return (
     <div className="flex flex-col gap-6 max-w-2xl mx-auto">
@@ -39,7 +36,6 @@ export function EarthquakesPage() {
               <Card>
                 <CardContent className="pt-4 pb-4">
                   <div className="flex items-start gap-4">
-                    {/* Magnitude badge — bold + accessible label */}
                     <div
                       className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg bg-muted"
                       aria-label={`Magnitude ${quake.magnitude}`}
@@ -58,7 +54,7 @@ export function EarthquakesPage() {
                         {quake.place ?? 'Unknown location'}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {formatTime(quake.time)}
+                        {formatTime(quake.time, station.timezone)}
                       </p>
                       <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1">
                         {quake.depth !== null && (

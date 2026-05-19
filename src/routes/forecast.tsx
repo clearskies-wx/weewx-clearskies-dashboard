@@ -1,6 +1,3 @@
-// forecast.tsx — Forecast page (/forecast)
-// Daily 7-day strip + hourly 12-hour strip.
-
 import { useMockData } from '../mock/index';
 import {
   Card,
@@ -9,17 +6,15 @@ import {
   CardContent,
 } from '../components/ui/card';
 
-// Format a UTC ISO time string to local hour label: "2 PM"
-function formatHour(isoString: string): string {
+function formatHour(isoString: string, timeZone: string): string {
   const d = new Date(isoString);
   return new Intl.DateTimeFormat('en-US', {
     hour: 'numeric',
     hour12: true,
-    timeZone: 'America/New_York',
+    timeZone,
   }).format(d);
 }
 
-// Format a date string to short day name: "Mon"
 function formatDayName(isoDate: string): string {
   const d = new Date(isoDate + 'T12:00:00Z');
   return new Intl.DateTimeFormat('en-US', {
@@ -29,7 +24,7 @@ function formatDayName(isoDate: string): string {
 }
 
 export function ForecastPage() {
-  const { forecast } = useMockData();
+  const { forecast, station } = useMockData();
 
   return (
     <div className="flex flex-col gap-6 max-w-3xl mx-auto">
@@ -95,7 +90,7 @@ export function ForecastPage() {
                 className="flex flex-col items-center gap-1 min-w-[64px] rounded-lg border border-border bg-card px-2 py-3 text-center"
               >
                 <span className="text-xs text-muted-foreground whitespace-nowrap">
-                  {formatHour(hour.validTime)}
+                  {formatHour(hour.validTime, station.timezone)}
                 </span>
                 <span
                   className="text-sm font-semibold text-foreground"

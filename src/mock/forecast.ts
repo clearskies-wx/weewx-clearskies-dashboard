@@ -86,7 +86,6 @@ function buildHourly(): HourlyForecastPoint[] {
   });
 }
 
-const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const DAILY_TEXTS = [
   'Partly Cloudy',
   'Mostly Sunny',
@@ -125,8 +124,6 @@ function buildDaily(): DailyForecastPoint[] {
   });
 }
 
-// Suppress unused warning — DAY_NAMES used in page components
-void DAY_NAMES;
 
 export const mockForecast: ForecastBundle = {
   hourly: buildHourly(),

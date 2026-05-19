@@ -1,10 +1,9 @@
-// footer.tsx — dashboard footer
-// Fixed at bottom of content area (not sticky/viewport-fixed).
-// Contains Legal link + copyright per ADR-024.
-
 import { Link } from 'react-router-dom';
+import { useMockData } from '../../mock/index';
 
 export function Footer() {
+  const { station } = useMockData();
+
   return (
     <footer className="mt-auto border-t border-border px-4 py-3 text-sm text-muted-foreground">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
@@ -15,7 +14,9 @@ export function Footer() {
           Legal / Privacy
         </Link>
         <span aria-hidden="true">·</span>
-        <span>© 2026 Clear Skies</span>
+        <span>© {new Date().getFullYear()} {station.name}</span>
+        <span aria-hidden="true">·</span>
+        <span>Powered by Clear Skies</span>
       </div>
     </footer>
   );
