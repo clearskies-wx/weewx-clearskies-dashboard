@@ -184,7 +184,7 @@ function AqiGauge({ aqi, category, pollutant }: { aqi: number; category: string 
             strokeLinecap="round"
           />
         )}
-        <text x="60" y="58" textAnchor="middle" fontSize="20" fontWeight="700" fill="currentColor" fontVariantNumeric="tabular-nums">{aqi}</text>
+        <text x="60" y="58" textAnchor="middle" fontSize="20" fontWeight="700" fill="currentColor" style={{ fontVariantNumeric: 'tabular-nums' }}>{aqi}</text>
       </svg>
       <p className="text-sm font-semibold text-foreground">{displayCategory}</p>
       {pollutant && (
