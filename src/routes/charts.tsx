@@ -44,7 +44,7 @@ export function ChartsPage() {
               'min-h-[36px]',
               tab === 'Homepage'
                 ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground',
+                : 'bg-muted text-foreground hover:bg-muted/70',
             ].join(' ')}
           >
             {tab}
@@ -60,7 +60,7 @@ export function ChartsPage() {
         <CardContent>
           {/* Chart container with aria-label per coding §5.5 */}
           <div
-            aria-label="Temperature over the last 24 hours"
+            role="figure" aria-label="Temperature over the last 24 hours"
             className="h-64 w-full"
           >
             <ResponsiveContainer width="100%" height="100%">

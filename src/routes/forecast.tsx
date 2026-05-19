@@ -42,7 +42,7 @@ export function ForecastPage() {
         </CardHeader>
         <CardContent>
           <div
-            className="flex gap-2 overflow-x-auto pb-2"
+            className="flex gap-2 overflow-x-auto pb-2" tabIndex={0}
             role="list"
             aria-label="7-day daily forecast"
           >
@@ -84,7 +84,7 @@ export function ForecastPage() {
         </CardHeader>
         <CardContent>
           <div
-            className="flex gap-2 overflow-x-auto pb-2"
+            className="flex gap-2 overflow-x-auto pb-2" tabIndex={0}
             role="list"
             aria-label="Hourly forecast for the next 12 hours"
           >
