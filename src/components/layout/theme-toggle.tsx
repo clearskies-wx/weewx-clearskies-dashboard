@@ -7,22 +7,20 @@ import { Button } from '../ui/button';
 import { useTheme } from '../../lib/theme-provider';
 import type { ThemePreference } from '../../lib/theme-provider';
 
-// Maps current preference → next preference in the cycle.
-const NEXT_PREFERENCE: Record<ThemePreference, ThemePreference> = {
+// Maps current preference → next preference in the cycle. Shared with nav-rail.
+export const NEXT_PREFERENCE: Record<ThemePreference, ThemePreference> = {
   system: 'light',
   light: 'dark',
   dark: 'system',
 };
 
-// aria-label: describes current state and what clicking will switch to next.
-const ARIA_LABEL: Record<ThemePreference, string> = {
+export const ARIA_LABEL: Record<ThemePreference, string> = {
   system: 'Theme: following system preference — click to switch to light mode',
   light:  'Theme: light — click to switch to dark mode',
   dark:   'Theme: dark — click to switch to system preference',
 };
 
-// Icon for each preference state.
-function ThemeIcon({ preference }: { preference: ThemePreference }) {
+export function ThemeIcon({ preference }: { preference: ThemePreference }) {
   if (preference === 'system') return <Monitor aria-hidden="true" className="h-5 w-5" />;
   if (preference === 'light')  return <Sun     aria-hidden="true" className="h-5 w-5" />;
   return                               <Moon    aria-hidden="true" className="h-5 w-5" />;

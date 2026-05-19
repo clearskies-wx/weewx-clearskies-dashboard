@@ -11,8 +11,6 @@ import {
   CloudSunRain,
   ChartLine,
   Moon,
-  Monitor,
-  Sun,
   Activity,
   Trophy,
   FileText,
@@ -20,9 +18,8 @@ import {
   Scale,
   Ellipsis,
 } from 'lucide-react';
-import { ThemeToggle } from './theme-toggle';
+import { ThemeToggle, ThemeIcon, NEXT_PREFERENCE, ARIA_LABEL } from './theme-toggle';
 import { useTheme } from '../../lib/theme-provider';
-import type { ThemePreference } from '../../lib/theme-provider';
 
 interface NavItem {
   to: string;
@@ -99,31 +96,11 @@ const FOCUSABLE_SELECTOR = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(', ');
 
-// Cycle order matches ThemeToggle: system → light → dark → system
-const NEXT_PREF: Record<ThemePreference, ThemePreference> = {
-  system: 'light',
-  light: 'dark',
-  dark: 'system',
-};
-
-const THEME_ROW_LABEL: Record<ThemePreference, string> = {
+const THEME_ROW_LABEL: Record<string, string> = {
   system: 'Auto',
   light: 'Light',
   dark: 'Dark',
 };
-
-// aria-label mirrors ThemeToggle for consistency.
-const THEME_ROW_ARIA: Record<ThemePreference, string> = {
-  system: 'Theme: following system preference — click to switch to light mode',
-  light:  'Theme: light — click to switch to dark mode',
-  dark:   'Theme: dark — click to switch to system preference',
-};
-
-function ThemeRowIcon({ preference }: { preference: ThemePreference }) {
-  if (preference === 'system') return <Monitor aria-hidden="true" className="h-5 w-5" />;
-  if (preference === 'light')  return <Sun     aria-hidden="true" className="h-5 w-5" />;
-  return                               <Moon    aria-hidden="true" className="h-5 w-5" />;
-}
 
 // Full-width labeled theme toggle row for the More sheet.
 function ThemeRowButton() {
@@ -131,8 +108,8 @@ function ThemeRowButton() {
   return (
     <button
       type="button"
-      aria-label={THEME_ROW_ARIA[preference]}
-      onClick={() => setTheme(NEXT_PREF[preference])}
+      aria-label={ARIA_LABEL[preference]}
+      onClick={() => setTheme(NEXT_PREFERENCE[preference])}
       className={[
         'flex items-center gap-3 px-4 rounded-lg w-full',
         'text-sm font-medium transition-colors duration-150',
@@ -141,7 +118,7 @@ function ThemeRowButton() {
         'text-foreground hover:bg-accent/50',
       ].join(' ')}
     >
-      <ThemeRowIcon preference={preference} />
+      <ThemeIcon preference={preference} />
       <span>Theme: {THEME_ROW_LABEL[preference]}</span>
     </button>
   );

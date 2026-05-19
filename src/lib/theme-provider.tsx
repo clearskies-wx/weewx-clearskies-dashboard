@@ -21,10 +21,12 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 // Resolve preference → concrete light/dark using current OS state.
+// ADR-023 defines 'system' as "follow operator default" — but operator config is not
+// yet wired (deferred to setup-wizard, T8). Until then, 'system' resolves via
+// matchMedia as a stand-in for the auto-os operator mode.
 function resolveTheme(preference: ThemePreference): ResolvedTheme {
   if (preference === 'light') return 'light';
   if (preference === 'dark') return 'dark';
-  // 'system': follow OS
   if (typeof window !== 'undefined') {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
@@ -87,17 +89,3 @@ export function useTheme(): ThemeContextValue {
   }
   return ctx;
 }
-
-// IIFE: set data-theme synchronously at module-load time to avoid flash of wrong theme.
-// Runs before React hydrates. Mirrors the resolution logic above without importing React.
-(function initTheme() {
-  if (typeof window === 'undefined') return;
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored === 'light' || stored === 'dark') {
-    document.documentElement.setAttribute('data-theme', stored);
-    return;
-  }
-  // 'system' or absent — follow OS preference
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
-})();
