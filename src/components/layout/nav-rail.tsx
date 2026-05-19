@@ -179,12 +179,16 @@ function MoreSheet({ isOpen, onClose, triggerRef }: MoreSheetProps) {
         onClick={onClose}
       />
 
-      {/* Bottom sheet */}
+      {/* Bottom sheet — pointer-events-none when closed so underlying nav bar remains clickable */}
       <div
         ref={sheetRef}
         role="dialog"
         aria-label="Additional navigation"
         aria-modal="true"
+        // inert removes all interactivity (keyboard, pointer, AT) when sheet is closed.
+        // aria-hidden mirrors the state for older AT that may not support inert.
+        aria-hidden={!isOpen}
+        inert={!isOpen}
         className={[
           'fixed bottom-0 left-0 right-0 z-40',
           'bg-background border-t border-border rounded-t-2xl',
@@ -192,7 +196,7 @@ function MoreSheet({ isOpen, onClose, triggerRef }: MoreSheetProps) {
           'transition-transform duration-150 ease-out',
           // Sheet sits above the bottom nav bar (56px + border).
           'mb-[calc(56px+1px)]',
-          isOpen ? 'translate-y-0' : 'translate-y-full',
+          isOpen ? 'translate-y-0 pointer-events-auto' : 'translate-y-full pointer-events-none',
         ].join(' ')}
       >
         {/* Drag handle — decorative */}
