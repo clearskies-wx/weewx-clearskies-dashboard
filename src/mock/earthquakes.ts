@@ -1,24 +1,8 @@
 // earthquakes.ts — mock EarthquakeRecord[]
-// Type matches OpenAPI v1 EarthquakeRecord schema.
+// Types are now imported from ../api/types.
 
-export interface EarthquakeRecord {
-  id: string;
-  time: string;
-  latitude: number;
-  longitude: number;
-  magnitude: number;
-  magnitudeType: string | null;
-  depth: number | null;
-  place: string | null;
-  url: string | null;
-  tsunami: boolean | null;
-  felt: number | null;
-  mmi: number | null;
-  alert: 'green' | 'yellow' | 'orange' | 'red' | null;
-  status: string | null;
-  extras: Record<string, number | string | boolean | null>;
-  source: string;
-}
+export type { EarthquakeRecord } from '../api/types';
+import type { EarthquakeRecord } from '../api/types';
 
 export const mockEarthquakes: EarthquakeRecord[] = [
   {

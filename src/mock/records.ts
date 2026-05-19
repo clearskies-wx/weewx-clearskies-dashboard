@@ -1,18 +1,8 @@
 // records.ts — mock RecordsBundle
-// Type matches OpenAPI v1 RecordsBundle / RecordEntry schemas.
+// Types are now imported from ../api/types.
 
-export interface RecordEntry {
-  label: string;
-  canonicalField: string;
-  value: number | null;
-  observedAt: string | null;
-  brokenInLast30Days?: boolean;
-}
-
-export interface RecordsBundle {
-  period: string;
-  sections: Record<string, RecordEntry[]>;
-}
+export type { RecordEntry, RecordsBundle } from '../api/types';
+import type { RecordsBundle } from '../api/types';
 
 export const mockRecords: RecordsBundle = {
   period: 'all-time',

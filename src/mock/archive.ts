@@ -1,14 +1,8 @@
-export interface ArchiveRecord {
-  timestamp: string;
-  outTemp: number;
-  windSpeed: number;
-  windDir: number;
-  windGust: number;
-  barometer: number;
-  rain: number;
-  radiation: number;
-  UV: number;
-}
+// archive.ts — mock ArchiveRecord[]
+// Types are now imported from ../api/types.
+
+export type { ArchiveRecord } from '../api/types';
+import type { ArchiveRecord } from '../api/types';
 
 function generateArchiveData(): ArchiveRecord[] {
   const points: ArchiveRecord[] = [];

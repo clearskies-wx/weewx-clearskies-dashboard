@@ -1,5 +1,5 @@
 import { TriangleAlert } from 'lucide-react';
-import type { AlertRecord } from '../../mock/alerts';
+import type { AlertRecord } from '../../api/types';
 
 interface AlertBannerProps {
   alerts: AlertRecord[];

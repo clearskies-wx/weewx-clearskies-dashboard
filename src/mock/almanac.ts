@@ -1,46 +1,8 @@
 // almanac.ts — mock AlmanacSnapshot
-// Type matches OpenAPI v1 AlmanacSnapshot schema.
+// Types are now imported from ../api/types.
 
-export interface AlmanacSnapshot {
-  date: string;
-  sun: {
-    rise: string | null;
-    set: string | null;
-    transit: string | null;
-    civilTwilightDawn: string | null;
-    civilTwilightDusk: string | null;
-    azimuth: number | null;
-    altitude: number | null;
-    rightAscension: number | null;
-    declination: number | null;
-    daylightMinutes: number | null;
-    daylightDeltaVsYesterdayMinutes: number | null;
-    nextEquinox: string | null;
-    nextSolstice: string | null;
-  };
-  moon: {
-    rise: string | null;
-    set: string | null;
-    transit: string | null;
-    azimuth: number | null;
-    altitude: number | null;
-    rightAscension: number | null;
-    declination: number | null;
-    phaseName:
-      | 'new'
-      | 'waxing-crescent'
-      | 'first-quarter'
-      | 'waxing-gibbous'
-      | 'full'
-      | 'waning-gibbous'
-      | 'last-quarter'
-      | 'waning-crescent'
-      | null;
-    illuminationPercent: number | null;
-    nextFullMoon: string | null;
-    nextNewMoon: string | null;
-  };
-}
+export type { AlmanacSnapshot } from '../api/types';
+import type { AlmanacSnapshot } from '../api/types';
 
 export const mockAlmanac: AlmanacSnapshot = {
   date: '2026-05-18',

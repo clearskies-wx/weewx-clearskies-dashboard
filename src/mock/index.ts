@@ -1,26 +1,39 @@
 // index.ts — useMockData() hook: re-exports all mock domains as a single object.
-// No real API calls. This module is the ONLY data source during Phase 3 mock wiring.
+// No real API calls. This module is the ONLY data source when VITE_USE_MOCK=true.
+// All type definitions have moved to src/api/types.ts.
 
 import { mockObservation, mockAqi, mockTodayStats, mockUnits } from './current';
-import type { Observation, AQIReading, TodayStats } from './current';
 import { mockForecast } from './forecast';
-import type { ForecastBundle } from './forecast';
 import { mockAlerts } from './alerts';
-import type { AlertRecord } from './alerts';
 import { mockAlmanac } from './almanac';
-import type { AlmanacSnapshot } from './almanac';
 import { mockEarthquakes } from './earthquakes';
-import type { EarthquakeRecord } from './earthquakes';
 import { mockRecords } from './records';
-import type { RecordsBundle } from './records';
 import { mockStation, mockCapabilities } from './station';
-import type { StationMetadata, CapabilityRegistry } from './station';
 import { mockLightning } from './lightning';
-import type { LightningData } from './lightning';
 import { mockArchiveData } from './archive';
-import type { ArchiveRecord } from './archive';
 
+// Re-export types from the canonical location for backward-compatibility.
 export type {
+  Observation,
+  AQIReading,
+  TodayStats,
+  ForecastBundle,
+  HourlyForecastPoint,
+  DailyForecastPoint,
+  AlertRecord,
+  AlmanacSnapshot,
+  EarthquakeRecord,
+  RecordsBundle,
+  RecordEntry,
+  StationMetadata,
+  CapabilityRegistry,
+  CapabilityDeclaration,
+  LightningData,
+  ArchiveRecord,
+  UnitsBlock,
+} from '../api/types';
+
+import type {
   Observation,
   AQIReading,
   TodayStats,
@@ -33,7 +46,7 @@ export type {
   CapabilityRegistry,
   LightningData,
   ArchiveRecord,
-};
+} from '../api/types';
 
 export interface MockData {
   observation: Observation;

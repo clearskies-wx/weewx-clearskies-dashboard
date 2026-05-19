@@ -1,9 +1,8 @@
-export interface LightningData {
-  count1h: number;
-  count24h: number;
-  nearestDistanceKm: number;
-  lastStrikeTime: string;
-}
+// lightning.ts — mock LightningData
+// Types are now imported from ../api/types.
+
+export type { LightningData } from '../api/types';
+import type { LightningData } from '../api/types';
 
 export const mockLightning: LightningData = {
   count1h: 3,

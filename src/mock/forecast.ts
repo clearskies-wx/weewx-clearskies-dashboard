@@ -1,48 +1,8 @@
 // forecast.ts — mock ForecastBundle
-// Types match OpenAPI v1 ForecastBundle / HourlyForecastPoint / DailyForecastPoint.
+// Types are now imported from ../api/types.
 
-export interface HourlyForecastPoint {
-  validTime: string;
-  outTemp: number | null;
-  outHumidity: number | null;
-  windSpeed: number | null;
-  windDir: number | null;
-  windGust: number | null;
-  precipProbability: number | null;
-  precipAmount: number | null;
-  precipType: string | null;
-  cloudCover: number | null;
-  weatherCode: string | null;
-  weatherText: string | null;
-  source: string;
-  extras: Record<string, number | string | boolean | null>;
-}
-
-export interface DailyForecastPoint {
-  validDate: string;
-  tempMax: number | null;
-  tempMin: number | null;
-  precipAmount: number | null;
-  precipProbabilityMax: number | null;
-  windSpeedMax: number | null;
-  windGustMax: number | null;
-  sunrise: string | null;
-  sunset: string | null;
-  uvIndexMax: number | null;
-  weatherCode: string | null;
-  weatherText: string | null;
-  narrative: string | null;
-  source: string;
-  extras: Record<string, number | string | boolean | null>;
-}
-
-export interface ForecastBundle {
-  hourly: HourlyForecastPoint[];
-  daily: DailyForecastPoint[];
-  discussion: string | null;
-  source: string;
-  generatedAt: string;
-}
+export type { HourlyForecastPoint, DailyForecastPoint, ForecastBundle } from '../api/types';
+import type { HourlyForecastPoint, DailyForecastPoint, ForecastBundle } from '../api/types';
 
 const HOURLY_TEXTS = [
   'Partly Cloudy',
@@ -135,7 +95,6 @@ function buildDaily(): DailyForecastPoint[] {
     };
   });
 }
-
 
 export const mockForecast: ForecastBundle = {
   hourly: buildHourly(),

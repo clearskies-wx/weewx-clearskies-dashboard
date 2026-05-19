@@ -1,39 +1,8 @@
 // station.ts — mock StationMetadata and CapabilityRegistry
-// Types match OpenAPI v1 StationMetadata / CapabilityRegistry schemas.
+// Types are now imported from ../api/types.
 
-export interface StationMetadata {
-  stationId: string;
-  name: string;
-  latitude: number;
-  longitude: number;
-  altitude: number;
-  timezone: string;
-  timezoneOffsetMinutes: number;
-  unitSystem: 'US' | 'METRIC' | 'METRICWX';
-  firstRecord: string | null;
-  lastRecord: string | null;
-  hardware: string | null;
-}
-
-export interface CapabilityDeclaration {
-  providerId: string;
-  domain: 'forecast' | 'alerts' | 'aqi' | 'earthquakes' | 'radar';
-  suppliedCanonicalFields: string[];
-  geographicCoverage: string;
-  defaultPollIntervalSeconds?: number;
-  operatorNotes: string | null;
-  tileUrlTemplate: string | null;
-  wmsEndpointUrl: string | null;
-  wmsLayerName: string | null;
-  tileContentType: string | null;
-  iframeUrl: string | null;
-}
-
-export interface CapabilityRegistry {
-  providers: CapabilityDeclaration[];
-  weewxColumns: Array<{ canonicalField: string; archiveColumn: string }>;
-  canonicalFieldsAvailable: string[];
-}
+export type { StationMetadata, CapabilityDeclaration, CapabilityRegistry } from '../api/types';
+import type { StationMetadata, CapabilityRegistry } from '../api/types';
 
 export const mockStation: StationMetadata = {
   stationId: 'clearskies-main',

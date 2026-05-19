@@ -1,21 +1,8 @@
 // alerts.ts — mock AlertRecord[]
-// Type matches OpenAPI v1 AlertRecord schema.
+// Types are now imported from ../api/types.
 
-export interface AlertRecord {
-  id: string;
-  headline: string;
-  description?: string;
-  severity: 'advisory' | 'watch' | 'warning';
-  urgency: string | null;
-  certainty: string | null;
-  event: string;
-  effective: string;
-  expires: string | null;
-  senderName: string | null;
-  areaDesc: string | null;
-  category: string | null;
-  source: string;
-}
+export type { AlertRecord } from '../api/types';
+import type { AlertRecord } from '../api/types';
 
 export const mockAlerts: AlertRecord[] = [
   {

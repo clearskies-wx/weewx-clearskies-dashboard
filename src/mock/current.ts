@@ -1,59 +1,8 @@
 // current.ts — mock Observation, AQIReading, units, and today stats
-// All types match OpenAPI v1 contract schemas.
+// Types are now imported from ../api/types.
 
-// TypeScript inline type definitions matching the OpenAPI v1 schemas.
-// Typed client generation is deferred; these interfaces are kept minimal
-// and exact against the contract shapes used in this mock layer.
-
-export interface Observation {
-  timestamp: string;
-  outTemp: number | null;
-  outHumidity: number | null;
-  windSpeed: number | null;
-  windDir: number | null;
-  windGust: number | null;
-  windGustDir: number | null;
-  barometer: number | null;
-  pressure: number | null;
-  altimeter: number | null;
-  dewpoint: number | null;
-  windchill: number | null;
-  heatindex: number | null;
-  rainRate: number | null;
-  rain: number | null;
-  barometerTrend: number | null;
-  radiation: number | null;
-  UV: number | null;
-  inTemp: number | null;
-  inHumidity: number | null;
-  appTemp: number | null;
-  extras: Record<string, number | string | boolean | null>;
-  source: string;
-}
-
-export interface AQIReading {
-  aqi: number | null;
-  aqiCategory: string | null;
-  aqiMainPollutant: string | null;
-  aqiLocation: string | null;
-  pollutantPM25: number | null;
-  pollutantPM10: number | null;
-  pollutantO3: number | null;
-  pollutantNO2: number | null;
-  pollutantSO2: number | null;
-  pollutantCO: number | null;
-  observedAt: string;
-  source: string;
-}
-
-export interface TodayStats {
-  high: number;
-  low: number;
-  peakGust: number;
-  rainSoFar: number;
-  peakAQI: number;
-  recordsBrokenToday: string[];
-}
+export type { Observation, AQIReading, TodayStats } from '../api/types';
+import type { Observation, AQIReading, TodayStats } from '../api/types';
 
 export const mockObservation: Observation = {
   timestamp: '2026-05-18T14:30:00Z',
