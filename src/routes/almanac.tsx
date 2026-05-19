@@ -1,5 +1,4 @@
 // almanac.tsx — Almanac page (/almanac)
-// Sun card: rise, set, daylight duration. Moon card: phase, illumination, next full moon.
 
 import { useMockData } from '../mock/index';
 import {
@@ -48,6 +47,19 @@ function formatPhaseName(name: string | null): string {
     .join(' ');
 }
 
+// Unicode moon phase emoji keyed by phase name.
+// aria-hidden on usage site since the phase name text conveys the same info.
+const MOON_PHASE_EMOJI: Record<string, string> = {
+  'new': '🌑',
+  'waxing-crescent': '🌒',
+  'first-quarter': '🌓',
+  'waxing-gibbous': '🌔',
+  'full': '🌕',
+  'waning-gibbous': '🌖',
+  'last-quarter': '🌗',
+  'waning-crescent': '🌘',
+};
+
 export function AlmanacPage() {
   const { almanac, station } = useMockData();
   const tz = station.timezone;
@@ -73,6 +85,18 @@ export function AlmanacPage() {
               <dt className="text-muted-foreground">Sunset</dt>
               <dd className="font-medium text-foreground mt-0.5">
                 {formatLocalTime(almanac.sun.set, tz)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Civil Dawn</dt>
+              <dd className="font-medium text-foreground mt-0.5">
+                {formatLocalTime(almanac.sun.civilTwilightDawn, tz)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Civil Dusk</dt>
+              <dd className="font-medium text-foreground mt-0.5">
+                {formatLocalTime(almanac.sun.civilTwilightDusk, tz)}
               </dd>
             </div>
             <div>
@@ -119,6 +143,11 @@ export function AlmanacPage() {
             <div>
               <dt className="text-muted-foreground">Phase</dt>
               <dd className="font-medium text-foreground mt-0.5">
+                {almanac.moon.phaseName && (
+                  <span aria-hidden="true" className="mr-1.5">
+                    {MOON_PHASE_EMOJI[almanac.moon.phaseName]}
+                  </span>
+                )}
                 {formatPhaseName(almanac.moon.phaseName)}
               </dd>
             </div>
@@ -150,6 +179,56 @@ export function AlmanacPage() {
               <dt className="text-muted-foreground">Next New Moon</dt>
               <dd className="font-medium text-foreground mt-0.5">
                 {formatDate(almanac.moon.nextNewMoon)}
+              </dd>
+            </div>
+          </dl>
+        </CardContent>
+      </Card>
+
+      {/* Positional Data card — Skyfield-computed; null in mock phase */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Positional Data</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-xs text-muted-foreground mb-4">
+            Positional data requires Skyfield computation on the server.
+          </p>
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+            <div>
+              <dt className="text-muted-foreground">Sun Azimuth</dt>
+              <dd
+                className="font-medium text-muted-foreground mt-0.5"
+                aria-label={almanac.sun.azimuth !== null ? String(almanac.sun.azimuth) : 'Not available'}
+              >
+                {almanac.sun.azimuth !== null ? `${almanac.sun.azimuth}°` : 'N/A'}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Sun Altitude</dt>
+              <dd
+                className="font-medium text-muted-foreground mt-0.5"
+                aria-label={almanac.sun.altitude !== null ? String(almanac.sun.altitude) : 'Not available'}
+              >
+                {almanac.sun.altitude !== null ? `${almanac.sun.altitude}°` : 'N/A'}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Moon Azimuth</dt>
+              <dd
+                className="font-medium text-muted-foreground mt-0.5"
+                aria-label={almanac.moon.azimuth !== null ? String(almanac.moon.azimuth) : 'Not available'}
+              >
+                {almanac.moon.azimuth !== null ? `${almanac.moon.azimuth}°` : 'N/A'}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Moon Altitude</dt>
+              <dd
+                className="font-medium text-muted-foreground mt-0.5"
+                aria-label={almanac.moon.altitude !== null ? String(almanac.moon.altitude) : 'Not available'}
+              >
+                {almanac.moon.altitude !== null ? `${almanac.moon.altitude}°` : 'N/A'}
               </dd>
             </div>
           </dl>
