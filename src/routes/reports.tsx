@@ -1,5 +1,4 @@
 // reports.tsx — Reports page (/reports)
-// Year/month selects (disabled) + placeholder message per task spec.
 
 import {
   Card,
@@ -12,6 +11,11 @@ export function ReportsPage() {
   return (
     <div className="flex flex-col gap-6 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold text-foreground">Reports</h1>
+
+      <p className="text-sm text-muted-foreground leading-relaxed">
+        NOAA-style monthly and annual climate reports summarize temperature, precipitation, and
+        other observations. Reports are generated from your station&apos;s archive data.
+      </p>
 
       <Card>
         <CardHeader>
@@ -62,6 +66,19 @@ export function ReportsPage() {
               </select>
             </div>
           </div>
+
+          {/* Download button — disabled preview of functionality wired when API supplies real data */}
+          <button
+            type="button"
+            disabled
+            className={[
+              'self-start rounded-md border border-input bg-background px-3 py-2 text-sm',
+              'text-muted-foreground cursor-not-allowed opacity-60',
+              'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+            ].join(' ')}
+          >
+            Download .txt
+          </button>
 
           <p className="text-sm text-muted-foreground">
             No NOAA reports found — Reports page will hide when wired to the API.

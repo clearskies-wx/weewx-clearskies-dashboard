@@ -1,5 +1,4 @@
 // legal.tsx — Legal page (/legal)
-// Placeholder legal/privacy text card.
 
 import {
   Card,
@@ -15,16 +14,47 @@ export function LegalPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Legal and Privacy Information</CardTitle>
+          <CardTitle>Privacy Policy</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Legal and privacy information will be configured by the station operator.
+            This weather station collects meteorological data from local sensors and may use
+            third-party services for forecasts, air quality, and earthquake data. No personal
+            visitor data is collected beyond standard web server logs. Station operators should
+            customize this section to reflect their specific data practices and applicable
+            privacy regulations.
           </p>
-          <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-            This page is a placeholder. Configure your station&apos;s legal and privacy
-            content via the Clear Skies configuration UI. Ensure you include any
-            applicable jurisdiction-specific disclosures for your location.
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Data Attribution</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1.5">
+            <li>Weather observations: Local station hardware (configured in About)</li>
+            <li>Forecast data: National Weather Service (NWS)</li>
+            <li>Air quality data: AirNow / EPA</li>
+            <li>Earthquake data: USGS</li>
+            <li>Astronomical data: Skyfield ephemeris calculations</li>
+          </ul>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Actual data sources depend on configured providers.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Open-Source Licenses</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Clear Skies is free software licensed under the GNU General Public License v3.0.
+            It is built with open-source technologies including React, Vite, Tailwind CSS,
+            Recharts, and Lucide icons. Full license text and third-party attribution are
+            available in the project repository.
           </p>
         </CardContent>
       </Card>

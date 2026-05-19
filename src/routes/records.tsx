@@ -19,23 +19,52 @@ function formatDate(isoString: string | null): string {
   }).format(new Date(isoString));
 }
 
+// Sections expected per ADR-024 spec; shown as placeholders when no data.
+const PLACEHOLDER_SECTIONS = ['Wind', 'Rain', 'Humidity', 'Barometer', 'Sun', 'AQI'];
+
 export function RecordsPage() {
   const { records, units } = useMockData();
 
   return (
     <div className="flex flex-col gap-6 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold text-foreground">Records</h1>
-      <p className="text-sm text-muted-foreground">
-        Period: <span className="font-medium text-foreground capitalize">{records.period}</span>
-      </p>
 
+      {/* Period selector — "All-Time" active; "Year-to-Date" disabled (mock has all-time only) */}
+      <div className="flex gap-2" role="group" aria-label="Records period">
+        <button
+          type="button"
+          aria-pressed="true"
+          className="rounded-md px-4 py-2 text-sm font-medium bg-primary text-primary-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          All-Time
+        </button>
+        <button
+          type="button"
+          aria-pressed="false"
+          disabled
+          className="rounded-md px-4 py-2 text-sm font-medium bg-muted text-muted-foreground cursor-not-allowed opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          Year-to-Date
+        </button>
+      </div>
+
+      {/* Operator narrative slot per ADR-024 */}
+      <Card>
+        <CardContent className="pt-4 pb-4">
+          <p className="text-sm text-muted-foreground leading-relaxed bg-muted/30 rounded-md px-3 py-2">
+            Station operators can add custom notes about their records here via the Clear Skies
+            configuration UI.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Populated sections from mock data */}
       {Object.entries(records.sections).map(([section, entries]) => (
         <Card key={section}>
           <CardHeader>
             <CardTitle className="capitalize">{section} Records</CardTitle>
           </CardHeader>
           <CardContent>
-            {/* Semantic table per coding §5.2 */}
             <div className="overflow-x-auto">
               <table className="w-full text-sm" aria-label={`${section} records`}>
                 <thead>
@@ -82,6 +111,44 @@ export function RecordsPage() {
                       </td>
                     </tr>
                   ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+
+      {/* Placeholder cards for sections not yet in mock data */}
+      {PLACEHOLDER_SECTIONS.map((section) => (
+        <Card key={section}>
+          <CardHeader>
+            <CardTitle>{section} Records</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm" aria-label={`${section} records`}>
+                <thead>
+                  <tr className="border-b border-border">
+                    <th scope="col" className="pb-2 text-left font-semibold text-foreground pr-4">
+                      Record
+                    </th>
+                    <th scope="col" className="pb-2 text-right font-semibold text-foreground pr-4">
+                      Value
+                    </th>
+                    <th scope="col" className="pb-2 text-right font-semibold text-foreground">
+                      Date Observed
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td
+                      colSpan={3}
+                      className="py-4 text-center text-muted-foreground"
+                    >
+                      No records available
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
