@@ -11,6 +11,8 @@ import {
   CloudSunRain,
   ChartLine,
   Moon,
+  Monitor,
+  Sun,
   Activity,
   Trophy,
   FileText,
@@ -19,6 +21,8 @@ import {
   Ellipsis,
 } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
+import { useTheme } from '../../lib/theme-provider';
+import type { ThemePreference } from '../../lib/theme-provider';
 
 interface NavItem {
   to: string;
@@ -94,6 +98,54 @@ const FOCUSABLE_SELECTOR = [
   'textarea:not([disabled])',
   '[tabindex]:not([tabindex="-1"])',
 ].join(', ');
+
+// Cycle order matches ThemeToggle: system → light → dark → system
+const NEXT_PREF: Record<ThemePreference, ThemePreference> = {
+  system: 'light',
+  light: 'dark',
+  dark: 'system',
+};
+
+const THEME_ROW_LABEL: Record<ThemePreference, string> = {
+  system: 'Auto',
+  light: 'Light',
+  dark: 'Dark',
+};
+
+// aria-label mirrors ThemeToggle for consistency.
+const THEME_ROW_ARIA: Record<ThemePreference, string> = {
+  system: 'Theme: following system preference — click to switch to light mode',
+  light:  'Theme: light — click to switch to dark mode',
+  dark:   'Theme: dark — click to switch to system preference',
+};
+
+function ThemeRowIcon({ preference }: { preference: ThemePreference }) {
+  if (preference === 'system') return <Monitor aria-hidden="true" className="h-5 w-5" />;
+  if (preference === 'light')  return <Sun     aria-hidden="true" className="h-5 w-5" />;
+  return                               <Moon    aria-hidden="true" className="h-5 w-5" />;
+}
+
+// Full-width labeled theme toggle row for the More sheet.
+function ThemeRowButton() {
+  const { preference, setTheme } = useTheme();
+  return (
+    <button
+      type="button"
+      aria-label={THEME_ROW_ARIA[preference]}
+      onClick={() => setTheme(NEXT_PREF[preference])}
+      className={[
+        'flex items-center gap-3 px-4 rounded-lg w-full',
+        'text-sm font-medium transition-colors duration-150',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        'min-h-[56px]',
+        'text-foreground hover:bg-accent/50',
+      ].join(' ')}
+    >
+      <ThemeRowIcon preference={preference} />
+      <span>Theme: {THEME_ROW_LABEL[preference]}</span>
+    </button>
+  );
+}
 
 interface MoreSheetProps {
   isOpen: boolean;
@@ -207,7 +259,7 @@ function MoreSheet({ isOpen, onClose, triggerRef }: MoreSheetProps) {
         </div>
 
         <nav aria-label="Additional pages">
-          <ul role="list" className="flex flex-col px-2 pb-3">
+          <ul role="list" className="flex flex-col px-2 pb-1">
             {MOBILE_OVERFLOW_ITEMS.map((item) => {
               const isActive = location.pathname === item.to ||
                 (item.to !== '/' && location.pathname.startsWith(item.to));
@@ -236,6 +288,14 @@ function MoreSheet({ isOpen, onClose, triggerRef }: MoreSheetProps) {
             })}
           </ul>
         </nav>
+
+        {/* Divider between nav links and settings controls */}
+        <div aria-hidden="true" className="mx-4 border-t border-border" />
+
+        {/* Theme control — cycles preference without closing the sheet */}
+        <div className="px-2 pb-3 pt-1">
+          <ThemeRowButton />
+        </div>
       </div>
     </>
   );
