@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef, useLayoutEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef, useLayoutEffect } from 'react';
 import {
   LineChart,
   Line,
@@ -119,7 +119,11 @@ export function ChartsPage() {
     };
   }, []);
 
-  const archiveFrom = rangeToFromParam(activeRange);
+  // useMemo so that archiveFrom only changes when activeRange changes, not on every render.
+  // Without this, rangeToFromParam returns a new Date() each render, producing a new ISO
+  // string every millisecond. That string flows into useArchive's deps array, triggering
+  // a refetch on every render → setLoading(true) → re-render → new string → infinite loop.
+  const archiveFrom = useMemo(() => rangeToFromParam(activeRange), [activeRange]);
   const { data: archiveData, loading: archiveLoading, error: archiveError, refetch: archiveRefetch } = useArchive({
     from: archiveFrom,
   });

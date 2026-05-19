@@ -18,7 +18,7 @@ import {
   Scale,
   Ellipsis,
 } from 'lucide-react';
-import { ThemeToggle, ThemeIcon, NEXT_PREFERENCE, ARIA_LABEL } from './theme-toggle';
+import { ThemeIcon, NEXT_PREFERENCE, ARIA_LABEL } from './theme-toggle';
 import { useTheme } from '../../lib/theme-provider';
 
 interface NavItem {
@@ -124,6 +124,30 @@ function ThemeRowButton() {
   );
 }
 
+// Nav-item-styled theme toggle for the desktop rail.
+// Matches icon + label stacked vertically so it reads as a first-class rail element,
+// not an afterthought ghost button that disappears against the dark background.
+function DesktopThemeButton() {
+  const { preference, setTheme } = useTheme();
+  return (
+    <button
+      type="button"
+      aria-label={ARIA_LABEL[preference]}
+      onClick={() => setTheme(NEXT_PREFERENCE[preference])}
+      className={[
+        'flex flex-col items-center justify-center gap-1 rounded-lg px-2 py-3 w-full',
+        'text-xs font-medium transition-colors duration-150',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        'min-h-[44px]',
+        'text-muted-foreground hover:bg-accent/50 hover:text-foreground',
+      ].join(' ')}
+    >
+      <ThemeIcon preference={preference} />
+      <span>Theme</span>
+    </button>
+  );
+}
+
 interface MoreSheetProps {
   isOpen: boolean;
   onClose: () => void;
@@ -200,17 +224,23 @@ function MoreSheet({ isOpen, onClose, triggerRef }: MoreSheetProps) {
 
   return (
     <>
-      {/* Backdrop — z-[35] sits between nav bar (z-30) and sheet (z-40) */}
+      {/* Backdrop — z-[35] sits between nav bar (z-30) and sheet (z-40).
+          md:hidden: MoreSheet is mobile-only; on desktop the backdrop must not appear. */}
       <div
         aria-hidden="true"
         className={[
+          'md:hidden',
           'fixed inset-0 z-[35] bg-black/40 transition-opacity duration-150',
           isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
         ].join(' ')}
         onClick={onClose}
       />
 
-      {/* Bottom sheet — pointer-events-none when closed so underlying nav bar remains clickable */}
+      {/* Bottom sheet — pointer-events-none when closed so underlying nav bar remains clickable.
+          md:hidden: MoreSheet is mobile-only; on desktop the fixed positioning with its
+          mb-[calc(56px+1px)] offset caused ~57px of the sheet to peek above the viewport
+          bottom even when translate-y-full was applied (the margin-bottom created visible
+          space). Hiding on md+ prevents the desktop "Earthquakes artifact". */}
       <div
         ref={sheetRef}
         role={isOpen ? 'dialog' : undefined}
@@ -221,6 +251,7 @@ function MoreSheet({ isOpen, onClose, triggerRef }: MoreSheetProps) {
         aria-hidden={!isOpen}
         inert={!isOpen}
         className={[
+          'md:hidden',
           'fixed bottom-0 left-0 right-0 z-40',
           'bg-background border-t border-border rounded-t-2xl',
           'pb-[env(safe-area-inset-bottom,0px)]',
@@ -328,9 +359,10 @@ export function NavRail() {
             </li>
           ))}
         </ul>
-        {/* Theme toggle at bottom of desktop rail */}
-        <div className="mt-auto px-1 w-full flex justify-center">
-          <ThemeToggle />
+        {/* Theme toggle at bottom of desktop rail — styled as a nav item so it
+            is visually discoverable and matches the icon+label pattern of all nav items. */}
+        <div className="mt-auto w-full px-1">
+          <DesktopThemeButton />
         </div>
       </nav>
 

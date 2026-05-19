@@ -5,7 +5,7 @@
 // Priority: user preference > operator default (operator default not yet wired;
 // deferred to setup-wizard integration). When preference is absent, default is 'system'.
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 export type ThemePreference = 'light' | 'dark' | 'system';
 export type ResolvedTheme = 'light' | 'dark';
@@ -71,12 +71,24 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return () => mql.removeEventListener('change', handleChange);
   }, [preference]);
 
-  function setTheme(t: ThemePreference) {
+  // useCallback so setTheme has a stable identity across renders — required for the
+  // useMemo context value below to remain stable when only resolved or preference changes.
+  const setTheme = useCallback((t: ThemePreference) => {
     setPreferenceState(t);
-  }
+  }, []);
+
+  // Memoize the context value so consumers only re-render when preference or resolved
+  // actually changes. Without this, every ThemeProvider render (e.g. triggered by a
+  // sibling state update) produces a new object reference, causing all useTheme()
+  // consumers to re-render — which can close an infinite loop if any consumer has a
+  // useEffect that writes state (e.g. a data-fetching hook).
+  const contextValue = useMemo(
+    () => ({ preference, resolved, setTheme }),
+    [preference, resolved, setTheme],
+  );
 
   return (
-    <ThemeContext.Provider value={{ preference, resolved, setTheme }}>
+    <ThemeContext.Provider value={contextValue}>
       {children}
     </ThemeContext.Provider>
   );

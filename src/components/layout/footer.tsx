@@ -5,7 +5,12 @@ export function Footer() {
   const { data: station } = useStation();
 
   return (
-    <footer className="mt-auto border-t border-border px-4 py-3 text-sm text-muted-foreground">
+    <footer className={[
+      'mt-auto border-t border-border px-4 py-3 text-sm text-muted-foreground',
+      // On mobile the bottom nav bar is fixed at 56px. Without bottom padding the footer
+      // renders beneath it and is invisible. md:pb-0 restores normal flow on desktop.
+      'pb-[calc(56px+12px)] md:pb-3',
+    ].join(' ')}>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
         <Link
           to="/legal"
