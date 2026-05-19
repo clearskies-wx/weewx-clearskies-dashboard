@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { ThemeIcon, NEXT_PREFERENCE, ARIA_LABEL } from './theme-toggle';
 import { useTheme } from '../../lib/theme-provider';
+import { useBranding } from '../../lib/branding-provider';
 
 interface NavItem {
   to: string;
@@ -313,6 +314,8 @@ export function NavRail() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
   const location = useLocation();
+  const branding = useBranding();
+  const { resolved } = useTheme();
 
   // "More" is active when the current route is one of the overflow pages.
   const moreIsActive = OVERFLOW_ROUTES.has(location.pathname);
@@ -344,6 +347,24 @@ export function NavRail() {
         aria-label="Main navigation"
         className="hidden md:flex md:flex-col md:w-16 md:min-h-screen md:border-r md:border-border md:bg-background md:pt-4 md:pb-4 md:gap-1 md:items-center md:overflow-y-auto"
       >
+        {branding.logo && (
+          <div className="mb-2 flex w-full justify-center px-2">
+            <img
+              src={
+                resolved === 'dark' && branding.logo.dark
+                  ? branding.logo.dark
+                  : branding.logo.light
+              }
+              alt={branding.logo.alt}
+              className={[
+                'max-h-10 w-auto',
+                // When in dark mode with only a light logo, invert so the logo
+                // remains visible against the dark rail background (ADR-022).
+                resolved === 'dark' && !branding.logo.dark ? 'invert' : '',
+              ].join(' ').trim()}
+            />
+          </div>
+        )}
         <ul className="flex flex-col gap-1 w-full px-1" role="list">
           {NAV_ITEMS.map((item) => (
             <li key={item.to}>
