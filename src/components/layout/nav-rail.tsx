@@ -258,7 +258,7 @@ function MoreSheet({ isOpen, onClose, triggerRef }: MoreSheetProps) {
           'transition-transform duration-150 ease-out',
           // Sheet sits above the bottom nav bar (56px + border).
           'mb-[calc(56px+1px)]',
-          isOpen ? 'translate-y-0 pointer-events-auto' : 'translate-y-full pointer-events-none',
+          isOpen ? 'translate-y-0 pointer-events-auto' : 'translate-y-[calc(100%+57px)] pointer-events-none',
         ].join(' ')}
       >
         {/* Drag handle — decorative */}
