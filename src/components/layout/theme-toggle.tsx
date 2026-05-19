@@ -1,62 +1,49 @@
-// theme-toggle.tsx — light/dark theme toggle
-// Persists to localStorage key clearskies.theme.user-override per ADR-023.
-// Sets data-theme on <html> synchronously.
+// theme-toggle.tsx — three-state theme cycle button per ADR-023.
+// Cycle order: system → light → dark → system
+// Reads/writes preference via ThemeProvider context (src/lib/theme-provider.tsx).
 
-import { useEffect, useState } from 'react';
-import { Sun, Moon } from 'lucide-react';
+import { Monitor, Sun, Moon } from 'lucide-react';
 import { Button } from '../ui/button';
+import { useTheme } from '../../lib/theme-provider';
+import type { ThemePreference } from '../../lib/theme-provider';
 
-type Theme = 'light' | 'dark';
+// Maps current preference → next preference in the cycle.
+const NEXT_PREFERENCE: Record<ThemePreference, ThemePreference> = {
+  system: 'light',
+  light: 'dark',
+  dark: 'system',
+};
 
-const STORAGE_KEY = 'clearskies.theme.user-override';
+// aria-label: describes current state and what clicking will switch to next.
+const ARIA_LABEL: Record<ThemePreference, string> = {
+  system: 'Theme: following system preference — click to switch to light mode',
+  light:  'Theme: light — click to switch to dark mode',
+  dark:   'Theme: dark — click to switch to system preference',
+};
 
-function getInitialTheme(): Theme {
-  if (typeof window === 'undefined') return 'light';
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored === 'dark' || stored === 'light') return stored;
-  return 'light';
-}
-
-function applyTheme(theme: Theme) {
-  document.documentElement.setAttribute('data-theme', theme);
-  localStorage.setItem(STORAGE_KEY, theme);
+// Icon for each preference state.
+function ThemeIcon({ preference }: { preference: ThemePreference }) {
+  if (preference === 'system') return <Monitor aria-hidden="true" className="h-5 w-5" />;
+  if (preference === 'light')  return <Sun     aria-hidden="true" className="h-5 w-5" />;
+  return                               <Moon    aria-hidden="true" className="h-5 w-5" />;
 }
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  const { preference, setTheme } = useTheme();
 
-  useEffect(() => {
-    applyTheme(theme);
-  }, [theme]);
-
-  function toggle() {
-    setTheme((t) => (t === 'light' ? 'dark' : 'light'));
+  function handleClick() {
+    setTheme(NEXT_PREFERENCE[preference]);
   }
-
-  const isDark = theme === 'dark';
 
   return (
     <Button
       variant="ghost"
       size="icon"
-      onClick={toggle}
-      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      onClick={handleClick}
+      aria-label={ARIA_LABEL[preference]}
       className="rounded-full"
     >
-      {isDark ? (
-        <Sun aria-hidden="true" className="h-5 w-5" />
-      ) : (
-        <Moon aria-hidden="true" className="h-5 w-5" />
-      )}
+      <ThemeIcon preference={preference} />
     </Button>
   );
 }
-
-// Initialize theme synchronously before first render.
-// Called once at module load time to avoid flash of wrong theme.
-(function initTheme() {
-  if (typeof window === 'undefined') return;
-  const stored = localStorage.getItem(STORAGE_KEY);
-  const theme: Theme = stored === 'dark' ? 'dark' : 'light';
-  document.documentElement.setAttribute('data-theme', theme);
-})();
