@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
-import { useMockData } from '../../mock/index';
+import { useStation } from '../../hooks/useWeatherData';
 
 export function Footer() {
-  const { station } = useMockData();
+  const { data: station } = useStation();
 
   return (
     <footer className="mt-auto border-t border-border px-4 py-3 text-sm text-muted-foreground">
@@ -14,7 +14,7 @@ export function Footer() {
           Legal / Privacy
         </Link>
         <span aria-hidden="true">·</span>
-        <span>© {new Date().getFullYear()} {station.name}</span>
+        <span>© {new Date().getFullYear()} {station?.name ?? 'Clear Skies Weather'}</span>
         <span aria-hidden="true">·</span>
         <span>Powered by Clear Skies</span>
       </div>
