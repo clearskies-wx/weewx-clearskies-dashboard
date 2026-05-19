@@ -120,7 +120,7 @@ export function ReportsPage() {
                       value={selectedYear ?? ''}
                       onChange={handleYearChange}
                       className={[
-                        'rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground',
+                        'rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground min-h-[44px] md:min-h-0',
                         'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
                       ].join(' ')}
                       aria-label="Select report year"
@@ -145,7 +145,7 @@ export function ReportsPage() {
                       onChange={handleMonthChange}
                       disabled={!selectedYear || availableMonths.length === 0}
                       className={[
-                        'rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground',
+                        'rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground min-h-[44px] md:min-h-0',
                         'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
                         (!selectedYear || availableMonths.length === 0) ? 'opacity-60 cursor-not-allowed' : '',
                       ].join(' ')}
@@ -181,7 +181,7 @@ export function ReportsPage() {
                     <a
                       href={`data:text/plain;charset=utf-8,${encodeURIComponent(report.rawText)}`}
                       download={report.filename}
-                      className="text-xs text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+                      className="inline-flex items-center min-h-[44px] md:min-h-0 px-2 text-sm text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
                     >
                       Download .txt
                     </a>

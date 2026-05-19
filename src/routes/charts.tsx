@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useLayoutEffect } from 'react';
 import {
   LineChart,
   Line,
@@ -94,8 +94,30 @@ export function ChartsPage() {
   const [activeTab, setActiveTab] = useState<TabId>('homepage');
   const [activeRange, setActiveRange] = useState<RangeId>('1d');
   const [showTable, setShowTable] = useState(false);
+  const [tabsCanScrollRight, setTabsCanScrollRight] = useState(false);
   const reducedMotion = usePrefersReducedMotion();
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const tabScrollRef = useRef<HTMLDivElement | null>(null);
+
+  // Detect whether the tab row overflows so we can show a fade indicator
+  useLayoutEffect(() => {
+    const el = tabScrollRef.current;
+    if (!el) return;
+
+    function checkOverflow() {
+      if (!el) return;
+      setTabsCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+    }
+
+    checkOverflow();
+    el.addEventListener('scroll', checkOverflow, { passive: true });
+    const ro = new ResizeObserver(checkOverflow);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener('scroll', checkOverflow);
+      ro.disconnect();
+    };
+  }, []);
 
   const archiveFrom = rangeToFromParam(activeRange);
   const { data: archiveData, loading: archiveLoading, error: archiveError, refetch: archiveRefetch } = useArchive({
@@ -129,35 +151,45 @@ export function ChartsPage() {
       <h1 className="sr-only">Charts</h1>
 
       {/* WAI-ARIA Tabs */}
-      <div
-        role="tablist"
-        aria-label="Chart group selection"
-        className="flex gap-1 overflow-x-auto pb-1"
-      >
-        {TABS.map((tab, index) => (
-          <button
-            key={tab.id}
-            ref={(el) => { tabRefs.current[index] = el; }}
-            role="tab"
-            id={`tab-${tab.id}`}
-            aria-selected={activeTab === tab.id}
-            aria-controls={`panel-${tab.id}`}
-            tabIndex={activeTab === tab.id ? 0 : -1}
-            type="button"
-            onClick={() => setActiveTab(tab.id)}
-            onKeyDown={(e) => handleTabKeyDown(e, index)}
-            className={[
-              'shrink-0 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-              'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-              'min-h-[36px]',
-              activeTab === tab.id
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-foreground hover:bg-muted/70',
-            ].join(' ')}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="relative">
+        <div
+          ref={tabScrollRef}
+          role="tablist"
+          aria-label="Chart group selection"
+          className="flex gap-1 overflow-x-auto pb-1"
+        >
+          {TABS.map((tab, index) => (
+            <button
+              key={tab.id}
+              ref={(el) => { tabRefs.current[index] = el; }}
+              role="tab"
+              id={`tab-${tab.id}`}
+              aria-selected={activeTab === tab.id}
+              aria-controls={`panel-${tab.id}`}
+              tabIndex={activeTab === tab.id ? 0 : -1}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              onKeyDown={(e) => handleTabKeyDown(e, index)}
+              className={[
+                'shrink-0 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                'min-h-[44px] md:min-h-0',
+                activeTab === tab.id
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-foreground hover:bg-muted/70',
+              ].join(' ')}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        {/* Scroll fade indicator — visible only when content overflows right */}
+        {tabsCanScrollRight && (
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent"
+          />
+        )}
       </div>
 
       {/* Homepage Tab Panel */}
@@ -181,6 +213,7 @@ export function ChartsPage() {
               size="sm"
               aria-pressed={activeRange === range}
               onClick={() => setActiveRange(range)}
+              className="min-h-[44px] md:min-h-0"
             >
               {range}
             </Button>
@@ -195,7 +228,7 @@ export function ChartsPage() {
               type="button"
               onClick={() => setShowTable((prev) => !prev)}
               aria-pressed={showTable}
-              className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded px-1 py-0.5"
+              className="inline-flex items-center min-h-[44px] md:min-h-0 px-3 py-2 text-sm text-muted-foreground rounded-md border border-border hover:text-foreground hover:bg-muted/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               {showTable ? 'Show chart' : 'Show data table'}
             </button>

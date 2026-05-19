@@ -104,12 +104,13 @@ export function ForecastPage() {
         ) : fcError ? (
           <TileError message="Unable to load forecast" onRetry={fcRefetch} />
         ) : forecast && forecast.hourly.length > 0 ? (
-          <div
-            className="overflow-x-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg"
-            tabIndex={0}
-            aria-label="Hourly forecast — scroll to see more"
-            style={{ scrollSnapType: 'x mandatory' }}
-          >
+          <div className="relative">
+            <div
+              className="overflow-x-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg"
+              tabIndex={0}
+              aria-label="Hourly forecast — scroll to see more"
+              style={{ scrollSnapType: 'x mandatory' }}
+            >
             <div
               role="list"
               aria-label="Hourly forecast"
@@ -144,6 +145,12 @@ export function ForecastPage() {
                 );
               })}
             </div>
+            </div>
+            {/* Scroll fade indicator — always visible on mobile; 12 items always overflow narrow viewports */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent"
+            />
           </div>
         ) : (
           <p className="text-muted-foreground text-sm">No hourly forecast data available.</p>
