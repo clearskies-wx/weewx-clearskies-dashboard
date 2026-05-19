@@ -106,13 +106,15 @@ function MoreSheet({ isOpen, onClose, triggerRef }: MoreSheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
 
-  // Focus first focusable element when sheet opens.
+  // Focus first focusable element when sheet opens (after slide-in transition starts).
   useEffect(() => {
     if (!isOpen) return;
-    const sheet = sheetRef.current;
-    if (!sheet) return;
-    const first = sheet.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
-    first?.focus();
+    requestAnimationFrame(() => {
+      const sheet = sheetRef.current;
+      if (!sheet) return;
+      const first = sheet.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
+      first?.focus();
+    });
   }, [isOpen]);
 
   // Escape key closes the sheet; focus trap constrains Tab within sheet.
@@ -182,9 +184,9 @@ function MoreSheet({ isOpen, onClose, triggerRef }: MoreSheetProps) {
       {/* Bottom sheet — pointer-events-none when closed so underlying nav bar remains clickable */}
       <div
         ref={sheetRef}
-        role="dialog"
+        role={isOpen ? 'dialog' : undefined}
         aria-label="Additional navigation"
-        aria-modal="true"
+        aria-modal={isOpen ? 'true' : undefined}
         // inert removes all interactivity (keyboard, pointer, AT) when sheet is closed.
         // aria-hidden mirrors the state for older AT that may not support inert.
         aria-hidden={!isOpen}
@@ -204,9 +206,7 @@ function MoreSheet({ isOpen, onClose, triggerRef }: MoreSheetProps) {
           <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
         </div>
 
-        <p className="sr-only" id="more-sheet-heading">Additional pages</p>
-
-        <nav aria-labelledby="more-sheet-heading">
+        <nav aria-label="Additional pages">
           <ul role="list" className="flex flex-col px-2 pb-3">
             {MOBILE_OVERFLOW_ITEMS.map((item) => {
               const isActive = location.pathname === item.to ||
