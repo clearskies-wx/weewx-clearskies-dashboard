@@ -11,7 +11,7 @@ import {
 } from 'recharts';
 import { Card, CardHeader, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { useMockData } from '../mock/index';
+import { useArchive, useStation } from '../hooks/useWeatherData';
 
 const TABS = [
   { id: 'homepage', label: 'Homepage' },
@@ -24,6 +24,20 @@ type TabId = (typeof TABS)[number]['id'];
 
 const RANGES = ['1d', '3d', '7d', '30d', '90d'] as const;
 type RangeId = (typeof RANGES)[number];
+
+function rangeToFromParam(range: RangeId): string {
+  const now = new Date();
+  const map: Record<RangeId, number> = {
+    '1d': 1,
+    '3d': 3,
+    '7d': 7,
+    '30d': 30,
+    '90d': 90,
+  };
+  const days = map[range];
+  const from = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+  return from.toISOString();
+}
 
 function formatXAxisHour(isoString: string, timeZone: string): string {
   return new Intl.DateTimeFormat('en-US', {
@@ -50,14 +64,43 @@ function usePrefersReducedMotion(): boolean {
   return reduced;
 }
 
+function TileSkeleton({ className }: { className?: string }) {
+  return (
+    <div
+      className={`animate-pulse rounded-lg bg-muted ${className ?? 'h-32'}`}
+      aria-hidden="true"
+    />
+  );
+}
+
+function TileError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div role="alert" className="flex flex-col gap-2 items-start text-sm">
+      <p className="text-destructive">{message}</p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="text-xs text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+      >
+        Retry
+      </button>
+    </div>
+  );
+}
+
 export function ChartsPage() {
-  const { archiveData, station } = useMockData();
-  const tz = station.timezone;
+  const { data: station } = useStation();
+  const tz = station?.timezone ?? 'UTC';
   const [activeTab, setActiveTab] = useState<TabId>('homepage');
   const [activeRange, setActiveRange] = useState<RangeId>('1d');
   const [showTable, setShowTable] = useState(false);
   const reducedMotion = usePrefersReducedMotion();
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  const archiveFrom = rangeToFromParam(activeRange);
+  const { data: archiveData, loading: archiveLoading, error: archiveError, refetch: archiveRefetch } = useArchive({
+    from: archiveFrom,
+  });
 
   const handleTabKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
@@ -76,13 +119,13 @@ export function ChartsPage() {
     []
   );
 
-  const chartData = archiveData.map((record) => ({
+  const chartData = (archiveData ?? []).map((record) => ({
     timestamp: record.timestamp,
     temp: record.outTemp,
   }));
 
   return (
-    <div className="flex flex-col gap-6 max-w-4xl mx-auto">
+    <div className="flex flex-col gap-6 max-w-4xl mx-auto" aria-live="polite">
       <h1 className="sr-only">Charts</h1>
 
       {/* WAI-ARIA Tabs */}
@@ -145,9 +188,9 @@ export function ChartsPage() {
         </div>
 
         {/* Temperature Chart Card */}
-        <Card>
+        <Card aria-busy={archiveLoading}>
           <CardHeader className="flex flex-row items-center justify-between">
-            <h2 className="font-heading text-base leading-snug font-medium">Temperature — Last 24 Hours</h2>
+            <h2 className="font-heading text-base leading-snug font-medium">Temperature — Last {activeRange}</h2>
             <button
               type="button"
               onClick={() => setShowTable((prev) => !prev)}
@@ -158,107 +201,118 @@ export function ChartsPage() {
             </button>
           </CardHeader>
           <CardContent>
-            {showTable ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <caption className="sr-only">Temperature readings over the last 24 hours</caption>
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th scope="col" className="py-2 px-3 text-left font-medium text-muted-foreground">Time</th>
-                      <th scope="col" className="py-2 px-3 text-right font-medium text-muted-foreground">Temperature (°F)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {archiveData.map((record) => (
-                      <tr key={record.timestamp} className="border-b border-border last:border-0">
-                        <td className="py-1.5 px-3 text-foreground">{formatXAxisHour(record.timestamp, tz)}</td>
-                        <td className="py-1.5 px-3 text-right text-foreground font-[tabular-nums]">{record.outTemp}°F</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
+            {archiveLoading ? (
               <>
-                <div
-                  role="figure"
-                  aria-label="Temperature over the last 24 hours"
-                  className="h-[350px] w-full"
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
-                      data={chartData}
-                      margin={{ top: 8, right: 16, bottom: 8, left: 8 }}
-                    >
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        stroke="var(--color-border)"
-                        opacity={0.5}
-                      />
-                      <XAxis
-                        dataKey="timestamp"
-                        tickFormatter={(v) => formatXAxisHour(v, tz)}
-                        tick={{ fontSize: 11 }}
-                        interval={7}
-                        stroke="var(--color-muted-foreground)"
-                        tickLine={false}
-                      />
-                      <YAxis
-                        tick={{ fontSize: 11 }}
-                        domain={['auto', 'auto']}
-                        stroke="var(--color-muted-foreground)"
-                        tickLine={false}
-                        width={40}
-                        tickFormatter={(v) => `${v}°`}
-                        unit="°F"
-                      />
-                      <Tooltip
-                        formatter={(value) => [
-                          typeof value === 'number' ? `${value}°F` : String(value),
-                          'Temperature',
-                        ]}
-                        labelFormatter={(label) => formatXAxisHour(String(label), tz)}
-                        contentStyle={{
-                          background: 'var(--color-popover)',
-                          border: '1px solid var(--color-border)',
-                          borderRadius: '6px',
-                          color: 'var(--color-popover-foreground)',
-                        }}
-                      />
-                      <Legend />
-                      <Line
-                        type="monotone"
-                        dataKey="temp"
-                        name="Temperature"
-                        stroke="var(--color-primary)"
-                        strokeWidth={2}
-                        dot={false}
-                        activeDot={{ r: 4 }}
-                        isAnimationActive={!reducedMotion}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* sr-only data table for screen readers when chart is visible */}
-                <table className="sr-only">
-                  <caption>Temperature readings over the last 24 hours</caption>
-                  <thead>
-                    <tr>
-                      <th scope="col">Time</th>
-                      <th scope="col">Temperature (°F)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {archiveData.map((record) => (
-                      <tr key={record.timestamp}>
-                        <td>{formatXAxisHour(record.timestamp, tz)}</td>
-                        <td>{record.outTemp}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <span className="sr-only" role="status">Loading chart data…</span>
+                <TileSkeleton className="h-[350px]" />
               </>
+            ) : archiveError ? (
+              <TileError message="Unable to load chart data" onRetry={archiveRefetch} />
+            ) : archiveData && archiveData.length > 0 ? (
+              showTable ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <caption className="sr-only">Temperature readings over the selected range</caption>
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th scope="col" className="py-2 px-3 text-left font-medium text-muted-foreground">Time</th>
+                        <th scope="col" className="py-2 px-3 text-right font-medium text-muted-foreground">Temperature (°F)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {archiveData.map((record) => (
+                        <tr key={record.timestamp} className="border-b border-border last:border-0">
+                          <td className="py-1.5 px-3 text-foreground">{formatXAxisHour(record.timestamp, tz)}</td>
+                          <td className="py-1.5 px-3 text-right text-foreground font-[tabular-nums]">{record.outTemp}°F</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <>
+                  <div
+                    role="figure"
+                    aria-label={`Temperature over the last ${activeRange}`}
+                    className="h-[350px] w-full"
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={chartData}
+                        margin={{ top: 8, right: 16, bottom: 8, left: 8 }}
+                      >
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke="var(--color-border)"
+                          opacity={0.5}
+                        />
+                        <XAxis
+                          dataKey="timestamp"
+                          tickFormatter={(v) => formatXAxisHour(v, tz)}
+                          tick={{ fontSize: 11 }}
+                          interval={7}
+                          stroke="var(--color-muted-foreground)"
+                          tickLine={false}
+                        />
+                        <YAxis
+                          tick={{ fontSize: 11 }}
+                          domain={['auto', 'auto']}
+                          stroke="var(--color-muted-foreground)"
+                          tickLine={false}
+                          width={40}
+                          tickFormatter={(v) => `${v}°`}
+                          unit="°F"
+                        />
+                        <Tooltip
+                          formatter={(value) => [
+                            typeof value === 'number' ? `${value}°F` : String(value),
+                            'Temperature',
+                          ]}
+                          labelFormatter={(label) => formatXAxisHour(String(label), tz)}
+                          contentStyle={{
+                            background: 'var(--color-popover)',
+                            border: '1px solid var(--color-border)',
+                            borderRadius: '6px',
+                            color: 'var(--color-popover-foreground)',
+                          }}
+                        />
+                        <Legend />
+                        <Line
+                          type="monotone"
+                          dataKey="temp"
+                          name="Temperature"
+                          stroke="var(--color-primary)"
+                          strokeWidth={2}
+                          dot={false}
+                          activeDot={{ r: 4 }}
+                          isAnimationActive={!reducedMotion}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* sr-only data table for screen readers when chart is visible */}
+                  <table className="sr-only">
+                    <caption>Temperature readings over the selected range</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Time</th>
+                        <th scope="col">Temperature (°F)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {archiveData.map((record) => (
+                        <tr key={record.timestamp}>
+                          <td>{formatXAxisHour(record.timestamp, tz)}</td>
+                          <td>{record.outTemp}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
+              )
+            ) : (
+              <p className="text-muted-foreground text-sm py-8 text-center">No chart data available for this range.</p>
             )}
           </CardContent>
         </Card>

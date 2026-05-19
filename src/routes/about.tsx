@@ -1,12 +1,12 @@
 // about.tsx — About page (/about)
 
-import { useMockData } from '../mock/index';
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
 } from '../components/ui/card';
+import { useStation, useContent } from '../hooks/useWeatherData';
 
 // Format ISO string as a long date: "January 1, 2020"
 function formatLongDate(isoString: string | null): string {
@@ -33,7 +33,6 @@ function formatAbsoluteTime(isoString: string, tz: string): string {
 }
 
 // Produce a human-readable relative string: "2 hours ago", "5 minutes ago", etc.
-// Used paired with an absolute time so precision loss doesn't matter.
 function relativeTime(isoString: string): string {
   const diffMs = Date.now() - new Date(isoString).getTime();
   const diffSec = Math.floor(diffMs / 1000);
@@ -46,84 +45,116 @@ function relativeTime(isoString: string): string {
   return `${diffDay} day${diffDay !== 1 ? 's' : ''} ago`;
 }
 
+function TileSkeleton({ className }: { className?: string }) {
+  return (
+    <div
+      className={`animate-pulse rounded-lg bg-muted ${className ?? 'h-32'}`}
+      aria-hidden="true"
+    />
+  );
+}
+
 export function AboutPage() {
-  const { station } = useMockData();
+  const { data: station, loading: stationLoading } = useStation();
+  const { data: content, loading: contentLoading } = useContent('about');
 
   return (
-    <div className="flex flex-col gap-6 max-w-2xl mx-auto">
+    <div className="flex flex-col gap-6 max-w-2xl mx-auto" aria-live="polite">
       <h1 className="text-2xl font-bold text-foreground">About</h1>
 
       {/* Station metadata */}
-      <Card>
+      <Card aria-busy={stationLoading}>
         <CardHeader>
-          <CardTitle>{station.name}</CardTitle>
+          <CardTitle>{station?.name ?? 'Weather Station'}</CardTitle>
         </CardHeader>
         <CardContent>
-          <dl className="grid grid-cols-1 gap-y-3 text-sm sm:grid-cols-2">
-            <div>
-              <dt className="text-muted-foreground">Location</dt>
-              <dd className="mt-0.5 font-medium text-foreground">
-                {station.latitude}°N, {Math.abs(station.longitude)}°W
-              </dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Altitude</dt>
-              <dd className="mt-0.5 font-medium text-foreground">
-                {station.altitude} ft
-              </dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Hardware</dt>
-              <dd className="mt-0.5 font-medium text-foreground">
-                {station.hardware ?? 'Not specified'}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Time Zone</dt>
-              <dd className="mt-0.5 font-medium text-foreground">
-                {station.timezone}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Unit System</dt>
-              <dd className="mt-0.5 font-medium text-foreground">
-                {station.unitSystem}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Station ID</dt>
-              <dd className="mt-0.5 font-medium text-foreground font-mono text-xs">
-                {station.stationId}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Recording Since</dt>
-              <dd className="mt-0.5 font-medium text-foreground">
-                {formatLongDate(station.firstRecord)}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Last Data Received</dt>
-              <dd className="mt-0.5 font-medium text-foreground">
-                {station.lastRecord
-                  ? `${relativeTime(station.lastRecord)} · ${formatAbsoluteTime(station.lastRecord, station.timezone)}`
-                  : '—'}
-              </dd>
-            </div>
-          </dl>
+          {stationLoading ? (
+            <>
+              <span className="sr-only" role="status">Loading station information…</span>
+              <TileSkeleton className="h-32" />
+            </>
+          ) : station ? (
+            <dl className="grid grid-cols-1 gap-y-3 text-sm sm:grid-cols-2">
+              <div>
+                <dt className="text-muted-foreground">Location</dt>
+                <dd className="mt-0.5 font-medium text-foreground">
+                  {station.latitude}°N, {Math.abs(station.longitude)}°W
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Altitude</dt>
+                <dd className="mt-0.5 font-medium text-foreground">
+                  {station.altitude} ft
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Hardware</dt>
+                <dd className="mt-0.5 font-medium text-foreground">
+                  {station.hardware ?? 'Not specified'}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Time Zone</dt>
+                <dd className="mt-0.5 font-medium text-foreground">
+                  {station.timezone}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Unit System</dt>
+                <dd className="mt-0.5 font-medium text-foreground">
+                  {station.unitSystem}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Station ID</dt>
+                <dd className="mt-0.5 font-medium text-foreground font-mono text-xs">
+                  {station.stationId}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Recording Since</dt>
+                <dd className="mt-0.5 font-medium text-foreground">
+                  {formatLongDate(station.firstRecord)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Last Data Received</dt>
+                <dd className="mt-0.5 font-medium text-foreground">
+                  {station.lastRecord
+                    ? `${relativeTime(station.lastRecord)} · ${formatAbsoluteTime(station.lastRecord, station.timezone)}`
+                    : '—'}
+                </dd>
+              </div>
+            </dl>
+          ) : (
+            <p className="text-sm text-muted-foreground">Station information unavailable.</p>
+          )}
         </CardContent>
       </Card>
 
       {/* Operator-authored content section */}
-      <Card>
+      <Card aria-busy={contentLoading}>
         <CardHeader>
           <CardTitle>About This Station</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            This station operator-authored description is a placeholder. Configure
-            your station&apos;s About content via the Clear Skies configuration UI.
-          </p>
+          {contentLoading ? (
+            <>
+              <span className="sr-only" role="status">Loading about content…</span>
+              <TileSkeleton className="h-20" />
+            </>
+          ) : content ? (
+            <div className="prose prose-sm dark:prose-invert max-w-none">
+              <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                {content.markdown}
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              This station operator-authored description is a placeholder. Configure
+              your station&apos;s About content via the Clear Skies configuration UI.
+            </p>
+          )}
         </CardContent>
       </Card>
 

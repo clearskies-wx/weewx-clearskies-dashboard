@@ -1,11 +1,11 @@
-import { useMockData } from '../mock/index';
-import type { EarthquakeRecord } from '../mock/index';
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
 } from '../components/ui/card';
+import type { EarthquakeRecord } from '../api/types';
+import { useEarthquakes, useStation } from '../hooks/useWeatherData';
 
 function formatTime(isoString: string, timeZone: string): string {
   return new Intl.DateTimeFormat('en-US', {
@@ -41,93 +41,130 @@ function alertClasses(level: EarthquakeRecord['alert']): string {
   }
 }
 
+function TileSkeleton({ className }: { className?: string }) {
+  return (
+    <div
+      className={`animate-pulse rounded-lg bg-muted ${className ?? 'h-32'}`}
+      aria-hidden="true"
+    />
+  );
+}
+
+function TileError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div role="alert" className="flex flex-col gap-2 items-start text-sm">
+      <p className="text-destructive">{message}</p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="text-xs text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+      >
+        Retry
+      </button>
+    </div>
+  );
+}
+
 export function EarthquakesPage() {
-  const { earthquakes, station } = useMockData();
+  const { data: earthquakes, loading, error, refetch } = useEarthquakes();
+  const { data: station } = useStation();
 
   return (
-    <div className="flex flex-col gap-6 max-w-2xl mx-auto">
+    <div className="flex flex-col gap-6 max-w-2xl mx-auto" aria-live="polite">
       <h1 className="text-2xl font-bold text-foreground">Earthquakes</h1>
 
-      {earthquakes.length === 0 ? (
-        <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
-            No recent earthquakes in the configured radius.
-          </CardContent>
-        </Card>
-      ) : (
-        <ul className="flex flex-col gap-4" role="list" aria-label="Recent earthquakes">
-          {earthquakes.map((quake) => {
-            const { bg, text } = magnitudeClasses(quake.magnitude);
-            return (
-              <li key={quake.id}>
-                <Card>
-                  <CardContent className="pt-4 pb-4">
-                    <div className="flex items-start gap-4">
-                      <div
-                        className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg ${bg}`}
-                        aria-label={`Magnitude ${quake.magnitude}`}
-                      >
-                        <span className={`text-xs leading-none ${text}`}>M</span>
-                        <span
-                          className={`text-2xl font-bold leading-none mt-0.5 ${text}`}
-                          style={{ fontFeatureSettings: '"tnum"' }}
+      {loading && (
+        <>
+          <span className="sr-only" role="status">Loading earthquake data…</span>
+          <TileSkeleton className="h-32" />
+          <TileSkeleton className="h-32" />
+        </>
+      )}
+
+      {error && <TileError message="Unable to load earthquake data" onRetry={refetch} />}
+
+      {!loading && !error && earthquakes !== null && (
+        earthquakes.length === 0 ? (
+          <Card>
+            <CardContent className="py-8 text-center text-muted-foreground">
+              No recent earthquakes in the configured radius.
+            </CardContent>
+          </Card>
+        ) : (
+          <ul className="flex flex-col gap-4" role="list" aria-label="Recent earthquakes">
+            {earthquakes.map((quake) => {
+              const { bg, text } = magnitudeClasses(quake.magnitude);
+              return (
+                <li key={quake.id}>
+                  <Card>
+                    <CardContent className="pt-4 pb-4">
+                      <div className="flex items-start gap-4">
+                        <div
+                          className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg ${bg}`}
+                          aria-label={`Magnitude ${quake.magnitude}`}
                         >
-                          {quake.magnitude}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <p className="font-semibold text-foreground leading-snug">
-                          {quake.place ?? 'Unknown location'}
-                          {quake.magnitudeType && (
-                            <span className="ml-1.5 text-xs font-normal text-muted-foreground">
-                              ({quake.magnitudeType.toLowerCase()})
-                            </span>
-                          )}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatTime(quake.time, station.timezone)}
-                        </p>
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1">
-                          {quake.depth !== null && (
-                            <span>Depth: {quake.depth} km</span>
-                          )}
-                          <span>Source: {quake.source.toUpperCase()}</span>
+                          <span className={`text-xs leading-none ${text}`}>M</span>
+                          <span
+                            className={`text-2xl font-bold leading-none mt-0.5 ${text}`}
+                            style={{ fontFeatureSettings: '"tnum"' }}
+                          >
+                            {quake.magnitude}
+                          </span>
                         </div>
 
-                        {/* Additional fields: felt, mmi, tsunami, alert */}
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs mt-1">
-                          {quake.felt !== null && (
-                            <span className="text-muted-foreground">
-                              Felt by {quake.felt} {quake.felt === 1 ? 'person' : 'people'}
-                            </span>
-                          )}
-                          {quake.mmi !== null && (
-                            <span className="text-muted-foreground" style={{ fontFeatureSettings: '"tnum"' }}>
-                              MMI: {quake.mmi.toFixed(1)}
-                            </span>
-                          )}
-                          {quake.tsunami && (
-                            <span className="font-medium text-amber-800 dark:text-amber-300">
-                              Tsunami watch
-                            </span>
-                          )}
-                          {quake.alert !== null && (
-                            <span
-                              className={`inline-block rounded px-1.5 py-0.5 font-medium capitalize ${alertClasses(quake.alert)}`}
-                            >
-                              PAGER: {quake.alert}
-                            </span>
-                          )}
+                        <div className="flex flex-col gap-1 min-w-0">
+                          <p className="font-semibold text-foreground leading-snug">
+                            {quake.place ?? 'Unknown location'}
+                            {quake.magnitudeType && (
+                              <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                                ({quake.magnitudeType.toLowerCase()})
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatTime(quake.time, station?.timezone ?? 'UTC')}
+                          </p>
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1">
+                            {quake.depth !== null && (
+                              <span>Depth: {quake.depth} km</span>
+                            )}
+                            <span>Source: {quake.source.toUpperCase()}</span>
+                          </div>
+
+                          {/* Additional fields: felt, mmi, tsunami, alert */}
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs mt-1">
+                            {quake.felt !== null && (
+                              <span className="text-muted-foreground">
+                                Felt by {quake.felt} {quake.felt === 1 ? 'person' : 'people'}
+                              </span>
+                            )}
+                            {quake.mmi !== null && (
+                              <span className="text-muted-foreground" style={{ fontFeatureSettings: '"tnum"' }}>
+                                MMI: {quake.mmi.toFixed(1)}
+                              </span>
+                            )}
+                            {quake.tsunami && (
+                              <span className="font-medium text-amber-800 dark:text-amber-300">
+                                Tsunami watch
+                              </span>
+                            )}
+                            {quake.alert !== null && (
+                              <span
+                                className={`inline-block rounded px-1.5 py-0.5 font-medium capitalize ${alertClasses(quake.alert)}`}
+                              >
+                                PAGER: {quake.alert}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </li>
-            );
-          })}
-        </ul>
+                    </CardContent>
+                  </Card>
+                </li>
+              );
+            })}
+          </ul>
+        )
       )}
 
       {/* Map placeholder — Leaflet not loaded at mock phase */}
