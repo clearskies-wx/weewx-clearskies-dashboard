@@ -176,7 +176,7 @@ export function ReportsPage() {
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center justify-between">
                     <h2 className="text-sm font-semibold text-foreground">
-                      {MONTHS[report.month ?? 0]} {report.year}
+                      {report.month ? MONTHS[report.month] : 'Annual'} {report.year}
                     </h2>
                     <a
                       href={`data:text/plain;charset=utf-8,${encodeURIComponent(report.rawText)}`}

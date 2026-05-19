@@ -420,7 +420,7 @@ export function useLightning(observation: Observation | null): LightningData | n
       count1h: count1h ?? 0,
       count24h: count24h ?? 0,
       nearestDistanceKm: nearestDistanceKm ?? 0,
-      lastStrikeTime: lastStrikeTime ?? new Date().toISOString(),
+      lastStrikeTime: lastStrikeTime ?? null,
     };
   }, [observation]);
 }
@@ -463,8 +463,8 @@ export function useTodayStats(
       .map((r) => r.rain)
       .filter((v): v is number => v !== null && v !== undefined);
 
-    const high = temps.length > 0 ? Math.max(...temps) : (observation?.outTemp ?? 0);
-    const low = temps.length > 0 ? Math.min(...temps) : (observation?.outTemp ?? 0);
+    const high = temps.length > 0 ? Math.max(...temps) : (observation?.outTemp ?? null);
+    const low = temps.length > 0 ? Math.min(...temps) : (observation?.outTemp ?? null);
     const peakGust = gusts.length > 0 ? Math.max(...gusts) : (observation?.windGust ?? 0);
     const rainSoFar = rainValues.reduce((sum, v) => sum + v, 0);
 

@@ -288,7 +288,7 @@ export function NowPage() {
                 </div>
                 <p className="text-lg text-muted-foreground">Partly Cloudy</p>
                 <p className="text-sm text-muted-foreground">
-                  Feels like <span className="font-medium text-foreground font-[tabular-nums]">{observation.appTemp}°F</span>
+                  Feels like <span className="font-medium text-foreground font-[tabular-nums]">{observation.appTemp !== null ? `${observation.appTemp}°F` : 'N/A'}</span>
                 </p>
               </>
             ) : (
@@ -312,11 +312,11 @@ export function NowPage() {
               <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm md:grid-cols-4 lg:grid-cols-2">
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">Today&apos;s High</dt>
-                  <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">{todayStats.high}°F</dd>
+                  <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">{todayStats.high !== null ? `${todayStats.high}°F` : '—'}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">Today&apos;s Low</dt>
-                  <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">{todayStats.low}°F</dd>
+                  <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">{todayStats.low !== null ? `${todayStats.low}°F` : '—'}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">Peak Gust</dt>
@@ -387,7 +387,7 @@ export function NowPage() {
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">Barometer</dt>
                   <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">
-                    {observation.barometer} inHg
+                    {observation.barometer !== null ? `${observation.barometer} inHg` : 'N/A'}
                     <span role="img" className="ml-1 text-muted-foreground" aria-label={`Trend: ${barometerTrendArrow(observation.barometerTrend) === '↑' ? 'rising' : barometerTrendArrow(observation.barometerTrend) === '↓' ? 'falling' : 'steady'}`}>
                       {barometerTrendArrow(observation.barometerTrend)}
                     </span>
@@ -395,15 +395,15 @@ export function NowPage() {
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">Dewpoint</dt>
-                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.dewpoint}°F</dd>
+                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.dewpoint !== null ? `${observation.dewpoint}°F` : 'N/A'}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">Humidity</dt>
-                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.outHumidity}%</dd>
+                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.outHumidity !== null ? `${observation.outHumidity}%` : 'N/A'}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">Rain</dt>
-                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.rain} in</dd>
+                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.rain !== null ? `${observation.rain} in` : 'N/A'}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">Heat Index</dt>
@@ -419,11 +419,11 @@ export function NowPage() {
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">Solar Radiation</dt>
-                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.radiation} W/m²</dd>
+                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.radiation !== null ? `${observation.radiation} W/m²` : 'N/A'}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">UV Index</dt>
-                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.UV}</dd>
+                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.UV !== null ? observation.UV : 'N/A'}</dd>
                 </div>
               </dl>
             ) : (

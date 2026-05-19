@@ -381,8 +381,8 @@ export interface RadarFrame {
  * Not returned directly by any API endpoint.
  */
 export interface TodayStats {
-  high: number;
-  low: number;
+  high: number | null;
+  low: number | null;
   peakGust: number;
   rainSoFar: number;
   peakAQI: number;
@@ -397,5 +397,5 @@ export interface LightningData {
   count1h: number;
   count24h: number;
   nearestDistanceKm: number;
-  lastStrikeTime: string;
+  lastStrikeTime: string | null;
 }
