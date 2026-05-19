@@ -4,9 +4,9 @@
 
 The dashboard itself has no configuration file. It is a static SPA — there are no server-side settings to edit and no rebuild is needed to change branding.
 
-All operator configuration is served by clearskies-api at the `/branding` endpoint and applied in the browser at runtime. The dashboard fetches this on startup and configures the accent color, logo, and theme default accordingly.
+Operator branding (accent color, logo, theme default) will be served by clearskies-api at a `/branding` endpoint and applied in the browser at startup — no dashboard rebuild needed. In v0.1, the dashboard uses built-in defaults (blue palette, OS preference theme mode). The API endpoint and setup wizard integration are planned for a future release.
 
-Initial configuration is done through the setup wizard in [weewx-clearskies-stack](https://github.com/inguy24/weewx-clearskies-stack). After the wizard runs, the settings are stored in the clearskies-api configuration directory and served dynamically.
+Initial configuration will be done through the setup wizard in [weewx-clearskies-stack](https://github.com/inguy24/weewx-clearskies-stack). The sections below document the full configuration surface for reference; options marked as defaults are what v0.1 ships with.
 
 ---
 
@@ -25,13 +25,13 @@ Six curated accent palettes are available. Each palette is verified WCAG AA comp
 
 All light values achieve ≥4.5:1 contrast on white (`oklch(1 0 0)`). All dark values achieve ≥4.5:1 on the dark background (`oklch(0.145 0 0)`).
 
-Set the palette through the setup wizard. The wizard writes the choice to clearskies-api configuration; no dashboard rebuild is needed.
+The palette will be configurable through the setup wizard once the `/branding` endpoint is implemented. In v0.1, the default palette is `blue`.
 
 ---
 
 ## Logo
 
-The `/branding` endpoint accepts:
+The branding configuration defines:
 
 - `branding.logo.light` — the default logo URL, used in light theme and as the fallback in dark theme
 - `branding.logo.dark` — optional separate logo URL for dark theme
@@ -53,7 +53,7 @@ The `/branding` endpoint accepts:
 
 ### Operator default
 
-Set via the setup wizard. Controls what new visitors see before they interact with the theme toggle.
+Controls what new visitors see before they interact with the theme toggle. In v0.1, the default is `auto-os`. Once the setup wizard ships, operators will configure this through the stack repo.
 
 | Value | Behavior |
 |---|---|
@@ -78,7 +78,7 @@ The user's choice is stored in `localStorage` under the key `clearskies.theme.us
 
 ## Custom CSS
 
-Place a file named `custom.css` in the clearskies-api configuration directory. It is served by the API and loaded by the dashboard last, after all built-in styles. Rules in `custom.css` override everything else.
+When the `/branding` endpoint is implemented, place a file named `custom.css` in the clearskies-api configuration directory. It will be served by the API and loaded by the dashboard last, after all built-in styles. Rules in `custom.css` will override everything else. This feature is not available in v0.1.
 
 **Stability warning:** CSS variable names used internally by the dashboard are not guaranteed to remain stable across versions. Minor version releases may rename, add, or remove variables. If you use internal CSS variables in `custom.css`, check the changelog before upgrading.
 
@@ -143,4 +143,4 @@ The clearskies-api locates its configuration directory in this order:
 2. `/etc/weewx-clearskies/<component>.conf`
 3. `$XDG_CONFIG_HOME/weewx-clearskies/<component>.conf` (typically `~/.config/weewx-clearskies/`)
 
-This search order applies to clearskies-api, not to the dashboard itself. The dashboard fetches its configuration from the API at runtime and has no local config path.
+This search order applies to clearskies-api, not to the dashboard itself. The dashboard has no local config path — it will receive its configuration from the API at runtime once the `/branding` endpoint ships.
