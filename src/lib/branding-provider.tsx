@@ -7,7 +7,7 @@ import { createContext, useContext, useEffect, useMemo } from 'react';
 import type { BrandingConfig } from './branding';
 import { ACCENT_PALETTES, DEFAULT_BRANDING } from './branding';
 
-const BrandingContext = createContext<BrandingConfig | null>(null);
+export const BrandingContext = createContext<BrandingConfig | null>(null);
 
 export function BrandingProvider({ children }: { children: React.ReactNode }) {
   const config = DEFAULT_BRANDING;

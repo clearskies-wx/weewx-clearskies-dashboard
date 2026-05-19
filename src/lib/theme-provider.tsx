@@ -2,13 +2,16 @@
 // Preference: 'light' | 'dark' | 'system'  (stored in localStorage)
 // Resolved:   'light' | 'dark'             (what CSS actually sees via data-theme)
 //
-// Priority: user preference > operator default (operator default not yet wired;
-// deferred to setup-wizard integration). When preference is absent, default is 'system'.
+// Priority: user preference > operator default > auto-os fallback.
+// When preference is absent, default is 'system' (follow operator default).
+// Operator default comes from BrandingProvider (BrandingContext) when present.
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { BrandingContext } from './branding-provider';
 
 export type ThemePreference = 'light' | 'dark' | 'system';
 export type ResolvedTheme = 'light' | 'dark';
+export type OperatorDefault = 'light' | 'dark' | 'auto-os' | 'auto-sunrise-sunset';
 
 const STORAGE_KEY = 'clearskies.theme.user-override';
 
@@ -20,13 +23,23 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-// Resolve preference → concrete light/dark using current OS state.
-// ADR-023 defines 'system' as "follow operator default" — but operator config is not
-// yet wired (deferred to setup-wizard, T8). Until then, 'system' resolves via
-// matchMedia as a stand-in for the auto-os operator mode.
-function resolveTheme(preference: ThemePreference): ResolvedTheme {
+// Resolve preference → concrete light/dark given the operator default.
+// 'system' defers to operatorDefault:
+//   'light' → 'light'
+//   'dark'  → 'dark'
+//   'auto-os' → matchMedia
+//   'auto-sunrise-sunset' → matchMedia fallback (sunrise/sunset data not yet
+//     available from the api; TODO: re-evaluate at next sunrise/sunset once
+//     almanac endpoint supplies those times per ADR-023/ADR-014).
+function resolveTheme(preference: ThemePreference, operatorDefault: OperatorDefault): ResolvedTheme {
   if (preference === 'light') return 'light';
   if (preference === 'dark') return 'dark';
+
+  // preference === 'system': resolve via operator default.
+  if (operatorDefault === 'light') return 'light';
+  if (operatorDefault === 'dark') return 'dark';
+
+  // 'auto-os' or 'auto-sunrise-sunset': use matchMedia.
   if (typeof window !== 'undefined') {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
@@ -44,20 +57,30 @@ function readStoredPreference(): ThemePreference {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [preference, setPreferenceState] = useState<ThemePreference>(readStoredPreference);
-  const [resolved, setResolved] = useState<ResolvedTheme>(() => resolveTheme(readStoredPreference()));
+  // Read operator default from BrandingContext. Returns null if BrandingProvider
+  // is not an ancestor — falls back to 'auto-os' so the component is usable
+  // standalone (e.g. in tests or Storybook without a BrandingProvider).
+  const branding = useContext(BrandingContext);
+  const operatorDefault: OperatorDefault = branding?.defaultThemeMode ?? 'auto-os';
 
-  // Apply resolved theme to DOM + keep it in sync when preference changes.
+  const [preference, setPreferenceState] = useState<ThemePreference>(readStoredPreference);
+  const [resolved, setResolved] = useState<ResolvedTheme>(() =>
+    resolveTheme(readStoredPreference(), operatorDefault),
+  );
+
+  // Apply resolved theme to DOM + keep it in sync when preference or operatorDefault changes.
   useEffect(() => {
-    const newResolved = resolveTheme(preference);
+    const newResolved = resolveTheme(preference, operatorDefault);
     setResolved(newResolved);
     document.documentElement.setAttribute('data-theme', newResolved);
     localStorage.setItem(STORAGE_KEY, preference);
-  }, [preference]);
+  }, [preference, operatorDefault]);
 
-  // When preference is 'system', subscribe to OS-level changes.
+  // When preference is 'system' AND operatorDefault is an auto-os mode,
+  // subscribe to OS-level changes.
   useEffect(() => {
     if (preference !== 'system') return;
+    if (operatorDefault !== 'auto-os' && operatorDefault !== 'auto-sunrise-sunset') return;
 
     const mql = window.matchMedia('(prefers-color-scheme: dark)');
 
@@ -69,7 +92,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     mql.addEventListener('change', handleChange);
     return () => mql.removeEventListener('change', handleChange);
-  }, [preference]);
+  }, [preference, operatorDefault]);
 
   // useCallback so setTheme has a stable identity across renders — required for the
   // useMemo context value below to remain stable when only resolved or preference changes.
