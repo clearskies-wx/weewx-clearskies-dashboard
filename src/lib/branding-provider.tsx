@@ -4,11 +4,8 @@
 // once that endpoint is defined in the OpenAPI contract (ADR-022).
 
 import { createContext, useContext, useEffect, useMemo } from 'react';
-import {
-  ACCENT_PALETTES,
-  BrandingConfig,
-  DEFAULT_BRANDING,
-} from './branding';
+import type { BrandingConfig } from './branding';
+import { ACCENT_PALETTES, DEFAULT_BRANDING } from './branding';
 
 const BrandingContext = createContext<BrandingConfig | null>(null);
 
