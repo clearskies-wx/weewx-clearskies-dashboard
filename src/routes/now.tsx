@@ -516,7 +516,7 @@ export function NowPage() {
                 </div>
                 <p className="text-muted-foreground font-[tabular-nums]">{lightning.count24h} in last 24h</p>
                 <p className="text-muted-foreground font-[tabular-nums]">Nearest: {lightning.nearestDistanceKm} km</p>
-                <p className="text-muted-foreground">Last strike: {formatRelativeTime(lightning.lastStrikeTime)}</p>
+                <p className="text-muted-foreground">Last strike: {lightning.lastStrikeTime ? formatRelativeTime(lightning.lastStrikeTime) : 'Unknown'}</p>
               </>
             ) : (
               <p className="text-muted-foreground text-sm">No lightning sensor configured.</p>
