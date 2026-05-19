@@ -11,7 +11,6 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
   return (
     <div
       role="alert"
-      aria-live="assertive"
       className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200"
     >
       <TriangleAlert

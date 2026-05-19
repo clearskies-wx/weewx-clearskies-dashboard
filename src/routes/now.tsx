@@ -7,8 +7,6 @@ import {
   CardContent,
 } from '../components/ui/card';
 
-const TZ = 'America/New_York';
-
 function formatLocalTime(iso: string | null, tz: string): string {
   if (!iso) return '—';
   return new Intl.DateTimeFormat('en-US', {
@@ -45,6 +43,7 @@ function windDirLabel(deg: number): string {
   return dirs[Math.round(deg / 22.5) % 16];
 }
 
+// EPA standard AQI palette — domain convention per ADR-009, not subject to theming
 function aqiColor(aqi: number): string {
   if (aqi <= 50) return '#00E400';
   if (aqi <= 100) return '#FFFF00';
@@ -195,7 +194,8 @@ function AqiGauge({ aqi, category, pollutant }: { aqi: number; category: string 
 }
 
 export function NowPage() {
-  const { observation, aqi, todayStats, alerts, units, almanac, lightning, earthquakes, forecast } = useMockData();
+  const { observation, aqi, todayStats, alerts, units, almanac, lightning, earthquakes, forecast, station } = useMockData();
+  const tz = station.timezone;
 
   const windDir = observation.windDir ?? 0;
   const windSpeed = observation.windSpeed ?? 0;
@@ -206,7 +206,7 @@ export function NowPage() {
 
   return (
     <div className="flex flex-col gap-4 max-w-6xl mx-auto">
-      <h1 className="sr-only">Current Conditions</h1>
+      <h1 className="sr-only">Now</h1>
 
       <AlertBanner alerts={alerts} />
 
@@ -262,6 +262,12 @@ export function NowPage() {
                   <span className="ml-1 text-xs font-normal text-muted-foreground">{aqiCategory(todayStats.peakAQI)}</span>
                 </dd>
               </div>
+              {todayStats.recordsBrokenToday.length > 0 && (
+                <div className="col-span-2">
+                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">Records Broken</dt>
+                  <dd className="mt-1 font-medium text-foreground">{todayStats.recordsBrokenToday.join(', ')}</dd>
+                </div>
+              )}
             </dl>
           </CardContent>
         </Card>
@@ -287,7 +293,7 @@ export function NowPage() {
                 <dt className="text-xs text-muted-foreground uppercase tracking-wide">Barometer</dt>
                 <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">
                   {observation.barometer} inHg
-                  <span className="ml-1 text-muted-foreground" aria-label={`Trend: ${barometerTrendArrow(observation.barometerTrend) === '↑' ? 'rising' : barometerTrendArrow(observation.barometerTrend) === '↓' ? 'falling' : 'steady'}`}>
+                  <span role="img" className="ml-1 text-muted-foreground" aria-label={`Trend: ${barometerTrendArrow(observation.barometerTrend) === '↑' ? 'rising' : barometerTrendArrow(observation.barometerTrend) === '↓' ? 'falling' : 'steady'}`}>
                     {barometerTrendArrow(observation.barometerTrend)}
                   </span>
                 </dd>
@@ -337,12 +343,12 @@ export function NowPage() {
             <div className="flex items-center gap-2">
               <Sunrise aria-hidden="true" className="h-4 w-4 text-amber-500 shrink-0" />
               <span className="text-muted-foreground">Sunrise</span>
-              <span className="ml-auto font-medium text-foreground">{formatLocalTime(almanac.sun.rise, TZ)}</span>
+              <span className="ml-auto font-medium text-foreground">{formatLocalTime(almanac.sun.rise, tz)}</span>
             </div>
             <div className="flex items-center gap-2">
               <Sunset aria-hidden="true" className="h-4 w-4 text-amber-600 shrink-0" />
               <span className="text-muted-foreground">Sunset</span>
-              <span className="ml-auto font-medium text-foreground">{formatLocalTime(almanac.sun.set, TZ)}</span>
+              <span className="ml-auto font-medium text-foreground">{formatLocalTime(almanac.sun.set, tz)}</span>
             </div>
             <div className="flex items-center gap-2">
               <Moon aria-hidden="true" className="h-4 w-4 text-blue-400 shrink-0" />

@@ -25,11 +25,11 @@ type TabId = (typeof TABS)[number]['id'];
 const RANGES = ['1d', '3d', '7d', '30d', '90d'] as const;
 type RangeId = (typeof RANGES)[number];
 
-function formatXAxisHour(isoString: string): string {
+function formatXAxisHour(isoString: string, timeZone: string): string {
   return new Intl.DateTimeFormat('en-US', {
     hour: 'numeric',
     hour12: true,
-    timeZone: 'America/New_York',
+    timeZone,
   }).format(new Date(isoString));
 }
 
@@ -51,7 +51,8 @@ function usePrefersReducedMotion(): boolean {
 }
 
 export function ChartsPage() {
-  const { archiveData } = useMockData();
+  const { archiveData, station } = useMockData();
+  const tz = station.timezone;
   const [activeTab, setActiveTab] = useState<TabId>('homepage');
   const [activeRange, setActiveRange] = useState<RangeId>('1d');
   const [showTable, setShowTable] = useState(false);
@@ -170,7 +171,7 @@ export function ChartsPage() {
                   <tbody>
                     {archiveData.map((record) => (
                       <tr key={record.timestamp} className="border-b border-border last:border-0">
-                        <td className="py-1.5 px-3 text-foreground">{formatXAxisHour(record.timestamp)}</td>
+                        <td className="py-1.5 px-3 text-foreground">{formatXAxisHour(record.timestamp, tz)}</td>
                         <td className="py-1.5 px-3 text-right text-foreground font-[tabular-nums]">{record.outTemp}°F</td>
                       </tr>
                     ))}
@@ -196,7 +197,7 @@ export function ChartsPage() {
                       />
                       <XAxis
                         dataKey="timestamp"
-                        tickFormatter={formatXAxisHour}
+                        tickFormatter={(v) => formatXAxisHour(v, tz)}
                         tick={{ fontSize: 11 }}
                         interval={7}
                         stroke="var(--color-muted-foreground)"
@@ -216,7 +217,7 @@ export function ChartsPage() {
                           typeof value === 'number' ? `${value}°F` : String(value),
                           'Temperature',
                         ]}
-                        labelFormatter={(label) => formatXAxisHour(String(label))}
+                        labelFormatter={(label) => formatXAxisHour(String(label), tz)}
                         contentStyle={{
                           background: 'var(--color-popover)',
                           border: '1px solid var(--color-border)',
@@ -251,7 +252,7 @@ export function ChartsPage() {
                   <tbody>
                     {archiveData.map((record) => (
                       <tr key={record.timestamp}>
-                        <td>{formatXAxisHour(record.timestamp)}</td>
+                        <td>{formatXAxisHour(record.timestamp, tz)}</td>
                         <td>{record.outTemp}</td>
                       </tr>
                     ))}
@@ -270,6 +271,7 @@ export function ChartsPage() {
         aria-labelledby="tab-averageclimate"
         hidden={activeTab !== 'averageclimate'}
       >
+        <h2 className="sr-only">Average Climate Charts</h2>
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
             Coming soon — Average Climate charts will be available when historical data is connected.
@@ -284,6 +286,7 @@ export function ChartsPage() {
         aria-labelledby="tab-monthly"
         hidden={activeTab !== 'monthly'}
       >
+        <h2 className="sr-only">Monthly Charts</h2>
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
             Coming soon — Monthly charts will be available when historical data is connected.
@@ -298,6 +301,7 @@ export function ChartsPage() {
         aria-labelledby="tab-annual"
         hidden={activeTab !== 'annual'}
       >
+        <h2 className="sr-only">Annual Charts</h2>
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
             Coming soon — Annual charts will be available when historical data is connected.
