@@ -197,38 +197,26 @@ export function AlmanacPage() {
           <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
             <div>
               <dt className="text-muted-foreground">Sun Azimuth</dt>
-              <dd
-                className="font-medium text-muted-foreground mt-0.5"
-                aria-label={almanac.sun.azimuth !== null ? String(almanac.sun.azimuth) : 'Not available'}
-              >
-                {almanac.sun.azimuth !== null ? `${almanac.sun.azimuth}°` : 'N/A'}
+              <dd className="font-medium text-muted-foreground mt-0.5">
+                {almanac.sun.azimuth !== null ? `${almanac.sun.azimuth}°` : '—'}
               </dd>
             </div>
             <div>
               <dt className="text-muted-foreground">Sun Altitude</dt>
-              <dd
-                className="font-medium text-muted-foreground mt-0.5"
-                aria-label={almanac.sun.altitude !== null ? String(almanac.sun.altitude) : 'Not available'}
-              >
-                {almanac.sun.altitude !== null ? `${almanac.sun.altitude}°` : 'N/A'}
+              <dd className="font-medium text-muted-foreground mt-0.5">
+                {almanac.sun.altitude !== null ? `${almanac.sun.altitude}°` : '—'}
               </dd>
             </div>
             <div>
               <dt className="text-muted-foreground">Moon Azimuth</dt>
-              <dd
-                className="font-medium text-muted-foreground mt-0.5"
-                aria-label={almanac.moon.azimuth !== null ? String(almanac.moon.azimuth) : 'Not available'}
-              >
-                {almanac.moon.azimuth !== null ? `${almanac.moon.azimuth}°` : 'N/A'}
+              <dd className="font-medium text-muted-foreground mt-0.5">
+                {almanac.moon.azimuth !== null ? `${almanac.moon.azimuth}°` : '—'}
               </dd>
             </div>
             <div>
               <dt className="text-muted-foreground">Moon Altitude</dt>
-              <dd
-                className="font-medium text-muted-foreground mt-0.5"
-                aria-label={almanac.moon.altitude !== null ? String(almanac.moon.altitude) : 'Not available'}
-              >
-                {almanac.moon.altitude !== null ? `${almanac.moon.altitude}°` : 'N/A'}
+              <dd className="font-medium text-muted-foreground mt-0.5">
+                {almanac.moon.altitude !== null ? `${almanac.moon.altitude}°` : '—'}
               </dd>
             </div>
           </dl>

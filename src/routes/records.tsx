@@ -103,7 +103,7 @@ export function RecordsPage() {
                         style={{ fontFeatureSettings: '"tnum"' }}
                       >
                         {entry.value !== null
-                          ? `${entry.value} ${units.outTemp ?? ''}`
+                          ? `${entry.value} ${units[entry.canonicalField] ?? ''}`
                           : '—'}
                       </td>
                       <td className="py-2.5 text-right text-muted-foreground">
