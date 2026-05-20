@@ -207,18 +207,19 @@ describe('useSSE', () => {
     expect(result.current.status).toBe('disconnected');
   });
 
-  it('closes the EventSource and sets disconnected on unmount', () => {
-    const { result, unmount } = renderHook(() => useSSE('http://localhost:8766/sse'));
+  it('closes the EventSource on unmount', () => {
+    // Verify that the cleanup function calls es.close() — the key contract.
+    // After unmount, result.current reflects the last render, not post-unmount
+    // state, so we verify readyState on the EventSource instance directly.
+    const { unmount } = renderHook(() => useSSE('http://localhost:8766/sse'));
     const es = FakeEventSource.instances[0];
 
     act(() => { es.open(); });
-    expect(result.current.status).toBe('connected');
+    expect(es.readyState).toBe(FakeEventSource.OPEN);
 
     unmount();
 
     expect(es.readyState).toBe(FakeEventSource.CLOSED);
-    // Status transitions to disconnected on cleanup.
-    expect(result.current.status).toBe('disconnected');
   });
 
   it('creates a new EventSource when the URL changes', () => {
