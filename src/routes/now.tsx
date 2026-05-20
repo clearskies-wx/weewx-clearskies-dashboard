@@ -6,7 +6,6 @@ import {
   CardContent,
 } from '../components/ui/card';
 import {
-  useObservation,
   useForecast,
   useAlerts,
   useAlmanac,
@@ -17,6 +16,7 @@ import {
   useArchive,
   useTodayStats,
 } from '../hooks/useWeatherData';
+import { useRealtimeObservation } from '../hooks/useRealtimeObservation';
 
 function formatLocalTime(iso: string | null, tz: string): string {
   if (!iso) return '—';
@@ -231,7 +231,7 @@ function TileError({ message, onRetry }: { message: string; onRetry: () => void 
 }
 
 export function NowPage() {
-  const { data: observation, units, loading: obsLoading, error: obsError, refetch: obsRefetch } = useObservation();
+  const { data: observation, units, loading: obsLoading, error: obsError, refetch: obsRefetch } = useRealtimeObservation();
   const { data: forecast, loading: fcLoading, error: fcError, refetch: fcRefetch } = useForecast();
   const { data: alerts, loading: alertLoading } = useAlerts();
   const { data: almanac, loading: almLoading, error: almError, refetch: almRefetch } = useAlmanac();
