@@ -13,7 +13,7 @@ function liveProps(severity: AlertRecord['severity']) {
   if (severity === 'warning') {
     return { role: 'alert' as const };
   }
-  return { role: 'status' as const, 'aria-live': 'polite' as const };
+  return { role: 'status' as const };
 }
 
 export function AlertBanner({ alerts }: AlertBannerProps) {
