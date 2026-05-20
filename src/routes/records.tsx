@@ -51,7 +51,7 @@ export function RecordsPage() {
   const { data: records, units, loading, error, refetch } = useRecords(period);
 
   return (
-    <div className="flex flex-col gap-6 max-w-2xl mx-auto" aria-live="polite">
+    <div className="flex flex-col gap-6 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold text-foreground">Records</h1>
 
       {/* Period selector */}
@@ -112,7 +112,7 @@ export function RecordsPage() {
           {Object.entries(records.sections).map(([section, entries]) => (
             <Card key={section}>
               <CardHeader>
-                <CardTitle className="capitalize">{section} Records</CardTitle>
+                <CardTitle as="h2" className="capitalize">{section} Records</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">

@@ -387,9 +387,13 @@ export function NavRail() {
         </div>
       </nav>
 
-      {/* Mobile: bottom nav bar — 4 primary slots + More button */}
+      {/* Mobile: bottom nav bar — 4 primary slots + More button.
+          Uses aria-label="Primary navigation" (distinct from the desktop rail's
+          "Main navigation") so screen readers don't report two landmarks with
+          identical names. Both exist in the DOM simultaneously; only one is
+          visible at a time via responsive Tailwind classes. */}
       <nav
-        aria-label="Main navigation"
+        aria-label="Primary navigation"
         className="md:hidden fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-background"
       >
         <ul

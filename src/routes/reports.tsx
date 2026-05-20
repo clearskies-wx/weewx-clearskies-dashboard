@@ -76,7 +76,7 @@ export function ReportsPage() {
   const canFetch = selectedYear !== null && selectedMonth !== null;
 
   return (
-    <div className="flex flex-col gap-6 max-w-2xl mx-auto" aria-live="polite">
+    <div className="flex flex-col gap-6 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold text-foreground">Reports</h1>
 
       <p className="text-sm text-muted-foreground leading-relaxed">
@@ -86,7 +86,7 @@ export function ReportsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>NOAA Monthly Reports</CardTitle>
+          <CardTitle as="h2">NOAA Monthly Reports</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {indexLoading && (

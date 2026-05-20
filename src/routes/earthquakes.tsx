@@ -70,7 +70,7 @@ export function EarthquakesPage() {
   const { data: station } = useStation();
 
   return (
-    <div className="flex flex-col gap-6 max-w-2xl mx-auto" aria-live="polite">
+    <div className="flex flex-col gap-6 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold text-foreground">Earthquakes</h1>
 
       {loading && (
@@ -170,7 +170,7 @@ export function EarthquakesPage() {
       {/* Map placeholder — Leaflet not loaded at mock phase */}
       <Card>
         <CardHeader>
-          <CardTitle>Earthquake Map</CardTitle>
+          <CardTitle as="h2">Earthquake Map</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="border-dashed border-2 border-border rounded-lg h-48 flex items-center justify-center">
@@ -184,7 +184,7 @@ export function EarthquakesPage() {
       {/* Configuration summary */}
       <Card>
         <CardHeader>
-          <CardTitle>Configuration</CardTitle>
+          <CardTitle as="h2">Configuration</CardTitle>
         </CardHeader>
         <CardContent>
           <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">

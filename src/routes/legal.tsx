@@ -21,7 +21,7 @@ export function LegalPage() {
   const { data: content, loading } = useContent('legal');
 
   return (
-    <div className="flex flex-col gap-6 max-w-2xl mx-auto" aria-live="polite">
+    <div className="flex flex-col gap-6 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold text-foreground">Legal &amp; Privacy</h1>
 
       {/* Operator-authored legal content — shown if configured, else show default text */}
@@ -33,7 +33,7 @@ export function LegalPage() {
       ) : content ? (
         <Card>
           <CardHeader>
-            <CardTitle>Legal &amp; Privacy Policy</CardTitle>
+            <CardTitle as="h2">Legal &amp; Privacy Policy</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
@@ -45,7 +45,7 @@ export function LegalPage() {
         <>
           <Card>
             <CardHeader>
-              <CardTitle>Privacy Policy</CardTitle>
+              <CardTitle as="h2">Privacy Policy</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground leading-relaxed">
@@ -60,7 +60,7 @@ export function LegalPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Data Attribution</CardTitle>
+              <CardTitle as="h2">Data Attribution</CardTitle>
             </CardHeader>
             <CardContent>
               <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1.5">
@@ -78,7 +78,7 @@ export function LegalPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Open-Source Licenses</CardTitle>
+              <CardTitle as="h2">Open-Source Licenses</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground leading-relaxed">

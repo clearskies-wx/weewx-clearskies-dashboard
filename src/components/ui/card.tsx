@@ -33,9 +33,17 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
-function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
+// CardTitle renders as a <div> by default so it does not impose a heading level
+// on callers that manage headings themselves (e.g. pages that use <h2> inside
+// CardHeader directly).  When the card heading should be a landmark heading,
+// pass `as="h2"` (or h3, etc.) explicitly.
+function CardTitle({
+  className,
+  as: Tag = "div",
+  ...props
+}: React.ComponentProps<"div"> & { as?: "div" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" }) {
   return (
-    <div
+    <Tag
       data-slot="card-title"
       className={cn(
         "font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm",

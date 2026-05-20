@@ -59,13 +59,13 @@ export function AboutPage() {
   const { data: content, loading: contentLoading } = useContent('about');
 
   return (
-    <div className="flex flex-col gap-6 max-w-2xl mx-auto" aria-live="polite">
+    <div className="flex flex-col gap-6 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold text-foreground">About</h1>
 
       {/* Station metadata */}
       <Card aria-busy={stationLoading}>
         <CardHeader>
-          <CardTitle>{station?.name ?? 'Weather Station'}</CardTitle>
+          <CardTitle as="h2">{station?.name ?? 'Weather Station'}</CardTitle>
         </CardHeader>
         <CardContent>
           {stationLoading ? (
@@ -135,7 +135,7 @@ export function AboutPage() {
       {/* Operator-authored content section */}
       <Card aria-busy={contentLoading}>
         <CardHeader>
-          <CardTitle>About This Station</CardTitle>
+          <CardTitle as="h2">About This Station</CardTitle>
         </CardHeader>
         <CardContent>
           {contentLoading ? (
@@ -161,7 +161,7 @@ export function AboutPage() {
       {/* Software info */}
       <Card>
         <CardHeader>
-          <CardTitle>Software</CardTitle>
+          <CardTitle as="h2">Software</CardTitle>
         </CardHeader>
         <CardContent>
           <dl className="grid grid-cols-1 gap-y-3 text-sm sm:grid-cols-2">
@@ -184,7 +184,7 @@ export function AboutPage() {
       {/* Station photo placeholder */}
       <Card>
         <CardHeader>
-          <CardTitle>Station Photo</CardTitle>
+          <CardTitle as="h2">Station Photo</CardTitle>
         </CardHeader>
         <CardContent>
           {/* Decorative placeholder — no img element, so no alt needed here.

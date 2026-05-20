@@ -90,7 +90,7 @@ export function AlmanacPage() {
   const tz = station?.timezone ?? 'UTC';
 
   return (
-    <div className="flex flex-col gap-6 max-w-2xl mx-auto" aria-live="polite">
+    <div className="flex flex-col gap-6 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold text-foreground">Almanac</h1>
 
       {loading && (
@@ -108,7 +108,7 @@ export function AlmanacPage() {
           {/* Sun card */}
           <Card>
             <CardHeader>
-              <CardTitle>Sun</CardTitle>
+              <CardTitle as="h2">Sun</CardTitle>
             </CardHeader>
             <CardContent>
               <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
@@ -173,7 +173,7 @@ export function AlmanacPage() {
           {/* Moon card */}
           <Card>
             <CardHeader>
-              <CardTitle>Moon</CardTitle>
+              <CardTitle as="h2">Moon</CardTitle>
             </CardHeader>
             <CardContent>
               <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
@@ -225,7 +225,7 @@ export function AlmanacPage() {
           {/* Positional Data card — Skyfield-computed; null in mock phase */}
           <Card>
             <CardHeader>
-              <CardTitle>Positional Data</CardTitle>
+              <CardTitle as="h2">Positional Data</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground mb-4">

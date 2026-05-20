@@ -151,7 +151,7 @@ export function ChartsPage() {
   }));
 
   return (
-    <div className="flex flex-col gap-6 max-w-4xl mx-auto" aria-live="polite">
+    <div className="flex flex-col gap-6 max-w-4xl mx-auto">
       <h1 className="sr-only">Charts</h1>
 
       {/* WAI-ARIA Tabs */}
