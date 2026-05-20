@@ -17,7 +17,7 @@ First public release — a modern, mobile-first weather dashboard SPA for weewx.
   mobile; icon rail on desktop (768 px breakpoint)
 - **Light / dark / auto theme modes** with OS-preference detection and
   flash-prevention blocking script
-- **Six curated accent palettes** (Slate, Ocean, Forest, Amber, Rose, Violet),
+- **Six curated accent palettes** (blue, teal, indigo, purple, green, amber),
   all WCAG AA compliant in both light and dark modes
 - **Operator logo** support with optional separate dark-mode variant
 - **Custom CSS escape hatch** via CSS variable overrides

@@ -137,10 +137,10 @@ The fallback values are the shadcn/ui defaults and take effect only if the brand
 
 ## Configuration search order (clearskies-api)
 
-The clearskies-api locates its configuration directory in this order:
+The clearskies-api locates its configuration file in this order:
 
-1. `WEEWX_CLEARSKIES_CONFIG_DIR` environment variable, if set
-2. `/etc/weewx-clearskies/<component>.conf`
-3. `$XDG_CONFIG_HOME/weewx-clearskies/<component>.conf` (typically `~/.config/weewx-clearskies/`)
+1. `CLEARSKIES_CONFIG` environment variable, if set (points directly to the `.conf` file)
+2. `/etc/weewx-clearskies/api.conf`
+3. `~/.config/weewx-clearskies/api.conf`
 
 This search order applies to clearskies-api, not to the dashboard itself. The dashboard has no local config path — it will receive its configuration from the API at runtime once the `/branding` endpoint ships.
