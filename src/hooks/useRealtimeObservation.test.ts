@@ -334,4 +334,23 @@ describe('useRealtimeObservation', () => {
     // useSSE must have been called with '' (empty) — not a real URL.
     expect(mockUseSSE).toHaveBeenCalledWith('');
   });
+
+  it('passes empty SSE URL when VITE_SSE_URL is not configured (non-mock mode)', () => {
+    // isMockMode() is false (default) and VITE_SSE_URL is '' (from beforeEach).
+    // SSE should be disabled — useSSE called with empty string.
+    mockIsMockMode.mockReturnValue(false);
+    const obs = makeObservation();
+    mockUseObservation.mockReturnValue({
+      data: obs,
+      loading: false,
+      error: null,
+      refetch: mockRefetch,
+    });
+    mockUseSSE.mockReturnValue({ packet: null, status: 'disconnected' });
+
+    const { result } = renderHook(() => useRealtimeObservation());
+    expect(mockUseSSE).toHaveBeenCalledWith('');
+    // Falls back to pure REST observation.
+    expect(result.current.data).toEqual(obs);
+  });
 });

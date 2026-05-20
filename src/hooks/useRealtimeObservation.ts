@@ -130,6 +130,11 @@ export function mapPacketToObservation(
     (partial as Record<string, unknown>)[obsKey] = val;
   }
 
+  // NOTE: Observation.extras (custom weewx columns) is NOT updated from SSE
+  // packets.  Loop packets may carry custom columns but they are not mapped
+  // here — extras stays at the REST baseline value until the next /current
+  // fetch.  Revisit when ADR-035 custom column promotion is implemented.
+
   // Mark the source so consumers can tell SSE data apart from REST data.
   partial.source = 'weewx-sse';
 

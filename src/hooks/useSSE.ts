@@ -6,13 +6,9 @@
 //
 // No new npm dependencies: native browser EventSource API only.
 //
-// Lint note: react-hooks/set-state-in-effect flags the setStatus('connecting')
-// call below.  This is the same pattern as the project's existing useApiQuery.ts
-// (setLoading(false) in effect body) and theme-provider.tsx.  The pattern is
-// correct — the status must update synchronously with the effect so consumers
-// see 'connecting' on the render that follows opening the EventSource.  Fixing
-// this across the codebase (e.g. via useReducer or derived state) is tracked as
-// a separate lint-cleanup task.
+// Lint note: setStatus('connecting') inside the effect body is intentional —
+// the status must transition before the EventSource open event fires.  The
+// suppress below silences the react-hooks lint rule for this line only.
 
 import { useState, useEffect } from 'react';
 import { isMockMode } from '../api/client';
