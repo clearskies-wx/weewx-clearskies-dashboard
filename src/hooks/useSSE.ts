@@ -6,7 +6,7 @@
 //
 // No new npm dependencies: native browser EventSource API only.
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { isMockMode } from '../api/client';
 
 // ---------------------------------------------------------------------------
@@ -43,15 +43,10 @@ export function useSSE(url: string | undefined): UseSSEResult {
   const [packet, setPacket] = useState<Record<string, unknown> | null>(null);
   const [status, setStatus] = useState<SSEStatus>('disconnected');
 
-  // Stable ref so the effect closure always sees the latest setter without
-  // re-running the effect when they change (they don't, but this is defensive).
-  const setPacketRef = useRef(setPacket);
-  setPacketRef.current = setPacket;
-
   useEffect(() => {
     // Do not connect in mock mode or when no URL is configured.
+    // Status stays 'disconnected' (initial value) — no setState needed.
     if (isMockMode() || !url) {
-      setStatus('disconnected');
       return;
     }
 
@@ -70,7 +65,7 @@ export function useSSE(url: string | undefined): UseSSEResult {
     es.addEventListener('loop', (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data) as Record<string, unknown>;
-        setPacketRef.current(data);
+        setPacket(data);
       } catch {
         // Malformed JSON — ignore packet, stay connected.
       }
@@ -88,7 +83,6 @@ export function useSSE(url: string | undefined): UseSSEResult {
       es.close();
       setStatus('disconnected');
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url]);
 
   return { packet, status };

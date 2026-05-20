@@ -32,7 +32,7 @@
 //
 // Unknown fields in the packet are ignored.
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useObservation } from './useWeatherData';
 import { useSSE } from './useSSE';
 import { isMockMode } from '../api/client';
@@ -173,40 +173,38 @@ export function useRealtimeObservation(): RealtimeObservationResult {
     refetch,
   } = useObservation();
 
-  // Local merged state — starts from the REST observation, updated by SSE.
-  const [merged, setMerged] = useState<Observation | null>(null);
+  // Accumulate SSE overlay patches on top of the REST base observation.
+  // We keep a mutable ref for the patches so we can merge without triggering
+  // extra renders from effect-side setState calls.
+  const [sseOverlay, setSseOverlay] = useState<Partial<Observation> | null>(null);
 
-  // When the REST load completes (or mock data arrives), seed the merged state.
-  useEffect(() => {
-    if (initialData !== null) {
-      setMerged(initialData);
-    }
-  }, [initialData]);
+  // Track the last packet ref so we only call setSseOverlay on new packets.
+  const lastPacketRef = useRef<Record<string, unknown> | null>(null);
 
-  // SSE connection — skipped when mock mode is active (url check is inside useSSE,
-  // but we also guard here to avoid computing the URL in tests unnecessarily).
+  // SSE connection — skipped when mock mode is active.
   const sseUrl = useMemo(() => (isMockMode() ? '' : getSseUrl()), []);
   const { packet } = useSSE(sseUrl);
 
-  // When a new packet arrives, map it and merge over the current observation.
+  // When a new packet arrives, compute and store the overlay.
+  // We compare by reference: packet identity changes each time useSSE updates.
   useEffect(() => {
-    if (packet === null) return;
-
+    if (packet === null || packet === lastPacketRef.current) return;
+    lastPacketRef.current = packet;
     const partial = mapPacketToObservation(packet);
-
-    setMerged((prev) => {
-      if (prev === null) {
-        // No base observation yet — cannot merge.  Wait for REST to load first.
-        return prev;
-      }
-      return { ...prev, ...partial };
-    });
+    setSseOverlay((prev) => (prev === null ? partial : { ...prev, ...partial }));
   }, [packet]);
 
+  // Merge: base REST observation + accumulated SSE overlay.
+  const data = useMemo<Observation | null>(() => {
+    if (initialData === null) return null;
+    if (sseOverlay === null) return initialData;
+    return { ...initialData, ...sseOverlay };
+  }, [initialData, sseOverlay]);
+
   return {
-    data: merged,
+    data,
     units,
-    source: merged?.source ?? restSource,
+    source: data?.source ?? restSource,
     loading,
     error,
     refetch,
