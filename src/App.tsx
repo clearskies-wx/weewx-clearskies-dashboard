@@ -13,6 +13,24 @@ const AboutPage = React.lazy(() => import('./routes/about'));
 const LegalPage = React.lazy(() => import('./routes/legal'));
 const NotFoundPage = React.lazy(() => import('./routes/not-found'));
 
+// PageLoader — Suspense fallback used for every lazy route.
+// Includes a visually-hidden <h1> so axe-core's page-has-heading-one rule
+// is satisfied even while the lazy chunk is still loading (WCAG 2.4.6 /
+// axe best-practice). The `title` prop must match the page's own <h1>.
+function PageLoader({ title }: { title: string }) {
+  return (
+    <div
+      className="flex items-center justify-center h-full"
+      role="status"
+      aria-label={`Loading ${title}`}
+    >
+      <h1 className="sr-only">{title}</h1>
+      <span className="sr-only">Loading…</span>
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+    </div>
+  );
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -21,18 +39,7 @@ function App() {
           <Route
             index
             element={
-              <Suspense
-                fallback={
-                  <div
-                    className="flex items-center justify-center h-full"
-                    role="status"
-                    aria-label="Loading page"
-                  >
-                    <span className="sr-only">Loading…</span>
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                  </div>
-                }
-              >
+              <Suspense fallback={<PageLoader title="Now" />}>
                 <NowPage />
               </Suspense>
             }
@@ -40,18 +47,7 @@ function App() {
           <Route
             path="forecast"
             element={
-              <Suspense
-                fallback={
-                  <div
-                    className="flex items-center justify-center h-full"
-                    role="status"
-                    aria-label="Loading page"
-                  >
-                    <span className="sr-only">Loading…</span>
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                  </div>
-                }
-              >
+              <Suspense fallback={<PageLoader title="Forecast" />}>
                 <ForecastPage />
               </Suspense>
             }
@@ -59,18 +55,7 @@ function App() {
           <Route
             path="charts"
             element={
-              <Suspense
-                fallback={
-                  <div
-                    className="flex items-center justify-center h-full"
-                    role="status"
-                    aria-label="Loading page"
-                  >
-                    <span className="sr-only">Loading…</span>
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                  </div>
-                }
-              >
+              <Suspense fallback={<PageLoader title="Charts" />}>
                 <ChartsPage />
               </Suspense>
             }
@@ -78,18 +63,7 @@ function App() {
           <Route
             path="almanac"
             element={
-              <Suspense
-                fallback={
-                  <div
-                    className="flex items-center justify-center h-full"
-                    role="status"
-                    aria-label="Loading page"
-                  >
-                    <span className="sr-only">Loading…</span>
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                  </div>
-                }
-              >
+              <Suspense fallback={<PageLoader title="Almanac" />}>
                 <AlmanacPage />
               </Suspense>
             }
@@ -97,18 +71,7 @@ function App() {
           <Route
             path="earthquakes"
             element={
-              <Suspense
-                fallback={
-                  <div
-                    className="flex items-center justify-center h-full"
-                    role="status"
-                    aria-label="Loading page"
-                  >
-                    <span className="sr-only">Loading…</span>
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                  </div>
-                }
-              >
+              <Suspense fallback={<PageLoader title="Earthquakes" />}>
                 <EarthquakesPage />
               </Suspense>
             }
@@ -116,18 +79,7 @@ function App() {
           <Route
             path="records"
             element={
-              <Suspense
-                fallback={
-                  <div
-                    className="flex items-center justify-center h-full"
-                    role="status"
-                    aria-label="Loading page"
-                  >
-                    <span className="sr-only">Loading…</span>
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                  </div>
-                }
-              >
+              <Suspense fallback={<PageLoader title="Records" />}>
                 <RecordsPage />
               </Suspense>
             }
@@ -135,18 +87,7 @@ function App() {
           <Route
             path="reports"
             element={
-              <Suspense
-                fallback={
-                  <div
-                    className="flex items-center justify-center h-full"
-                    role="status"
-                    aria-label="Loading page"
-                  >
-                    <span className="sr-only">Loading…</span>
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                  </div>
-                }
-              >
+              <Suspense fallback={<PageLoader title="Reports" />}>
                 <ReportsPage />
               </Suspense>
             }
@@ -154,18 +95,7 @@ function App() {
           <Route
             path="about"
             element={
-              <Suspense
-                fallback={
-                  <div
-                    className="flex items-center justify-center h-full"
-                    role="status"
-                    aria-label="Loading page"
-                  >
-                    <span className="sr-only">Loading…</span>
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                  </div>
-                }
-              >
+              <Suspense fallback={<PageLoader title="About" />}>
                 <AboutPage />
               </Suspense>
             }
@@ -173,18 +103,7 @@ function App() {
           <Route
             path="legal"
             element={
-              <Suspense
-                fallback={
-                  <div
-                    className="flex items-center justify-center h-full"
-                    role="status"
-                    aria-label="Loading page"
-                  >
-                    <span className="sr-only">Loading…</span>
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                  </div>
-                }
-              >
+              <Suspense fallback={<PageLoader title="Legal & Privacy" />}>
                 <LegalPage />
               </Suspense>
             }
@@ -192,18 +111,7 @@ function App() {
           <Route
             path="*"
             element={
-              <Suspense
-                fallback={
-                  <div
-                    className="flex items-center justify-center h-full"
-                    role="status"
-                    aria-label="Loading page"
-                  >
-                    <span className="sr-only">Loading…</span>
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                  </div>
-                }
-              >
+              <Suspense fallback={<PageLoader title="Page not found" />}>
                 <NotFoundPage />
               </Suspense>
             }
