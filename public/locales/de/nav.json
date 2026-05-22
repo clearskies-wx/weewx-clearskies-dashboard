@@ -1,1 +1,31 @@
-﻿{}
+{
+  "pages": {
+    "now": "Aktuell",
+    "forecast": "Vorhersage",
+    "charts": "Diagramme",
+    "almanac": "Almanach",
+    "earthquakes": "Erdbeben",
+    "records": "Rekorde",
+    "reports": "Berichte",
+    "about": "Über",
+    "legal": "Rechtliches",
+    "legalPrivacy": "Rechtliches & Datenschutz",
+    "notFound": "Seite nicht gefunden"
+  },
+  "theme": {
+    "label": "Design",
+    "auto": "Design: Automatisch",
+    "light": "Design: Hell",
+    "dark": "Design: Dunkel",
+    "ariaAuto": "Design: Systemeinstellung wird verwendet – klicken, um zum hellen Design zu wechseln",
+    "ariaLight": "Design: Hell – klicken, um zum dunklen Design zu wechseln",
+    "ariaDark": "Design: Dunkel – klicken, um zur Systemeinstellung zu wechseln",
+    "rowLabel": "Design: {{mode}}"
+  },
+  "more": "Mehr",
+  "morePages": "Weitere Seiten",
+  "ariaMain": "Hauptnavigation",
+  "ariaPrimary": "Primäre Navigation",
+  "ariaAdditional": "Weitere Navigation",
+  "ariaAdditionalPages": "Weitere Seiten"
+}

@@ -1,1 +1,40 @@
-﻿{}
+{
+  "pageTitle": "Almanach",
+
+  "loading": "Almanach-Daten werden geladen…",
+  "error": "Almanach-Daten konnten nicht geladen werden",
+  "noData": "Keine Almanach-Daten verfügbar.",
+
+  "sun": {
+    "title": "Sonne",
+    "sunrise": "Sonnenaufgang",
+    "sunset": "Sonnenuntergang",
+    "civilDawn": "Bürgerliche Morgendämmerung",
+    "civilDusk": "Bürgerliche Abenddämmerung",
+    "totalDaylight": "Tageslichtdauer",
+    "solarNoon": "Sonnenhöchststand",
+    "nextSolstice": "Nächste Sonnenwende",
+    "nextEquinox": "Nächste Tagundnachtgleiche"
+  },
+
+  "moon": {
+    "title": "Mond",
+    "phase": "Mondphase",
+    "illumination": "Beleuchtung",
+    "moonrise": "Mondaufgang",
+    "moonset": "Monduntergang",
+    "nextFullMoon": "Nächster Vollmond",
+    "nextNewMoon": "Nächster Neumond"
+  },
+
+  "positional": {
+    "title": "Positionsdaten",
+    "note": "Positionsdaten erfordern eine Skyfield-Berechnung auf dem Server.",
+    "sunAzimuth": "Sonnenazimut",
+    "sunAltitude": "Sonnenhöhe",
+    "moonAzimuth": "Mondazimut",
+    "moonAltitude": "Mondhöhe"
+  },
+
+  "daylightDelta": "({{delta}}m gegenüber gestern)"
+}

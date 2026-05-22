@@ -1,1 +1,17 @@
-﻿{}
+{
+  "title": "Vorhersage",
+  "next12Hours": "Nächste 12 Stunden",
+  "sevenDayForecast": "7-Tage-Vorhersage",
+  "today": "Heute",
+  "loadingHourly": "Stündliche Vorhersage wird geladen…",
+  "loadingDaily": "Tagesvorhersage wird geladen…",
+  "unableToLoad": "Vorhersage konnte nicht geladen werden",
+  "noHourlyData": "Keine stündlichen Vorhersagedaten verfügbar.",
+  "noDailyData": "Keine täglichen Vorhersagedaten verfügbar.",
+  "percentPrecip": "{{pct}}% Niederschlag",
+  "windUpTo": "Wind bis {{speed}} mph",
+  "updated": "Aktualisiert {{time}}",
+  "ariaHourlyScroll": "Stündliche Vorhersage – scrollen, um mehr zu sehen",
+  "ariaHourlyList": "Stündliche Vorhersage",
+  "ariaDayForecast": "Vorhersage für {{day}}"
+}

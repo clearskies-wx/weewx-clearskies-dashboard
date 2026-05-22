@@ -1,1 +1,17 @@
-﻿{}
+{
+  "title": "Rekorde",
+  "ariaPeriodGroup": "Rekord-Zeitraum",
+  "periodAllTime": "Alle Zeiten",
+  "periodYearToDate": "Bisheriges Jahr",
+  "loadingRecords": "Rekorde werden geladen…",
+  "unableToLoad": "Rekorde konnten nicht geladen werden",
+  "sectionHeading": "{{section}}-Rekorde",
+  "tableHeaderRecord": "Rekord",
+  "tableHeaderValue": "Wert",
+  "tableHeaderDateObserved": "Beobachtungsdatum",
+  "badgeNew": "Neu",
+  "badgeNewTitle": "In den letzten 30 Tagen gebrochen",
+  "badgeNewAriaLabel": "Kürzlich gebrochener Rekord",
+  "noData": "Keine Rekorde für diesen Zeitraum verfügbar.",
+  "operatorNotePlaceholder": "Stationsbetreiber können hier benutzerdefinierte Hinweise zu ihren Rekorden über die Clear-Skies-Konfigurationsoberfläche hinzufügen."
+}

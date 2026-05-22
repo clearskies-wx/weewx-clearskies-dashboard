@@ -1,1 +1,28 @@
-﻿{}
+{
+  "title": "Berichte",
+  "intro": "Monatliche und jährliche Klimaberichte im NOAA-Stil fassen Temperatur, Niederschlag und weitere Beobachtungen zusammen. Die Berichte werden aus den Archivdaten Ihrer Station erstellt.",
+  "card": {
+    "title": "NOAA-Monatsberichte"
+  },
+  "year": {
+    "label": "Jahr",
+    "ariaLabel": "Berichtsjahr auswählen",
+    "placeholder": "— Jahr auswählen —"
+  },
+  "month": {
+    "label": "Monat",
+    "ariaLabel": "Berichtsmonat auswählen",
+    "placeholder": "— Monat auswählen —"
+  },
+  "empty": "Keine NOAA-Berichte gefunden. Berichte sind verfügbar, sobald das Archiv monatliche Daten enthält.",
+  "loading": {
+    "index": "Berichtsindex wird geladen…",
+    "report": "Bericht wird geladen…"
+  },
+  "error": {
+    "index": "Berichte konnten nicht geladen werden",
+    "report": "Bericht konnte nicht geladen werden"
+  },
+  "annual": "Jährlich",
+  "download": ".txt herunterladen"
+}

@@ -1,1 +1,37 @@
-﻿{}
+{
+  "title": "Diagramme",
+  "tabs": {
+    "homepage": "Startseite",
+    "averageclimate": "Durchschnittsklima",
+    "monthly": "Monatlich",
+    "annual": "Jährlich"
+  },
+  "tabsPanelHeadings": {
+    "averageclimate": "Durchschnittsklima-Diagramme",
+    "monthly": "Monatliche Diagramme",
+    "annual": "Jährliche Diagramme"
+  },
+  "ranges": {
+    "1d": "1T",
+    "3d": "3T",
+    "7d": "7T",
+    "30d": "30T",
+    "90d": "90T"
+  },
+  "ariaTabGroupLabel": "Diagrammgruppe auswählen",
+  "ariaRangeGroupLabel": "Zeitraum auswählen",
+  "temperatureCardHeading": "Temperatur – Letzte {{range}}",
+  "showChart": "Diagramm anzeigen",
+  "showDataTable": "Datentabelle anzeigen",
+  "loadingChart": "Diagrammdaten werden geladen…",
+  "unableToLoad": "Diagrammdaten konnten nicht geladen werden",
+  "tableCaption": "Temperaturmessungen im ausgewählten Zeitraum",
+  "tableHeaderTime": "Uhrzeit",
+  "tableHeaderTemperature": "Temperatur (°C)",
+  "ariaChartFigure": "Temperatur in den letzten {{range}}",
+  "seriesTemperature": "Temperatur",
+  "noData": "Keine Diagrammdaten für diesen Zeitraum verfügbar.",
+  "comingSoonAverageClimate": "Demnächst – Durchschnittsklima-Diagramme sind verfügbar, sobald historische Daten eingebunden sind.",
+  "comingSoonMonthly": "Demnächst – Monatliche Diagramme sind verfügbar, sobald historische Daten eingebunden sind.",
+  "comingSoonAnnual": "Demnächst – Jährliche Diagramme sind verfügbar, sobald historische Daten eingebunden sind."
+}

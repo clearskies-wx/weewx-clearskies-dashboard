@@ -1,1 +1,138 @@
-﻿{}
+{
+  "currentConditions": "Aktuelle Wetterlage",
+  "todaysHighlights": "Heutige Highlights",
+  "wind": "Wind",
+  "stationObservations": "Stationsbeobachtungen",
+  "sunAndMoon": "Sonne & Mond",
+  "airQuality": "Luftqualität",
+  "lightning": "Blitze",
+  "recentEarthquake": "Aktuelles Erdbeben",
+  "todaysForecast": "Heutige Vorhersage",
+  "temperatureTrend": "Temperaturverlauf",
+  "viewCharts": "Diagramme anzeigen →",
+
+  "loading": {
+    "currentConditions": "Aktuelle Wetterlage wird geladen…",
+    "highlights": "Heutige Highlights werden geladen…",
+    "wind": "Winddaten werden geladen…",
+    "stationObservations": "Stationsbeobachtungen werden geladen…",
+    "sunMoon": "Sonnen- und Monddaten werden geladen…",
+    "airQuality": "Luftqualitätsdaten werden geladen…",
+    "lightning": "Blitzdaten werden geladen…",
+    "earthquake": "Erdbebendaten werden geladen…",
+    "forecast": "Vorhersage wird geladen…"
+  },
+
+  "error": {
+    "currentConditions": "Aktuelle Wetterlage konnte nicht geladen werden",
+    "wind": "Winddaten konnten nicht geladen werden",
+    "stationObservations": "Stationsbeobachtungen konnten nicht geladen werden",
+    "almanac": "Almanach-Daten konnten nicht geladen werden",
+    "airQuality": "Luftqualitätsdaten konnten nicht geladen werden",
+    "earthquake": "Erdbebendaten konnten nicht geladen werden",
+    "forecast": "Vorhersage konnte nicht geladen werden"
+  },
+
+  "noData": {
+    "observation": "Keine Beobachtungsdaten verfügbar.",
+    "highlights": "Keine Highlights verfügbar.",
+    "wind": "Keine Winddaten verfügbar.",
+    "lightning": "Kein Blitzsensor konfiguriert.",
+    "earthquake": "Keine aktuellen Erdbeben im konfigurierten Radius.",
+    "airQuality": "Kein Luftqualitätsanbieter konfiguriert.",
+    "forecast": "Keine Vorhersagedaten verfügbar."
+  },
+
+  "highlights": {
+    "todaysHigh": "Tageshöchstwert",
+    "todaysLow": "Tagestiefwert",
+    "peakGust": "Höchste Böe",
+    "rainToday": "Regen heute",
+    "peakAqi": "Höchster LQI",
+    "recordsBroken": "Rekorde gebrochen"
+  },
+
+  "observations": {
+    "barometer": "Luftdruck",
+    "dewpoint": "Taupunkt",
+    "humidity": "Luftfeuchtigkeit",
+    "rain": "Niederschlag",
+    "heatIndex": "Hitzeindex",
+    "windChill": "Windchill",
+    "solarRadiation": "Sonnenstrahlung",
+    "uvIndex": "UV-Index"
+  },
+
+  "sunMoon": {
+    "sunrise": "Sonnenaufgang",
+    "sunset": "Sonnenuntergang",
+    "moon": "Mond"
+  },
+
+  "feelsLike": "Gefühlt wie",
+
+  "windCompass": {
+    "speed": "Wind: {{speed}} mph · {{direction}}",
+    "gusts": "Böen: {{gust}} mph",
+    "ariaLabel": "Wind aus {{direction}} mit {{degrees}} Grad"
+  },
+
+  "barometer": {
+    "trend": {
+      "rising": "steigend",
+      "falling": "fallend",
+      "steady": "gleichbleibend"
+    },
+    "trendAriaLabel": "Tendenz: {{trend}}"
+  },
+
+  "aqi": {
+    "good": "Gut",
+    "moderate": "Mäßig",
+    "unhealthySensitive": "Ungesund für empfindliche Gruppen",
+    "unhealthy": "Ungesund",
+    "veryUnhealthy": "Sehr ungesund",
+    "hazardous": "Gefährlich",
+    "gaugeAriaLabel": "Luftqualitätsindex: {{aqi}}, {{category}}. Hauptschadstoff: {{pollutant}}",
+    "unknownPollutant": "Unbekannt",
+    "mainPollutant": "Hauptschadstoff: {{pollutant}}"
+  },
+
+  "beaufort": {
+    "calm": "Windstille",
+    "lightAir": "Leiser Zug",
+    "lightBreeze": "Leichte Brise",
+    "gentleBreeze": "Schwache Brise",
+    "moderateBreeze": "Mäßige Brise",
+    "freshBreeze": "Frische Brise",
+    "strongBreeze": "Starker Wind",
+    "nearGale": "Steifer Wind",
+    "gale": "Stürmischer Wind",
+    "strongGale": "Sturm",
+    "storm": "Schwerer Sturm",
+    "violentStorm": "Orkanartige Böen",
+    "hurricane": "Orkan"
+  },
+
+  "lightning": {
+    "strikesLastHour": "{{count}} Einschläge in der letzten Stunde",
+    "strikesLast24h": "{{count}} in den letzten 24 Stunden",
+    "nearest": "Nächster: {{distance}} km",
+    "lastStrike": "Letzter Einschlag: {{time}}",
+    "lastStrikeUnknown": "Unbekannt"
+  },
+
+  "earthquake": {
+    "magnitude": "M{{magnitude}} — {{place}}",
+    "depth": "Tiefe: {{depth}} km"
+  },
+
+  "forecast": {
+    "hiLo": "Hoch {{high}}° / Tief {{low}}°",
+    "precipChance": "{{percent}}% Niederschlagswahrscheinlichkeit"
+  },
+
+  "temperature": {
+    "ariaLabel": "Aktuelle Temperatur: {{temp}} Grad {{unit}}"
+  }
+}

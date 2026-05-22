@@ -1,1 +1,18 @@
-﻿{}
+{
+  "loading": "Wird geladen…",
+  "loadingPage": "{{title}} wird geladen",
+  "error": "Ein Fehler ist aufgetreten",
+  "retry": "Erneut versuchen",
+  "noData": "Keine Daten verfügbar",
+  "skipToContent": "Zum Hauptinhalt springen",
+  "pageNotFound": "Seite nicht gefunden.",
+  "footer": {
+    "legal": "Rechtliches / Datenschutz",
+    "poweredBy": "Bereitgestellt von Clear Skies"
+  },
+  "theme": {
+    "ariaAuto": "Design: Systemeinstellung wird verwendet – klicken, um zum hellen Design zu wechseln",
+    "ariaLight": "Design: Hell – klicken, um zum dunklen Design zu wechseln",
+    "ariaDark": "Design: Dunkel – klicken, um zur Systemeinstellung zu wechseln"
+  }
+}
