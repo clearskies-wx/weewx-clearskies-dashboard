@@ -1,1 +1,31 @@
-﻿{}
+{
+  "pages": {
+    "now": "En ce moment",
+    "forecast": "Prévisions",
+    "charts": "Graphiques",
+    "almanac": "Almanach",
+    "earthquakes": "Séismes",
+    "records": "Records",
+    "reports": "Rapports",
+    "about": "À propos",
+    "legal": "Mentions légales",
+    "legalPrivacy": "Mentions légales et confidentialité",
+    "notFound": "Page introuvable"
+  },
+  "theme": {
+    "label": "Thème",
+    "auto": "Thème : Automatique",
+    "light": "Thème : Clair",
+    "dark": "Thème : Sombre",
+    "ariaAuto": "Thème : selon la préférence système — cliquer pour passer en mode clair",
+    "ariaLight": "Thème : clair — cliquer pour passer en mode sombre",
+    "ariaDark": "Thème : sombre — cliquer pour utiliser la préférence système",
+    "rowLabel": "Thème : {{mode}}"
+  },
+  "more": "Plus",
+  "morePages": "Plus de pages",
+  "ariaMain": "Navigation principale",
+  "ariaPrimary": "Navigation primaire",
+  "ariaAdditional": "Navigation supplémentaire",
+  "ariaAdditionalPages": "Pages supplémentaires"
+}

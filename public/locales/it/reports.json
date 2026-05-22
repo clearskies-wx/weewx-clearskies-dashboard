@@ -1,1 +1,28 @@
-﻿{}
+{
+  "title": "Rapporti",
+  "intro": "I rapporti climatici mensili e annuali in stile NOAA riassumono temperatura, precipitazioni e altre osservazioni. I rapporti sono generati dai dati dell’archivio della stazione.",
+  "card": {
+    "title": "Rapporti mensili NOAA"
+  },
+  "year": {
+    "label": "Anno",
+    "ariaLabel": "Seleziona anno del rapporto",
+    "placeholder": "— Seleziona anno —"
+  },
+  "month": {
+    "label": "Mese",
+    "ariaLabel": "Seleziona mese del rapporto",
+    "placeholder": "— Seleziona mese —"
+  },
+  "empty": "Nessun rapporto NOAA trovato. I rapporti saranno disponibili quando l’archivio avrà dati mensili.",
+  "loading": {
+    "index": "Caricamento indice rapporti…",
+    "report": "Caricamento rapporto…"
+  },
+  "error": {
+    "index": "Impossibile caricare i rapporti",
+    "report": "Impossibile caricare il rapporto"
+  },
+  "annual": "Annuale",
+  "download": "Scarica .txt"
+}

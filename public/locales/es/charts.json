@@ -1,1 +1,37 @@
-﻿{}
+{
+  "title": "Gráficos",
+  "tabs": {
+    "homepage": "Inicio",
+    "averageclimate": "Clima promedio",
+    "monthly": "Mensual",
+    "annual": "Anual"
+  },
+  "tabsPanelHeadings": {
+    "averageclimate": "Gráficos de clima promedio",
+    "monthly": "Gráficos mensuales",
+    "annual": "Gráficos anuales"
+  },
+  "ranges": {
+    "1d": "1d",
+    "3d": "3d",
+    "7d": "7d",
+    "30d": "30d",
+    "90d": "90d"
+  },
+  "ariaTabGroupLabel": "Selección de grupo de gráficos",
+  "ariaRangeGroupLabel": "Selección de rango de tiempo",
+  "temperatureCardHeading": "Temperatura — Últimos {{range}}",
+  "showChart": "Mostrar gráfico",
+  "showDataTable": "Mostrar tabla de datos",
+  "loadingChart": "Cargando datos del gráfico…",
+  "unableToLoad": "No se pueden cargar los datos del gráfico",
+  "tableCaption": "Lecturas de temperatura en el rango seleccionado",
+  "tableHeaderTime": "Hora",
+  "tableHeaderTemperature": "Temperatura (°F)",
+  "ariaChartFigure": "Temperatura en los últimos {{range}}",
+  "seriesTemperature": "Temperatura",
+  "noData": "No hay datos de gráfico disponibles para este rango.",
+  "comingSoonAverageClimate": "Próximamente — Los gráficos de clima promedio estarán disponibles cuando se conecten datos históricos.",
+  "comingSoonMonthly": "Próximamente — Los gráficos mensuales estarán disponibles cuando se conecten datos históricos.",
+  "comingSoonAnnual": "Próximamente — Los gráficos anuales estarán disponibles cuando se conecten datos históricos."
+}

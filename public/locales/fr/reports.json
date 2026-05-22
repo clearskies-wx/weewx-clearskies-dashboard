@@ -1,1 +1,28 @@
-﻿{}
+{
+  "title": "Rapports",
+  "intro": "Les rapports climatiques mensuels et annuels au format NOAA résument la température, les précipitations et d’autres observations. Les rapports sont générés à partir des données d’archive de votre station.",
+  "card": {
+    "title": "Rapports mensuels NOAA"
+  },
+  "year": {
+    "label": "Année",
+    "ariaLabel": "Sélectionner l’année du rapport",
+    "placeholder": "— Sélectionner une année —"
+  },
+  "month": {
+    "label": "Mois",
+    "ariaLabel": "Sélectionner le mois du rapport",
+    "placeholder": "— Sélectionner un mois —"
+  },
+  "empty": "Aucun rapport NOAA trouvé. Les rapports seront disponibles une fois que l’archive aura des données mensuelles.",
+  "loading": {
+    "index": "Chargement de l’index des rapports…",
+    "report": "Chargement du rapport…"
+  },
+  "error": {
+    "index": "Impossible de charger les rapports",
+    "report": "Impossible de charger le rapport"
+  },
+  "annual": "Annuel",
+  "download": "Télécharger .txt"
+}

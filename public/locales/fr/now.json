@@ -1,1 +1,122 @@
-﻿{}
+{
+  "currentConditions": "Conditions actuelles",
+  "todaysHighlights": "Points forts du jour",
+  "wind": "Vent",
+  "stationObservations": "Observations de la station",
+  "sunAndMoon": "Soleil et Lune",
+  "airQuality": "Qualité de l’air",
+  "lightning": {
+    "strikesLastHour": "{{count}} éclairs dans la dernière heure",
+    "strikesLast24h": "{{count}} dans les dernières 24h",
+    "nearest": "Le plus proche : {{distance}} km",
+    "lastStrike": "Dernier éclair : {{time}}",
+    "lastStrikeUnknown": "Inconnu"
+  },
+  "recentEarthquake": "Séisme récent",
+  "todaysForecast": "Prévisions du jour",
+  "temperatureTrend": "Tendance de température",
+  "viewCharts": "Voir les graphiques →",
+  "loading": {
+    "currentConditions": "Chargement des conditions actuelles…",
+    "highlights": "Chargement des points forts du jour…",
+    "wind": "Chargement des données de vent…",
+    "stationObservations": "Chargement des observations de la station…",
+    "sunMoon": "Chargement des données soleil et lune…",
+    "airQuality": "Chargement des données de qualité de l’air…",
+    "lightning": "Chargement des données de foudre…",
+    "earthquake": "Chargement des données sismiques…",
+    "forecast": "Chargement des prévisions…"
+  },
+  "error": {
+    "currentConditions": "Impossible de charger les conditions actuelles",
+    "wind": "Impossible de charger les données de vent",
+    "stationObservations": "Impossible de charger les observations de la station",
+    "almanac": "Impossible de charger les données de l’almanach",
+    "airQuality": "Impossible de charger les données de qualité de l’air",
+    "earthquake": "Impossible de charger les données sismiques",
+    "forecast": "Impossible de charger les prévisions"
+  },
+  "noData": {
+    "observation": "Aucune donnée d’observation disponible.",
+    "highlights": "Aucun point fort disponible.",
+    "wind": "Aucune donnée de vent disponible.",
+    "lightning": "Aucun capteur de foudre configuré.",
+    "earthquake": "Aucun séisme récent dans le rayon configuré.",
+    "airQuality": "Aucun fournisseur de qualité de l’air configuré.",
+    "forecast": "Aucune donnée de prévision disponible."
+  },
+  "highlights": {
+    "todaysHigh": "Maximum du jour",
+    "todaysLow": "Minimum du jour",
+    "peakGust": "Rafale maximale",
+    "rainToday": "Pluie du jour",
+    "peakAqi": "IQA maximal",
+    "recordsBroken": "Records battus"
+  },
+  "observations": {
+    "barometer": "Baromètre",
+    "dewpoint": "Point de rosée",
+    "humidity": "Humidité",
+    "rain": "Pluie",
+    "heatIndex": "Indice de chaleur",
+    "windChill": "Refroidissement éolien",
+    "solarRadiation": "Rayonnement solaire",
+    "uvIndex": "Indice UV"
+  },
+  "sunMoon": {
+    "sunrise": "Lever du soleil",
+    "sunset": "Coucher du soleil",
+    "moon": "Lune"
+  },
+  "feelsLike": "Ressenti",
+  "windCompass": {
+    "speed": "Vent : {{speed}} mph · {{direction}}",
+    "gusts": "Rafales : {{gust}} mph",
+    "ariaLabel": "Vent de {{direction}} à {{degrees}} degrés"
+  },
+  "barometer": {
+    "trend": {
+      "rising": "en hausse",
+      "falling": "en baisse",
+      "steady": "stable"
+    },
+    "trendAriaLabel": "Tendance : {{trend}}"
+  },
+  "aqi": {
+    "good": "Bon",
+    "moderate": "Modéré",
+    "unhealthySensitive": "Mauvais pour les groupes sensibles",
+    "unhealthy": "Mauvais",
+    "veryUnhealthy": "Très mauvais",
+    "hazardous": "Dangereux",
+    "gaugeAriaLabel": "Indice de qualité de l’air : {{aqi}}, {{category}}. Polluant principal : {{pollutant}}",
+    "unknownPollutant": "Inconnu",
+    "mainPollutant": "Polluant principal : {{pollutant}}"
+  },
+  "beaufort": {
+    "calm": "Calme",
+    "lightAir": "Très légère brise",
+    "lightBreeze": "Légère brise",
+    "gentleBreeze": "Petite brise",
+    "moderateBreeze": "Jolie brise",
+    "freshBreeze": "Bonne brise",
+    "strongBreeze": "Vent fraîche",
+    "nearGale": "Grand fraîche",
+    "gale": "Coup de vent",
+    "strongGale": "Fort coup de vent",
+    "storm": "Tempête",
+    "violentStorm": "Violente tempête",
+    "hurricane": "Ouragan"
+  },
+  "earthquake": {
+    "magnitude": "M{{magnitude}} — {{place}}",
+    "depth": "Profondeur : {{depth}} km"
+  },
+  "forecast": {
+    "hiLo": "Max {{high}}° / Min {{low}}°",
+    "precipChance": "{{percent}}% de risque de précipitations"
+  },
+  "temperature": {
+    "ariaLabel": "Température actuelle : {{temp}} degrés {{unit}}"
+  }
+}

@@ -1,1 +1,17 @@
-﻿{}
+{
+  "title": "Previsioni",
+  "next12Hours": "Prossime 12 ore",
+  "sevenDayForecast": "Previsioni a 7 giorni",
+  "today": "Oggi",
+  "loadingHourly": "Caricamento previsioni orarie…",
+  "loadingDaily": "Caricamento previsioni giornaliere…",
+  "unableToLoad": "Impossibile caricare le previsioni",
+  "noHourlyData": "Nessun dato di previsione oraria disponibile.",
+  "noDailyData": "Nessun dato di previsione giornaliera disponibile.",
+  "percentPrecip": "{{pct}}% precip.",
+  "windUpTo": "Vento fino a {{speed}} mph",
+  "updated": "Aggiornato {{time}}",
+  "ariaHourlyScroll": "Previsioni orarie — scorri per vedere di più",
+  "ariaHourlyList": "Previsioni orarie",
+  "ariaDayForecast": "Previsioni di {{day}}"
+}

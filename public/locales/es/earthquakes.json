@@ -1,1 +1,22 @@
-﻿{}
+{
+  "title": "Sismos",
+  "loadingData": "Cargando datos de sismos…",
+  "unableToLoad": "No se pueden cargar los datos de sismos",
+  "noRecentQuakes": "No hay sismos recientes en el radio configurado.",
+  "ariaRecentList": "Sismos recientes",
+  "ariaMagnitude": "Magnitud {{mag}}",
+  "unknownLocation": "Ubicación desconocida",
+  "depth": "Profundidad: {{depth}} km",
+  "source": "Fuente: {{source}}",
+  "feltBy_one": "Sentido por {{count}} persona",
+  "feltBy_other": "Sentido por {{count}} personas",
+  "mmi": "IMM: {{mmi}}",
+  "tsunamiWatch": "Alerta de tsunami",
+  "pager": "PAGER: {{level}}",
+  "mapCardTitle": "Mapa de sismos",
+  "mapPlaceholder": "El mapa interactivo requiere Leaflet — disponible cuando se configure el proveedor de mapas.",
+  "configCardTitle": "Configuración",
+  "configRadius": "Radio",
+  "configProvider": "Proveedor",
+  "configHelperText": "Configure los ajustes de sismos en la interfaz de configuración de Clear Skies."
+}

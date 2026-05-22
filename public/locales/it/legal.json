@@ -1,1 +1,24 @@
-﻿{}
+{
+  "title": "Note legali e privacy",
+  "loadingAria": "Caricamento contenuto legale…",
+  "operatorCard": {
+    "title": "Politica legale e sulla privacy"
+  },
+  "privacy": {
+    "title": "Informativa sulla privacy",
+    "body": "Questa stazione meteorologica raccoglie dati meteorologici da sensori locali e può utilizzare servizi di terze parti per previsioni, qualità dell’aria e dati sismici. Non vengono raccolti dati personali dei visitatori oltre ai normali log del server web. Gli operatori della stazione devono personalizzare questa sezione per riflettere le proprie pratiche specifiche sui dati e le normative sulla privacy applicabili."
+  },
+  "attribution": {
+    "title": "Attribuzione dei dati",
+    "observations": "Osservazioni meteorologiche: Hardware della stazione locale (configurato in Informazioni)",
+    "forecast": "Dati previsionali: National Weather Service (NWS)",
+    "airQuality": "Dati qualità dell’aria: AirNow / EPA",
+    "earthquake": "Dati sismici: USGS",
+    "astronomical": "Dati astronomici: Calcoli di effemeridi Skyfield",
+    "note": "Le fonti di dati effettive dipendono dai fornitori configurati."
+  },
+  "openSource": {
+    "title": "Licenze open source",
+    "body": "Clear Skies è software libero concesso in licenza ai sensi della GNU General Public License v3.0. È sviluppato con tecnologie open source tra cui React, Vite, Tailwind CSS, Recharts e icone Lucide. Il testo completo della licenza e l’attribuzione di terze parti sono disponibili nel repository del progetto."
+  }
+}

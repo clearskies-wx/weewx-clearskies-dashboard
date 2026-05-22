@@ -1,1 +1,28 @@
-﻿{}
+{
+  "title": "Informes",
+  "intro": "Los informes climáticos mensuales y anuales al estilo NOAA resumen temperatura, precipitación y otras observaciones. Los informes se generan a partir de los datos del archivo de su estación.",
+  "card": {
+    "title": "Informes mensuales NOAA"
+  },
+  "year": {
+    "label": "Año",
+    "ariaLabel": "Seleccionar año del informe",
+    "placeholder": "— Seleccionar año —"
+  },
+  "month": {
+    "label": "Mes",
+    "ariaLabel": "Seleccionar mes del informe",
+    "placeholder": "— Seleccionar mes —"
+  },
+  "empty": "No se encontraron informes NOAA. Los informes estarán disponibles cuando el archivo tenga datos mensuales.",
+  "loading": {
+    "index": "Cargando índice de informes…",
+    "report": "Cargando informe…"
+  },
+  "error": {
+    "index": "No se pueden cargar los informes",
+    "report": "No se puede cargar el informe"
+  },
+  "annual": "Anual",
+  "download": "Descargar .txt"
+}

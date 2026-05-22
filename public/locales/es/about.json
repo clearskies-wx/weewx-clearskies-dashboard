@@ -1,1 +1,35 @@
-﻿{}
+{
+  "title": "Acerca de",
+  "station": {
+    "defaultName": "Estación meteorológica",
+    "loadingAria": "Cargando información de la estación…",
+    "unavailable": "Información de la estación no disponible.",
+    "location": "Ubicación",
+    "altitude": "Altitud",
+    "hardware": "Hardware",
+    "hardwareDefault": "No especificado",
+    "timezone": "Zona horaria",
+    "unitSystem": "Sistema de unidades",
+    "stationId": "ID de la estación",
+    "recordingSince": "Registrando desde",
+    "lastData": "Últimos datos recibidos"
+  },
+  "aboutStation": {
+    "cardTitle": "Acerca de esta estación",
+    "loadingAria": "Cargando contenido…",
+    "placeholder": "Esta descripción escrita por el operador de la estación es un marcador de posición. Configure el contenido Acerca de su estación mediante la interfaz de configuración de Clear Skies."
+  },
+  "software": {
+    "cardTitle": "Software",
+    "weatherSoftware": "Software meteorológico",
+    "weatherSoftwareValue": "weewx 5.x",
+    "dashboard": "Panel de control",
+    "dashboardValue": "Clear Skies v0.1.0-dev",
+    "dashboardEngine": "Motor del panel",
+    "dashboardEngineValue": "React + Vite"
+  },
+  "photo": {
+    "cardTitle": "Foto de la estación",
+    "placeholder": "Sube una foto de la estación mediante la interfaz de configuración de Clear Skies."
+  }
+}

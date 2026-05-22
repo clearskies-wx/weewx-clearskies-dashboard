@@ -1,1 +1,17 @@
-﻿{}
+{
+  "title": "Records",
+  "ariaPeriodGroup": "Période des records",
+  "periodAllTime": "Tous les temps",
+  "periodYearToDate": "Depuis le début de l’année",
+  "loadingRecords": "Chargement des records…",
+  "unableToLoad": "Impossible de charger les records",
+  "sectionHeading": "Records de {{section}}",
+  "tableHeaderRecord": "Record",
+  "tableHeaderValue": "Valeur",
+  "tableHeaderDateObserved": "Date observée",
+  "badgeNew": "Nouveau",
+  "badgeNewTitle": "Battu dans les 30 derniers jours",
+  "badgeNewAriaLabel": "Record récemment battu",
+  "noData": "Aucun record disponible pour cette période.",
+  "operatorNotePlaceholder": "Les opérateurs de station peuvent ajouter des notes personnalisées sur leurs records ici via l’interface de configuration de Clear Skies."
+}

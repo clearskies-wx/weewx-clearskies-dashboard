@@ -1,1 +1,35 @@
-﻿{}
+{
+  "pageTitle": "Almanach",
+  "loading": "Chargement des données de l’almanach…",
+  "error": "Impossible de charger les données de l’almanach",
+  "noData": "Aucune donnée d’almanach disponible.",
+  "sun": {
+    "title": "Soleil",
+    "sunrise": "Lever du soleil",
+    "sunset": "Coucher du soleil",
+    "civilDawn": "Aube civile",
+    "civilDusk": "Crépuscule civil",
+    "totalDaylight": "Durée totale du jour",
+    "solarNoon": "Midi solaire",
+    "nextSolstice": "Prochain solstice",
+    "nextEquinox": "Prochain équinoxe"
+  },
+  "moon": {
+    "title": "Lune",
+    "phase": "Phase",
+    "illumination": "Illumination",
+    "moonrise": "Lever de lune",
+    "moonset": "Coucher de lune",
+    "nextFullMoon": "Prochaine pleine lune",
+    "nextNewMoon": "Prochaine nouvelle lune"
+  },
+  "positional": {
+    "title": "Données positionnelles",
+    "note": "Les données positionnelles nécessitent un calcul Skyfield sur le serveur.",
+    "sunAzimuth": "Azimut solaire",
+    "sunAltitude": "Altitude solaire",
+    "moonAzimuth": "Azimut lunaire",
+    "moonAltitude": "Altitude lunaire"
+  },
+  "daylightDelta": "({{delta}}min par rapport à hier)"
+}

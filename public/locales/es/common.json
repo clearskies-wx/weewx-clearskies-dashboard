@@ -1,1 +1,18 @@
-﻿{}
+{
+  "loading": "Cargando…",
+  "loadingPage": "Cargando {{title}}",
+  "error": "Se produjo un error",
+  "retry": "Reintentar",
+  "noData": "No hay datos disponibles",
+  "skipToContent": "Ir al contenido principal",
+  "pageNotFound": "Página no encontrada.",
+  "footer": {
+    "legal": "Legal / Privacidad",
+    "poweredBy": "Desarrollado por Clear Skies"
+  },
+  "theme": {
+    "ariaAuto": "Tema: siguiendo la preferencia del sistema — haz clic para cambiar al modo claro",
+    "ariaLight": "Tema: claro — haz clic para cambiar al modo oscuro",
+    "ariaDark": "Tema: oscuro — haz clic para usar la preferencia del sistema"
+  }
+}

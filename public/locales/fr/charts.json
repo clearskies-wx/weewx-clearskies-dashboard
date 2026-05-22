@@ -1,1 +1,37 @@
-﻿{}
+{
+  "title": "Graphiques",
+  "tabs": {
+    "homepage": "Accueil",
+    "averageclimate": "Climat moyen",
+    "monthly": "Mensuel",
+    "annual": "Annuel"
+  },
+  "tabsPanelHeadings": {
+    "averageclimate": "Graphiques du climat moyen",
+    "monthly": "Graphiques mensuels",
+    "annual": "Graphiques annuels"
+  },
+  "ranges": {
+    "1d": "1j",
+    "3d": "3j",
+    "7d": "7j",
+    "30d": "30j",
+    "90d": "90j"
+  },
+  "ariaTabGroupLabel": "Sélection du groupe de graphiques",
+  "ariaRangeGroupLabel": "Sélection de la plage temporelle",
+  "temperatureCardHeading": "Température — {{range}} derniers",
+  "showChart": "Afficher le graphique",
+  "showDataTable": "Afficher le tableau de données",
+  "loadingChart": "Chargement des données du graphique…",
+  "unableToLoad": "Impossible de charger les données du graphique",
+  "tableCaption": "Relevés de température sur la plage sélectionnée",
+  "tableHeaderTime": "Heure",
+  "tableHeaderTemperature": "Température (°F)",
+  "ariaChartFigure": "Température sur les {{range}} derniers",
+  "seriesTemperature": "Température",
+  "noData": "Aucune donnée de graphique disponible pour cette plage.",
+  "comingSoonAverageClimate": "Bientôt disponible — Les graphiques du climat moyen seront disponibles lorsque les données historiques seront connectées.",
+  "comingSoonMonthly": "Bientôt disponible — Les graphiques mensuels seront disponibles lorsque les données historiques seront connectées.",
+  "comingSoonAnnual": "Bientôt disponible — Les graphiques annuels seront disponibles lorsque les données historiques seront connectées."
+}

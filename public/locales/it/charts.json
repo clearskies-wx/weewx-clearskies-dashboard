@@ -1,1 +1,37 @@
-﻿{}
+{
+  "title": "Grafici",
+  "tabs": {
+    "homepage": "Home",
+    "averageclimate": "Clima medio",
+    "monthly": "Mensile",
+    "annual": "Annuale"
+  },
+  "tabsPanelHeadings": {
+    "averageclimate": "Grafici del clima medio",
+    "monthly": "Grafici mensili",
+    "annual": "Grafici annuali"
+  },
+  "ranges": {
+    "1d": "1g",
+    "3d": "3g",
+    "7d": "7g",
+    "30d": "30g",
+    "90d": "90g"
+  },
+  "ariaTabGroupLabel": "Selezione gruppo grafici",
+  "ariaRangeGroupLabel": "Selezione intervallo di tempo",
+  "temperatureCardHeading": "Temperatura — Ultimi {{range}}",
+  "showChart": "Mostra grafico",
+  "showDataTable": "Mostra tabella dati",
+  "loadingChart": "Caricamento dati grafico…",
+  "unableToLoad": "Impossibile caricare i dati del grafico",
+  "tableCaption": "Rilevazioni di temperatura nell’intervallo selezionato",
+  "tableHeaderTime": "Ora",
+  "tableHeaderTemperature": "Temperatura (°F)",
+  "ariaChartFigure": "Temperatura negli ultimi {{range}}",
+  "seriesTemperature": "Temperatura",
+  "noData": "Nessun dato grafico disponibile per questo intervallo.",
+  "comingSoonAverageClimate": "Prossimamente — I grafici del clima medio saranno disponibili quando i dati storici saranno connessi.",
+  "comingSoonMonthly": "Prossimamente — I grafici mensili saranno disponibili quando i dati storici saranno connessi.",
+  "comingSoonAnnual": "Prossimamente — I grafici annuali saranno disponibili quando i dati storici saranno connessi."
+}

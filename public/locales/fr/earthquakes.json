@@ -1,1 +1,22 @@
-﻿{}
+{
+  "title": "Séismes",
+  "loadingData": "Chargement des données sismiques…",
+  "unableToLoad": "Impossible de charger les données sismiques",
+  "noRecentQuakes": "Aucun séisme récent dans le rayon configuré.",
+  "ariaRecentList": "Séismes récents",
+  "ariaMagnitude": "Magnitude {{mag}}",
+  "unknownLocation": "Emplacement inconnu",
+  "depth": "Profondeur : {{depth}} km",
+  "source": "Source : {{source}}",
+  "feltBy_one": "Ressenti par {{count}} personne",
+  "feltBy_other": "Ressenti par {{count}} personnes",
+  "mmi": "MMI : {{mmi}}",
+  "tsunamiWatch": "Alerte tsunami",
+  "pager": "PAGER : {{level}}",
+  "mapCardTitle": "Carte des séismes",
+  "mapPlaceholder": "La carte interactive nécessite Leaflet — disponible lorsque le fournisseur de cartes est configuré.",
+  "configCardTitle": "Configuration",
+  "configRadius": "Rayon",
+  "configProvider": "Fournisseur",
+  "configHelperText": "Configurez les paramètres sismiques dans l’interface de configuration de Clear Skies."
+}

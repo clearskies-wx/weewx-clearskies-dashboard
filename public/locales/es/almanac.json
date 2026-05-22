@@ -1,1 +1,35 @@
-﻿{}
+{
+  "pageTitle": "Almanaque",
+  "loading": "Cargando datos del almanaque…",
+  "error": "No se pueden cargar los datos del almanaque",
+  "noData": "No hay datos del almanaque disponibles.",
+  "sun": {
+    "title": "Sol",
+    "sunrise": "Amanecer",
+    "sunset": "Atardecer",
+    "civilDawn": "Aurora civil",
+    "civilDusk": "Crepúsculo civil",
+    "totalDaylight": "Luz del día total",
+    "solarNoon": "Mediodía solar",
+    "nextSolstice": "Próximo solsticio",
+    "nextEquinox": "Próximo equinoccio"
+  },
+  "moon": {
+    "title": "Luna",
+    "phase": "Fase",
+    "illumination": "Iluminación",
+    "moonrise": "Salida de la luna",
+    "moonset": "Puesta de la luna",
+    "nextFullMoon": "Próxima luna llena",
+    "nextNewMoon": "Próxima luna nueva"
+  },
+  "positional": {
+    "title": "Datos posicionales",
+    "note": "Los datos posicionales requieren cálculo de Skyfield en el servidor.",
+    "sunAzimuth": "Acimut solar",
+    "sunAltitude": "Altitud solar",
+    "moonAzimuth": "Acimut lunar",
+    "moonAltitude": "Altitud lunar"
+  },
+  "daylightDelta": "({{delta}}m respecto a ayer)"
+}
