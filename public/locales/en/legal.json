@@ -8,6 +8,68 @@
     "title": "Privacy Policy",
     "body": "This weather station collects meteorological data from local sensors and may use third-party services for forecasts, air quality, and earthquake data. No personal visitor data is collected beyond standard web server logs. Station operators should customize this section to reflect their specific data practices and applicable privacy regulations."
   },
+  "jurisdictions": {
+    "sectionLabel": "Jurisdiction-Specific Privacy Notices",
+    "expandLabel": "Expand",
+    "collapseLabel": "Collapse",
+    "ccpa": {
+      "heading": "California Consumer Privacy Act (CCPA)",
+      "p1": "This notice applies to California residents under the California Consumer Privacy Act (CCPA) and the California Privacy Rights Act (CPRA).",
+      "p2": "We collect the following categories of personal information when you visit this site: Internet Protocol (IP) address, browser type and version, operating system, referring URL, pages viewed, and timestamps of your visit. This information is collected automatically through standard web server logs.",
+      "p3": "We use this information solely to operate and maintain this weather station website. We do not sell, share for cross-context behavioral advertising, or disclose your personal information to third parties for their own commercial purposes.",
+      "p4": "As a California resident, you have the following rights:",
+      "rights": [
+        "Right to Know — You may request that we disclose the categories and specific pieces of personal information we have collected about you.",
+        "Right to Delete — You may request deletion of personal information we have collected, subject to certain exceptions.",
+        "Right to Opt-Out of Sale or Sharing — We do not sell or share personal information for cross-context behavioral advertising. No opt-out is required.",
+        "Right to Non-Discrimination — We will not discriminate against you for exercising your CCPA rights."
+      ],
+      "p5": "To submit a rights request, contact the site operator using the contact information provided on the About page. We will respond to verifiable consumer requests within 45 days.",
+      "p6": "This privacy notice was last reviewed on May 22, 2026."
+    },
+    "gdpr": {
+      "heading": "General Data Protection Regulation (GDPR) — EU/EEA Residents",
+      "p1": "This notice applies to residents of the European Union and European Economic Area under the General Data Protection Regulation (EU) 2016/679.",
+      "p2": "Data controller: The site operator (contact information available on the About page). If you have questions about data processing, contact the site operator directly.",
+      "p3": "We process the following personal data: IP address, browser user-agent string, HTTP referrer, and page request timestamps. This data is recorded in standard web server access logs.",
+      "p4": "Legal bases for processing:",
+      "legalBases": [
+        "Legitimate interest (Article 6(1)(f)) — We process server log data to ensure the security and proper operation of this website. Our interest in preventing abuse and diagnosing technical issues is balanced against the minimal impact of processing standard access-log data.",
+        "Consent (Article 6(1)(a)) — If analytics tracking is enabled on this site, such processing only occurs with your prior consent, which you may withdraw at any time."
+      ],
+      "p5": "Your rights under the GDPR:",
+      "rights": [
+        "Right of access (Article 15) — You may request a copy of the personal data we hold about you.",
+        "Right to rectification (Article 16) — You may request correction of inaccurate personal data.",
+        "Right to erasure (Article 17) — You may request deletion of your personal data where there is no overriding legitimate ground for continued processing.",
+        "Right to restriction of processing (Article 18) — You may request that we restrict processing of your personal data in certain circumstances.",
+        "Right to data portability (Article 20) — Where processing is based on consent or contract, you may request your data in a structured, machine-readable format.",
+        "Right to object (Article 21) — You may object to processing based on legitimate interests at any time."
+      ],
+      "p6": "Retention: Server access logs are retained for up to 90 days for security and diagnostic purposes, then deleted.",
+      "p7": "International transfers: This site is operated from the United States. If you access this site from the EU/EEA, your data may be transferred to and processed in the United States. We rely on the necessity of processing for the performance of a task in the public interest (meteorological data dissemination) as the transfer mechanism.",
+      "p8": "Right to lodge a complaint: You have the right to lodge a complaint with your national supervisory authority. A list of EU supervisory authorities is available at https://edpb.europa.eu/about-edpb/about-edpb/members_en.",
+      "p9": "This privacy notice was last reviewed on May 22, 2026."
+    },
+    "quebec": {
+      "heading": "Quebec Law 25 — Quebec Residents",
+      "p1": "This notice applies to residents of Quebec, Canada under the Act Respecting the Protection of Personal Information in the Private Sector (Law 25 / Bill 64), as amended.",
+      "p2": "We collect the following personal information when you visit this site: IP address, browser type and version, operating system, referring URL, pages visited, and timestamps. This information is recorded in standard web server logs for the purpose of operating and securing this weather station website.",
+      "p3": "Privacy impact assessment: The operator of this website has assessed the privacy impact of collecting server log data. The assessment determined that the collection is limited to the minimum necessary for website operation and security, and does not present a serious risk to privacy.",
+      "p4": "Consent: By accessing this website, you acknowledge the collection of the personal information described above. No additional personal information is collected without your explicit consent. If analytics services are enabled, they are only activated with your prior consent.",
+      "p5": "Your rights under Law 25:",
+      "rights": [
+        "Right of access — You may request access to the personal information we hold about you.",
+        "Right to rectification — You may request correction of any inaccurate, incomplete, or equivocal information.",
+        "Right to withdraw consent — Where processing is based on consent, you may withdraw that consent at any time.",
+        "Right to erasure — You may request deletion of personal information collected without legal authority or retained beyond the necessary period."
+      ],
+      "p6": "Cross-border transfers: This website is hosted on servers located outside of Quebec. Personal information (server log data) may be transferred to and processed in the United States. Prior to any such transfer, we have evaluated whether the information would receive adequate protection equivalent to that provided by Quebec law.",
+      "p7": "Incident notification: In the event of a confidentiality incident (unauthorized access, use, or disclosure) involving personal information that presents a risk of serious harm, we will notify the Commission d'accès à l'information du Québec and the affected individuals as required by law.",
+      "p8": "Contact: To exercise your rights or for questions about our privacy practices, contact the site operator using the contact information on the About page.",
+      "p9": "This privacy notice was last reviewed on May 22, 2026."
+    }
+  },
   "attribution": {
     "title": "Data Attribution",
     "observations": "Weather observations: Local station hardware (configured in About)",
