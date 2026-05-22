@@ -1,0 +1,65 @@
+name: quality
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  lighthouse:
+    name: Lighthouse CI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run Lighthouse CI
+        run: npx @lhci/cli@latest autorun
+
+  bundle-size:
+    name: Bundle size check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Report bundle size
+        run: |
+          # Find the main JS bundle (exclude vendor/chunk splits) and report gzipped size
+          BUNDLE=$(find dist/assets -name '*.js' -not -name 'vendor*' | head -1)
+          if [ -z "$BUNDLE" ]; then
+            echo "No JS bundle found in dist/assets — skipping size check." >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+          GZIP_SIZE=$(gzip -c "$BUNDLE" | wc -c)
+          GZIP_KB=$((GZIP_SIZE / 1024))
+          echo "## Bundle Size Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| File | Gzipped | Target |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|---------|--------|" >> $GITHUB_STEP_SUMMARY
+          if [ $GZIP_KB -gt 200 ]; then
+            echo "| $(basename $BUNDLE) | ${GZIP_KB} KB | <= 200 KB (over target) |" >> $GITHUB_STEP_SUMMARY
+            echo "Bundle is ${GZIP_KB} KB gzipped (target: <= 200 KB). This is informational — not a build failure. Document the miss in docs/audits/ per ADR-033."
+          else
+            echo "| $(basename $BUNDLE) | ${GZIP_KB} KB | <= 200 KB (within target) |" >> $GITHUB_STEP_SUMMARY
+            echo "Bundle is ${GZIP_KB} KB gzipped — within the 200 KB target."
+          fi
