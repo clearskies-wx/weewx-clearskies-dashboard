@@ -1,1 +1,37 @@
-﻿{}
+{
+  "title": "图表",
+  "tabs": {
+    "homepage": "首页",
+    "averageclimate": "平均气候",
+    "monthly": "月度",
+    "annual": "年度"
+  },
+  "tabsPanelHeadings": {
+    "averageclimate": "平均气候图表",
+    "monthly": "月度图表",
+    "annual": "年度图表"
+  },
+  "ranges": {
+    "1d": "1天",
+    "3d": "3天",
+    "7d": "7天",
+    "30d": "30天",
+    "90d": "90天"
+  },
+  "ariaTabGroupLabel": "图表组选择",
+  "ariaRangeGroupLabel": "时间范围选择",
+  "temperatureCardHeading": "气温 — 过去 {{range}}",
+  "showChart": "显示图表",
+  "showDataTable": "显示数据表",
+  "loadingChart": "正在加载图表数据…",
+  "unableToLoad": "无法加载图表数据",
+  "tableCaption": "所选范围内的气温数据",
+  "tableHeaderTime": "时间",
+  "tableHeaderTemperature": "气温 (°F)",
+  "ariaChartFigure": "过去 {{range}} 的气温",
+  "seriesTemperature": "气温",
+  "noData": "此时间范围内暂无图表数据。",
+  "comingSoonAverageClimate": "即将推出 — 接入历史数据后即可查看平均气候图表。",
+  "comingSoonMonthly": "即将推出 — 接入历史数据后即可查看月度图表。",
+  "comingSoonAnnual": "即将推出 — 接入历史数据后即可查看年度图表。"
+}

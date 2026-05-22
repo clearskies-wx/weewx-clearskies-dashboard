@@ -1,1 +1,37 @@
-﻿{}
+{
+  "title": "圖表",
+  "tabs": {
+    "homepage": "首頁",
+    "averageclimate": "平均氣候",
+    "monthly": "月度",
+    "annual": "年度"
+  },
+  "tabsPanelHeadings": {
+    "averageclimate": "平均氣候圖表",
+    "monthly": "月度圖表",
+    "annual": "年度圖表"
+  },
+  "ranges": {
+    "1d": "1天",
+    "3d": "3天",
+    "7d": "7天",
+    "30d": "30天",
+    "90d": "90天"
+  },
+  "ariaTabGroupLabel": "圖表群組選擇",
+  "ariaRangeGroupLabel": "時間範圍選擇",
+  "temperatureCardHeading": "氣溫 — 過去 {{range}}",
+  "showChart": "顯示圖表",
+  "showDataTable": "顯示資料表",
+  "loadingChart": "正在載入圖表資料…",
+  "unableToLoad": "無法載入圖表資料",
+  "tableCaption": "所選範圍內的氣溫資料",
+  "tableHeaderTime": "時間",
+  "tableHeaderTemperature": "氣溫 (°F)",
+  "ariaChartFigure": "過去 {{range}} 的氣溫",
+  "seriesTemperature": "氣溫",
+  "noData": "此時間範圍內暫無圖表資料。",
+  "comingSoonAverageClimate": "即將推出 — 連接歷史資料後即可查看平均氣候圖表。",
+  "comingSoonMonthly": "即將推出 — 連接歷史資料後即可查看月度圖表。",
+  "comingSoonAnnual": "即將推出 — 連接歷史資料後即可查看年度圖表。"
+}

@@ -1,1 +1,31 @@
-﻿{}
+{
+  "pages": {
+    "now": "現在",
+    "forecast": "予報",
+    "charts": "グラフ",
+    "almanac": "天文暦",
+    "earthquakes": "地震",
+    "records": "記録",
+    "reports": "レポート",
+    "about": "このサイトについて",
+    "legal": "法的情報",
+    "legalPrivacy": "法的情報 & プライバシー",
+    "notFound": "ページが見つかりません"
+  },
+  "theme": {
+    "label": "テーマ",
+    "auto": "テーマ: 自動",
+    "light": "テーマ: ライト",
+    "dark": "テーマ: ダーク",
+    "ariaAuto": "テーマ: システム設定に従う — クリックでライトモードに切り替え",
+    "ariaLight": "テーマ: ライト — クリックでダークモードに切り替え",
+    "ariaDark": "テーマ: ダーク — クリックでシステム設定に切り替え",
+    "rowLabel": "テーマ: {{mode}}"
+  },
+  "more": "もっと見る",
+  "morePages": "その他のページ",
+  "ariaMain": "メインナビゲーション",
+  "ariaPrimary": "プライマリナビゲーション",
+  "ariaAdditional": "追加ナビゲーション",
+  "ariaAdditionalPages": "追加ページ"
+}

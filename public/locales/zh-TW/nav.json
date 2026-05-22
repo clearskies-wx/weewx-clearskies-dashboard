@@ -1,1 +1,31 @@
-﻿{}
+{
+  "pages": {
+    "now": "即時",
+    "forecast": "天氣預報",
+    "charts": "圖表",
+    "almanac": "天文曆",
+    "earthquakes": "地震",
+    "records": "紀錄",
+    "reports": "報告",
+    "about": "關於",
+    "legal": "法律",
+    "legalPrivacy": "法律與隱私",
+    "notFound": "找不到頁面"
+  },
+  "theme": {
+    "label": "主題",
+    "auto": "主題：自動",
+    "light": "主題：淺色",
+    "dark": "主題：深色",
+    "ariaAuto": "主題：跟隨系統設定 — 點擊切換至淺色模式",
+    "ariaLight": "主題：淺色 — 點擊切換至深色模式",
+    "ariaDark": "主題：深色 — 點擊切換至系統設定",
+    "rowLabel": "主題：{{mode}}"
+  },
+  "more": "更多",
+  "morePages": "更多頁面",
+  "ariaMain": "主導覽",
+  "ariaPrimary": "主要導覽",
+  "ariaAdditional": "附加導覽",
+  "ariaAdditionalPages": "附加頁面"
+}

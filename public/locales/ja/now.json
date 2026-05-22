@@ -1,1 +1,138 @@
-﻿{}
+{
+  "currentConditions": "現在の状況",
+  "todaysHighlights": "本日のハイライト",
+  "wind": "風",
+  "stationObservations": "観測所データ",
+  "sunAndMoon": "太陽と月",
+  "airQuality": "大気質",
+  "lightning": "雷",
+  "recentEarthquake": "最近の地震",
+  "todaysForecast": "本日の予報",
+  "temperatureTrend": "気温の推移",
+  "viewCharts": "グラフを見る →",
+
+  "loading": {
+    "currentConditions": "現在の状況を読み込み中…",
+    "highlights": "本日のハイライトを読み込み中…",
+    "wind": "風データを読み込み中…",
+    "stationObservations": "観測所データを読み込み中…",
+    "sunMoon": "太陽・月データを読み込み中…",
+    "airQuality": "大気質データを読み込み中…",
+    "lightning": "雷データを読み込み中…",
+    "earthquake": "地震データを読み込み中…",
+    "forecast": "予報を読み込み中…"
+  },
+
+  "error": {
+    "currentConditions": "現在の状況を読み込めません",
+    "wind": "風データを読み込めません",
+    "stationObservations": "観測所データを読み込めません",
+    "almanac": "暦データを読み込めません",
+    "airQuality": "大気質データを読み込めません",
+    "earthquake": "地震データを読み込めません",
+    "forecast": "予報を読み込めません"
+  },
+
+  "noData": {
+    "observation": "観測データがありません。",
+    "highlights": "ハイライトがありません。",
+    "wind": "風データがありません。",
+    "lightning": "雷センサーが設定されていません。",
+    "earthquake": "設定された範囲内に最近の地震はありません。",
+    "airQuality": "大気質プロバイダーが設定されていません。",
+    "forecast": "予報データがありません。"
+  },
+
+  "highlights": {
+    "todaysHigh": "本日の最高気温",
+    "todaysLow": "本日の最低気温",
+    "peakGust": "最大瞬間風速",
+    "rainToday": "本日の降水量",
+    "peakAqi": "最大AQI",
+    "recordsBroken": "更新された記録"
+  },
+
+  "observations": {
+    "barometer": "気圧計",
+    "dewpoint": "露点",
+    "humidity": "湿度",
+    "rain": "降水量",
+    "heatIndex": "体感温度（熱指数）",
+    "windChill": "体感温度（風冷却）",
+    "solarRadiation": "日射量",
+    "uvIndex": "UV指数"
+  },
+
+  "sunMoon": {
+    "sunrise": "日の出",
+    "sunset": "日の入り",
+    "moon": "月"
+  },
+
+  "feelsLike": "体感",
+
+  "windCompass": {
+    "speed": "風速: {{speed}} mph · {{direction}}",
+    "gusts": "突風: {{gust}} mph",
+    "ariaLabel": "{{direction}}から{{degrees}}度の風"
+  },
+
+  "barometer": {
+    "trend": {
+      "rising": "上昇中",
+      "falling": "下降中",
+      "steady": "安定"
+    },
+    "trendAriaLabel": "傾向: {{trend}}"
+  },
+
+  "aqi": {
+    "good": "良好",
+    "moderate": "普通",
+    "unhealthySensitive": "敏感な人には不健康",
+    "unhealthy": "不健康",
+    "veryUnhealthy": "非常に不健康",
+    "hazardous": "有害",
+    "gaugeAriaLabel": "大気質指数: {{aqi}}、{{category}}。主要汚染物質: {{pollutant}}",
+    "unknownPollutant": "不明",
+    "mainPollutant": "主要汚染物質: {{pollutant}}"
+  },
+
+  "beaufort": {
+    "calm": "静穏",
+    "lightAir": "至軽風",
+    "lightBreeze": "軽風",
+    "gentleBreeze": "軟風",
+    "moderateBreeze": "和風",
+    "freshBreeze": "疾風",
+    "strongBreeze": "雄風",
+    "nearGale": "強風",
+    "gale": "疾強風",
+    "strongGale": "大強風",
+    "storm": "全強風",
+    "violentStorm": "暴風",
+    "hurricane": "ハリケーン"
+  },
+
+  "lightning": {
+    "strikesLastHour": "過去1時間の落雷: {{count}}回",
+    "strikesLast24h": "過去24時間: {{count}}回",
+    "nearest": "最近距離: {{distance}} km",
+    "lastStrike": "最終落雷: {{time}}",
+    "lastStrikeUnknown": "不明"
+  },
+
+  "earthquake": {
+    "magnitude": "M{{magnitude}} — {{place}}",
+    "depth": "深さ: {{depth}} km"
+  },
+
+  "forecast": {
+    "hiLo": "最高 {{high}}° / 最低 {{low}}°",
+    "precipChance": "降水確率 {{percent}}%"
+  },
+
+  "temperature": {
+    "ariaLabel": "現在の気温: {{temp}}度 {{unit}}"
+  }
+}

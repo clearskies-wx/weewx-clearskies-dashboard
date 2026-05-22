@@ -1,1 +1,35 @@
-﻿{}
+{
+  "title": "このサイトについて",
+  "station": {
+    "defaultName": "気象観測所",
+    "loadingAria": "観測所情報を読み込み中…",
+    "unavailable": "観測所情報は利用できません。",
+    "location": "場所",
+    "altitude": "標高",
+    "hardware": "ハードウェア",
+    "hardwareDefault": "未設定",
+    "timezone": "タイムゾーン",
+    "unitSystem": "単位系",
+    "stationId": "観測所ID",
+    "recordingSince": "観測開始日",
+    "lastData": "最終データ受信"
+  },
+  "aboutStation": {
+    "cardTitle": "この観測所について",
+    "loadingAria": "説明を読み込み中…",
+    "placeholder": "この観測所の説明はプレースホルダーです。Clear Skies設定UIから観測所の説明を設定してください。"
+  },
+  "software": {
+    "cardTitle": "ソフトウェア",
+    "weatherSoftware": "気象ソフトウェア",
+    "weatherSoftwareValue": "weewx 5.x",
+    "dashboard": "ダッシュボード",
+    "dashboardValue": "Clear Skies v0.1.0-dev",
+    "dashboardEngine": "ダッシュボードエンジン",
+    "dashboardEngineValue": "React + Vite"
+  },
+  "photo": {
+    "cardTitle": "観測所の写真",
+    "placeholder": "Clear Skies設定UIから観測所の写真をアップロードしてください。"
+  }
+}

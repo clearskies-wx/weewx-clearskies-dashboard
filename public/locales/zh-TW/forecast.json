@@ -1,1 +1,17 @@
-﻿{}
+{
+  "title": "天氣預報",
+  "next12Hours": "未來12小時",
+  "sevenDayForecast": "7天預報",
+  "today": "今天",
+  "loadingHourly": "正在載入逐時預報…",
+  "loadingDaily": "正在載入每日預報…",
+  "unableToLoad": "無法載入天氣預報",
+  "noHourlyData": "暫無逐時預報資料。",
+  "noDailyData": "暫無每日預報資料。",
+  "percentPrecip": "降雨機率 {{pct}}%",
+  "windUpTo": "最大風速 {{speed}} mph",
+  "updated": "更新於 {{time}}",
+  "ariaHourlyScroll": "逐時預報 — 捲動查看更多",
+  "ariaHourlyList": "逐時預報",
+  "ariaDayForecast": "{{day}} 預報"
+}

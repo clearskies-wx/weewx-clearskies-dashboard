@@ -1,1 +1,40 @@
-﻿{}
+{
+  "pageTitle": "天文曆",
+
+  "loading": "正在載入天文曆資料…",
+  "error": "無法載入天文曆資料",
+  "noData": "暫無天文曆資料。",
+
+  "sun": {
+    "title": "太陽",
+    "sunrise": "日出",
+    "sunset": "日落",
+    "civilDawn": "民用黎明",
+    "civilDusk": "民用黃昏",
+    "totalDaylight": "日照時長",
+    "solarNoon": "正午",
+    "nextSolstice": "下一個至日",
+    "nextEquinox": "下一個分日"
+  },
+
+  "moon": {
+    "title": "月亮",
+    "phase": "月相",
+    "illumination": "照明度",
+    "moonrise": "月出",
+    "moonset": "月落",
+    "nextFullMoon": "下一個滿月",
+    "nextNewMoon": "下一個新月"
+  },
+
+  "positional": {
+    "title": "位置資料",
+    "note": "位置資料需要伺服器上的 Skyfield 計算。",
+    "sunAzimuth": "太陽方位角",
+    "sunAltitude": "太陽仰角",
+    "moonAzimuth": "月亮方位角",
+    "moonAltitude": "月亮仰角"
+  },
+
+  "daylightDelta": "（與昨日相差 {{delta}} 分鐘）"
+}

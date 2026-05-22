@@ -1,1 +1,35 @@
-﻿{}
+{
+  "title": "关于",
+  "station": {
+    "defaultName": "气象站",
+    "loadingAria": "正在加载站点信息…",
+    "unavailable": "站点信息不可用。",
+    "location": "位置",
+    "altitude": "海拔",
+    "hardware": "硬件",
+    "hardwareDefault": "未指定",
+    "timezone": "时区",
+    "unitSystem": "单位制",
+    "stationId": "站点ID",
+    "recordingSince": "记录开始时间",
+    "lastData": "最近数据接收时间"
+  },
+  "aboutStation": {
+    "cardTitle": "关于本站",
+    "loadingAria": "正在加载站点介绍…",
+    "placeholder": "这是站点管理员编写的描述占位符。请通过 Clear Skies 配置界面设置您的站点介绍。"
+  },
+  "software": {
+    "cardTitle": "软件",
+    "weatherSoftware": "气象软件",
+    "weatherSoftwareValue": "weewx 5.x",
+    "dashboard": "仪表板",
+    "dashboardValue": "Clear Skies v0.1.0-dev",
+    "dashboardEngine": "仪表板引擎",
+    "dashboardEngineValue": "React + Vite"
+  },
+  "photo": {
+    "cardTitle": "站点照片",
+    "placeholder": "请通过 Clear Skies 配置界面上传站点照片。"
+  }
+}

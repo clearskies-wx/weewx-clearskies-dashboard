@@ -1,1 +1,138 @@
-﻿{}
+{
+  "currentConditions": "目前狀況",
+  "todaysHighlights": "今日重點",
+  "wind": "風",
+  "stationObservations": "測站觀測",
+  "sunAndMoon": "日月",
+  "airQuality": "空氣品質",
+  "lightning": "閃電",
+  "recentEarthquake": "近期地震",
+  "todaysForecast": "今日天氣預報",
+  "temperatureTrend": "氣溫趨勢",
+  "viewCharts": "查看圖表 →",
+
+  "loading": {
+    "currentConditions": "正在載入目前狀況…",
+    "highlights": "正在載入今日重點…",
+    "wind": "正在載入風力資料…",
+    "stationObservations": "正在載入測站觀測資料…",
+    "sunMoon": "正在載入日月資料…",
+    "airQuality": "正在載入空氣品質資料…",
+    "lightning": "正在載入閃電資料…",
+    "earthquake": "正在載入地震資料…",
+    "forecast": "正在載入天氣預報…"
+  },
+
+  "error": {
+    "currentConditions": "無法載入目前狀況",
+    "wind": "無法載入風力資料",
+    "stationObservations": "無法載入測站觀測資料",
+    "almanac": "無法載入曆書資料",
+    "airQuality": "無法載入空氣品質資料",
+    "earthquake": "無法載入地震資料",
+    "forecast": "無法載入天氣預報"
+  },
+
+  "noData": {
+    "observation": "暫無觀測資料。",
+    "highlights": "暫無重點資料。",
+    "wind": "暫無風力資料。",
+    "lightning": "未設定閃電感應器。",
+    "earthquake": "設定範圍內近期無地震。",
+    "airQuality": "未設定空氣品質提供商。",
+    "forecast": "暫無天氣預報資料。"
+  },
+
+  "highlights": {
+    "todaysHigh": "今日最高氣溫",
+    "todaysLow": "今日最低氣溫",
+    "peakGust": "最大陣風",
+    "rainToday": "今日降雨量",
+    "peakAqi": "最高AQI",
+    "recordsBroken": "打破紀錄"
+  },
+
+  "observations": {
+    "barometer": "氣壓計",
+    "dewpoint": "露點",
+    "humidity": "濕度",
+    "rain": "降雨量",
+    "heatIndex": "酷熱指數",
+    "windChill": "風寒指數",
+    "solarRadiation": "太陽輻射",
+    "uvIndex": "紫外線指數"
+  },
+
+  "sunMoon": {
+    "sunrise": "日出",
+    "sunset": "日落",
+    "moon": "月亮"
+  },
+
+  "feelsLike": "體感溫度",
+
+  "windCompass": {
+    "speed": "風速：{{speed}} mph · {{direction}}",
+    "gusts": "陣風：{{gust}} mph",
+    "ariaLabel": "來自 {{direction}} 方向 {{degrees}} 度的風"
+  },
+
+  "barometer": {
+    "trend": {
+      "rising": "上升",
+      "falling": "下降",
+      "steady": "平穩"
+    },
+    "trendAriaLabel": "趨勢：{{trend}}"
+  },
+
+  "aqi": {
+    "good": "優",
+    "moderate": "良",
+    "unhealthySensitive": "對敏感族群不健康",
+    "unhealthy": "不健康",
+    "veryUnhealthy": "非常不健康",
+    "hazardous": "有害",
+    "gaugeAriaLabel": "空氣品質指數：{{aqi}}，{{category}}。主要污染物：{{pollutant}}",
+    "unknownPollutant": "未知",
+    "mainPollutant": "主要污染物：{{pollutant}}"
+  },
+
+  "beaufort": {
+    "calm": "無風",
+    "lightAir": "軟風",
+    "lightBreeze": "輕風",
+    "gentleBreeze": "微風",
+    "moderateBreeze": "和風",
+    "freshBreeze": "清勁風",
+    "strongBreeze": "強風",
+    "nearGale": "疾風",
+    "gale": "大風",
+    "strongGale": "烈風",
+    "storm": "狂風",
+    "violentStorm": "暴風",
+    "hurricane": "颶風"
+  },
+
+  "lightning": {
+    "strikesLastHour": "過去一小時雷擊 {{count}} 次",
+    "strikesLast24h": "過去24小時 {{count}} 次",
+    "nearest": "最近距離：{{distance}} km",
+    "lastStrike": "最近雷擊：{{time}}",
+    "lastStrikeUnknown": "未知"
+  },
+
+  "earthquake": {
+    "magnitude": "M{{magnitude}} — {{place}}",
+    "depth": "深度：{{depth}} km"
+  },
+
+  "forecast": {
+    "hiLo": "最高 {{high}}° / 最低 {{low}}°",
+    "precipChance": "降雨機率 {{percent}}%"
+  },
+
+  "temperature": {
+    "ariaLabel": "目前氣溫：{{temp}} 度 {{unit}}"
+  }
+}

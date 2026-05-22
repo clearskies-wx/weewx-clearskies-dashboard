@@ -1,1 +1,28 @@
-﻿{}
+{
+  "title": "报告",
+  "intro": "NOAA 格式的月度和年度气候报告汇总了气温、降水量及其他观测数据。报告由站点存档数据生成。",
+  "card": {
+    "title": "NOAA 月度报告"
+  },
+  "year": {
+    "label": "年份",
+    "ariaLabel": "选择报告年份",
+    "placeholder": "— 选择年份 —"
+  },
+  "month": {
+    "label": "月份",
+    "ariaLabel": "选择报告月份",
+    "placeholder": "— 选择月份 —"
+  },
+  "empty": "未找到 NOAA 报告。当存档积累了月度数据后报告将会可用。",
+  "loading": {
+    "index": "正在加载报告索引…",
+    "report": "正在加载报告…"
+  },
+  "error": {
+    "index": "无法加载报告",
+    "report": "无法加载报告"
+  },
+  "annual": "年度",
+  "download": "下载 .txt"
+}

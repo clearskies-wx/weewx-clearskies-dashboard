@@ -1,1 +1,18 @@
-﻿{}
+{
+  "loading": "載入中…",
+  "loadingPage": "正在載入 {{title}}",
+  "error": "發生錯誤",
+  "retry": "重試",
+  "noData": "暫無資料",
+  "skipToContent": "跳至主要內容",
+  "pageNotFound": "找不到頁面。",
+  "footer": {
+    "legal": "法律 / 隱私",
+    "poweredBy": "由 Clear Skies 驅動"
+  },
+  "theme": {
+    "ariaAuto": "主題：跟隨系統設定 — 點擊切換至淺色模式",
+    "ariaLight": "主題：淺色 — 點擊切換至深色模式",
+    "ariaDark": "主題：深色 — 點擊切換至系統設定"
+  }
+}

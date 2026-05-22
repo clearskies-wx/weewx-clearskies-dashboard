@@ -1,1 +1,28 @@
-﻿{}
+{
+  "title": "報告",
+  "intro": "NOAA 格式的月度和年度氣候報告彙整了氣溫、降雨量及其他觀測資料。報告由測站封存資料產生。",
+  "card": {
+    "title": "NOAA 月度報告"
+  },
+  "year": {
+    "label": "年份",
+    "ariaLabel": "選擇報告年份",
+    "placeholder": "— 選擇年份 —"
+  },
+  "month": {
+    "label": "月份",
+    "ariaLabel": "選擇報告月份",
+    "placeholder": "— 選擇月份 —"
+  },
+  "empty": "未找到 NOAA 報告。當封存資料累積月度資料後，報告即可使用。",
+  "loading": {
+    "index": "正在載入報告索引…",
+    "report": "正在載入報告…"
+  },
+  "error": {
+    "index": "無法載入報告",
+    "report": "無法載入報告"
+  },
+  "annual": "年度",
+  "download": "下載 .txt"
+}

@@ -1,1 +1,18 @@
-﻿{}
+{
+  "loading": "加载中…",
+  "loadingPage": "正在加载 {{title}}",
+  "error": "发生错误",
+  "retry": "重试",
+  "noData": "暂无数据",
+  "skipToContent": "跳至主要内容",
+  "pageNotFound": "页面未找到。",
+  "footer": {
+    "legal": "法律 / 隐私",
+    "poweredBy": "由 Clear Skies 驱动"
+  },
+  "theme": {
+    "ariaAuto": "主题：跟随系统设置 — 点击切换至浅色模式",
+    "ariaLight": "主题：浅色 — 点击切换至深色模式",
+    "ariaDark": "主题：深色 — 点击切换至系统设置"
+  }
+}

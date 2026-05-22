@@ -1,1 +1,24 @@
-﻿{}
+{
+  "title": "法律与隐私",
+  "loadingAria": "正在加载法律内容…",
+  "operatorCard": {
+    "title": "法律与隐私政策"
+  },
+  "privacy": {
+    "title": "隐私政策",
+    "body": "本气象站从本地传感器收集气象数据，并可能使用第三方服务获取预报、空气质量和地震数据。除标准网络服务器日志外，不收集任何访客个人数据。站点管理员应根据其具体数据处理方式和适用的隐私法规自定义本节内容。"
+  },
+  "attribution": {
+    "title": "数据来源",
+    "observations": "气象观测：本地站点硬件（在"关于"中配置）",
+    "forecast": "预报数据：美国国家气象局 (NWS)",
+    "airQuality": "空气质量数据：AirNow / EPA",
+    "earthquake": "地震数据：USGS",
+    "astronomical": "天文数据：Skyfield 天体历计算",
+    "note": "实际数据来源取决于已配置的提供商。"
+  },
+  "openSource": {
+    "title": "开源许可证",
+    "body": "Clear Skies 是根据 GNU 通用公共许可证 v3.0 授权的自由软件。它使用 React、Vite、Tailwind CSS、Recharts 和 Lucide 图标等开源技术构建。完整的许可证文本和第三方归属说明可在项目仓库中找到。"
+  }
+}

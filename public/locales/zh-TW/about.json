@@ -1,1 +1,35 @@
-﻿{}
+{
+  "title": "關於",
+  "station": {
+    "defaultName": "氣象測站",
+    "loadingAria": "正在載入測站資訊…",
+    "unavailable": "測站資訊不可用。",
+    "location": "位置",
+    "altitude": "海拔",
+    "hardware": "硬體",
+    "hardwareDefault": "未指定",
+    "timezone": "時區",
+    "unitSystem": "單位制",
+    "stationId": "測站ID",
+    "recordingSince": "記錄開始時間",
+    "lastData": "最近資料接收時間"
+  },
+  "aboutStation": {
+    "cardTitle": "關於本站",
+    "loadingAria": "正在載入站點介紹…",
+    "placeholder": "這是測站管理員撰寫的說明占位符。請透過 Clear Skies 設定介面設定您的站點說明。"
+  },
+  "software": {
+    "cardTitle": "軟體",
+    "weatherSoftware": "氣象軟體",
+    "weatherSoftwareValue": "weewx 5.x",
+    "dashboard": "儀表板",
+    "dashboardValue": "Clear Skies v0.1.0-dev",
+    "dashboardEngine": "儀表板引擎",
+    "dashboardEngineValue": "React + Vite"
+  },
+  "photo": {
+    "cardTitle": "測站照片",
+    "placeholder": "請透過 Clear Skies 設定介面上傳測站照片。"
+  }
+}

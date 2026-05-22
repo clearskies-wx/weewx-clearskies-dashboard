@@ -1,1 +1,24 @@
-﻿{}
+{
+  "title": "法律與隱私",
+  "loadingAria": "正在載入法律內容…",
+  "operatorCard": {
+    "title": "法律與隱私政策"
+  },
+  "privacy": {
+    "title": "隱私政策",
+    "body": "本氣象測站從本地感應器收集氣象資料，並可能使用第三方服務取得天氣預報、空氣品質和地震資料。除標準網路伺服器日誌外，不收集任何訪客個人資料。測站管理員應根據其具體資料處理方式及適用的隱私法規自訂本節內容。"
+  },
+  "attribution": {
+    "title": "資料來源",
+    "observations": "氣象觀測：本地測站硬體（在「關於」中設定）",
+    "forecast": "天氣預報資料：美國國家氣象局 (NWS)",
+    "airQuality": "空氣品質資料：AirNow / EPA",
+    "earthquake": "地震資料：USGS",
+    "astronomical": "天文資料：Skyfield 天體曆計算",
+    "note": "實際資料來源取決於已設定的提供商。"
+  },
+  "openSource": {
+    "title": "開放原始碼授權",
+    "body": "Clear Skies 是根據 GNU 通用公共授權條款 v3.0 授權的自由軟體。它使用 React、Vite、Tailwind CSS、Recharts 和 Lucide 圖示等開放原始碼技術構建。完整授權條款文字及第三方歸屬說明可在專案儲存庫中取得。"
+  }
+}

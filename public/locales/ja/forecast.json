@@ -1,1 +1,17 @@
-﻿{}
+{
+  "title": "予報",
+  "next12Hours": "今後12時間",
+  "sevenDayForecast": "7日間予報",
+  "today": "今日",
+  "loadingHourly": "時間別予報を読み込み中…",
+  "loadingDaily": "日別予報を読み込み中…",
+  "unableToLoad": "予報を読み込めません",
+  "noHourlyData": "時間別予報データがありません。",
+  "noDailyData": "日別予報データがありません。",
+  "percentPrecip": "降水確率 {{pct}}%",
+  "windUpTo": "最大風速 {{speed}} mph",
+  "updated": "更新: {{time}}",
+  "ariaHourlyScroll": "時間別予報 — スクロールして詳細を確認",
+  "ariaHourlyList": "時間別予報",
+  "ariaDayForecast": "{{day}}の予報"
+}

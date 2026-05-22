@@ -1,1 +1,22 @@
-﻿{}
+{
+  "title": "地震",
+  "loadingData": "正在加载地震数据…",
+  "unableToLoad": "无法加载地震数据",
+  "noRecentQuakes": "配置范围内近期无地震。",
+  "ariaRecentList": "近期地震",
+  "ariaMagnitude": "震级 {{mag}}",
+  "unknownLocation": "位置未知",
+  "depth": "深度：{{depth}} km",
+  "source": "来源：{{source}}",
+  "feltBy_one": "{{count}} 人有感",
+  "feltBy_other": "{{count}} 人有感",
+  "mmi": "修正麦卡利烈度：{{mmi}}",
+  "tsunamiWatch": "海啸预警",
+  "pager": "PAGER：{{level}}",
+  "mapCardTitle": "地震地图",
+  "mapPlaceholder": "交互式地图需要 Leaflet — 配置地图提供商后即可使用。",
+  "configCardTitle": "配置",
+  "configRadius": "半径",
+  "configProvider": "提供商",
+  "configHelperText": "请在 Clear Skies 配置界面中设置地震相关选项。"
+}
