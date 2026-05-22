@@ -1,5 +1,6 @@
 // almanac.tsx — Almanac page (/almanac)
 
+import { useTranslation } from 'react-i18next';
 import {
   Card,
   CardHeader,
@@ -9,9 +10,9 @@ import {
 import { useAlmanac, useStation } from '../hooks/useWeatherData';
 
 // Format UTC ISO time to local time display: "5:55 AM"
-function formatLocalTime(isoString: string | null, tz: string): string {
+function formatLocalTime(isoString: string | null, tz: string, locale: string): string {
   if (!isoString) return '—';
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(locale, {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
@@ -28,9 +29,9 @@ function formatDaylight(minutes: number | null): string {
 }
 
 // Format ISO datetime to local date: "May 25, 2026"
-function formatDate(isoString: string | null): string {
+function formatDate(isoString: string | null, locale: string): string {
   if (!isoString) return '—';
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(locale, {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
@@ -70,6 +71,7 @@ function TileSkeleton({ className }: { className?: string }) {
 }
 
 function TileError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  const { t } = useTranslation('common');
   return (
     <div role="alert" className="flex flex-col gap-2 items-start text-sm">
       <p className="text-destructive">{message}</p>
@@ -78,92 +80,97 @@ function TileError({ message, onRetry }: { message: string; onRetry: () => void 
         onClick={onRetry}
         className="text-xs text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
       >
-        Retry
+        {t('retry')}
       </button>
     </div>
   );
 }
 
 export function AlmanacPage() {
+  const { t, i18n } = useTranslation('almanac');
+  const locale = i18n.language;
+
   const { data: almanac, loading, error, refetch } = useAlmanac();
   const { data: station } = useStation();
   const tz = station?.timezone ?? 'UTC';
 
   return (
     <div className="flex flex-col gap-6 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-foreground">Almanac</h1>
+      <h1 className="text-2xl font-bold text-foreground">{t('pageTitle')}</h1>
 
       {loading && (
         <>
-          <span className="sr-only" role="status">Loading almanac data…</span>
+          <span className="sr-only" role="status">{t('loading')}</span>
           <TileSkeleton className="h-48" />
           <TileSkeleton className="h-48" />
         </>
       )}
 
-      {error && <TileError message="Unable to load almanac data" onRetry={refetch} />}
+      {error && <TileError message={t('error')} onRetry={refetch} />}
 
       {!loading && !error && almanac && (
         <>
           {/* Sun card */}
           <Card>
             <CardHeader>
-              <CardTitle as="h2">Sun</CardTitle>
+              <CardTitle as="h2">{t('sun.title')}</CardTitle>
             </CardHeader>
             <CardContent>
               <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
                 <div>
-                  <dt className="text-muted-foreground">Sunrise</dt>
+                  <dt className="text-muted-foreground">{t('sun.sunrise')}</dt>
                   <dd className="font-medium text-foreground mt-0.5">
-                    {formatLocalTime(almanac.sun.rise, tz)}
+                    {formatLocalTime(almanac.sun.rise, tz, locale)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">Sunset</dt>
+                  <dt className="text-muted-foreground">{t('sun.sunset')}</dt>
                   <dd className="font-medium text-foreground mt-0.5">
-                    {formatLocalTime(almanac.sun.set, tz)}
+                    {formatLocalTime(almanac.sun.set, tz, locale)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">Civil Dawn</dt>
+                  <dt className="text-muted-foreground">{t('sun.civilDawn')}</dt>
                   <dd className="font-medium text-foreground mt-0.5">
-                    {formatLocalTime(almanac.sun.civilTwilightDawn, tz)}
+                    {formatLocalTime(almanac.sun.civilTwilightDawn, tz, locale)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">Civil Dusk</dt>
+                  <dt className="text-muted-foreground">{t('sun.civilDusk')}</dt>
                   <dd className="font-medium text-foreground mt-0.5">
-                    {formatLocalTime(almanac.sun.civilTwilightDusk, tz)}
+                    {formatLocalTime(almanac.sun.civilTwilightDusk, tz, locale)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">Total Daylight</dt>
+                  <dt className="text-muted-foreground">{t('sun.totalDaylight')}</dt>
                   <dd className="font-medium text-foreground mt-0.5" style={{ fontFeatureSettings: '"tnum"' }}>
                     {formatDaylight(almanac.sun.daylightMinutes)}
                     {almanac.sun.daylightDeltaVsYesterdayMinutes !== null && (
                       <span className="ml-2 text-xs text-muted-foreground">
-                        ({almanac.sun.daylightDeltaVsYesterdayMinutes > 0 ? '+' : ''}
-                        {almanac.sun.daylightDeltaVsYesterdayMinutes}m vs yesterday)
+                        {t('daylightDelta', {
+                          delta: (almanac.sun.daylightDeltaVsYesterdayMinutes > 0 ? '+' : '') +
+                            almanac.sun.daylightDeltaVsYesterdayMinutes,
+                        })}
                       </span>
                     )}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">Solar Noon</dt>
+                  <dt className="text-muted-foreground">{t('sun.solarNoon')}</dt>
                   <dd className="font-medium text-foreground mt-0.5">
-                    {formatLocalTime(almanac.sun.transit, tz)}
+                    {formatLocalTime(almanac.sun.transit, tz, locale)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">Next Solstice</dt>
+                  <dt className="text-muted-foreground">{t('sun.nextSolstice')}</dt>
                   <dd className="font-medium text-foreground mt-0.5">
-                    {formatDate(almanac.sun.nextSolstice)}
+                    {formatDate(almanac.sun.nextSolstice, locale)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">Next Equinox</dt>
+                  <dt className="text-muted-foreground">{t('sun.nextEquinox')}</dt>
                   <dd className="font-medium text-foreground mt-0.5">
-                    {formatDate(almanac.sun.nextEquinox)}
+                    {formatDate(almanac.sun.nextEquinox, locale)}
                   </dd>
                 </div>
               </dl>
@@ -173,12 +180,12 @@ export function AlmanacPage() {
           {/* Moon card */}
           <Card>
             <CardHeader>
-              <CardTitle as="h2">Moon</CardTitle>
+              <CardTitle as="h2">{t('moon.title')}</CardTitle>
             </CardHeader>
             <CardContent>
               <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
                 <div>
-                  <dt className="text-muted-foreground">Phase</dt>
+                  <dt className="text-muted-foreground">{t('moon.phase')}</dt>
                   <dd className="font-medium text-foreground mt-0.5">
                     {almanac.moon.phaseName && (
                       <span aria-hidden="true" className="mr-1.5">
@@ -189,33 +196,33 @@ export function AlmanacPage() {
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">Illumination</dt>
+                  <dt className="text-muted-foreground">{t('moon.illumination')}</dt>
                   <dd className="font-medium text-foreground mt-0.5" style={{ fontFeatureSettings: '"tnum"' }}>
                     {almanac.moon.illuminationPercent}%
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">Moonrise</dt>
+                  <dt className="text-muted-foreground">{t('moon.moonrise')}</dt>
                   <dd className="font-medium text-foreground mt-0.5">
-                    {formatLocalTime(almanac.moon.rise, tz)}
+                    {formatLocalTime(almanac.moon.rise, tz, locale)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">Moonset</dt>
+                  <dt className="text-muted-foreground">{t('moon.moonset')}</dt>
                   <dd className="font-medium text-foreground mt-0.5">
-                    {formatLocalTime(almanac.moon.set, tz)}
+                    {formatLocalTime(almanac.moon.set, tz, locale)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">Next Full Moon</dt>
+                  <dt className="text-muted-foreground">{t('moon.nextFullMoon')}</dt>
                   <dd className="font-medium text-foreground mt-0.5">
-                    {formatDate(almanac.moon.nextFullMoon)}
+                    {formatDate(almanac.moon.nextFullMoon, locale)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">Next New Moon</dt>
+                  <dt className="text-muted-foreground">{t('moon.nextNewMoon')}</dt>
                   <dd className="font-medium text-foreground mt-0.5">
-                    {formatDate(almanac.moon.nextNewMoon)}
+                    {formatDate(almanac.moon.nextNewMoon, locale)}
                   </dd>
                 </div>
               </dl>
@@ -225,33 +232,33 @@ export function AlmanacPage() {
           {/* Positional Data card — Skyfield-computed; null in mock phase */}
           <Card>
             <CardHeader>
-              <CardTitle as="h2">Positional Data</CardTitle>
+              <CardTitle as="h2">{t('positional.title')}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground mb-4">
-                Positional data requires Skyfield computation on the server.
+                {t('positional.note')}
               </p>
               <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
                 <div>
-                  <dt className="text-muted-foreground">Sun Azimuth</dt>
+                  <dt className="text-muted-foreground">{t('positional.sunAzimuth')}</dt>
                   <dd className="font-medium text-muted-foreground mt-0.5">
                     {almanac.sun.azimuth !== null ? `${almanac.sun.azimuth}°` : '—'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">Sun Altitude</dt>
+                  <dt className="text-muted-foreground">{t('positional.sunAltitude')}</dt>
                   <dd className="font-medium text-muted-foreground mt-0.5">
                     {almanac.sun.altitude !== null ? `${almanac.sun.altitude}°` : '—'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">Moon Azimuth</dt>
+                  <dt className="text-muted-foreground">{t('positional.moonAzimuth')}</dt>
                   <dd className="font-medium text-muted-foreground mt-0.5">
                     {almanac.moon.azimuth !== null ? `${almanac.moon.azimuth}°` : '—'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">Moon Altitude</dt>
+                  <dt className="text-muted-foreground">{t('positional.moonAltitude')}</dt>
                   <dd className="font-medium text-muted-foreground mt-0.5">
                     {almanac.moon.altitude !== null ? `${almanac.moon.altitude}°` : '—'}
                   </dd>
@@ -265,7 +272,7 @@ export function AlmanacPage() {
       {!loading && !error && !almanac && (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
-            No almanac data available.
+            {t('noData')}
           </CardContent>
         </Card>
       )}

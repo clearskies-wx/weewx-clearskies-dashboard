@@ -1,1 +1,138 @@
-﻿{}
+{
+  "currentConditions": "Current Conditions",
+  "todaysHighlights": "Today's Highlights",
+  "wind": "Wind",
+  "stationObservations": "Station Observations",
+  "sunAndMoon": "Sun & Moon",
+  "airQuality": "Air Quality",
+  "lightning": "Lightning",
+  "recentEarthquake": "Recent Earthquake",
+  "todaysForecast": "Today's Forecast",
+  "temperatureTrend": "Temperature Trend",
+  "viewCharts": "View Charts →",
+
+  "loading": {
+    "currentConditions": "Loading current conditions…",
+    "highlights": "Loading today's highlights…",
+    "wind": "Loading wind data…",
+    "stationObservations": "Loading station observations…",
+    "sunMoon": "Loading sun and moon data…",
+    "airQuality": "Loading air quality data…",
+    "lightning": "Loading lightning data…",
+    "earthquake": "Loading earthquake data…",
+    "forecast": "Loading forecast…"
+  },
+
+  "error": {
+    "currentConditions": "Unable to load current conditions",
+    "wind": "Unable to load wind data",
+    "stationObservations": "Unable to load station observations",
+    "almanac": "Unable to load almanac data",
+    "airQuality": "Unable to load air quality data",
+    "earthquake": "Unable to load earthquake data",
+    "forecast": "Unable to load forecast"
+  },
+
+  "noData": {
+    "observation": "No observation data available.",
+    "highlights": "No highlights available.",
+    "wind": "No wind data available.",
+    "lightning": "No lightning sensor configured.",
+    "earthquake": "No recent earthquakes in configured radius.",
+    "airQuality": "No air quality provider configured.",
+    "forecast": "No forecast data available."
+  },
+
+  "highlights": {
+    "todaysHigh": "Today's High",
+    "todaysLow": "Today's Low",
+    "peakGust": "Peak Gust",
+    "rainToday": "Rain Today",
+    "peakAqi": "Peak AQI",
+    "recordsBroken": "Records Broken"
+  },
+
+  "observations": {
+    "barometer": "Barometer",
+    "dewpoint": "Dewpoint",
+    "humidity": "Humidity",
+    "rain": "Rain",
+    "heatIndex": "Heat Index",
+    "windChill": "Wind Chill",
+    "solarRadiation": "Solar Radiation",
+    "uvIndex": "UV Index"
+  },
+
+  "sunMoon": {
+    "sunrise": "Sunrise",
+    "sunset": "Sunset",
+    "moon": "Moon"
+  },
+
+  "feelsLike": "Feels like",
+
+  "windCompass": {
+    "speed": "Wind: {{speed}} mph · {{direction}}",
+    "gusts": "Gusts: {{gust}} mph",
+    "ariaLabel": "Wind from {{direction}} at {{degrees}} degrees"
+  },
+
+  "barometer": {
+    "trend": {
+      "rising": "rising",
+      "falling": "falling",
+      "steady": "steady"
+    },
+    "trendAriaLabel": "Trend: {{trend}}"
+  },
+
+  "aqi": {
+    "good": "Good",
+    "moderate": "Moderate",
+    "unhealthySensitive": "Unhealthy for Sensitive Groups",
+    "unhealthy": "Unhealthy",
+    "veryUnhealthy": "Very Unhealthy",
+    "hazardous": "Hazardous",
+    "gaugeAriaLabel": "Air Quality Index: {{aqi}}, {{category}}. Main pollutant: {{pollutant}}",
+    "unknownPollutant": "Unknown",
+    "mainPollutant": "Main pollutant: {{pollutant}}"
+  },
+
+  "beaufort": {
+    "calm": "Calm",
+    "lightAir": "Light Air",
+    "lightBreeze": "Light Breeze",
+    "gentleBreeze": "Gentle Breeze",
+    "moderateBreeze": "Moderate Breeze",
+    "freshBreeze": "Fresh Breeze",
+    "strongBreeze": "Strong Breeze",
+    "nearGale": "Near Gale",
+    "gale": "Gale",
+    "strongGale": "Strong Gale",
+    "storm": "Storm",
+    "violentStorm": "Violent Storm",
+    "hurricane": "Hurricane"
+  },
+
+  "lightning": {
+    "strikesLastHour": "{{count}} strikes in last hour",
+    "strikesLast24h": "{{count}} in last 24h",
+    "nearest": "Nearest: {{distance}} km",
+    "lastStrike": "Last strike: {{time}}",
+    "lastStrikeUnknown": "Unknown"
+  },
+
+  "earthquake": {
+    "magnitude": "M{{magnitude}} — {{place}}",
+    "depth": "Depth: {{depth}} km"
+  },
+
+  "forecast": {
+    "hiLo": "Hi {{high}}° / Lo {{low}}°",
+    "precipChance": "{{percent}}% chance of precipitation"
+  },
+
+  "temperature": {
+    "ariaLabel": "Current temperature: {{temp}} degrees {{unit}}"
+  }
+}

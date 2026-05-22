@@ -1,1 +1,40 @@
-﻿{}
+{
+  "pageTitle": "Almanac",
+
+  "loading": "Loading almanac data…",
+  "error": "Unable to load almanac data",
+  "noData": "No almanac data available.",
+
+  "sun": {
+    "title": "Sun",
+    "sunrise": "Sunrise",
+    "sunset": "Sunset",
+    "civilDawn": "Civil Dawn",
+    "civilDusk": "Civil Dusk",
+    "totalDaylight": "Total Daylight",
+    "solarNoon": "Solar Noon",
+    "nextSolstice": "Next Solstice",
+    "nextEquinox": "Next Equinox"
+  },
+
+  "moon": {
+    "title": "Moon",
+    "phase": "Phase",
+    "illumination": "Illumination",
+    "moonrise": "Moonrise",
+    "moonset": "Moonset",
+    "nextFullMoon": "Next Full Moon",
+    "nextNewMoon": "Next New Moon"
+  },
+
+  "positional": {
+    "title": "Positional Data",
+    "note": "Positional data requires Skyfield computation on the server.",
+    "sunAzimuth": "Sun Azimuth",
+    "sunAltitude": "Sun Altitude",
+    "moonAzimuth": "Moon Azimuth",
+    "moonAltitude": "Moon Altitude"
+  },
+
+  "daylightDelta": "({{delta}}m vs yesterday)"
+}

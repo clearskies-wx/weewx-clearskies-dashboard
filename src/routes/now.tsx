@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Sunrise, Sunset, Moon, Zap, Activity } from 'lucide-react';
+import type { TFunction } from 'i18next';
 import { AlertBanner } from '../components/shared/alert-banner';
 import {
   Card,
@@ -19,9 +21,9 @@ import {
 } from '../hooks/useWeatherData';
 import { useRealtimeObservation } from '../hooks/useRealtimeObservation';
 
-function formatLocalTime(iso: string | null, tz: string): string {
+function formatLocalTime(iso: string | null, tz: string, locale: string): string {
   if (!iso) return '—';
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(locale, {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
@@ -34,20 +36,20 @@ function formatPhaseName(name: string | null): string {
   return name.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 
-function beaufortLabel(speedMph: number): string {
-  if (speedMph < 1) return 'Calm';
-  if (speedMph <= 3) return 'Light Air';
-  if (speedMph <= 7) return 'Light Breeze';
-  if (speedMph <= 12) return 'Gentle Breeze';
-  if (speedMph <= 18) return 'Moderate Breeze';
-  if (speedMph <= 24) return 'Fresh Breeze';
-  if (speedMph <= 31) return 'Strong Breeze';
-  if (speedMph <= 38) return 'Near Gale';
-  if (speedMph <= 46) return 'Gale';
-  if (speedMph <= 54) return 'Strong Gale';
-  if (speedMph <= 63) return 'Storm';
-  if (speedMph <= 72) return 'Violent Storm';
-  return 'Hurricane';
+function beaufortLabel(speedMph: number, t: TFunction): string {
+  if (speedMph < 1) return t('beaufort.calm');
+  if (speedMph <= 3) return t('beaufort.lightAir');
+  if (speedMph <= 7) return t('beaufort.lightBreeze');
+  if (speedMph <= 12) return t('beaufort.gentleBreeze');
+  if (speedMph <= 18) return t('beaufort.moderateBreeze');
+  if (speedMph <= 24) return t('beaufort.freshBreeze');
+  if (speedMph <= 31) return t('beaufort.strongBreeze');
+  if (speedMph <= 38) return t('beaufort.nearGale');
+  if (speedMph <= 46) return t('beaufort.gale');
+  if (speedMph <= 54) return t('beaufort.strongGale');
+  if (speedMph <= 63) return t('beaufort.storm');
+  if (speedMph <= 72) return t('beaufort.violentStorm');
+  return t('beaufort.hurricane');
 }
 
 function windDirLabel(deg: number): string {
@@ -77,17 +79,17 @@ function aqiColor(aqi: number): string {
   return '#7E0023';
 }
 
-function aqiCategory(aqi: number): string {
-  if (aqi <= 50) return 'Good';
-  if (aqi <= 100) return 'Moderate';
-  if (aqi <= 150) return 'Unhealthy for Sensitive Groups';
-  if (aqi <= 200) return 'Unhealthy';
-  if (aqi <= 300) return 'Very Unhealthy';
-  return 'Hazardous';
+function aqiCategory(aqi: number, t: TFunction): string {
+  if (aqi <= 50) return t('aqi.good');
+  if (aqi <= 100) return t('aqi.moderate');
+  if (aqi <= 150) return t('aqi.unhealthySensitive');
+  if (aqi <= 200) return t('aqi.unhealthy');
+  if (aqi <= 300) return t('aqi.veryUnhealthy');
+  return t('aqi.hazardous');
 }
 
-function formatRelativeTime(iso: string): string {
-  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+function formatRelativeTime(iso: string, locale: string): string {
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
   const diffMs = new Date(iso).getTime() - Date.now();
   const diffSec = Math.round(diffMs / 1000);
   const diffMin = Math.round(diffSec / 60);
@@ -107,9 +109,26 @@ function barometerTrendArrow(trend: number | null): string {
   return '→';
 }
 
-function WindCompass({ windDir, windSpeed, windGust }: { windDir: number; windSpeed: number; windGust: number }) {
+function barometerTrendLabel(trend: number | null, t: TFunction): string {
+  if (trend === null) return t('barometer.trend.steady');
+  if (trend > 0.01) return t('barometer.trend.rising');
+  if (trend < -0.01) return t('barometer.trend.falling');
+  return t('barometer.trend.steady');
+}
+
+function WindCompass({
+  windDir,
+  windSpeed,
+  windGust,
+  t,
+}: {
+  windDir: number;
+  windSpeed: number;
+  windGust: number;
+  t: TFunction;
+}) {
   const dirLabel = windDirLabel(windDir).toLowerCase();
-  const ariaLabel = `Wind from ${dirLabel} at ${windDir} degrees`;
+  const ariaLabel = t('windCompass.ariaLabel', { direction: dirLabel, degrees: windDir });
 
   return (
     <div className="flex flex-col items-center gap-3">
@@ -148,16 +167,26 @@ function WindCompass({ windDir, windSpeed, windGust }: { windDir: number; windSp
 
       <div className="text-center text-sm font-[tabular-nums]">
         <p className="font-medium text-foreground">
-          Wind: {windSpeed} mph · {windDirLabel(windDir)}
+          {t('windCompass.speed', { speed: windSpeed, direction: windDirLabel(windDir) })}
         </p>
-        <p className="text-muted-foreground">Gusts: {windGust} mph</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{beaufortLabel(windSpeed)}</p>
+        <p className="text-muted-foreground">{t('windCompass.gusts', { gust: windGust })}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{beaufortLabel(windSpeed, t)}</p>
       </div>
     </div>
   );
 }
 
-function AqiGauge({ aqi, category, pollutant }: { aqi: number; category: string | null; pollutant: string | null }) {
+function AqiGauge({
+  aqi,
+  category,
+  pollutant,
+  t,
+}: {
+  aqi: number;
+  category: string | null;
+  pollutant: string | null;
+  t: TFunction;
+}) {
   const clampedAqi = Math.min(Math.max(aqi, 0), 500);
   const fraction = clampedAqi / 500;
   const sweepDeg = fraction * 180;
@@ -181,12 +210,13 @@ function AqiGauge({ aqi, category, pollutant }: { aqi: number; category: string 
   const trackEnd = polarToCart(180);
 
   const color = aqiColor(aqi);
-  const displayCategory = category ?? aqiCategory(aqi);
+  const displayCategory = category ?? aqiCategory(aqi, t);
+  const displayPollutant = pollutant ?? t('aqi.unknownPollutant');
 
   return (
     <div
       role="figure"
-      aria-label={`Air Quality Index: ${aqi}, ${displayCategory}. Main pollutant: ${pollutant ?? 'Unknown'}`}
+      aria-label={t('aqi.gaugeAriaLabel', { aqi, category: displayCategory, pollutant: displayPollutant })}
       className="flex flex-col items-center gap-2"
     >
       <svg width="120" height="70" viewBox="0 0 120 70" aria-hidden="true" focusable="false">
@@ -211,7 +241,7 @@ function AqiGauge({ aqi, category, pollutant }: { aqi: number; category: string 
       </svg>
       <p className="text-sm font-semibold text-foreground">{displayCategory}</p>
       {pollutant && (
-        <p className="text-xs text-muted-foreground">Main pollutant: {pollutant}</p>
+        <p className="text-xs text-muted-foreground">{t('aqi.mainPollutant', { pollutant })}</p>
       )}
     </div>
   );
@@ -229,6 +259,7 @@ function TileSkeleton({ className }: { className?: string }) {
 
 /** Error message for tile failures. */
 function TileError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  const { t } = useTranslation('common');
   return (
     <div role="alert" className="flex flex-col gap-2 items-start text-sm">
       <p className="text-destructive">{message}</p>
@@ -237,13 +268,16 @@ function TileError({ message, onRetry }: { message: string; onRetry: () => void 
         onClick={onRetry}
         className="text-xs text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
       >
-        Retry
+        {t('retry')}
       </button>
     </div>
   );
 }
 
 export function NowPage() {
+  const { t, i18n } = useTranslation('now');
+  const locale = i18n.language;
+
   const { data: observation, units, loading: obsLoading, error: obsError, refetch: obsRefetch } = useRealtimeObservation();
   const { data: forecast, loading: fcLoading, error: fcError, refetch: fcRefetch } = useForecast();
   const { data: alerts, loading: alertLoading } = useAlerts();
@@ -279,17 +313,17 @@ export function NowPage() {
         {/* Current Conditions Hero — lg: 8-col primary */}
         <Card className="md:col-span-2 lg:col-span-8" aria-busy={obsLoading}>
           <CardHeader>
-            <h2 className="font-heading text-base leading-snug font-medium">Current Conditions</h2>
+            <h2 className="font-heading text-base leading-snug font-medium">{t('currentConditions')}</h2>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             {obsLoading ? (
               <>
-                <span className="sr-only" role="status">Loading current conditions…</span>
+                <span className="sr-only" role="status">{t('loading.currentConditions')}</span>
                 <TileSkeleton className="h-16 w-32" />
                 <TileSkeleton className="h-4 w-48" />
               </>
             ) : obsError ? (
-              <TileError message="Unable to load current conditions" onRetry={obsRefetch} />
+              <TileError message={t('error.currentConditions')} onRetry={obsRefetch} />
             ) : observation ? (
               <>
                 {/* aria-live="polite" scoped to just the observation values so SSE
@@ -298,18 +332,18 @@ export function NowPage() {
                   aria-live="polite"
                   aria-atomic="true"
                   className="text-7xl font-bold text-foreground leading-none font-[tabular-nums]"
-                  aria-label={`Current temperature: ${observation.outTemp} degrees ${units?.outTemp ?? '°F'}`}
+                  aria-label={t('temperature.ariaLabel', { temp: observation.outTemp, unit: units?.outTemp ?? '°F' })}
                 >
                   {observation.outTemp}
                   <span className="text-4xl font-normal text-muted-foreground ml-1">{units?.outTemp ?? '°F'}</span>
                 </div>
                 <p className="text-lg text-muted-foreground">Partly Cloudy</p>
                 <p className="text-sm text-muted-foreground">
-                  Feels like <span className="font-medium text-foreground font-[tabular-nums]">{observation.appTemp !== null ? `${observation.appTemp}°F` : 'N/A'}</span>
+                  {t('feelsLike')} <span className="font-medium text-foreground font-[tabular-nums]">{observation.appTemp !== null ? `${observation.appTemp}°F` : 'N/A'}</span>
                 </p>
               </>
             ) : (
-              <p className="text-muted-foreground text-sm">No observation data available.</p>
+              <p className="text-muted-foreground text-sm">{t('noData.observation')}</p>
             )}
           </CardContent>
         </Card>
@@ -317,50 +351,50 @@ export function NowPage() {
         {/* Today's Highlights — lg: 4-col sidebar */}
         <Card className="md:col-span-2 lg:col-span-4">
           <CardHeader>
-            <h2 className="font-heading text-base leading-snug font-medium">Today&apos;s Highlights</h2>
+            <h2 className="font-heading text-base leading-snug font-medium">{t('todaysHighlights')}</h2>
           </CardHeader>
           <CardContent>
             {obsLoading ? (
               <>
-                <span className="sr-only" role="status">Loading today&apos;s highlights…</span>
+                <span className="sr-only" role="status">{t('loading.highlights')}</span>
                 <TileSkeleton className="h-24" />
               </>
             ) : todayStats ? (
               <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm md:grid-cols-4 lg:grid-cols-2">
                 <div>
-                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">Today&apos;s High</dt>
+                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.todaysHigh')}</dt>
                   <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">{todayStats.high !== null ? `${todayStats.high}°F` : '—'}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">Today&apos;s Low</dt>
+                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.todaysLow')}</dt>
                   <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">{todayStats.low !== null ? `${todayStats.low}°F` : '—'}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">Peak Gust</dt>
+                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.peakGust')}</dt>
                   <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">{todayStats.peakGust} mph</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">Rain Today</dt>
+                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.rainToday')}</dt>
                   <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">{todayStats.rainSoFar} in</dd>
                 </div>
                 {todayStats.peakAQI > 0 && (
                   <div>
-                    <dt className="text-xs text-muted-foreground uppercase tracking-wide">Peak AQI</dt>
+                    <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.peakAqi')}</dt>
                     <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">
                       {todayStats.peakAQI}
-                      <span className="ml-1 text-xs font-normal text-muted-foreground">{aqiCategory(todayStats.peakAQI)}</span>
+                      <span className="ml-1 text-xs font-normal text-muted-foreground">{aqiCategory(todayStats.peakAQI, t)}</span>
                     </dd>
                   </div>
                 )}
                 {todayStats.recordsBrokenToday.length > 0 && (
                   <div className="col-span-2">
-                    <dt className="text-xs text-muted-foreground uppercase tracking-wide">Records Broken</dt>
+                    <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.recordsBroken')}</dt>
                     <dd className="mt-1 font-medium text-foreground">{todayStats.recordsBrokenToday.join(', ')}</dd>
                   </div>
                 )}
               </dl>
             ) : (
-              <p className="text-muted-foreground text-sm">No highlights available.</p>
+              <p className="text-muted-foreground text-sm">{t('noData.highlights')}</p>
             )}
           </CardContent>
         </Card>
@@ -368,20 +402,20 @@ export function NowPage() {
         {/* Wind Tile — lg: 4 cols */}
         <Card className="lg:col-span-4" aria-busy={obsLoading}>
           <CardHeader>
-            <h2 className="font-heading text-base leading-snug font-medium">Wind</h2>
+            <h2 className="font-heading text-base leading-snug font-medium">{t('wind')}</h2>
           </CardHeader>
           <CardContent>
             {obsLoading ? (
               <>
-                <span className="sr-only" role="status">Loading wind data…</span>
+                <span className="sr-only" role="status">{t('loading.wind')}</span>
                 <TileSkeleton className="h-32" />
               </>
             ) : obsError ? (
-              <TileError message="Unable to load wind data" onRetry={obsRefetch} />
+              <TileError message={t('error.wind')} onRetry={obsRefetch} />
             ) : observation ? (
-              <WindCompass windDir={windDir} windSpeed={windSpeed} windGust={windGust} />
+              <WindCompass windDir={windDir} windSpeed={windSpeed} windGust={windGust} t={t} />
             ) : (
-              <p className="text-muted-foreground text-sm">No wind data available.</p>
+              <p className="text-muted-foreground text-sm">{t('noData.wind')}</p>
             )}
           </CardContent>
         </Card>
@@ -389,62 +423,62 @@ export function NowPage() {
         {/* Station Observations — lg: 8 cols */}
         <Card className="md:col-span-2 lg:col-span-8" aria-busy={obsLoading}>
           <CardHeader>
-            <h2 className="font-heading text-base leading-snug font-medium">Station Observations</h2>
+            <h2 className="font-heading text-base leading-snug font-medium">{t('stationObservations')}</h2>
           </CardHeader>
           <CardContent>
             {obsLoading ? (
               <>
-                <span className="sr-only" role="status">Loading station observations…</span>
+                <span className="sr-only" role="status">{t('loading.stationObservations')}</span>
                 <TileSkeleton className="h-24" />
               </>
             ) : obsError ? (
-              <TileError message="Unable to load station observations" onRetry={obsRefetch} />
+              <TileError message={t('error.stationObservations')} onRetry={obsRefetch} />
             ) : observation ? (
               <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm md:grid-cols-4">
                 <div>
-                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">Barometer</dt>
+                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('observations.barometer')}</dt>
                   <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">
                     {observation.barometer !== null ? `${observation.barometer} inHg` : 'N/A'}
-                    <span role="img" className="ml-1 text-muted-foreground" aria-label={`Trend: ${barometerTrendArrow(observation.barometerTrend) === '↑' ? 'rising' : barometerTrendArrow(observation.barometerTrend) === '↓' ? 'falling' : 'steady'}`}>
+                    <span role="img" className="ml-1 text-muted-foreground" aria-label={t('barometer.trendAriaLabel', { trend: barometerTrendLabel(observation.barometerTrend, t) })}>
                       {barometerTrendArrow(observation.barometerTrend)}
                     </span>
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">Dewpoint</dt>
+                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('observations.dewpoint')}</dt>
                   <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.dewpoint !== null ? `${observation.dewpoint}°F` : 'N/A'}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">Humidity</dt>
+                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('observations.humidity')}</dt>
                   <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.outHumidity !== null ? `${observation.outHumidity}%` : 'N/A'}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">Rain</dt>
+                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('observations.rain')}</dt>
                   <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.rain !== null ? `${observation.rain} in` : 'N/A'}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">Heat Index</dt>
+                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('observations.heatIndex')}</dt>
                   <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">
                     {observation.heatindex !== null ? `${observation.heatindex}°F` : 'N/A'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">Wind Chill</dt>
+                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('observations.windChill')}</dt>
                   <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">
                     {observation.windchill !== null ? `${observation.windchill}°F` : 'N/A'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">Solar Radiation</dt>
+                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('observations.solarRadiation')}</dt>
                   <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.radiation !== null ? `${observation.radiation} W/m²` : 'N/A'}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">UV Index</dt>
+                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('observations.uvIndex')}</dt>
                   <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.UV !== null ? observation.UV : 'N/A'}</dd>
                 </div>
               </dl>
             ) : (
-              <p className="text-muted-foreground text-sm">No observation data available.</p>
+              <p className="text-muted-foreground text-sm">{t('noData.observation')}</p>
             )}
           </CardContent>
         </Card>
@@ -452,31 +486,31 @@ export function NowPage() {
         {/* Sun & Moon — lg: 4 cols */}
         <Card className="lg:col-span-4" aria-busy={almLoading}>
           <CardHeader>
-            <h2 className="font-heading text-base leading-snug font-medium">Sun &amp; Moon</h2>
+            <h2 className="font-heading text-base leading-snug font-medium">{t('sunAndMoon')}</h2>
           </CardHeader>
           <CardContent className="flex flex-col gap-3 text-sm">
             {almLoading ? (
               <>
-                <span className="sr-only" role="status">Loading sun and moon data…</span>
+                <span className="sr-only" role="status">{t('loading.sunMoon')}</span>
                 <TileSkeleton className="h-20" />
               </>
             ) : almError ? (
-              <TileError message="Unable to load almanac data" onRetry={almRefetch} />
+              <TileError message={t('error.almanac')} onRetry={almRefetch} />
             ) : almanac ? (
               <>
                 <div className="flex items-center gap-2">
                   <Sunrise aria-hidden="true" className="h-4 w-4 text-amber-500 shrink-0" />
-                  <span className="text-muted-foreground">Sunrise</span>
-                  <span className="ml-auto font-medium text-foreground">{formatLocalTime(almanac.sun.rise, tz)}</span>
+                  <span className="text-muted-foreground">{t('sunMoon.sunrise')}</span>
+                  <span className="ml-auto font-medium text-foreground">{formatLocalTime(almanac.sun.rise, tz, locale)}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Sunset aria-hidden="true" className="h-4 w-4 text-amber-600 shrink-0" />
-                  <span className="text-muted-foreground">Sunset</span>
-                  <span className="ml-auto font-medium text-foreground">{formatLocalTime(almanac.sun.set, tz)}</span>
+                  <span className="text-muted-foreground">{t('sunMoon.sunset')}</span>
+                  <span className="ml-auto font-medium text-foreground">{formatLocalTime(almanac.sun.set, tz, locale)}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Moon aria-hidden="true" className="h-4 w-4 text-blue-400 shrink-0" />
-                  <span className="text-muted-foreground">Moon</span>
+                  <span className="text-muted-foreground">{t('sunMoon.moon')}</span>
                   <span className="ml-auto text-right font-medium text-foreground">
                     {formatPhaseName(almanac.moon.phaseName)}
                     <span className="ml-1 text-xs font-normal text-muted-foreground">{almanac.moon.illuminationPercent}% lit</span>
@@ -484,7 +518,7 @@ export function NowPage() {
                 </div>
               </>
             ) : (
-              <p className="text-muted-foreground text-sm">No almanac data available.</p>
+              <p className="text-muted-foreground text-sm">{t('noData.observation')}</p>
             )}
           </CardContent>
         </Card>
@@ -492,24 +526,25 @@ export function NowPage() {
         {/* AQI Tile — lg: 4 cols */}
         <Card className="lg:col-span-4" aria-busy={aqiLoading}>
           <CardHeader>
-            <h2 className="font-heading text-base leading-snug font-medium">Air Quality</h2>
+            <h2 className="font-heading text-base leading-snug font-medium">{t('airQuality')}</h2>
           </CardHeader>
           <CardContent>
             {aqiLoading ? (
               <>
-                <span className="sr-only" role="status">Loading air quality data…</span>
+                <span className="sr-only" role="status">{t('loading.airQuality')}</span>
                 <TileSkeleton className="h-24" />
               </>
             ) : aqiError ? (
-              <TileError message="Unable to load air quality data" onRetry={aqiRefetch} />
+              <TileError message={t('error.airQuality')} onRetry={aqiRefetch} />
             ) : aqi ? (
               <AqiGauge
                 aqi={aqi.aqi ?? 0}
                 category={aqi.aqiCategory}
                 pollutant={aqi.aqiMainPollutant}
+                t={t}
               />
             ) : (
-              <p className="text-sm text-muted-foreground">No air quality provider configured.</p>
+              <p className="text-sm text-muted-foreground">{t('noData.airQuality')}</p>
             )}
           </CardContent>
         </Card>
@@ -517,26 +552,26 @@ export function NowPage() {
         {/* Lightning Tile — lg: 4 cols */}
         <Card className="lg:col-span-4">
           <CardHeader>
-            <h2 className="font-heading text-base leading-snug font-medium">Lightning</h2>
+            <h2 className="font-heading text-base leading-snug font-medium">{t('lightning')}</h2>
           </CardHeader>
           <CardContent className="flex flex-col gap-2 text-sm">
             {obsLoading ? (
               <>
-                <span className="sr-only" role="status">Loading lightning data…</span>
+                <span className="sr-only" role="status">{t('loading.lightning')}</span>
                 <TileSkeleton className="h-16" />
               </>
             ) : lightning ? (
               <>
                 <div className="flex items-center gap-2">
                   <Zap aria-hidden="true" className="h-5 w-5 text-yellow-500 shrink-0" />
-                  <span className="font-medium text-foreground font-[tabular-nums]">{lightning.count1h} strikes in last hour</span>
+                  <span className="font-medium text-foreground font-[tabular-nums]">{t('lightning.strikesLastHour', { count: lightning.count1h })}</span>
                 </div>
-                <p className="text-muted-foreground font-[tabular-nums]">{lightning.count24h} in last 24h</p>
-                <p className="text-muted-foreground font-[tabular-nums]">Nearest: {lightning.nearestDistanceKm} km</p>
-                <p className="text-muted-foreground">Last strike: {lightning.lastStrikeTime ? formatRelativeTime(lightning.lastStrikeTime) : 'Unknown'}</p>
+                <p className="text-muted-foreground font-[tabular-nums]">{t('lightning.strikesLast24h', { count: lightning.count24h })}</p>
+                <p className="text-muted-foreground font-[tabular-nums]">{t('lightning.nearest', { distance: lightning.nearestDistanceKm })}</p>
+                <p className="text-muted-foreground">{t('lightning.lastStrike', { time: lightning.lastStrikeTime ? formatRelativeTime(lightning.lastStrikeTime, locale) : t('lightning.lastStrikeUnknown') })}</p>
               </>
             ) : (
-              <p className="text-muted-foreground text-sm">No lightning sensor configured.</p>
+              <p className="text-muted-foreground text-sm">{t('noData.lightning')}</p>
             )}
           </CardContent>
         </Card>
@@ -544,31 +579,31 @@ export function NowPage() {
         {/* Earthquake Tile — lg: 4 cols */}
         <Card className="lg:col-span-4" aria-busy={eqLoading}>
           <CardHeader>
-            <h2 className="font-heading text-base leading-snug font-medium">Recent Earthquake</h2>
+            <h2 className="font-heading text-base leading-snug font-medium">{t('recentEarthquake')}</h2>
           </CardHeader>
           <CardContent className="flex flex-col gap-2 text-sm">
             {eqLoading ? (
               <>
-                <span className="sr-only" role="status">Loading earthquake data…</span>
+                <span className="sr-only" role="status">{t('loading.earthquake')}</span>
                 <TileSkeleton className="h-16" />
               </>
             ) : eqError ? (
-              <TileError message="Unable to load earthquake data" onRetry={eqRefetch} />
+              <TileError message={t('error.earthquake')} onRetry={eqRefetch} />
             ) : firstQuake ? (
               <>
                 <div className="flex items-center gap-2">
                   <Activity aria-hidden="true" className="h-5 w-5 text-muted-foreground shrink-0" />
                   <span className="font-medium text-foreground font-[tabular-nums]">
-                    M{firstQuake.magnitude} — {firstQuake.place}
+                    {t('earthquake.magnitude', { magnitude: firstQuake.magnitude, place: firstQuake.place })}
                   </span>
                 </div>
-                <p className="text-muted-foreground">{formatRelativeTime(firstQuake.time)}</p>
+                <p className="text-muted-foreground">{formatRelativeTime(firstQuake.time, locale)}</p>
                 {firstQuake.depth !== null && (
-                  <p className="text-muted-foreground font-[tabular-nums]">Depth: {firstQuake.depth} km</p>
+                  <p className="text-muted-foreground font-[tabular-nums]">{t('earthquake.depth', { depth: firstQuake.depth })}</p>
                 )}
               </>
             ) : (
-              <p className="text-muted-foreground text-sm">No recent earthquakes in configured radius.</p>
+              <p className="text-muted-foreground text-sm">{t('noData.earthquake')}</p>
             )}
           </CardContent>
         </Card>
@@ -576,31 +611,31 @@ export function NowPage() {
         {/* Today's Forecast Card — lg: 6 cols */}
         <Card className="md:col-span-2 lg:col-span-6" aria-busy={fcLoading}>
           <CardHeader>
-            <h2 className="font-heading text-base leading-snug font-medium">Today&apos;s Forecast</h2>
+            <h2 className="font-heading text-base leading-snug font-medium">{t('todaysForecast')}</h2>
           </CardHeader>
           <CardContent className="flex flex-col gap-2 text-sm">
             {fcLoading ? (
               <>
-                <span className="sr-only" role="status">Loading forecast…</span>
+                <span className="sr-only" role="status">{t('loading.forecast')}</span>
                 <TileSkeleton className="h-16" />
               </>
             ) : fcError ? (
-              <TileError message="Unable to load forecast" onRetry={fcRefetch} />
+              <TileError message={t('error.forecast')} onRetry={fcRefetch} />
             ) : todayForecast ? (
               <>
                 <p className="text-foreground font-medium">{todayForecast.weatherText}</p>
                 <p className="text-muted-foreground font-[tabular-nums]">
-                  Hi {todayForecast.tempMax}° / Lo {todayForecast.tempMin}°
+                  {t('forecast.hiLo', { high: todayForecast.tempMax, low: todayForecast.tempMin })}
                 </p>
                 {todayForecast.precipProbabilityMax !== null && (
-                  <p className="text-muted-foreground">{todayForecast.precipProbabilityMax}% chance of precipitation</p>
+                  <p className="text-muted-foreground">{t('forecast.precipChance', { percent: todayForecast.precipProbabilityMax })}</p>
                 )}
                 {todayForecast.narrative && (
                   <p className="text-muted-foreground leading-relaxed">{todayForecast.narrative}</p>
                 )}
               </>
             ) : (
-              <p className="text-muted-foreground">No forecast data available.</p>
+              <p className="text-muted-foreground">{t('noData.forecast')}</p>
             )}
           </CardContent>
         </Card>
@@ -608,7 +643,7 @@ export function NowPage() {
         {/* Chart Panel — placeholder, NO Recharts import */}
         <Card className="md:col-span-2 lg:col-span-6">
           <CardHeader>
-            <h2 className="font-heading text-base leading-snug font-medium">Temperature Trend</h2>
+            <h2 className="font-heading text-base leading-snug font-medium">{t('temperatureTrend')}</h2>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <div
@@ -636,7 +671,7 @@ export function NowPage() {
               to="/charts"
               className="text-sm text-primary underline-offset-4 hover:underline focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded self-start"
             >
-              View Charts →
+              {t('viewCharts')}
             </Link>
           </CardContent>
         </Card>
