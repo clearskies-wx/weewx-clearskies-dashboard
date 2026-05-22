@@ -8,6 +8,7 @@ import {
   CloudLightning,
 } from 'lucide-react';
 import type { ComponentType } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertBanner } from '../components/shared/alert-banner';
 import {
   Card,
@@ -29,25 +30,24 @@ function weatherCodeIcon(code: string | null): ComponentType<{ className?: strin
   return Cloud;
 }
 
-function formatHour(isoString: string, timeZone: string): string {
-  return new Intl.DateTimeFormat('en-US', {
+function formatHour(isoString: string, timeZone: string, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
     hour: 'numeric',
     hour12: true,
     timeZone,
   }).format(new Date(isoString));
 }
 
-function formatDayName(isoDate: string, index: number): string {
-  if (index === 0) return 'Today';
+function formatDayName(isoDate: string, locale: string): string {
   const d = new Date(isoDate + 'T12:00:00Z');
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(locale, {
     weekday: 'long',
     timeZone: 'UTC',
   }).format(d);
 }
 
-function formatRelativeTime(isoString: string): string {
-  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+function formatRelativeTime(isoString: string, locale: string): string {
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
   const diffMs = new Date(isoString).getTime() - Date.now();
   const diffMin = Math.round(diffMs / 60000);
   const diffHr = Math.round(diffMin / 60);
@@ -67,6 +67,7 @@ function TileSkeleton({ className }: { className?: string }) {
 }
 
 function TileError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  const { t: tc } = useTranslation('common');
   return (
     <div role="alert" className="flex flex-col gap-2 items-start text-sm">
       <p className="text-destructive">{message}</p>
@@ -75,50 +76,52 @@ function TileError({ message, onRetry }: { message: string; onRetry: () => void 
         onClick={onRetry}
         className="text-xs text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
       >
-        Retry
+        {tc('retry')}
       </button>
     </div>
   );
 }
 
 export function ForecastPage() {
+  const { t, i18n } = useTranslation('forecast');
   const { data: forecast, loading: fcLoading, error: fcError, refetch: fcRefetch } = useForecast();
   const { data: station } = useStation();
   const { data: alerts, loading: alertLoading } = useAlerts();
   const tz = station?.timezone ?? 'UTC';
+  const locale = i18n.language;
 
   return (
     <div className="flex flex-col gap-6 max-w-4xl mx-auto">
-      <h1 className="sr-only">Forecast</h1>
+      <h1 className="sr-only">{t('title')}</h1>
 
       {!alertLoading && alerts && <AlertBanner alerts={alerts} />}
 
       {/* Hourly Forecast Strip */}
       <section aria-labelledby="hourly-heading" aria-busy={fcLoading}>
-        <h2 id="hourly-heading" className="text-lg font-semibold text-foreground mb-3">Next 12 Hours</h2>
+        <h2 id="hourly-heading" className="text-lg font-semibold text-foreground mb-3">{t('next12Hours')}</h2>
         {fcLoading ? (
           <>
-            <span className="sr-only" role="status">Loading hourly forecast…</span>
+            <span className="sr-only" role="status">{t('loadingHourly')}</span>
             <TileSkeleton className="h-28" />
           </>
         ) : fcError ? (
-          <TileError message="Unable to load forecast" onRetry={fcRefetch} />
+          <TileError message={t('unableToLoad')} onRetry={fcRefetch} />
         ) : forecast && forecast.hourly.length > 0 ? (
           <div className="relative">
             <div
               className="overflow-x-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg"
               tabIndex={0}
-              aria-label="Hourly forecast — scroll to see more"
+              aria-label={t('ariaHourlyScroll')}
               style={{ scrollSnapType: 'x mandatory' }}
             >
             <div
               role="list"
-              aria-label="Hourly forecast"
+              aria-label={t('ariaHourlyList')}
               className="flex gap-2 pb-2 min-w-max"
             >
               {forecast.hourly.map((hour) => {
                 const Icon = weatherCodeIcon(hour.weatherCode);
-                const hourLabel = formatHour(hour.validTime, tz);
+                const hourLabel = formatHour(hour.validTime, tz, locale);
                 return (
                   <div
                     key={hour.validTime}
@@ -153,16 +156,16 @@ export function ForecastPage() {
             />
           </div>
         ) : (
-          <p className="text-muted-foreground text-sm">No hourly forecast data available.</p>
+          <p className="text-muted-foreground text-sm">{t('noHourlyData')}</p>
         )}
       </section>
 
       {/* 7-Day Daily Forecast */}
       <section aria-labelledby="daily-heading" aria-busy={fcLoading}>
-        <h2 id="daily-heading" className="text-lg font-semibold text-foreground mb-3">7-Day Forecast</h2>
+        <h2 id="daily-heading" className="text-lg font-semibold text-foreground mb-3">{t('sevenDayForecast')}</h2>
         {fcLoading ? (
           <>
-            <span className="sr-only" role="status">Loading daily forecast…</span>
+            <span className="sr-only" role="status">{t('loadingDaily')}</span>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
               {Array.from({ length: 4 }).map((_, i) => (
                 <TileSkeleton key={i} className="h-36" />
@@ -173,11 +176,11 @@ export function ForecastPage() {
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
             {forecast.daily.map((day, index) => {
               const Icon = weatherCodeIcon(day.weatherCode);
-              const dayName = formatDayName(day.validDate, index);
+              const dayName = index === 0 ? t('today') : formatDayName(day.validDate, locale);
               return (
                 <article
                   key={day.validDate}
-                  aria-label={`${dayName} forecast`}
+                  aria-label={t('ariaDayForecast', { day: dayName })}
                 >
                   <Card>
                     <CardHeader>
@@ -195,12 +198,12 @@ export function ForecastPage() {
                       </div>
                       {day.precipProbabilityMax !== null && (
                         <p className="text-blue-600 dark:text-blue-400 font-[tabular-nums]">
-                          {day.precipProbabilityMax}% precip
+                          {t('percentPrecip', { pct: day.precipProbabilityMax })}
                         </p>
                       )}
                       {day.windSpeedMax !== null && (
                         <p className="text-muted-foreground font-[tabular-nums]">
-                          Wind up to {day.windSpeedMax} mph
+                          {t('windUpTo', { speed: day.windSpeedMax })}
                         </p>
                       )}
                     </CardContent>
@@ -210,14 +213,14 @@ export function ForecastPage() {
             })}
           </div>
         ) : (
-          <p className="text-muted-foreground text-sm">No daily forecast data available.</p>
+          <p className="text-muted-foreground text-sm">{t('noDailyData')}</p>
         )}
       </section>
 
       {/* Forecast Freshness Indicator */}
       {forecast && (
         <p className="text-xs text-muted-foreground text-right">
-          Updated {formatRelativeTime(forecast.generatedAt)}
+          {t('updated', { time: formatRelativeTime(forecast.generatedAt, locale) })}
         </p>
       )}
     </div>

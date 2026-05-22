@@ -1,1 +1,37 @@
-﻿{}
+{
+  "title": "Charts",
+  "tabs": {
+    "homepage": "Homepage",
+    "averageclimate": "Average Climate",
+    "monthly": "Monthly",
+    "annual": "Annual"
+  },
+  "tabsPanelHeadings": {
+    "averageclimate": "Average Climate Charts",
+    "monthly": "Monthly Charts",
+    "annual": "Annual Charts"
+  },
+  "ranges": {
+    "1d": "1d",
+    "3d": "3d",
+    "7d": "7d",
+    "30d": "30d",
+    "90d": "90d"
+  },
+  "ariaTabGroupLabel": "Chart group selection",
+  "ariaRangeGroupLabel": "Time range selection",
+  "temperatureCardHeading": "Temperature — Last {{range}}",
+  "showChart": "Show chart",
+  "showDataTable": "Show data table",
+  "loadingChart": "Loading chart data…",
+  "unableToLoad": "Unable to load chart data",
+  "tableCaption": "Temperature readings over the selected range",
+  "tableHeaderTime": "Time",
+  "tableHeaderTemperature": "Temperature (°F)",
+  "ariaChartFigure": "Temperature over the last {{range}}",
+  "seriesTemperature": "Temperature",
+  "noData": "No chart data available for this range.",
+  "comingSoonAverageClimate": "Coming soon — Average Climate charts will be available when historical data is connected.",
+  "comingSoonMonthly": "Coming soon — Monthly charts will be available when historical data is connected.",
+  "comingSoonAnnual": "Coming soon — Annual charts will be available when historical data is connected."
+}

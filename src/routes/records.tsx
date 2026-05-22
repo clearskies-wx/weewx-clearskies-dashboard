@@ -2,6 +2,7 @@
 // Semantic <table> with <thead>/<tbody>/<th scope> per coding §5.2.
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Card,
   CardHeader,
@@ -10,9 +11,9 @@ import {
 } from '../components/ui/card';
 import { useRecords } from '../hooks/useWeatherData';
 
-function formatDate(isoString: string | null): string {
+function formatDate(isoString: string | null, locale: string): string {
   if (!isoString) return '—';
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(locale, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -32,6 +33,7 @@ function TileSkeleton({ className }: { className?: string }) {
 }
 
 function TileError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  const { t: tc } = useTranslation('common');
   return (
     <div role="alert" className="flex flex-col gap-2 items-start text-sm">
       <p className="text-destructive">{message}</p>
@@ -40,22 +42,24 @@ function TileError({ message, onRetry }: { message: string; onRetry: () => void 
         onClick={onRetry}
         className="text-xs text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
       >
-        Retry
+        {tc('retry')}
       </button>
     </div>
   );
 }
 
 export function RecordsPage() {
+  const { t, i18n } = useTranslation('records');
+  const locale = i18n.language;
   const [period, setPeriod] = useState<Period>('all-time');
   const { data: records, units, loading, error, refetch } = useRecords(period);
 
   return (
     <div className="flex flex-col gap-6 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-foreground">Records</h1>
+      <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
 
       {/* Period selector */}
-      <div className="flex gap-2" role="group" aria-label="Records period">
+      <div className="flex gap-2" role="group" aria-label={t('ariaPeriodGroup')}>
         <button
           type="button"
           aria-pressed={period === 'all-time'}
@@ -68,7 +72,7 @@ export function RecordsPage() {
               : 'bg-muted text-foreground hover:bg-muted/70',
           ].join(' ')}
         >
-          All-Time
+          {t('periodAllTime')}
         </button>
         <button
           type="button"
@@ -82,7 +86,7 @@ export function RecordsPage() {
               : 'bg-muted text-foreground hover:bg-muted/70',
           ].join(' ')}
         >
-          Year-to-Date
+          {t('periodYearToDate')}
         </button>
       </div>
 
@@ -90,21 +94,20 @@ export function RecordsPage() {
       <Card>
         <CardContent className="pt-4 pb-4">
           <p className="text-sm text-muted-foreground leading-relaxed bg-muted/30 rounded-md px-3 py-2">
-            Station operators can add custom notes about their records here via the Clear Skies
-            configuration UI.
+            {t('operatorNotePlaceholder')}
           </p>
         </CardContent>
       </Card>
 
       {loading && (
         <>
-          <span className="sr-only" role="status">Loading records…</span>
+          <span className="sr-only" role="status">{t('loadingRecords')}</span>
           <TileSkeleton className="h-48" />
           <TileSkeleton className="h-48" />
         </>
       )}
 
-      {error && <TileError message="Unable to load records" onRetry={refetch} />}
+      {error && <TileError message={t('unableToLoad')} onRetry={refetch} />}
 
       {!loading && !error && records && (
         <>
@@ -112,21 +115,21 @@ export function RecordsPage() {
           {Object.entries(records.sections).map(([section, entries]) => (
             <Card key={section}>
               <CardHeader>
-                <CardTitle as="h2" className="capitalize">{section} Records</CardTitle>
+                <CardTitle as="h2" className="capitalize">{t('sectionHeading', { section })}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm" aria-label={`${section} records`}>
+                  <table className="w-full text-sm" aria-label={t('sectionHeading', { section })}>
                     <thead>
                       <tr className="border-b border-border">
                         <th scope="col" className="pb-2 text-left font-semibold text-foreground pr-4">
-                          Record
+                          {t('tableHeaderRecord')}
                         </th>
                         <th scope="col" className="pb-2 text-right font-semibold text-foreground pr-4">
-                          Value
+                          {t('tableHeaderValue')}
                         </th>
                         <th scope="col" className="pb-2 text-right font-semibold text-foreground">
-                          Date Observed
+                          {t('tableHeaderDateObserved')}
                         </th>
                       </tr>
                     </thead>
@@ -141,10 +144,10 @@ export function RecordsPage() {
                             {entry.brokenInLast30Days && (
                               <span
                                 className="ml-2 inline-block rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
-                                title="Broken in the last 30 days"
-                                aria-label="Recently broken record"
+                                title={t('badgeNewTitle')}
+                                aria-label={t('badgeNewAriaLabel')}
                               >
-                                New
+                                {t('badgeNew')}
                               </span>
                             )}
                           </td>
@@ -157,7 +160,7 @@ export function RecordsPage() {
                               : '—'}
                           </td>
                           <td className="py-2.5 text-right text-muted-foreground">
-                            {formatDate(entry.observedAt)}
+                            {formatDate(entry.observedAt, locale)}
                           </td>
                         </tr>
                       ))}
@@ -171,7 +174,7 @@ export function RecordsPage() {
           {Object.keys(records.sections).length === 0 && (
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">
-                No records available for this period.
+                {t('noData')}
               </CardContent>
             </Card>
           )}

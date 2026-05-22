@@ -1,1 +1,22 @@
-﻿{}
+{
+  "title": "Earthquakes",
+  "loadingData": "Loading earthquake data…",
+  "unableToLoad": "Unable to load earthquake data",
+  "noRecentQuakes": "No recent earthquakes in the configured radius.",
+  "ariaRecentList": "Recent earthquakes",
+  "ariaMagnitude": "Magnitude {{mag}}",
+  "unknownLocation": "Unknown location",
+  "depth": "Depth: {{depth}} km",
+  "source": "Source: {{source}}",
+  "feltBy_one": "Felt by {{count}} person",
+  "feltBy_other": "Felt by {{count}} people",
+  "mmi": "MMI: {{mmi}}",
+  "tsunamiWatch": "Tsunami watch",
+  "pager": "PAGER: {{level}}",
+  "mapCardTitle": "Earthquake Map",
+  "mapPlaceholder": "Interactive map requires Leaflet — available when map provider is configured.",
+  "configCardTitle": "Configuration",
+  "configRadius": "Radius",
+  "configProvider": "Provider",
+  "configHelperText": "Configure earthquake settings in the Clear Skies configuration UI."
+}

@@ -1,1 +1,17 @@
-﻿{}
+{
+  "title": "Forecast",
+  "next12Hours": "Next 12 Hours",
+  "sevenDayForecast": "7-Day Forecast",
+  "today": "Today",
+  "loadingHourly": "Loading hourly forecast…",
+  "loadingDaily": "Loading daily forecast…",
+  "unableToLoad": "Unable to load forecast",
+  "noHourlyData": "No hourly forecast data available.",
+  "noDailyData": "No daily forecast data available.",
+  "percentPrecip": "{{pct}}% precip",
+  "windUpTo": "Wind up to {{speed}} mph",
+  "updated": "Updated {{time}}",
+  "ariaHourlyScroll": "Hourly forecast — scroll to see more",
+  "ariaHourlyList": "Hourly forecast",
+  "ariaDayForecast": "{{day}} forecast"
+}

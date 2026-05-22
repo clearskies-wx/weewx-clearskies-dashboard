@@ -1,1 +1,17 @@
-﻿{}
+{
+  "title": "Records",
+  "ariaPeriodGroup": "Records period",
+  "periodAllTime": "All-Time",
+  "periodYearToDate": "Year-to-Date",
+  "loadingRecords": "Loading records…",
+  "unableToLoad": "Unable to load records",
+  "sectionHeading": "{{section}} Records",
+  "tableHeaderRecord": "Record",
+  "tableHeaderValue": "Value",
+  "tableHeaderDateObserved": "Date Observed",
+  "badgeNew": "New",
+  "badgeNewTitle": "Broken in the last 30 days",
+  "badgeNewAriaLabel": "Recently broken record",
+  "noData": "No records available for this period.",
+  "operatorNotePlaceholder": "Station operators can add custom notes about their records here via the Clear Skies configuration UI."
+}

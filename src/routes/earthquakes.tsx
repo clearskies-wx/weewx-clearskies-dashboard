@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import {
   Card,
   CardHeader,
@@ -7,8 +8,8 @@ import {
 import type { EarthquakeRecord } from '../api/types';
 import { useEarthquakes, useStation } from '../hooks/useWeatherData';
 
-function formatTime(isoString: string, timeZone: string): string {
-  return new Intl.DateTimeFormat('en-US', {
+function formatTime(isoString: string, timeZone: string, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -51,6 +52,7 @@ function TileSkeleton({ className }: { className?: string }) {
 }
 
 function TileError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  const { t: tc } = useTranslation('common');
   return (
     <div role="alert" className="flex flex-col gap-2 items-start text-sm">
       <p className="text-destructive">{message}</p>
@@ -59,39 +61,41 @@ function TileError({ message, onRetry }: { message: string; onRetry: () => void 
         onClick={onRetry}
         className="text-xs text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
       >
-        Retry
+        {tc('retry')}
       </button>
     </div>
   );
 }
 
 export function EarthquakesPage() {
+  const { t, i18n } = useTranslation('earthquakes');
+  const locale = i18n.language;
   const { data: earthquakes, loading, error, refetch } = useEarthquakes();
   const { data: station } = useStation();
 
   return (
     <div className="flex flex-col gap-6 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-foreground">Earthquakes</h1>
+      <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
 
       {loading && (
         <>
-          <span className="sr-only" role="status">Loading earthquake data…</span>
+          <span className="sr-only" role="status">{t('loadingData')}</span>
           <TileSkeleton className="h-32" />
           <TileSkeleton className="h-32" />
         </>
       )}
 
-      {error && <TileError message="Unable to load earthquake data" onRetry={refetch} />}
+      {error && <TileError message={t('unableToLoad')} onRetry={refetch} />}
 
       {!loading && !error && earthquakes !== null && (
         earthquakes.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center text-muted-foreground">
-              No recent earthquakes in the configured radius.
+              {t('noRecentQuakes')}
             </CardContent>
           </Card>
         ) : (
-          <ul className="flex flex-col gap-4" role="list" aria-label="Recent earthquakes">
+          <ul className="flex flex-col gap-4" role="list" aria-label={t('ariaRecentList')}>
             {earthquakes.map((quake) => {
               const { bg, text } = magnitudeClasses(quake.magnitude);
               return (
@@ -101,7 +105,7 @@ export function EarthquakesPage() {
                       <div className="flex items-start gap-4">
                         <div
                           className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg ${bg}`}
-                          aria-label={`Magnitude ${quake.magnitude}`}
+                          aria-label={t('ariaMagnitude', { mag: quake.magnitude })}
                         >
                           <span className={`text-xs leading-none ${text}`}>M</span>
                           <span
@@ -114,7 +118,7 @@ export function EarthquakesPage() {
 
                         <div className="flex flex-col gap-1 min-w-0">
                           <p className="font-semibold text-foreground leading-snug">
-                            {quake.place ?? 'Unknown location'}
+                            {quake.place ?? t('unknownLocation')}
                             {quake.magnitudeType && (
                               <span className="ml-1.5 text-xs font-normal text-muted-foreground">
                                 ({quake.magnitudeType.toLowerCase()})
@@ -122,37 +126,37 @@ export function EarthquakesPage() {
                             )}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {formatTime(quake.time, station?.timezone ?? 'UTC')}
+                            {formatTime(quake.time, station?.timezone ?? 'UTC', locale)}
                           </p>
                           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1">
                             {quake.depth !== null && (
-                              <span>Depth: {quake.depth} km</span>
+                              <span>{t('depth', { depth: quake.depth })}</span>
                             )}
-                            <span>Source: {quake.source.toUpperCase()}</span>
+                            <span>{t('source', { source: quake.source.toUpperCase() })}</span>
                           </div>
 
                           {/* Additional fields: felt, mmi, tsunami, alert */}
                           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs mt-1">
                             {quake.felt !== null && (
                               <span className="text-muted-foreground">
-                                Felt by {quake.felt} {quake.felt === 1 ? 'person' : 'people'}
+                                {t('feltBy', { count: quake.felt })}
                               </span>
                             )}
                             {quake.mmi !== null && (
                               <span className="text-muted-foreground" style={{ fontFeatureSettings: '"tnum"' }}>
-                                MMI: {quake.mmi.toFixed(1)}
+                                {t('mmi', { mmi: quake.mmi.toFixed(1) })}
                               </span>
                             )}
                             {quake.tsunami && (
                               <span className="font-medium text-amber-800 dark:text-amber-300">
-                                Tsunami watch
+                                {t('tsunamiWatch')}
                               </span>
                             )}
                             {quake.alert !== null && (
                               <span
                                 className={`inline-block rounded px-1.5 py-0.5 font-medium capitalize ${alertClasses(quake.alert)}`}
                               >
-                                PAGER: {quake.alert}
+                                {t('pager', { level: quake.alert })}
                               </span>
                             )}
                           </div>
@@ -170,12 +174,12 @@ export function EarthquakesPage() {
       {/* Map placeholder — Leaflet not loaded at mock phase */}
       <Card>
         <CardHeader>
-          <CardTitle as="h2">Earthquake Map</CardTitle>
+          <CardTitle as="h2">{t('mapCardTitle')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="border-dashed border-2 border-border rounded-lg h-48 flex items-center justify-center">
             <p className="text-sm text-muted-foreground text-center px-4">
-              Interactive map requires Leaflet — available when map provider is configured.
+              {t('mapPlaceholder')}
             </p>
           </div>
         </CardContent>
@@ -184,21 +188,21 @@ export function EarthquakesPage() {
       {/* Configuration summary */}
       <Card>
         <CardHeader>
-          <CardTitle as="h2">Configuration</CardTitle>
+          <CardTitle as="h2">{t('configCardTitle')}</CardTitle>
         </CardHeader>
         <CardContent>
           <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
             <div>
-              <dt className="text-muted-foreground">Radius</dt>
+              <dt className="text-muted-foreground">{t('configRadius')}</dt>
               <dd className="font-medium text-foreground mt-0.5">100 km</dd>
             </div>
             <div>
-              <dt className="text-muted-foreground">Provider</dt>
+              <dt className="text-muted-foreground">{t('configProvider')}</dt>
               <dd className="font-medium text-foreground mt-0.5">USGS</dd>
             </div>
           </dl>
           <p className="mt-3 text-xs text-muted-foreground">
-            Configure earthquake settings in the Clear Skies configuration UI.
+            {t('configHelperText')}
           </p>
         </CardContent>
       </Card>

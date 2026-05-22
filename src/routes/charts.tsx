@@ -9,15 +9,16 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import { useTranslation } from 'react-i18next';
 import { Card, CardHeader, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { useArchive, useStation } from '../hooks/useWeatherData';
 
 const TABS = [
-  { id: 'homepage', label: 'Homepage' },
-  { id: 'averageclimate', label: 'Average Climate' },
-  { id: 'monthly', label: 'Monthly' },
-  { id: 'annual', label: 'Annual' },
+  { id: 'homepage' },
+  { id: 'averageclimate' },
+  { id: 'monthly' },
+  { id: 'annual' },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
@@ -39,8 +40,8 @@ function rangeToFromParam(range: RangeId): string {
   return from.toISOString();
 }
 
-function formatXAxisHour(isoString: string, timeZone: string): string {
-  return new Intl.DateTimeFormat('en-US', {
+function formatXAxisHour(isoString: string, timeZone: string, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
     hour: 'numeric',
     hour12: true,
     timeZone,
@@ -74,6 +75,7 @@ function TileSkeleton({ className }: { className?: string }) {
 }
 
 function TileError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  const { t: tc } = useTranslation('common');
   return (
     <div role="alert" className="flex flex-col gap-2 items-start text-sm">
       <p className="text-destructive">{message}</p>
@@ -82,15 +84,17 @@ function TileError({ message, onRetry }: { message: string; onRetry: () => void 
         onClick={onRetry}
         className="text-xs text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
       >
-        Retry
+        {tc('retry')}
       </button>
     </div>
   );
 }
 
 export function ChartsPage() {
+  const { t, i18n } = useTranslation('charts');
   const { data: station } = useStation();
   const tz = station?.timezone ?? 'UTC';
+  const locale = i18n.language;
   const [activeTab, setActiveTab] = useState<TabId>('homepage');
   const [activeRange, setActiveRange] = useState<RangeId>('1d');
   const [showTable, setShowTable] = useState(false);
@@ -152,14 +156,14 @@ export function ChartsPage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-4xl mx-auto">
-      <h1 className="sr-only">Charts</h1>
+      <h1 className="sr-only">{t('title')}</h1>
 
       {/* WAI-ARIA Tabs */}
       <div className="relative">
         <div
           ref={tabScrollRef}
           role="tablist"
-          aria-label="Chart group selection"
+          aria-label={t('ariaTabGroupLabel')}
           className="flex gap-1 overflow-x-auto pb-1"
         >
           {TABS.map((tab, index) => (
@@ -183,7 +187,7 @@ export function ChartsPage() {
                   : 'bg-muted text-foreground hover:bg-muted/70',
               ].join(' ')}
             >
-              {tab.label}
+              {t(`tabs.${tab.id}`)}
             </button>
           ))}
         </div>
@@ -207,7 +211,7 @@ export function ChartsPage() {
         <div
           className="flex gap-1 mb-4"
           role="group"
-          aria-label="Time range selection"
+          aria-label={t('ariaRangeGroupLabel')}
         >
           {RANGES.map((range) => (
             <Button
@@ -219,7 +223,7 @@ export function ChartsPage() {
               onClick={() => setActiveRange(range)}
               className="min-h-[44px] md:min-h-0"
             >
-              {range}
+              {t(`ranges.${range}`)}
             </Button>
           ))}
         </div>
@@ -227,39 +231,39 @@ export function ChartsPage() {
         {/* Temperature Chart Card */}
         <Card aria-busy={archiveLoading}>
           <CardHeader className="flex flex-row items-center justify-between">
-            <h2 className="font-heading text-base leading-snug font-medium">Temperature — Last {activeRange}</h2>
+            <h2 className="font-heading text-base leading-snug font-medium">{t('temperatureCardHeading', { range: activeRange })}</h2>
             <button
               type="button"
               onClick={() => setShowTable((prev) => !prev)}
               aria-pressed={showTable}
               className="inline-flex items-center min-h-[44px] md:min-h-0 px-3 py-2 text-sm text-muted-foreground rounded-md border border-border hover:text-foreground hover:bg-muted/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              {showTable ? 'Show chart' : 'Show data table'}
+              {showTable ? t('showChart') : t('showDataTable')}
             </button>
           </CardHeader>
           <CardContent>
             {archiveLoading ? (
               <>
-                <span className="sr-only" role="status">Loading chart data…</span>
+                <span className="sr-only" role="status">{t('loadingChart')}</span>
                 <TileSkeleton className="h-[350px]" />
               </>
             ) : archiveError ? (
-              <TileError message="Unable to load chart data" onRetry={archiveRefetch} />
+              <TileError message={t('unableToLoad')} onRetry={archiveRefetch} />
             ) : archiveData && archiveData.length > 0 ? (
               showTable ? (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
-                    <caption className="sr-only">Temperature readings over the selected range</caption>
+                    <caption className="sr-only">{t('tableCaption')}</caption>
                     <thead>
                       <tr className="border-b border-border">
-                        <th scope="col" className="py-2 px-3 text-left font-medium text-muted-foreground">Time</th>
-                        <th scope="col" className="py-2 px-3 text-right font-medium text-muted-foreground">Temperature (°F)</th>
+                        <th scope="col" className="py-2 px-3 text-left font-medium text-muted-foreground">{t('tableHeaderTime')}</th>
+                        <th scope="col" className="py-2 px-3 text-right font-medium text-muted-foreground">{t('tableHeaderTemperature')}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {archiveData.map((record) => (
                         <tr key={record.timestamp} className="border-b border-border last:border-0">
-                          <td className="py-1.5 px-3 text-foreground">{formatXAxisHour(record.timestamp, tz)}</td>
+                          <td className="py-1.5 px-3 text-foreground">{formatXAxisHour(record.timestamp, tz, locale)}</td>
                           <td className="py-1.5 px-3 text-right text-foreground font-[tabular-nums]">{record.outTemp}°F</td>
                         </tr>
                       ))}
@@ -270,7 +274,7 @@ export function ChartsPage() {
                 <>
                   <div
                     role="figure"
-                    aria-label={`Temperature over the last ${activeRange}`}
+                    aria-label={t('ariaChartFigure', { range: activeRange })}
                     className="h-[350px] w-full"
                   >
                     <ResponsiveContainer width="100%" height="100%">
@@ -285,7 +289,7 @@ export function ChartsPage() {
                         />
                         <XAxis
                           dataKey="timestamp"
-                          tickFormatter={(v) => formatXAxisHour(v, tz)}
+                          tickFormatter={(v) => formatXAxisHour(v, tz, locale)}
                           tick={{ fontSize: 11 }}
                           interval={7}
                           stroke="var(--color-muted-foreground)"
@@ -303,9 +307,9 @@ export function ChartsPage() {
                         <Tooltip
                           formatter={(value) => [
                             typeof value === 'number' ? `${value}°F` : String(value),
-                            'Temperature',
+                            t('seriesTemperature'),
                           ]}
-                          labelFormatter={(label) => formatXAxisHour(String(label), tz)}
+                          labelFormatter={(label) => formatXAxisHour(String(label), tz, locale)}
                           contentStyle={{
                             background: 'var(--color-popover)',
                             border: '1px solid var(--color-border)',
@@ -317,7 +321,7 @@ export function ChartsPage() {
                         <Line
                           type="monotone"
                           dataKey="temp"
-                          name="Temperature"
+                          name={t('seriesTemperature')}
                           stroke="var(--color-primary)"
                           strokeWidth={2}
                           dot={false}
@@ -330,17 +334,17 @@ export function ChartsPage() {
 
                   {/* sr-only data table for screen readers when chart is visible */}
                   <table className="sr-only">
-                    <caption>Temperature readings over the selected range</caption>
+                    <caption>{t('tableCaption')}</caption>
                     <thead>
                       <tr>
-                        <th scope="col">Time</th>
-                        <th scope="col">Temperature (°F)</th>
+                        <th scope="col">{t('tableHeaderTime')}</th>
+                        <th scope="col">{t('tableHeaderTemperature')}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {archiveData.map((record) => (
                         <tr key={record.timestamp}>
-                          <td>{formatXAxisHour(record.timestamp, tz)}</td>
+                          <td>{formatXAxisHour(record.timestamp, tz, locale)}</td>
                           <td>{record.outTemp}</td>
                         </tr>
                       ))}
@@ -349,7 +353,7 @@ export function ChartsPage() {
                 </>
               )
             ) : (
-              <p className="text-muted-foreground text-sm py-8 text-center">No chart data available for this range.</p>
+              <p className="text-muted-foreground text-sm py-8 text-center">{t('noData')}</p>
             )}
           </CardContent>
         </Card>
@@ -362,10 +366,10 @@ export function ChartsPage() {
         aria-labelledby="tab-averageclimate"
         hidden={activeTab !== 'averageclimate'}
       >
-        <h2 className="sr-only">Average Climate Charts</h2>
+        <h2 className="sr-only">{t('tabsPanelHeadings.averageclimate')}</h2>
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
-            Coming soon — Average Climate charts will be available when historical data is connected.
+            {t('comingSoonAverageClimate')}
           </CardContent>
         </Card>
       </div>
@@ -377,10 +381,10 @@ export function ChartsPage() {
         aria-labelledby="tab-monthly"
         hidden={activeTab !== 'monthly'}
       >
-        <h2 className="sr-only">Monthly Charts</h2>
+        <h2 className="sr-only">{t('tabsPanelHeadings.monthly')}</h2>
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
-            Coming soon — Monthly charts will be available when historical data is connected.
+            {t('comingSoonMonthly')}
           </CardContent>
         </Card>
       </div>
@@ -392,10 +396,10 @@ export function ChartsPage() {
         aria-labelledby="tab-annual"
         hidden={activeTab !== 'annual'}
       >
-        <h2 className="sr-only">Annual Charts</h2>
+        <h2 className="sr-only">{t('tabsPanelHeadings.annual')}</h2>
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
-            Coming soon — Annual charts will be available when historical data is connected.
+            {t('comingSoonAnnual')}
           </CardContent>
         </Card>
       </div>
