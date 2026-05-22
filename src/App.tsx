@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AppLayout } from './components/layout/app-layout';
+import { useLocaleSync } from './i18n/use-locale-sync';
 
 const NowPage = React.lazy(() => import('./routes/now'));
 const ForecastPage = React.lazy(() => import('./routes/forecast'));
@@ -32,6 +33,9 @@ function PageLoader({ title }: { title: string }) {
 }
 
 function App() {
+  // Keeps <html lang="…"> in sync with the active i18next locale (ADR-021 / WCAG 2.4.2).
+  useLocaleSync();
+
   return (
     <BrowserRouter>
       <Routes>
