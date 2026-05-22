@@ -376,12 +376,25 @@ export interface ContentBlock {
 }
 
 // ---------------------------------------------------------------------------
-// Radar (for completeness — not wired in Phase 3)
+// Radar (ADR-015, wired in Phase 3 / Gap #6)
 // ---------------------------------------------------------------------------
 
 export interface RadarFrame {
-  timestamp: string;
-  url: string;
+  time: string;       // UTC ISO-8601 with Z
+  kind: 'past' | 'current' | 'nowcast';
+  path: string | null; // RainViewer per-frame tile path; null for WMS-T providers
+}
+
+export interface RadarFrameList {
+  providerId: string;
+  frames: RadarFrame[];
+  attribution: string | null;
+  tileHost: string | null; // RainViewer per-fetch tile host; null for WMS-T
+}
+
+export interface RadarFramesResponse {
+  data: RadarFrameList;
+  generatedAt: string;
 }
 
 // ---------------------------------------------------------------------------

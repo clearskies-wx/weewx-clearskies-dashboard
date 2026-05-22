@@ -21,6 +21,7 @@ import type {
   PageMetadata,
   MarkdownContentResponse,
   ProblemDetail,
+  RadarFramesResponse,
 } from './types';
 
 // ---------------------------------------------------------------------------
@@ -202,4 +203,15 @@ export function getPages(signal?: AbortSignal): Promise<ApiResponse<{ pages: Pag
 // The endpoint shape matches MarkdownResponse (MarkdownContent data + generatedAt).
 export function getPageContent(slug: string, signal?: AbortSignal): Promise<MarkdownContentResponse> {
   return fetchApi<MarkdownContentResponse>(`/pages/${slug}/content`, undefined, signal);
+}
+
+export function getRadarFrames(
+  providerId: string,
+  signal?: AbortSignal,
+): Promise<RadarFramesResponse> {
+  return fetchApi<RadarFramesResponse>(
+    `/radar/providers/${encodeURIComponent(providerId)}/frames`,
+    undefined,
+    signal,
+  );
 }

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Sunrise, Sunset, Moon, Zap, Activity } from 'lucide-react';
 import type { TFunction } from 'i18next';
 import { AlertBanner } from '../components/shared/alert-banner';
+import { RadarMap } from '../components/shared/radar-map';
 import {
   Card,
   CardHeader,
@@ -276,6 +277,7 @@ function TileError({ message, onRetry }: { message: string; onRetry: () => void 
 
 export function NowPage() {
   const { t, i18n } = useTranslation('now');
+  const { t: tRadar } = useTranslation('radar');
   const locale = i18n.language;
 
   const { data: observation, units, loading: obsLoading, error: obsError, refetch: obsRefetch } = useRealtimeObservation();
@@ -673,6 +675,18 @@ export function NowPage() {
             >
               {t('viewCharts')}
             </Link>
+          </CardContent>
+        </Card>
+
+        {/* Radar Card — ADR-015 / ADR-024 */}
+        <Card className="md:col-span-2 lg:col-span-12">
+          <CardHeader>
+            <h2 className="font-heading text-base leading-snug font-medium">{tRadar('radarTitle')}</h2>
+          </CardHeader>
+          <CardContent>
+            <RadarMap
+              center={[station?.latitude ?? 0, station?.longitude ?? 0]}
+            />
           </CardContent>
         </Card>
 
