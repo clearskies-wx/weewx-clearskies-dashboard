@@ -6,6 +6,8 @@
   "noData": "No data available",
   "skipToContent": "Skip to main content",
   "pageNotFound": "Page not found.",
+  "customPageLoading": "Loading page...",
+  "customPageNoContent": "This page has no content yet.",
   "footer": {
     "legal": "Legal / Privacy",
     "poweredBy": "Powered by Clear Skies"

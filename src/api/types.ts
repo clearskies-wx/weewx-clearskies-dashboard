@@ -313,14 +313,26 @@ export interface CapabilityRegistry {
 }
 
 // ---------------------------------------------------------------------------
-// /pages  /charts/groups
+// /pages  /pages/{slug}/content  /charts/groups
 // ---------------------------------------------------------------------------
 
 export interface PageMetadata {
-  id: string;
-  label: string;
-  path: string;
-  enabled: boolean;
+  slug: string;
+  name: string;
+  icon: string;
+  navPosition: number;
+  builtIn: boolean;
+  hidden: boolean;
+}
+
+export interface MarkdownContent {
+  markdown: string;
+  updatedAt: string | null;
+}
+
+export interface MarkdownContentResponse {
+  data: MarkdownContent;
+  generatedAt: string;
 }
 
 export interface ChartGroup {

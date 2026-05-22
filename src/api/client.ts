@@ -18,6 +18,8 @@ import type {
   ReportEntry,
   NOAAReport,
   ContentBlock,
+  PageMetadata,
+  MarkdownContentResponse,
   ProblemDetail,
 } from './types';
 
@@ -190,4 +192,14 @@ export function getContent(
   signal?: AbortSignal,
 ): Promise<ApiResponse<ContentBlock>> {
   return fetchApi<ApiResponse<ContentBlock>>(`/content/${slug}`, undefined, signal);
+}
+
+export function getPages(signal?: AbortSignal): Promise<ApiResponse<{ pages: PageMetadata[] }>> {
+  return fetchApi<ApiResponse<{ pages: PageMetadata[] }>>('/pages', undefined, signal);
+}
+
+// NOTE: /pages/{slug}/content is not yet in the OpenAPI v1 contract (gap).
+// The endpoint shape matches MarkdownResponse (MarkdownContent data + generatedAt).
+export function getPageContent(slug: string, signal?: AbortSignal): Promise<MarkdownContentResponse> {
+  return fetchApi<MarkdownContentResponse>(`/pages/${slug}/content`, undefined, signal);
 }

@@ -13,6 +13,7 @@ const RecordsPage = React.lazy(() => import('./routes/records'));
 const ReportsPage = React.lazy(() => import('./routes/reports'));
 const AboutPage = React.lazy(() => import('./routes/about'));
 const LegalPage = React.lazy(() => import('./routes/legal'));
+const CustomPage = React.lazy(() => import('./routes/custom-page'));
 const NotFoundPage = React.lazy(() => import('./routes/not-found'));
 
 // PageLoader — Suspense fallback used for every lazy route.
@@ -113,6 +114,14 @@ function App() {
             element={
               <Suspense fallback={<PageLoader title={tNav('pages.legalPrivacy')} />}>
                 <LegalPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path=":slug"
+            element={
+              <Suspense fallback={<PageLoader title={tCommon('customPageLoading')} />}>
+                <CustomPage />
               </Suspense>
             }
           />
