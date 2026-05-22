@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
+@import "@fontsource-variable/inter";
 @import "leaflet/dist/leaflet.css";
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
@@ -10,7 +10,7 @@
 
     --font-heading: var(--font-sans);
 
-    --font-sans: 'Geist Variable', sans-serif;
+    --font-sans: 'Inter Variable', sans-serif;
 
     --color-sidebar-ring: var(--sidebar-ring);
 
@@ -227,6 +227,10 @@
     }
   body {
     @apply bg-background text-foreground;
+    /* ADR-009: tabular figures globally — weather dashboard is numeric-dense and
+       digits must not shift width on live updates. Applies to all text; harmless
+       on non-numeric glyphs since only digit widths are affected. */
+    font-variant-numeric: tabular-nums;
     }
   html {
     @apply font-sans;
