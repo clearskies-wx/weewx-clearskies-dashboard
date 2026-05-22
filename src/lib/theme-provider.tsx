@@ -6,8 +6,9 @@
 // When preference is absent, default is 'system' (follow operator default).
 // Operator default comes from BrandingProvider (BrandingContext) when present.
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { BrandingContext } from './branding-provider';
+import { getAlmanac } from '../api/client';
 
 export type ThemePreference = 'light' | 'dark' | 'system';
 export type ResolvedTheme = 'light' | 'dark';
@@ -28,9 +29,9 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 //   'light' → 'light'
 //   'dark'  → 'dark'
 //   'auto-os' → matchMedia
-//   'auto-sunrise-sunset' → matchMedia fallback (sunrise/sunset data not yet
-//     available from the api; TODO: re-evaluate at next sunrise/sunset once
-//     almanac endpoint supplies those times per ADR-023/ADR-014).
+//   'auto-sunrise-sunset' → matchMedia as the synchronous starting value;
+//     the useEffect below replaces it with almanac-derived times once the
+//     fetch resolves (ADR-023).
 function resolveTheme(preference: ThemePreference, operatorDefault: OperatorDefault): ResolvedTheme {
   if (preference === 'light') return 'light';
   if (preference === 'dark') return 'dark';
@@ -39,7 +40,7 @@ function resolveTheme(preference: ThemePreference, operatorDefault: OperatorDefa
   if (operatorDefault === 'light') return 'light';
   if (operatorDefault === 'dark') return 'dark';
 
-  // 'auto-os' or 'auto-sunrise-sunset': use matchMedia.
+  // 'auto-os' or 'auto-sunrise-sunset' (before almanac fetch): use matchMedia.
   if (typeof window !== 'undefined') {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
@@ -76,11 +77,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(STORAGE_KEY, preference);
   }, [preference, operatorDefault]);
 
-  // When preference is 'system' AND operatorDefault is an auto-os mode,
-  // subscribe to OS-level changes.
+  // When preference is 'system' AND operatorDefault is 'auto-os', subscribe to
+  // OS-level changes. auto-sunrise-sunset has its own effect below and does NOT
+  // use matchMedia for live updates.
   useEffect(() => {
     if (preference !== 'system') return;
-    if (operatorDefault !== 'auto-os' && operatorDefault !== 'auto-sunrise-sunset') return;
+    if (operatorDefault !== 'auto-os') return;
 
     const mql = window.matchMedia('(prefers-color-scheme: dark)');
 
@@ -92,6 +94,140 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     mql.addEventListener('change', handleChange);
     return () => mql.removeEventListener('change', handleChange);
+  }, [preference, operatorDefault]);
+
+  // auto-sunrise-sunset: fetch almanac data, compute day/night, and schedule
+  // timers to flip the theme at the next sunrise or sunset. Cleans up on
+  // unmount or when preference/operatorDefault changes.
+  //
+  // Timer scheduling is stored in a ref so the inner callback can reschedule
+  // itself without closing over stale state, and so cleanup is always possible.
+  const sunTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const midnightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (preference !== 'system' || operatorDefault !== 'auto-sunrise-sunset') return;
+
+    const abortController = new AbortController();
+
+    function applyTheme(theme: ResolvedTheme) {
+      setResolved(theme);
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+
+    function fallbackToOs() {
+      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      applyTheme(isDark ? 'dark' : 'light');
+    }
+
+    // Compute whether it's daytime right now given UTC rise/set strings.
+    // Returns the resolved theme and the ms until the next transition event.
+    function computeThemeAndDelay(
+      riseUtc: string,
+      setUtc: string,
+    ): { theme: ResolvedTheme; msUntilNext: number } {
+      const now = Date.now();
+      const rise = new Date(riseUtc).getTime();
+      const set = new Date(setUtc).getTime();
+
+      const isDaytime = now >= rise && now < set;
+      const theme: ResolvedTheme = isDaytime ? 'light' : 'dark';
+
+      // Next event is whichever of rise/set comes next after now.
+      const candidates = [rise, set].filter((t) => t > now);
+      const msUntilNext = candidates.length > 0 ? Math.min(...candidates) - now : null;
+
+      // Clamp: if next event is > 24 h away (e.g. polar edge case despite
+      // non-null strings), wait only until midnight so we re-fetch fresh data.
+      const msUntilMidnight = msUntilLocalMidnight();
+      const delay = msUntilNext !== null
+        ? Math.min(msUntilNext, msUntilMidnight)
+        : msUntilMidnight;
+
+      return { theme, msUntilNext: delay };
+    }
+
+    function msUntilLocalMidnight(): number {
+      const now = new Date();
+      const midnight = new Date(now);
+      midnight.setHours(24, 0, 0, 0); // next midnight in local time
+      return midnight.getTime() - now.getTime();
+    }
+
+    function scheduleMidnightRefetch() {
+      const ms = msUntilLocalMidnight();
+      midnightTimerRef.current = setTimeout(() => {
+        if (!abortController.signal.aborted) {
+          // Re-fetch almanac for the new day and restart the whole loop.
+          void runSunriseSunsetLoop();
+        }
+      }, ms);
+    }
+
+    async function runSunriseSunsetLoop() {
+      // Clear any pending transition timer from a previous run.
+      if (sunTimerRef.current !== null) {
+        clearTimeout(sunTimerRef.current);
+        sunTimerRef.current = null;
+      }
+      if (midnightTimerRef.current !== null) {
+        clearTimeout(midnightTimerRef.current);
+        midnightTimerRef.current = null;
+      }
+
+      // fetchSunTimes returns null on fetch failure, or the raw rise/set strings
+      // (which may themselves be null for polar regions) on success.
+      async function fetchSunTimes(): Promise<{ rise: string | null; set: string | null } | null> {
+        try {
+          const response = await getAlmanac(undefined, abortController.signal);
+          return { rise: response.data.sun.rise, set: response.data.sun.set };
+        } catch {
+          return null;
+        }
+      }
+
+      const sunTimes = await fetchSunTimes();
+
+      if (abortController.signal.aborted) return;
+
+      // Fetch failure or polar region (null rise/set) → fall back to OS.
+      if (sunTimes === null || sunTimes.rise === null || sunTimes.set === null) {
+        fallbackToOs();
+        return;
+      }
+
+      const riseUtc = sunTimes.rise;
+      const setUtc = sunTimes.set;
+
+      const { theme, msUntilNext } = computeThemeAndDelay(riseUtc, setUtc);
+      applyTheme(theme);
+
+      // Schedule the next theme flip at sunrise or sunset.
+      sunTimerRef.current = setTimeout(() => {
+        if (!abortController.signal.aborted) {
+          void runSunriseSunsetLoop();
+        }
+      }, msUntilNext);
+
+      // Also schedule a midnight re-fetch so the next day's times are loaded.
+      // (If msUntilNext already lands after midnight, the sun timer fires first
+      // and triggers a re-fetch via runSunriseSunsetLoop anyway.)
+      scheduleMidnightRefetch();
+    }
+
+    void runSunriseSunsetLoop();
+
+    return () => {
+      abortController.abort();
+      if (sunTimerRef.current !== null) {
+        clearTimeout(sunTimerRef.current);
+        sunTimerRef.current = null;
+      }
+      if (midnightTimerRef.current !== null) {
+        clearTimeout(midnightTimerRef.current);
+        midnightTimerRef.current = null;
+      }
+    };
   }, [preference, operatorDefault]);
 
   // useCallback so setTheme has a stable identity across renders — required for the
