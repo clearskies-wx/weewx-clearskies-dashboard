@@ -1,1 +1,138 @@
-﻿{}
+{
+  "currentConditions": "Текущие условия",
+  "todaysHighlights": "Сводка за сегодня",
+  "wind": "Ветер",
+  "stationObservations": "Наблюдения станции",
+  "sunAndMoon": "Солнце и Луна",
+  "airQuality": "Качество воздуха",
+  "lightning": "Грозовая активность",
+  "recentEarthquake": "Последнее землетрясение",
+  "todaysForecast": "Прогноз на сегодня",
+  "temperatureTrend": "Динамика температуры",
+  "viewCharts": "Смотреть графики →",
+
+  "loading": {
+    "currentConditions": "Загрузка текущих условий…",
+    "highlights": "Загрузка сводки за сегодня…",
+    "wind": "Загрузка данных о ветре…",
+    "stationObservations": "Загрузка наблюдений станции…",
+    "sunMoon": "Загрузка данных о Солнце и Луне…",
+    "airQuality": "Загрузка данных о качестве воздуха…",
+    "lightning": "Загрузка данных о грозовой активности…",
+    "earthquake": "Загрузка данных о землетрясениях…",
+    "forecast": "Загрузка прогноза…"
+  },
+
+  "error": {
+    "currentConditions": "Не удалось загрузить текущие условия",
+    "wind": "Не удалось загрузить данные о ветре",
+    "stationObservations": "Не удалось загрузить наблюдения станции",
+    "almanac": "Не удалось загрузить данные альманаха",
+    "airQuality": "Не удалось загрузить данные о качестве воздуха",
+    "earthquake": "Не удалось загрузить данные о землетрясениях",
+    "forecast": "Не удалось загрузить прогноз"
+  },
+
+  "noData": {
+    "observation": "Данные наблюдений отсутствуют.",
+    "highlights": "Сводка недоступна.",
+    "wind": "Данные о ветре отсутствуют.",
+    "lightning": "Датчик молний не настроен.",
+    "earthquake": "Землетрясений в заданном радиусе не зафиксировано.",
+    "airQuality": "Источник данных о качестве воздуха не настроен.",
+    "forecast": "Данные прогноза отсутствуют."
+  },
+
+  "highlights": {
+    "todaysHigh": "Максимум за день",
+    "todaysLow": "Минимум за день",
+    "peakGust": "Порыв ветра",
+    "rainToday": "Осадки за день",
+    "peakAqi": "Макс. ИКВ",
+    "recordsBroken": "Побито рекордов"
+  },
+
+  "observations": {
+    "barometer": "Давление",
+    "dewpoint": "Точка росы",
+    "humidity": "Влажность",
+    "rain": "Осадки",
+    "heatIndex": "Индекс жары",
+    "windChill": "Ощущаемый холод",
+    "solarRadiation": "Солнечная радиация",
+    "uvIndex": "Индекс УФ"
+  },
+
+  "sunMoon": {
+    "sunrise": "Восход",
+    "sunset": "Закат",
+    "moon": "Луна"
+  },
+
+  "feelsLike": "Ощущается как",
+
+  "windCompass": {
+    "speed": "Ветер: {{speed}} м/с · {{direction}}",
+    "gusts": "Порывы: {{gust}} м/с",
+    "ariaLabel": "Ветер с {{direction}} со скоростью {{degrees}} градусов"
+  },
+
+  "barometer": {
+    "trend": {
+      "rising": "повышается",
+      "falling": "понижается",
+      "steady": "устойчиво"
+    },
+    "trendAriaLabel": "Тенденция: {{trend}}"
+  },
+
+  "aqi": {
+    "good": "Хорошее",
+    "moderate": "Удовлетворительное",
+    "unhealthySensitive": "Вредное для чувствительных групп",
+    "unhealthy": "Вредное",
+    "veryUnhealthy": "Очень вредное",
+    "hazardous": "Опасное",
+    "gaugeAriaLabel": "Индекс качества воздуха: {{aqi}}, {{category}}. Основной загрязнитель: {{pollutant}}",
+    "unknownPollutant": "Неизвестно",
+    "mainPollutant": "Основной загрязнитель: {{pollutant}}"
+  },
+
+  "beaufort": {
+    "calm": "Штиль",
+    "lightAir": "Тихий ветер",
+    "lightBreeze": "Лёгкий ветер",
+    "gentleBreeze": "Слабый ветер",
+    "moderateBreeze": "Умеренный ветер",
+    "freshBreeze": "Свежий ветер",
+    "strongBreeze": "Сильный ветер",
+    "nearGale": "Крепкий ветер",
+    "gale": "Очень крепкий ветер",
+    "strongGale": "Шторм",
+    "storm": "Сильный шторм",
+    "violentStorm": "Жестокий шторм",
+    "hurricane": "Ураган"
+  },
+
+  "lightning": {
+    "strikesLastHour": "{{count}} разрядов за последний час",
+    "strikesLast24h": "{{count}} за последние 24 ч",
+    "nearest": "Ближайший: {{distance}} км",
+    "lastStrike": "Последний разряд: {{time}}",
+    "lastStrikeUnknown": "Неизвестно"
+  },
+
+  "earthquake": {
+    "magnitude": "M{{magnitude}} — {{place}}",
+    "depth": "Глубина: {{depth}} км"
+  },
+
+  "forecast": {
+    "hiLo": "Макс. {{high}}° / Мин. {{low}}°",
+    "precipChance": "Вероятность осадков {{percent}}%"
+  },
+
+  "temperature": {
+    "ariaLabel": "Текущая температура: {{temp}} градусов {{unit}}"
+  }
+}

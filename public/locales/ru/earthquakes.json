@@ -1,1 +1,22 @@
-﻿{}
+{
+  "title": "Землетрясения",
+  "loadingData": "Загрузка данных о землетрясениях…",
+  "unableToLoad": "Не удалось загрузить данные о землетрясениях",
+  "noRecentQuakes": "Землетрясений в заданном радиусе не зафиксировано.",
+  "ariaRecentList": "Последние землетрясения",
+  "ariaMagnitude": "Магнитуда {{mag}}",
+  "unknownLocation": "Местоположение неизвестно",
+  "depth": "Глубина: {{depth}} км",
+  "source": "Источник: {{source}}",
+  "feltBy_one": "Ощутил {{count}} человек",
+  "feltBy_other": "Ощутили {{count}} человек",
+  "mmi": "ММИ: {{mmi}}",
+  "tsunamiWatch": "Предупреждение о цунами",
+  "pager": "PAGER: {{level}}",
+  "mapCardTitle": "Карта землетрясений",
+  "mapPlaceholder": "Интерактивная карта требует Leaflet — доступна при настройке провайдера карт.",
+  "configCardTitle": "Конфигурация",
+  "configRadius": "Радиус",
+  "configProvider": "Провайдер",
+  "configHelperText": "Настройте параметры землетрясений в интерфейсе настройки Clear Skies."
+}

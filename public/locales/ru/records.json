@@ -1,1 +1,17 @@
-﻿{}
+{
+  "title": "Рекорды",
+  "ariaPeriodGroup": "Период рекордов",
+  "periodAllTime": "За всё время",
+  "periodYearToDate": "С начала года",
+  "loadingRecords": "Загрузка рекордов…",
+  "unableToLoad": "Не удалось загрузить рекорды",
+  "sectionHeading": "Рекорды: {{section}}",
+  "tableHeaderRecord": "Рекорд",
+  "tableHeaderValue": "Значение",
+  "tableHeaderDateObserved": "Дата наблюдения",
+  "badgeNew": "Новый",
+  "badgeNewTitle": "Побит за последние 30 дней",
+  "badgeNewAriaLabel": "Недавно побитый рекорд",
+  "noData": "Рекорды за этот период отсутствуют.",
+  "operatorNotePlaceholder": "Операторы станции могут добавлять собственные примечания о рекордах через интерфейс настройки Clear Skies."
+}

@@ -1,1 +1,35 @@
-﻿{}
+{
+  "title": "О станции",
+  "station": {
+    "defaultName": "Метеостанция",
+    "loadingAria": "Загрузка информации о станции…",
+    "unavailable": "Информация о станции недоступна.",
+    "location": "Местоположение",
+    "altitude": "Высота над уровнем моря",
+    "hardware": "Оборудование",
+    "hardwareDefault": "Не указано",
+    "timezone": "Часовой пояс",
+    "unitSystem": "Система единиц",
+    "stationId": "Идентификатор станции",
+    "recordingSince": "Ведение записей с",
+    "lastData": "Последние полученные данные"
+  },
+  "aboutStation": {
+    "cardTitle": "Об этой станции",
+    "loadingAria": "Загрузка описания станции…",
+    "placeholder": "Это описание станции является заполнителем. Настройте текст раздела «О станции» через интерфейс настройки Clear Skies."
+  },
+  "software": {
+    "cardTitle": "Программное обеспечение",
+    "weatherSoftware": "Метеорологическое ПО",
+    "weatherSoftwareValue": "weewx 5.x",
+    "dashboard": "Панель управления",
+    "dashboardValue": "Clear Skies v0.1.0-dev",
+    "dashboardEngine": "Движок панели",
+    "dashboardEngineValue": "React + Vite"
+  },
+  "photo": {
+    "cardTitle": "Фото станции",
+    "placeholder": "Загрузите фото станции через интерфейс настройки Clear Skies."
+  }
+}

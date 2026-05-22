@@ -1,1 +1,17 @@
-﻿{}
+{
+  "title": "Прогноз",
+  "next12Hours": "Ближайшие 12 часов",
+  "sevenDayForecast": "Прогноз на 7 дней",
+  "today": "Сегодня",
+  "loadingHourly": "Загрузка почасового прогноза…",
+  "loadingDaily": "Загрузка суточного прогноза…",
+  "unableToLoad": "Не удалось загрузить прогноз",
+  "noHourlyData": "Почасовой прогноз недоступен.",
+  "noDailyData": "Суточный прогноз недоступен.",
+  "percentPrecip": "{{pct}}% осадков",
+  "windUpTo": "Ветер до {{speed}} м/с",
+  "updated": "Обновлено {{time}}",
+  "ariaHourlyScroll": "Почасовой прогноз — прокрутите, чтобы увидеть больше",
+  "ariaHourlyList": "Почасовой прогноз",
+  "ariaDayForecast": "Прогноз на {{day}}"
+}
