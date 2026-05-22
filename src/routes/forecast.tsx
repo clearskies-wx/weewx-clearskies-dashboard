@@ -1,14 +1,5 @@
-import {
-  Sun,
-  CloudSun,
-  Cloud,
-  CloudFog,
-  CloudDrizzle,
-  CloudRain,
-  CloudLightning,
-} from 'lucide-react';
-import type { ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
+import { WeatherIcon } from '../components/weather-icon';
 import { AlertBanner } from '../components/shared/alert-banner';
 import {
   Card,
@@ -17,18 +8,6 @@ import {
 } from '../components/ui/card';
 import { useForecast, useAlerts, useStation } from '../hooks/useWeatherData';
 
-function weatherCodeIcon(code: string | null): ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }> {
-  if (code === null) return Cloud;
-  const n = parseInt(code, 10);
-  if (n === 0 || n === 1) return Sun;
-  if (n === 2) return CloudSun;
-  if (n === 3) return Cloud;
-  if (n === 45 || n === 48) return CloudFog;
-  if (n >= 51 && n <= 55) return CloudDrizzle;
-  if ((n >= 61 && n <= 65) || (n >= 80 && n <= 82)) return CloudRain;
-  if (n >= 95) return CloudLightning;
-  return Cloud;
-}
 
 function formatHour(isoString: string, timeZone: string, locale: string): string {
   return new Intl.DateTimeFormat(locale, {
@@ -120,7 +99,6 @@ export function ForecastPage() {
               className="flex gap-2 pb-2 min-w-max"
             >
               {forecast.hourly.map((hour) => {
-                const Icon = weatherCodeIcon(hour.weatherCode);
                 const hourLabel = formatHour(hour.validTime, tz, locale);
                 return (
                   <div
@@ -130,9 +108,10 @@ export function ForecastPage() {
                     style={{ scrollSnapAlign: 'start' }}
                   >
                     <span className="text-xs text-muted-foreground whitespace-nowrap">{hourLabel}</span>
-                    <Icon
-                      aria-hidden="true"
-                      className="h-5 w-5 text-muted-foreground"
+                    <WeatherIcon
+                      code={hour.weatherCode}
+                      size={20}
+                      className="text-muted-foreground"
                     />
                     <span
                       className="text-sm font-semibold text-foreground font-[tabular-nums]"
@@ -175,7 +154,6 @@ export function ForecastPage() {
         ) : fcError ? null : forecast && forecast.daily.length > 0 ? (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
             {forecast.daily.map((day, index) => {
-              const Icon = weatherCodeIcon(day.weatherCode);
               const dayName = index === 0 ? t('today') : formatDayName(day.validDate, locale);
               return (
                 <article
@@ -188,7 +166,11 @@ export function ForecastPage() {
                     </CardHeader>
                     <CardContent className="flex flex-col gap-2 text-sm">
                       <div className="flex items-center gap-2">
-                        <Icon aria-hidden="true" className="h-5 w-5 text-muted-foreground shrink-0" />
+                        <WeatherIcon
+                          code={day.weatherCode}
+                          size={20}
+                          className="text-muted-foreground shrink-0"
+                        />
                         <span className="text-muted-foreground leading-tight">{day.weatherText}</span>
                       </div>
                       <div className="flex gap-1 font-[tabular-nums]">
