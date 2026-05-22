@@ -18,27 +18,30 @@ import {
   Scale,
   Ellipsis,
 } from 'lucide-react';
-import { ThemeIcon, NEXT_PREFERENCE, ARIA_LABEL } from './theme-toggle';
+import { useTranslation } from 'react-i18next';
+import { ThemeIcon, NEXT_PREFERENCE } from './theme-toggle';
 import { useTheme } from '../../lib/theme-provider';
 import { useBranding } from '../../lib/branding-provider';
 
-interface NavItem {
+interface NavItemDef {
   to: string;
-  label: string;
+  /** i18n key within nav.pages — e.g. "now", "forecast" */
+  pageKey: string;
   icon: React.ReactNode;
 }
 
 // All 9 navigation items in default order per ADR-024.
-const NAV_ITEMS: NavItem[] = [
-  { to: '/', label: 'Now', icon: <House aria-hidden="true" className="h-5 w-5" /> },
-  { to: '/forecast', label: 'Forecast', icon: <CloudSunRain aria-hidden="true" className="h-5 w-5" /> },
-  { to: '/charts', label: 'Charts', icon: <ChartLine aria-hidden="true" className="h-5 w-5" /> },
-  { to: '/almanac', label: 'Almanac', icon: <Moon aria-hidden="true" className="h-5 w-5" /> },
-  { to: '/earthquakes', label: 'Earthquakes', icon: <Activity aria-hidden="true" className="h-5 w-5" /> },
-  { to: '/records', label: 'Records', icon: <Trophy aria-hidden="true" className="h-5 w-5" /> },
-  { to: '/reports', label: 'Reports', icon: <FileText aria-hidden="true" className="h-5 w-5" /> },
-  { to: '/about', label: 'About', icon: <Info aria-hidden="true" className="h-5 w-5" /> },
-  { to: '/legal', label: 'Legal', icon: <Scale aria-hidden="true" className="h-5 w-5" /> },
+// Labels are resolved via t(`pages.${pageKey}`) inside the component.
+const NAV_ITEMS: NavItemDef[] = [
+  { to: '/', pageKey: 'now', icon: <House aria-hidden="true" className="h-5 w-5" /> },
+  { to: '/forecast', pageKey: 'forecast', icon: <CloudSunRain aria-hidden="true" className="h-5 w-5" /> },
+  { to: '/charts', pageKey: 'charts', icon: <ChartLine aria-hidden="true" className="h-5 w-5" /> },
+  { to: '/almanac', pageKey: 'almanac', icon: <Moon aria-hidden="true" className="h-5 w-5" /> },
+  { to: '/earthquakes', pageKey: 'earthquakes', icon: <Activity aria-hidden="true" className="h-5 w-5" /> },
+  { to: '/records', pageKey: 'records', icon: <Trophy aria-hidden="true" className="h-5 w-5" /> },
+  { to: '/reports', pageKey: 'reports', icon: <FileText aria-hidden="true" className="h-5 w-5" /> },
+  { to: '/about', pageKey: 'about', icon: <Info aria-hidden="true" className="h-5 w-5" /> },
+  { to: '/legal', pageKey: 'legal', icon: <Scale aria-hidden="true" className="h-5 w-5" /> },
 ];
 
 // Mobile: first 4 slots are always visible; remaining 5 go into the overflow sheet.
@@ -97,19 +100,15 @@ const FOCUSABLE_SELECTOR = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(', ');
 
-const THEME_ROW_LABEL: Record<string, string> = {
-  system: 'Auto',
-  light: 'Light',
-  dark: 'Dark',
-};
-
 // Full-width labeled theme toggle row for the More sheet.
 function ThemeRowButton() {
   const { preference, setTheme } = useTheme();
+  const { t } = useTranslation('nav');
+  const modeLabel = t(`theme.${preference === 'system' ? 'auto' : preference}`);
   return (
     <button
       type="button"
-      aria-label={ARIA_LABEL[preference]}
+      aria-label={t(`theme.aria${preference.charAt(0).toUpperCase()}${preference.slice(1)}`)}
       onClick={() => setTheme(NEXT_PREFERENCE[preference])}
       className={[
         'flex items-center gap-3 px-4 rounded-lg w-full',
@@ -120,7 +119,7 @@ function ThemeRowButton() {
       ].join(' ')}
     >
       <ThemeIcon preference={preference} />
-      <span>Theme: {THEME_ROW_LABEL[preference]}</span>
+      <span>{modeLabel}</span>
     </button>
   );
 }
@@ -130,10 +129,11 @@ function ThemeRowButton() {
 // not an afterthought ghost button that disappears against the dark background.
 function DesktopThemeButton() {
   const { preference, setTheme } = useTheme();
+  const { t } = useTranslation('nav');
   return (
     <button
       type="button"
-      aria-label={ARIA_LABEL[preference]}
+      aria-label={t(`theme.aria${preference.charAt(0).toUpperCase()}${preference.slice(1)}`)}
       onClick={() => setTheme(NEXT_PREFERENCE[preference])}
       className={[
         'flex flex-col items-center justify-center gap-1 rounded-lg px-2 py-3 w-full',
@@ -144,7 +144,7 @@ function DesktopThemeButton() {
       ].join(' ')}
     >
       <ThemeIcon preference={preference} />
-      <span>Theme</span>
+      <span>{t('theme.label')}</span>
     </button>
   );
 }
@@ -159,6 +159,7 @@ interface MoreSheetProps {
 function MoreSheet({ isOpen, onClose, triggerRef }: MoreSheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
+  const { t } = useTranslation('nav');
 
   // Focus first focusable element when sheet opens (after slide-in transition starts).
   useEffect(() => {
@@ -245,7 +246,7 @@ function MoreSheet({ isOpen, onClose, triggerRef }: MoreSheetProps) {
       <div
         ref={sheetRef}
         role={isOpen ? 'dialog' : undefined}
-        aria-label="Additional navigation"
+        aria-label={t('ariaAdditional')}
         aria-modal={isOpen ? 'true' : undefined}
         // inert removes all interactivity (keyboard, pointer, AT) when sheet is closed.
         // aria-hidden mirrors the state for older AT that may not support inert.
@@ -267,7 +268,7 @@ function MoreSheet({ isOpen, onClose, triggerRef }: MoreSheetProps) {
           <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
         </div>
 
-        <nav aria-label="Additional pages">
+        <nav aria-label={t('ariaAdditionalPages')}>
           <ul role="list" className="flex flex-col px-2 pb-1">
             {MOBILE_OVERFLOW_ITEMS.map((item) => {
               const isActive = location.pathname === item.to ||
@@ -290,7 +291,7 @@ function MoreSheet({ isOpen, onClose, triggerRef }: MoreSheetProps) {
                     onClick={onClose}
                   >
                     {item.icon}
-                    <span>{item.label}</span>
+                    <span>{t(`pages.${item.pageKey}`)}</span>
                   </NavLink>
                 </li>
               );
@@ -316,6 +317,7 @@ export function NavRail() {
   const location = useLocation();
   const branding = useBranding();
   const { resolved } = useTheme();
+  const { t } = useTranslation('nav');
 
   // "More" is active when the current route is one of the overflow pages.
   const moreIsActive = OVERFLOW_ROUTES.has(location.pathname);
@@ -344,7 +346,7 @@ export function NavRail() {
     <>
       {/* Desktop: left rail — all 9 items, unchanged */}
       <nav
-        aria-label="Main navigation"
+        aria-label={t('ariaMain')}
         className="hidden md:flex md:flex-col md:w-16 md:min-h-screen md:border-r md:border-border md:bg-background md:pt-4 md:pb-4 md:gap-1 md:items-center md:overflow-y-auto"
       >
         {branding.logo && (
@@ -366,19 +368,22 @@ export function NavRail() {
           </div>
         )}
         <ul className="flex flex-col gap-1 w-full px-1" role="list">
-          {NAV_ITEMS.map((item) => (
-            <li key={item.to}>
-              <NavLink
-                to={item.to}
-                end={item.to === '/'}
-                className={navLinkClass}
-                title={item.label}
-              >
-                {item.icon}
-                <span className="truncate">{item.label}</span>
-              </NavLink>
-            </li>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const label = t(`pages.${item.pageKey}`);
+            return (
+              <li key={item.to}>
+                <NavLink
+                  to={item.to}
+                  end={item.to === '/'}
+                  className={navLinkClass}
+                  title={label}
+                >
+                  {item.icon}
+                  <span className="truncate">{label}</span>
+                </NavLink>
+              </li>
+            );
+          })}
         </ul>
         {/* Theme toggle at bottom of desktop rail — styled as a nav item so it
             is visually discoverable and matches the icon+label pattern of all nav items. */}
@@ -393,39 +398,42 @@ export function NavRail() {
           identical names. Both exist in the DOM simultaneously; only one is
           visible at a time via responsive Tailwind classes. */}
       <nav
-        aria-label="Primary navigation"
+        aria-label={t('ariaPrimary')}
         className="md:hidden fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-background"
       >
         <ul
           className="flex flex-row items-stretch"
           role="list"
         >
-          {MOBILE_VISIBLE_ITEMS.map((item) => (
-            <li key={item.to} className="flex-1 min-w-0">
-              <NavLink
-                to={item.to}
-                end={item.to === '/'}
-                className={({ isActive }) => mobileSlotClass(isActive)}
-                title={item.label}
-              >
-                {item.icon}
-                <span className="truncate max-w-full leading-none">{item.label}</span>
-              </NavLink>
-            </li>
-          ))}
+          {MOBILE_VISIBLE_ITEMS.map((item) => {
+            const label = t(`pages.${item.pageKey}`);
+            return (
+              <li key={item.to} className="flex-1 min-w-0">
+                <NavLink
+                  to={item.to}
+                  end={item.to === '/'}
+                  className={({ isActive }) => mobileSlotClass(isActive)}
+                  title={label}
+                >
+                  {item.icon}
+                  <span className="truncate max-w-full leading-none">{label}</span>
+                </NavLink>
+              </li>
+            );
+          })}
 
           {/* More slot — 5th and final mobile slot */}
           <li className="flex-1 min-w-0">
             <button
               ref={moreButtonRef}
               type="button"
-              aria-label="More pages"
+              aria-label={t('morePages')}
               aria-expanded={sheetOpen}
               onClick={openSheet}
               className={mobileSlotClass(moreIsActive)}
             >
               <Ellipsis aria-hidden="true" className="h-5 w-5" />
-              <span className="truncate max-w-full leading-none">More</span>
+              <span className="truncate max-w-full leading-none">{t('more')}</span>
             </button>
           </li>
         </ul>

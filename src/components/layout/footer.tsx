@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useStation } from '../../hooks/useWeatherData';
 
 export function Footer() {
   const { data: station } = useStation();
+  const { t } = useTranslation('common');
 
   return (
     <footer className={[
@@ -16,12 +18,12 @@ export function Footer() {
           to="/legal"
           className="hover:text-foreground underline underline-offset-4 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded"
         >
-          Legal / Privacy
+          {t('footer.legal')}
         </Link>
         <span aria-hidden="true">·</span>
         <span>© {new Date().getFullYear()} {station?.name ?? 'Clear Skies Weather'}</span>
         <span aria-hidden="true">·</span>
-        <span>Powered by Clear Skies</span>
+        <span>{t('footer.poweredBy')}</span>
       </div>
     </footer>
   );

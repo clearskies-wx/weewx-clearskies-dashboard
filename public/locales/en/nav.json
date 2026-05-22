@@ -1,1 +1,31 @@
-﻿{}
+{
+  "pages": {
+    "now": "Now",
+    "forecast": "Forecast",
+    "charts": "Charts",
+    "almanac": "Almanac",
+    "earthquakes": "Earthquakes",
+    "records": "Records",
+    "reports": "Reports",
+    "about": "About",
+    "legal": "Legal",
+    "legalPrivacy": "Legal & Privacy",
+    "notFound": "Page not found"
+  },
+  "theme": {
+    "label": "Theme",
+    "auto": "Theme: Auto",
+    "light": "Theme: Light",
+    "dark": "Theme: Dark",
+    "ariaAuto": "Theme: following system preference — click to switch to light mode",
+    "ariaLight": "Theme: light — click to switch to dark mode",
+    "ariaDark": "Theme: dark — click to switch to system preference",
+    "rowLabel": "Theme: {{mode}}"
+  },
+  "more": "More",
+  "morePages": "More pages",
+  "ariaMain": "Main navigation",
+  "ariaPrimary": "Primary navigation",
+  "ariaAdditional": "Additional navigation",
+  "ariaAdditionalPages": "Additional pages"
+}

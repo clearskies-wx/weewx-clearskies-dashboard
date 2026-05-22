@@ -1,7 +1,11 @@
 // skip-link.tsx — skip-to-main-content link, first focusable element in DOM
 // Visually hidden until focused; WCAG 2.1 AA §2.4.1 (bypass blocks).
 
+import { useTranslation } from 'react-i18next';
+
 export function SkipLink() {
+  const { t } = useTranslation('common');
+
   return (
     <a
       href="#main-content"
@@ -16,7 +20,7 @@ export function SkipLink() {
         'font-medium text-sm',
       ].join(' ')}
     >
-      Skip to main content
+      {t('skipToContent')}
     </a>
   );
 }

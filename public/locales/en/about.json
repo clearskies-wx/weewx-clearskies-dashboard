@@ -1,1 +1,35 @@
-﻿{}
+{
+  "title": "About",
+  "station": {
+    "defaultName": "Weather Station",
+    "loadingAria": "Loading station information…",
+    "unavailable": "Station information unavailable.",
+    "location": "Location",
+    "altitude": "Altitude",
+    "hardware": "Hardware",
+    "hardwareDefault": "Not specified",
+    "timezone": "Time Zone",
+    "unitSystem": "Unit System",
+    "stationId": "Station ID",
+    "recordingSince": "Recording Since",
+    "lastData": "Last Data Received"
+  },
+  "aboutStation": {
+    "cardTitle": "About This Station",
+    "loadingAria": "Loading about content…",
+    "placeholder": "This station operator-authored description is a placeholder. Configure your station's About content via the Clear Skies configuration UI."
+  },
+  "software": {
+    "cardTitle": "Software",
+    "weatherSoftware": "Weather Software",
+    "weatherSoftwareValue": "weewx 5.x",
+    "dashboard": "Dashboard",
+    "dashboardValue": "Clear Skies v0.1.0-dev",
+    "dashboardEngine": "Dashboard Engine",
+    "dashboardEngineValue": "React + Vite"
+  },
+  "photo": {
+    "cardTitle": "Station Photo",
+    "placeholder": "Upload a station photo via the Clear Skies configuration UI."
+  }
+}

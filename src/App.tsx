@@ -1,5 +1,6 @@
 import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { AppLayout } from './components/layout/app-layout';
 import { useLocaleSync } from './i18n/use-locale-sync';
 
@@ -19,14 +20,15 @@ const NotFoundPage = React.lazy(() => import('./routes/not-found'));
 // is satisfied even while the lazy chunk is still loading (WCAG 2.4.6 /
 // axe best-practice). The `title` prop must match the page's own <h1>.
 function PageLoader({ title }: { title: string }) {
+  const { t } = useTranslation('common');
   return (
     <div
       className="flex items-center justify-center h-full"
       role="status"
-      aria-label={`Loading ${title}`}
+      aria-label={t('loadingPage', { title })}
     >
       <h1 className="sr-only">{title}</h1>
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">{t('loading')}</span>
       <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
     </div>
   );
@@ -35,6 +37,8 @@ function PageLoader({ title }: { title: string }) {
 function App() {
   // Keeps <html lang="…"> in sync with the active i18next locale (ADR-021 / WCAG 2.4.2).
   useLocaleSync();
+  const { t: tNav } = useTranslation('nav');
+  const { t: tCommon } = useTranslation('common');
 
   return (
     <BrowserRouter>
@@ -43,7 +47,7 @@ function App() {
           <Route
             index
             element={
-              <Suspense fallback={<PageLoader title="Now" />}>
+              <Suspense fallback={<PageLoader title={tNav('pages.now')} />}>
                 <NowPage />
               </Suspense>
             }
@@ -51,7 +55,7 @@ function App() {
           <Route
             path="forecast"
             element={
-              <Suspense fallback={<PageLoader title="Forecast" />}>
+              <Suspense fallback={<PageLoader title={tNav('pages.forecast')} />}>
                 <ForecastPage />
               </Suspense>
             }
@@ -59,7 +63,7 @@ function App() {
           <Route
             path="charts"
             element={
-              <Suspense fallback={<PageLoader title="Charts" />}>
+              <Suspense fallback={<PageLoader title={tNav('pages.charts')} />}>
                 <ChartsPage />
               </Suspense>
             }
@@ -67,7 +71,7 @@ function App() {
           <Route
             path="almanac"
             element={
-              <Suspense fallback={<PageLoader title="Almanac" />}>
+              <Suspense fallback={<PageLoader title={tNav('pages.almanac')} />}>
                 <AlmanacPage />
               </Suspense>
             }
@@ -75,7 +79,7 @@ function App() {
           <Route
             path="earthquakes"
             element={
-              <Suspense fallback={<PageLoader title="Earthquakes" />}>
+              <Suspense fallback={<PageLoader title={tNav('pages.earthquakes')} />}>
                 <EarthquakesPage />
               </Suspense>
             }
@@ -83,7 +87,7 @@ function App() {
           <Route
             path="records"
             element={
-              <Suspense fallback={<PageLoader title="Records" />}>
+              <Suspense fallback={<PageLoader title={tNav('pages.records')} />}>
                 <RecordsPage />
               </Suspense>
             }
@@ -91,7 +95,7 @@ function App() {
           <Route
             path="reports"
             element={
-              <Suspense fallback={<PageLoader title="Reports" />}>
+              <Suspense fallback={<PageLoader title={tNav('pages.reports')} />}>
                 <ReportsPage />
               </Suspense>
             }
@@ -99,7 +103,7 @@ function App() {
           <Route
             path="about"
             element={
-              <Suspense fallback={<PageLoader title="About" />}>
+              <Suspense fallback={<PageLoader title={tNav('pages.about')} />}>
                 <AboutPage />
               </Suspense>
             }
@@ -107,7 +111,7 @@ function App() {
           <Route
             path="legal"
             element={
-              <Suspense fallback={<PageLoader title="Legal & Privacy" />}>
+              <Suspense fallback={<PageLoader title={tNav('pages.legalPrivacy')} />}>
                 <LegalPage />
               </Suspense>
             }
@@ -115,7 +119,7 @@ function App() {
           <Route
             path="*"
             element={
-              <Suspense fallback={<PageLoader title="Page not found" />}>
+              <Suspense fallback={<PageLoader title={tCommon('pageNotFound')} />}>
                 <NotFoundPage />
               </Suspense>
             }

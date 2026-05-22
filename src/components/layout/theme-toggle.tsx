@@ -3,6 +3,7 @@
 // Reads/writes preference via ThemeProvider context (src/lib/theme-provider.tsx).
 
 import { Monitor, Sun, Moon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../ui/button';
 import { useTheme } from '../../lib/theme-provider';
 import type { ThemePreference } from '../../lib/theme-provider';
@@ -14,12 +15,6 @@ export const NEXT_PREFERENCE: Record<ThemePreference, ThemePreference> = {
   dark: 'system',
 };
 
-export const ARIA_LABEL: Record<ThemePreference, string> = {
-  system: 'Theme: following system preference — click to switch to light mode',
-  light:  'Theme: light — click to switch to dark mode',
-  dark:   'Theme: dark — click to switch to system preference',
-};
-
 export function ThemeIcon({ preference }: { preference: ThemePreference }) {
   if (preference === 'system') return <Monitor aria-hidden="true" className="h-5 w-5" />;
   if (preference === 'light')  return <Sun     aria-hidden="true" className="h-5 w-5" />;
@@ -28,6 +23,12 @@ export function ThemeIcon({ preference }: { preference: ThemePreference }) {
 
 export function ThemeToggle() {
   const { preference, setTheme } = useTheme();
+  const { t } = useTranslation('common');
+
+  // Map preference to its aria key suffix: system→ariaAuto, light→ariaLight, dark→ariaDark
+  const ariaKey = preference === 'system' ? 'theme.ariaAuto'
+    : preference === 'light' ? 'theme.ariaLight'
+    : 'theme.ariaDark';
 
   function handleClick() {
     setTheme(NEXT_PREFERENCE[preference]);
@@ -38,7 +39,7 @@ export function ThemeToggle() {
       variant="ghost"
       size="icon"
       onClick={handleClick}
-      aria-label={ARIA_LABEL[preference]}
+      aria-label={t(ariaKey)}
       className="rounded-full"
     >
       <ThemeIcon preference={preference} />

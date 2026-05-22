@@ -1,5 +1,6 @@
 // legal.tsx — Legal page (/legal)
 
+import { useTranslation } from 'react-i18next';
 import {
   Card,
   CardHeader,
@@ -18,22 +19,23 @@ function TileSkeleton({ className }: { className?: string }) {
 }
 
 export function LegalPage() {
+  const { t } = useTranslation('legal');
   const { data: content, loading } = useContent('legal');
 
   return (
     <div className="flex flex-col gap-6 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-foreground">Legal &amp; Privacy</h1>
+      <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
 
       {/* Operator-authored legal content — shown if configured, else show default text */}
       {loading ? (
         <>
-          <span className="sr-only" role="status">Loading legal content…</span>
+          <span className="sr-only" role="status">{t('loadingAria')}</span>
           <TileSkeleton className="h-32" />
         </>
       ) : content ? (
         <Card>
           <CardHeader>
-            <CardTitle as="h2">Legal &amp; Privacy Policy</CardTitle>
+            <CardTitle as="h2">{t('operatorCard.title')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
@@ -45,47 +47,40 @@ export function LegalPage() {
         <>
           <Card>
             <CardHeader>
-              <CardTitle as="h2">Privacy Policy</CardTitle>
+              <CardTitle as="h2">{t('privacy.title')}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                This weather station collects meteorological data from local sensors and may use
-                third-party services for forecasts, air quality, and earthquake data. No personal
-                visitor data is collected beyond standard web server logs. Station operators should
-                customize this section to reflect their specific data practices and applicable
-                privacy regulations.
+                {t('privacy.body')}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle as="h2">Data Attribution</CardTitle>
+              <CardTitle as="h2">{t('attribution.title')}</CardTitle>
             </CardHeader>
             <CardContent>
               <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1.5">
-                <li>Weather observations: Local station hardware (configured in About)</li>
-                <li>Forecast data: National Weather Service (NWS)</li>
-                <li>Air quality data: AirNow / EPA</li>
-                <li>Earthquake data: USGS</li>
-                <li>Astronomical data: Skyfield ephemeris calculations</li>
+                <li>{t('attribution.observations')}</li>
+                <li>{t('attribution.forecast')}</li>
+                <li>{t('attribution.airQuality')}</li>
+                <li>{t('attribution.earthquake')}</li>
+                <li>{t('attribution.astronomical')}</li>
               </ul>
               <p className="mt-3 text-xs text-muted-foreground">
-                Actual data sources depend on configured providers.
+                {t('attribution.note')}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle as="h2">Open-Source Licenses</CardTitle>
+              <CardTitle as="h2">{t('openSource.title')}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Clear Skies is free software licensed under the GNU General Public License v3.0.
-                It is built with open-source technologies including React, Vite, Tailwind CSS,
-                Recharts, and Lucide icons. Full license text and third-party attribution are
-                available in the project repository.
+                {t('openSource.body')}
               </p>
             </CardContent>
           </Card>

@@ -1,8 +1,18 @@
 {
   "loading": "Loading…",
+  "loadingPage": "Loading {{title}}",
   "error": "An error occurred",
   "retry": "Retry",
   "noData": "No data available",
   "skipToContent": "Skip to main content",
-  "poweredBy": "Powered by Clear Skies"
+  "pageNotFound": "Page not found.",
+  "footer": {
+    "legal": "Legal / Privacy",
+    "poweredBy": "Powered by Clear Skies"
+  },
+  "theme": {
+    "ariaAuto": "Theme: following system preference — click to switch to light mode",
+    "ariaLight": "Theme: light — click to switch to dark mode",
+    "ariaDark": "Theme: dark — click to switch to system preference"
+  }
 }

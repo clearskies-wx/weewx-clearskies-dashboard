@@ -1,6 +1,7 @@
 // reports.tsx — Reports page (/reports)
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Card,
   CardHeader,
@@ -9,10 +10,13 @@ import {
 } from '../components/ui/card';
 import { useReports, useReport } from '../hooks/useWeatherData';
 
-const MONTHS = [
-  '', 'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
+/** Return the long month name for a 1-based month number using the active locale. */
+function getMonthName(monthNumber: number, locale: string): string {
+  // Intl.DateTimeFormat month: 'long' on a date whose month index = monthNumber - 1
+  return new Intl.DateTimeFormat(locale, { month: 'long' }).format(
+    new Date(2000, monthNumber - 1, 1),
+  );
+}
 
 function TileSkeleton({ className }: { className?: string }) {
   return (
@@ -24,6 +28,7 @@ function TileSkeleton({ className }: { className?: string }) {
 }
 
 function TileError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  const { t } = useTranslation('common');
   return (
     <div role="alert" className="flex flex-col gap-2 items-start text-sm">
       <p className="text-destructive">{message}</p>
@@ -32,13 +37,14 @@ function TileError({ message, onRetry }: { message: string; onRetry: () => void 
         onClick={onRetry}
         className="text-xs text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
       >
-        Retry
+        {t('retry')}
       </button>
     </div>
   );
 }
 
 export function ReportsPage() {
+  const { t, i18n } = useTranslation('reports');
   const { data: reports, loading: indexLoading, error: indexError, refetch: indexRefetch } = useReports();
 
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
@@ -77,32 +83,31 @@ export function ReportsPage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-foreground">Reports</h1>
+      <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
 
       <p className="text-sm text-muted-foreground leading-relaxed">
-        NOAA-style monthly and annual climate reports summarize temperature, precipitation, and
-        other observations. Reports are generated from your station&apos;s archive data.
+        {t('intro')}
       </p>
 
       <Card>
         <CardHeader>
-          <CardTitle as="h2">NOAA Monthly Reports</CardTitle>
+          <CardTitle as="h2">{t('card.title')}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {indexLoading && (
             <>
-              <span className="sr-only" role="status">Loading report index…</span>
+              <span className="sr-only" role="status">{t('loading.index')}</span>
               <TileSkeleton className="h-12" />
             </>
           )}
 
-          {indexError && <TileError message="Unable to load reports" onRetry={indexRefetch} />}
+          {indexError && <TileError message={t('error.index')} onRetry={indexRefetch} />}
 
           {!indexLoading && !indexError && (
             <>
               {reports && reports.length === 0 && (
                 <p className="text-sm text-muted-foreground">
-                  No NOAA reports found. Reports become available once the archive has monthly data.
+                  {t('empty')}
                 </p>
               )}
 
@@ -113,7 +118,7 @@ export function ReportsPage() {
                       htmlFor="report-year"
                       className="text-sm font-medium text-foreground"
                     >
-                      Year
+                      {t('year.label')}
                     </label>
                     <select
                       id="report-year"
@@ -123,9 +128,9 @@ export function ReportsPage() {
                         'rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground min-h-[44px] md:min-h-0',
                         'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
                       ].join(' ')}
-                      aria-label="Select report year"
+                      aria-label={t('year.ariaLabel')}
                     >
-                      <option value="">— Select year —</option>
+                      <option value="">{t('year.placeholder')}</option>
                       {availableYears.map((y) => (
                         <option key={y} value={y}>{y}</option>
                       ))}
@@ -137,7 +142,7 @@ export function ReportsPage() {
                       htmlFor="report-month"
                       className="text-sm font-medium text-foreground"
                     >
-                      Month
+                      {t('month.label')}
                     </label>
                     <select
                       id="report-month"
@@ -149,11 +154,11 @@ export function ReportsPage() {
                         'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
                         (!selectedYear || availableMonths.length === 0) ? 'opacity-60 cursor-not-allowed' : '',
                       ].join(' ')}
-                      aria-label="Select report month"
+                      aria-label={t('month.ariaLabel')}
                     >
-                      <option value="">— Select month —</option>
+                      <option value="">{t('month.placeholder')}</option>
                       {availableMonths.map((m) => (
-                        <option key={m} value={m}>{MONTHS[m]}</option>
+                        <option key={m} value={m}>{getMonthName(m, i18n.language)}</option>
                       ))}
                     </select>
                   </div>
@@ -167,23 +172,23 @@ export function ReportsPage() {
             <div aria-live="polite" aria-busy={reportLoading}>
               {reportLoading && (
                 <>
-                  <span className="sr-only" role="status">Loading report…</span>
+                  <span className="sr-only" role="status">{t('loading.report')}</span>
                   <TileSkeleton className="h-64" />
                 </>
               )}
-              {reportError && <TileError message="Unable to load report" onRetry={reportRefetch} />}
+              {reportError && <TileError message={t('error.report')} onRetry={reportRefetch} />}
               {!reportLoading && !reportError && report && (
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center justify-between">
                     <h2 className="text-sm font-semibold text-foreground">
-                      {report.month ? MONTHS[report.month] : 'Annual'} {report.year}
+                      {report.month ? getMonthName(report.month, i18n.language) : t('annual')} {report.year}
                     </h2>
                     <a
                       href={`data:text/plain;charset=utf-8,${encodeURIComponent(report.rawText)}`}
                       download={report.filename}
                       className="inline-flex items-center min-h-[44px] md:min-h-0 px-2 text-sm text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
                     >
-                      Download .txt
+                      {t('download')}
                     </a>
                   </div>
                   <pre className="overflow-x-auto rounded-md bg-muted/40 p-4 text-xs text-foreground font-mono leading-relaxed whitespace-pre-wrap">

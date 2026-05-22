@@ -1,1 +1,28 @@
-﻿{}
+{
+  "title": "Reports",
+  "intro": "NOAA-style monthly and annual climate reports summarize temperature, precipitation, and other observations. Reports are generated from your station's archive data.",
+  "card": {
+    "title": "NOAA Monthly Reports"
+  },
+  "year": {
+    "label": "Year",
+    "ariaLabel": "Select report year",
+    "placeholder": "— Select year —"
+  },
+  "month": {
+    "label": "Month",
+    "ariaLabel": "Select report month",
+    "placeholder": "— Select month —"
+  },
+  "empty": "No NOAA reports found. Reports become available once the archive has monthly data.",
+  "loading": {
+    "index": "Loading report index…",
+    "report": "Loading report…"
+  },
+  "error": {
+    "index": "Unable to load reports",
+    "report": "Unable to load report"
+  },
+  "annual": "Annual",
+  "download": "Download .txt"
+}
