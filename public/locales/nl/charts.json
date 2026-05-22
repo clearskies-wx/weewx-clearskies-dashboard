@@ -1,1 +1,37 @@
-﻿{}
+{
+  "title": "Grafieken",
+  "tabs": {
+    "homepage": "Startpagina",
+    "averageclimate": "Gemiddeld klimaat",
+    "monthly": "Maandelijks",
+    "annual": "Jaarlijks"
+  },
+  "tabsPanelHeadings": {
+    "averageclimate": "Gemiddeld klimaat grafieken",
+    "monthly": "Maandelijkse grafieken",
+    "annual": "Jaarlijkse grafieken"
+  },
+  "ranges": {
+    "1d": "1d",
+    "3d": "3d",
+    "7d": "7d",
+    "30d": "30d",
+    "90d": "90d"
+  },
+  "ariaTabGroupLabel": "Grafiekgroep selecteren",
+  "ariaRangeGroupLabel": "Tijdsbereik selecteren",
+  "temperatureCardHeading": "Temperatuur — Laatste {{range}}",
+  "showChart": "Grafiek tonen",
+  "showDataTable": "Gegevenstabel tonen",
+  "loadingChart": "Grafiekgegevens laden…",
+  "unableToLoad": "Kan grafiekgegevens niet laden",
+  "tableCaption": "Temperatuurmetingen over het geselecteerde bereik",
+  "tableHeaderTime": "Tijd",
+  "tableHeaderTemperature": "Temperatuur (°C)",
+  "ariaChartFigure": "Temperatuur over de afgelopen {{range}}",
+  "seriesTemperature": "Temperatuur",
+  "noData": "Geen grafiekgegevens beschikbaar voor dit bereik.",
+  "comingSoonAverageClimate": "Binnenkort beschikbaar — Gemiddeld klimaat grafieken zijn beschikbaar zodra historische gegevens zijn gekoppeld.",
+  "comingSoonMonthly": "Binnenkort beschikbaar — Maandelijkse grafieken zijn beschikbaar zodra historische gegevens zijn gekoppeld.",
+  "comingSoonAnnual": "Binnenkort beschikbaar — Jaarlijkse grafieken zijn beschikbaar zodra historische gegevens zijn gekoppeld."
+}

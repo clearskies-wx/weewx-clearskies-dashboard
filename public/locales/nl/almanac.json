@@ -1,1 +1,40 @@
-﻿{}
+{
+  "pageTitle": "Almanak",
+
+  "loading": "Almanak-gegevens laden…",
+  "error": "Kan almanak-gegevens niet laden",
+  "noData": "Geen almanak-gegevens beschikbaar.",
+
+  "sun": {
+    "title": "Zon",
+    "sunrise": "Zonsopgang",
+    "sunset": "Zonsondergang",
+    "civilDawn": "Burgerlijke schemering (ochtend)",
+    "civilDusk": "Burgerlijke schemering (avond)",
+    "totalDaylight": "Totale daglengte",
+    "solarNoon": "Zonnige middag",
+    "nextSolstice": "Volgende zonnewende",
+    "nextEquinox": "Volgende dag-en-nachtevening"
+  },
+
+  "moon": {
+    "title": "Maan",
+    "phase": "Fase",
+    "illumination": "Verlichting",
+    "moonrise": "Maanopgang",
+    "moonset": "Maanondergang",
+    "nextFullMoon": "Volgende volle maan",
+    "nextNewMoon": "Volgende nieuwe maan"
+  },
+
+  "positional": {
+    "title": "Positiegegevens",
+    "note": "Positiegegevens vereisen Skyfield-berekening op de server.",
+    "sunAzimuth": "Zon azimut",
+    "sunAltitude": "Zon hoogte",
+    "moonAzimuth": "Maan azimut",
+    "moonAltitude": "Maan hoogte"
+  },
+
+  "daylightDelta": "({{delta}}m t.o.v. gisteren)"
+}

@@ -1,1 +1,28 @@
-﻿{}
+{
+  "title": "Rapporten",
+  "intro": "NOAA-stijl maandelijkse en jaarlijkse klimaatrapporten vatten temperatuur, neerslag en andere waarnemingen samen. Rapporten worden gegenereerd uit de archiefgegevens van uw station.",
+  "card": {
+    "title": "NOAA Maandelijkse rapporten"
+  },
+  "year": {
+    "label": "Jaar",
+    "ariaLabel": "Selecteer rapportjaar",
+    "placeholder": "— Selecteer jaar —"
+  },
+  "month": {
+    "label": "Maand",
+    "ariaLabel": "Selecteer rapportmaand",
+    "placeholder": "— Selecteer maand —"
+  },
+  "empty": "Geen NOAA-rapporten gevonden. Rapporten worden beschikbaar zodra het archief maandelijkse gegevens bevat.",
+  "loading": {
+    "index": "Rapportindex laden…",
+    "report": "Rapport laden…"
+  },
+  "error": {
+    "index": "Kan rapporten niet laden",
+    "report": "Kan rapport niet laden"
+  },
+  "annual": "Jaarlijks",
+  "download": "Downloaden als .txt"
+}

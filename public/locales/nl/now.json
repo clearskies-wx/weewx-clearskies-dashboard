@@ -1,1 +1,138 @@
-﻿{}
+{
+  "currentConditions": "Huidige omstandigheden",
+  "todaysHighlights": "Hoogtepunten van vandaag",
+  "wind": "Wind",
+  "stationObservations": "Stationswaarnemingen",
+  "sunAndMoon": "Zon & Maan",
+  "airQuality": "Luchtkwaliteit",
+  "lightning": "Bliksem",
+  "recentEarthquake": "Recente aardbeving",
+  "todaysForecast": "Verwachting van vandaag",
+  "temperatureTrend": "Temperatuurverloop",
+  "viewCharts": "Grafieken bekijken →",
+
+  "loading": {
+    "currentConditions": "Huidige omstandigheden laden…",
+    "highlights": "Hoogtepunten van vandaag laden…",
+    "wind": "Windgegevens laden…",
+    "stationObservations": "Stationswaarnemingen laden…",
+    "sunMoon": "Zon- en maangegevens laden…",
+    "airQuality": "Luchtkwaliteitsgegevens laden…",
+    "lightning": "Bliksemgegevens laden…",
+    "earthquake": "Aardbevingsgegevens laden…",
+    "forecast": "Verwachting laden…"
+  },
+
+  "error": {
+    "currentConditions": "Kan huidige omstandigheden niet laden",
+    "wind": "Kan windgegevens niet laden",
+    "stationObservations": "Kan stationswaarnemingen niet laden",
+    "almanac": "Kan almanak-gegevens niet laden",
+    "airQuality": "Kan luchtkwaliteitsgegevens niet laden",
+    "earthquake": "Kan aardbevingsgegevens niet laden",
+    "forecast": "Kan verwachting niet laden"
+  },
+
+  "noData": {
+    "observation": "Geen waarnemingsgegevens beschikbaar.",
+    "highlights": "Geen hoogtepunten beschikbaar.",
+    "wind": "Geen windgegevens beschikbaar.",
+    "lightning": "Geen bliksemdetector geconfigureerd.",
+    "earthquake": "Geen recente aardbevingen binnen de ingestelde straal.",
+    "airQuality": "Geen luchtkwaliteitsprovider geconfigureerd.",
+    "forecast": "Geen verwachtingsgegevens beschikbaar."
+  },
+
+  "highlights": {
+    "todaysHigh": "Maximum vandaag",
+    "todaysLow": "Minimum vandaag",
+    "peakGust": "Maximale windstoot",
+    "rainToday": "Neerslag vandaag",
+    "peakAqi": "Maximale LKI",
+    "recordsBroken": "Gebroken records"
+  },
+
+  "observations": {
+    "barometer": "Barometer",
+    "dewpoint": "Dauwpunt",
+    "humidity": "Luchtvochtigheid",
+    "rain": "Neerslag",
+    "heatIndex": "Gevoelstemperatuur (hitte)",
+    "windChill": "Gevoelstemperatuur (kou)",
+    "solarRadiation": "Zonnestraling",
+    "uvIndex": "UV-index"
+  },
+
+  "sunMoon": {
+    "sunrise": "Zonsopgang",
+    "sunset": "Zonsondergang",
+    "moon": "Maan"
+  },
+
+  "feelsLike": "Voelt als",
+
+  "windCompass": {
+    "speed": "Wind: {{speed}} mph · {{direction}}",
+    "gusts": "Windstoten: {{gust}} mph",
+    "ariaLabel": "Wind uit {{direction}} met {{degrees}} graden"
+  },
+
+  "barometer": {
+    "trend": {
+      "rising": "stijgend",
+      "falling": "dalend",
+      "steady": "stabiel"
+    },
+    "trendAriaLabel": "Trend: {{trend}}"
+  },
+
+  "aqi": {
+    "good": "Goed",
+    "moderate": "Matig",
+    "unhealthySensitive": "Ongezond voor gevoelige groepen",
+    "unhealthy": "Ongezond",
+    "veryUnhealthy": "Zeer ongezond",
+    "hazardous": "Gevaarlijk",
+    "gaugeAriaLabel": "Luchtkwaliteitsindex: {{aqi}}, {{category}}. Voornaamste verontreiniging: {{pollutant}}",
+    "unknownPollutant": "Onbekend",
+    "mainPollutant": "Voornaamste verontreiniging: {{pollutant}}"
+  },
+
+  "beaufort": {
+    "calm": "Windstil",
+    "lightAir": "Zwak",
+    "lightBreeze": "Zwak",
+    "gentleBreeze": "Zwak",
+    "moderateBreeze": "Matig",
+    "freshBreeze": "Vrij krachtig",
+    "strongBreeze": "Krachtig",
+    "nearGale": "Hard",
+    "gale": "Stormachtig",
+    "strongGale": "Storm",
+    "storm": "Zware storm",
+    "violentStorm": "Zeer zware storm",
+    "hurricane": "Orkaan"
+  },
+
+  "lightning": {
+    "strikesLastHour": "{{count}} inslagen in het afgelopen uur",
+    "strikesLast24h": "{{count}} in de afgelopen 24 uur",
+    "nearest": "Dichtstbij: {{distance}} km",
+    "lastStrike": "Laatste inslag: {{time}}",
+    "lastStrikeUnknown": "Onbekend"
+  },
+
+  "earthquake": {
+    "magnitude": "M{{magnitude}} — {{place}}",
+    "depth": "Diepte: {{depth}} km"
+  },
+
+  "forecast": {
+    "hiLo": "Max {{high}}° / Min {{low}}°",
+    "precipChance": "{{percent}}% kans op neerslag"
+  },
+
+  "temperature": {
+    "ariaLabel": "Huidige temperatuur: {{temp}} graden {{unit}}"
+  }
+}

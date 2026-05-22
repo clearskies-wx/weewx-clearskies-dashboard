@@ -1,1 +1,31 @@
-﻿{}
+{
+  "pages": {
+    "now": "Nu",
+    "forecast": "Verwachting",
+    "charts": "Grafieken",
+    "almanac": "Almanak",
+    "earthquakes": "Aardbevingen",
+    "records": "Records",
+    "reports": "Rapporten",
+    "about": "Over",
+    "legal": "Juridisch",
+    "legalPrivacy": "Juridisch & Privacy",
+    "notFound": "Pagina niet gevonden"
+  },
+  "theme": {
+    "label": "Thema",
+    "auto": "Thema: Auto",
+    "light": "Thema: Licht",
+    "dark": "Thema: Donker",
+    "ariaAuto": "Thema: systeemvoorkeur — klik om over te schakelen naar licht thema",
+    "ariaLight": "Thema: licht — klik om over te schakelen naar donker thema",
+    "ariaDark": "Thema: donker — klik om over te schakelen naar systeemvoorkeur",
+    "rowLabel": "Thema: {{mode}}"
+  },
+  "more": "Meer",
+  "morePages": "Meer pagina's",
+  "ariaMain": "Hoofdnavigatie",
+  "ariaPrimary": "Primaire navigatie",
+  "ariaAdditional": "Aanvullende navigatie",
+  "ariaAdditionalPages": "Aanvullende pagina's"
+}

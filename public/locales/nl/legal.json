@@ -1,1 +1,24 @@
-﻿{}
+{
+  "title": "Juridisch & Privacy",
+  "loadingAria": "Juridische inhoud laden…",
+  "operatorCard": {
+    "title": "Juridisch & Privacybeleid"
+  },
+  "privacy": {
+    "title": "Privacybeleid",
+    "body": "Dit weerstation verzamelt meteorologische gegevens van lokale sensoren en maakt mogelijk gebruik van diensten van derden voor verwachtingen, luchtkwaliteit en aardbevingsgegevens. Er worden geen persoonlijke bezoekersgegevens verzameld buiten standaard webserverlogboeken. Stationsbeheerders dienen dit gedeelte aan te passen aan hun specifieke gegevenspraktijken en toepasselijke privacyregelgeving."
+  },
+  "attribution": {
+    "title": "Gegevensattributie",
+    "observations": "Weerwaarnemingen: Lokale stationshardware (geconfigureerd in Over)",
+    "forecast": "Verwachtingsgegevens: National Weather Service (NWS)",
+    "airQuality": "Luchtkwaliteitsgegevens: AirNow / EPA",
+    "earthquake": "Aardbevingsgegevens: USGS",
+    "astronomical": "Astronomische gegevens: Skyfield efemerideberekeningen",
+    "note": "Werkelijke gegevensbronnen zijn afhankelijk van geconfigureerde providers."
+  },
+  "openSource": {
+    "title": "Open-source licenties",
+    "body": "Clear Skies is vrije software, gelicentieerd onder de GNU General Public License v3.0. Het is gebouwd met open-source technologieën waaronder React, Vite, Tailwind CSS, Recharts en Lucide-iconen. De volledige licentietekst en attributie van derden zijn beschikbaar in de projectrepository."
+  }
+}

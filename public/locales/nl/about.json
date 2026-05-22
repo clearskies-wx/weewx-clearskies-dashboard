@@ -1,1 +1,35 @@
-﻿{}
+{
+  "title": "Over",
+  "station": {
+    "defaultName": "Weerstation",
+    "loadingAria": "Stationsinformatie laden…",
+    "unavailable": "Stationsinformatie niet beschikbaar.",
+    "location": "Locatie",
+    "altitude": "Hoogte",
+    "hardware": "Hardware",
+    "hardwareDefault": "Niet opgegeven",
+    "timezone": "Tijdzone",
+    "unitSystem": "Eenheidssysteem",
+    "stationId": "Station-ID",
+    "recordingSince": "Registratie gestart",
+    "lastData": "Laatste gegevens ontvangen"
+  },
+  "aboutStation": {
+    "cardTitle": "Over dit station",
+    "loadingAria": "Over-inhoud laden…",
+    "placeholder": "Deze door de stationsbeheerder geschreven beschrijving is een tijdelijke aanduiding. Configureer de Over-inhoud van uw station via de Clear Skies configuratie-UI."
+  },
+  "software": {
+    "cardTitle": "Software",
+    "weatherSoftware": "Weersoftware",
+    "weatherSoftwareValue": "weewx 5.x",
+    "dashboard": "Dashboard",
+    "dashboardValue": "Clear Skies v0.1.0-dev",
+    "dashboardEngine": "Dashboard-engine",
+    "dashboardEngineValue": "React + Vite"
+  },
+  "photo": {
+    "cardTitle": "Stationfoto",
+    "placeholder": "Upload een stationfoto via de Clear Skies configuratie-UI."
+  }
+}

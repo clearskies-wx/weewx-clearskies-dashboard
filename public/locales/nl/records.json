@@ -1,1 +1,17 @@
-﻿{}
+{
+  "title": "Records",
+  "ariaPeriodGroup": "Recordperiode",
+  "periodAllTime": "Allertijden",
+  "periodYearToDate": "Jaar tot nu",
+  "loadingRecords": "Records laden…",
+  "unableToLoad": "Kan records niet laden",
+  "sectionHeading": "{{section}} records",
+  "tableHeaderRecord": "Record",
+  "tableHeaderValue": "Waarde",
+  "tableHeaderDateObserved": "Datum waargenomen",
+  "badgeNew": "Nieuw",
+  "badgeNewTitle": "Verbroken in de afgelopen 30 dagen",
+  "badgeNewAriaLabel": "Recent verbroken record",
+  "noData": "Geen records beschikbaar voor deze periode.",
+  "operatorNotePlaceholder": "Stationsbeheerders kunnen hier aangepaste notities over hun records toevoegen via de Clear Skies configuratie-UI."
+}
