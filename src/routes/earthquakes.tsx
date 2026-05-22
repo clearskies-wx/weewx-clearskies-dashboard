@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { MapContainer, TileLayer, Marker, CircleMarker, Popup } from 'react-leaflet';
 import {
   Card,
   CardHeader,
@@ -42,6 +43,16 @@ function alertClasses(level: EarthquakeRecord['alert']): string {
   }
 }
 
+function alertColor(alert: EarthquakeRecord['alert']): string {
+  switch (alert) {
+    case 'green':  return '#22c55e';
+    case 'yellow': return '#eab308';
+    case 'orange': return '#f97316';
+    case 'red':    return '#ef4444';
+    default:       return '#6b7280';
+  }
+}
+
 function TileSkeleton({ className }: { className?: string }) {
   return (
     <div
@@ -72,6 +83,12 @@ export function EarthquakesPage() {
   const locale = i18n.language;
   const { data: earthquakes, loading, error, refetch } = useEarthquakes();
   const { data: station } = useStation();
+
+  const hasStation = station !== null;
+  const center: [number, number] = hasStation
+    ? [station.latitude, station.longitude]
+    : [0, 0];
+  const defaultZoom = hasStation ? 7 : 2;
 
   return (
     <div className="flex flex-col gap-6 max-w-2xl mx-auto">
@@ -171,16 +188,55 @@ export function EarthquakesPage() {
         )
       )}
 
-      {/* Map placeholder — Leaflet not loaded at mock phase */}
       <Card>
         <CardHeader>
           <CardTitle as="h2">{t('mapCardTitle')}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="border-dashed border-2 border-border rounded-lg h-48 flex items-center justify-center">
-            <p className="text-sm text-muted-foreground text-center px-4">
-              {t('mapPlaceholder')}
-            </p>
+          <div
+            className="h-96 rounded-lg overflow-hidden"
+            role="region"
+            aria-label={t('mapCardTitle')}
+          >
+            <MapContainer
+              center={center}
+              zoom={defaultZoom}
+              className="h-full w-full"
+              scrollWheelZoom={true}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              {hasStation && (
+                <Marker position={center}>
+                  <Popup>{t('stationLocation')}</Popup>
+                </Marker>
+              )}
+              {earthquakes?.map((eq) => (
+                <CircleMarker
+                  key={eq.id}
+                  center={[eq.latitude, eq.longitude]}
+                  radius={Math.max(4, eq.magnitude * 3)}
+                  pathOptions={{
+                    color: alertColor(eq.alert),
+                    fillColor: alertColor(eq.alert),
+                    fillOpacity: 0.6,
+                    weight: 1,
+                  }}
+                >
+                  <Popup>
+                    <div>
+                      <strong>{eq.place ?? t('unknownLocation')}</strong><br />
+                      {t('magnitude')}: {eq.magnitude}{eq.magnitudeType ? ` ${eq.magnitudeType}` : ''}<br />
+                      {eq.depth !== null ? <>{t('depthLabel')}: {eq.depth} km<br /></> : null}
+                      {eq.alert !== null ? <>{t('pager', { level: eq.alert })}<br /></> : null}
+                      {new Date(eq.time).toLocaleString(locale)}
+                    </div>
+                  </Popup>
+                </CircleMarker>
+              ))}
+            </MapContainer>
           </div>
         </CardContent>
       </Card>

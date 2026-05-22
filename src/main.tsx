@@ -1,6 +1,7 @@
 import { StrictMode, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import './lib/leaflet-setup'
 // Initialize i18next before React renders so the first render already has
 // translations available (or gracefully defers to the Suspense boundary below).
 import './i18n'
