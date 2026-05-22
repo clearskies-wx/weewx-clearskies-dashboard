@@ -109,6 +109,7 @@ export interface ArchiveParams {
   to?: string;
   limit?: string;
   fields?: string;
+  interval?: string;
 }
 
 export function getArchive(
@@ -120,6 +121,7 @@ export function getArchive(
   if (params?.to) p['to'] = params.to;
   if (params?.limit) p['limit'] = params.limit;
   if (params?.fields) p['fields'] = params.fields;
+  if (params?.interval) p['interval'] = params.interval;
   return fetchApi<PaginatedResponse<ArchiveRecord[]>>('/archive', p, signal);
 }
 

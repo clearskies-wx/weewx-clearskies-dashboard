@@ -278,10 +278,11 @@ export function useArchive(params?: ArchiveParams): HookResult<ArchiveRecord[]> 
   const toStr = params?.to ?? '';
   const limitStr = params?.limit ?? '';
   const fieldsStr = params?.fields ?? '';
+  const intervalStr = params?.interval ?? '';
 
   const { data, loading, error, refetch } = useApiQuery<{ data: ArchiveRecord[]; units?: UnitsBlock; source?: string }>(
     (signal) => getArchive(params, signal) as Promise<{ data: ArchiveRecord[]; units?: UnitsBlock; source?: string; generatedAt: string }>,
-    { skip: isMockMode(), deps: [fromStr, toStr, limitStr, fieldsStr] },
+    { skip: isMockMode(), deps: [fromStr, toStr, limitStr, fieldsStr, intervalStr] },
   );
 
   if (isMockMode()) {
