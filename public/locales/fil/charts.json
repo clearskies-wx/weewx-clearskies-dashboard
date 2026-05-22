@@ -1,1 +1,37 @@
-﻿{}
+{
+  "title": "Mga Tsart",
+  "tabs": {
+    "homepage": "Homepage",
+    "averageclimate": "Average na Klima",
+    "monthly": "Buwanang",
+    "annual": "Taunan"
+  },
+  "tabsPanelHeadings": {
+    "averageclimate": "Mga Tsart ng Average na Klima",
+    "monthly": "Mga Buwanang Tsart",
+    "annual": "Mga Taunan na Tsart"
+  },
+  "ranges": {
+    "1d": "1d",
+    "3d": "3d",
+    "7d": "7d",
+    "30d": "30d",
+    "90d": "90d"
+  },
+  "ariaTabGroupLabel": "Pagpili ng grupo ng tsart",
+  "ariaRangeGroupLabel": "Pagpili ng hanay ng oras",
+  "temperatureCardHeading": "Temperatura — Nakaraang {{range}}",
+  "showChart": "Ipakita ang tsart",
+  "showDataTable": "Ipakita ang talahanayan ng datos",
+  "loadingChart": "Naglo-load ng datos ng tsart…",
+  "unableToLoad": "Hindi ma-load ang datos ng tsart",
+  "tableCaption": "Mga pagbasa ng temperatura sa napiling hanay",
+  "tableHeaderTime": "Oras",
+  "tableHeaderTemperature": "Temperatura (°F)",
+  "ariaChartFigure": "Temperatura sa nakaraang {{range}}",
+  "seriesTemperature": "Temperatura",
+  "noData": "Walang available na datos ng tsart para sa hanay na ito.",
+  "comingSoonAverageClimate": "Paparating na — Ang mga tsart ng Average na Klima ay magiging available kapag nakakonekta na ang makasaysayang datos.",
+  "comingSoonMonthly": "Paparating na — Ang mga buwanang tsart ay magiging available kapag nakakonekta na ang makasaysayang datos.",
+  "comingSoonAnnual": "Paparating na — Ang mga taunan na tsart ay magiging available kapag nakakonekta na ang makasaysayang datos."
+}

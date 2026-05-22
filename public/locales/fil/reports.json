@@ -1,1 +1,28 @@
-﻿{}
+{
+  "title": "Mga Ulat",
+  "intro": "Ang mga buwanang at taunan na ulat ng klima na katulad ng NOAA ay nagbubuod ng temperatura, pag-ulan, at iba pang obserbasyon. Ang mga ulat ay nabuo mula sa archive na datos ng iyong istasyon.",
+  "card": {
+    "title": "Mga Buwanang Ulat ng NOAA"
+  },
+  "year": {
+    "label": "Taon",
+    "ariaLabel": "Piliin ang taon ng ulat",
+    "placeholder": "— Piliin ang taon —"
+  },
+  "month": {
+    "label": "Buwan",
+    "ariaLabel": "Piliin ang buwan ng ulat",
+    "placeholder": "— Piliin ang buwan —"
+  },
+  "empty": "Walang nahanap na mga ulat ng NOAA. Magiging available ang mga ulat kapag may buwanang datos na ang archive.",
+  "loading": {
+    "index": "Naglo-load ng index ng ulat…",
+    "report": "Naglo-load ng ulat…"
+  },
+  "error": {
+    "index": "Hindi ma-load ang mga ulat",
+    "report": "Hindi ma-load ang ulat"
+  },
+  "annual": "Taunan",
+  "download": "I-download ang .txt"
+}

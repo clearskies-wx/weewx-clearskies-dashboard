@@ -1,1 +1,138 @@
-﻿{}
+{
+  "currentConditions": "Condições Actuais",
+  "todaysHighlights": "Destaques de Hoje",
+  "wind": "Vento",
+  "stationObservations": "Observações da Estação",
+  "sunAndMoon": "Sol e Lua",
+  "airQuality": "Qualidade do Ar",
+  "lightning": "Relâmpago",
+  "recentEarthquake": "Sismo Recente",
+  "todaysForecast": "Previsão de Hoje",
+  "temperatureTrend": "Tendência da Temperatura",
+  "viewCharts": "Ver Gráficos →",
+
+  "loading": {
+    "currentConditions": "A carregar condições actuais…",
+    "highlights": "A carregar destaques de hoje…",
+    "wind": "A carregar dados do vento…",
+    "stationObservations": "A carregar observações da estação…",
+    "sunMoon": "A carregar dados do sol e da lua…",
+    "airQuality": "A carregar dados da qualidade do ar…",
+    "lightning": "A carregar dados de relâmpagos…",
+    "earthquake": "A carregar dados de sismos…",
+    "forecast": "A carregar previsão…"
+  },
+
+  "error": {
+    "currentConditions": "Não foi possível carregar as condições actuais",
+    "wind": "Não foi possível carregar os dados do vento",
+    "stationObservations": "Não foi possível carregar as observações da estação",
+    "almanac": "Não foi possível carregar os dados do almanaque",
+    "airQuality": "Não foi possível carregar os dados da qualidade do ar",
+    "earthquake": "Não foi possível carregar os dados de sismos",
+    "forecast": "Não foi possível carregar a previsão"
+  },
+
+  "noData": {
+    "observation": "Sem dados de observação disponíveis.",
+    "highlights": "Sem destaques disponíveis.",
+    "wind": "Sem dados de vento disponíveis.",
+    "lightning": "Nenhum sensor de relâmpago configurado.",
+    "earthquake": "Nenhum sismo recente no raio configurado.",
+    "airQuality": "Nenhum fornecedor de qualidade do ar configurado.",
+    "forecast": "Sem dados de previsão disponíveis."
+  },
+
+  "highlights": {
+    "todaysHigh": "Máxima de Hoje",
+    "todaysLow": "Mínima de Hoje",
+    "peakGust": "Rajada Máxima",
+    "rainToday": "Chuva Hoje",
+    "peakAqi": "IQA Máximo",
+    "recordsBroken": "Recordes Batidos"
+  },
+
+  "observations": {
+    "barometer": "Barómetro",
+    "dewpoint": "Ponto de Orvalho",
+    "humidity": "Humidade",
+    "rain": "Chuva",
+    "heatIndex": "Índice de Calor",
+    "windChill": "Sensação Térmica",
+    "solarRadiation": "Radiação Solar",
+    "uvIndex": "Índice UV"
+  },
+
+  "sunMoon": {
+    "sunrise": "Nascer do Sol",
+    "sunset": "Pôr do Sol",
+    "moon": "Lua"
+  },
+
+  "feelsLike": "Sensação de",
+
+  "windCompass": {
+    "speed": "Vento: {{speed}} mph · {{direction}}",
+    "gusts": "Rajadas: {{gust}} mph",
+    "ariaLabel": "Vento de {{direction}} a {{degrees}} graus"
+  },
+
+  "barometer": {
+    "trend": {
+      "rising": "a subir",
+      "falling": "a descer",
+      "steady": "estável"
+    },
+    "trendAriaLabel": "Tendência: {{trend}}"
+  },
+
+  "aqi": {
+    "good": "Bom",
+    "moderate": "Moderado",
+    "unhealthySensitive": "Não Saudável para Grupos Sensíveis",
+    "unhealthy": "Não Saudável",
+    "veryUnhealthy": "Muito Não Saudável",
+    "hazardous": "Perigoso",
+    "gaugeAriaLabel": "Índice de Qualidade do Ar: {{aqi}}, {{category}}. Principal poluente: {{pollutant}}",
+    "unknownPollutant": "Desconhecido",
+    "mainPollutant": "Principal poluente: {{pollutant}}"
+  },
+
+  "beaufort": {
+    "calm": "Calmo",
+    "lightAir": "Ar Ligeiro",
+    "lightBreeze": "Brisa Ligeira",
+    "gentleBreeze": "Brisa Suave",
+    "moderateBreeze": "Brisa Moderada",
+    "freshBreeze": "Brisa Fresca",
+    "strongBreeze": "Brisa Forte",
+    "nearGale": "Quase Vento Forte",
+    "gale": "Vento Forte",
+    "strongGale": "Vento Muito Forte",
+    "storm": "Tempestade",
+    "violentStorm": "Tempestade Violenta",
+    "hurricane": "Furacão"
+  },
+
+  "lightning": {
+    "strikesLastHour": "{{count}} relâmpagos na última hora",
+    "strikesLast24h": "{{count}} nas últimas 24h",
+    "nearest": "Mais próximo: {{distance}} km",
+    "lastStrike": "Último relâmpago: {{time}}",
+    "lastStrikeUnknown": "Desconhecido"
+  },
+
+  "earthquake": {
+    "magnitude": "M{{magnitude}} — {{place}}",
+    "depth": "Profundidade: {{depth}} km"
+  },
+
+  "forecast": {
+    "hiLo": "Máx {{high}}° / Mín {{low}}°",
+    "precipChance": "{{percent}}% de probabilidade de precipitação"
+  },
+
+  "temperature": {
+    "ariaLabel": "Temperatura actual: {{temp}} graus {{unit}}"
+  }
+}

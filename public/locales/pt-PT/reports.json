@@ -1,1 +1,28 @@
-﻿{}
+{
+  "title": "Relatórios",
+  "intro": "Os relatórios climáticos mensais e anuais no estilo NOAA resumem a temperatura, precipitação e outras observações. Os relatórios são gerados a partir dos dados de arquivo da sua estação.",
+  "card": {
+    "title": "Relatórios Mensais NOAA"
+  },
+  "year": {
+    "label": "Ano",
+    "ariaLabel": "Seleccionar ano do relatório",
+    "placeholder": "— Seleccionar ano —"
+  },
+  "month": {
+    "label": "Mês",
+    "ariaLabel": "Seleccionar mês do relatório",
+    "placeholder": "— Seleccionar mês —"
+  },
+  "empty": "Nenhum relatório NOAA encontrado. Os relatórios ficam disponíveis quando o arquivo tiver dados mensais.",
+  "loading": {
+    "index": "A carregar índice de relatórios…",
+    "report": "A carregar relatório…"
+  },
+  "error": {
+    "index": "Não foi possível carregar os relatórios",
+    "report": "Não foi possível carregar o relatório"
+  },
+  "annual": "Anual",
+  "download": "Transferir .txt"
+}

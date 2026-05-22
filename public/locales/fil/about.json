@@ -1,1 +1,35 @@
-﻿{}
+{
+  "title": "Tungkol",
+  "station": {
+    "defaultName": "Weather Station",
+    "loadingAria": "Naglo-load ng impormasyon ng istasyon…",
+    "unavailable": "Hindi available ang impormasyon ng istasyon.",
+    "location": "Lokasyon",
+    "altitude": "Altitude",
+    "hardware": "Hardware",
+    "hardwareDefault": "Hindi tinukoy",
+    "timezone": "Time Zone",
+    "unitSystem": "Sistema ng Yunit",
+    "stationId": "ID ng Istasyon",
+    "recordingSince": "Nagtatala Mula Noong",
+    "lastData": "Huling Natanggap na Datos"
+  },
+  "aboutStation": {
+    "cardTitle": "Tungkol sa Istasyong Ito",
+    "loadingAria": "Naglo-load ng nilalaman ng tungkol…",
+    "placeholder": "Ang paglalarawan na ito na ginawa ng operator ng istasyon ay placeholder. I-configure ang nilalaman ng Tungkol ng iyong istasyon sa pamamagitan ng Clear Skies configuration UI."
+  },
+  "software": {
+    "cardTitle": "Software",
+    "weatherSoftware": "Weather Software",
+    "weatherSoftwareValue": "weewx 5.x",
+    "dashboard": "Dashboard",
+    "dashboardValue": "Clear Skies v0.1.0-dev",
+    "dashboardEngine": "Dashboard Engine",
+    "dashboardEngineValue": "React + Vite"
+  },
+  "photo": {
+    "cardTitle": "Larawan ng Istasyon",
+    "placeholder": "Mag-upload ng larawan ng istasyon sa pamamagitan ng Clear Skies configuration UI."
+  }
+}

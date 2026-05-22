@@ -1,1 +1,31 @@
-﻿{}
+{
+  "pages": {
+    "now": "Ngayon",
+    "forecast": "Hula",
+    "charts": "Mga Tsart",
+    "almanac": "Almanac",
+    "earthquakes": "Mga Lindol",
+    "records": "Mga Rekord",
+    "reports": "Mga Ulat",
+    "about": "Tungkol",
+    "legal": "Legal",
+    "legalPrivacy": "Legal at Privacy",
+    "notFound": "Hindi mahanap ang pahina"
+  },
+  "theme": {
+    "label": "Tema",
+    "auto": "Tema: Auto",
+    "light": "Tema: Maliwanag",
+    "dark": "Tema: Madilim",
+    "ariaAuto": "Tema: sumusunod sa kagustuhan ng system — i-click para lumipat sa light mode",
+    "ariaLight": "Tema: maliwanag — i-click para lumipat sa dark mode",
+    "ariaDark": "Tema: madilim — i-click para lumipat sa kagustuhan ng system",
+    "rowLabel": "Tema: {{mode}}"
+  },
+  "more": "Higit Pa",
+  "morePages": "Higit pang mga pahina",
+  "ariaMain": "Pangunahing nabigasyon",
+  "ariaPrimary": "Pangunahing nabigasyon",
+  "ariaAdditional": "Karagdagang nabigasyon",
+  "ariaAdditionalPages": "Mga karagdagang pahina"
+}

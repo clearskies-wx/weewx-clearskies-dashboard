@@ -1,1 +1,17 @@
-﻿{}
+{
+  "title": "Hula ng Panahon",
+  "next12Hours": "Susunod na 12 Oras",
+  "sevenDayForecast": "7-Araw na Hula",
+  "today": "Ngayon",
+  "loadingHourly": "Naglo-load ng oras-oras na hula…",
+  "loadingDaily": "Naglo-load ng araw-araw na hula…",
+  "unableToLoad": "Hindi ma-load ang hula",
+  "noHourlyData": "Walang available na oras-oras na datos ng hula.",
+  "noDailyData": "Walang available na araw-araw na datos ng hula.",
+  "percentPrecip": "{{pct}}% ulan",
+  "windUpTo": "Hangin hanggang {{speed}} mph",
+  "updated": "Na-update {{time}}",
+  "ariaHourlyScroll": "Oras-oras na hula — mag-scroll para makita ang higit pa",
+  "ariaHourlyList": "Oras-oras na hula",
+  "ariaDayForecast": "Hula para sa {{day}}"
+}

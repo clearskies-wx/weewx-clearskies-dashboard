@@ -1,1 +1,138 @@
-﻿{}
+{
+  "currentConditions": "Kasalukuyang Kondisyon",
+  "todaysHighlights": "Mga Highlight Ngayon",
+  "wind": "Hangin",
+  "stationObservations": "Mga Obserbasyon sa Istasyon",
+  "sunAndMoon": "Araw at Buwan",
+  "airQuality": "Kalidad ng Hangin",
+  "lightning": "Kidlat",
+  "recentEarthquake": "Kamakailang Lindol",
+  "todaysForecast": "Hula para Ngayon",
+  "temperatureTrend": "Takbo ng Temperatura",
+  "viewCharts": "Tingnan ang mga Tsart →",
+
+  "loading": {
+    "currentConditions": "Naglo-load ng kasalukuyang kondisyon…",
+    "highlights": "Naglo-load ng mga highlight ngayon…",
+    "wind": "Naglo-load ng datos ng hangin…",
+    "stationObservations": "Naglo-load ng mga obserbasyon sa istasyon…",
+    "sunMoon": "Naglo-load ng datos ng araw at buwan…",
+    "airQuality": "Naglo-load ng datos ng kalidad ng hangin…",
+    "lightning": "Naglo-load ng datos ng kidlat…",
+    "earthquake": "Naglo-load ng datos ng lindol…",
+    "forecast": "Naglo-load ng hula…"
+  },
+
+  "error": {
+    "currentConditions": "Hindi ma-load ang kasalukuyang kondisyon",
+    "wind": "Hindi ma-load ang datos ng hangin",
+    "stationObservations": "Hindi ma-load ang mga obserbasyon sa istasyon",
+    "almanac": "Hindi ma-load ang datos ng almanac",
+    "airQuality": "Hindi ma-load ang datos ng kalidad ng hangin",
+    "earthquake": "Hindi ma-load ang datos ng lindol",
+    "forecast": "Hindi ma-load ang hula"
+  },
+
+  "noData": {
+    "observation": "Walang available na datos ng obserbasyon.",
+    "highlights": "Walang available na highlights.",
+    "wind": "Walang available na datos ng hangin.",
+    "lightning": "Walang naka-configure na sensor ng kidlat.",
+    "earthquake": "Walang kamakailang lindol sa loob ng naka-configure na radius.",
+    "airQuality": "Walang naka-configure na provider ng kalidad ng hangin.",
+    "forecast": "Walang available na datos ng hula."
+  },
+
+  "highlights": {
+    "todaysHigh": "Pinakamataas Ngayon",
+    "todaysLow": "Pinakamababa Ngayon",
+    "peakGust": "Pinakamalakas na Hangin",
+    "rainToday": "Ulan Ngayon",
+    "peakAqi": "Pinakamataas na AQI",
+    "recordsBroken": "Mga Rekord na Nabali"
+  },
+
+  "observations": {
+    "barometer": "Barometro",
+    "dewpoint": "Punto ng Hamog",
+    "humidity": "Halumigmig",
+    "rain": "Ulan",
+    "heatIndex": "Heat Index",
+    "windChill": "Wind Chill",
+    "solarRadiation": "Radyasyon Solar",
+    "uvIndex": "UV Index"
+  },
+
+  "sunMoon": {
+    "sunrise": "Pagsikat ng Araw",
+    "sunset": "Paglubog ng Araw",
+    "moon": "Buwan"
+  },
+
+  "feelsLike": "Pakiramdam",
+
+  "windCompass": {
+    "speed": "Hangin: {{speed}} mph · {{direction}}",
+    "gusts": "Hangin: {{gust}} mph",
+    "ariaLabel": "Hangin mula sa {{direction}} sa {{degrees}} degrees"
+  },
+
+  "barometer": {
+    "trend": {
+      "rising": "tumataas",
+      "falling": "bumababa",
+      "steady": "matatag"
+    },
+    "trendAriaLabel": "Takbo: {{trend}}"
+  },
+
+  "aqi": {
+    "good": "Maganda",
+    "moderate": "Katamtaman",
+    "unhealthySensitive": "Hindi Malusog para sa Sensitibong Grupo",
+    "unhealthy": "Hindi Malusog",
+    "veryUnhealthy": "Napaka-Hindi Malusog",
+    "hazardous": "Mapanganib",
+    "gaugeAriaLabel": "Air Quality Index: {{aqi}}, {{category}}. Pangunahing polusyon: {{pollutant}}",
+    "unknownPollutant": "Hindi Kilala",
+    "mainPollutant": "Pangunahing polusyon: {{pollutant}}"
+  },
+
+  "beaufort": {
+    "calm": "Tahimik",
+    "lightAir": "Mahinang Hangin",
+    "lightBreeze": "Mahinang Simoy",
+    "gentleBreeze": "Malambot na Simoy",
+    "moderateBreeze": "Katamtamang Simoy",
+    "freshBreeze": "Sariwang Simoy",
+    "strongBreeze": "Malakas na Simoy",
+    "nearGale": "Malapit sa Bagyo",
+    "gale": "Bagyo",
+    "strongGale": "Malakas na Bagyo",
+    "storm": "Unos",
+    "violentStorm": "Marahas na Unos",
+    "hurricane": "Bagyong Marahas"
+  },
+
+  "lightning": {
+    "strikesLastHour": "{{count}} kidlat sa nakaraang isang oras",
+    "strikesLast24h": "{{count}} sa nakaraang 24 oras",
+    "nearest": "Pinakamalapit: {{distance}} km",
+    "lastStrike": "Huling kidlat: {{time}}",
+    "lastStrikeUnknown": "Hindi Kilala"
+  },
+
+  "earthquake": {
+    "magnitude": "M{{magnitude}} — {{place}}",
+    "depth": "Lalim: {{depth}} km"
+  },
+
+  "forecast": {
+    "hiLo": "Mataas {{high}}° / Mababa {{low}}°",
+    "precipChance": "{{percent}}% tsansa ng pag-ulan"
+  },
+
+  "temperature": {
+    "ariaLabel": "Kasalukuyang temperatura: {{temp}} degrees {{unit}}"
+  }
+}

@@ -1,1 +1,24 @@
-﻿{}
+{
+  "title": "Legal at Privacy",
+  "loadingAria": "Naglo-load ng legal na nilalaman…",
+  "operatorCard": {
+    "title": "Legal at Patakaran sa Privacy"
+  },
+  "privacy": {
+    "title": "Patakaran sa Privacy",
+    "body": "Ang weather station na ito ay nangongolekta ng meteorological na datos mula sa lokal na mga sensor at maaaring gumamit ng mga third-party na serbisyo para sa mga hula, kalidad ng hangin, at datos ng lindol. Walang personal na datos ng bisita ang nangongolekta maliban sa mga karaniwang log ng web server. Ang mga operator ng istasyon ay dapat mag-customize ng seksyong ito upang maipakita ang kanilang mga tiyak na gawi sa datos at naaangkop na mga regulasyon sa privacy."
+  },
+  "attribution": {
+    "title": "Attribution ng Datos",
+    "observations": "Mga obserbasyon ng panahon: Lokal na hardware ng istasyon (naka-configure sa Tungkol)",
+    "forecast": "Datos ng hula: National Weather Service (NWS)",
+    "airQuality": "Datos ng kalidad ng hangin: AirNow / EPA",
+    "earthquake": "Datos ng lindol: USGS",
+    "astronomical": "Astronomical na datos: Skyfield ephemeris calculations",
+    "note": "Ang aktwal na mga pinagkukunan ng datos ay depende sa mga naka-configure na provider."
+  },
+  "openSource": {
+    "title": "Mga Open-Source na Lisensya",
+    "body": "Ang Clear Skies ay libreng software na lisensyado sa ilalim ng GNU General Public License v3.0. Ito ay ginawa gamit ang mga open-source na teknolohiya kabilang ang React, Vite, Tailwind CSS, Recharts, at mga icon ng Lucide. Ang buong teksto ng lisensya at third-party attribution ay available sa repository ng proyekto."
+  }
+}

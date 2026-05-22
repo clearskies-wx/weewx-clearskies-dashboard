@@ -1,1 +1,22 @@
-﻿{}
+{
+  "title": "Mga Lindol",
+  "loadingData": "Naglo-load ng datos ng lindol…",
+  "unableToLoad": "Hindi ma-load ang datos ng lindol",
+  "noRecentQuakes": "Walang kamakailang lindol sa loob ng naka-configure na radius.",
+  "ariaRecentList": "Mga kamakailang lindol",
+  "ariaMagnitude": "Lakas na {{mag}}",
+  "unknownLocation": "Hindi kilalang lokasyon",
+  "depth": "Lalim: {{depth}} km",
+  "source": "Pinagmulan: {{source}}",
+  "feltBy_one": "Naramdaman ng {{count}} tao",
+  "feltBy_other": "Naramdaman ng {{count}} tao",
+  "mmi": "MMI: {{mmi}}",
+  "tsunamiWatch": "Babala ng tsunami",
+  "pager": "PAGER: {{level}}",
+  "mapCardTitle": "Mapa ng Lindol",
+  "mapPlaceholder": "Ang interactive na mapa ay nangangailangan ng Leaflet — available kapang naka-configure na ang map provider.",
+  "configCardTitle": "Konfigurasyion",
+  "configRadius": "Radius",
+  "configProvider": "Provider",
+  "configHelperText": "I-configure ang mga setting ng lindol sa Clear Skies configuration UI."
+}

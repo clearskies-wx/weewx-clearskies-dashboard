@@ -1,1 +1,17 @@
-﻿{}
+{
+  "title": "Mga Rekord",
+  "ariaPeriodGroup": "Panahon ng mga rekord",
+  "periodAllTime": "Lahat ng Oras",
+  "periodYearToDate": "Ngayong Taon",
+  "loadingRecords": "Naglo-load ng mga rekord…",
+  "unableToLoad": "Hindi ma-load ang mga rekord",
+  "sectionHeading": "Mga Rekord ng {{section}}",
+  "tableHeaderRecord": "Rekord",
+  "tableHeaderValue": "Halaga",
+  "tableHeaderDateObserved": "Petsa ng Obserbasyon",
+  "badgeNew": "Bago",
+  "badgeNewTitle": "Nabali sa nakaraang 30 araw",
+  "badgeNewAriaLabel": "Kamakailang nabalin na rekord",
+  "noData": "Walang available na rekord para sa panahong ito.",
+  "operatorNotePlaceholder": "Ang mga operator ng istasyon ay maaaring magdagdag ng custom na mga tala tungkol sa kanilang mga rekord dito sa pamamagitan ng Clear Skies configuration UI."
+}

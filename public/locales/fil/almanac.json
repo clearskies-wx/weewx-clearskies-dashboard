@@ -1,1 +1,40 @@
-﻿{}
+{
+  "pageTitle": "Almanac",
+
+  "loading": "Naglo-load ng datos ng almanac…",
+  "error": "Hindi ma-load ang datos ng almanac",
+  "noData": "Walang available na datos ng almanac.",
+
+  "sun": {
+    "title": "Araw",
+    "sunrise": "Pagsikat ng Araw",
+    "sunset": "Paglubog ng Araw",
+    "civilDawn": "Civil Dawn",
+    "civilDusk": "Civil Dusk",
+    "totalDaylight": "Kabuuang Liwanag ng Araw",
+    "solarNoon": "Solar Noon",
+    "nextSolstice": "Susunod na Solstice",
+    "nextEquinox": "Susunod na Equinox"
+  },
+
+  "moon": {
+    "title": "Buwan",
+    "phase": "Yugto",
+    "illumination": "Liwanag",
+    "moonrise": "Pagsikat ng Buwan",
+    "moonset": "Paglubog ng Buwan",
+    "nextFullMoon": "Susunod na Buong Buwan",
+    "nextNewMoon": "Susunod na Bagong Buwan"
+  },
+
+  "positional": {
+    "title": "Positional na Datos",
+    "note": "Ang positional na datos ay nangangailangan ng Skyfield computation sa server.",
+    "sunAzimuth": "Azimuth ng Araw",
+    "sunAltitude": "Altitude ng Araw",
+    "moonAzimuth": "Azimuth ng Buwan",
+    "moonAltitude": "Altitude ng Buwan"
+  },
+
+  "daylightDelta": "({{delta}}m kumpara kahapon)"
+}

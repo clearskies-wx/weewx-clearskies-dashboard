@@ -1,1 +1,18 @@
-﻿{}
+{
+  "loading": "Naglo-load…",
+  "loadingPage": "Naglo-load ng {{title}}",
+  "error": "May naganap na error",
+  "retry": "Subukan muli",
+  "noData": "Walang available na data",
+  "skipToContent": "Lumaktaw sa pangunahing nilalaman",
+  "pageNotFound": "Hindi mahanap ang pahina.",
+  "footer": {
+    "legal": "Legal / Privacy",
+    "poweredBy": "Pinapagana ng Clear Skies"
+  },
+  "theme": {
+    "ariaAuto": "Tema: sumusunod sa kagustuhan ng system — i-click para lumipat sa light mode",
+    "ariaLight": "Tema: maliwanag — i-click para lumipat sa dark mode",
+    "ariaDark": "Tema: madilim — i-click para lumipat sa kagustuhan ng system"
+  }
+}
