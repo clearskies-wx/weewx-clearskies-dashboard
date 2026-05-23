@@ -18,6 +18,7 @@ import {
   getChartGroups,
   getReports,
   getReport,
+  getYearlyReport,
   getContent,
 } from '../api/client';
 import type { ArchiveParams } from '../api/client';
@@ -47,6 +48,7 @@ import type {
   ChartGroup,
   ReportEntry,
   NOAAReport,
+  NOAAYearlyReport,
   ContentBlock,
   UnitsBlock,
   TodayStats,
@@ -357,6 +359,30 @@ export function useReport(year: number | null, month: number | null): HookResult
 
   if (isMockMode()) {
     return mockResult<NOAAReport | null>(null) as HookResult<NOAAReport>;
+  }
+
+  return {
+    data: data?.data ?? null,
+    loading,
+    error,
+    refetch,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// useYearlyReport — /reports/{year}
+// ---------------------------------------------------------------------------
+
+export function useYearlyReport(year: number | null): HookResult<NOAAYearlyReport> {
+  const skip = isMockMode() || year === null;
+
+  const { data, loading, error, refetch } = useApiQuery<{ data: NOAAYearlyReport }>(
+    (signal) => getYearlyReport(year as number, signal),
+    { skip, deps: [year] },
+  );
+
+  if (isMockMode()) {
+    return mockResult<NOAAYearlyReport | null>(null) as HookResult<NOAAYearlyReport>;
   }
 
   return {

@@ -24,5 +24,33 @@
     "report": "Unable to load report"
   },
   "annual": "Annual",
-  "download": "Download .txt"
+  "download": "Download .txt",
+  "viewTable": "View table",
+  "viewRawText": "View raw text",
+  "sortAscending": "Sort ascending",
+  "sortDescending": "Sort descending",
+  "highlightLegend": "Rows highlighted: warmest day (orange), coolest day (blue)",
+  "highTempRow": "Highest temperature day",
+  "lowTempRow": "Lowest temperature day",
+  "summary": "Summary",
+  "monthlyColumns": {
+    "day": "Day",
+    "meanTemp": "Mean Temp",
+    "highTemp": "High",
+    "highTempTime": "Time",
+    "lowTemp": "Low",
+    "lowTempTime": "Time",
+    "heatDegDays": "HDD",
+    "coolDegDays": "CDD",
+    "rain": "Rain",
+    "avgWindSpeed": "Avg Wind",
+    "highWindSpeed": "Peak Gust",
+    "highWindTime": "Time",
+    "domWindDir": "Dir"
+  },
+  "yearlyTemp": "Temperature",
+  "yearlyPrecip": "Precipitation",
+  "yearlyWind": "Wind Speed",
+  "noReportSelected": "Select a year and month to view a report.",
+  "tableCaption": "NOAA climate report for {{period}}"
 }

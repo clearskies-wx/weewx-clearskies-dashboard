@@ -1,6 +1,12 @@
 // reports.tsx — Reports page (/reports)
+//
+// Default view: parsed, sortable HTML table for both monthly and yearly reports.
+// Toggle to raw text view is available via the "View raw text" button.
+// Monthly report highlights the row with the highest daily high temp (orange)
+// and the row with the lowest daily low temp (blue).
+// Yearly report renders three separate sub-tables (Temperature, Precipitation, Wind).
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Card,
@@ -8,15 +14,25 @@ import {
   CardTitle,
   CardContent,
 } from '../components/ui/card';
-import { useReports, useReport } from '../hooks/useWeatherData';
+import { useReports, useReport, useYearlyReport } from '../hooks/useWeatherData';
+import { parseMonthlyReport, parseYearlyReport } from '../lib/noaa-parser';
+import type { MonthlyRow, YearlyTable } from '../lib/noaa-parser';
+import { cn } from '../lib/utils';
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 /** Return the long month name for a 1-based month number using the active locale. */
 function getMonthName(monthNumber: number, locale: string): string {
-  // Intl.DateTimeFormat month: 'long' on a date whose month index = monthNumber - 1
   return new Intl.DateTimeFormat(locale, { month: 'long' }).format(
     new Date(2000, monthNumber - 1, 1),
   );
 }
+
+// ---------------------------------------------------------------------------
+// Shared sub-components
+// ---------------------------------------------------------------------------
 
 function TileSkeleton({ className }: { className?: string }) {
   return (
@@ -43,27 +59,471 @@ function TileError({ message, onRetry }: { message: string; onRetry: () => void 
   );
 }
 
+// ---------------------------------------------------------------------------
+// Sort state
+// ---------------------------------------------------------------------------
+
+type SortDirection = 'asc' | 'desc';
+
+interface SortState {
+  column: number | null;
+  direction: SortDirection;
+}
+
+// ---------------------------------------------------------------------------
+// Monthly column metadata
+// The label keys map to `reports.monthlyColumns.*` in i18n.
+// ---------------------------------------------------------------------------
+
+interface ColumnMeta {
+  /** i18n key within monthlyColumns namespace */
+  labelKey: string;
+  /** Property accessor on MonthlyRow */
+  accessor: keyof MonthlyRow;
+  /** Whether the value is numeric (enables numeric sort) */
+  numeric: boolean;
+}
+
+const MONTHLY_COLUMNS: ColumnMeta[] = [
+  { labelKey: 'day',           accessor: 'day',           numeric: true  },
+  { labelKey: 'meanTemp',      accessor: 'meanTemp',      numeric: true  },
+  { labelKey: 'highTemp',      accessor: 'highTemp',      numeric: true  },
+  { labelKey: 'highTempTime',  accessor: 'highTempTime',  numeric: false },
+  { labelKey: 'lowTemp',       accessor: 'lowTemp',       numeric: true  },
+  { labelKey: 'lowTempTime',   accessor: 'lowTempTime',   numeric: false },
+  { labelKey: 'heatDegDays',   accessor: 'heatDegDays',   numeric: true  },
+  { labelKey: 'coolDegDays',   accessor: 'coolDegDays',   numeric: true  },
+  { labelKey: 'rain',          accessor: 'rain',          numeric: true  },
+  { labelKey: 'avgWindSpeed',  accessor: 'avgWindSpeed',  numeric: true  },
+  { labelKey: 'highWindSpeed', accessor: 'highWindSpeed', numeric: true  },
+  { labelKey: 'highWindTime',  accessor: 'highWindTime',  numeric: false },
+  { labelKey: 'domWindDir',    accessor: 'domWindDir',    numeric: true  },
+];
+
+// ---------------------------------------------------------------------------
+// SortableHeader — <th> with embedded <button> for sort
+// ---------------------------------------------------------------------------
+
+function SortableHeader({
+  label,
+  colIndex,
+  sortState,
+  onSort,
+}: {
+  label: string;
+  colIndex: number;
+  sortState: SortState;
+  onSort: (colIndex: number) => void;
+}) {
+  const { t } = useTranslation('reports');
+  const isActive = sortState.column === colIndex;
+  const ariaSortValue = isActive
+    ? sortState.direction === 'asc'
+      ? 'ascending'
+      : 'descending'
+    : 'none';
+
+  const indicator = isActive ? (sortState.direction === 'asc' ? ' ↑' : ' ↓') : '';
+
+  return (
+    <th
+      scope="col"
+      aria-sort={ariaSortValue}
+      className="px-2 py-2 text-left text-xs font-semibold text-foreground whitespace-nowrap"
+    >
+      <button
+        type="button"
+        onClick={() => onSort(colIndex)}
+        className={cn(
+          'inline-flex items-center gap-0.5 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+          isActive ? 'text-primary' : 'hover:text-primary',
+        )}
+        aria-label={`${label} — ${isActive && sortState.direction === 'asc' ? t('sortDescending') : t('sortAscending')}`}
+      >
+        {label}{indicator}
+      </button>
+    </th>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Monthly table
+// ---------------------------------------------------------------------------
+
+function MonthlyReportTable({
+  rawText,
+  period,
+}: {
+  rawText: string;
+  period: string;
+}) {
+  const { t } = useTranslation('reports');
+  const [sortState, setSortState] = useState<SortState>({ column: null, direction: 'asc' });
+
+  const parsed = useMemo(() => parseMonthlyReport(rawText), [rawText]);
+
+  // All hooks must run before any early return — compute sort even when parsed may be null.
+  const sortedRows = useMemo(() => {
+    if (!parsed) return [];
+    if (sortState.column === null) return parsed.rows;
+    const col = MONTHLY_COLUMNS[sortState.column];
+    if (!col) return parsed.rows;
+
+    return [...parsed.rows].sort((a, b) => {
+      const av = a[col.accessor];
+      const bv = b[col.accessor];
+      // Nulls sort last regardless of direction
+      if (av === null && bv === null) return 0;
+      if (av === null) return 1;
+      if (bv === null) return -1;
+
+      const cmp = col.numeric
+        ? (av as number) - (bv as number)
+        : String(av).localeCompare(String(bv));
+      return sortState.direction === 'asc' ? cmp : -cmp;
+    });
+  }, [parsed, sortState]);
+
+  // Map sorted row back to original index for highlight lookup.
+  const originalIndexMap = useMemo(() => {
+    if (!parsed) return [];
+    return sortedRows.map((row) => parsed.rows.indexOf(row));
+  }, [sortedRows, parsed]);
+
+  const captionText = t('tableCaption', { period });
+
+  function handleSort(colIndex: number) {
+    setSortState((prev) => ({
+      column: colIndex,
+      direction: prev.column === colIndex && prev.direction === 'asc' ? 'desc' : 'asc',
+    }));
+  }
+
+  if (!parsed) {
+    // Parsing failed — fall back to raw text inline
+    return (
+      <pre className="overflow-x-auto rounded-md bg-muted/40 p-4 text-xs text-foreground font-mono leading-relaxed whitespace-pre-wrap">
+        {rawText}
+      </pre>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      {/* Highlight legend */}
+      <p className="text-xs text-muted-foreground" aria-live="off">
+        {t('highlightLegend')}
+      </p>
+
+      <div className="overflow-x-auto rounded-md border border-border">
+        <table className="w-full text-xs text-foreground border-collapse">
+          <caption className="sr-only">{captionText}</caption>
+          <thead>
+            <tr className="bg-muted/50 border-b border-border">
+              {MONTHLY_COLUMNS.map((col, idx) => (
+                <SortableHeader
+                  key={col.accessor}
+                  label={t(`monthlyColumns.${col.labelKey}`)}
+                  colIndex={idx}
+                  sortState={sortState}
+                  onSort={handleSort}
+                />
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {sortedRows.map((row, sortedIdx) => {
+              const origIdx = originalIndexMap[sortedIdx];
+              const isHighTemp = origIdx === parsed.highTempRowIndex;
+              const isLowTemp = origIdx === parsed.lowTempRowIndex;
+
+              return (
+                <tr
+                  key={row.day ?? `row-${sortedIdx}`}
+                  className={cn(
+                    'border-b border-border last:border-0 hover:bg-muted/30 transition-colors',
+                    isHighTemp && 'bg-orange-50 dark:bg-orange-950/30',
+                    isLowTemp && !isHighTemp && 'bg-blue-50 dark:bg-blue-950/30',
+                  )}
+                  aria-label={
+                    isHighTemp
+                      ? t('highTempRow', { defaultValue: 'Highest temperature day' })
+                      : isLowTemp
+                      ? t('lowTempRow', { defaultValue: 'Lowest temperature day' })
+                      : undefined
+                  }
+                >
+                  {/* Day cell — scope="row" so screen readers can identify the row */}
+                  <td scope="row" className="px-2 py-1.5 font-medium tabular-nums">
+                    {row.day ?? '—'}
+                  </td>
+                  <td className="px-2 py-1.5 tabular-nums">{row.meanTemp ?? '—'}</td>
+                  <td className="px-2 py-1.5 tabular-nums">{row.highTemp ?? '—'}</td>
+                  <td className="px-2 py-1.5">{row.highTempTime || '—'}</td>
+                  <td className="px-2 py-1.5 tabular-nums">{row.lowTemp ?? '—'}</td>
+                  <td className="px-2 py-1.5">{row.lowTempTime || '—'}</td>
+                  <td className="px-2 py-1.5 tabular-nums">{row.heatDegDays ?? '—'}</td>
+                  <td className="px-2 py-1.5 tabular-nums">{row.coolDegDays ?? '—'}</td>
+                  <td className="px-2 py-1.5 tabular-nums">{row.rain ?? '—'}</td>
+                  <td className="px-2 py-1.5 tabular-nums">{row.avgWindSpeed ?? '—'}</td>
+                  <td className="px-2 py-1.5 tabular-nums">{row.highWindSpeed ?? '—'}</td>
+                  <td className="px-2 py-1.5">{row.highWindTime || '—'}</td>
+                  <td className="px-2 py-1.5 tabular-nums">{row.domWindDir ?? '—'}</td>
+                </tr>
+              );
+            })}
+
+            {/* Summary row */}
+            {parsed.summary && (
+              <tr className="border-t-2 border-border bg-muted/50 font-semibold">
+                <td scope="row" className="px-2 py-1.5">
+                  {t('summary')}
+                </td>
+                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.meanTemp ?? '—'}</td>
+                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.highTemp ?? '—'}</td>
+                <td className="px-2 py-1.5">{parsed.summary.highTempTime || '—'}</td>
+                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.lowTemp ?? '—'}</td>
+                <td className="px-2 py-1.5">{parsed.summary.lowTempTime || '—'}</td>
+                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.heatDegDays ?? '—'}</td>
+                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.coolDegDays ?? '—'}</td>
+                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.rain ?? '—'}</td>
+                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.avgWindSpeed ?? '—'}</td>
+                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.highWindSpeed ?? '—'}</td>
+                <td className="px-2 py-1.5">{parsed.summary.highWindTime || '—'}</td>
+                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.domWindDir ?? '—'}</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Yearly sub-table
+// ---------------------------------------------------------------------------
+
+function YearlySubTable({
+  table,
+  caption,
+}: {
+  table: YearlyTable;
+  caption: string;
+}) {
+  const { t } = useTranslation('reports');
+  const [sortState, setSortState] = useState<SortState>({ column: null, direction: 'asc' });
+
+  function handleSort(colIndex: number) {
+    setSortState((prev) => ({
+      column: colIndex,
+      direction: prev.column === colIndex && prev.direction === 'asc' ? 'desc' : 'asc',
+    }));
+  }
+
+  const sortedRows = useMemo(() => {
+    if (sortState.column === null) return table.rows;
+    return [...table.rows].sort((a, b) => {
+      const av = a[sortState.column!];
+      const bv = b[sortState.column!];
+      if (av === null && bv === null) return 0;
+      if (av === null) return 1;
+      if (bv === null) return -1;
+      const cmp = (typeof av === 'number' && typeof bv === 'number')
+        ? av - bv
+        : String(av).localeCompare(String(bv));
+      return sortState.direction === 'asc' ? cmp : -cmp;
+    });
+  }, [table.rows, sortState]);
+
+  const colCount = table.headers.length;
+
+  return (
+    <div className="overflow-x-auto rounded-md border border-border">
+      <table className="w-full text-xs text-foreground border-collapse">
+        <caption className="sr-only">{caption}</caption>
+        <thead>
+          <tr className="bg-muted/50 border-b border-border">
+            {table.headers.map((header, idx) => {
+              const isActive = sortState.column === idx;
+              const ariaSortValue = isActive
+                ? sortState.direction === 'asc'
+                  ? 'ascending'
+                  : 'descending'
+                : 'none';
+              const indicator = isActive ? (sortState.direction === 'asc' ? ' ↑' : ' ↓') : '';
+              return (
+                <th
+                  key={`${header}-${idx}`}
+                  scope="col"
+                  aria-sort={ariaSortValue}
+                  className="px-2 py-2 text-left text-xs font-semibold text-foreground whitespace-nowrap"
+                >
+                  <button
+                    type="button"
+                    onClick={() => handleSort(idx)}
+                    className={cn(
+                      'inline-flex items-center gap-0.5 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+                      isActive ? 'text-primary' : 'hover:text-primary',
+                    )}
+                    aria-label={`${header} — ${isActive && sortState.direction === 'asc' ? t('sortDescending') : t('sortAscending')}`}
+                  >
+                    {header}{indicator}
+                  </button>
+                </th>
+              );
+            })}
+          </tr>
+        </thead>
+        <tbody>
+          {sortedRows.map((row, rowIdx) => (
+            <tr
+              key={rowIdx}
+              className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
+            >
+              {Array.from({ length: colCount }).map((_, colIdx) => {
+                const cell = row[colIdx] ?? null;
+                return colIdx === 0 ? (
+                  <td key={colIdx} scope="row" className="px-2 py-1.5 font-medium tabular-nums">
+                    {cell ?? '—'}
+                  </td>
+                ) : (
+                  <td key={colIdx} className="px-2 py-1.5 tabular-nums">
+                    {cell ?? '—'}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+
+          {/* Summary row */}
+          {table.summary && (
+            <tr className="border-t-2 border-border bg-muted/50 font-semibold">
+              <td scope="row" className="px-2 py-1.5">
+                {t('summary')}
+              </td>
+              {Array.from({ length: colCount - 1 }).map((_, colIdx) => {
+                const cell = table.summary![colIdx + 1] ?? null;
+                return (
+                  <td key={colIdx + 1} className="px-2 py-1.5 tabular-nums">
+                    {cell ?? '—'}
+                  </td>
+                );
+              })}
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Yearly report renderer
+// ---------------------------------------------------------------------------
+
+function YearlyReportTables({ rawText, period }: { rawText: string; period: string }) {
+  const { t } = useTranslation('reports');
+  const parsed = useMemo(() => parseYearlyReport(rawText), [rawText]);
+
+  if (!parsed) {
+    return (
+      <pre className="overflow-x-auto rounded-md bg-muted/40 p-4 text-xs text-foreground font-mono leading-relaxed whitespace-pre-wrap">
+        {rawText}
+      </pre>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <section aria-labelledby="yearly-temp-heading">
+        <h3 id="yearly-temp-heading" className="text-sm font-semibold text-foreground mb-2">
+          {t('yearlyTemp')}
+        </h3>
+        <YearlySubTable
+          table={parsed.temperature}
+          caption={`${t('yearlyTemp')} — ${period}`}
+        />
+      </section>
+
+      <section aria-labelledby="yearly-precip-heading">
+        <h3 id="yearly-precip-heading" className="text-sm font-semibold text-foreground mb-2">
+          {t('yearlyPrecip')}
+        </h3>
+        <YearlySubTable
+          table={parsed.precipitation}
+          caption={`${t('yearlyPrecip')} — ${period}`}
+        />
+      </section>
+
+      <section aria-labelledby="yearly-wind-heading">
+        <h3 id="yearly-wind-heading" className="text-sm font-semibold text-foreground mb-2">
+          {t('yearlyWind')}
+        </h3>
+        <YearlySubTable
+          table={parsed.wind}
+          caption={`${t('yearlyWind')} — ${period}`}
+        />
+      </section>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main ReportsPage component
+// ---------------------------------------------------------------------------
+
 export function ReportsPage() {
   const { t, i18n } = useTranslation('reports');
-  const { data: reports, loading: indexLoading, error: indexError, refetch: indexRefetch } = useReports();
+  const {
+    data: reports,
+    loading: indexLoading,
+    error: indexError,
+    refetch: indexRefetch,
+  } = useReports();
 
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
+  // 0 = "Annual" sentinel; null = nothing selected; 1-12 = month number
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
+  const [showRawText, setShowRawText] = useState(false);
 
-  const { data: report, loading: reportLoading, error: reportError, refetch: reportRefetch } = useReport(
-    selectedYear,
-    selectedMonth,
-  );
+  const isAnnual = selectedMonth === 0;
+
+  // Always call both hooks; skip logic prevents unnecessary fetches.
+  const {
+    data: monthlyReport,
+    loading: monthlyLoading,
+    error: monthlyError,
+    refetch: monthlyRefetch,
+  } = useReport(selectedYear, isAnnual ? null : selectedMonth);
+
+  const {
+    data: yearlyReport,
+    loading: yearlyLoading,
+    error: yearlyError,
+    refetch: yearlyRefetch,
+  } = useYearlyReport(isAnnual ? selectedYear : null);
+
+  const activeReport = isAnnual ? yearlyReport : monthlyReport;
+  const reportLoading = isAnnual ? yearlyLoading : monthlyLoading;
+  const reportError = isAnnual ? yearlyError : monthlyError;
+  const reportRefetch = isAnnual ? yearlyRefetch : monthlyRefetch;
 
   // Derive available years from report index
   const availableYears = reports
     ? [...new Set(reports.map((r) => r.year))].sort((a, b) => b - a)
     : [];
 
-  // Derive available months for selected year
+  // Check if yearly reports exist for the selected year
+  const hasYearlyReport =
+    reports && selectedYear
+      ? reports.some((r) => r.kind === 'yearly' && r.year === selectedYear)
+      : false;
+
+  // Derive available months for the selected year (only monthly entries)
   const availableMonths = reports && selectedYear
     ? reports
-        .filter((r) => r.year === selectedYear && r.month != null)
+        .filter((r) => r.year === selectedYear && r.kind === 'monthly' && r.month != null)
         .map((r) => r.month as number)
         .sort((a, b) => b - a)
     : [];
@@ -72,17 +532,35 @@ export function ReportsPage() {
     const y = e.target.value ? Number(e.target.value) : null;
     setSelectedYear(y);
     setSelectedMonth(null);
+    setShowRawText(false);
   }
 
   function handleMonthChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const m = e.target.value ? Number(e.target.value) : null;
-    setSelectedMonth(m);
+    const val = e.target.value;
+    if (val === '') {
+      setSelectedMonth(null);
+    } else {
+      setSelectedMonth(Number(val));
+    }
+    setShowRawText(false);
   }
 
-  const canFetch = selectedYear !== null && selectedMonth !== null;
+  // canFetch: a year and a month/annual selection have both been made
+  const canFetch =
+    selectedYear !== null && selectedMonth !== null;
+
+  // Build period label for table captions and headings
+  const periodLabel = useMemo(() => {
+    if (!selectedYear) return '';
+    if (isAnnual) return String(selectedYear);
+    if (selectedMonth && selectedMonth >= 1) {
+      return `${getMonthName(selectedMonth, i18n.language)} ${selectedYear}`;
+    }
+    return String(selectedYear);
+  }, [selectedYear, selectedMonth, isAnnual, i18n.language]);
 
   return (
-    <div className="flex flex-col gap-6 max-w-2xl mx-auto">
+    <div className="flex flex-col gap-6 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
 
       <p className="text-sm text-muted-foreground leading-relaxed">
@@ -113,6 +591,7 @@ export function ReportsPage() {
 
               {reports && reports.length > 0 && (
                 <div className="flex flex-wrap gap-4">
+                  {/* Year selector */}
                   <div className="flex flex-col gap-1">
                     <label
                       htmlFor="report-year"
@@ -137,6 +616,7 @@ export function ReportsPage() {
                     </select>
                   </div>
 
+                  {/* Month / Annual selector */}
                   <div className="flex flex-col gap-1">
                     <label
                       htmlFor="report-month"
@@ -148,15 +628,21 @@ export function ReportsPage() {
                       id="report-month"
                       value={selectedMonth ?? ''}
                       onChange={handleMonthChange}
-                      disabled={!selectedYear || availableMonths.length === 0}
+                      disabled={!selectedYear || (availableMonths.length === 0 && !hasYearlyReport)}
                       className={[
                         'rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground min-h-[44px] md:min-h-0',
                         'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-                        (!selectedYear || availableMonths.length === 0) ? 'opacity-60 cursor-not-allowed' : '',
+                        (!selectedYear || (availableMonths.length === 0 && !hasYearlyReport))
+                          ? 'opacity-60 cursor-not-allowed'
+                          : '',
                       ].join(' ')}
                       aria-label={t('month.ariaLabel')}
                     >
                       <option value="">{t('month.placeholder')}</option>
+                      {/* Annual option — only shown when a yearly report exists for the year */}
+                      {hasYearlyReport && (
+                        <option value={0}>{t('annual')}</option>
+                      )}
                       {availableMonths.map((m) => (
                         <option key={m} value={m}>{getMonthName(m, i18n.language)}</option>
                       ))}
@@ -165,6 +651,11 @@ export function ReportsPage() {
                 </div>
               )}
             </>
+          )}
+
+          {/* Empty-selection prompt */}
+          {!canFetch && !indexLoading && !indexError && reports && reports.length > 0 && (
+            <p className="text-sm text-muted-foreground">{t('noReportSelected')}</p>
           )}
 
           {/* Report viewer */}
@@ -176,24 +667,49 @@ export function ReportsPage() {
                   <TileSkeleton className="h-64" />
                 </>
               )}
-              {reportError && <TileError message={t('error.report')} onRetry={reportRefetch} />}
-              {!reportLoading && !reportError && report && (
+              {reportError && (
+                <TileError message={t('error.report')} onRetry={reportRefetch} />
+              )}
+
+              {!reportLoading && !reportError && activeReport && (
                 <div className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
+                  {/* Report header row */}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <h2 className="text-sm font-semibold text-foreground">
-                      {report.month ? getMonthName(report.month, i18n.language) : t('annual')} {report.year}
+                      {periodLabel}
                     </h2>
-                    <a
-                      href={`data:text/plain;charset=utf-8,${encodeURIComponent(report.rawText)}`}
-                      download={report.filename}
-                      className="inline-flex items-center min-h-[44px] md:min-h-0 px-2 text-sm text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
-                    >
-                      {t('download')}
-                    </a>
+                    <div className="flex items-center gap-2">
+                      {/* Toggle table / raw text */}
+                      <button
+                        type="button"
+                        onClick={() => setShowRawText((v) => !v)}
+                        className="inline-flex items-center min-h-[44px] md:min-h-0 px-2 text-sm text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+                        aria-pressed={showRawText}
+                      >
+                        {showRawText ? t('viewTable') : t('viewRawText')}
+                      </button>
+
+                      {/* Download link */}
+                      <a
+                        href={`data:text/plain;charset=utf-8,${encodeURIComponent(activeReport.rawText)}`}
+                        download={activeReport.filename}
+                        className="inline-flex items-center min-h-[44px] md:min-h-0 px-2 text-sm text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+                      >
+                        {t('download')}
+                      </a>
+                    </div>
                   </div>
-                  <pre className="overflow-x-auto rounded-md bg-muted/40 p-4 text-xs text-foreground font-mono leading-relaxed whitespace-pre-wrap">
-                    {report.rawText}
-                  </pre>
+
+                  {/* Table or raw text */}
+                  {showRawText ? (
+                    <pre className="overflow-x-auto rounded-md bg-muted/40 p-4 text-xs text-foreground font-mono leading-relaxed whitespace-pre-wrap">
+                      {activeReport.rawText}
+                    </pre>
+                  ) : isAnnual ? (
+                    <YearlyReportTables rawText={activeReport.rawText} period={periodLabel} />
+                  ) : (
+                    <MonthlyReportTable rawText={activeReport.rawText} period={periodLabel} />
+                  )}
                 </div>
               )}
             </div>

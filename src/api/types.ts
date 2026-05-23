@@ -353,14 +353,24 @@ export interface ChartDefinition {
 // ---------------------------------------------------------------------------
 
 export interface ReportEntry {
+  kind: 'monthly' | 'yearly';
   year: number;
   month?: number;
   filename: string;
+  modifiedAt: string;
 }
 
 export interface NOAAReport {
   year: number;
   month?: number;
+  filename: string;
+  rawText: string;
+  modifiedAt: string;
+}
+
+/** Shape returned by GET /reports/{year} (yearly NOAA report). */
+export interface NOAAYearlyReport {
+  year: number;
   filename: string;
   rawText: string;
   modifiedAt: string;
