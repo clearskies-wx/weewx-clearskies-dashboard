@@ -134,5 +134,9 @@
 
   "temperature": {
     "ariaLabel": "Current temperature: {{temp}} degrees {{unit}}"
-  }
+  },
+
+  "heroLabel": "Current conditions",
+  "feelsLikeHero": "Feels like {{temp}}°",
+  "noCurrentData": "No current data available"
 }

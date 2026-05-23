@@ -217,3 +217,25 @@ export function getRadarFrames(
     signal,
   );
 }
+
+// ---------------------------------------------------------------------------
+// GET /branding — operator branding configuration (Gap #10)
+// Field names match the OpenAPI contract (lightUrl / darkUrl).
+// The internal BrandingConfig in branding.ts uses light/dark — mapping is
+// done at the provider boundary (branding-provider.tsx).
+// ---------------------------------------------------------------------------
+
+export interface ApiBrandingConfig {
+  accent: string;
+  defaultThemeMode: string;
+  logo: {
+    lightUrl: string;
+    darkUrl?: string;
+    alt: string;
+  } | null;
+  customCssUrl: string | null;
+}
+
+export function getBranding(signal?: AbortSignal): Promise<ApiResponse<ApiBrandingConfig>> {
+  return fetchApi<ApiResponse<ApiBrandingConfig>>('/branding', undefined, signal);
+}

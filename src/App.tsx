@@ -1,8 +1,9 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AppLayout } from './components/layout/app-layout';
 import { useLocaleSync } from './i18n/use-locale-sync';
+import { useBranding } from './lib/branding-provider';
 
 const NowPage = React.lazy(() => import('./routes/now'));
 const ForecastPage = React.lazy(() => import('./routes/forecast'));
@@ -40,6 +41,32 @@ function App() {
   useLocaleSync();
   const { t: tNav } = useTranslation('nav');
   const { t: tCommon } = useTranslation('common');
+  const branding = useBranding();
+
+  // Inject operator-supplied custom.css when the branding API provides a URL.
+  // The <link> element is appended to <head> and cleaned up when the URL changes
+  // or the component unmounts. A stable element id prevents duplicate injections
+  // on StrictMode double-invoke. customCssUrl from DEFAULT_BRANDING is undefined,
+  // so this effect is a no-op in mock mode and before the API responds.
+  useEffect(() => {
+    if (!branding.customCssUrl) return;
+    const id = 'custom-css';
+    // Avoid inserting a duplicate if already present (React StrictMode double-invoke).
+    const existing = document.getElementById(id);
+    if (existing) {
+      (existing as HTMLLinkElement).href = branding.customCssUrl;
+      return;
+    }
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = branding.customCssUrl;
+    link.id = id;
+    document.head.appendChild(link);
+    return () => {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    };
+  }, [branding.customCssUrl]);
 
   return (
     <BrowserRouter>

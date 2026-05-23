@@ -1,0 +1,33 @@
+<!--
+  hero-default.svg — Abstract sky/horizon background for the Now page hero section.
+  Licensed under GNU General Public License v3.0 (GPL-3.0).
+  Copyright (C) Clear Skies Dashboard contributors.
+
+  Design notes:
+  - Colors are WCAG-AA pre-tuned: dark blue gradient ensures white text
+    overlay (#fff on dark overlay + this background) passes 4.5:1 AA ratio.
+  - Not photography, not locale-specific (ADR-009).
+  - Used as a decorative background with aria-hidden="true"; no text content.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 540" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0f172a"/>
+      <stop offset="0.4" stop-color="#1e3a5f"/>
+      <stop offset="0.7" stop-color="#2d5a87"/>
+      <stop offset="1" stop-color="#3b7cb8"/>
+    </linearGradient>
+    <linearGradient id="horizon" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1a2332" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0d1117"/>
+    </linearGradient>
+  </defs>
+  <rect fill="url(#sky)" width="1920" height="540"/>
+  <ellipse cx="250" cy="180" rx="180" ry="35" fill="#ffffff" opacity="0.04"/>
+  <ellipse cx="350" cy="175" rx="120" ry="30" fill="#ffffff" opacity="0.03"/>
+  <ellipse cx="1500" cy="140" rx="220" ry="40" fill="#ffffff" opacity="0.035"/>
+  <ellipse cx="1620" cy="135" rx="140" ry="28" fill="#ffffff" opacity="0.025"/>
+  <ellipse cx="900" cy="220" rx="160" ry="32" fill="#ffffff" opacity="0.03"/>
+  <path d="M0 420 Q320 390 640 410 Q960 430 1280 405 Q1600 380 1920 400 V540 H0 Z" fill="url(#horizon)"/>
+  <path d="M0 460 Q400 440 800 455 Q1200 470 1600 445 Q1800 435 1920 450 V540 H0 Z" fill="#0d1117" opacity="0.5"/>
+</svg>

@@ -20,8 +20,9 @@ import {
   getReport,
   getYearlyReport,
   getContent,
+  getBranding,
 } from '../api/client';
-import type { ArchiveParams } from '../api/client';
+import type { ArchiveParams, ApiBrandingConfig } from '../api/client';
 
 // Mock data
 import { mockObservation, mockUnits } from '../mock/current';
@@ -450,6 +451,36 @@ export function useLightning(observation: Observation | null): LightningData | n
       lastStrikeTime: lastStrikeTime ?? null,
     };
   }, [observation]);
+}
+
+// ---------------------------------------------------------------------------
+// useBrandingApi — /branding  (Gap #10)
+// Internal hook — consumed only by BrandingProvider, not by page components.
+// Page components should use useBranding() from branding-provider.tsx instead.
+// ---------------------------------------------------------------------------
+
+export function useBrandingApi(): HookResult<ApiBrandingConfig> {
+  const { data, loading, error, refetch } = useApiQuery<{ data: ApiBrandingConfig }>(
+    (signal) => getBranding(signal),
+    // Always skip in mock mode; BrandingProvider falls back to DEFAULT_BRANDING.
+    { skip: isMockMode() },
+  );
+
+  if (isMockMode()) {
+    return {
+      data: null,
+      loading: false,
+      error: null,
+      refetch: () => { /* no-op */ },
+    };
+  }
+
+  return {
+    data: data?.data ?? null,
+    loading,
+    error,
+    refetch,
+  };
 }
 
 // ---------------------------------------------------------------------------

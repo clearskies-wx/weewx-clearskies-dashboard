@@ -11,6 +11,8 @@ export interface BrandingConfig {
   accent: AccentName;
   defaultThemeMode: 'light' | 'dark' | 'auto-os' | 'auto-sunrise-sunset';
   logo?: { light: string; dark?: string; alt: string };
+  /** URL of an operator-supplied custom.css file, or null if not configured. */
+  customCssUrl?: string | null;
 }
 
 // Curated palette — all light values verified ≥4.5:1 on white (oklch(1 0 0));

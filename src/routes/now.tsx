@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Sunrise, Sunset, Moon, Zap, Activity } from 'lucide-react';
 import type { TFunction } from 'i18next';
 import { AlertBanner } from '../components/shared/alert-banner';
+import { HeroSection } from '../components/hero-section';
 import { RadarMap } from '../components/shared/radar-map';
 import {
   Card,
@@ -307,6 +308,13 @@ export function NowPage() {
   return (
     <div className="flex flex-col gap-4 max-w-6xl mx-auto">
       <h1 className="sr-only">Now</h1>
+
+      <HeroSection
+        observation={observation}
+        stationName={station?.name ?? ''}
+        loading={obsLoading}
+        units={units}
+      />
 
       {!alertLoading && alerts && <AlertBanner alerts={alerts} />}
 

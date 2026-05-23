@@ -1,16 +1,57 @@
 // branding-provider.tsx — operator branding context (accent palette + logo + default theme mode).
-// Phase 3: uses hardcoded defaults. No API fetch yet.
-// TODO: replace DEFAULT_BRANDING with a fetch from clearskies-api /branding endpoint
-// once that endpoint is defined in the OpenAPI contract (ADR-022).
+// Gap #10: fetches from clearskies-api GET /branding on mount.
+// Falls back to DEFAULT_BRANDING on API error or in mock mode.
+//
+// Mapping note: the API response uses logo.lightUrl / logo.darkUrl to match
+// the OpenAPI contract; the internal BrandingConfig uses logo.light / logo.dark.
+// The mapping happens here at the provider boundary so consumers are isolated
+// from the wire format.
 
 import { createContext, useContext, useEffect, useMemo } from 'react';
 import type { BrandingConfig } from './branding';
 import { ACCENT_PALETTES, DEFAULT_BRANDING } from './branding';
+import type { AccentName } from './branding';
+import { useBrandingApi } from '../hooks/useWeatherData';
 
 export const BrandingContext = createContext<BrandingConfig | null>(null);
 
+/** Coerce the raw API accent string into a known AccentName, defaulting to 'blue'. */
+function toAccentName(raw: string): AccentName {
+  const known: AccentName[] = ['blue', 'teal', 'indigo', 'purple', 'green', 'amber'];
+  return (known as string[]).includes(raw) ? (raw as AccentName) : 'blue';
+}
+
+/** Coerce the raw API theme-mode string into the internal union, defaulting to 'auto-os'. */
+function toThemeMode(raw: string): BrandingConfig['defaultThemeMode'] {
+  const known: BrandingConfig['defaultThemeMode'][] = [
+    'light', 'dark', 'auto-os', 'auto-sunrise-sunset',
+  ];
+  return (known as string[]).includes(raw)
+    ? (raw as BrandingConfig['defaultThemeMode'])
+    : 'auto-os';
+}
+
 export function BrandingProvider({ children }: { children: React.ReactNode }) {
-  const config = DEFAULT_BRANDING;
+  const { data: apiData } = useBrandingApi();
+
+  // Map API response → internal BrandingConfig; fall back to DEFAULT_BRANDING
+  // if the fetch has not yet completed or returned null (network error, 404, etc.).
+  const config = useMemo<BrandingConfig>(() => {
+    if (!apiData) return DEFAULT_BRANDING;
+
+    return {
+      accent: toAccentName(apiData.accent),
+      defaultThemeMode: toThemeMode(apiData.defaultThemeMode),
+      logo: apiData.logo
+        ? {
+            light: apiData.logo.lightUrl,
+            dark: apiData.logo.darkUrl,
+            alt: apiData.logo.alt,
+          }
+        : undefined,
+      customCssUrl: apiData.customCssUrl ?? null,
+    };
+  }, [apiData]);
 
   // Set CSS custom properties on <html> once so both :root and [data-theme="dark"]
   // blocks can reference --brand-* via var() without JS needing to know the resolved
