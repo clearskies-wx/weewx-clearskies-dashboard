@@ -1,0 +1,35 @@
+name: OpenAPI type sync check
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/api/openapi-v1.yaml'
+      - 'src/api/generated-types.ts'
+      - 'package.json'
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run generate:types
+
+      - name: Verify generated types are committed
+        run: |
+          if ! git diff --quiet src/api/generated-types.ts; then
+            echo "::error::Generated types are out of sync with the OpenAPI spec."
+            echo "Run 'npm run generate:types' locally and commit the result."
+            git diff src/api/generated-types.ts
+            exit 1
+          fi
