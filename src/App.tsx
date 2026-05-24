@@ -2,6 +2,7 @@ import React, { Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AppLayout } from './components/layout/app-layout';
+import { SetupGuard } from './components/SetupGuard';
 import { useLocaleSync } from './i18n/use-locale-sync';
 import { useBranding } from './lib/branding-provider';
 
@@ -69,6 +70,7 @@ function App() {
   }, [branding.customCssUrl]);
 
   return (
+    <SetupGuard>
     <BrowserRouter>
       <Routes>
         <Route element={<AppLayout />}>
@@ -163,6 +165,7 @@ function App() {
         </Route>
       </Routes>
     </BrowserRouter>
+    </SetupGuard>
   );
 }
 
