@@ -531,7 +531,7 @@ export function NowPage() {
         {/* Row 5 — Lightning */}
         <Card>
           <CardHeader>
-            <h2 className="font-heading text-base leading-snug font-medium">{t('lightning')}</h2>
+            <h2 className="font-heading text-base leading-snug font-medium">{t('lightning.title')}</h2>
           </CardHeader>
           <CardContent className="flex flex-col gap-2 text-sm">
             {obsLoading ? (

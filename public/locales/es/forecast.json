@@ -13,5 +13,7 @@
   "updated": "Actualizado {{time}}",
   "ariaHourlyScroll": "Pronóstico por horas — deslázate para ver más",
   "ariaHourlyList": "Pronóstico por horas",
-  "ariaDayForecast": "Pronóstico del {{day}}"
+  "ariaDayForecast": "Pronóstico del {{day}}",
+  "ariaPrecipBar": "{{pct}}% de probabilidad de precipitación",
+  "ariaWindDir": "Viento del {{direction}}"
 }

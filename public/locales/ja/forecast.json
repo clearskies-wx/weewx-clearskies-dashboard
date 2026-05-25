@@ -13,5 +13,7 @@
   "updated": "更新: {{time}}",
   "ariaHourlyScroll": "時間別予報 — スクロールして詳細を確認",
   "ariaHourlyList": "時間別予報",
-  "ariaDayForecast": "{{day}}の予報"
+  "ariaDayForecast": "{{day}}の予報",
+  "ariaPrecipBar": "降水確率{{pct}}%",
+  "ariaWindDir": "{{direction}}からの風"
 }

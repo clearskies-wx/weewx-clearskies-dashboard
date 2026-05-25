@@ -13,5 +13,7 @@
   "updated": "更新于 {{time}}",
   "ariaHourlyScroll": "逐小时预报 — 滚动查看更多",
   "ariaHourlyList": "逐小时预报",
-  "ariaDayForecast": "{{day}} 预报"
+  "ariaDayForecast": "{{day}} 预报",
+  "ariaPrecipBar": "降水概率 {{pct}}%",
+  "ariaWindDir": "来自{{direction}}方向的风"
 }

@@ -18,5 +18,7 @@
   "configCardTitle": "Configuração",
   "configRadius": "Raio",
   "configProvider": "Provedor",
-  "configHelperText": "Configure as configurações de terremotos na interface de configuração do Clear Skies."
+  "configHelperText": "Configure as configurações de terremotos na interface de configuração do Clear Skies.",
+  "showMore": "Mostrar mais",
+  "showMoreAriaLabel": "Mostrar mais terremotos (exibindo {{showing}} de {{total}})"
 }

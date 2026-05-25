@@ -13,5 +13,7 @@
   "updated": "Na-update {{time}}",
   "ariaHourlyScroll": "Oras-oras na hula — mag-scroll para makita ang higit pa",
   "ariaHourlyList": "Oras-oras na hula",
-  "ariaDayForecast": "Hula para sa {{day}}"
+  "ariaDayForecast": "Hula para sa {{day}}",
+  "ariaPrecipBar": "{{pct}}% posibilidad ng ulan",
+  "ariaWindDir": "Hangin mula sa {{direction}}"
 }

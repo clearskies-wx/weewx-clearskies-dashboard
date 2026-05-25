@@ -8,6 +8,7 @@
   "sectionHeading": "Records de {{section}}",
   "tableHeaderRecord": "Record",
   "tableHeaderValue": "Valeur",
+  "tableHeaderToday": "Aujourd'hui",
   "tableHeaderDateObserved": "Date observée",
   "badgeNew": "Nouveau",
   "badgeNewTitle": "Battu dans les 30 derniers jours",

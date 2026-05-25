@@ -8,6 +8,7 @@
   "sectionHeading": "{{section}} 紀錄",
   "tableHeaderRecord": "紀錄",
   "tableHeaderValue": "數值",
+  "tableHeaderToday": "今日",
   "tableHeaderDateObserved": "觀測日期",
   "badgeNew": "新紀錄",
   "badgeNewTitle": "過去30天內打破",

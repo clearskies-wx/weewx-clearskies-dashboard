@@ -5,7 +5,6 @@
   "stationObservations": "站点观测",
   "sunAndMoon": "日月",
   "airQuality": "空气质量",
-  "lightning": "闪电",
   "recentEarthquake": "近期地震",
   "todaysForecast": "今日预报",
   "temperatureTrend": "气温趋势",
@@ -115,6 +114,7 @@
   },
 
   "lightning": {
+    "title": "闪电",
     "strikesLastHour": "过去一小时雷击 {{count}} 次",
     "strikesLast24h": "过去24小时 {{count}} 次",
     "nearest": "最近距离：{{distance}} km",

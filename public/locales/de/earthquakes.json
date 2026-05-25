@@ -18,5 +18,7 @@
   "configCardTitle": "Konfiguration",
   "configRadius": "Radius",
   "configProvider": "Anbieter",
-  "configHelperText": "Erdbebeneinstellungen in der Clear-Skies-Konfigurationsoberfläche konfigurieren."
+  "configHelperText": "Erdbebeneinstellungen in der Clear-Skies-Konfigurationsoberfläche konfigurieren.",
+  "showMore": "Mehr anzeigen",
+  "showMoreAriaLabel": "Mehr Erdbeben anzeigen ({{showing}} von {{total}} werden angezeigt)"
 }

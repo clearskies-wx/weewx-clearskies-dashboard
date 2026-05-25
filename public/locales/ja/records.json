@@ -8,6 +8,7 @@
   "sectionHeading": "{{section}}の記録",
   "tableHeaderRecord": "記録",
   "tableHeaderValue": "値",
+  "tableHeaderToday": "本日",
   "tableHeaderDateObserved": "観測日",
   "badgeNew": "新記録",
   "badgeNewTitle": "過去30日以内に更新",

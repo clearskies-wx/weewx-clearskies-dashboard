@@ -18,5 +18,7 @@
   "configCardTitle": "設定",
   "configRadius": "半徑",
   "configProvider": "提供商",
-  "configHelperText": "請在 Clear Skies 設定介面中設定地震相關選項。"
+  "configHelperText": "請在 Clear Skies 設定介面中設定地震相關選項。",
+  "showMore": "顯示更多",
+  "showMoreAriaLabel": "顯示更多地震（目前顯示 {{showing}} / {{total}} 筆）"
 }

@@ -18,5 +18,7 @@
   "configCardTitle": "Конфигурация",
   "configRadius": "Радиус",
   "configProvider": "Провайдер",
-  "configHelperText": "Настройте параметры землетрясений в интерфейсе настройки Clear Skies."
+  "configHelperText": "Настройте параметры землетрясений в интерфейсе настройки Clear Skies.",
+  "showMore": "Показать больше",
+  "showMoreAriaLabel": "Показать больше землетрясений (показано {{showing}} из {{total}})"
 }

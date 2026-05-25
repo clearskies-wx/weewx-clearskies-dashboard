@@ -13,5 +13,7 @@
   "updated": "Aktualisiert {{time}}",
   "ariaHourlyScroll": "Stündliche Vorhersage – scrollen, um mehr zu sehen",
   "ariaHourlyList": "Stündliche Vorhersage",
-  "ariaDayForecast": "Vorhersage für {{day}}"
+  "ariaDayForecast": "Vorhersage für {{day}}",
+  "ariaPrecipBar": "{{pct}}% Regenwahrscheinlichkeit",
+  "ariaWindDir": "Wind aus {{direction}}"
 }

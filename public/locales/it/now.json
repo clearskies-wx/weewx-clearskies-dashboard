@@ -6,6 +6,7 @@
   "sunAndMoon": "Sole e Luna",
   "airQuality": "Qualità dell’aria",
   "lightning": {
+    "title": "Fulmini",
     "strikesLastHour": "{{count}} fulmini nell’ultima ora",
     "strikesLast24h": "{{count}} nelle ultime 24h",
     "nearest": "Più vicino: {{distance}} km",

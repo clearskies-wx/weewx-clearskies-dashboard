@@ -18,5 +18,7 @@
   "configCardTitle": "Configurazione",
   "configRadius": "Raggio",
   "configProvider": "Fornitore",
-  "configHelperText": "Configura le impostazioni sismiche nell’interfaccia di configurazione di Clear Skies."
+  "configHelperText": "Configura le impostazioni sismiche nell’interfaccia di configurazione di Clear Skies.",
+  "showMore": "Mostra altri",
+  "showMoreAriaLabel": "Mostra altri terremoti (visualizzazione {{showing}} di {{total}})"
 }

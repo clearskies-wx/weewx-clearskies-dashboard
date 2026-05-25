@@ -8,6 +8,7 @@
   "sectionHeading": "{{section}} records",
   "tableHeaderRecord": "Record",
   "tableHeaderValue": "Waarde",
+  "tableHeaderToday": "Vandaag",
   "tableHeaderDateObserved": "Datum waargenomen",
   "badgeNew": "Nieuw",
   "badgeNewTitle": "Verbroken in de afgelopen 30 dagen",

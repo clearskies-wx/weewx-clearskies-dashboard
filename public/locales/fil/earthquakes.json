@@ -18,5 +18,7 @@
   "configCardTitle": "Konfigurasyion",
   "configRadius": "Radius",
   "configProvider": "Provider",
-  "configHelperText": "I-configure ang mga setting ng lindol sa Clear Skies configuration UI."
+  "configHelperText": "I-configure ang mga setting ng lindol sa Clear Skies configuration UI.",
+  "showMore": "Magpakita ng higit pa",
+  "showMoreAriaLabel": "Magpakita ng higit pang mga lindol (ipinapakita ang {{showing}} sa {{total}})"
 }

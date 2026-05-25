@@ -8,6 +8,7 @@
   "sectionHeading": "Mga Rekord ng {{section}}",
   "tableHeaderRecord": "Rekord",
   "tableHeaderValue": "Halaga",
+  "tableHeaderToday": "Ngayon",
   "tableHeaderDateObserved": "Petsa ng Obserbasyon",
   "badgeNew": "Bago",
   "badgeNewTitle": "Nabali sa nakaraang 30 araw",

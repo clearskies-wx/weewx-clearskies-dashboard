@@ -5,7 +5,6 @@
   "stationObservations": "観測所データ",
   "sunAndMoon": "太陽と月",
   "airQuality": "大気質",
-  "lightning": "雷",
   "recentEarthquake": "最近の地震",
   "todaysForecast": "本日の予報",
   "temperatureTrend": "気温の推移",
@@ -115,6 +114,7 @@
   },
 
   "lightning": {
+    "title": "雷",
     "strikesLastHour": "過去1時間の落雷: {{count}}回",
     "strikesLast24h": "過去24時間: {{count}}回",
     "nearest": "最近距離: {{distance}} km",

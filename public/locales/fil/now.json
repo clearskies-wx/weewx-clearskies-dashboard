@@ -5,7 +5,6 @@
   "stationObservations": "Mga Obserbasyon sa Istasyon",
   "sunAndMoon": "Araw at Buwan",
   "airQuality": "Kalidad ng Hangin",
-  "lightning": "Kidlat",
   "recentEarthquake": "Kamakailang Lindol",
   "todaysForecast": "Hula para Ngayon",
   "temperatureTrend": "Takbo ng Temperatura",
@@ -115,6 +114,7 @@
   },
 
   "lightning": {
+    "title": "Kidlat",
     "strikesLastHour": "{{count}} kidlat sa nakaraang isang oras",
     "strikesLast24h": "{{count}} sa nakaraang 24 oras",
     "nearest": "Pinakamalapit: {{distance}} km",

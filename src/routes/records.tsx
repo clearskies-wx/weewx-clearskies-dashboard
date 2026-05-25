@@ -9,8 +9,9 @@ import {
   CardTitle,
   CardContent,
 } from '../components/ui/card';
-import { useRecords } from '../hooks/useWeatherData';
+import { useRecords, useObservation } from '../hooks/useWeatherData';
 import { formatValue } from '../utils/format';
+import type { Observation } from '../api/types';
 
 /**
  * Map a canonical field name to the appropriate formatValue type.
@@ -27,6 +28,21 @@ function canonicalFieldToType(field: string): string {
   if (/[Uu][Vv]/.test(field)) return 'uv';
   if (/radiation|[Ss]olar/.test(field)) return 'solar';
   return 'default';
+}
+
+/**
+ * Map a record's canonicalField to today's value from the current Observation.
+ * The Observation fields use the same canonical names as record entries (outTemp,
+ * windGust, barometer, etc.), so we can look them up directly as a keyed index.
+ * Fields with no direct today equivalent (e.g., domWindDir, maxSolarRad) return null.
+ */
+function getTodayValue(canonicalField: string, observation: Observation): number | null {
+  // Direct field lookup: the Observation interface uses the same canonical names.
+  // Cast to a record index to avoid an exhaustive if-chain; unknown fields return undefined.
+  const obs = observation as Record<string, unknown>;
+  const raw = obs[canonicalField];
+  if (typeof raw === 'number') return raw;
+  return null;
 }
 
 function formatDate(isoString: string | null, locale: string): string {
@@ -71,6 +87,7 @@ export function RecordsPage() {
   const locale = i18n.language;
   const [period, setPeriod] = useState<Period>('all-time');
   const { data: records, units, loading, error, refetch } = useRecords(period);
+  const { data: observation } = useObservation();
 
   return (
     <div className="flex flex-col gap-6 max-w-2xl mx-auto">
@@ -146,6 +163,9 @@ export function RecordsPage() {
                         <th scope="col" className="pb-2 text-right font-semibold text-foreground pr-4">
                           {t('tableHeaderValue')}
                         </th>
+                        <th scope="col" className="pb-2 text-right font-semibold text-foreground pr-4">
+                          {t('tableHeaderToday')}
+                        </th>
                         <th scope="col" className="pb-2 text-right font-semibold text-foreground">
                           {t('tableHeaderDateObserved')}
                         </th>
@@ -176,6 +196,17 @@ export function RecordsPage() {
                             {entry.value !== null
                               ? `${formatValue(entry.value, canonicalFieldToType(entry.canonicalField))} ${units?.[entry.canonicalField] ?? ''}`
                               : '—'}
+                          </td>
+                          <td
+                            className="py-2.5 pr-4 text-right text-muted-foreground"
+                            style={{ fontFeatureSettings: '"tnum"' }}
+                          >
+                            {(() => {
+                              if (!observation) return '--';
+                              const todayVal = getTodayValue(entry.canonicalField, observation);
+                              if (todayVal === null) return '--';
+                              return `${formatValue(todayVal, canonicalFieldToType(entry.canonicalField))} ${units?.[entry.canonicalField] ?? ''}`;
+                            })()}
                           </td>
                           <td className="py-2.5 text-right text-muted-foreground">
                             {formatDate(entry.observedAt, locale)}

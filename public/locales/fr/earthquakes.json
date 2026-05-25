@@ -18,5 +18,7 @@
   "configCardTitle": "Configuration",
   "configRadius": "Rayon",
   "configProvider": "Fournisseur",
-  "configHelperText": "Configurez les paramètres sismiques dans l’interface de configuration de Clear Skies."
+  "configHelperText": "Configurez les paramètres sismiques dans l’interface de configuration de Clear Skies.",
+  "showMore": "Afficher plus",
+  "showMoreAriaLabel": "Afficher plus de séismes (affichage de {{showing}} sur {{total}})"
 }

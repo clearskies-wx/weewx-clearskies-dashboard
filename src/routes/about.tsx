@@ -151,11 +151,9 @@ export function AboutPage() {
               <TileSkeleton className="h-20" />
             </>
           ) : content ? (
-            <div className="prose prose-sm dark:prose-invert max-w-none">
-              <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
-                {content.markdown}
-              </p>
-            </div>
+            <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+              {content.markdown}
+            </p>
           ) : (
             <p className="text-sm text-muted-foreground leading-relaxed">
               {t('aboutStation.placeholder')}

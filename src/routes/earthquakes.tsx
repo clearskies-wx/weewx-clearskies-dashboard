@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MapContainer, TileLayer, Marker, CircleMarker, Popup } from 'react-leaflet';
 import {
@@ -9,6 +10,8 @@ import {
 import type { EarthquakeRecord } from '../api/types';
 import { useEarthquakes, useStation } from '../hooks/useWeatherData';
 import { formatValue } from '../utils/format';
+
+const PAGE_SIZE = 20;
 
 function formatTime(isoString: string, timeZone: string, locale: string): string {
   return new Intl.DateTimeFormat(locale, {
@@ -85,6 +88,10 @@ export function EarthquakesPage() {
   const { data: earthquakes, loading, error, refetch } = useEarthquakes();
   const { data: station } = useStation();
 
+  // Client-side pagination — show PAGE_SIZE items at a time. Reset when data
+  // refreshes so stale offsets don't carry over to a new API response.
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
   const hasStation = station !== null;
   const center: [number, number] = hasStation
     ? [station.latitude, station.longitude]
@@ -113,79 +120,99 @@ export function EarthquakesPage() {
             </CardContent>
           </Card>
         ) : (
-          <ul className="flex flex-col gap-4" role="list" aria-label={t('ariaRecentList')}>
-            {earthquakes.map((quake) => {
-              const { bg, text } = magnitudeClasses(quake.magnitude);
-              return (
-                <li key={quake.id}>
-                  <Card>
-                    <CardContent className="pt-4 pb-4">
-                      <div className="flex items-start gap-4">
-                        <div
-                          className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg ${bg}`}
-                          aria-label={t('ariaMagnitude', { mag: formatValue(quake.magnitude, 'earthquakeMag') })}
-                        >
-                          <span className={`text-xs leading-none ${text}`}>M</span>
-                          <span
-                            className={`text-2xl font-bold leading-none mt-0.5 ${text}`}
-                            style={{ fontFeatureSettings: '"tnum"' }}
+          <>
+            <ul className="flex flex-col gap-4" role="list" aria-label={t('ariaRecentList')}>
+              {earthquakes.slice(0, visibleCount).map((quake) => {
+                const { bg, text } = magnitudeClasses(quake.magnitude);
+                return (
+                  <li key={quake.id}>
+                    <Card>
+                      <CardContent className="pt-4 pb-4">
+                        <div className="flex items-start gap-4">
+                          {/* Magnitude badge — overflow-hidden prevents text from
+                              bleeding outside the fixed-size circle on long values. */}
+                          <div
+                            className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg overflow-hidden ${bg}`}
+                            aria-label={t('ariaMagnitude', { mag: formatValue(quake.magnitude, 'earthquakeMag') })}
                           >
-                            {formatValue(quake.magnitude, 'earthquakeMag')}
-                          </span>
-                        </div>
-
-                        <div className="flex flex-col gap-1 min-w-0">
-                          <p className="font-semibold text-foreground leading-snug">
-                            {quake.place ?? t('unknownLocation')}
-                            {quake.magnitudeType && (
-                              <span className="ml-1.5 text-xs font-normal text-muted-foreground">
-                                ({quake.magnitudeType.toLowerCase()})
-                              </span>
-                            )}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {formatTime(quake.time, station?.timezone ?? 'UTC', locale)}
-                          </p>
-                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1">
-                            {quake.depth !== null && (
-                              <span>{t('depth', { depth: formatValue(quake.depth, 'earthquakeDepth') })}</span>
-                            )}
-                            <span>{t('source', { source: quake.source.toUpperCase() })}</span>
+                            <span className={`text-xs leading-none ${text}`}>M</span>
+                            <span
+                              className={`text-2xl font-bold leading-none mt-0.5 ${text}`}
+                              style={{ fontFeatureSettings: '"tnum"' }}
+                            >
+                              {formatValue(quake.magnitude, 'earthquakeMag')}
+                            </span>
                           </div>
 
-                          {/* Additional fields: felt, mmi, tsunami, alert */}
-                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs mt-1">
-                            {quake.felt !== null && (
-                              <span className="text-muted-foreground">
-                                {t('feltBy', { count: quake.felt })}
-                              </span>
-                            )}
-                            {quake.mmi !== null && (
-                              <span className="text-muted-foreground" style={{ fontFeatureSettings: '"tnum"' }}>
-                                {t('mmi', { mmi: formatValue(quake.mmi, 'earthquakeMag') })}
-                              </span>
-                            )}
-                            {quake.tsunami && (
-                              <span className="font-medium text-amber-800 dark:text-amber-300">
-                                {t('tsunamiWatch')}
-                              </span>
-                            )}
-                            {quake.alert !== null && (
-                              <span
-                                className={`inline-block rounded px-1.5 py-0.5 font-medium capitalize ${alertClasses(quake.alert)}`}
-                              >
-                                {t('pager', { level: quake.alert })}
-                              </span>
-                            )}
+                          <div className="flex flex-col gap-1 min-w-0">
+                            <p className="font-semibold text-foreground leading-snug">
+                              {quake.place ?? t('unknownLocation')}
+                              {quake.magnitudeType && (
+                                <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                                  ({quake.magnitudeType.toLowerCase()})
+                                </span>
+                              )}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {formatTime(quake.time, station?.timezone ?? 'UTC', locale)}
+                            </p>
+                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1">
+                              {quake.depth !== null && (
+                                <span>{t('depth', { depth: formatValue(quake.depth, 'earthquakeDepth') })}</span>
+                              )}
+                              <span>{t('source', { source: quake.source.toUpperCase() })}</span>
+                            </div>
+
+                            {/* Additional fields: felt, mmi, tsunami, alert */}
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs mt-1">
+                              {quake.felt !== null && (
+                                <span className="text-muted-foreground">
+                                  {t('feltBy', { count: quake.felt })}
+                                </span>
+                              )}
+                              {quake.mmi !== null && (
+                                <span className="text-muted-foreground" style={{ fontFeatureSettings: '"tnum"' }}>
+                                  {t('mmi', { mmi: formatValue(quake.mmi, 'earthquakeMag') })}
+                                </span>
+                              )}
+                              {quake.tsunami && (
+                                <span className="font-medium text-amber-800 dark:text-amber-300">
+                                  {t('tsunamiWatch')}
+                                </span>
+                              )}
+                              {quake.alert !== null && (
+                                <span
+                                  className={`inline-block rounded px-1.5 py-0.5 font-medium capitalize ${alertClasses(quake.alert)}`}
+                                >
+                                  {t('pager', { level: quake.alert })}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </li>
-              );
-            })}
-          </ul>
+                      </CardContent>
+                    </Card>
+                  </li>
+                );
+              })}
+            </ul>
+
+            {visibleCount < earthquakes.length && (
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}
+                  className="rounded-md px-4 py-2 text-sm font-medium text-primary border border-primary/40 hover:bg-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors"
+                  aria-label={t('showMoreAriaLabel', {
+                    showing: Math.min(visibleCount, earthquakes.length),
+                    total: earthquakes.length,
+                  })}
+                >
+                  {t('showMore')}
+                </button>
+              </div>
+            )}
+          </>
         )
       )}
 

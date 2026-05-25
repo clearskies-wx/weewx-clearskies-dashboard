@@ -21,5 +21,7 @@
   "configCardTitle": "Configuration",
   "configRadius": "Radius",
   "configProvider": "Provider",
-  "configHelperText": "Configure earthquake settings in the Clear Skies configuration UI."
+  "configHelperText": "Configure earthquake settings in the Clear Skies configuration UI.",
+  "showMore": "Show more",
+  "showMoreAriaLabel": "Show more earthquakes (showing {{showing}} of {{total}})"
 }

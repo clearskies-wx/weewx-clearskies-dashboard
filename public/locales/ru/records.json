@@ -8,6 +8,7 @@
   "sectionHeading": "Рекорды: {{section}}",
   "tableHeaderRecord": "Рекорд",
   "tableHeaderValue": "Значение",
+  "tableHeaderToday": "Сегодня",
   "tableHeaderDateObserved": "Дата наблюдения",
   "badgeNew": "Новый",
   "badgeNewTitle": "Побит за последние 30 дней",

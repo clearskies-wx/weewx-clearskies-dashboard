@@ -5,7 +5,6 @@
   "stationObservations": "Наблюдения станции",
   "sunAndMoon": "Солнце и Луна",
   "airQuality": "Качество воздуха",
-  "lightning": "Грозовая активность",
   "recentEarthquake": "Последнее землетрясение",
   "todaysForecast": "Прогноз на сегодня",
   "temperatureTrend": "Динамика температуры",
@@ -115,6 +114,7 @@
   },
 
   "lightning": {
+    "title": "Грозовая активность",
     "strikesLastHour": "{{count}} разрядов за последний час",
     "strikesLast24h": "{{count}} за последние 24 ч",
     "nearest": "Ближайший: {{distance}} км",

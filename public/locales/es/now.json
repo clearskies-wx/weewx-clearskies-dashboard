@@ -6,6 +6,7 @@
   "sunAndMoon": "Sol y Luna",
   "airQuality": "Calidad del aire",
   "lightning": {
+    "title": "Relámpago",
     "strikesLastHour": "{{count}} descargas en la última hora",
     "strikesLast24h": "{{count}} en las últimas 24h",
     "nearest": "Más cercana: {{distance}} km",

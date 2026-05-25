@@ -17,6 +17,7 @@ import type {
   ChartGroup,
   ReportEntry,
   NOAAReport,
+  NOAAYearlyReport,
   ContentBlock,
   PageMetadata,
   MarkdownContentResponse,
@@ -186,8 +187,8 @@ export function getReport(
 export function getYearlyReport(
   year: number,
   signal?: AbortSignal,
-): Promise<ApiResponse<NOAAReport>> {
-  return fetchApi<ApiResponse<NOAAReport>>(`/reports/${year}`, undefined, signal);
+): Promise<ApiResponse<NOAAYearlyReport>> {
+  return fetchApi<ApiResponse<NOAAYearlyReport>>(`/reports/${year}`, undefined, signal);
 }
 
 export function getContent(

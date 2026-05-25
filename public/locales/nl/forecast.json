@@ -13,5 +13,7 @@
   "updated": "Bijgewerkt {{time}}",
   "ariaHourlyScroll": "Uurverwachting — scroll voor meer",
   "ariaHourlyList": "Uurverwachting",
-  "ariaDayForecast": "Verwachting voor {{day}}"
+  "ariaDayForecast": "Verwachting voor {{day}}",
+  "ariaPrecipBar": "{{pct}}% kans op neerslag",
+  "ariaWindDir": "Wind uit {{direction}}"
 }

@@ -18,5 +18,7 @@
   "configCardTitle": "Configuração",
   "configRadius": "Raio",
   "configProvider": "Fornecedor",
-  "configHelperText": "Configure as definições de sismos na interface de configuração do Clear Skies."
+  "configHelperText": "Configure as definições de sismos na interface de configuração do Clear Skies.",
+  "showMore": "Mostrar mais",
+  "showMoreAriaLabel": "Mostrar mais sismos (a mostrar {{showing}} de {{total}})"
 }

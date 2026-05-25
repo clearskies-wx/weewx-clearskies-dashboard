@@ -6,6 +6,7 @@
   "sunAndMoon": "Soleil et Lune",
   "airQuality": "Qualité de l’air",
   "lightning": {
+    "title": "Foudre",
     "strikesLastHour": "{{count}} éclairs dans la dernière heure",
     "strikesLast24h": "{{count}} dans les dernières 24h",
     "nearest": "Le plus proche : {{distance}} km",

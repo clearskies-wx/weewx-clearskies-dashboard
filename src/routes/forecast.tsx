@@ -9,6 +9,79 @@ import {
 import { useForecast, useAlerts, useStation } from '../hooks/useWeatherData';
 import { formatValue } from '../utils/format';
 
+/** Convert wind direction degrees to an 16-point cardinal label. */
+function windDirLabel(deg: number): string {
+  const dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+  return dirs[Math.round(deg / 22.5) % 16];
+}
+
+/**
+ * PrecipBar — horizontal progress bar for precipitation probability.
+ *
+ * Accessibility: role="meter" with aria-valuenow/min/max conveys the
+ * proportional value to screen readers. The numeric percentage is always
+ * shown alongside so color is never the sole signal (WCAG 1.4.1).
+ */
+function PrecipBar({ pct, ariaLabel }: { pct: number; ariaLabel: string }) {
+  const clampedPct = Math.max(0, Math.min(100, pct));
+  return (
+    <div className="flex items-center gap-2">
+      {/* meter track */}
+      <div
+        role="meter"
+        aria-valuenow={clampedPct}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={ariaLabel}
+        className="relative h-1.5 flex-1 rounded-full bg-blue-200 dark:bg-blue-900 overflow-hidden"
+      >
+        {/* filled portion */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-y-0 left-0 rounded-full bg-blue-500 dark:bg-blue-400"
+          style={{ width: `${clampedPct}%` }}
+        />
+      </div>
+      {/* numeric label — always visible; color is not the only signal */}
+      <span
+        aria-hidden="true"
+        className="text-xs tabular-nums text-blue-600 dark:text-blue-400 shrink-0"
+      >
+        {clampedPct}%
+      </span>
+    </div>
+  );
+}
+
+/**
+ * WindArrow — small SVG arrow that rotates to indicate the direction the wind
+ * is blowing FROM (meteorological convention).
+ *
+ * Rotation: windDir=0 means FROM the north (arrow tip points up/north).
+ * Applies rotate(windDir) around the SVG centre — the same convention used
+ * by WindCompass in now.tsx.
+ *
+ * The element is aria-hidden; the caller supplies an aria-label on the
+ * surrounding context element.
+ */
+function WindArrow({ deg, className = '' }: { deg: number; className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      className={className}
+      style={{ transform: `rotate(${deg}deg)`, display: 'inline-block' }}
+    >
+      {/* Arrow pointing upward (N) — rotated by deg to show FROM direction */}
+      <polygon points="7,1 9,9 7,7 5,9" fill="currentColor" />
+      <line x1="7" y1="7" x2="7" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 
 function formatHour(isoString: string, timeZone: string, locale: string): string {
   return new Intl.DateTimeFormat(locale, {
@@ -104,6 +177,11 @@ export function ForecastPage() {
             >
               {forecast.hourly.map((hour) => {
                 const hourLabel = formatHour(hour.validTime, tz, locale);
+                const hasWindDir = hour.windDir !== null;
+                const windDirDeg = hour.windDir ?? 0;
+                const windLabel = hasWindDir
+                  ? t('ariaWindDir', { direction: windDirLabel(windDirDeg).toLowerCase() })
+                  : undefined;
                 return (
                   <div
                     key={hour.validTime}
@@ -114,7 +192,7 @@ export function ForecastPage() {
                     <span className="text-xs text-muted-foreground whitespace-nowrap">{hourLabel}</span>
                     <WeatherIcon
                       code={hour.weatherCode}
-                      size={20}
+                      size={24}
                       className="text-muted-foreground"
                     />
                     <span
@@ -125,6 +203,18 @@ export function ForecastPage() {
                     {hour.precipProbability !== null && hour.precipProbability > 0 && (
                       <span className="text-xs text-blue-600 dark:text-blue-400 font-[tabular-nums]">
                         {formatValue(hour.precipProbability, 'percent')}%
+                      </span>
+                    )}
+                    {hasWindDir && hour.windSpeed !== null && (
+                      <span
+                        className="flex items-center gap-0.5 text-xs text-muted-foreground font-[tabular-nums]"
+                        aria-label={windLabel}
+                      >
+                        <WindArrow
+                          deg={windDirDeg}
+                          className="text-muted-foreground"
+                        />
+                        {formatValue(hour.windSpeed, 'wind')}
                       </span>
                     )}
                   </div>
@@ -159,6 +249,7 @@ export function ForecastPage() {
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
             {forecast.daily.map((day, index) => {
               const dayName = index === 0 ? t('today') : formatDayName(day.validDate, locale);
+              const hasPrecip = day.precipProbabilityMax !== null && day.precipProbabilityMax > 0;
               return (
                 <article
                   key={day.validDate}
@@ -168,27 +259,39 @@ export function ForecastPage() {
                     <CardHeader>
                       <h3 className="font-heading text-base leading-snug font-medium">{dayName}</h3>
                     </CardHeader>
-                    <CardContent className="flex flex-col gap-2 text-sm">
-                      <div className="flex items-center gap-2">
+                    <CardContent className="flex flex-col gap-3">
+                      {/* Weather icon — dominant visual element */}
+                      <div className="flex justify-center py-1">
                         <WeatherIcon
                           code={day.weatherCode}
-                          size={20}
-                          className="text-muted-foreground shrink-0"
+                          size="48px"
+                          className="text-foreground"
                         />
-                        <span className="text-muted-foreground leading-tight">{day.weatherText}</span>
                       </div>
-                      <div className="flex gap-1 font-[tabular-nums]">
+
+                      {/* Temperature row — high / low */}
+                      <div className="flex justify-center gap-1 font-[tabular-nums] text-base">
                         <span className="font-semibold text-foreground">{formatValue(day.tempMax, 'temperature')}°</span>
                         <span className="text-muted-foreground">/</span>
                         <span className="text-muted-foreground">{formatValue(day.tempMin, 'temperature')}°</span>
                       </div>
-                      {day.precipProbabilityMax !== null && (
-                        <p className="text-blue-600 dark:text-blue-400 font-[tabular-nums]">
-                          {t('percentPrecip', { pct: formatValue(day.precipProbabilityMax, 'percent') })}
-                        </p>
+
+                      {/* Weather description */}
+                      {day.weatherText && (
+                        <p className="text-xs text-muted-foreground text-center leading-tight">{day.weatherText}</p>
                       )}
+
+                      {/* Precipitation probability bar — only when > 0 */}
+                      {hasPrecip && (
+                        <PrecipBar
+                          pct={day.precipProbabilityMax!}
+                          ariaLabel={t('ariaPrecipBar', { pct: day.precipProbabilityMax! })}
+                        />
+                      )}
+
+                      {/* Wind speed — no windDir on DailyForecastPoint, show speed only */}
                       {day.windSpeedMax !== null && (
-                        <p className="text-muted-foreground font-[tabular-nums]">
+                        <p className="text-xs text-muted-foreground font-[tabular-nums]">
                           {t('windUpTo', { speed: formatValue(day.windSpeedMax, 'wind') })}
                         </p>
                       )}

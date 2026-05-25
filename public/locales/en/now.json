@@ -5,7 +5,6 @@
   "stationObservations": "Station Observations",
   "sunAndMoon": "Sun & Moon",
   "airQuality": "Air Quality",
-  "lightning": "Lightning",
   "recentEarthquake": "Recent Earthquake",
   "todaysForecast": "Today's Forecast",
   "temperatureTrend": "Temperature Trend",
@@ -119,6 +118,7 @@
   },
 
   "lightning": {
+    "title": "Lightning",
     "strikesLastHour": "{{count}} strikes in last hour",
     "strikesLast24h": "{{count}} in last 24h",
     "nearest": "Nearest: {{distance}} km",

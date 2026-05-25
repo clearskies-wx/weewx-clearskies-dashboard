@@ -13,5 +13,7 @@
   "updated": "Atualizado {{time}}",
   "ariaHourlyScroll": "Previsão horária — role para ver mais",
   "ariaHourlyList": "Previsão horária",
-  "ariaDayForecast": "Previsão para {{day}}"
+  "ariaDayForecast": "Previsão para {{day}}",
+  "ariaPrecipBar": "{{pct}}% de probabilidade de precipitação",
+  "ariaWindDir": "Vento de {{direction}}"
 }

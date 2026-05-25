@@ -13,5 +13,7 @@
   "updated": "Updated {{time}}",
   "ariaHourlyScroll": "Hourly forecast — scroll to see more",
   "ariaHourlyList": "Hourly forecast",
-  "ariaDayForecast": "{{day}} forecast"
+  "ariaDayForecast": "{{day}} forecast",
+  "ariaPrecipBar": "{{pct}}% chance of precipitation",
+  "ariaWindDir": "Wind from the {{direction}}"
 }

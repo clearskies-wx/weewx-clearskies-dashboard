@@ -18,5 +18,7 @@
   "configCardTitle": "Configuratie",
   "configRadius": "Straal",
   "configProvider": "Provider",
-  "configHelperText": "Configureer aardbevingsinstellingen in de Clear Skies configuratie-UI."
+  "configHelperText": "Configureer aardbevingsinstellingen in de Clear Skies configuratie-UI.",
+  "showMore": "Meer tonen",
+  "showMoreAriaLabel": "Meer aardbevingen tonen ({{showing}} van {{total}} worden getoond)"
 }

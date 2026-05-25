@@ -5,7 +5,6 @@
   "stationObservations": "Stationswaarnemingen",
   "sunAndMoon": "Zon & Maan",
   "airQuality": "Luchtkwaliteit",
-  "lightning": "Bliksem",
   "recentEarthquake": "Recente aardbeving",
   "todaysForecast": "Verwachting van vandaag",
   "temperatureTrend": "Temperatuurverloop",
@@ -115,6 +114,7 @@
   },
 
   "lightning": {
+    "title": "Bliksem",
     "strikesLastHour": "{{count}} inslagen in het afgelopen uur",
     "strikesLast24h": "{{count}} in de afgelopen 24 uur",
     "nearest": "Dichtstbij: {{distance}} km",

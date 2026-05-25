@@ -5,7 +5,6 @@
   "stationObservations": "Observações da Estação",
   "sunAndMoon": "Sol e Lua",
   "airQuality": "Qualidade do Ar",
-  "lightning": "Raios",
   "recentEarthquake": "Terremoto Recente",
   "todaysForecast": "Previsão de Hoje",
   "temperatureTrend": "Tendência da Temperatura",
@@ -115,6 +114,7 @@
   },
 
   "lightning": {
+    "title": "Raios",
     "strikesLastHour": "{{count}} raios na última hora",
     "strikesLast24h": "{{count}} nas últimas 24h",
     "nearest": "Mais próximo: {{distance}} km",

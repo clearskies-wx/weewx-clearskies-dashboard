@@ -18,5 +18,7 @@
   "configCardTitle": "設定",
   "configRadius": "範囲",
   "configProvider": "プロバイダー",
-  "configHelperText": "地震設定はClear Skies設定UIで行ってください。"
+  "configHelperText": "地震設定はClear Skies設定UIで行ってください。",
+  "showMore": "もっと見る",
+  "showMoreAriaLabel": "地震をさらに表示（{{total}}件中{{showing}}件を表示中）"
 }

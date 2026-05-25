@@ -13,5 +13,7 @@
   "updated": "Обновлено {{time}}",
   "ariaHourlyScroll": "Почасовой прогноз — прокрутите, чтобы увидеть больше",
   "ariaHourlyList": "Почасовой прогноз",
-  "ariaDayForecast": "Прогноз на {{day}}"
+  "ariaDayForecast": "Прогноз на {{day}}",
+  "ariaPrecipBar": "{{pct}}% вероятность осадков",
+  "ariaWindDir": "Ветер с {{direction}}"
 }
