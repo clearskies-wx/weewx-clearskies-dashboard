@@ -14,6 +14,17 @@ interface RadarMapProps {
 const ANIMATION_INTERVAL_MS = 750;
 const DEFAULT_PROVIDER_ID = 'rainviewer';
 
+// RainViewer tile defaults.
+// {size}    — tile size in pixels; 512 is the high-DPI option (also valid: 256).
+// {color}   — colour scheme index; 2 = "Original" (meteorological standard).
+// {options} — "<smooth>_<snow>"; 0_0 = no smoothing, no snow highlight.
+// These are display preferences that belong in the dashboard, not the API.
+// The CAPABILITY template keeps the placeholders generic; we resolve them here
+// so Leaflet never sees an unknown {variable} and throws.
+const RAINVIEWER_TILE_SIZE = 512;
+const RAINVIEWER_COLOR = 2;
+const RAINVIEWER_OPTIONS = '0_0';
+
 function buildTileUrl(
   frame: RadarFrame,
   capability: CapabilityDeclaration,
@@ -26,6 +37,12 @@ function buildTileUrl(
     if (tileHost) url = url.replace('{host}', tileHost);
     if (frame.path) url = url.replace('{path}', frame.path);
     url = url.replace('{time}', encodeURIComponent(frame.time));
+    // Resolve RainViewer-specific placeholders that Leaflet doesn't know about.
+    // Leaflet's getTileUrl throws "No value provided for variable {X}" for any
+    // {placeholder} it cannot expand from its built-in set ({x},{y},{z},{s},{r}).
+    url = url.replace('{size}', String(RAINVIEWER_TILE_SIZE));
+    url = url.replace('{color}', String(RAINVIEWER_COLOR));
+    url = url.replace('{options}', RAINVIEWER_OPTIONS);
     return url;
   }
 
