@@ -24,8 +24,8 @@ const DECIMALS: Record<string, number> = {
   default:         1,
 };
 
-export function formatValue(value: number | null, type: string): string {
-  if (value === null) return '--';
+export function formatValue(value: number | null | undefined, type: string): string {
+  if (value == null || typeof value !== 'number' || !isFinite(value)) return '--';
   const decimals = DECIMALS[type] ?? DECIMALS['default'];
   return value.toFixed(decimals);
 }
