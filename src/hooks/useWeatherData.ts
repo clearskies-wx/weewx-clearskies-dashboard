@@ -4,7 +4,7 @@
 
 import { useMemo } from 'react';
 import { useApiQuery } from './useApiQuery';
-import { isMockMode } from '../api/client';
+import { isMockMode, ApiError } from '../api/client';
 import {
   getCurrent,
   getArchive,
@@ -15,6 +15,8 @@ import {
   getAqiCurrent,
   getRecords,
   getStation,
+  getCapabilities,
+  getRadarFrames,
   getChartGroups,
   getReports,
   getReport,
@@ -25,6 +27,8 @@ import {
 import type { ArchiveParams, ApiBrandingConfig } from '../api/client';
 
 // Mock data
+import { mockCapabilities } from '../mock/station';
+import { mockRadarFrameList } from '../mock/radar';
 import { mockObservation, mockUnits } from '../mock/current';
 import { mockForecast } from '../mock/forecast';
 import { mockAlerts } from '../mock/alerts';
@@ -46,6 +50,8 @@ import type {
   RecordsBundle,
   StationMetadata,
   ArchiveRecord,
+  CapabilityRegistry,
+  RadarFrameList,
   ChartGroup,
   ReportEntry,
   NOAAReport,
@@ -329,8 +335,18 @@ export function useChartGroups(): HookResult<ChartGroup[]> {
 // ---------------------------------------------------------------------------
 
 export function useReports(): HookResult<ReportEntry[]> {
-  const { data, loading, error, refetch } = useApiQuery<{ data: { reports: ReportEntry[] } }>(
-    (signal) => getReports(signal),
+  const { data, loading, error, refetch } = useApiQuery<{ data: { reports: ReportEntry[] } } | null>(
+    async (signal) => {
+      try {
+        return await getReports(signal);
+      } catch (err) {
+        // 404 means reports_directory is not configured on the API — treat as empty list.
+        if (err instanceof ApiError && err.status === 404) {
+          return null;
+        }
+        throw err;
+      }
+    },
     { skip: isMockMode() },
   );
 
@@ -339,7 +355,8 @@ export function useReports(): HookResult<ReportEntry[]> {
   }
 
   return {
-    data: data?.data?.reports ?? null,
+    // null from the fetcher (404) becomes an empty array so the UI shows the empty-state message.
+    data: data === null && !loading && !error ? [] : (data?.data?.reports ?? null),
     loading,
     error,
     refetch,
@@ -478,6 +495,55 @@ export function useBrandingApi(): HookResult<ApiBrandingConfig> {
   return {
     data: data?.data ?? null,
     loading,
+    error,
+    refetch,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// useCapabilities — /capabilities
+// ---------------------------------------------------------------------------
+
+export function useCapabilities(): HookResult<CapabilityRegistry> {
+  const { data, loading, error, refetch } = useApiQuery<{ data: CapabilityRegistry }>(
+    (signal) => getCapabilities(signal),
+    { skip: isMockMode() },
+  );
+
+  if (isMockMode()) {
+    return mockResult<CapabilityRegistry>(mockCapabilities);
+  }
+
+  return {
+    data: data?.data ?? null,
+    loading,
+    error,
+    refetch,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// useRadarFrames — /radar/providers/{providerId}/frames
+// ---------------------------------------------------------------------------
+
+export function useRadarFrames(
+  providerId: string | null,
+): HookResult<RadarFrameList> {
+  // Skip when no provider is known — avoids a spurious call with the fallback id.
+  const skip = isMockMode() || providerId === null;
+
+  const { data, loading, error, refetch } = useApiQuery<{ data: RadarFrameList; generatedAt: string }>(
+    (signal) => getRadarFrames(providerId as string, signal),
+    { skip, deps: [providerId] },
+  );
+
+  if (isMockMode()) {
+    return mockResult<RadarFrameList>(mockRadarFrameList);
+  }
+
+  return {
+    data: data?.data ?? null,
+    loading: providerId === null ? false : loading,
     error,
     refetch,
   };

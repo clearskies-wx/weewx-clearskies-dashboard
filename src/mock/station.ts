@@ -38,6 +38,27 @@ export const mockCapabilities: CapabilityRegistry = {
       tileContentType: null,
       iframeUrl: null,
     },
+    {
+      // RainViewer — keyless, direct browser fetch.
+      // Template placeholders resolved by buildTileUrl() in radar-map.tsx:
+      //   {host}    — per-fetch tile server host from RadarFrameList.tileHost
+      //   {path}    — per-frame tile path from RadarFrame.path
+      //   {size}    — 512 (high-DPI)
+      //   {color}   — 2 ("Original" meteorological palette)
+      //   {options} — 0_0 (no smoothing, no snow highlight)
+      //   {z}/{x}/{y} — Leaflet slippy-map tile coordinates
+      providerId: 'rainviewer',
+      domain: 'radar',
+      suppliedCanonicalFields: [],
+      geographicCoverage: 'global',
+      defaultPollIntervalSeconds: 300,
+      operatorNotes: null,
+      tileUrlTemplate: '{host}{path}/{size}/{color}/{options}/{z}/{x}/{y}/1/1.png',
+      wmsEndpointUrl: null,
+      wmsLayerName: null,
+      tileContentType: 'image/png',
+      iframeUrl: null,
+    },
   ],
   weewxColumns: [
     { canonicalField: 'outTemp', archiveColumn: 'outTemp' },

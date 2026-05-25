@@ -2,8 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import { Play, Pause, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useApiQuery } from '../../hooks/useApiQuery';
-import { getCapabilities, getRadarFrames } from '../../api/client';
+import { useCapabilities, useRadarFrames } from '../../hooks/useWeatherData';
 import type { CapabilityDeclaration, RadarFrame } from '../../api/types';
 
 interface RadarMapProps {
@@ -12,7 +11,6 @@ interface RadarMapProps {
 }
 
 const ANIMATION_INTERVAL_MS = 750;
-const DEFAULT_PROVIDER_ID = 'rainviewer';
 
 // RainViewer tile defaults.
 // {size}    — tile size in pixels; 512 is the high-DPI option (also valid: 256).
@@ -66,24 +64,24 @@ export function RadarMap({ center, zoom = 7 }: RadarMapProps) {
   const { t } = useTranslation('radar');
 
   // --- Capabilities fetch to discover radar provider ---
-  const { data: capabilitiesEnvelope, loading: capLoading } = useApiQuery(
-    (signal) => getCapabilities(signal),
-  );
+  const { data: capabilities, loading: capLoading, error: capError } = useCapabilities();
 
   const radarCapability: CapabilityDeclaration | null =
-    capabilitiesEnvelope?.data?.providers.find((p) => p.domain === 'radar') ?? null;
+    capabilities?.providers.find((p) => p.domain === 'radar') ?? null;
 
-  const providerId = radarCapability?.providerId ?? DEFAULT_PROVIDER_ID;
+  // Only pass a providerId to useRadarFrames once capabilities have loaded and a
+  // radar provider is confirmed. Passing null causes the hook to skip the fetch,
+  // which prevents a spurious call (using the fallback DEFAULT_PROVIDER_ID) that
+  // would 404/503 and trigger the error overlay instead of the "no provider" UI.
+  const providerId: string | null =
+    !capLoading && !capError && radarCapability !== null
+      ? radarCapability.providerId
+      : null;
 
-  // --- Frames fetch ---
-  const skipFrames = capLoading;
-  const { data: framesEnvelope, loading: framesLoading, error: framesError } = useApiQuery(
-    (signal) => getRadarFrames(providerId, signal),
-    { skip: skipFrames, deps: [providerId] },
-  );
+  const { data: radarFrameList, loading: framesLoading, error: framesError } = useRadarFrames(providerId);
 
-  const frames: RadarFrame[] = framesEnvelope?.data?.frames ?? [];
-  const tileHost = framesEnvelope?.data?.tileHost ?? null;
+  const frames: RadarFrame[] = radarFrameList?.frames ?? [];
+  const tileHost = radarFrameList?.tileHost ?? null;
 
   // --- Animation state ---
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -185,7 +183,7 @@ export function RadarMap({ center, zoom = 7 }: RadarMapProps) {
           </div>
         )}
 
-        {!isLoading && framesError && (
+        {!isLoading && (capError || framesError) && (
           <div
             className="absolute inset-0 z-10 flex items-center justify-center bg-muted rounded-lg"
             role="alert"
@@ -194,7 +192,7 @@ export function RadarMap({ center, zoom = 7 }: RadarMapProps) {
           </div>
         )}
 
-        {!isLoading && !framesError && !capLoading && !radarCapability && (
+        {!isLoading && !capError && !framesError && !radarCapability && (
           <div
             className="absolute inset-0 z-10 flex items-center justify-center bg-muted rounded-lg"
             role="status"
@@ -233,7 +231,7 @@ export function RadarMap({ center, zoom = 7 }: RadarMapProps) {
               key={currentTileUrl}
               url={currentTileUrl}
               opacity={0.7}
-              attribution={framesEnvelope?.data?.attribution ?? undefined}
+              attribution={radarFrameList?.attribution ?? undefined}
             />
           )}
         </MapContainer>
