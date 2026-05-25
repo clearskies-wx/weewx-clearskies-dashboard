@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useStation } from '../../hooks/useWeatherData';
+import poweredBlue from '../../assets/clearskies-powered-blue.svg';
+import poweredLight from '../../assets/clearskies-powered-light.svg';
 
 export function Footer() {
   const { data: station } = useStation();
@@ -23,7 +25,21 @@ export function Footer() {
         <span aria-hidden="true">·</span>
         <span>© {new Date().getFullYear()} {station?.name ?? 'Clear Skies Weather'}</span>
         <span aria-hidden="true">·</span>
-        <span>{t('footer.poweredBy')}</span>
+        {/* Blue logo for light mode; light-blue logo for dark mode.
+            Only the visible image is in the a11y tree (display:none removes it).
+            dark: variant maps to [data-theme="dark"] per index.css @custom-variant. */}
+        <img
+          src={poweredBlue}
+          alt="Powered by Clear Skies"
+          height={22}
+          className="h-[22px] w-auto dark:hidden"
+        />
+        <img
+          src={poweredLight}
+          alt="Powered by Clear Skies"
+          height={22}
+          className="h-[22px] w-auto hidden dark:inline"
+        />
       </div>
     </footer>
   );

@@ -8,6 +8,7 @@ import {
   CardContent,
 } from '../components/ui/card';
 import { useAlmanac, useStation } from '../hooks/useWeatherData';
+import { formatValue } from '../utils/format';
 
 // Format UTC ISO time to local time display: "5:55 AM"
 function formatLocalTime(isoString: string | null, tz: string, locale: string): string {
@@ -198,7 +199,7 @@ export function AlmanacPage() {
                 <div>
                   <dt className="text-muted-foreground">{t('moon.illumination')}</dt>
                   <dd className="font-medium text-foreground mt-0.5" style={{ fontFeatureSettings: '"tnum"' }}>
-                    {almanac.moon.illuminationPercent}%
+                    {formatValue(almanac.moon.illuminationPercent, 'percent')}%
                   </dd>
                 </div>
                 <div>
@@ -242,25 +243,25 @@ export function AlmanacPage() {
                 <div>
                   <dt className="text-muted-foreground">{t('positional.sunAzimuth')}</dt>
                   <dd className="font-medium text-muted-foreground mt-0.5">
-                    {almanac.sun.azimuth !== null ? `${almanac.sun.azimuth}°` : '—'}
+                    {almanac.sun.azimuth !== null ? `${formatValue(almanac.sun.azimuth, 'degrees')}°` : '—'}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">{t('positional.sunAltitude')}</dt>
                   <dd className="font-medium text-muted-foreground mt-0.5">
-                    {almanac.sun.altitude !== null ? `${almanac.sun.altitude}°` : '—'}
+                    {almanac.sun.altitude !== null ? `${formatValue(almanac.sun.altitude, 'degrees')}°` : '—'}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">{t('positional.moonAzimuth')}</dt>
                   <dd className="font-medium text-muted-foreground mt-0.5">
-                    {almanac.moon.azimuth !== null ? `${almanac.moon.azimuth}°` : '—'}
+                    {almanac.moon.azimuth !== null ? `${formatValue(almanac.moon.azimuth, 'degrees')}°` : '—'}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">{t('positional.moonAltitude')}</dt>
                   <dd className="font-medium text-muted-foreground mt-0.5">
-                    {almanac.moon.altitude !== null ? `${almanac.moon.altitude}°` : '—'}
+                    {almanac.moon.altitude !== null ? `${formatValue(almanac.moon.altitude, 'degrees')}°` : '—'}
                   </dd>
                 </div>
               </dl>

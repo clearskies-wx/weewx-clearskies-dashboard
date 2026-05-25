@@ -7,6 +7,7 @@ import {
   CardContent,
 } from '../components/ui/card';
 import { useForecast, useAlerts, useStation } from '../hooks/useWeatherData';
+import { formatValue } from '../utils/format';
 
 
 function formatHour(isoString: string, timeZone: string, locale: string): string {
@@ -119,11 +120,11 @@ export function ForecastPage() {
                     <span
                       className="text-sm font-semibold text-foreground font-[tabular-nums]"
                     >
-                      {hour.outTemp}°
+                      {formatValue(hour.outTemp, 'temperature')}°
                     </span>
                     {hour.precipProbability !== null && hour.precipProbability > 0 && (
                       <span className="text-xs text-blue-600 dark:text-blue-400 font-[tabular-nums]">
-                        {hour.precipProbability}%
+                        {formatValue(hour.precipProbability, 'percent')}%
                       </span>
                     )}
                   </div>
@@ -177,18 +178,18 @@ export function ForecastPage() {
                         <span className="text-muted-foreground leading-tight">{day.weatherText}</span>
                       </div>
                       <div className="flex gap-1 font-[tabular-nums]">
-                        <span className="font-semibold text-foreground">{day.tempMax}°</span>
+                        <span className="font-semibold text-foreground">{formatValue(day.tempMax, 'temperature')}°</span>
                         <span className="text-muted-foreground">/</span>
-                        <span className="text-muted-foreground">{day.tempMin}°</span>
+                        <span className="text-muted-foreground">{formatValue(day.tempMin, 'temperature')}°</span>
                       </div>
                       {day.precipProbabilityMax !== null && (
                         <p className="text-blue-600 dark:text-blue-400 font-[tabular-nums]">
-                          {t('percentPrecip', { pct: day.precipProbabilityMax })}
+                          {t('percentPrecip', { pct: formatValue(day.precipProbabilityMax, 'percent') })}
                         </p>
                       )}
                       {day.windSpeedMax !== null && (
                         <p className="text-muted-foreground font-[tabular-nums]">
-                          {t('windUpTo', { speed: day.windSpeedMax })}
+                          {t('windUpTo', { speed: formatValue(day.windSpeedMax, 'wind') })}
                         </p>
                       )}
                     </CardContent>

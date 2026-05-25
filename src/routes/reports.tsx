@@ -18,6 +18,7 @@ import { useReports, useReport, useYearlyReport } from '../hooks/useWeatherData'
 import { parseMonthlyReport, parseYearlyReport } from '../lib/noaa-parser';
 import type { MonthlyRow, YearlyTable } from '../lib/noaa-parser';
 import { cn } from '../lib/utils';
+import { formatValue } from '../utils/format';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -99,6 +100,7 @@ const MONTHLY_COLUMNS: ColumnMeta[] = [
   { labelKey: 'highWindTime',  accessor: 'highWindTime',  numeric: false },
   { labelKey: 'domWindDir',    accessor: 'domWindDir',    numeric: true  },
 ];
+
 
 // ---------------------------------------------------------------------------
 // SortableHeader — <th> with embedded <button> for sort
@@ -257,18 +259,18 @@ function MonthlyReportTable({
                   <td scope="row" className="px-2 py-1.5 font-medium tabular-nums">
                     {row.day ?? '—'}
                   </td>
-                  <td className="px-2 py-1.5 tabular-nums">{row.meanTemp ?? '—'}</td>
-                  <td className="px-2 py-1.5 tabular-nums">{row.highTemp ?? '—'}</td>
+                  <td className="px-2 py-1.5 tabular-nums">{row.meanTemp !== null ? formatValue(row.meanTemp, 'temperature') : '—'}</td>
+                  <td className="px-2 py-1.5 tabular-nums">{row.highTemp !== null ? formatValue(row.highTemp, 'temperature') : '—'}</td>
                   <td className="px-2 py-1.5">{row.highTempTime || '—'}</td>
-                  <td className="px-2 py-1.5 tabular-nums">{row.lowTemp ?? '—'}</td>
+                  <td className="px-2 py-1.5 tabular-nums">{row.lowTemp !== null ? formatValue(row.lowTemp, 'temperature') : '—'}</td>
                   <td className="px-2 py-1.5">{row.lowTempTime || '—'}</td>
-                  <td className="px-2 py-1.5 tabular-nums">{row.heatDegDays ?? '—'}</td>
-                  <td className="px-2 py-1.5 tabular-nums">{row.coolDegDays ?? '—'}</td>
-                  <td className="px-2 py-1.5 tabular-nums">{row.rain ?? '—'}</td>
-                  <td className="px-2 py-1.5 tabular-nums">{row.avgWindSpeed ?? '—'}</td>
-                  <td className="px-2 py-1.5 tabular-nums">{row.highWindSpeed ?? '—'}</td>
+                  <td className="px-2 py-1.5 tabular-nums">{row.heatDegDays !== null ? formatValue(row.heatDegDays, 'default') : '—'}</td>
+                  <td className="px-2 py-1.5 tabular-nums">{row.coolDegDays !== null ? formatValue(row.coolDegDays, 'default') : '—'}</td>
+                  <td className="px-2 py-1.5 tabular-nums">{row.rain !== null ? formatValue(row.rain, 'rain') : '—'}</td>
+                  <td className="px-2 py-1.5 tabular-nums">{row.avgWindSpeed !== null ? formatValue(row.avgWindSpeed, 'wind') : '—'}</td>
+                  <td className="px-2 py-1.5 tabular-nums">{row.highWindSpeed !== null ? formatValue(row.highWindSpeed, 'wind') : '—'}</td>
                   <td className="px-2 py-1.5">{row.highWindTime || '—'}</td>
-                  <td className="px-2 py-1.5 tabular-nums">{row.domWindDir ?? '—'}</td>
+                  <td className="px-2 py-1.5 tabular-nums">{row.domWindDir !== null ? formatValue(row.domWindDir, 'degrees') : '—'}</td>
                 </tr>
               );
             })}
@@ -279,18 +281,18 @@ function MonthlyReportTable({
                 <td scope="row" className="px-2 py-1.5">
                   {t('summary')}
                 </td>
-                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.meanTemp ?? '—'}</td>
-                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.highTemp ?? '—'}</td>
+                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.meanTemp !== null ? formatValue(parsed.summary.meanTemp, 'temperature') : '—'}</td>
+                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.highTemp !== null ? formatValue(parsed.summary.highTemp, 'temperature') : '—'}</td>
                 <td className="px-2 py-1.5">{parsed.summary.highTempTime || '—'}</td>
-                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.lowTemp ?? '—'}</td>
+                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.lowTemp !== null ? formatValue(parsed.summary.lowTemp, 'temperature') : '—'}</td>
                 <td className="px-2 py-1.5">{parsed.summary.lowTempTime || '—'}</td>
-                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.heatDegDays ?? '—'}</td>
-                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.coolDegDays ?? '—'}</td>
-                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.rain ?? '—'}</td>
-                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.avgWindSpeed ?? '—'}</td>
-                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.highWindSpeed ?? '—'}</td>
+                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.heatDegDays !== null ? formatValue(parsed.summary.heatDegDays, 'default') : '—'}</td>
+                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.coolDegDays !== null ? formatValue(parsed.summary.coolDegDays, 'default') : '—'}</td>
+                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.rain !== null ? formatValue(parsed.summary.rain, 'rain') : '—'}</td>
+                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.avgWindSpeed !== null ? formatValue(parsed.summary.avgWindSpeed, 'wind') : '—'}</td>
+                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.highWindSpeed !== null ? formatValue(parsed.summary.highWindSpeed, 'wind') : '—'}</td>
                 <td className="px-2 py-1.5">{parsed.summary.highWindTime || '—'}</td>
-                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.domWindDir ?? '—'}</td>
+                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.domWindDir !== null ? formatValue(parsed.summary.domWindDir, 'degrees') : '—'}</td>
               </tr>
             )}
           </tbody>
@@ -383,13 +385,16 @@ function YearlySubTable({
             >
               {Array.from({ length: colCount }).map((_, colIdx) => {
                 const cell = row[colIdx] ?? null;
+                const display = typeof cell === 'number'
+                  ? formatValue(cell, 'default')
+                  : (cell ?? '—');
                 return colIdx === 0 ? (
                   <td key={colIdx} scope="row" className="px-2 py-1.5 font-medium tabular-nums">
-                    {cell ?? '—'}
+                    {display}
                   </td>
                 ) : (
                   <td key={colIdx} className="px-2 py-1.5 tabular-nums">
-                    {cell ?? '—'}
+                    {display}
                   </td>
                 );
               })}
@@ -404,9 +409,12 @@ function YearlySubTable({
               </td>
               {Array.from({ length: colCount - 1 }).map((_, colIdx) => {
                 const cell = table.summary![colIdx + 1] ?? null;
+                const display = typeof cell === 'number'
+                  ? formatValue(cell, 'default')
+                  : (cell ?? '—');
                 return (
                   <td key={colIdx + 1} className="px-2 py-1.5 tabular-nums">
-                    {cell ?? '—'}
+                    {display}
                   </td>
                 );
               })}

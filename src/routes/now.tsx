@@ -7,7 +7,6 @@ import { AlertBanner } from '../components/shared/alert-banner';
 import { CurrentConditionsCard } from '../components/current-conditions-card';
 import { SolarUvCard } from '../components/solar-uv-card';
 import { PrecipitationBarometerCard } from '../components/precipitation-barometer-card';
-import { barometerTrendArrow } from '../utils/barometer';
 import { RadarMap } from '../components/shared/radar-map';
 import {
   Card,
@@ -109,15 +108,6 @@ function formatRelativeTime(iso: string, locale: string): string {
   if (Math.abs(diffMin) < 60) return rtf.format(diffMin, 'minute');
   if (Math.abs(diffHr) < 24) return rtf.format(diffHr, 'hour');
   return rtf.format(diffDay, 'day');
-}
-
-// barometerTrendArrow is imported from precipitation-barometer-card.tsx.
-
-function barometerTrendLabel(trend: number | null, t: TFunction): string {
-  if (trend === null) return t('barometer.trend.steady');
-  if (trend > 0.01) return t('barometer.trend.rising');
-  if (trend < -0.01) return t('barometer.trend.falling');
-  return t('barometer.trend.steady');
 }
 
 function WindCompass({
@@ -327,10 +317,20 @@ export function NowPage() {
 
       {!alertLoading && alerts && <AlertBanner alerts={alerts} />}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-12">
+      {/*
+        Grid layout — mobile-first single column, two equal columns on md+.
+        Row 1: Current Conditions + Today's Forecast (above the fold on desktop).
+        Row 2: Today's Highlights (full-width — summarises the day at a glance).
+        Row 3: Wind + Solar/UV
+        Row 4: Precipitation/Barometer + AQI
+        Row 5: Sun & Moon + Lightning
+        Row 6: Recent Earthquake + Temperature Trend
+        Row 7: Radar Map (full-width)
+      */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 
-        {/* Current Conditions Card — lg: 8-col primary, full-width on mobile */}
-        <div className="md:col-span-2 lg:col-span-8">
+        {/* Row 1 — Current Conditions */}
+        <div>
           <CurrentConditionsCard
             observation={observation}
             stationName={station?.name ?? ''}
@@ -342,8 +342,40 @@ export function NowPage() {
           />
         </div>
 
-        {/* Today's Highlights — lg: 4-col sidebar */}
-        <Card className="md:col-span-2 lg:col-span-4">
+        {/* Row 1 — Today's Forecast */}
+        <Card aria-busy={fcLoading}>
+          <CardHeader>
+            <h2 className="font-heading text-base leading-snug font-medium">{t('todaysForecast')}</h2>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2 text-sm">
+            {fcLoading ? (
+              <>
+                <span className="sr-only" role="status">{t('loading.forecast')}</span>
+                <TileSkeleton className="h-16" />
+              </>
+            ) : fcError ? (
+              <TileError message={t('error.forecast')} onRetry={fcRefetch} />
+            ) : todayForecast ? (
+              <>
+                <p className="text-foreground font-medium">{todayForecast.weatherText}</p>
+                <p className="text-muted-foreground font-[tabular-nums]">
+                  {t('forecast.hiLo', { high: formatValue(todayForecast.tempMax, 'temperature'), low: formatValue(todayForecast.tempMin, 'temperature') })}
+                </p>
+                {todayForecast.precipProbabilityMax !== null && (
+                  <p className="text-muted-foreground">{t('forecast.precipChance', { percent: formatValue(todayForecast.precipProbabilityMax, 'percent') })}</p>
+                )}
+                {todayForecast.narrative && (
+                  <p className="text-muted-foreground leading-relaxed">{todayForecast.narrative}</p>
+                )}
+              </>
+            ) : (
+              <p className="text-muted-foreground">{t('noData.forecast')}</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Row 2 — Today's Highlights (full-width) */}
+        <Card className="md:col-span-2">
           <CardHeader>
             <h2 className="font-heading text-base leading-snug font-medium">{t('todaysHighlights')}</h2>
           </CardHeader>
@@ -354,7 +386,7 @@ export function NowPage() {
                 <TileSkeleton className="h-24" />
               </>
             ) : todayStats ? (
-              <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm md:grid-cols-4 lg:grid-cols-2">
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-4">
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.todaysHigh')}</dt>
                   <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">{todayStats.high !== null ? `${formatValue(todayStats.high, 'temperature')}°F` : '—'}</dd>
@@ -393,8 +425,8 @@ export function NowPage() {
           </CardContent>
         </Card>
 
-        {/* Wind Tile — lg: 4 cols */}
-        <Card className="lg:col-span-4" aria-busy={obsLoading}>
+        {/* Row 3 — Wind */}
+        <Card aria-busy={obsLoading}>
           <CardHeader>
             <h2 className="font-heading text-base leading-snug font-medium">{t('wind')}</h2>
           </CardHeader>
@@ -414,89 +446,50 @@ export function NowPage() {
           </CardContent>
         </Card>
 
-        {/* Solar / UV Tile — lg: 4 cols */}
+        {/* Row 3 — Solar / UV */}
         <SolarUvCard
-          className="lg:col-span-4"
           observation={observation}
           loading={obsLoading}
           error={obsError}
           onRetry={obsRefetch}
         />
 
-        {/* Precipitation / Barometer Tile — lg: 4 cols */}
+        {/* Row 4 — Precipitation / Barometer */}
         <PrecipitationBarometerCard
-          className="lg:col-span-4"
           observation={observation}
           loading={obsLoading}
           error={obsError}
           onRetry={obsRefetch}
         />
 
-        {/* Station Observations — lg: 8 cols */}
-        <Card className="md:col-span-2 lg:col-span-8" aria-busy={obsLoading}>
+        {/* Row 4 — AQI */}
+        <Card aria-busy={aqiLoading}>
           <CardHeader>
-            <h2 className="font-heading text-base leading-snug font-medium">{t('stationObservations')}</h2>
+            <h2 className="font-heading text-base leading-snug font-medium">{t('airQuality')}</h2>
           </CardHeader>
           <CardContent>
-            {obsLoading ? (
+            {aqiLoading ? (
               <>
-                <span className="sr-only" role="status">{t('loading.stationObservations')}</span>
+                <span className="sr-only" role="status">{t('loading.airQuality')}</span>
                 <TileSkeleton className="h-24" />
               </>
-            ) : obsError ? (
-              <TileError message={t('error.stationObservations')} onRetry={obsRefetch} />
-            ) : observation ? (
-              <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm md:grid-cols-4">
-                <div>
-                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('observations.barometer')}</dt>
-                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">
-                    {observation.barometer !== null ? `${formatValue(observation.barometer, 'barometer')} inHg` : 'N/A'}
-                    <span role="img" className="ml-1 text-muted-foreground" aria-label={t('barometer.trendAriaLabel', { trend: barometerTrendLabel(observation.barometerTrend, t) })}>
-                      {barometerTrendArrow(observation.barometerTrend)}
-                    </span>
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('observations.dewpoint')}</dt>
-                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.dewpoint !== null ? `${formatValue(observation.dewpoint, 'temperature')}°F` : 'N/A'}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('observations.humidity')}</dt>
-                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.outHumidity !== null ? `${formatValue(observation.outHumidity, 'humidity')}%` : 'N/A'}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('observations.rain')}</dt>
-                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.rain !== null ? `${formatValue(observation.rain, 'rain')} in` : 'N/A'}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('observations.heatIndex')}</dt>
-                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">
-                    {observation.heatindex !== null ? `${formatValue(observation.heatindex, 'temperature')}°F` : 'N/A'}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('observations.windChill')}</dt>
-                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">
-                    {observation.windchill !== null ? `${formatValue(observation.windchill, 'temperature')}°F` : 'N/A'}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('observations.solarRadiation')}</dt>
-                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.radiation !== null ? `${formatValue(observation.radiation, 'solar')} W/m²` : 'N/A'}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('observations.uvIndex')}</dt>
-                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.UV !== null ? formatValue(observation.UV, 'uv') : 'N/A'}</dd>
-                </div>
-              </dl>
+            ) : aqiError ? (
+              <TileError message={t('error.airQuality')} onRetry={aqiRefetch} />
+            ) : aqi ? (
+              <AqiGauge
+                aqi={aqi.aqi ?? 0}
+                category={aqi.aqiCategory}
+                pollutant={aqi.aqiMainPollutant}
+                t={t}
+              />
             ) : (
-              <p className="text-muted-foreground text-sm">{t('noData.observation')}</p>
+              <p className="text-sm text-muted-foreground">{t('noData.airQuality')}</p>
             )}
           </CardContent>
         </Card>
 
-        {/* Sun & Moon — lg: 4 cols */}
-        <Card className="lg:col-span-4" aria-busy={almLoading}>
+        {/* Row 5 — Sun & Moon */}
+        <Card aria-busy={almLoading}>
           <CardHeader>
             <h2 className="font-heading text-base leading-snug font-medium">{t('sunAndMoon')}</h2>
           </CardHeader>
@@ -535,34 +528,8 @@ export function NowPage() {
           </CardContent>
         </Card>
 
-        {/* AQI Tile — lg: 4 cols */}
-        <Card className="lg:col-span-4" aria-busy={aqiLoading}>
-          <CardHeader>
-            <h2 className="font-heading text-base leading-snug font-medium">{t('airQuality')}</h2>
-          </CardHeader>
-          <CardContent>
-            {aqiLoading ? (
-              <>
-                <span className="sr-only" role="status">{t('loading.airQuality')}</span>
-                <TileSkeleton className="h-24" />
-              </>
-            ) : aqiError ? (
-              <TileError message={t('error.airQuality')} onRetry={aqiRefetch} />
-            ) : aqi ? (
-              <AqiGauge
-                aqi={aqi.aqi ?? 0}
-                category={aqi.aqiCategory}
-                pollutant={aqi.aqiMainPollutant}
-                t={t}
-              />
-            ) : (
-              <p className="text-sm text-muted-foreground">{t('noData.airQuality')}</p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Lightning Tile — lg: 4 cols */}
-        <Card className="lg:col-span-4">
+        {/* Row 5 — Lightning */}
+        <Card>
           <CardHeader>
             <h2 className="font-heading text-base leading-snug font-medium">{t('lightning')}</h2>
           </CardHeader>
@@ -588,8 +555,8 @@ export function NowPage() {
           </CardContent>
         </Card>
 
-        {/* Earthquake Tile — lg: 4 cols */}
-        <Card className="lg:col-span-4" aria-busy={eqLoading}>
+        {/* Row 6 — Recent Earthquake */}
+        <Card aria-busy={eqLoading}>
           <CardHeader>
             <h2 className="font-heading text-base leading-snug font-medium">{t('recentEarthquake')}</h2>
           </CardHeader>
@@ -620,40 +587,8 @@ export function NowPage() {
           </CardContent>
         </Card>
 
-        {/* Today's Forecast Card — lg: 6 cols */}
-        <Card className="md:col-span-2 lg:col-span-6" aria-busy={fcLoading}>
-          <CardHeader>
-            <h2 className="font-heading text-base leading-snug font-medium">{t('todaysForecast')}</h2>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2 text-sm">
-            {fcLoading ? (
-              <>
-                <span className="sr-only" role="status">{t('loading.forecast')}</span>
-                <TileSkeleton className="h-16" />
-              </>
-            ) : fcError ? (
-              <TileError message={t('error.forecast')} onRetry={fcRefetch} />
-            ) : todayForecast ? (
-              <>
-                <p className="text-foreground font-medium">{todayForecast.weatherText}</p>
-                <p className="text-muted-foreground font-[tabular-nums]">
-                  {t('forecast.hiLo', { high: formatValue(todayForecast.tempMax, 'temperature'), low: formatValue(todayForecast.tempMin, 'temperature') })}
-                </p>
-                {todayForecast.precipProbabilityMax !== null && (
-                  <p className="text-muted-foreground">{t('forecast.precipChance', { percent: formatValue(todayForecast.precipProbabilityMax, 'percent') })}</p>
-                )}
-                {todayForecast.narrative && (
-                  <p className="text-muted-foreground leading-relaxed">{todayForecast.narrative}</p>
-                )}
-              </>
-            ) : (
-              <p className="text-muted-foreground">{t('noData.forecast')}</p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Chart Panel — placeholder, NO Recharts import */}
-        <Card className="md:col-span-2 lg:col-span-6">
+        {/* Row 6 — Temperature Trend (placeholder, NO Recharts import) */}
+        <Card>
           <CardHeader>
             <h2 className="font-heading text-base leading-snug font-medium">{t('temperatureTrend')}</h2>
           </CardHeader>
@@ -688,8 +623,8 @@ export function NowPage() {
           </CardContent>
         </Card>
 
-        {/* Radar Card — ADR-015 / ADR-024 */}
-        <Card className="md:col-span-2 lg:col-span-12">
+        {/* Row 7 — Radar Map (full-width) — ADR-015 / ADR-024 */}
+        <Card className="md:col-span-2">
           <CardHeader>
             <h2 className="font-heading text-base leading-snug font-medium">{tRadar('radarTitle')}</h2>
           </CardHeader>

@@ -10,6 +10,24 @@ import {
   CardContent,
 } from '../components/ui/card';
 import { useRecords } from '../hooks/useWeatherData';
+import { formatValue } from '../utils/format';
+
+/**
+ * Map a canonical field name to the appropriate formatValue type.
+ * Canonical fields come from the OpenAPI contract; unknown fields fall back to 'default' (1dp).
+ */
+function canonicalFieldToType(field: string): string {
+  if (/[Tt]emp|dewpoint|windchill|heatindex|appTemp/.test(field)) return 'temperature';
+  if (/[Bb]arometer|pressure|altimeter/.test(field)) return 'barometer';
+  if (/[Ww]ind[Ss]peed|[Ww]ind[Gg]ust|avgWind|highWind/.test(field)) return 'wind';
+  if (/[Ww]ind[Dd]ir|[Dd]om[Ww]ind/.test(field)) return 'degrees';
+  if (/[Hh]umidity/.test(field)) return 'humidity';
+  if (/rainRate/.test(field)) return 'rainRate';
+  if (/rain|Rain|precip|Precip/.test(field)) return 'rain';
+  if (/[Uu][Vv]/.test(field)) return 'uv';
+  if (/radiation|[Ss]olar/.test(field)) return 'solar';
+  return 'default';
+}
 
 function formatDate(isoString: string | null, locale: string): string {
   if (!isoString) return '—';
@@ -156,7 +174,7 @@ export function RecordsPage() {
                             style={{ fontFeatureSettings: '"tnum"' }}
                           >
                             {entry.value !== null
-                              ? `${entry.value} ${units?.[entry.canonicalField] ?? ''}`
+                              ? `${formatValue(entry.value, canonicalFieldToType(entry.canonicalField))} ${units?.[entry.canonicalField] ?? ''}`
                               : '—'}
                           </td>
                           <td className="py-2.5 text-right text-muted-foreground">

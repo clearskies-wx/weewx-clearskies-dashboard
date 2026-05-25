@@ -8,6 +8,7 @@ import {
 } from '../components/ui/card';
 import type { EarthquakeRecord } from '../api/types';
 import { useEarthquakes, useStation } from '../hooks/useWeatherData';
+import { formatValue } from '../utils/format';
 
 function formatTime(isoString: string, timeZone: string, locale: string): string {
   return new Intl.DateTimeFormat(locale, {
@@ -122,14 +123,14 @@ export function EarthquakesPage() {
                       <div className="flex items-start gap-4">
                         <div
                           className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg ${bg}`}
-                          aria-label={t('ariaMagnitude', { mag: quake.magnitude })}
+                          aria-label={t('ariaMagnitude', { mag: formatValue(quake.magnitude, 'earthquakeMag') })}
                         >
                           <span className={`text-xs leading-none ${text}`}>M</span>
                           <span
                             className={`text-2xl font-bold leading-none mt-0.5 ${text}`}
                             style={{ fontFeatureSettings: '"tnum"' }}
                           >
-                            {quake.magnitude}
+                            {formatValue(quake.magnitude, 'earthquakeMag')}
                           </span>
                         </div>
 
@@ -147,7 +148,7 @@ export function EarthquakesPage() {
                           </p>
                           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1">
                             {quake.depth !== null && (
-                              <span>{t('depth', { depth: quake.depth })}</span>
+                              <span>{t('depth', { depth: formatValue(quake.depth, 'earthquakeDepth') })}</span>
                             )}
                             <span>{t('source', { source: quake.source.toUpperCase() })}</span>
                           </div>
@@ -161,7 +162,7 @@ export function EarthquakesPage() {
                             )}
                             {quake.mmi !== null && (
                               <span className="text-muted-foreground" style={{ fontFeatureSettings: '"tnum"' }}>
-                                {t('mmi', { mmi: quake.mmi.toFixed(1) })}
+                                {t('mmi', { mmi: formatValue(quake.mmi, 'earthquakeMag') })}
                               </span>
                             )}
                             {quake.tsunami && (
@@ -228,8 +229,8 @@ export function EarthquakesPage() {
                   <Popup>
                     <div>
                       <strong>{eq.place ?? t('unknownLocation')}</strong><br />
-                      {t('magnitude')}: {eq.magnitude}{eq.magnitudeType ? ` ${eq.magnitudeType}` : ''}<br />
-                      {eq.depth !== null ? <>{t('depthLabel')}: {eq.depth} km<br /></> : null}
+                      {t('magnitude')}: {formatValue(eq.magnitude, 'earthquakeMag')}{eq.magnitudeType ? ` ${eq.magnitudeType}` : ''}<br />
+                      {eq.depth !== null ? <>{t('depthLabel')}: {formatValue(eq.depth, 'earthquakeDepth')} km<br /></> : null}
                       {eq.alert !== null ? <>{t('pager', { level: eq.alert })}<br /></> : null}
                       {new Date(eq.time).toLocaleString(locale)}
                     </div>
