@@ -1,9 +1,13 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Sunrise, Sunset, Moon, Zap, Activity } from 'lucide-react';
+import { formatValue } from '../utils/format';
 import type { TFunction } from 'i18next';
 import { AlertBanner } from '../components/shared/alert-banner';
-import { HeroSection } from '../components/hero-section';
+import { CurrentConditionsCard } from '../components/current-conditions-card';
+import { SolarUvCard } from '../components/solar-uv-card';
+import { PrecipitationBarometerCard } from '../components/precipitation-barometer-card';
+import { barometerTrendArrow } from '../utils/barometer';
 import { RadarMap } from '../components/shared/radar-map';
 import {
   Card,
@@ -107,12 +111,7 @@ function formatRelativeTime(iso: string, locale: string): string {
   return rtf.format(diffDay, 'day');
 }
 
-function barometerTrendArrow(trend: number | null): string {
-  if (trend === null) return '→';
-  if (trend > 0.01) return '↑';
-  if (trend < -0.01) return '↓';
-  return '→';
-}
+// barometerTrendArrow is imported from precipitation-barometer-card.tsx.
 
 function barometerTrendLabel(trend: number | null, t: TFunction): string {
   if (trend === null) return t('barometer.trend.steady');
@@ -133,7 +132,7 @@ function WindCompass({
   t: TFunction;
 }) {
   const dirLabel = windDirLabel(windDir).toLowerCase();
-  const ariaLabel = t('windCompass.ariaLabel', { direction: dirLabel, degrees: windDir });
+  const ariaLabel = t('windCompass.ariaLabel', { direction: dirLabel, degrees: formatValue(windDir, 'degrees') });
 
   return (
     <div className="flex flex-col items-center gap-3">
@@ -159,22 +158,36 @@ function WindCompass({
         <text x="60" y="108" textAnchor="middle" fontSize="11" fill="currentColor" className="text-muted-foreground" dominantBaseline="middle">S</text>
         <text x="14" y="60" textAnchor="middle" fontSize="11" fill="currentColor" className="text-muted-foreground" dominantBaseline="middle">W</text>
 
-        <g transform={`translate(60,60) rotate(${windDir})`}>
-          <polygon
-            points="0,-36 5,-16 0,-22 -5,-16"
-            fill="currentColor"
-            className="text-primary"
-          />
-          <line x1="0" y1="-22" x2="0" y2="20" stroke="currentColor" strokeWidth="2" className="text-primary" />
-          <circle cx="0" cy="0" r="3" fill="currentColor" className="text-primary" />
+        {/* Outer <g> centers the coordinate system; inner <g> applies CSS rotation
+            so the browser can transition it smoothly between SSE updates. SVG
+            presentation-attribute rotate() cannot be CSS-transitioned. */}
+        <g transform="translate(60,60)">
+          <g
+            style={{
+              transform: `rotate(${windDir}deg)`,
+              transformOrigin: '0px 0px',
+              transition: 'transform 0.5s ease',
+            }}
+          >
+            <polygon
+              points="0,-36 5,-16 0,-22 -5,-16"
+              fill="currentColor"
+              className="text-primary"
+            />
+            <line x1="0" y1="-22" x2="0" y2="20" stroke="currentColor" strokeWidth="2" className="text-primary" />
+            <circle cx="0" cy="0" r="3" fill="currentColor" className="text-primary" />
+          </g>
         </g>
       </svg>
 
       <div className="text-center text-sm font-[tabular-nums]">
-        <p className="font-medium text-foreground">
-          {t('windCompass.speed', { speed: windSpeed, direction: windDirLabel(windDir) })}
+        <p className="font-medium text-foreground text-base">
+          {windDirLabel(windDir)}&nbsp;{formatValue(windDir, 'degrees')}°
         </p>
-        <p className="text-muted-foreground">{t('windCompass.gusts', { gust: windGust })}</p>
+        <p className="text-muted-foreground">
+          {t('windCompass.speed', { speed: formatValue(windSpeed, 'wind'), direction: windDirLabel(windDir) })}
+        </p>
+        <p className="text-muted-foreground">{t('windCompass.gusts', { gust: formatValue(windGust, 'wind') })}</p>
         <p className="text-xs text-muted-foreground mt-0.5">{beaufortLabel(windSpeed, t)}</p>
       </div>
     </div>
@@ -312,54 +325,22 @@ export function NowPage() {
     <div className="flex flex-col gap-4 max-w-6xl mx-auto">
       <h1 className="sr-only">Now</h1>
 
-      <HeroSection
-        observation={observation}
-        stationName={station?.name ?? ''}
-        loading={obsLoading}
-        units={units}
-      />
-
       {!alertLoading && alerts && <AlertBanner alerts={alerts} />}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-12">
 
-        {/* Current Conditions Hero — lg: 8-col primary */}
-        <Card className="md:col-span-2 lg:col-span-8" aria-busy={obsLoading}>
-          <CardHeader>
-            <h2 className="font-heading text-base leading-snug font-medium">{t('currentConditions')}</h2>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            {obsLoading ? (
-              <>
-                <span className="sr-only" role="status">{t('loading.currentConditions')}</span>
-                <TileSkeleton className="h-16 w-32" />
-                <TileSkeleton className="h-4 w-48" />
-              </>
-            ) : obsError ? (
-              <TileError message={t('error.currentConditions')} onRetry={obsRefetch} />
-            ) : observation ? (
-              <>
-                {/* aria-live="polite" scoped to just the observation values so SSE
-                    updates announce only the changed reading, not the full card. */}
-                <div
-                  aria-live="polite"
-                  aria-atomic="true"
-                  className="text-7xl font-bold text-foreground leading-none font-[tabular-nums]"
-                  aria-label={t('temperature.ariaLabel', { temp: observation.outTemp, unit: units?.outTemp ?? '°F' })}
-                >
-                  {observation.outTemp}
-                  <span className="text-4xl font-normal text-muted-foreground ml-1">{units?.outTemp ?? '°F'}</span>
-                </div>
-                <p className="text-lg text-muted-foreground">Partly Cloudy</p>
-                <p className="text-sm text-muted-foreground">
-                  {t('feelsLike')} <span className="font-medium text-foreground font-[tabular-nums]">{observation.appTemp !== null ? `${observation.appTemp}°F` : 'N/A'}</span>
-                </p>
-              </>
-            ) : (
-              <p className="text-muted-foreground text-sm">{t('noData.observation')}</p>
-            )}
-          </CardContent>
-        </Card>
+        {/* Current Conditions Card — lg: 8-col primary, full-width on mobile */}
+        <div className="md:col-span-2 lg:col-span-8">
+          <CurrentConditionsCard
+            observation={observation}
+            stationName={station?.name ?? ''}
+            loading={obsLoading}
+            error={obsError}
+            units={units}
+            weatherText={todayForecast?.weatherText ?? null}
+            onRetry={obsRefetch}
+          />
+        </div>
 
         {/* Today's Highlights — lg: 4-col sidebar */}
         <Card className="md:col-span-2 lg:col-span-4">
@@ -376,25 +357,25 @@ export function NowPage() {
               <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm md:grid-cols-4 lg:grid-cols-2">
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.todaysHigh')}</dt>
-                  <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">{todayStats.high !== null ? `${todayStats.high}°F` : '—'}</dd>
+                  <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">{todayStats.high !== null ? `${formatValue(todayStats.high, 'temperature')}°F` : '—'}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.todaysLow')}</dt>
-                  <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">{todayStats.low !== null ? `${todayStats.low}°F` : '—'}</dd>
+                  <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">{todayStats.low !== null ? `${formatValue(todayStats.low, 'temperature')}°F` : '—'}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.peakGust')}</dt>
-                  <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">{todayStats.peakGust} mph</dd>
+                  <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">{formatValue(todayStats.peakGust, 'wind')} mph</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.rainToday')}</dt>
-                  <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">{todayStats.rainSoFar} in</dd>
+                  <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">{formatValue(todayStats.rainSoFar, 'rain')} in</dd>
                 </div>
                 {todayStats.peakAQI > 0 && (
                   <div>
                     <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.peakAqi')}</dt>
                     <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">
-                      {todayStats.peakAQI}
+                      {formatValue(todayStats.peakAQI, 'uv')}
                       <span className="ml-1 text-xs font-normal text-muted-foreground">{aqiCategory(todayStats.peakAQI, t)}</span>
                     </dd>
                   </div>
@@ -433,6 +414,24 @@ export function NowPage() {
           </CardContent>
         </Card>
 
+        {/* Solar / UV Tile — lg: 4 cols */}
+        <SolarUvCard
+          className="lg:col-span-4"
+          observation={observation}
+          loading={obsLoading}
+          error={obsError}
+          onRetry={obsRefetch}
+        />
+
+        {/* Precipitation / Barometer Tile — lg: 4 cols */}
+        <PrecipitationBarometerCard
+          className="lg:col-span-4"
+          observation={observation}
+          loading={obsLoading}
+          error={obsError}
+          onRetry={obsRefetch}
+        />
+
         {/* Station Observations — lg: 8 cols */}
         <Card className="md:col-span-2 lg:col-span-8" aria-busy={obsLoading}>
           <CardHeader>
@@ -451,7 +450,7 @@ export function NowPage() {
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('observations.barometer')}</dt>
                   <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">
-                    {observation.barometer !== null ? `${observation.barometer} inHg` : 'N/A'}
+                    {observation.barometer !== null ? `${formatValue(observation.barometer, 'barometer')} inHg` : 'N/A'}
                     <span role="img" className="ml-1 text-muted-foreground" aria-label={t('barometer.trendAriaLabel', { trend: barometerTrendLabel(observation.barometerTrend, t) })}>
                       {barometerTrendArrow(observation.barometerTrend)}
                     </span>
@@ -459,35 +458,35 @@ export function NowPage() {
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('observations.dewpoint')}</dt>
-                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.dewpoint !== null ? `${observation.dewpoint}°F` : 'N/A'}</dd>
+                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.dewpoint !== null ? `${formatValue(observation.dewpoint, 'temperature')}°F` : 'N/A'}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('observations.humidity')}</dt>
-                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.outHumidity !== null ? `${observation.outHumidity}%` : 'N/A'}</dd>
+                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.outHumidity !== null ? `${formatValue(observation.outHumidity, 'humidity')}%` : 'N/A'}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('observations.rain')}</dt>
-                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.rain !== null ? `${observation.rain} in` : 'N/A'}</dd>
+                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.rain !== null ? `${formatValue(observation.rain, 'rain')} in` : 'N/A'}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('observations.heatIndex')}</dt>
                   <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">
-                    {observation.heatindex !== null ? `${observation.heatindex}°F` : 'N/A'}
+                    {observation.heatindex !== null ? `${formatValue(observation.heatindex, 'temperature')}°F` : 'N/A'}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('observations.windChill')}</dt>
                   <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">
-                    {observation.windchill !== null ? `${observation.windchill}°F` : 'N/A'}
+                    {observation.windchill !== null ? `${formatValue(observation.windchill, 'temperature')}°F` : 'N/A'}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('observations.solarRadiation')}</dt>
-                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.radiation !== null ? `${observation.radiation} W/m²` : 'N/A'}</dd>
+                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.radiation !== null ? `${formatValue(observation.radiation, 'solar')} W/m²` : 'N/A'}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('observations.uvIndex')}</dt>
-                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.UV !== null ? observation.UV : 'N/A'}</dd>
+                  <dd className="mt-1 font-medium text-foreground font-[tabular-nums]">{observation.UV !== null ? formatValue(observation.UV, 'uv') : 'N/A'}</dd>
                 </div>
               </dl>
             ) : (
@@ -526,7 +525,7 @@ export function NowPage() {
                   <span className="text-muted-foreground">{t('sunMoon.moon')}</span>
                   <span className="ml-auto text-right font-medium text-foreground">
                     {formatPhaseName(almanac.moon.phaseName)}
-                    <span className="ml-1 text-xs font-normal text-muted-foreground">{almanac.moon.illuminationPercent}% lit</span>
+                    <span className="ml-1 text-xs font-normal text-muted-foreground">{formatValue(almanac.moon.illuminationPercent, 'percent')}% lit</span>
                   </span>
                 </div>
               </>
@@ -580,7 +579,7 @@ export function NowPage() {
                   <span className="font-medium text-foreground font-[tabular-nums]">{t('lightning.strikesLastHour', { count: lightning.count1h })}</span>
                 </div>
                 <p className="text-muted-foreground font-[tabular-nums]">{t('lightning.strikesLast24h', { count: lightning.count24h })}</p>
-                <p className="text-muted-foreground font-[tabular-nums]">{t('lightning.nearest', { distance: lightning.nearestDistanceKm })}</p>
+                <p className="text-muted-foreground font-[tabular-nums]">{t('lightning.nearest', { distance: formatValue(lightning.nearestDistanceKm, 'earthquakeDepth') })}</p>
                 <p className="text-muted-foreground">{t('lightning.lastStrike', { time: lightning.lastStrikeTime ? formatRelativeTime(lightning.lastStrikeTime, locale) : t('lightning.lastStrikeUnknown') })}</p>
               </>
             ) : (
@@ -607,12 +606,12 @@ export function NowPage() {
                 <div className="flex items-center gap-2">
                   <Activity aria-hidden="true" className="h-5 w-5 text-muted-foreground shrink-0" />
                   <span className="font-medium text-foreground font-[tabular-nums]">
-                    {t('earthquake.magnitude', { magnitude: firstQuake.magnitude, place: firstQuake.place })}
+                    {t('earthquake.magnitude', { magnitude: formatValue(firstQuake.magnitude, 'earthquakeMag'), place: firstQuake.place })}
                   </span>
                 </div>
                 <p className="text-muted-foreground">{formatRelativeTime(firstQuake.time, locale)}</p>
                 {firstQuake.depth !== null && (
-                  <p className="text-muted-foreground font-[tabular-nums]">{t('earthquake.depth', { depth: firstQuake.depth })}</p>
+                  <p className="text-muted-foreground font-[tabular-nums]">{t('earthquake.depth', { depth: formatValue(firstQuake.depth, 'earthquakeDepth') })}</p>
                 )}
               </>
             ) : (
@@ -638,10 +637,10 @@ export function NowPage() {
               <>
                 <p className="text-foreground font-medium">{todayForecast.weatherText}</p>
                 <p className="text-muted-foreground font-[tabular-nums]">
-                  {t('forecast.hiLo', { high: todayForecast.tempMax, low: todayForecast.tempMin })}
+                  {t('forecast.hiLo', { high: formatValue(todayForecast.tempMax, 'temperature'), low: formatValue(todayForecast.tempMin, 'temperature') })}
                 </p>
                 {todayForecast.precipProbabilityMax !== null && (
-                  <p className="text-muted-foreground">{t('forecast.precipChance', { percent: todayForecast.precipProbabilityMax })}</p>
+                  <p className="text-muted-foreground">{t('forecast.precipChance', { percent: formatValue(todayForecast.precipProbabilityMax, 'percent') })}</p>
                 )}
                 {todayForecast.narrative && (
                   <p className="text-muted-foreground leading-relaxed">{todayForecast.narrative}</p>

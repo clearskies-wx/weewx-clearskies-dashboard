@@ -20,7 +20,9 @@
     "airQuality": "Loading air quality data…",
     "lightning": "Loading lightning data…",
     "earthquake": "Loading earthquake data…",
-    "forecast": "Loading forecast…"
+    "forecast": "Loading forecast…",
+    "solarUv": "Loading solar and UV data…",
+    "precipBarometer": "Loading precipitation and pressure data…"
   },
 
   "error": {
@@ -30,7 +32,9 @@
     "almanac": "Unable to load almanac data",
     "airQuality": "Unable to load air quality data",
     "earthquake": "Unable to load earthquake data",
-    "forecast": "Unable to load forecast"
+    "forecast": "Unable to load forecast",
+    "solarUv": "Unable to load solar and UV data",
+    "precipBarometer": "Unable to load precipitation and pressure data"
   },
 
   "noData": {
@@ -138,5 +142,32 @@
 
   "heroLabel": "Current conditions",
   "feelsLikeHero": "Feels like {{temp}}°",
-  "noCurrentData": "No current data available"
+  "noCurrentData": "No current data available",
+
+  "solarUv": {
+    "title": "Solar & UV",
+    "solarRadiation": "Solar Radiation",
+    "uvIndex": "UV Index",
+    "uvBarAriaLabel": "UV index {{uv}}, {{level}}",
+    "uv": {
+      "low": "Low",
+      "moderate": "Moderate",
+      "high": "High",
+      "veryHigh": "Very High",
+      "extreme": "Extreme"
+    }
+  },
+
+  "precipBarometer": {
+    "title": "Precipitation & Pressure",
+    "rainToday": "Rain Today",
+    "rainRate": "Rain Rate",
+    "barometer": "Barometer",
+    "trend": {
+      "rising": "Rising",
+      "falling": "Falling",
+      "steady": "Steady"
+    },
+    "trendAriaLabel": "Pressure trend: {{trend}}"
+  }
 }
