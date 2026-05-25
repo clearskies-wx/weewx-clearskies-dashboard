@@ -93,6 +93,9 @@ function aqiCategory(aqi: number, t: TFunction): string {
 function formatRelativeTime(iso: string, locale: string): string {
   const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
   const diffMs = new Date(iso).getTime() - Date.now();
+  // Guard: new Date() returns NaN for invalid/missing strings.
+  // Intl.RelativeTimeFormat.format() throws on NaN — return a safe fallback.
+  if (!Number.isFinite(diffMs)) return '—';
   const diffSec = Math.round(diffMs / 1000);
   const diffMin = Math.round(diffSec / 60);
   const diffHr = Math.round(diffMin / 60);

@@ -28,6 +28,9 @@ function formatDayName(isoDate: string, locale: string): string {
 function formatRelativeTime(isoString: string, locale: string): string {
   const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
   const diffMs = new Date(isoString).getTime() - Date.now();
+  // Guard: new Date() returns NaN for invalid/missing strings.
+  // Intl.RelativeTimeFormat.format() throws on NaN — return a safe fallback.
+  if (!Number.isFinite(diffMs)) return '—';
   const diffMin = Math.round(diffMs / 60000);
   const diffHr = Math.round(diffMin / 60);
   const diffDay = Math.round(diffHr / 24);

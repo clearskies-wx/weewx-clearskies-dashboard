@@ -37,6 +37,9 @@ function formatAbsoluteTime(isoString: string, tz: string, locale: string): stri
 // Uses Intl.RelativeTimeFormat when available for locale-appropriate output.
 function relativeTime(isoString: string, locale: string): string {
   const diffMs = Date.now() - new Date(isoString).getTime();
+  // Guard: new Date() returns NaN for invalid/missing strings.
+  // Intl.RelativeTimeFormat.format() throws on NaN — return a safe fallback.
+  if (!Number.isFinite(diffMs)) return '—';
   const diffSec = Math.floor(diffMs / 1000);
   const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
   if (diffSec < 60) return rtf.format(-diffSec, 'second');
