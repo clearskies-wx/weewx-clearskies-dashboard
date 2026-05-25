@@ -39,7 +39,7 @@ function canonicalFieldToType(field: string): string {
 function getTodayValue(canonicalField: string, observation: Observation): number | null {
   // Direct field lookup: the Observation interface uses the same canonical names.
   // Cast to a record index to avoid an exhaustive if-chain; unknown fields return undefined.
-  const obs = observation as Record<string, unknown>;
+  const obs = observation as unknown as Record<string, unknown>;
   const raw = obs[canonicalField];
   if (typeof raw === 'number') return raw;
   return null;
