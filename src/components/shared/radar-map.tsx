@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import L from 'leaflet';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import { Play, Pause, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCapabilities, useRadarFrames } from '../../hooks/useWeatherData';
@@ -11,7 +10,9 @@ interface RadarMapProps {
   zoom?: number;
 }
 
-const ANIMATION_INTERVAL_MS = 500;
+const SUBSTEPS = 5;        // interpolation steps between each real frame pair
+const TICK_MS = 100;       // milliseconds per sub-step
+const MAX_OPACITY = 0.7;   // max radar overlay opacity
 
 // How long to wait after frames load before starting auto-play.
 // Gives the browser time to begin fetching tiles for all frames so the first
@@ -66,6 +67,26 @@ function buildTileUrl(
   return null;
 }
 
+function getFrameOpacity(frameIndex: number, step: number, totalFrames: number): number {
+  const primaryFrame = Math.floor(step / SUBSTEPS) % totalFrames;
+  const subStep = step % SUBSTEPS;
+  const nextFrame = (primaryFrame + 1) % totalFrames;
+
+  if (subStep === 0) {
+    // On a keyframe — only the primary frame is visible
+    return frameIndex === primaryFrame ? MAX_OPACITY : 0;
+  }
+
+  // Between keyframes — cross-fade
+  if (frameIndex === primaryFrame) {
+    return MAX_OPACITY * (SUBSTEPS - subStep) / SUBSTEPS;
+  }
+  if (frameIndex === nextFrame) {
+    return MAX_OPACITY * subStep / SUBSTEPS;
+  }
+  return 0;
+}
+
 export function RadarMap({ center, zoom = 7 }: RadarMapProps) {
   const { t } = useTranslation('radar');
 
@@ -90,7 +111,7 @@ export function RadarMap({ center, zoom = 7 }: RadarMapProps) {
   const tileHost = radarFrameList?.tileHost ?? null;
 
   // --- Animation state ---
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [animationStep, setAnimationStep] = useState(0);
   // Start paused; auto-play begins after PRELOAD_DELAY_MS once frames are ready.
   const [isPlaying, setIsPlaying] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -101,21 +122,33 @@ export function RadarMap({ center, zoom = 7 }: RadarMapProps) {
   const frameCount = frames.length;
 
   const goNext = useCallback(() => {
-    setCurrentIndex((i) => (frameCount > 0 ? (i + 1) % frameCount : 0));
+    const total = frameCount * SUBSTEPS;
+    if (total > 0) {
+      setAnimationStep((s) => {
+        // Snap to the next keyframe
+        const currentKey = Math.floor(s / SUBSTEPS);
+        return ((currentKey + 1) % frameCount) * SUBSTEPS;
+      });
+    }
   }, [frameCount]);
 
   const goPrev = useCallback(() => {
-    setCurrentIndex((i) => (frameCount > 0 ? (i - 1 + frameCount) % frameCount : 0));
+    const total = frameCount * SUBSTEPS;
+    if (total > 0) {
+      setAnimationStep((s) => {
+        const currentKey = Math.floor(s / SUBSTEPS);
+        return ((currentKey - 1 + frameCount) % frameCount) * SUBSTEPS;
+      });
+    }
   }, [frameCount]);
 
-  // Clamp index when frames change; start the preload delay when a new frame
-  // list arrives so the browser has time to fetch tiles before animation starts.
+  // Clamp animationStep when frames change; start the preload delay when a new
+  // frame list arrives so the browser has time to fetch tiles before animation starts.
   useEffect(() => {
     if (frameCount === 0) return;
 
-    if (currentIndex >= frameCount) {
-      setCurrentIndex(frameCount - 1);
-    }
+    // Reset to step 0 on new frame list.
+    setAnimationStep(0);
 
     // Reset tile-load tracking for the new frame list.
     loadedLayersRef.current = new Set<number>();
@@ -135,21 +168,21 @@ export function RadarMap({ center, zoom = 7 }: RadarMapProps) {
         preloadTimerRef.current = null;
       }
     };
-    // Intentionally omit currentIndex to avoid re-firing when only the index
-    // changes; this effect is about frame-list changes only.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [frameCount]);
 
-  // Animation timer — only advances the index; no URL swap or tile re-fetch.
-  // Tiles for every frame are already rendered as TileLayers; toggling opacity
-  // between 0 and 0.7 shows the active frame while keeping all others cached.
+  // Animation timer — advances animationStep one sub-step at a time; cross-fade
+  // between real frames is handled by getFrameOpacity. No URL swaps or tile
+  // re-fetches after the initial load, resulting in smooth looping.
   useEffect(() => {
     if (intervalRef.current !== null) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
     if (isPlaying && frameCount > 1) {
-      intervalRef.current = setInterval(goNext, ANIMATION_INTERVAL_MS);
+      const totalSteps = frameCount * SUBSTEPS;
+      intervalRef.current = setInterval(() => {
+        setAnimationStep((s) => (s + 1) % totalSteps);
+      }, TICK_MS);
     }
     return () => {
       if (intervalRef.current !== null) {
@@ -157,9 +190,11 @@ export function RadarMap({ center, zoom = 7 }: RadarMapProps) {
         intervalRef.current = null;
       }
     };
-  }, [isPlaying, frameCount, goNext]);
+  }, [isPlaying, frameCount]);
 
-  const currentFrame: RadarFrame | null = frames[currentIndex] ?? null;
+  // Derive the display frame index from animationStep for timestamp/counter display.
+  const displayFrameIndex = frameCount > 0 ? Math.floor(animationStep / SUBSTEPS) % frameCount : 0;
+  const currentFrame: RadarFrame | null = frames[displayFrameIndex] ?? null;
 
   const isLoading = capLoading || framesLoading;
 
@@ -244,9 +279,11 @@ export function RadarMap({ center, zoom = 7 }: RadarMapProps) {
 
         {/*
           All frame TileLayers are rendered simultaneously so the browser fetches
-          and caches every frame's tiles on first load. The active frame is shown
-          at opacity 0.7; all others are at opacity 0 (invisible but cached).
-          Advancing the animation only changes `currentIndex` — no URL swaps, no
+          and caches every frame's tiles on first load. Cross-fade between frames
+          is achieved by computing per-frame opacity via getFrameOpacity — frames
+          near the current animationStep are blended together, all others get
+          0.001 (invisible but kept alive in Leaflet so tiles stay cached).
+          Advancing the animation only changes `animationStep` — no URL swaps, no
           tile re-fetches after the initial load, resulting in smooth looping.
 
           Each radar TileLayer has a stable key derived from the frame timestamp
@@ -277,17 +314,9 @@ export function RadarMap({ center, zoom = 7 }: RadarMapProps) {
               <TileLayer
                 key={frame.time}
                 url={url}
-                opacity={i === currentIndex ? 0.7 : 0}
+                opacity={Math.max(getFrameOpacity(i, animationStep, frameCount), 0.001)}
                 attribution={i === 0 ? (radarFrameList?.attribution ?? undefined) : undefined}
                 eventHandlers={{
-                  add: (e) => {
-                    // Apply a CSS transition so opacity changes animate smoothly
-                    // via the browser compositor instead of cutting instantly.
-                    const container = (e.target as L.TileLayer).getContainer();
-                    if (container) {
-                      container.style.transition = 'opacity 300ms ease-in-out';
-                    }
-                  },
                   load: () => {
                     // Mark this frame as fully loaded. When all frames are ready,
                     // start playback immediately rather than waiting for the
@@ -343,7 +372,7 @@ export function RadarMap({ center, zoom = 7 }: RadarMapProps) {
           </button>
 
           <span className="text-xs text-muted-foreground tabular-nums ml-1">
-            {t('frameOf', { current: currentIndex + 1, total: frameCount })}
+            {t('frameOf', { current: displayFrameIndex + 1, total: frameCount })}
           </span>
 
           {currentFrame && (
