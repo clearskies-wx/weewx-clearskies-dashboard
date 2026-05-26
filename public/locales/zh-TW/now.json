@@ -122,5 +122,7 @@
   },
   "temperature": {
     "ariaLabel": "目前氣溫：{{temp}} 度 {{unit}}"
-  }
+  },
+  "webcam": "網路攝影機",
+  "webcamAlt": "即時網路攝影機畫面"
 }

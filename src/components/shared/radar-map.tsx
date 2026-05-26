@@ -12,6 +12,11 @@ interface RadarMapProps {
 
 const ANIMATION_INTERVAL_MS = 750;
 
+// How long to wait after frames load before starting auto-play.
+// Gives the browser time to begin fetching tiles for all frames so the first
+// loop isn't visibly stuttery while tiles are still in-flight.
+const PRELOAD_DELAY_MS = 1500;
+
 // RainViewer tile defaults.
 // {size}    — tile size in pixels; 512 is the high-DPI option (also valid: 256).
 // {color}   — colour scheme index; 2 = "Original" (meteorological standard).
@@ -85,8 +90,10 @@ export function RadarMap({ center, zoom = 7 }: RadarMapProps) {
 
   // --- Animation state ---
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
+  // Start paused; auto-play begins after PRELOAD_DELAY_MS once frames are ready.
+  const [isPlaying, setIsPlaying] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const preloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const frameCount = frames.length;
 
@@ -98,14 +105,37 @@ export function RadarMap({ center, zoom = 7 }: RadarMapProps) {
     setCurrentIndex((i) => (frameCount > 0 ? (i - 1 + frameCount) % frameCount : 0));
   }, [frameCount]);
 
-  // Clamp index when frames change
+  // Clamp index when frames change; start the preload delay when a new frame
+  // list arrives so the browser has time to fetch tiles before animation starts.
   useEffect(() => {
-    if (frameCount > 0 && currentIndex >= frameCount) {
+    if (frameCount === 0) return;
+
+    if (currentIndex >= frameCount) {
       setCurrentIndex(frameCount - 1);
     }
-  }, [frameCount, currentIndex]);
 
-  // Animation timer
+    // Cancel any previous preload timer, then start a fresh one.
+    if (preloadTimerRef.current !== null) {
+      clearTimeout(preloadTimerRef.current);
+    }
+    preloadTimerRef.current = setTimeout(() => {
+      setIsPlaying(true);
+    }, PRELOAD_DELAY_MS);
+
+    return () => {
+      if (preloadTimerRef.current !== null) {
+        clearTimeout(preloadTimerRef.current);
+        preloadTimerRef.current = null;
+      }
+    };
+    // Intentionally omit currentIndex to avoid re-firing when only the index
+    // changes; this effect is about frame-list changes only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [frameCount]);
+
+  // Animation timer — only advances the index; no URL swap or tile re-fetch.
+  // Tiles for every frame are already rendered as TileLayers; toggling opacity
+  // between 0 and 0.7 shows the active frame while keeping all others cached.
   useEffect(() => {
     if (intervalRef.current !== null) {
       clearInterval(intervalRef.current);
@@ -123,11 +153,6 @@ export function RadarMap({ center, zoom = 7 }: RadarMapProps) {
   }, [isPlaying, frameCount, goNext]);
 
   const currentFrame: RadarFrame | null = frames[currentIndex] ?? null;
-
-  const currentTileUrl: string | null =
-    currentFrame && radarCapability
-      ? buildTileUrl(currentFrame, radarCapability, tileHost)
-      : null;
 
   const isLoading = capLoading || framesLoading;
 
@@ -211,11 +236,16 @@ export function RadarMap({ center, zoom = 7 }: RadarMapProps) {
         )}
 
         {/*
-          MapContainer must not be unmounted/remounted on frame changes — that causes
-          a full Leaflet reset. It's always rendered; the radar TileLayer's url prop is
-          updated in-place each frame so Leaflet swaps tiles without destroying the layer.
-          Do NOT add a key prop to the radar TileLayer — key changes force React to
-          unmount/remount the layer, re-fetching every tile and causing jerky animation.
+          All frame TileLayers are rendered simultaneously so the browser fetches
+          and caches every frame's tiles on first load. The active frame is shown
+          at opacity 0.7; all others are at opacity 0 (invisible but cached).
+          Advancing the animation only changes `currentIndex` — no URL swaps, no
+          tile re-fetches after the initial load, resulting in smooth looping.
+
+          Each radar TileLayer has a stable key derived from the frame timestamp
+          so React never unmounts/remounts a layer between renders (which would
+          discard cached tiles). The key is intentional here — it is the correct
+          pattern to keep layers stable across re-renders.
         */}
         <MapContainer
           center={center}
@@ -228,13 +258,21 @@ export function RadarMap({ center, zoom = 7 }: RadarMapProps) {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          {currentTileUrl && (
-            <TileLayer
-              url={currentTileUrl}
-              opacity={0.7}
-              attribution={radarFrameList?.attribution ?? undefined}
-            />
-          )}
+          {radarCapability !== null && frames.map((frame, i) => {
+            // Capture the non-null capability so TypeScript can confirm it inside
+            // the map callback closure.
+            const cap = radarCapability;
+            const url = buildTileUrl(frame, cap, tileHost);
+            if (!url) return null;
+            return (
+              <TileLayer
+                key={frame.time}
+                url={url}
+                opacity={i === currentIndex ? 0.7 : 0}
+                attribution={i === 0 ? (radarFrameList?.attribution ?? undefined) : undefined}
+              />
+            );
+          })}
         </MapContainer>
       </div>
 

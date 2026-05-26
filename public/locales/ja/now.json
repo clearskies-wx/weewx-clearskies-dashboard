@@ -122,5 +122,7 @@
   },
   "temperature": {
     "ariaLabel": "現在の気温: {{temp}}度 {{unit}}"
-  }
+  },
+  "webcam": "ウェブカメラ",
+  "webcamAlt": "ライブウェブカメラ映像"
 }

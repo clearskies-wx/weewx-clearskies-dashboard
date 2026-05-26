@@ -122,5 +122,7 @@
   },
   "temperature": {
     "ariaLabel": "Température actuelle : {{temp}} degrés {{unit}}"
-  }
+  },
+  "webcam": "Webcam",
+  "webcamAlt": "Vue webcam en direct"
 }

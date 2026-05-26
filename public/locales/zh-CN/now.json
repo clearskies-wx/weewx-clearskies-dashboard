@@ -122,5 +122,7 @@
   },
   "temperature": {
     "ariaLabel": "当前气温：{{temp}} 度 {{unit}}"
-  }
+  },
+  "webcam": "网络摄像头",
+  "webcamAlt": "实时网络摄像头画面"
 }

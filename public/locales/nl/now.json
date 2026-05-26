@@ -122,5 +122,7 @@
   },
   "temperature": {
     "ariaLabel": "Huidige temperatuur: {{temp}} graden {{unit}}"
-  }
+  },
+  "webcam": "Webcam",
+  "webcamAlt": "Live webcamweergave"
 }

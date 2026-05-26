@@ -122,5 +122,7 @@
   },
   "temperature": {
     "ariaLabel": "Kasalukuyang temperatura: {{temp}} degrees {{unit}}"
-  }
+  },
+  "webcam": "Webcam",
+  "webcamAlt": "Tanawin ng live na webcam"
 }

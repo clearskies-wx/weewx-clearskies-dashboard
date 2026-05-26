@@ -172,5 +172,8 @@
       "steady": "Steady"
     },
     "trendAriaLabel": "Pressure trend: {{trend}}"
-  }
+  },
+
+  "webcam": "Webcam",
+  "webcamAlt": "Live webcam view"
 }
