@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import L from 'leaflet';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import { Play, Pause, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCapabilities, useRadarFrames } from '../../hooks/useWeatherData';
@@ -10,7 +11,7 @@ interface RadarMapProps {
   zoom?: number;
 }
 
-const ANIMATION_INTERVAL_MS = 150;
+const ANIMATION_INTERVAL_MS = 500;
 
 // How long to wait after frames load before starting auto-play.
 // Gives the browser time to begin fetching tiles for all frames so the first
@@ -94,6 +95,8 @@ export function RadarMap({ center, zoom = 7 }: RadarMapProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const preloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Tracks which frame indices have fully loaded all their tiles.
+  const loadedLayersRef = useRef(new Set<number>());
 
   const frameCount = frames.length;
 
@@ -114,7 +117,11 @@ export function RadarMap({ center, zoom = 7 }: RadarMapProps) {
       setCurrentIndex(frameCount - 1);
     }
 
-    // Cancel any previous preload timer, then start a fresh one.
+    // Reset tile-load tracking for the new frame list.
+    loadedLayersRef.current = new Set<number>();
+
+    // Cancel any previous preload timer, then start a fresh fallback one.
+    // The fallback fires only if tiles haven't all reported loaded yet.
     if (preloadTimerRef.current !== null) {
       clearTimeout(preloadTimerRef.current);
     }
@@ -264,12 +271,37 @@ export function RadarMap({ center, zoom = 7 }: RadarMapProps) {
             const cap = radarCapability;
             const url = buildTileUrl(frame, cap, tileHost);
             if (!url) return null;
+            // Capture the loop index in a stable const for use inside closures.
+            const frameIndex = i;
             return (
               <TileLayer
                 key={frame.time}
                 url={url}
                 opacity={i === currentIndex ? 0.7 : 0}
                 attribution={i === 0 ? (radarFrameList?.attribution ?? undefined) : undefined}
+                eventHandlers={{
+                  add: (e) => {
+                    // Apply a CSS transition so opacity changes animate smoothly
+                    // via the browser compositor instead of cutting instantly.
+                    const container = (e.target as L.TileLayer).getContainer();
+                    if (container) {
+                      container.style.transition = 'opacity 300ms ease-in-out';
+                    }
+                  },
+                  load: () => {
+                    // Mark this frame as fully loaded. When all frames are ready,
+                    // start playback immediately rather than waiting for the
+                    // PRELOAD_DELAY_MS fallback timeout.
+                    loadedLayersRef.current.add(frameIndex);
+                    if (loadedLayersRef.current.size >= frames.length) {
+                      if (preloadTimerRef.current !== null) {
+                        clearTimeout(preloadTimerRef.current);
+                        preloadTimerRef.current = null;
+                      }
+                      setIsPlaying(true);
+                    }
+                  },
+                }}
               />
             );
           })}
