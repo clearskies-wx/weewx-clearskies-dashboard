@@ -212,8 +212,10 @@ export function RadarMap({ center, zoom = 7 }: RadarMapProps) {
 
         {/*
           MapContainer must not be unmounted/remounted on frame changes — that causes
-          a full Leaflet reset. It's always rendered; tile URL is swapped via key prop
-          on TileLayer so Leaflet fetches new tiles without destroying the map instance.
+          a full Leaflet reset. It's always rendered; the radar TileLayer's url prop is
+          updated in-place each frame so Leaflet swaps tiles without destroying the layer.
+          Do NOT add a key prop to the radar TileLayer — key changes force React to
+          unmount/remount the layer, re-fetching every tile and causing jerky animation.
         */}
         <MapContainer
           center={center}
@@ -228,7 +230,6 @@ export function RadarMap({ center, zoom = 7 }: RadarMapProps) {
           />
           {currentTileUrl && (
             <TileLayer
-              key={currentTileUrl}
               url={currentTileUrl}
               opacity={0.7}
               attribution={radarFrameList?.attribution ?? undefined}
