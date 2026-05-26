@@ -312,6 +312,7 @@ export function NowPage() {
   const [webcamAvailable, setWebcamAvailable] = useState(true);
   const [videoAvailable, setVideoAvailable] = useState(true);
   const [webcamConfig, setWebcamConfig] = useState<WebcamConfig | null>(null);
+  const [webcamTab, setWebcamTab] = useState<'live' | 'timelapse'>('live');
 
   // Fetch webcam config from static JSON written by the wizard (not the station API).
   // If the file doesn't exist or fails to load, webcamConfig stays null and the card
@@ -360,7 +361,7 @@ export function NowPage() {
         Row 4: Precipitation/Barometer + AQI
         Row 5: Sun & Moon + Lightning
         Row 6: Recent Earthquake + Temperature Trend
-        Row 7: Radar Map + Webcam (side-by-side on desktop; radar full-width when webcam disabled)
+        Row 7: Radar + Webcam side-by-side (radar expands to full-width when webcam is disabled)
       */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 
@@ -667,46 +668,72 @@ export function NowPage() {
           </CardContent>
         </Card>
 
-        {/* Row 7 — Radar Map (full-width) */}
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle as="h2">{tRadar('radarTitle')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {station ? (
-              <RadarMap center={[station.latitude, station.longitude]} />
-            ) : (
-              <TileSkeleton className="h-96" />
-            )}
-          </CardContent>
-        </Card>
+        {/* Row 7 — Radar + Webcam (side-by-side on md+; radar expands full-width when webcam is disabled) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
 
-        {/* Row 8 — Webcam (shown only when enabled in station config and files load successfully) */}
-        {webcamEnabled && webcamAvailable && (
-          <Card className="md:col-span-2">
+          {/* Radar card — half-width when webcam is present, full-width otherwise */}
+          <Card className={!(webcamEnabled && webcamAvailable) ? 'md:col-span-2' : undefined}>
             <CardHeader>
-              <CardTitle as="h2">{t('webcam')}</CardTitle>
+              <CardTitle as="h2">{tRadar('radarTitle')}</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col gap-2">
-              <img
-                src={`${webcamConfig!.imageUrl}?t=${refreshTs}`}
-                alt={t('webcamAlt')}
-                className="w-full rounded object-cover h-80"
-                onError={() => setWebcamAvailable(false)}
-              />
-              {videoAvailable && (
-                <video
-                  controls
-                  loop
-                  className="w-full rounded mt-2"
-                  onError={() => setVideoAvailable(false)}
-                >
-                  <source src={`${webcamConfig!.videoUrl}?t=${videoRefreshTs}`} type="video/mp4" />
-                </video>
+            <CardContent>
+              {station ? (
+                <RadarMap center={[station.latitude, station.longitude]} />
+              ) : (
+                <TileSkeleton className="h-96" />
               )}
             </CardContent>
           </Card>
-        )}
+
+          {/* Webcam card — shown only when enabled and files load successfully */}
+          {webcamEnabled && webcamAvailable && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <h2 className="font-heading text-base leading-snug font-medium">{t('webcam')}</h2>
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    className={`px-2 py-1 text-xs rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${webcamTab === 'live' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+                    onClick={() => setWebcamTab('live')}
+                    aria-pressed={webcamTab === 'live'}
+                  >
+                    {t('webcamTabLive', 'Live')}
+                  </button>
+                  <button
+                    type="button"
+                    className={`px-2 py-1 text-xs rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${webcamTab === 'timelapse' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+                    onClick={() => setWebcamTab('timelapse')}
+                    aria-pressed={webcamTab === 'timelapse'}
+                  >
+                    {t('webcamTabTimelapse', 'Timelapse')}
+                  </button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {webcamTab === 'live' ? (
+                  <img
+                    src={`${webcamConfig!.imageUrl}?t=${refreshTs}`}
+                    alt={t('webcamAlt')}
+                    className="w-full rounded object-cover"
+                    onError={() => setWebcamAvailable(false)}
+                  />
+                ) : videoAvailable ? (
+                  <video
+                    controls
+                    loop
+                    className="w-full rounded"
+                    onError={() => setVideoAvailable(false)}
+                  >
+                    <source src={`${webcamConfig!.videoUrl}?t=${videoRefreshTs}`} type="video/mp4" />
+                  </video>
+                ) : (
+                  <p className="text-muted-foreground text-sm">{t('noData.timelapse', 'No timelapse available')}</p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+        </div>
 
       </div>
     </div>
