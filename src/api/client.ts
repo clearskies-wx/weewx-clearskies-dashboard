@@ -23,7 +23,6 @@ import type {
   MarkdownContentResponse,
   ProblemDetail,
   RadarFramesResponse,
-  WebcamData,
 } from './types';
 
 // ---------------------------------------------------------------------------
@@ -218,10 +217,6 @@ export function getRadarFrames(
     undefined,
     signal,
   );
-}
-
-export function getWebcam(signal?: AbortSignal): Promise<ApiResponse<WebcamData>> {
-  return fetchApi<ApiResponse<WebcamData>>('/webcam', undefined, signal);
 }
 
 // ---------------------------------------------------------------------------

@@ -13,7 +13,6 @@ const AlmanacPage = React.lazy(() => import('./routes/almanac'));
 const EarthquakesPage = React.lazy(() => import('./routes/earthquakes'));
 const RecordsPage = React.lazy(() => import('./routes/records'));
 const ReportsPage = React.lazy(() => import('./routes/reports'));
-const WebcamPage = React.lazy(() => import('./routes/webcam'));
 const AboutPage = React.lazy(() => import('./routes/about'));
 const LegalPage = React.lazy(() => import('./routes/legal'));
 const CustomPage = React.lazy(() => import('./routes/custom-page'));
@@ -128,14 +127,6 @@ function App() {
             element={
               <Suspense fallback={<PageLoader title={tNav('pages.reports')} />}>
                 <ReportsPage />
-              </Suspense>
-            }
-          />
-          <Route
-            path="webcam"
-            element={
-              <Suspense fallback={<PageLoader title={tNav('pages.webcam')} />}>
-                <WebcamPage />
               </Suspense>
             }
           />

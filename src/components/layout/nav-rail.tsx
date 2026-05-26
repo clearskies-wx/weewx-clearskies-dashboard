@@ -14,7 +14,6 @@ import {
   Activity,
   Trophy,
   FileText,
-  Camera,
   Info,
   Scale,
   Ellipsis,
@@ -41,7 +40,6 @@ const NAV_ITEMS: NavItemDef[] = [
   { to: '/earthquakes', pageKey: 'earthquakes', icon: <Activity aria-hidden="true" className="h-5 w-5" /> },
   { to: '/records', pageKey: 'records', icon: <Trophy aria-hidden="true" className="h-5 w-5" /> },
   { to: '/reports', pageKey: 'reports', icon: <FileText aria-hidden="true" className="h-5 w-5" /> },
-  { to: '/webcam', pageKey: 'webcam', icon: <Camera aria-hidden="true" className="h-5 w-5" /> },
   { to: '/about', pageKey: 'about', icon: <Info aria-hidden="true" className="h-5 w-5" /> },
   { to: '/legal', pageKey: 'legal', icon: <Scale aria-hidden="true" className="h-5 w-5" /> },
 ];

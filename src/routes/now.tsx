@@ -25,7 +25,6 @@ import {
   useLightning,
   useArchive,
   useTodayStats,
-  useWebcam,
 } from '../hooks/useWeatherData';
 import { useRealtimeObservation } from '../hooks/useRealtimeObservation';
 
@@ -298,17 +297,6 @@ export function NowPage() {
   const { data: earthquakes, loading: eqLoading, error: eqError, refetch: eqRefetch } = useEarthquakes();
   const { data: aqi, loading: aqiLoading, error: aqiError, refetch: aqiRefetch } = useAqi();
   const { data: station } = useStation();
-  const { data: webcamData } = useWebcam();
-
-  // Cache-busting timestamp for the webcam image on the Now page.
-  // Ticks at webcamData.refreshInterval seconds so the browser re-fetches the
-  // live image without unmounting/remounting the <img> element.
-  const [webcamRefreshTs, setWebcamRefreshTs] = useState<number>(() => Date.now());
-  useEffect(() => {
-    if (!webcamData?.enabled || !webcamData.refreshInterval || webcamData.refreshInterval <= 0) return;
-    const id = setInterval(() => setWebcamRefreshTs(Date.now()), webcamData.refreshInterval * 1000);
-    return () => clearInterval(id);
-  }, [webcamData?.enabled, webcamData?.refreshInterval]);
 
   // Today's archive for todayStats computation
   const todayStart = new Date();
@@ -664,57 +652,46 @@ export function NowPage() {
           </CardContent>
         </Card>
 
-        {/* Row 7 — Radar Map + optional Webcam — ADR-015 / ADR-024
-            When webcam is enabled and has an imageUrl, radar and webcam sit
-            side-by-side on md+ screens. Without a webcam, radar is full-width.
-        */}
-        {(() => {
-          const hasWebcam = !!(webcamData?.enabled && webcamData.imageUrl) && webcamAvailable;
-          return (
-            <div className={`md:col-span-2 grid grid-cols-1 ${hasWebcam ? 'md:grid-cols-2' : ''} gap-4`}>
-              {/* Radar */}
-              <Card>
-                <CardHeader>
-                  <CardTitle as="h2">{tRadar('radarTitle')}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {station ? (
-                    <RadarMap center={[station.latitude, station.longitude]} />
-                  ) : (
-                    <TileSkeleton className="h-96" />
-                  )}
-                </CardContent>
-              </Card>
+        {/* Row 7 — Radar Map (full-width) */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle as="h2">{tRadar('radarTitle')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {station ? (
+              <RadarMap center={[station.latitude, station.longitude]} />
+            ) : (
+              <TileSkeleton className="h-96" />
+            )}
+          </CardContent>
+        </Card>
 
-              {/* Webcam — only rendered when enabled, imageUrl is present, and image loads */}
-              {hasWebcam && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle as="h2">{t('webcam')}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex flex-col gap-2">
-                    <img
-                      src={`${webcamData!.imageUrl}?t=${webcamRefreshTs}`}
-                      alt={t('webcamAlt')}
-                      className="w-full rounded object-cover h-80"
-                      onError={() => setWebcamAvailable(false)}
-                    />
-                    {videoAvailable && (
-                      <video
-                        controls
-                        loop
-                        className="w-full rounded mt-2"
-                        onError={() => setVideoAvailable(false)}
-                      >
-                        <source src={`/webcam/weewx_timelapse.mp4?t=${videoRefreshTs}`} type="video/mp4" />
-                      </video>
-                    )}
-                  </CardContent>
-                </Card>
+        {/* Row 8 — Webcam (hidden on image load error) */}
+        {webcamAvailable && (
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle as="h2">{t('webcam')}</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2">
+              <img
+                src={`/webcam/weather_cam.jpg?t=${refreshTs}`}
+                alt={t('webcamAlt')}
+                className="w-full rounded object-cover h-80"
+                onError={() => setWebcamAvailable(false)}
+              />
+              {videoAvailable && (
+                <video
+                  controls
+                  loop
+                  className="w-full rounded mt-2"
+                  onError={() => setVideoAvailable(false)}
+                >
+                  <source src={`/webcam/weewx_timelapse.mp4?t=${videoRefreshTs}`} type="video/mp4" />
+                </video>
               )}
-            </div>
-          );
-        })()}
+            </CardContent>
+          </Card>
+        )}
 
       </div>
     </div>
