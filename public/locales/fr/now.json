@@ -11,7 +11,8 @@
     "strikesLast24h": "{{count}} dans les dernières 24h",
     "nearest": "Le plus proche : {{distance}} km",
     "lastStrike": "Dernier éclair : {{time}}",
-    "lastStrikeUnknown": "Inconnu"
+    "lastStrikeUnknown": "Inconnu",
+    "noActivity": "No activity detected"
   },
   "recentEarthquake": "Séisme récent",
   "todaysForecast": "Prévisions du jour",
@@ -73,7 +74,8 @@
   "windCompass": {
     "speed": "Vent : {{speed}} mph · {{direction}}",
     "gusts": "Rafales : {{gust}} mph",
-    "ariaLabel": "Vent de {{direction}} à {{degrees}} degrés"
+    "ariaLabel": "Vent de {{direction}} à {{degrees}} degrés",
+    "directionLabel": "Du {{direction}} {{degrees}}°"
   },
   "barometer": {
     "trend": {
@@ -115,7 +117,8 @@
   },
   "forecast": {
     "hiLo": "Max {{high}}° / Min {{low}}°",
-    "precipChance": "{{percent}}% de risque de précipitations"
+    "precipChance": "{{percent}}% de risque de précipitations",
+    "hiOnly": "Max {{high}}°"
   },
   "temperature": {
     "ariaLabel": "Température actuelle : {{temp}} degrés {{unit}}"

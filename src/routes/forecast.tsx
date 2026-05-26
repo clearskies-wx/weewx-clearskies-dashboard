@@ -88,6 +88,7 @@ function formatHour(isoString: string, timeZone: string, locale: string): string
     hour: 'numeric',
     hour12: true,
     timeZone,
+    timeZoneName: 'short',
   }).format(new Date(isoString));
 }
 

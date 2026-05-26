@@ -7,12 +7,11 @@
   "unableToLoad": "Rekorde konnten nicht geladen werden",
   "sectionHeading": "{{section}}-Rekorde",
   "tableHeaderRecord": "Rekord",
-  "tableHeaderValue": "Wert",
+  "tableHeaderValue": "Rekordwert",
   "tableHeaderToday": "Heute",
-  "tableHeaderDateObserved": "Beobachtungsdatum",
+  "tableHeaderDateObserved": "Datum gesetzt",
   "badgeNew": "Neu",
   "badgeNewTitle": "In den letzten 30 Tagen gebrochen",
   "badgeNewAriaLabel": "Kürzlich gebrochener Rekord",
-  "noData": "Keine Rekorde für diesen Zeitraum verfügbar.",
-  "operatorNotePlaceholder": "Stationsbetreiber können hier benutzerdefinierte Hinweise zu ihren Rekorden über die Clear-Skies-Konfigurationsoberfläche hinzufügen."
+  "noData": "Keine Rekorde für diesen Zeitraum verfügbar."
 }

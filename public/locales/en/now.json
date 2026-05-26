@@ -77,7 +77,8 @@
   "windCompass": {
     "speed": "Wind: {{speed}} mph · {{direction}}",
     "gusts": "Gusts: {{gust}} mph",
-    "ariaLabel": "Wind from {{direction}} at {{degrees}} degrees"
+    "ariaLabel": "Wind from {{direction}} at {{degrees}} degrees",
+    "directionLabel": "From the {{direction}} {{degrees}}°"
   },
 
   "barometer": {
@@ -123,7 +124,8 @@
     "strikesLast24h": "{{count}} in last 24h",
     "nearest": "Nearest: {{distance}} km",
     "lastStrike": "Last strike: {{time}}",
-    "lastStrikeUnknown": "Unknown"
+    "lastStrikeUnknown": "Unknown",
+    "noActivity": "No activity detected"
   },
 
   "earthquake": {
@@ -133,6 +135,7 @@
 
   "forecast": {
     "hiLo": "Hi {{high}}° / Lo {{low}}°",
+    "hiOnly": "Hi {{high}}°",
     "precipChance": "{{percent}}% chance of precipitation"
   },
 

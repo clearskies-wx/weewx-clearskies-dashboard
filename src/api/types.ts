@@ -70,6 +70,8 @@ export interface Observation {
   lightning_strike_count_1h?: number | null;
   lightning_distance?: number | null;
   lightning_last_det_time?: string | null;
+  /** Weather description text — present when observation includes a text summary (Phase 0B). */
+  weatherText?: string | null;
   extras: Record<string, number | string | boolean | null>;
   source: string;
 }
@@ -431,6 +433,6 @@ export interface TodayStats {
 export interface LightningData {
   count1h: number;
   count24h: number;
-  nearestDistanceKm: number;
+  nearestDistanceKm: number | null;
   lastStrikeTime: string | null;
 }

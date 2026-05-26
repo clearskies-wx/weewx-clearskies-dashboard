@@ -7,12 +7,11 @@
   "unableToLoad": "Kan records niet laden",
   "sectionHeading": "{{section}} records",
   "tableHeaderRecord": "Record",
-  "tableHeaderValue": "Waarde",
+  "tableHeaderValue": "Recordwaarde",
   "tableHeaderToday": "Vandaag",
-  "tableHeaderDateObserved": "Datum waargenomen",
+  "tableHeaderDateObserved": "Datum vastgesteld",
   "badgeNew": "Nieuw",
   "badgeNewTitle": "Verbroken in de afgelopen 30 dagen",
   "badgeNewAriaLabel": "Recent verbroken record",
-  "noData": "Geen records beschikbaar voor deze periode.",
-  "operatorNotePlaceholder": "Stationsbeheerders kunnen hier aangepaste notities over hun records toevoegen via de Clear Skies configuratie-UI."
+  "noData": "Geen records beschikbaar voor deze periode."
 }

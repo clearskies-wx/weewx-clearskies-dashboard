@@ -9,7 +9,6 @@
   "todaysForecast": "Heutige Vorhersage",
   "temperatureTrend": "Temperaturverlauf",
   "viewCharts": "Diagramme anzeigen →",
-
   "loading": {
     "currentConditions": "Aktuelle Wetterlage wird geladen…",
     "highlights": "Heutige Highlights werden geladen…",
@@ -21,7 +20,6 @@
     "earthquake": "Erdbebendaten werden geladen…",
     "forecast": "Vorhersage wird geladen…"
   },
-
   "error": {
     "currentConditions": "Aktuelle Wetterlage konnte nicht geladen werden",
     "wind": "Winddaten konnten nicht geladen werden",
@@ -31,7 +29,6 @@
     "earthquake": "Erdbebendaten konnten nicht geladen werden",
     "forecast": "Vorhersage konnte nicht geladen werden"
   },
-
   "noData": {
     "observation": "Keine Beobachtungsdaten verfügbar.",
     "highlights": "Keine Highlights verfügbar.",
@@ -41,7 +38,6 @@
     "airQuality": "Kein Luftqualitätsanbieter konfiguriert.",
     "forecast": "Keine Vorhersagedaten verfügbar."
   },
-
   "highlights": {
     "todaysHigh": "Tageshöchstwert",
     "todaysLow": "Tagestiefwert",
@@ -50,7 +46,6 @@
     "peakAqi": "Höchster LQI",
     "recordsBroken": "Rekorde gebrochen"
   },
-
   "observations": {
     "barometer": "Luftdruck",
     "dewpoint": "Taupunkt",
@@ -61,21 +56,18 @@
     "solarRadiation": "Sonnenstrahlung",
     "uvIndex": "UV-Index"
   },
-
   "sunMoon": {
     "sunrise": "Sonnenaufgang",
     "sunset": "Sonnenuntergang",
     "moon": "Mond"
   },
-
   "feelsLike": "Gefühlt wie",
-
   "windCompass": {
     "speed": "Wind: {{speed}} mph · {{direction}}",
     "gusts": "Böen: {{gust}} mph",
-    "ariaLabel": "Wind aus {{direction}} mit {{degrees}} Grad"
+    "ariaLabel": "Wind aus {{direction}} mit {{degrees}} Grad",
+    "directionLabel": "Aus {{direction}} {{degrees}}°"
   },
-
   "barometer": {
     "trend": {
       "rising": "steigend",
@@ -84,7 +76,6 @@
     },
     "trendAriaLabel": "Tendenz: {{trend}}"
   },
-
   "aqi": {
     "good": "Gut",
     "moderate": "Mäßig",
@@ -96,7 +87,6 @@
     "unknownPollutant": "Unbekannt",
     "mainPollutant": "Hauptschadstoff: {{pollutant}}"
   },
-
   "beaufort": {
     "calm": "Windstille",
     "lightAir": "Leiser Zug",
@@ -112,26 +102,24 @@
     "violentStorm": "Orkanartige Böen",
     "hurricane": "Orkan"
   },
-
   "lightning": {
     "title": "Blitze",
     "strikesLastHour": "{{count}} Einschläge in der letzten Stunde",
     "strikesLast24h": "{{count}} in den letzten 24 Stunden",
     "nearest": "Nächster: {{distance}} km",
     "lastStrike": "Letzter Einschlag: {{time}}",
-    "lastStrikeUnknown": "Unbekannt"
+    "lastStrikeUnknown": "Unbekannt",
+    "noActivity": "No activity detected"
   },
-
   "earthquake": {
     "magnitude": "M{{magnitude}} — {{place}}",
     "depth": "Tiefe: {{depth}} km"
   },
-
   "forecast": {
     "hiLo": "Hoch {{high}}° / Tief {{low}}°",
-    "precipChance": "{{percent}}% Niederschlagswahrscheinlichkeit"
+    "precipChance": "{{percent}}% Niederschlagswahrscheinlichkeit",
+    "hiOnly": "Hoch {{high}}°"
   },
-
   "temperature": {
     "ariaLabel": "Aktuelle Temperatur: {{temp}} Grad {{unit}}"
   }

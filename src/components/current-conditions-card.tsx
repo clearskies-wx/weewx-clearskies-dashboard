@@ -18,6 +18,7 @@ import {
   CardHeader,
   CardContent,
 } from './ui/card';
+import { WeatherIcon } from './weather-icon';
 import type { Observation, UnitsBlock } from '../api/types';
 
 // ---------------------------------------------------------------------------
@@ -84,6 +85,8 @@ interface CurrentConditionsCardProps {
   units?: UnitsBlock;
   /** Weather description text — from forecast when observation lacks it. */
   weatherText?: string | null;
+  /** WMO weather code for the current conditions icon. */
+  weatherCode?: number | null;
   onRetry: () => void;
 }
 
@@ -98,9 +101,12 @@ export function CurrentConditionsCard({
   error,
   units,
   weatherText,
+  weatherCode,
   onRetry,
 }: CurrentConditionsCardProps) {
   const { t } = useTranslation('now');
+  const hour = new Date().getHours();
+  const isNight = hour < 6 || hour >= 20;
 
   const tempUnit = units?.outTemp ?? '°F';
   const comfortIndex = selectComfortIndex(observation?.outTemp ?? null);
@@ -153,8 +159,16 @@ export function CurrentConditionsCard({
                     })
                   : undefined
               }
-              className="flex items-end gap-1 leading-none"
+              className="flex items-end gap-3 leading-none"
             >
+              {weatherCode != null && (
+                <WeatherIcon
+                  code={weatherCode}
+                  isNight={isNight}
+                  size={56}
+                  className="text-foreground mb-1"
+                />
+              )}
               <span className="text-7xl font-bold text-foreground font-[tabular-nums]">
                 {formatValue(observation.outTemp, 'temperature')}
               </span>
@@ -169,7 +183,7 @@ export function CurrentConditionsCard({
 
             {/* ---- Feels-like (appTemp) -----------------------------------
                 Also wrapped in aria-live so SSE updates are announced. */}
-            {observation.appTemp !== null && (
+            {observation.appTemp != null && (
               <p
                 aria-live="polite"
                 aria-atomic="true"
@@ -198,7 +212,7 @@ export function CurrentConditionsCard({
                   {t('observations.dewpoint')}
                 </dt>
                 <dd className="mt-0.5 font-medium text-foreground font-[tabular-nums]">
-                  {observation.dewpoint !== null
+                  {observation.dewpoint != null
                     ? `${formatValue(observation.dewpoint, 'temperature')}${tempUnit}`
                     : '—'}
                 </dd>
@@ -209,7 +223,7 @@ export function CurrentConditionsCard({
                   {t('observations.humidity')}
                 </dt>
                 <dd className="mt-0.5 font-medium text-foreground font-[tabular-nums]">
-                  {observation.outHumidity !== null
+                  {observation.outHumidity != null
                     ? `${formatValue(observation.outHumidity, 'humidity')}%`
                     : '—'}
                 </dd>
@@ -220,7 +234,7 @@ export function CurrentConditionsCard({
                   Heat index when outTemp > 80 °F (NWS heat threshold).
                   Neither when 50–80 °F (comfortable range).
                   Never show both at once. */}
-              {comfortIndex === 'windChill' && observation.windchill !== null && (
+              {comfortIndex === 'windChill' && observation.windchill != null && (
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">
                     {t('observations.windChill')}
@@ -232,7 +246,7 @@ export function CurrentConditionsCard({
                 </div>
               )}
 
-              {comfortIndex === 'heatIndex' && observation.heatindex !== null && (
+              {comfortIndex === 'heatIndex' && observation.heatindex != null && (
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">
                     {t('observations.heatIndex')}

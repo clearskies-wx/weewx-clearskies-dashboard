@@ -7,12 +7,11 @@
   "unableToLoad": "記録を読み込めません",
   "sectionHeading": "{{section}}の記録",
   "tableHeaderRecord": "記録",
-  "tableHeaderValue": "値",
+  "tableHeaderValue": "記録値",
   "tableHeaderToday": "本日",
-  "tableHeaderDateObserved": "観測日",
+  "tableHeaderDateObserved": "記録日",
   "badgeNew": "新記録",
   "badgeNewTitle": "過去30日以内に更新",
   "badgeNewAriaLabel": "最近更新された記録",
-  "noData": "この期間の記録がありません。",
-  "operatorNotePlaceholder": "観測所管理者はClear Skies設定UIを通じてここに記録に関するカスタムノートを追加できます。"
+  "noData": "この期間の記録がありません。"
 }

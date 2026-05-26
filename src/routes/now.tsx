@@ -33,6 +33,7 @@ function formatLocalTime(iso: string | null, tz: string, locale: string): string
     minute: '2-digit',
     hour12: true,
     timeZone: tz,
+    timeZoneName: 'short',
   }).format(new Date(iso));
 }
 
@@ -154,7 +155,7 @@ function WindCompass({
         <g transform="translate(60,60)">
           <g
             style={{
-              transform: `rotate(${windDir}deg)`,
+              transform: `rotate(${(windDir + 180) % 360}deg)`,
               transformOrigin: '0px 0px',
               transition: 'transform 0.5s ease',
             }}
@@ -172,7 +173,7 @@ function WindCompass({
 
       <div className="text-center text-sm font-[tabular-nums]">
         <p className="font-medium text-foreground text-base">
-          {windDirLabel(windDir)}&nbsp;{formatValue(windDir, 'degrees')}°
+          {t('windCompass.directionLabel', { direction: windDirLabel(windDir), degrees: formatValue(windDir, 'degrees') })}
         </p>
         <p className="text-muted-foreground">
           {t('windCompass.speed', { speed: formatValue(windSpeed, 'wind'), direction: windDirLabel(windDir) })}
@@ -337,7 +338,8 @@ export function NowPage() {
             loading={obsLoading}
             error={obsError}
             units={units}
-            weatherText={todayForecast?.weatherText ?? null}
+            weatherText={observation?.weatherText ?? todayForecast?.weatherText ?? null}
+            weatherCode={todayForecast?.weatherCode ?? null}
             onRetry={obsRefetch}
           />
         </div>
@@ -359,7 +361,9 @@ export function NowPage() {
               <>
                 <p className="text-foreground font-medium">{todayForecast.weatherText}</p>
                 <p className="text-muted-foreground font-[tabular-nums]">
-                  {t('forecast.hiLo', { high: formatValue(todayForecast.tempMax, 'temperature'), low: formatValue(todayForecast.tempMin, 'temperature') })}
+                  {todayForecast.tempMin !== null
+                    ? t('forecast.hiLo', { high: formatValue(todayForecast.tempMax, 'temperature'), low: formatValue(todayForecast.tempMin, 'temperature') })
+                    : t('forecast.hiOnly', { high: formatValue(todayForecast.tempMax, 'temperature') })}
                 </p>
                 {todayForecast.precipProbabilityMax !== null && (
                   <p className="text-muted-foreground">{t('forecast.precipChance', { percent: formatValue(todayForecast.precipProbabilityMax, 'percent') })}</p>
@@ -540,15 +544,21 @@ export function NowPage() {
                 <TileSkeleton className="h-16" />
               </>
             ) : lightning ? (
-              <>
-                <div className="flex items-center gap-2">
-                  <Zap aria-hidden="true" className="h-5 w-5 text-yellow-500 shrink-0" />
-                  <span className="font-medium text-foreground font-[tabular-nums]">{t('lightning.strikesLastHour', { count: lightning.count1h })}</span>
-                </div>
-                <p className="text-muted-foreground font-[tabular-nums]">{t('lightning.strikesLast24h', { count: lightning.count24h })}</p>
-                <p className="text-muted-foreground font-[tabular-nums]">{t('lightning.nearest', { distance: formatValue(lightning.nearestDistanceKm, 'earthquakeDepth') })}</p>
-                <p className="text-muted-foreground">{t('lightning.lastStrike', { time: lightning.lastStrikeTime ? formatRelativeTime(lightning.lastStrikeTime, locale) : t('lightning.lastStrikeUnknown') })}</p>
-              </>
+              lightning.count1h === 0 && lightning.count24h === 0 && lightning.nearestDistanceKm === null ? (
+                <p className="text-muted-foreground text-sm">{t('lightning.noActivity')}</p>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2">
+                    <Zap aria-hidden="true" className="h-5 w-5 text-yellow-500 shrink-0" />
+                    <span className="font-medium text-foreground font-[tabular-nums]">{t('lightning.strikesLastHour', { count: lightning.count1h })}</span>
+                  </div>
+                  <p className="text-muted-foreground font-[tabular-nums]">{t('lightning.strikesLast24h', { count: lightning.count24h })}</p>
+                  {lightning.nearestDistanceKm !== null && (
+                    <p className="text-muted-foreground font-[tabular-nums]">{t('lightning.nearest', { distance: formatValue(lightning.nearestDistanceKm, 'earthquakeDepth') })}</p>
+                  )}
+                  <p className="text-muted-foreground">{t('lightning.lastStrike', { time: lightning.lastStrikeTime ? formatRelativeTime(lightning.lastStrikeTime, locale) : t('lightning.lastStrikeUnknown') })}</p>
+                </>
+              )
             ) : (
               <p className="text-muted-foreground text-sm">{t('noData.lightning')}</p>
             )}
@@ -629,9 +639,11 @@ export function NowPage() {
             <h2 className="font-heading text-base leading-snug font-medium">{tRadar('radarTitle')}</h2>
           </CardHeader>
           <CardContent>
-            <RadarMap
-              center={[station?.latitude ?? 0, station?.longitude ?? 0]}
-            />
+              {station ? (
+              <RadarMap center={[station.latitude, station.longitude]} />
+            ) : (
+              <TileSkeleton className="h-96" />
+            )}
           </CardContent>
         </Card>
 

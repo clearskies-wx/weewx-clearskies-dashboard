@@ -7,12 +7,11 @@
   "unableToLoad": "无法加载记录",
   "sectionHeading": "{{section}} 记录",
   "tableHeaderRecord": "记录",
-  "tableHeaderValue": "数值",
+  "tableHeaderValue": "记录值",
   "tableHeaderToday": "今日",
-  "tableHeaderDateObserved": "观测日期",
+  "tableHeaderDateObserved": "创建日期",
   "badgeNew": "新记录",
   "badgeNewTitle": "过去30天内打破",
   "badgeNewAriaLabel": "近期打破的记录",
-  "noData": "此时段暂无记录数据。",
-  "operatorNotePlaceholder": "站点管理员可通过 Clear Skies 配置界面在此添加关于记录的自定义备注。"
+  "noData": "此时段暂无记录数据。"
 }

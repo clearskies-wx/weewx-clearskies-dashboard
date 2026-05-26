@@ -9,7 +9,6 @@
   "todaysForecast": "Verwachting van vandaag",
   "temperatureTrend": "Temperatuurverloop",
   "viewCharts": "Grafieken bekijken →",
-
   "loading": {
     "currentConditions": "Huidige omstandigheden laden…",
     "highlights": "Hoogtepunten van vandaag laden…",
@@ -21,7 +20,6 @@
     "earthquake": "Aardbevingsgegevens laden…",
     "forecast": "Verwachting laden…"
   },
-
   "error": {
     "currentConditions": "Kan huidige omstandigheden niet laden",
     "wind": "Kan windgegevens niet laden",
@@ -31,7 +29,6 @@
     "earthquake": "Kan aardbevingsgegevens niet laden",
     "forecast": "Kan verwachting niet laden"
   },
-
   "noData": {
     "observation": "Geen waarnemingsgegevens beschikbaar.",
     "highlights": "Geen hoogtepunten beschikbaar.",
@@ -41,7 +38,6 @@
     "airQuality": "Geen luchtkwaliteitsprovider geconfigureerd.",
     "forecast": "Geen verwachtingsgegevens beschikbaar."
   },
-
   "highlights": {
     "todaysHigh": "Maximum vandaag",
     "todaysLow": "Minimum vandaag",
@@ -50,7 +46,6 @@
     "peakAqi": "Maximale LKI",
     "recordsBroken": "Gebroken records"
   },
-
   "observations": {
     "barometer": "Barometer",
     "dewpoint": "Dauwpunt",
@@ -61,21 +56,18 @@
     "solarRadiation": "Zonnestraling",
     "uvIndex": "UV-index"
   },
-
   "sunMoon": {
     "sunrise": "Zonsopgang",
     "sunset": "Zonsondergang",
     "moon": "Maan"
   },
-
   "feelsLike": "Voelt als",
-
   "windCompass": {
     "speed": "Wind: {{speed}} mph · {{direction}}",
     "gusts": "Windstoten: {{gust}} mph",
-    "ariaLabel": "Wind uit {{direction}} met {{degrees}} graden"
+    "ariaLabel": "Wind uit {{direction}} met {{degrees}} graden",
+    "directionLabel": "Uit het {{direction}} {{degrees}}°"
   },
-
   "barometer": {
     "trend": {
       "rising": "stijgend",
@@ -84,7 +76,6 @@
     },
     "trendAriaLabel": "Trend: {{trend}}"
   },
-
   "aqi": {
     "good": "Goed",
     "moderate": "Matig",
@@ -96,7 +87,6 @@
     "unknownPollutant": "Onbekend",
     "mainPollutant": "Voornaamste verontreiniging: {{pollutant}}"
   },
-
   "beaufort": {
     "calm": "Windstil",
     "lightAir": "Zwak",
@@ -112,26 +102,24 @@
     "violentStorm": "Zeer zware storm",
     "hurricane": "Orkaan"
   },
-
   "lightning": {
     "title": "Bliksem",
     "strikesLastHour": "{{count}} inslagen in het afgelopen uur",
     "strikesLast24h": "{{count}} in de afgelopen 24 uur",
     "nearest": "Dichtstbij: {{distance}} km",
     "lastStrike": "Laatste inslag: {{time}}",
-    "lastStrikeUnknown": "Onbekend"
+    "lastStrikeUnknown": "Onbekend",
+    "noActivity": "No activity detected"
   },
-
   "earthquake": {
     "magnitude": "M{{magnitude}} — {{place}}",
     "depth": "Diepte: {{depth}} km"
   },
-
   "forecast": {
     "hiLo": "Max {{high}}° / Min {{low}}°",
-    "precipChance": "{{percent}}% kans op neerslag"
+    "precipChance": "{{percent}}% kans op neerslag",
+    "hiOnly": "Max {{high}}°"
   },
-
   "temperature": {
     "ariaLabel": "Huidige temperatuur: {{temp}} graden {{unit}}"
   }

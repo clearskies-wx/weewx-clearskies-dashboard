@@ -9,7 +9,6 @@
   "todaysForecast": "本日の予報",
   "temperatureTrend": "気温の推移",
   "viewCharts": "グラフを見る →",
-
   "loading": {
     "currentConditions": "現在の状況を読み込み中…",
     "highlights": "本日のハイライトを読み込み中…",
@@ -21,7 +20,6 @@
     "earthquake": "地震データを読み込み中…",
     "forecast": "予報を読み込み中…"
   },
-
   "error": {
     "currentConditions": "現在の状況を読み込めません",
     "wind": "風データを読み込めません",
@@ -31,7 +29,6 @@
     "earthquake": "地震データを読み込めません",
     "forecast": "予報を読み込めません"
   },
-
   "noData": {
     "observation": "観測データがありません。",
     "highlights": "ハイライトがありません。",
@@ -41,7 +38,6 @@
     "airQuality": "大気質プロバイダーが設定されていません。",
     "forecast": "予報データがありません。"
   },
-
   "highlights": {
     "todaysHigh": "本日の最高気温",
     "todaysLow": "本日の最低気温",
@@ -50,7 +46,6 @@
     "peakAqi": "最大AQI",
     "recordsBroken": "更新された記録"
   },
-
   "observations": {
     "barometer": "気圧計",
     "dewpoint": "露点",
@@ -61,21 +56,18 @@
     "solarRadiation": "日射量",
     "uvIndex": "UV指数"
   },
-
   "sunMoon": {
     "sunrise": "日の出",
     "sunset": "日の入り",
     "moon": "月"
   },
-
   "feelsLike": "体感",
-
   "windCompass": {
     "speed": "風速: {{speed}} mph · {{direction}}",
     "gusts": "突風: {{gust}} mph",
-    "ariaLabel": "{{direction}}から{{degrees}}度の風"
+    "ariaLabel": "{{direction}}から{{degrees}}度の風",
+    "directionLabel": "{{direction}} {{degrees}}°から"
   },
-
   "barometer": {
     "trend": {
       "rising": "上昇中",
@@ -84,7 +76,6 @@
     },
     "trendAriaLabel": "傾向: {{trend}}"
   },
-
   "aqi": {
     "good": "良好",
     "moderate": "普通",
@@ -96,7 +87,6 @@
     "unknownPollutant": "不明",
     "mainPollutant": "主要汚染物質: {{pollutant}}"
   },
-
   "beaufort": {
     "calm": "静穏",
     "lightAir": "至軽風",
@@ -112,26 +102,24 @@
     "violentStorm": "暴風",
     "hurricane": "ハリケーン"
   },
-
   "lightning": {
     "title": "雷",
     "strikesLastHour": "過去1時間の落雷: {{count}}回",
     "strikesLast24h": "過去24時間: {{count}}回",
     "nearest": "最近距離: {{distance}} km",
     "lastStrike": "最終落雷: {{time}}",
-    "lastStrikeUnknown": "不明"
+    "lastStrikeUnknown": "不明",
+    "noActivity": "No activity detected"
   },
-
   "earthquake": {
     "magnitude": "M{{magnitude}} — {{place}}",
     "depth": "深さ: {{depth}} km"
   },
-
   "forecast": {
     "hiLo": "最高 {{high}}° / 最低 {{low}}°",
-    "precipChance": "降水確率 {{percent}}%"
+    "precipChance": "降水確率 {{percent}}%",
+    "hiOnly": "最高 {{high}}°"
   },
-
   "temperature": {
     "ariaLabel": "現在の気温: {{temp}}度 {{unit}}"
   }

@@ -9,7 +9,6 @@
   "todaysForecast": "今日天氣預報",
   "temperatureTrend": "氣溫趨勢",
   "viewCharts": "查看圖表 →",
-
   "loading": {
     "currentConditions": "正在載入目前狀況…",
     "highlights": "正在載入今日重點…",
@@ -21,7 +20,6 @@
     "earthquake": "正在載入地震資料…",
     "forecast": "正在載入天氣預報…"
   },
-
   "error": {
     "currentConditions": "無法載入目前狀況",
     "wind": "無法載入風力資料",
@@ -31,7 +29,6 @@
     "earthquake": "無法載入地震資料",
     "forecast": "無法載入天氣預報"
   },
-
   "noData": {
     "observation": "暫無觀測資料。",
     "highlights": "暫無重點資料。",
@@ -41,7 +38,6 @@
     "airQuality": "未設定空氣品質提供商。",
     "forecast": "暫無天氣預報資料。"
   },
-
   "highlights": {
     "todaysHigh": "今日最高氣溫",
     "todaysLow": "今日最低氣溫",
@@ -50,7 +46,6 @@
     "peakAqi": "最高AQI",
     "recordsBroken": "打破紀錄"
   },
-
   "observations": {
     "barometer": "氣壓計",
     "dewpoint": "露點",
@@ -61,21 +56,18 @@
     "solarRadiation": "太陽輻射",
     "uvIndex": "紫外線指數"
   },
-
   "sunMoon": {
     "sunrise": "日出",
     "sunset": "日落",
     "moon": "月亮"
   },
-
   "feelsLike": "體感溫度",
-
   "windCompass": {
     "speed": "風速：{{speed}} mph · {{direction}}",
     "gusts": "陣風：{{gust}} mph",
-    "ariaLabel": "來自 {{direction}} 方向 {{degrees}} 度的風"
+    "ariaLabel": "來自 {{direction}} 方向 {{degrees}} 度的風",
+    "directionLabel": "來自{{direction}} {{degrees}}°"
   },
-
   "barometer": {
     "trend": {
       "rising": "上升",
@@ -84,7 +76,6 @@
     },
     "trendAriaLabel": "趨勢：{{trend}}"
   },
-
   "aqi": {
     "good": "優",
     "moderate": "良",
@@ -96,7 +87,6 @@
     "unknownPollutant": "未知",
     "mainPollutant": "主要污染物：{{pollutant}}"
   },
-
   "beaufort": {
     "calm": "無風",
     "lightAir": "軟風",
@@ -112,26 +102,24 @@
     "violentStorm": "暴風",
     "hurricane": "颶風"
   },
-
   "lightning": {
     "title": "閃電",
     "strikesLastHour": "過去一小時雷擊 {{count}} 次",
     "strikesLast24h": "過去24小時 {{count}} 次",
     "nearest": "最近距離：{{distance}} km",
     "lastStrike": "最近雷擊：{{time}}",
-    "lastStrikeUnknown": "未知"
+    "lastStrikeUnknown": "未知",
+    "noActivity": "No activity detected"
   },
-
   "earthquake": {
     "magnitude": "M{{magnitude}} — {{place}}",
     "depth": "深度：{{depth}} km"
   },
-
   "forecast": {
     "hiLo": "最高 {{high}}° / 最低 {{low}}°",
-    "precipChance": "降雨機率 {{percent}}%"
+    "precipChance": "降雨機率 {{percent}}%",
+    "hiOnly": "最高 {{high}}°"
   },
-
   "temperature": {
     "ariaLabel": "目前氣溫：{{temp}} 度 {{unit}}"
   }

@@ -112,7 +112,7 @@ export function PrecipitationBarometerCard({
                 {t('precipBarometer.rainToday')}
               </dt>
               <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">
-                {observation.rain !== null
+                {observation.rain != null
                   ? <>{formatValue(observation.rain, 'rain')} <span className="text-sm font-normal text-muted-foreground">in</span></>
                   : '—'}
               </dd>
@@ -124,7 +124,7 @@ export function PrecipitationBarometerCard({
                 {t('precipBarometer.rainRate')}
               </dt>
               <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">
-                {observation.rainRate !== null
+                {observation.rainRate != null
                   ? <>{formatValue(observation.rainRate, 'rainRate')} <span className="text-sm font-normal text-muted-foreground">in/hr</span></>
                   : '—'}
               </dd>
@@ -138,7 +138,7 @@ export function PrecipitationBarometerCard({
               </dt>
               <dd className="mt-1 flex items-baseline gap-2">
                 <span className="text-xl font-semibold text-foreground font-[tabular-nums]">
-                  {observation.barometer !== null
+                  {observation.barometer != null
                     ? <>{formatValue(observation.barometer, 'barometer')} <span className="text-sm font-normal text-muted-foreground">inHg</span></>
                     : '—'}
                 </span>

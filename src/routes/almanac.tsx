@@ -10,7 +10,7 @@ import {
 import { useAlmanac, useStation } from '../hooks/useWeatherData';
 import { formatValue } from '../utils/format';
 
-// Format UTC ISO time to local time display: "5:55 AM"
+// Format UTC ISO time to local time display: "5:55 AM PDT"
 function formatLocalTime(isoString: string | null, tz: string, locale: string): string {
   if (!isoString) return '—';
   return new Intl.DateTimeFormat(locale, {
@@ -18,6 +18,7 @@ function formatLocalTime(isoString: string | null, tz: string, locale: string): 
     minute: '2-digit',
     hour12: true,
     timeZone: tz,
+    timeZoneName: 'short',
   }).format(new Date(isoString));
 }
 

@@ -9,7 +9,6 @@
   "todaysForecast": "Hula para Ngayon",
   "temperatureTrend": "Takbo ng Temperatura",
   "viewCharts": "Tingnan ang mga Tsart →",
-
   "loading": {
     "currentConditions": "Naglo-load ng kasalukuyang kondisyon…",
     "highlights": "Naglo-load ng mga highlight ngayon…",
@@ -21,7 +20,6 @@
     "earthquake": "Naglo-load ng datos ng lindol…",
     "forecast": "Naglo-load ng hula…"
   },
-
   "error": {
     "currentConditions": "Hindi ma-load ang kasalukuyang kondisyon",
     "wind": "Hindi ma-load ang datos ng hangin",
@@ -31,7 +29,6 @@
     "earthquake": "Hindi ma-load ang datos ng lindol",
     "forecast": "Hindi ma-load ang hula"
   },
-
   "noData": {
     "observation": "Walang available na datos ng obserbasyon.",
     "highlights": "Walang available na highlights.",
@@ -41,7 +38,6 @@
     "airQuality": "Walang naka-configure na provider ng kalidad ng hangin.",
     "forecast": "Walang available na datos ng hula."
   },
-
   "highlights": {
     "todaysHigh": "Pinakamataas Ngayon",
     "todaysLow": "Pinakamababa Ngayon",
@@ -50,7 +46,6 @@
     "peakAqi": "Pinakamataas na AQI",
     "recordsBroken": "Mga Rekord na Nabali"
   },
-
   "observations": {
     "barometer": "Barometro",
     "dewpoint": "Punto ng Hamog",
@@ -61,21 +56,18 @@
     "solarRadiation": "Radyasyon Solar",
     "uvIndex": "UV Index"
   },
-
   "sunMoon": {
     "sunrise": "Pagsikat ng Araw",
     "sunset": "Paglubog ng Araw",
     "moon": "Buwan"
   },
-
   "feelsLike": "Pakiramdam",
-
   "windCompass": {
     "speed": "Hangin: {{speed}} mph · {{direction}}",
     "gusts": "Hangin: {{gust}} mph",
-    "ariaLabel": "Hangin mula sa {{direction}} sa {{degrees}} degrees"
+    "ariaLabel": "Hangin mula sa {{direction}} sa {{degrees}} degrees",
+    "directionLabel": "Mula sa {{direction}} {{degrees}}°"
   },
-
   "barometer": {
     "trend": {
       "rising": "tumataas",
@@ -84,7 +76,6 @@
     },
     "trendAriaLabel": "Takbo: {{trend}}"
   },
-
   "aqi": {
     "good": "Maganda",
     "moderate": "Katamtaman",
@@ -96,7 +87,6 @@
     "unknownPollutant": "Hindi Kilala",
     "mainPollutant": "Pangunahing polusyon: {{pollutant}}"
   },
-
   "beaufort": {
     "calm": "Tahimik",
     "lightAir": "Mahinang Hangin",
@@ -112,26 +102,24 @@
     "violentStorm": "Marahas na Unos",
     "hurricane": "Bagyong Marahas"
   },
-
   "lightning": {
     "title": "Kidlat",
     "strikesLastHour": "{{count}} kidlat sa nakaraang isang oras",
     "strikesLast24h": "{{count}} sa nakaraang 24 oras",
     "nearest": "Pinakamalapit: {{distance}} km",
     "lastStrike": "Huling kidlat: {{time}}",
-    "lastStrikeUnknown": "Hindi Kilala"
+    "lastStrikeUnknown": "Hindi Kilala",
+    "noActivity": "No activity detected"
   },
-
   "earthquake": {
     "magnitude": "M{{magnitude}} — {{place}}",
     "depth": "Lalim: {{depth}} km"
   },
-
   "forecast": {
     "hiLo": "Mataas {{high}}° / Mababa {{low}}°",
-    "precipChance": "{{percent}}% tsansa ng pag-ulan"
+    "precipChance": "{{percent}}% tsansa ng pag-ulan",
+    "hiOnly": "Mataas {{high}}°"
   },
-
   "temperature": {
     "ariaLabel": "Kasalukuyang temperatura: {{temp}} degrees {{unit}}"
   }

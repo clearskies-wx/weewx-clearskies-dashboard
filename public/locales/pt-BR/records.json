@@ -7,12 +7,11 @@
   "unableToLoad": "Não foi possível carregar os recordes",
   "sectionHeading": "Recordes de {{section}}",
   "tableHeaderRecord": "Recorde",
-  "tableHeaderValue": "Valor",
+  "tableHeaderValue": "Valor recorde",
   "tableHeaderToday": "Hoje",
-  "tableHeaderDateObserved": "Data de Observação",
+  "tableHeaderDateObserved": "Data estabelecida",
   "badgeNew": "Novo",
   "badgeNewTitle": "Quebrado nos últimos 30 dias",
   "badgeNewAriaLabel": "Recorde recentemente quebrado",
-  "noData": "Sem recordes disponíveis para este período.",
-  "operatorNotePlaceholder": "Os operadores da estação podem adicionar notas personalizadas sobre seus recordes aqui através da interface de configuração do Clear Skies."
+  "noData": "Sem recordes disponíveis para este período."
 }

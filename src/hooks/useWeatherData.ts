@@ -464,7 +464,7 @@ export function useLightning(observation: Observation | null): LightningData | n
     return {
       count1h: count1h ?? 0,
       count24h: count24h ?? 0,
-      nearestDistanceKm: nearestDistanceKm ?? 0,
+      nearestDistanceKm,
       lastStrikeTime: lastStrikeTime ?? null,
     };
   }, [observation]);

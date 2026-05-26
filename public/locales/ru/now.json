@@ -9,7 +9,6 @@
   "todaysForecast": "Прогноз на сегодня",
   "temperatureTrend": "Динамика температуры",
   "viewCharts": "Смотреть графики →",
-
   "loading": {
     "currentConditions": "Загрузка текущих условий…",
     "highlights": "Загрузка сводки за сегодня…",
@@ -21,7 +20,6 @@
     "earthquake": "Загрузка данных о землетрясениях…",
     "forecast": "Загрузка прогноза…"
   },
-
   "error": {
     "currentConditions": "Не удалось загрузить текущие условия",
     "wind": "Не удалось загрузить данные о ветре",
@@ -31,7 +29,6 @@
     "earthquake": "Не удалось загрузить данные о землетрясениях",
     "forecast": "Не удалось загрузить прогноз"
   },
-
   "noData": {
     "observation": "Данные наблюдений отсутствуют.",
     "highlights": "Сводка недоступна.",
@@ -41,7 +38,6 @@
     "airQuality": "Источник данных о качестве воздуха не настроен.",
     "forecast": "Данные прогноза отсутствуют."
   },
-
   "highlights": {
     "todaysHigh": "Максимум за день",
     "todaysLow": "Минимум за день",
@@ -50,7 +46,6 @@
     "peakAqi": "Макс. ИКВ",
     "recordsBroken": "Побито рекордов"
   },
-
   "observations": {
     "barometer": "Давление",
     "dewpoint": "Точка росы",
@@ -61,21 +56,18 @@
     "solarRadiation": "Солнечная радиация",
     "uvIndex": "Индекс УФ"
   },
-
   "sunMoon": {
     "sunrise": "Восход",
     "sunset": "Закат",
     "moon": "Луна"
   },
-
   "feelsLike": "Ощущается как",
-
   "windCompass": {
     "speed": "Ветер: {{speed}} м/с · {{direction}}",
     "gusts": "Порывы: {{gust}} м/с",
-    "ariaLabel": "Ветер с {{direction}} со скоростью {{degrees}} градусов"
+    "ariaLabel": "Ветер с {{direction}} со скоростью {{degrees}} градусов",
+    "directionLabel": "С {{direction}} {{degrees}}°"
   },
-
   "barometer": {
     "trend": {
       "rising": "повышается",
@@ -84,7 +76,6 @@
     },
     "trendAriaLabel": "Тенденция: {{trend}}"
   },
-
   "aqi": {
     "good": "Хорошее",
     "moderate": "Удовлетворительное",
@@ -96,7 +87,6 @@
     "unknownPollutant": "Неизвестно",
     "mainPollutant": "Основной загрязнитель: {{pollutant}}"
   },
-
   "beaufort": {
     "calm": "Штиль",
     "lightAir": "Тихий ветер",
@@ -112,26 +102,24 @@
     "violentStorm": "Жестокий шторм",
     "hurricane": "Ураган"
   },
-
   "lightning": {
     "title": "Грозовая активность",
     "strikesLastHour": "{{count}} разрядов за последний час",
     "strikesLast24h": "{{count}} за последние 24 ч",
     "nearest": "Ближайший: {{distance}} км",
     "lastStrike": "Последний разряд: {{time}}",
-    "lastStrikeUnknown": "Неизвестно"
+    "lastStrikeUnknown": "Неизвестно",
+    "noActivity": "No activity detected"
   },
-
   "earthquake": {
     "magnitude": "M{{magnitude}} — {{place}}",
     "depth": "Глубина: {{depth}} км"
   },
-
   "forecast": {
     "hiLo": "Макс. {{high}}° / Мин. {{low}}°",
-    "precipChance": "Вероятность осадков {{percent}}%"
+    "precipChance": "Вероятность осадков {{percent}}%",
+    "hiOnly": "Макс. {{high}}°"
   },
-
   "temperature": {
     "ariaLabel": "Текущая температура: {{temp}} градусов {{unit}}"
   }

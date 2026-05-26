@@ -7,12 +7,11 @@
   "unableToLoad": "Unable to load records",
   "sectionHeading": "{{section}} Records",
   "tableHeaderRecord": "Record",
-  "tableHeaderValue": "Value",
+  "tableHeaderValue": "Record Value",
   "tableHeaderToday": "Today",
-  "tableHeaderDateObserved": "Date Observed",
+  "tableHeaderDateObserved": "Date Set",
   "badgeNew": "New",
   "badgeNewTitle": "Broken in the last 30 days",
   "badgeNewAriaLabel": "Recently broken record",
-  "noData": "No records available for this period.",
-  "operatorNotePlaceholder": "Station operators can add custom notes about their records here via the Clear Skies configuration UI."
+  "noData": "No records available for this period."
 }

@@ -125,9 +125,16 @@ export function mapPacketToObservation(
     const val = packet[weewxKey];
     if (val === undefined) continue;
     // Null is a valid value (sensor not available) — include it.
+    // SSE loop packets may deliver numeric fields as strings (e.g. windDir as
+    // "270" instead of 270).  Coerce string values to numbers; non-finite
+    // strings (e.g. malformed values) become null so formatValue never sees them.
+    let coerced: unknown = val;
+    if (typeof val === 'string') {
+      const n = Number(val);
+      coerced = Number.isFinite(n) ? n : null;
+    }
     // Type assertion: Observation field values are number | string | boolean | null.
-    // The loop packet carries the same types for these fields.
-    (partial as Record<string, unknown>)[obsKey] = val;
+    (partial as Record<string, unknown>)[obsKey] = coerced;
   }
 
   // NOTE: Observation.extras (custom weewx columns) is NOT updated from SSE

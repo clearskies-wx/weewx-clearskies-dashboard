@@ -7,12 +7,11 @@
   "unableToLoad": "無法載入紀錄",
   "sectionHeading": "{{section}} 紀錄",
   "tableHeaderRecord": "紀錄",
-  "tableHeaderValue": "數值",
+  "tableHeaderValue": "紀錄值",
   "tableHeaderToday": "今日",
-  "tableHeaderDateObserved": "觀測日期",
+  "tableHeaderDateObserved": "建立日期",
   "badgeNew": "新紀錄",
   "badgeNewTitle": "過去30天內打破",
   "badgeNewAriaLabel": "近期打破的紀錄",
-  "noData": "此時段暫無紀錄資料。",
-  "operatorNotePlaceholder": "測站管理員可透過 Clear Skies 設定介面在此新增關於紀錄的自訂備註。"
+  "noData": "此時段暫無紀錄資料。"
 }

@@ -236,4 +236,9 @@
   html {
     @apply font-sans;
     }
+  /* UA stylesheets hard-code font-family on form controls, breaking inheritance.
+     Force them back onto the cascade so Inter Variable applies everywhere. */
+  button, input, select, textarea {
+    font-family: inherit;
+    }
 }

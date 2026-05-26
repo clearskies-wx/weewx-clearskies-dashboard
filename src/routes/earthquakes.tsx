@@ -22,6 +22,7 @@ function formatTime(isoString: string, timeZone: string, locale: string): string
     minute: '2-digit',
     hour12: true,
     timeZone,
+    timeZoneName: 'short',
   }).format(new Date(isoString));
 }
 

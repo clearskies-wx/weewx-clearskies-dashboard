@@ -125,15 +125,6 @@ export function RecordsPage() {
         </button>
       </div>
 
-      {/* Operator narrative slot per ADR-024 */}
-      <Card>
-        <CardContent className="pt-4 pb-4">
-          <p className="text-sm text-muted-foreground leading-relaxed bg-muted/30 rounded-md px-3 py-2">
-            {t('operatorNotePlaceholder')}
-          </p>
-        </CardContent>
-      </Card>
-
       {loading && (
         <>
           <span className="sr-only" role="status">{t('loadingRecords')}</span>
@@ -161,10 +152,10 @@ export function RecordsPage() {
                           {t('tableHeaderRecord')}
                         </th>
                         <th scope="col" className="pb-2 text-right font-semibold text-foreground pr-4">
-                          {t('tableHeaderValue')}
+                          {t('tableHeaderToday')}
                         </th>
                         <th scope="col" className="pb-2 text-right font-semibold text-foreground pr-4">
-                          {t('tableHeaderToday')}
+                          {t('tableHeaderValue')}
                         </th>
                         <th scope="col" className="pb-2 text-right font-semibold text-foreground">
                           {t('tableHeaderDateObserved')}
@@ -190,14 +181,6 @@ export function RecordsPage() {
                             )}
                           </td>
                           <td
-                            className="py-2.5 pr-4 text-right font-semibold text-foreground"
-                            style={{ fontFeatureSettings: '"tnum"' }}
-                          >
-                            {entry.value !== null
-                              ? `${formatValue(entry.value, canonicalFieldToType(entry.canonicalField))} ${units?.[entry.canonicalField] ?? ''}`
-                              : '—'}
-                          </td>
-                          <td
                             className="py-2.5 pr-4 text-right text-muted-foreground"
                             style={{ fontFeatureSettings: '"tnum"' }}
                           >
@@ -207,6 +190,14 @@ export function RecordsPage() {
                               if (todayVal === null) return '--';
                               return `${formatValue(todayVal, canonicalFieldToType(entry.canonicalField))} ${units?.[entry.canonicalField] ?? ''}`;
                             })()}
+                          </td>
+                          <td
+                            className="py-2.5 pr-4 text-right font-semibold text-foreground"
+                            style={{ fontFeatureSettings: '"tnum"' }}
+                          >
+                            {entry.value !== null
+                              ? `${formatValue(entry.value, canonicalFieldToType(entry.canonicalField))} ${units?.[entry.canonicalField] ?? ''}`
+                              : '—'}
                           </td>
                           <td className="py-2.5 text-right text-muted-foreground">
                             {formatDate(entry.observedAt, locale)}

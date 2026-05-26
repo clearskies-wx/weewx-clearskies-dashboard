@@ -160,7 +160,7 @@ export function SolarUvCard({ observation, loading, error, onRetry, className }:
   const { t } = useTranslation('now');
 
   const uv = observation?.UV ?? null;
-  const activeIdx = uv !== null ? uvSegmentIndex(uv) : -1;
+  const activeIdx = uv != null ? uvSegmentIndex(uv) : -1;
   const levelLabel = activeIdx >= 0 ? t(UV_SEGMENTS[activeIdx].labelKey) : '';
 
   return (
@@ -189,7 +189,7 @@ export function SolarUvCard({ observation, loading, error, onRetry, className }:
                   {t('solarUv.solarRadiation')}
                 </dt>
                 <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">
-                  {observation.radiation !== null
+                  {observation.radiation != null
                     ? <>{formatValue(observation.radiation, 'solar')} <span className="text-sm font-normal text-muted-foreground">W/m²</span></>
                     : '—'}
                 </dd>
@@ -202,7 +202,7 @@ export function SolarUvCard({ observation, loading, error, onRetry, className }:
                 </dt>
                 <dd className="mt-1 flex items-baseline gap-2">
                   <span className="text-xl font-semibold text-foreground font-[tabular-nums]">
-                    {uv !== null ? formatValue(uv, 'uv') : '—'}
+                    {uv != null ? formatValue(uv, 'uv') : '—'}
                   </span>
                   {levelLabel && (
                     // Risk label rendered in text-foreground for WCAG 1.4.3 text contrast.
@@ -217,7 +217,7 @@ export function SolarUvCard({ observation, loading, error, onRetry, className }:
             </dl>
 
             {/* UV bar — only rendered when we have a UV value */}
-            {uv !== null && (
+            {uv != null && (
               <UvBar uv={uv} levelLabel={levelLabel} />
             )}
           </>
