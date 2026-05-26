@@ -10,7 +10,7 @@ interface RadarMapProps {
   zoom?: number;
 }
 
-const ANIMATION_INTERVAL_MS = 750;
+const ANIMATION_INTERVAL_MS = 300;
 
 // How long to wait after frames load before starting auto-play.
 // Gives the browser time to begin fetching tiles for all frames so the first
