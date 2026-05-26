@@ -188,7 +188,7 @@ export function SolarUvCard({ observation, loading, error, onRetry, className }:
                 <dt className="text-xs text-muted-foreground uppercase tracking-wide">
                   {t('solarUv.solarRadiation')}
                 </dt>
-                <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">
+                <dd className="mt-1 text-xl font-semibold text-foreground">
                   {observation.radiation != null
                     ? <>{formatValue(observation.radiation, 'solar')} <span className="text-sm font-normal text-muted-foreground">W/m²</span></>
                     : '—'}
@@ -201,7 +201,7 @@ export function SolarUvCard({ observation, loading, error, onRetry, className }:
                   {t('solarUv.uvIndex')}
                 </dt>
                 <dd className="mt-1 flex items-baseline gap-2">
-                  <span className="text-xl font-semibold text-foreground font-[tabular-nums]">
+                  <span className="text-xl font-semibold text-foreground">
                     {uv != null ? formatValue(uv, 'uv') : '—'}
                   </span>
                   {levelLabel && (

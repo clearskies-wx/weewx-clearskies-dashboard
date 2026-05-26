@@ -182,7 +182,6 @@ export function RecordsPage() {
                           </td>
                           <td
                             className="py-2.5 pr-4 text-right text-muted-foreground"
-                            style={{ fontFeatureSettings: '"tnum"' }}
                           >
                             {(() => {
                               if (!observation) return '--';
@@ -193,7 +192,6 @@ export function RecordsPage() {
                           </td>
                           <td
                             className="py-2.5 pr-4 text-right font-semibold text-foreground"
-                            style={{ fontFeatureSettings: '"tnum"' }}
                           >
                             {entry.value !== null
                               ? `${formatValue(entry.value, canonicalFieldToType(entry.canonicalField))} ${units?.[entry.canonicalField] ?? ''}`

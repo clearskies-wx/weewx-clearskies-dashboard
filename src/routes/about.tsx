@@ -114,7 +114,7 @@ export function AboutPage() {
               </div>
               <div>
                 <dt className="text-muted-foreground">{t('station.stationId')}</dt>
-                <dd className="mt-0.5 font-medium text-foreground font-mono text-xs">
+                <dd className="mt-0.5 font-medium text-foreground text-xs">
                   {station.stationId}
                 </dd>
               </div>

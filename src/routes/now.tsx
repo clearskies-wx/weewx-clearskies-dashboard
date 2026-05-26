@@ -174,7 +174,7 @@ function WindCompass({
         </g>
       </svg>
 
-      <div className="text-center text-sm font-[tabular-nums]">
+      <div className="text-center text-sm">
         <p className="font-medium text-foreground text-base">
           {t('windCompass.directionLabel', { direction: windDirLabel(windDir), degrees: formatValue(windDir, 'degrees') })}
         </p>
@@ -395,7 +395,7 @@ export function NowPage() {
             ) : todayForecast ? (
               <>
                 <p className="text-foreground font-medium">{todayForecast.weatherText}</p>
-                <p className="text-muted-foreground font-[tabular-nums]">
+                <p className="text-muted-foreground">
                   {todayForecast.tempMin !== null
                     ? t('forecast.hiLo', { high: formatValue(todayForecast.tempMax, 'temperature'), low: formatValue(todayForecast.tempMin, 'temperature') })
                     : t('forecast.hiOnly', { high: formatValue(todayForecast.tempMax, 'temperature') })}
@@ -428,24 +428,24 @@ export function NowPage() {
               <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-4">
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.todaysHigh')}</dt>
-                  <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">{todayStats.high !== null ? `${formatValue(todayStats.high, 'temperature')}°F` : '—'}</dd>
+                  <dd className="mt-1 text-xl font-semibold text-foreground">{todayStats.high !== null ? `${formatValue(todayStats.high, 'temperature')}°F` : '—'}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.todaysLow')}</dt>
-                  <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">{todayStats.low !== null ? `${formatValue(todayStats.low, 'temperature')}°F` : '—'}</dd>
+                  <dd className="mt-1 text-xl font-semibold text-foreground">{todayStats.low !== null ? `${formatValue(todayStats.low, 'temperature')}°F` : '—'}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.peakGust')}</dt>
-                  <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">{formatValue(todayStats.peakGust, 'wind')} mph</dd>
+                  <dd className="mt-1 text-xl font-semibold text-foreground">{formatValue(todayStats.peakGust, 'wind')} mph</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.rainToday')}</dt>
-                  <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">{formatValue(todayStats.rainSoFar, 'rain')} in</dd>
+                  <dd className="mt-1 text-xl font-semibold text-foreground">{formatValue(todayStats.rainSoFar, 'rain')} in</dd>
                 </div>
                 {todayStats.peakAQI > 0 && (
                   <div>
                     <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.peakAqi')}</dt>
-                    <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">
+                    <dd className="mt-1 text-xl font-semibold text-foreground">
                       {formatValue(todayStats.peakAQI, 'uv')}
                       <span className="ml-1 text-xs font-normal text-muted-foreground">{aqiCategory(todayStats.peakAQI, t)}</span>
                     </dd>
@@ -585,11 +585,11 @@ export function NowPage() {
                 <>
                   <div className="flex items-center gap-2">
                     <Zap aria-hidden="true" className="h-5 w-5 text-yellow-500 shrink-0" />
-                    <span className="font-medium text-foreground font-[tabular-nums]">{t('lightning.strikesLastHour', { count: lightning.count1h })}</span>
+                    <span className="font-medium text-foreground">{t('lightning.strikesLastHour', { count: lightning.count1h })}</span>
                   </div>
-                  <p className="text-muted-foreground font-[tabular-nums]">{t('lightning.strikesLast24h', { count: lightning.count24h })}</p>
+                  <p className="text-muted-foreground">{t('lightning.strikesLast24h', { count: lightning.count24h })}</p>
                   {lightning.nearestDistanceKm !== null && (
-                    <p className="text-muted-foreground font-[tabular-nums]">{t('lightning.nearest', { distance: formatValue(lightning.nearestDistanceKm, 'earthquakeDepth') })}</p>
+                    <p className="text-muted-foreground">{t('lightning.nearest', { distance: formatValue(lightning.nearestDistanceKm, 'earthquakeDepth') })}</p>
                   )}
                   <p className="text-muted-foreground">{t('lightning.lastStrike', { time: lightning.lastStrikeTime ? formatRelativeTime(lightning.lastStrikeTime, locale) : t('lightning.lastStrikeUnknown') })}</p>
                 </>
@@ -617,13 +617,13 @@ export function NowPage() {
               <>
                 <div className="flex items-center gap-2">
                   <Activity aria-hidden="true" className="h-5 w-5 text-muted-foreground shrink-0" />
-                  <span className="font-medium text-foreground font-[tabular-nums]">
+                  <span className="font-medium text-foreground">
                     {t('earthquake.magnitude', { magnitude: formatValue(firstQuake.magnitude, 'earthquakeMag'), place: firstQuake.place })}
                   </span>
                 </div>
                 <p className="text-muted-foreground">{formatRelativeTime(firstQuake.time, locale)}</p>
                 {firstQuake.depth !== null && (
-                  <p className="text-muted-foreground font-[tabular-nums]">{t('earthquake.depth', { depth: formatValue(firstQuake.depth, 'earthquakeDepth') })}</p>
+                  <p className="text-muted-foreground">{t('earthquake.depth', { depth: formatValue(firstQuake.depth, 'earthquakeDepth') })}</p>
                 )}
               </>
             ) : (

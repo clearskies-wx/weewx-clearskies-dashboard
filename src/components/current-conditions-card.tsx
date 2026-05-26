@@ -169,7 +169,7 @@ export function CurrentConditionsCard({
                   className="text-foreground mb-1"
                 />
               )}
-              <span className="text-7xl font-bold text-foreground font-[tabular-nums]">
+              <span className="text-7xl font-bold text-foreground">
                 {formatValue(observation.outTemp, 'temperature')}
               </span>
               {/* Unit label is decorative context for the aria-label above */}
@@ -190,7 +190,7 @@ export function CurrentConditionsCard({
                 className="text-sm text-muted-foreground"
               >
                 {t('feelsLike')}{' '}
-                <span className="font-medium text-foreground font-[tabular-nums]">
+                <span className="font-medium text-foreground">
                   {formatValue(observation.appTemp, 'temperature')}
                   {tempUnit}
                 </span>
@@ -211,7 +211,7 @@ export function CurrentConditionsCard({
                 <dt className="text-xs text-muted-foreground uppercase tracking-wide">
                   {t('observations.dewpoint')}
                 </dt>
-                <dd className="mt-0.5 font-medium text-foreground font-[tabular-nums]">
+                <dd className="mt-0.5 font-medium text-foreground">
                   {observation.dewpoint != null
                     ? `${formatValue(observation.dewpoint, 'temperature')}${tempUnit}`
                     : '—'}
@@ -222,7 +222,7 @@ export function CurrentConditionsCard({
                 <dt className="text-xs text-muted-foreground uppercase tracking-wide">
                   {t('observations.humidity')}
                 </dt>
-                <dd className="mt-0.5 font-medium text-foreground font-[tabular-nums]">
+                <dd className="mt-0.5 font-medium text-foreground">
                   {observation.outHumidity != null
                     ? `${formatValue(observation.outHumidity, 'humidity')}%`
                     : '—'}
@@ -239,7 +239,7 @@ export function CurrentConditionsCard({
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">
                     {t('observations.windChill')}
                   </dt>
-                  <dd className="mt-0.5 font-medium text-foreground font-[tabular-nums]">
+                  <dd className="mt-0.5 font-medium text-foreground">
                     {formatValue(observation.windchill, 'temperature')}
                     {tempUnit}
                   </dd>
@@ -251,7 +251,7 @@ export function CurrentConditionsCard({
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">
                     {t('observations.heatIndex')}
                   </dt>
-                  <dd className="mt-0.5 font-medium text-foreground font-[tabular-nums]">
+                  <dd className="mt-0.5 font-medium text-foreground">
                     {formatValue(observation.heatindex, 'temperature')}
                     {tempUnit}
                   </dd>

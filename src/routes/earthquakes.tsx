@@ -139,7 +139,6 @@ export function EarthquakesPage() {
                             <span className={`text-xs leading-none ${text}`}>M</span>
                             <span
                               className={`text-2xl font-bold leading-none mt-0.5 ${text}`}
-                              style={{ fontFeatureSettings: '"tnum"' }}
                             >
                               {formatValue(quake.magnitude, 'earthquakeMag')}
                             </span>
@@ -172,7 +171,7 @@ export function EarthquakesPage() {
                                 </span>
                               )}
                               {quake.mmi !== null && (
-                                <span className="text-muted-foreground" style={{ fontFeatureSettings: '"tnum"' }}>
+                                <span className="text-muted-foreground">
                                   {t('mmi', { mmi: formatValue(quake.mmi, 'earthquakeMag') })}
                                 </span>
                               )}

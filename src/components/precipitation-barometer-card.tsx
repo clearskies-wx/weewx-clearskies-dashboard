@@ -111,7 +111,7 @@ export function PrecipitationBarometerCard({
                 <CloudRain aria-hidden="true" className="h-3 w-3" />
                 {t('precipBarometer.rainToday')}
               </dt>
-              <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">
+              <dd className="mt-1 text-xl font-semibold text-foreground">
                 {observation.rain != null
                   ? <>{formatValue(observation.rain, 'rain')} <span className="text-sm font-normal text-muted-foreground">in</span></>
                   : '—'}
@@ -123,7 +123,7 @@ export function PrecipitationBarometerCard({
               <dt className="text-xs text-muted-foreground uppercase tracking-wide">
                 {t('precipBarometer.rainRate')}
               </dt>
-              <dd className="mt-1 text-xl font-semibold text-foreground font-[tabular-nums]">
+              <dd className="mt-1 text-xl font-semibold text-foreground">
                 {observation.rainRate != null
                   ? <>{formatValue(observation.rainRate, 'rainRate')} <span className="text-sm font-normal text-muted-foreground">in/hr</span></>
                   : '—'}
@@ -137,7 +137,7 @@ export function PrecipitationBarometerCard({
                 {t('precipBarometer.barometer')}
               </dt>
               <dd className="mt-1 flex items-baseline gap-2">
-                <span className="text-xl font-semibold text-foreground font-[tabular-nums]">
+                <span className="text-xl font-semibold text-foreground">
                   {observation.barometer != null
                     ? <>{formatValue(observation.barometer, 'barometer')} <span className="text-sm font-normal text-muted-foreground">inHg</span></>
                     : '—'}

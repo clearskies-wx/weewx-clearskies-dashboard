@@ -197,18 +197,18 @@ export function ForecastPage() {
                       className="text-muted-foreground"
                     />
                     <span
-                      className="text-sm font-semibold text-foreground font-[tabular-nums]"
+                      className="text-sm font-semibold text-foreground"
                     >
                       {formatValue(hour.outTemp, 'temperature')}°
                     </span>
                     {hour.precipProbability !== null && hour.precipProbability > 0 && (
-                      <span className="text-xs text-blue-600 dark:text-blue-400 font-[tabular-nums]">
+                      <span className="text-xs text-blue-600 dark:text-blue-400">
                         {formatValue(hour.precipProbability, 'percent')}%
                       </span>
                     )}
                     {hasWindDir && hour.windSpeed !== null && (
                       <span
-                        className="flex items-center gap-0.5 text-xs text-muted-foreground font-[tabular-nums]"
+                        className="flex items-center gap-0.5 text-xs text-muted-foreground"
                         aria-label={windLabel}
                       >
                         <WindArrow
@@ -271,7 +271,7 @@ export function ForecastPage() {
                       </div>
 
                       {/* Temperature row — high / low */}
-                      <div className="flex justify-center gap-1 font-[tabular-nums] text-base">
+                      <div className="flex justify-center gap-1 text-base">
                         <span className="font-semibold text-foreground">{formatValue(day.tempMax, 'temperature')}°</span>
                         <span className="text-muted-foreground">/</span>
                         <span className="text-muted-foreground">{formatValue(day.tempMin, 'temperature')}°</span>
@@ -292,7 +292,7 @@ export function ForecastPage() {
 
                       {/* Wind speed — no windDir on DailyForecastPoint, show speed only */}
                       {day.windSpeedMax !== null && (
-                        <p className="text-xs text-muted-foreground font-[tabular-nums]">
+                        <p className="text-xs text-muted-foreground">
                           {t('windUpTo', { speed: formatValue(day.windSpeedMax, 'wind') })}
                         </p>
                       )}

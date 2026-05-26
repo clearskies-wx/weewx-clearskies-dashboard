@@ -145,7 +145,7 @@ export function AlmanacPage() {
                 </div>
                 <div>
                   <dt className="text-muted-foreground">{t('sun.totalDaylight')}</dt>
-                  <dd className="font-medium text-foreground mt-0.5" style={{ fontFeatureSettings: '"tnum"' }}>
+                  <dd className="font-medium text-foreground mt-0.5">
                     {formatDaylight(almanac.sun.daylightMinutes)}
                     {almanac.sun.daylightDeltaVsYesterdayMinutes !== null && (
                       <span className="ml-2 text-xs text-muted-foreground">
@@ -199,7 +199,7 @@ export function AlmanacPage() {
                 </div>
                 <div>
                   <dt className="text-muted-foreground">{t('moon.illumination')}</dt>
-                  <dd className="font-medium text-foreground mt-0.5" style={{ fontFeatureSettings: '"tnum"' }}>
+                  <dd className="font-medium text-foreground mt-0.5">
                     {formatValue(almanac.moon.illuminationPercent, 'percent')}%
                   </dd>
                 </div>

@@ -299,7 +299,7 @@ function MonthlyTabContent({ station, tz, locale }: TabContentProps) {
                         <td className="py-1.5 px-3 text-foreground">
                           {formatDayOfMonth(record.timestamp, tz, locale)}
                         </td>
-                        <td className="py-1.5 px-3 text-right text-foreground font-[tabular-nums]">
+                        <td className="py-1.5 px-3 text-right text-foreground">
                           {record.outTemp != null ? `${record.outTemp}°F` : '—'}
                         </td>
                       </tr>
@@ -521,7 +521,7 @@ function AnnualTabContent({ station, tz, locale }: TabContentProps) {
                         <td className="py-1.5 px-3 text-foreground">
                           {formatDayOfMonth(record.timestamp, tz, locale)}
                         </td>
-                        <td className="py-1.5 px-3 text-right text-foreground font-[tabular-nums]">
+                        <td className="py-1.5 px-3 text-right text-foreground">
                           {record.outTemp != null ? `${record.outTemp}°F` : '—'}
                         </td>
                       </tr>
@@ -720,7 +720,7 @@ function AverageClimateTabContent({ station, locale }: TabContentProps) {
                       <td className="py-1.5 px-3 text-foreground">
                         {monthNameLong(row.month, locale)}
                       </td>
-                      <td className="py-1.5 px-3 text-right text-foreground font-[tabular-nums]">
+                      <td className="py-1.5 px-3 text-right text-foreground">
                         {row.avgTemp != null ? `${row.avgTemp}°F` : '—'}
                       </td>
                     </tr>
@@ -997,7 +997,7 @@ export function ChartsPage() {
                       {archiveData.map((record) => (
                         <tr key={record.timestamp} className="border-b border-border last:border-0">
                           <td className="py-1.5 px-3 text-foreground">{formatXAxisHour(record.timestamp, tz, locale)}</td>
-                          <td className="py-1.5 px-3 text-right text-foreground font-[tabular-nums]">{record.outTemp}°F</td>
+                          <td className="py-1.5 px-3 text-right text-foreground">{record.outTemp}°F</td>
                         </tr>
                       ))}
                     </tbody>
