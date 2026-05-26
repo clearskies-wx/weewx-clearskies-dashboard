@@ -18,7 +18,7 @@
 
 import { useTranslation } from 'react-i18next';
 import { CloudRain, Gauge } from 'lucide-react';
-import { formatValue } from '../utils/format';
+import { asConverted } from '../api/types';
 import { barometerTrendArrow, barometerTrendLabel } from '../utils/barometer';
 import {
   Card,
@@ -82,9 +82,11 @@ export function PrecipitationBarometerCard({
 }: PrecipitationBarometerCardProps) {
   const { t } = useTranslation('now');
 
-  const trend = observation?.barometerTrend ?? null;
-  const trendArrow = barometerTrendArrow(trend);
-  const trendText = barometerTrendLabel(trend, t);
+  // barometerTrend helpers need a raw number; extract .value from ConvertedValue.
+  const trendCV = asConverted(observation?.barometerTrend ?? null);
+  const trendNumeric = trendCV?.value ?? null;
+  const trendArrow = barometerTrendArrow(trendNumeric);
+  const trendText = barometerTrendLabel(trendNumeric, t);
 
   return (
     <Card className={className} aria-busy={loading}>
@@ -112,9 +114,11 @@ export function PrecipitationBarometerCard({
                 {t('precipBarometer.rainToday')}
               </dt>
               <dd className="mt-1 text-xl font-semibold text-foreground">
-                {observation.rain != null
-                  ? <>{formatValue(observation.rain, 'rain')} <span className="text-sm font-normal text-muted-foreground">in</span></>
-                  : '—'}
+                {(() => {
+                  const cv = asConverted(observation.rain);
+                  if (cv === null) return '—';
+                  return <>{cv.formatted}{cv.label && <span className="text-sm font-normal text-muted-foreground"> {cv.label.trimStart()}</span>}</>;
+                })()}
               </dd>
             </div>
 
@@ -124,9 +128,11 @@ export function PrecipitationBarometerCard({
                 {t('precipBarometer.rainRate')}
               </dt>
               <dd className="mt-1 text-xl font-semibold text-foreground">
-                {observation.rainRate != null
-                  ? <>{formatValue(observation.rainRate, 'rainRate')} <span className="text-sm font-normal text-muted-foreground">in/hr</span></>
-                  : '—'}
+                {(() => {
+                  const cv = asConverted(observation.rainRate);
+                  if (cv === null) return '—';
+                  return <>{cv.formatted}{cv.label && <span className="text-sm font-normal text-muted-foreground"> {cv.label.trimStart()}</span>}</>;
+                })()}
               </dd>
             </div>
 
@@ -138,9 +144,11 @@ export function PrecipitationBarometerCard({
               </dt>
               <dd className="mt-1 flex items-baseline gap-2">
                 <span className="text-xl font-semibold text-foreground">
-                  {observation.barometer != null
-                    ? <>{formatValue(observation.barometer, 'barometer')} <span className="text-sm font-normal text-muted-foreground">inHg</span></>
-                    : '—'}
+                  {(() => {
+                    const cv = asConverted(observation.barometer);
+                    if (cv === null) return '—';
+                    return <>{cv.formatted}{cv.label && <span className="text-sm font-normal text-muted-foreground"> {cv.label.trimStart()}</span>}</>;
+                  })()}
                 </span>
                 {/* Trend arrow — role="img" so the glyph is named, not spelled
                     out.  The text label also appears visually for all users. */}

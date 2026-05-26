@@ -1,8 +1,8 @@
 // useRealtimeObservation.ts — Merged observation hook.
 //
 // Combines:
-//   1. useObservation() — initial load from GET /current (REST, archive row)
-//   2. useSSE()         — real-time updates from GET /sse (live loop packets)
+//   1. useObservation() — initial load from GET /current (REST via BFF)
+//   2. useSSE()         — real-time updates from GET /sse (live loop packets via BFF)
 //
 // When an SSE loop packet arrives, its fields are mapped to the Observation
 // type and shallow-merged over the current observation state.  Fields not
@@ -12,21 +12,24 @@
 // drop-in import swap with no other changes.
 //
 // ---------------------------------------------------------------------------
-// Field mapping rationale
+// Field mapping rationale (post ADR-041/ADR-042)
 // ---------------------------------------------------------------------------
-// Per ADR-010 the canonical data model uses weewx camelCase field names
-// as-is.  The API's /current endpoint reads archive rows and maps them
-// directly: archive column "outTemp" → Observation.outTemp, etc.
-// NO unit conversion happens server-side (ADR-019): the API passes the
-// weewx target_unit through unchanged.
+// The BFF (ADR-041) applies unit conversion and emits ConvertedValue objects
+// for all numeric observation fields.  SSE packets from the BFF now carry
+// ConvertedValue objects (not raw numbers) for weather fields.
 //
-// SSE sends the raw weewx loop packet.  The loop packet field names are
-// the same weewx names.  Therefore the mapping for numeric fields is:
-//   weewx loop packet key === Observation key  (1-to-1, no rename, no convert)
+// The SSE path stores ConvertedValue objects directly — no client-side
+// coercion to numbers.  The BFF handles MQTT suffix stripping and conversion
+// before the SSE event reaches the browser.
 //
-// The ONE exception is the timestamp:
+// The ONE special case is dateTime — still a raw integer epoch (seconds)
+// from the BFF's SSE stream:
 //   weewx "dateTime"  → integer epoch (seconds)
 //   Observation.timestamp → UTC ISO-8601 string (e.g. "2026-05-19T12:00:00Z")
+//
+// New BFF-computed fields also arrive in SSE packets:
+//   beaufort      → ConvertedValue { value, label, formatted }
+//   comfortIndex  → "windChill" | "heatIndex" | "none"
 //
 // The SSE source field is fixed to "weewx-sse" to distinguish it from REST.
 //
@@ -36,7 +39,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useObservation } from './useWeatherData';
 import { useSSE } from './useSSE';
 import { isMockMode } from '../api/client';
-import type { Observation, UnitsBlock } from '../api/types';
+import type { Observation, UnitsBlock, ConvertedValue } from '../api/types';
 
 // ---------------------------------------------------------------------------
 // SSE URL config
@@ -95,7 +98,9 @@ export const WEEWX_TO_OBSERVATION: Readonly<Record<string, ObservationKey>> = {
   lightning_strike_count_1h: 'lightning_strike_count_1h',
   lightning_distance:        'lightning_distance',
   lightning_last_det_time:   'lightning_last_det_time',
-  // dateTime is handled separately (epoch → ISO string conversion).
+  // BFF-computed derived fields (ADR-042):
+  beaufort:     'beaufort',
+  // dateTime and comfortIndex are handled separately below.
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -103,9 +108,27 @@ export const WEEWX_TO_OBSERVATION: Readonly<Record<string, ObservationKey>> = {
 // ---------------------------------------------------------------------------
 
 /**
- * Convert a raw weewx loop packet to a partial Observation.
+ * Determine whether an unknown value is a ConvertedValue object from the BFF.
+ * ConvertedValue has { value: number|null, label: string, formatted: string }.
+ */
+function isConvertedValue(val: unknown): val is ConvertedValue {
+  return (
+    typeof val === 'object' &&
+    val !== null &&
+    'value' in val &&
+    'label' in val &&
+    'formatted' in val
+  );
+}
+
+/**
+ * Convert a BFF SSE packet to a partial Observation.
  *
- * Only mapped fields with non-null values are included in the result.
+ * The BFF (ADR-041) converts MQTT field values to ConvertedValue objects
+ * before emitting the SSE event.  This function passes ConvertedValue objects
+ * through directly.  Raw numbers (for fields the BFF has no conversion for)
+ * are kept as-is — asConverted() in components handles both cases.
+ *
  * Unknown packet fields are silently ignored.
  */
 export function mapPacketToObservation(
@@ -114,26 +137,38 @@ export function mapPacketToObservation(
   const partial: Partial<Observation> = {};
 
   // Handle dateTime → timestamp conversion.
-  // weewx dateTime is a Unix epoch integer (seconds since 1970-01-01T00:00:00Z).
+  // dateTime is still a raw Unix epoch integer (seconds) from the BFF.
   const dt = packet['dateTime'];
   if (typeof dt === 'number' && dt > 0) {
     partial.timestamp = new Date(dt * 1000).toISOString().replace(/\.\d{3}Z$/, 'Z');
+  } else if (typeof dt === 'string') {
+    const n = Number(dt);
+    if (Number.isFinite(n) && n > 0) {
+      partial.timestamp = new Date(n * 1000).toISOString().replace(/\.\d{3}Z$/, 'Z');
+    }
   }
 
-  // Map all other fields.
+  // Handle comfortIndex — BFF emits a plain string, not a ConvertedValue.
+  const ci = packet['comfortIndex'];
+  if (ci === 'windChill' || ci === 'heatIndex' || ci === 'none') {
+    partial.comfortIndex = ci;
+  }
+
+  // Map all other fields (ConvertedValue or raw number/null).
   for (const [weewxKey, obsKey] of Object.entries(WEEWX_TO_OBSERVATION)) {
     const val = packet[weewxKey];
     if (val === undefined) continue;
     // Null is a valid value (sensor not available) — include it.
-    // SSE loop packets may deliver numeric fields as strings (e.g. windDir as
-    // "270" instead of 270).  Coerce string values to numbers; non-finite
-    // strings (e.g. malformed values) become null so formatValue never sees them.
     let coerced: unknown = val;
-    if (typeof val === 'string') {
+    if (isConvertedValue(val)) {
+      // BFF-converted field: store as-is.
+      coerced = val;
+    } else if (typeof val === 'string') {
+      // Legacy path: raw string number (older BFF without conversion for this group).
       const n = Number(val);
       coerced = Number.isFinite(n) ? n : null;
     }
-    // Type assertion: Observation field values are number | string | boolean | null.
+    // Type assertion: Observation field values are ConvertedValue | number | string | boolean | null.
     (partial as Record<string, unknown>)[obsKey] = coerced;
   }
 

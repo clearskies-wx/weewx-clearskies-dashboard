@@ -7,7 +7,9 @@ import {
   CardContent,
 } from '../components/ui/card';
 import { useForecast, useAlerts, useStation } from '../hooks/useWeatherData';
+import { useRealtimeObservation } from '../hooks/useRealtimeObservation';
 import { formatValue } from '../utils/format';
+import { asConverted } from '../api/types';
 
 /** Convert wind direction degrees to an 16-point cardinal label. */
 function windDirLabel(deg: number): string {
@@ -144,8 +146,14 @@ export function ForecastPage() {
   const { data: forecast, loading: fcLoading, error: fcError, refetch: fcRefetch } = useForecast();
   const { data: station } = useStation();
   const { data: alerts, loading: alertLoading } = useAlerts();
+  const { data: observation } = useRealtimeObservation();
   const tz = station?.timezone ?? 'UTC';
   const locale = i18n.language;
+
+  // Wind unit label from BFF (ADR-042). Forecast data is raw numbers from the
+  // provider — not BFF-converted. We use the current observation's wind label
+  // as the best available proxy for the display unit.
+  const windUnit = asConverted(observation?.windSpeed ?? null)?.label ?? '';
 
   return (
     <div className="flex flex-col gap-6 max-w-4xl mx-auto">
@@ -293,7 +301,7 @@ export function ForecastPage() {
                       {/* Wind speed — no windDir on DailyForecastPoint, show speed only */}
                       {day.windSpeedMax !== null && (
                         <p className="text-xs text-muted-foreground">
-                          {t('windUpTo', { speed: formatValue(day.windSpeedMax, 'wind') })}
+                          {t('windUpTo', { speed: formatValue(day.windSpeedMax, 'wind'), unit: windUnit })}
                         </p>
                       )}
                     </CardContent>

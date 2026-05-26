@@ -9,7 +9,7 @@
   "noHourlyData": "暫無逐時預報資料。",
   "noDailyData": "暫無每日預報資料。",
   "percentPrecip": "降雨機率 {{pct}}%",
-  "windUpTo": "最大風速 {{speed}} mph",
+  "windUpTo": "最大風速 {{speed}}{{unit}}",
   "updated": "更新於 {{time}}",
   "ariaHourlyScroll": "逐時預報 — 捲動查看更多",
   "ariaHourlyList": "逐時預報",

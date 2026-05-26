@@ -9,7 +9,7 @@
   "noHourlyData": "Keine stündlichen Vorhersagedaten verfügbar.",
   "noDailyData": "Keine täglichen Vorhersagedaten verfügbar.",
   "percentPrecip": "{{pct}}% Niederschlag",
-  "windUpTo": "Wind bis {{speed}} mph",
+  "windUpTo": "Wind bis {{speed}}{{unit}}",
   "updated": "Aktualisiert {{time}}",
   "ariaHourlyScroll": "Stündliche Vorhersage – scrollen, um mehr zu sehen",
   "ariaHourlyList": "Stündliche Vorhersage",

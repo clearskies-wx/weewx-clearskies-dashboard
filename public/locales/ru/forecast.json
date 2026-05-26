@@ -9,7 +9,7 @@
   "noHourlyData": "Почасовой прогноз недоступен.",
   "noDailyData": "Суточный прогноз недоступен.",
   "percentPrecip": "{{pct}}% осадков",
-  "windUpTo": "Ветер до {{speed}} м/с",
+  "windUpTo": "Ветер до {{speed}}{{unit}}",
   "updated": "Обновлено {{time}}",
   "ariaHourlyScroll": "Почасовой прогноз — прокрутите, чтобы увидеть больше",
   "ariaHourlyList": "Почасовой прогноз",

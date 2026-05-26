@@ -75,8 +75,8 @@
   "feelsLike": "Feels like",
 
   "windCompass": {
-    "speed": "Wind: {{speed}} mph · {{direction}}",
-    "gusts": "Gusts: {{gust}} mph",
+    "speed": "Wind: {{speed}}{{unit}} · {{direction}}",
+    "gusts": "Gusts: {{gust}}{{unit}}",
     "ariaLabel": "Wind from {{direction}} at {{degrees}} degrees",
     "directionLabel": "From the {{direction}} {{degrees}}°"
   },

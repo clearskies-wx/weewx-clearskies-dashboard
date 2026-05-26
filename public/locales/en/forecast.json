@@ -9,7 +9,7 @@
   "noHourlyData": "No hourly forecast data available.",
   "noDailyData": "No daily forecast data available.",
   "percentPrecip": "{{pct}}% precip",
-  "windUpTo": "Wind up to {{speed}} mph",
+  "windUpTo": "Wind up to {{speed}}{{unit}}",
   "updated": "Updated {{time}}",
   "ariaHourlyScroll": "Hourly forecast — scroll to see more",
   "ariaHourlyList": "Hourly forecast",

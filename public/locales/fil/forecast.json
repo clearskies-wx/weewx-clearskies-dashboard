@@ -9,7 +9,7 @@
   "noHourlyData": "Walang available na oras-oras na datos ng hula.",
   "noDailyData": "Walang available na araw-araw na datos ng hula.",
   "percentPrecip": "{{pct}}% ulan",
-  "windUpTo": "Hangin hanggang {{speed}} mph",
+  "windUpTo": "Hangin hanggang {{speed}}{{unit}}",
   "updated": "Na-update {{time}}",
   "ariaHourlyScroll": "Oras-oras na hula — mag-scroll para makita ang higit pa",
   "ariaHourlyList": "Oras-oras na hula",

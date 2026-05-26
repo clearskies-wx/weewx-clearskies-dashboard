@@ -72,8 +72,8 @@
   },
   "feelsLike": "Sensación térmica",
   "windCompass": {
-    "speed": "Viento: {{speed}} mph · {{direction}}",
-    "gusts": "Ráfagas: {{gust}} mph",
+    "speed": "Viento: {{speed}}{{unit}} · {{direction}}",
+    "gusts": "Ráfagas: {{gust}}{{unit}}",
     "ariaLabel": "Viento del {{direction}} a {{degrees}} grados",
     "directionLabel": "Del {{direction}} {{degrees}}°"
   },

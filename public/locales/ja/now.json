@@ -63,8 +63,8 @@
   },
   "feelsLike": "体感",
   "windCompass": {
-    "speed": "風速: {{speed}} mph · {{direction}}",
-    "gusts": "突風: {{gust}} mph",
+    "speed": "風速: {{speed}}{{unit}} · {{direction}}",
+    "gusts": "突風: {{gust}}{{unit}}",
     "ariaLabel": "{{direction}}から{{degrees}}度の風",
     "directionLabel": "{{direction}} {{degrees}}°から"
   },

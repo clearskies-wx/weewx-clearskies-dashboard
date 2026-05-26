@@ -63,8 +63,8 @@
   },
   "feelsLike": "Gefühlt wie",
   "windCompass": {
-    "speed": "Wind: {{speed}} mph · {{direction}}",
-    "gusts": "Böen: {{gust}} mph",
+    "speed": "Wind: {{speed}}{{unit}} · {{direction}}",
+    "gusts": "Böen: {{gust}}{{unit}}",
     "ariaLabel": "Wind aus {{direction}} mit {{degrees}} Grad",
     "directionLabel": "Aus {{direction}} {{degrees}}°"
   },

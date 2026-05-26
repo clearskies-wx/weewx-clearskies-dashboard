@@ -15,6 +15,8 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardHeader, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { useArchive, useStation } from '../hooks/useWeatherData';
+import { useRealtimeObservation } from '../hooks/useRealtimeObservation';
+import { asConverted } from '../api/types';
 import type { StationMetadata } from '../api/types';
 
 const TABS = [
@@ -128,6 +130,8 @@ interface TabContentProps {
   station: StationMetadata | null;
   tz: string;
   locale: string;
+  /** Temperature unit label from BFF (e.g. " °F", " °C"). Empty when unknown. */
+  tempUnit: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -149,7 +153,7 @@ function availableYears(firstRecord: string | null | undefined): number[] {
 // Monthly tab
 // ---------------------------------------------------------------------------
 
-function MonthlyTabContent({ station, tz, locale }: TabContentProps) {
+function MonthlyTabContent({ station, tz, locale, tempUnit }: TabContentProps) {
   const { t } = useTranslation('charts');
   const reducedMotion = usePrefersReducedMotion();
   const now = new Date();
@@ -300,7 +304,7 @@ function MonthlyTabContent({ station, tz, locale }: TabContentProps) {
                           {formatDayOfMonth(record.timestamp, tz, locale)}
                         </td>
                         <td className="py-1.5 px-3 text-right text-foreground">
-                          {record.outTemp != null ? `${record.outTemp}°F` : '—'}
+                          {record.outTemp != null ? `${record.outTemp}${tempUnit}` : '—'}
                         </td>
                       </tr>
                     ))}
@@ -339,11 +343,11 @@ function MonthlyTabContent({ station, tz, locale }: TabContentProps) {
                         tickLine={false}
                         width={40}
                         tickFormatter={(v) => `${v}°`}
-                        unit="°F"
+                        unit={tempUnit}
                       />
                       <Tooltip
                         formatter={(value) => [
-                          typeof value === 'number' ? `${value}°F` : String(value),
+                          typeof value === 'number' ? `${value}${tempUnit}` : String(value),
                           t('seriesTemperature'),
                         ]}
                         labelFormatter={(label) => formatDayOfMonth(String(label), tz, locale)}
@@ -384,7 +388,7 @@ function MonthlyTabContent({ station, tz, locale }: TabContentProps) {
                     {archiveData.map((record) => (
                       <tr key={record.timestamp}>
                         <td>{formatDayOfMonth(record.timestamp, tz, locale)}</td>
-                        <td>{record.outTemp != null ? `${record.outTemp}°F` : '—'}</td>
+                        <td>{record.outTemp != null ? `${record.outTemp}${tempUnit}` : '—'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -406,7 +410,7 @@ function MonthlyTabContent({ station, tz, locale }: TabContentProps) {
 // Annual tab
 // ---------------------------------------------------------------------------
 
-function AnnualTabContent({ station, tz, locale }: TabContentProps) {
+function AnnualTabContent({ station, tz, locale, tempUnit }: TabContentProps) {
   const { t } = useTranslation('charts');
   const reducedMotion = usePrefersReducedMotion();
   const now = new Date();
@@ -522,7 +526,7 @@ function AnnualTabContent({ station, tz, locale }: TabContentProps) {
                           {formatDayOfMonth(record.timestamp, tz, locale)}
                         </td>
                         <td className="py-1.5 px-3 text-right text-foreground">
-                          {record.outTemp != null ? `${record.outTemp}°F` : '—'}
+                          {record.outTemp != null ? `${record.outTemp}${tempUnit}` : '—'}
                         </td>
                       </tr>
                     ))}
@@ -561,11 +565,11 @@ function AnnualTabContent({ station, tz, locale }: TabContentProps) {
                         tickLine={false}
                         width={40}
                         tickFormatter={(v) => `${v}°`}
-                        unit="°F"
+                        unit={tempUnit}
                       />
                       <Tooltip
                         formatter={(value) => [
-                          typeof value === 'number' ? `${value}°F` : String(value),
+                          typeof value === 'number' ? `${value}${tempUnit}` : String(value),
                           t('seriesTemperature'),
                         ]}
                         labelFormatter={(label) => formatDayOfMonth(String(label), tz, locale)}
@@ -604,7 +608,7 @@ function AnnualTabContent({ station, tz, locale }: TabContentProps) {
                     {archiveData.map((record) => (
                       <tr key={record.timestamp}>
                         <td>{formatDayOfMonth(record.timestamp, tz, locale)}</td>
-                        <td>{record.outTemp != null ? `${record.outTemp}°F` : '—'}</td>
+                        <td>{record.outTemp != null ? `${record.outTemp}${tempUnit}` : '—'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -626,7 +630,7 @@ function AnnualTabContent({ station, tz, locale }: TabContentProps) {
 // Average Climate tab
 // ---------------------------------------------------------------------------
 
-function AverageClimateTabContent({ station, locale }: TabContentProps) {
+function AverageClimateTabContent({ station, locale, tempUnit }: TabContentProps) {
   const { t } = useTranslation('charts');
   const reducedMotion = usePrefersReducedMotion();
   const [showTable, setShowTable] = useState(false);
@@ -721,7 +725,7 @@ function AverageClimateTabContent({ station, locale }: TabContentProps) {
                         {monthNameLong(row.month, locale)}
                       </td>
                       <td className="py-1.5 px-3 text-right text-foreground">
-                        {row.avgTemp != null ? `${row.avgTemp}°F` : '—'}
+                        {row.avgTemp != null ? `${row.avgTemp}${tempUnit}` : '—'}
                       </td>
                     </tr>
                   ))}
@@ -759,11 +763,11 @@ function AverageClimateTabContent({ station, locale }: TabContentProps) {
                       tickLine={false}
                       width={40}
                       tickFormatter={(v) => `${v}°`}
-                      unit="°F"
+                      unit={tempUnit}
                     />
                     <Tooltip
                       formatter={(value) => [
-                        typeof value === 'number' ? `${value}°F` : String(value),
+                        typeof value === 'number' ? `${value}${tempUnit}` : String(value),
                         t('averageClimateSeriesAvgTemp'),
                       ]}
                       labelFormatter={(label) => monthNameLong(label as number, locale)}
@@ -799,7 +803,7 @@ function AverageClimateTabContent({ station, locale }: TabContentProps) {
                   {monthlyAverages.map((row) => (
                     <tr key={row.month}>
                       <td>{monthNameLong(row.month, locale)}</td>
-                      <td>{row.avgTemp != null ? `${row.avgTemp}°F` : '—'}</td>
+                      <td>{row.avgTemp != null ? `${row.avgTemp}${tempUnit}` : '—'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -823,8 +827,13 @@ function AverageClimateTabContent({ station, locale }: TabContentProps) {
 export function ChartsPage() {
   const { t, i18n } = useTranslation('charts');
   const { data: station } = useStation();
+  const { data: observation } = useRealtimeObservation();
   const tz = station?.timezone ?? 'UTC';
   const locale = i18n.language;
+
+  // Derive temperature unit label from BFF-converted observation (ADR-042).
+  // Falls back to empty string when observation isn't loaded yet.
+  const tempUnit = asConverted(observation?.outTemp ?? null)?.label ?? '';
   const [activeTab, setActiveTab] = useState<TabId>('homepage');
   const [activeRange, setActiveRange] = useState<RangeId>('1d');
   const [showTable, setShowTable] = useState(false);
@@ -997,7 +1006,7 @@ export function ChartsPage() {
                       {archiveData.map((record) => (
                         <tr key={record.timestamp} className="border-b border-border last:border-0">
                           <td className="py-1.5 px-3 text-foreground">{formatXAxisHour(record.timestamp, tz, locale)}</td>
-                          <td className="py-1.5 px-3 text-right text-foreground">{record.outTemp}°F</td>
+                          <td className="py-1.5 px-3 text-right text-foreground">{record.outTemp}{tempUnit}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1035,11 +1044,11 @@ export function ChartsPage() {
                           tickLine={false}
                           width={40}
                           tickFormatter={(v) => `${v}°`}
-                          unit="°F"
+                          unit={tempUnit}
                         />
                         <Tooltip
                           formatter={(value) => [
-                            typeof value === 'number' ? `${value}°F` : String(value),
+                            typeof value === 'number' ? `${value}${tempUnit}` : String(value),
                             t('seriesTemperature'),
                           ]}
                           labelFormatter={(label) => formatXAxisHour(String(label), tz, locale)}
@@ -1100,7 +1109,7 @@ export function ChartsPage() {
         hidden={activeTab !== 'averageclimate'}
       >
         {activeTab === 'averageclimate' && (
-          <AverageClimateTabContent station={station} tz={tz} locale={locale} />
+          <AverageClimateTabContent station={station} tz={tz} locale={locale} tempUnit={tempUnit} />
         )}
       </div>
 
@@ -1112,7 +1121,7 @@ export function ChartsPage() {
         hidden={activeTab !== 'monthly'}
       >
         {activeTab === 'monthly' && (
-          <MonthlyTabContent station={station} tz={tz} locale={locale} />
+          <MonthlyTabContent station={station} tz={tz} locale={locale} tempUnit={tempUnit} />
         )}
       </div>
 
@@ -1124,7 +1133,7 @@ export function ChartsPage() {
         hidden={activeTab !== 'annual'}
       >
         {activeTab === 'annual' && (
-          <AnnualTabContent station={station} tz={tz} locale={locale} />
+          <AnnualTabContent station={station} tz={tz} locale={locale} tempUnit={tempUnit} />
         )}
       </div>
     </div>

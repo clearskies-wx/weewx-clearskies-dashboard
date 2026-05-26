@@ -3,6 +3,49 @@
 // Dashboard-derived types (not from a single endpoint) are marked with a comment.
 
 // ---------------------------------------------------------------------------
+// BFF unit-converted value (ADR-042)
+// ---------------------------------------------------------------------------
+
+/**
+ * ConvertedValue — the shape the BFF emits for every observation field.
+ *
+ * The BFF (ADR-041) converts all observation values to operator display units
+ * and attaches a label and pre-formatted string.  Components must render
+ * `.formatted` for display and use `.label` for the unit string.
+ *
+ * Some fields (e.g. UV, radiation) may arrive as raw numbers when the BFF
+ * has no configured conversion for that group.  Use asConverted() to
+ * normalise both cases.
+ */
+export interface ConvertedValue {
+  value: number | null;
+  label: string;
+  formatted: string;
+}
+
+/**
+ * asConverted — normalise a BFF field to ConvertedValue.
+ *
+ * Handles three cases:
+ *   - Already a ConvertedValue object: returned as-is.
+ *   - Raw number (BFF without unit config for that group): wrapped with
+ *     empty label and String(val) formatted.
+ *   - null / undefined: returns null.
+ *
+ * Components should call asConverted() on every Observation field before
+ * accessing .value / .label / .formatted so they don't need to branch on
+ * the ConvertedValue | number | null union.
+ */
+export function asConverted(
+  val: ConvertedValue | number | null | undefined,
+): ConvertedValue | null {
+  if (val === null || val === undefined) return null;
+  if (typeof val === 'object' && 'value' in val) return val as ConvertedValue;
+  if (typeof val === 'number') return { value: val, label: '', formatted: String(val) };
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // Response envelope
 // ---------------------------------------------------------------------------
 
@@ -45,26 +88,30 @@ export interface ProblemDetail {
 
 export interface Observation {
   timestamp: string;
-  outTemp: number | null;
-  outHumidity: number | null;
-  windSpeed: number | null;
-  windDir: number | null;
-  windGust: number | null;
-  windGustDir: number | null;
-  barometer: number | null;
-  pressure: number | null;
-  altimeter: number | null;
-  dewpoint: number | null;
-  windchill: number | null;
-  heatindex: number | null;
-  rainRate: number | null;
-  rain: number | null;
-  barometerTrend: number | null;
-  radiation: number | null;
-  UV: number | null;
-  inTemp: number | null;
-  inHumidity: number | null;
-  appTemp: number | null;
+  // Numeric observation fields are ConvertedValue when the BFF has applied unit
+  // conversion (ADR-042), or a raw number when the BFF has no conversion config
+  // for that group.  Use asConverted() to normalise before reading .value /
+  // .label / .formatted.
+  outTemp: ConvertedValue | number | null;
+  outHumidity: ConvertedValue | number | null;
+  windSpeed: ConvertedValue | number | null;
+  windDir: ConvertedValue | number | null;
+  windGust: ConvertedValue | number | null;
+  windGustDir: ConvertedValue | number | null;
+  barometer: ConvertedValue | number | null;
+  pressure: ConvertedValue | number | null;
+  altimeter: ConvertedValue | number | null;
+  dewpoint: ConvertedValue | number | null;
+  windchill: ConvertedValue | number | null;
+  heatindex: ConvertedValue | number | null;
+  rainRate: ConvertedValue | number | null;
+  rain: ConvertedValue | number | null;
+  barometerTrend: ConvertedValue | number | null;
+  radiation: ConvertedValue | number | null;
+  UV: ConvertedValue | number | null;
+  inTemp: ConvertedValue | number | null;
+  inHumidity: ConvertedValue | number | null;
+  appTemp: ConvertedValue | number | null;
   /** Lightning fields — present only when lightning sensor configured. */
   lightning_strike_count?: number | null;
   lightning_strike_count_1h?: number | null;
@@ -72,6 +119,20 @@ export interface Observation {
   lightning_last_det_time?: string | null;
   /** Weather description text — present when observation includes a text summary (Phase 0B). */
   weatherText?: string | null;
+  /**
+   * Beaufort scale — computed by BFF (ADR-042).
+   * .value: Beaufort number (0–12).
+   * .label: localised descriptor (e.g. "Gentle breeze").
+   * .formatted: Beaufort number as string.
+   */
+  beaufort?: ConvertedValue | null;
+  /**
+   * Comfort index selection — computed by BFF (ADR-042).
+   * "windChill" when temperature is in the cold range.
+   * "heatIndex" when temperature is in the heat range.
+   * "none" when neither applies.
+   */
+  comfortIndex?: 'windChill' | 'heatIndex' | 'none';
   extras: Record<string, number | string | boolean | null>;
   source: string;
 }

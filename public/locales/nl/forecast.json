@@ -9,7 +9,7 @@
   "noHourlyData": "Geen uurverwachtingsgegevens beschikbaar.",
   "noDailyData": "Geen dagverwachtingsgegevens beschikbaar.",
   "percentPrecip": "{{pct}}% neerslag",
-  "windUpTo": "Wind tot {{speed}} mph",
+  "windUpTo": "Wind tot {{speed}}{{unit}}",
   "updated": "Bijgewerkt {{time}}",
   "ariaHourlyScroll": "Uurverwachting — scroll voor meer",
   "ariaHourlyList": "Uurverwachting",

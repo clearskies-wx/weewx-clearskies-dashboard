@@ -3,16 +3,15 @@
 // Displays: station name, large live temperature, feels-like, weather
 // description text, dewpoint, relative humidity, and a smart comfort index.
 //
-// Comfort index NWS thresholds (standard):
-//   outTemp < 50 °F  → wind chill (cold discomfort)
-//   outTemp > 80 °F  → heat index (heat discomfort)
-//   50–80 °F         → neither (comfortable range)
+// Comfort index (windChill / heatIndex / none) is determined by the BFF
+// (ADR-042) — no client-side threshold math.  The BFF field comfortIndex
+// is read directly from the Observation.
 //
 // The temperature and feels-like values are wrapped in aria-live="polite"
 // so SSE updates announce to screen readers without interrupting the user.
 
 import { useTranslation } from 'react-i18next';
-import { formatValue } from '../utils/format';
+import { asConverted } from '../api/types';
 import {
   Card,
   CardHeader,
@@ -53,27 +52,6 @@ function TileError({ message, onRetry }: { message: string; onRetry: () => void 
 }
 
 // ---------------------------------------------------------------------------
-// Comfort index selection logic
-// ---------------------------------------------------------------------------
-
-type ComfortIndex = 'windChill' | 'heatIndex' | 'none';
-
-/**
- * Determine which comfort index to show based on current temperature.
- *
- * NWS standard thresholds:
- *   < 50 °F  → wind chill (cold stress)
- *   > 80 °F  → heat index (heat stress)
- *   50–80 °F → neither
- */
-function selectComfortIndex(outTemp: number | null): ComfortIndex {
-  if (outTemp === null) return 'none';
-  if (outTemp < 50) return 'windChill';
-  if (outTemp > 80) return 'heatIndex';
-  return 'none';
-}
-
-// ---------------------------------------------------------------------------
 // Props
 // ---------------------------------------------------------------------------
 
@@ -108,8 +86,13 @@ export function CurrentConditionsCard({
   const hour = new Date().getHours();
   const isNight = hour < 6 || hour >= 20;
 
-  const tempUnit = units?.outTemp ?? '°F';
-  const comfortIndex = selectComfortIndex(observation?.outTemp ?? null);
+  // Unit label comes from the BFF ConvertedValue (ADR-042).
+  // Fall back to the legacy UnitsBlock for backwards compat, then to empty.
+  const outTempCV = asConverted(observation?.outTemp ?? null);
+  const tempUnit = outTempCV?.label ?? units?.outTemp ?? '';
+
+  // Comfort index comes from BFF (ADR-042) — no client-side threshold math.
+  const comfortIndex = observation?.comfortIndex ?? 'none';
 
   return (
     <Card aria-busy={loading}>
@@ -152,9 +135,9 @@ export function CurrentConditionsCard({
               aria-live="polite"
               aria-atomic="true"
               aria-label={
-                observation.outTemp !== null
+                outTempCV !== null
                   ? t('temperature.ariaLabel', {
-                      temp: formatValue(observation.outTemp, 'temperature'),
+                      temp: outTempCV.formatted,
                       unit: tempUnit,
                     })
                   : undefined
@@ -170,7 +153,7 @@ export function CurrentConditionsCard({
                 />
               )}
               <span className="text-7xl font-bold text-foreground">
-                {formatValue(observation.outTemp, 'temperature')}
+                {outTempCV?.formatted ?? '--'}
               </span>
               {/* Unit label is decorative context for the aria-label above */}
               <span
@@ -183,19 +166,22 @@ export function CurrentConditionsCard({
 
             {/* ---- Feels-like (appTemp) -----------------------------------
                 Also wrapped in aria-live so SSE updates are announced. */}
-            {observation.appTemp != null && (
-              <p
-                aria-live="polite"
-                aria-atomic="true"
-                className="text-sm text-muted-foreground"
-              >
-                {t('feelsLike')}{' '}
-                <span className="font-medium text-foreground">
-                  {formatValue(observation.appTemp, 'temperature')}
-                  {tempUnit}
-                </span>
-              </p>
-            )}
+            {observation.appTemp != null && (() => {
+              const appTempCV = asConverted(observation.appTemp);
+              return appTempCV !== null ? (
+                <p
+                  aria-live="polite"
+                  aria-atomic="true"
+                  className="text-sm text-muted-foreground"
+                >
+                  {t('feelsLike')}{' '}
+                  <span className="font-medium text-foreground">
+                    {appTempCV.formatted}
+                    {appTempCV.label}
+                  </span>
+                </p>
+              ) : null;
+            })()}
 
             {/* ---- Weather description text --------------------------------
                 Sourced from observation extras (if present) or passed in from
@@ -212,9 +198,10 @@ export function CurrentConditionsCard({
                   {t('observations.dewpoint')}
                 </dt>
                 <dd className="mt-0.5 font-medium text-foreground">
-                  {observation.dewpoint != null
-                    ? `${formatValue(observation.dewpoint, 'temperature')}${tempUnit}`
-                    : '—'}
+                  {(() => {
+                    const cv = asConverted(observation.dewpoint);
+                    return cv !== null ? `${cv.formatted}${cv.label}` : '—';
+                  })()}
                 </dd>
               </div>
 
@@ -223,40 +210,45 @@ export function CurrentConditionsCard({
                   {t('observations.humidity')}
                 </dt>
                 <dd className="mt-0.5 font-medium text-foreground">
-                  {observation.outHumidity != null
-                    ? `${formatValue(observation.outHumidity, 'humidity')}%`
-                    : '—'}
+                  {(() => {
+                    const cv = asConverted(observation.outHumidity);
+                    // Humidity label from BFF includes "%" — use it when present,
+                    // otherwise fall back to appending "%" for raw numbers.
+                    return cv !== null ? `${cv.formatted}${cv.label || '%'}` : '—';
+                  })()}
                 </dd>
               </div>
 
               {/* ---- Smart comfort index -----------------------------------
-                  Wind chill when outTemp < 50 °F (NWS cold threshold).
-                  Heat index when outTemp > 80 °F (NWS heat threshold).
-                  Neither when 50–80 °F (comfortable range).
-                  Never show both at once. */}
-              {comfortIndex === 'windChill' && observation.windchill != null && (
-                <div>
-                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">
-                    {t('observations.windChill')}
-                  </dt>
-                  <dd className="mt-0.5 font-medium text-foreground">
-                    {formatValue(observation.windchill, 'temperature')}
-                    {tempUnit}
-                  </dd>
-                </div>
-              )}
+                  Determined by BFF (ADR-042) — no client-side threshold math.
+                  comfortIndex comes from observation.comfortIndex. */}
+              {comfortIndex === 'windChill' && observation.windchill != null && (() => {
+                const cv = asConverted(observation.windchill);
+                return cv !== null ? (
+                  <div>
+                    <dt className="text-xs text-muted-foreground uppercase tracking-wide">
+                      {t('observations.windChill')}
+                    </dt>
+                    <dd className="mt-0.5 font-medium text-foreground">
+                      {cv.formatted}{cv.label}
+                    </dd>
+                  </div>
+                ) : null;
+              })()}
 
-              {comfortIndex === 'heatIndex' && observation.heatindex != null && (
-                <div>
-                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">
-                    {t('observations.heatIndex')}
-                  </dt>
-                  <dd className="mt-0.5 font-medium text-foreground">
-                    {formatValue(observation.heatindex, 'temperature')}
-                    {tempUnit}
-                  </dd>
-                </div>
-              )}
+              {comfortIndex === 'heatIndex' && observation.heatindex != null && (() => {
+                const cv = asConverted(observation.heatindex);
+                return cv !== null ? (
+                  <div>
+                    <dt className="text-xs text-muted-foreground uppercase tracking-wide">
+                      {t('observations.heatIndex')}
+                    </dt>
+                    <dd className="mt-0.5 font-medium text-foreground">
+                      {cv.formatted}{cv.label}
+                    </dd>
+                  </div>
+                ) : null;
+              })()}
             </dl>
           </>
         ) : (

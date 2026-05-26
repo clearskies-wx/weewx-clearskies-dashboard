@@ -72,8 +72,8 @@
   },
   "feelsLike": "Percepita",
   "windCompass": {
-    "speed": "Vento: {{speed}} mph · {{direction}}",
-    "gusts": "Raffiche: {{gust}} mph",
+    "speed": "Vento: {{speed}}{{unit}} · {{direction}}",
+    "gusts": "Raffiche: {{gust}}{{unit}}",
     "ariaLabel": "Vento da {{direction}} a {{degrees}} gradi",
     "directionLabel": "Da {{direction}} {{degrees}}°"
   },

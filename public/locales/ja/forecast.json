@@ -9,7 +9,7 @@
   "noHourlyData": "時間別予報データがありません。",
   "noDailyData": "日別予報データがありません。",
   "percentPrecip": "降水確率 {{pct}}%",
-  "windUpTo": "最大風速 {{speed}} mph",
+  "windUpTo": "最大風速 {{speed}}{{unit}}",
   "updated": "更新: {{time}}",
   "ariaHourlyScroll": "時間別予報 — スクロールして詳細を確認",
   "ariaHourlyList": "時間別予報",

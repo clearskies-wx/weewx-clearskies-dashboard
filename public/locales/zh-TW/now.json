@@ -63,8 +63,8 @@
   },
   "feelsLike": "體感溫度",
   "windCompass": {
-    "speed": "風速：{{speed}} mph · {{direction}}",
-    "gusts": "陣風：{{gust}} mph",
+    "speed": "風速：{{speed}}{{unit}} · {{direction}}",
+    "gusts": "陣風：{{gust}}{{unit}}",
     "ariaLabel": "來自 {{direction}} 方向 {{degrees}} 度的風",
     "directionLabel": "來自{{direction}} {{degrees}}°"
   },

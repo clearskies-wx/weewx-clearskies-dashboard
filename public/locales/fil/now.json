@@ -63,8 +63,8 @@
   },
   "feelsLike": "Pakiramdam",
   "windCompass": {
-    "speed": "Hangin: {{speed}} mph · {{direction}}",
-    "gusts": "Hangin: {{gust}} mph",
+    "speed": "Hangin: {{speed}}{{unit}} · {{direction}}",
+    "gusts": "Hangin: {{gust}}{{unit}}",
     "ariaLabel": "Hangin mula sa {{direction}} sa {{degrees}} degrees",
     "directionLabel": "Mula sa {{direction}} {{degrees}}°"
   },

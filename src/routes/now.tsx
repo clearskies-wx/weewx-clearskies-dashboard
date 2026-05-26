@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Sunrise, Sunset, Moon, Zap, Activity } from 'lucide-react';
 import { formatValue } from '../utils/format';
+import { asConverted } from '../api/types';
 import type { TFunction } from 'i18next';
 import type { WebcamConfig } from '../api/types';
 import { AlertBanner } from '../components/shared/alert-banner';
@@ -43,22 +44,6 @@ function formatLocalTime(iso: string | null, tz: string, locale: string): string
 function formatPhaseName(name: string | null): string {
   if (!name) return '—';
   return name.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-}
-
-function beaufortLabel(speedMph: number, t: TFunction): string {
-  if (speedMph < 1) return t('beaufort.calm');
-  if (speedMph <= 3) return t('beaufort.lightAir');
-  if (speedMph <= 7) return t('beaufort.lightBreeze');
-  if (speedMph <= 12) return t('beaufort.gentleBreeze');
-  if (speedMph <= 18) return t('beaufort.moderateBreeze');
-  if (speedMph <= 24) return t('beaufort.freshBreeze');
-  if (speedMph <= 31) return t('beaufort.strongBreeze');
-  if (speedMph <= 38) return t('beaufort.nearGale');
-  if (speedMph <= 46) return t('beaufort.gale');
-  if (speedMph <= 54) return t('beaufort.strongGale');
-  if (speedMph <= 63) return t('beaufort.storm');
-  if (speedMph <= 72) return t('beaufort.violentStorm');
-  return t('beaufort.hurricane');
 }
 
 function windDirLabel(deg: number): string {
@@ -115,18 +100,26 @@ function formatRelativeTime(iso: string, locale: string): string {
 }
 
 function WindCompass({
-  windDir,
-  windSpeed,
-  windGust,
+  windDirDeg,
+  windSpeedFormatted,
+  windSpeedUnit,
+  windGustFormatted,
+  windGustUnit,
+  beaufortDescription,
   t,
 }: {
-  windDir: number;
-  windSpeed: number;
-  windGust: number;
+  /** Raw wind direction degrees (from ConvertedValue.value) for SVG rotation. */
+  windDirDeg: number;
+  windSpeedFormatted: string;
+  windSpeedUnit: string;
+  windGustFormatted: string;
+  windGustUnit: string;
+  /** Beaufort descriptor from BFF (e.g. "Gentle breeze") — empty string when unavailable. */
+  beaufortDescription: string;
   t: TFunction;
 }) {
-  const dirLabel = windDirLabel(windDir).toLowerCase();
-  const ariaLabel = t('windCompass.ariaLabel', { direction: dirLabel, degrees: formatValue(windDir, 'degrees') });
+  const dirLabel = windDirLabel(windDirDeg).toLowerCase();
+  const ariaLabel = t('windCompass.ariaLabel', { direction: dirLabel, degrees: formatValue(windDirDeg, 'degrees') });
 
   return (
     <div className="flex flex-col items-center gap-3">
@@ -158,7 +151,7 @@ function WindCompass({
         <g transform="translate(60,60)">
           <g
             style={{
-              transform: `rotate(${(windDir + 180) % 360}deg)`,
+              transform: `rotate(${(windDirDeg + 180) % 360}deg)`,
               transformOrigin: '0px 0px',
               transition: 'transform 0.5s ease',
             }}
@@ -176,13 +169,15 @@ function WindCompass({
 
       <div className="text-center text-sm">
         <p className="font-medium text-foreground text-base">
-          {t('windCompass.directionLabel', { direction: windDirLabel(windDir), degrees: formatValue(windDir, 'degrees') })}
+          {t('windCompass.directionLabel', { direction: windDirLabel(windDirDeg), degrees: formatValue(windDirDeg, 'degrees') })}
         </p>
         <p className="text-muted-foreground">
-          {t('windCompass.speed', { speed: formatValue(windSpeed, 'wind'), direction: windDirLabel(windDir) })}
+          {t('windCompass.speed', { speed: windSpeedFormatted, unit: windSpeedUnit, direction: windDirLabel(windDirDeg) })}
         </p>
-        <p className="text-muted-foreground">{t('windCompass.gusts', { gust: formatValue(windGust, 'wind') })}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{beaufortLabel(windSpeed, t)}</p>
+        <p className="text-muted-foreground">{t('windCompass.gusts', { gust: windGustFormatted, unit: windGustUnit })}</p>
+        {beaufortDescription && (
+          <p className="text-xs text-muted-foreground mt-0.5">{beaufortDescription}</p>
+        )}
       </div>
     </div>
   );
@@ -340,9 +335,18 @@ export function NowPage() {
   }, []);
 
   const tz = station?.timezone ?? 'UTC';
-  const windDir = observation?.windDir ?? 0;
-  const windSpeed = observation?.windSpeed ?? 0;
-  const windGust = observation?.windGust ?? 0;
+
+  // Extract ConvertedValue fields for the wind compass.
+  // .value is the raw numeric degree/speed needed for SVG rotation and
+  // formatValue calls; .formatted and .label come from the BFF.
+  const windDirCV = asConverted(observation?.windDir ?? null);
+  const windSpeedCV = asConverted(observation?.windSpeed ?? null);
+  const windGustCV = asConverted(observation?.windGust ?? null);
+  const windDirDeg = windDirCV?.value ?? 0;
+
+  // Beaufort description comes from the BFF (ADR-042). Empty string when absent.
+  const beaufortCV = asConverted(observation?.beaufort ?? null);
+  const beaufortDescription = beaufortCV?.label ?? '';
 
   const firstQuake = earthquakes?.[0] ?? null;
   const todayForecast = forecast?.daily?.[0] ?? null;
@@ -428,19 +432,35 @@ export function NowPage() {
               <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-4">
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.todaysHigh')}</dt>
-                  <dd className="mt-1 text-xl font-semibold text-foreground">{todayStats.high !== null ? `${formatValue(todayStats.high, 'temperature')}°F` : '—'}</dd>
+                  <dd className="mt-1 text-xl font-semibold text-foreground">
+                    {todayStats.high !== null
+                      ? `${asConverted(observation?.outTemp ?? null)?.formatted ?? formatValue(todayStats.high, 'temperature')}${asConverted(observation?.outTemp ?? null)?.label ?? ''}`
+                      : '—'}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.todaysLow')}</dt>
-                  <dd className="mt-1 text-xl font-semibold text-foreground">{todayStats.low !== null ? `${formatValue(todayStats.low, 'temperature')}°F` : '—'}</dd>
+                  <dd className="mt-1 text-xl font-semibold text-foreground">
+                    {todayStats.low !== null
+                      ? `${asConverted(observation?.outTemp ?? null)?.formatted ?? formatValue(todayStats.low, 'temperature')}${asConverted(observation?.outTemp ?? null)?.label ?? ''}`
+                      : '—'}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.peakGust')}</dt>
-                  <dd className="mt-1 text-xl font-semibold text-foreground">{formatValue(todayStats.peakGust, 'wind')} mph</dd>
+                  <dd className="mt-1 text-xl font-semibold text-foreground">
+                    {windGustCV
+                      ? `${windGustCV.formatted}${windGustCV.label}`
+                      : formatValue(todayStats.peakGust, 'wind')}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.rainToday')}</dt>
-                  <dd className="mt-1 text-xl font-semibold text-foreground">{formatValue(todayStats.rainSoFar, 'rain')} in</dd>
+                  <dd className="mt-1 text-xl font-semibold text-foreground">
+                    {asConverted(observation?.rain ?? null)
+                      ? `${asConverted(observation?.rain ?? null)!.formatted}${asConverted(observation?.rain ?? null)!.label}`
+                      : formatValue(todayStats.rainSoFar, 'rain')}
+                  </dd>
                 </div>
                 {todayStats.peakAQI > 0 && (
                   <div>
@@ -478,7 +498,15 @@ export function NowPage() {
             ) : obsError ? (
               <TileError message={t('error.wind')} onRetry={obsRefetch} />
             ) : observation ? (
-              <WindCompass windDir={windDir} windSpeed={windSpeed} windGust={windGust} t={t} />
+              <WindCompass
+                windDirDeg={windDirDeg}
+                windSpeedFormatted={windSpeedCV?.formatted ?? '--'}
+                windSpeedUnit={windSpeedCV?.label ?? ''}
+                windGustFormatted={windGustCV?.formatted ?? '--'}
+                windGustUnit={windGustCV?.label ?? ''}
+                beaufortDescription={beaufortDescription}
+                t={t}
+              />
             ) : (
               <p className="text-muted-foreground text-sm">{t('noData.wind')}</p>
             )}

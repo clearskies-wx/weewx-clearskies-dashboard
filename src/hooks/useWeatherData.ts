@@ -25,6 +25,7 @@ import {
   getBranding,
 } from '../api/client';
 import type { ArchiveParams, ApiBrandingConfig } from '../api/client';
+import { asConverted } from '../api/types';
 
 // Mock data
 import { mockCapabilities } from '../mock/station';
@@ -587,9 +588,13 @@ export function useTodayStats(
       .map((r) => r.rain)
       .filter((v): v is number => v !== null && v !== undefined);
 
-    const high = temps.length > 0 ? Math.max(...temps) : (observation?.outTemp ?? null);
-    const low = temps.length > 0 ? Math.min(...temps) : (observation?.outTemp ?? null);
-    const peakGust = gusts.length > 0 ? Math.max(...gusts) : (observation?.windGust ?? 0);
+    // When no archive records exist, fall back to the current observation.
+    // observation fields are ConvertedValue | number | null — extract .value.
+    const fallbackTemp = asConverted(observation?.outTemp ?? null)?.value ?? null;
+    const fallbackGust = asConverted(observation?.windGust ?? null)?.value ?? 0;
+    const high = temps.length > 0 ? Math.max(...temps) : fallbackTemp;
+    const low = temps.length > 0 ? Math.min(...temps) : fallbackTemp;
+    const peakGust = gusts.length > 0 ? Math.max(...gusts) : fallbackGust;
     const rainSoFar = rainValues.reduce((sum, v) => sum + v, 0);
 
     return {

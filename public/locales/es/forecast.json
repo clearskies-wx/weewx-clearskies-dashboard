@@ -9,7 +9,7 @@
   "noHourlyData": "No hay datos de pronóstico horario disponibles.",
   "noDailyData": "No hay datos de pronóstico diario disponibles.",
   "percentPrecip": "{{pct}}% precipitación",
-  "windUpTo": "Viento de hasta {{speed}} mph",
+  "windUpTo": "Viento de hasta {{speed}}{{unit}}",
   "updated": "Actualizado {{time}}",
   "ariaHourlyScroll": "Pronóstico por horas — deslázate para ver más",
   "ariaHourlyList": "Pronóstico por horas",

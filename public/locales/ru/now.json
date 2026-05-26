@@ -63,8 +63,8 @@
   },
   "feelsLike": "Ощущается как",
   "windCompass": {
-    "speed": "Ветер: {{speed}} м/с · {{direction}}",
-    "gusts": "Порывы: {{gust}} м/с",
+    "speed": "Ветер: {{speed}}{{unit}} · {{direction}}",
+    "gusts": "Порывы: {{gust}}{{unit}}",
     "ariaLabel": "Ветер с {{direction}} со скоростью {{degrees}} градусов",
     "directionLabel": "С {{direction}} {{degrees}}°"
   },
