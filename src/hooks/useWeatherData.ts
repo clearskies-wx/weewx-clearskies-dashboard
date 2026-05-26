@@ -23,6 +23,7 @@ import {
   getYearlyReport,
   getContent,
   getBranding,
+  getWebcam,
 } from '../api/client';
 import type { ArchiveParams, ApiBrandingConfig } from '../api/client';
 
@@ -60,6 +61,7 @@ import type {
   UnitsBlock,
   TodayStats,
   LightningData,
+  WebcamData,
 } from '../api/types';
 
 // ---------------------------------------------------------------------------
@@ -544,6 +546,33 @@ export function useRadarFrames(
   return {
     data: data?.data ?? null,
     loading: providerId === null ? false : loading,
+    error,
+    refetch,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// useWebcam — /webcam  (Phase 6B)
+// ---------------------------------------------------------------------------
+
+export function useWebcam(): HookResult<WebcamData> {
+  const { data, loading, error, refetch } = useApiQuery<{ data: WebcamData }>(
+    (signal) => getWebcam(signal),
+    { skip: isMockMode() },
+  );
+
+  if (isMockMode()) {
+    return mockResult<WebcamData>({
+      enabled: false,
+      imageUrl: null,
+      refreshInterval: 60,
+      timelapseFrames: [],
+    });
+  }
+
+  return {
+    data: data?.data ?? null,
+    loading,
     error,
     refetch,
   };

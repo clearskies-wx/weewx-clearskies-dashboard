@@ -410,6 +410,17 @@ export interface RadarFramesResponse {
 }
 
 // ---------------------------------------------------------------------------
+// /webcam  (Phase 6B)
+// ---------------------------------------------------------------------------
+
+export interface WebcamData {
+  enabled: boolean;
+  imageUrl: string | null;
+  refreshInterval: number;
+  timelapseFrames: string[];
+}
+
+// ---------------------------------------------------------------------------
 // Dashboard-derived types (computed, not from a single API endpoint)
 // ---------------------------------------------------------------------------
 

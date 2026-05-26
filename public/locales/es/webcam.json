@@ -1,0 +1,17 @@
+{
+  "title": "Webcam",
+  "liveView": "Live View",
+  "lastUpdated": "Last updated: {{time}}",
+  "timelapse": "Timelapse",
+  "play": "Play",
+  "pause": "Pause",
+  "speed": "Speed",
+  "speedAriaLabel": "Timelapse playback speed",
+  "frameOf": "Frame {{current}} of {{total}}",
+  "scrubberLabel": "Timelapse frame position",
+  "notConfigured": "Webcam is not configured.",
+  "noTimelapse": "No timelapse frames available.",
+  "imageAlt": "Live webcam view",
+  "loading": "Loading webcam…",
+  "error": "Failed to load webcam data."
+}
