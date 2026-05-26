@@ -280,6 +280,13 @@ export interface RecordsBundle {
 // /station  /capabilities
 // ---------------------------------------------------------------------------
 
+export interface WebcamConfig {
+  enabled: boolean;
+  imageUrl: string;
+  videoUrl: string;
+  refreshInterval: number;
+}
+
 export interface StationMetadata {
   stationId: string;
   name: string;
@@ -292,6 +299,7 @@ export interface StationMetadata {
   firstRecord: string | null;
   lastRecord: string | null;
   hardware: string | null;
+  webcam?: WebcamConfig | null;
 }
 
 export interface CapabilityDeclaration {

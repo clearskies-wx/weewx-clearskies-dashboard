@@ -311,11 +311,15 @@ export function NowPage() {
   const [webcamAvailable, setWebcamAvailable] = useState(true);
   const [videoAvailable, setVideoAvailable] = useState(true);
 
-  // 60-second cache-busting refresh for the still image
+  const webcamConfig = station?.webcam;
+  const webcamEnabled = webcamConfig?.enabled ?? false;
+
+  // Cache-busting refresh for the still image — interval driven by API config (default 60s)
   useEffect(() => {
-    const interval = setInterval(() => setRefreshTs(Date.now()), 60000);
+    const ms = (webcamConfig?.refreshInterval ?? 60) * 1000;
+    const interval = setInterval(() => setRefreshTs(Date.now()), ms);
     return () => clearInterval(interval);
-  }, []);
+  }, [webcamConfig?.refreshInterval]);
 
   // 15-minute cache-busting refresh for the timelapse video
   useEffect(() => {
@@ -666,15 +670,15 @@ export function NowPage() {
           </CardContent>
         </Card>
 
-        {/* Row 8 — Webcam (hidden on image load error) */}
-        {webcamAvailable && (
+        {/* Row 8 — Webcam (shown only when enabled in station config and files load successfully) */}
+        {webcamEnabled && webcamAvailable && (
           <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle as="h2">{t('webcam')}</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
               <img
-                src={`/webcam/weather_cam.jpg?t=${refreshTs}`}
+                src={`${webcamConfig!.imageUrl}?t=${refreshTs}`}
                 alt={t('webcamAlt')}
                 className="w-full rounded object-cover h-80"
                 onError={() => setWebcamAvailable(false)}
@@ -686,7 +690,7 @@ export function NowPage() {
                   className="w-full rounded mt-2"
                   onError={() => setVideoAvailable(false)}
                 >
-                  <source src={`/webcam/weewx_timelapse.mp4?t=${videoRefreshTs}`} type="video/mp4" />
+                  <source src={`${webcamConfig!.videoUrl}?t=${videoRefreshTs}`} type="video/mp4" />
                 </video>
               )}
             </CardContent>
