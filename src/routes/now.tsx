@@ -318,6 +318,23 @@ export function NowPage() {
   const lightning = useLightning(observation);
   const todayStats = useTodayStats(observation, todayArchive);
 
+  const [refreshTs, setRefreshTs] = useState(Date.now());
+  const [videoRefreshTs, setVideoRefreshTs] = useState(Date.now());
+  const [webcamAvailable, setWebcamAvailable] = useState(true);
+  const [videoAvailable, setVideoAvailable] = useState(true);
+
+  // 60-second cache-busting refresh for the still image
+  useEffect(() => {
+    const interval = setInterval(() => setRefreshTs(Date.now()), 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // 15-minute cache-busting refresh for the timelapse video
+  useEffect(() => {
+    const interval = setInterval(() => setVideoRefreshTs(Date.now()), 900000);
+    return () => clearInterval(interval);
+  }, []);
+
   const tz = station?.timezone ?? 'UTC';
   const windDir = observation?.windDir ?? 0;
   const windSpeed = observation?.windSpeed ?? 0;
@@ -652,7 +669,7 @@ export function NowPage() {
             side-by-side on md+ screens. Without a webcam, radar is full-width.
         */}
         {(() => {
-          const hasWebcam = !!(webcamData?.enabled && webcamData.imageUrl);
+          const hasWebcam = !!(webcamData?.enabled && webcamData.imageUrl) && webcamAvailable;
           return (
             <div className={`md:col-span-2 grid grid-cols-1 ${hasWebcam ? 'md:grid-cols-2' : ''} gap-4`}>
               {/* Radar */}
@@ -669,18 +686,29 @@ export function NowPage() {
                 </CardContent>
               </Card>
 
-              {/* Webcam — only rendered when enabled and imageUrl is present */}
+              {/* Webcam — only rendered when enabled, imageUrl is present, and image loads */}
               {hasWebcam && (
                 <Card>
                   <CardHeader>
                     <CardTitle as="h2">{t('webcam')}</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="flex flex-col gap-2">
                     <img
                       src={`${webcamData!.imageUrl}?t=${webcamRefreshTs}`}
                       alt={t('webcamAlt')}
                       className="w-full rounded object-cover h-80"
+                      onError={() => setWebcamAvailable(false)}
                     />
+                    {videoAvailable && (
+                      <video
+                        controls
+                        loop
+                        className="w-full rounded mt-2"
+                        onError={() => setVideoAvailable(false)}
+                      >
+                        <source src={`/webcam/weewx_timelapse.mp4?t=${videoRefreshTs}`} type="video/mp4" />
+                      </video>
+                    )}
                   </CardContent>
                 </Card>
               )}
