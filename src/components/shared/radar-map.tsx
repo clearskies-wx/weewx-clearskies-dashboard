@@ -73,13 +73,14 @@ function getFrameOpacity(frameIndex: number, step: number, totalFrames: number):
   const nextFrame = (primaryFrame + 1) % totalFrames;
 
   if (subStep === 0) {
-    // On a keyframe — only the primary frame is visible
     return frameIndex === primaryFrame ? MAX_OPACITY : 0;
   }
 
-  // Between keyframes — cross-fade
+  // Cross-fade: keep outgoing at full opacity, fade incoming on top.
+  // This prevents the dimming strobe that occurs when both layers
+  // have reduced opacity during a linear blend.
   if (frameIndex === primaryFrame) {
-    return MAX_OPACITY * (SUBSTEPS - subStep) / SUBSTEPS;
+    return MAX_OPACITY;
   }
   if (frameIndex === nextFrame) {
     return MAX_OPACITY * subStep / SUBSTEPS;
