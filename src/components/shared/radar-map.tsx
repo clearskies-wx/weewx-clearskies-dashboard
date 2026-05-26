@@ -76,14 +76,17 @@ function getFrameOpacity(frameIndex: number, step: number, totalFrames: number):
     return frameIndex === primaryFrame ? MAX_OPACITY : 0;
   }
 
-  // Cross-fade: keep outgoing at full opacity, fade incoming on top.
-  // This prevents the dimming strobe that occurs when both layers
-  // have reduced opacity during a linear blend.
+  // Constant-composite cross-fade: compute opacities so two overlapping
+  // semi-transparent layers composite to exactly MAX_OPACITY throughout.
+  // Formula: composite = 1 - (1-a)(1-b) = MAX_OPACITY
+  // Solved: a = 1 - transparency^(1-t), b = 1 - transparency^t
+  const t = subStep / SUBSTEPS;
+  const transparency = 1 - MAX_OPACITY;
   if (frameIndex === primaryFrame) {
-    return MAX_OPACITY;
+    return 1 - Math.pow(transparency, 1 - t);
   }
   if (frameIndex === nextFrame) {
-    return MAX_OPACITY * subStep / SUBSTEPS;
+    return 1 - Math.pow(transparency, t);
   }
   return 0;
 }
