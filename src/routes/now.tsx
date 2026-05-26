@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Sunrise, Sunset, Moon, Zap, Activity } from 'lucide-react';
 import { formatValue } from '../utils/format';
 import type { TFunction } from 'i18next';
+import type { WebcamConfig } from '../api/types';
 import { AlertBanner } from '../components/shared/alert-banner';
 import { CurrentConditionsCard } from '../components/current-conditions-card';
 import { SolarUvCard } from '../components/solar-uv-card';
@@ -310,11 +311,21 @@ export function NowPage() {
   const [videoRefreshTs, setVideoRefreshTs] = useState(Date.now());
   const [webcamAvailable, setWebcamAvailable] = useState(true);
   const [videoAvailable, setVideoAvailable] = useState(true);
+  const [webcamConfig, setWebcamConfig] = useState<WebcamConfig | null>(null);
 
-  const webcamConfig = station?.webcam;
+  // Fetch webcam config from static JSON written by the wizard (not the station API).
+  // If the file doesn't exist or fails to load, webcamConfig stays null and the card
+  // doesn't render — graceful degradation.
+  useEffect(() => {
+    fetch('/webcam.json')
+      .then(r => r.ok ? r.json() : null)
+      .catch(() => null)
+      .then(data => setWebcamConfig(data));
+  }, []);
+
   const webcamEnabled = webcamConfig?.enabled ?? false;
 
-  // Cache-busting refresh for the still image — interval driven by API config (default 60s)
+  // Cache-busting refresh for the still image — interval driven by webcam config (default 60s)
   useEffect(() => {
     const ms = (webcamConfig?.refreshInterval ?? 60) * 1000;
     const interval = setInterval(() => setRefreshTs(Date.now()), ms);

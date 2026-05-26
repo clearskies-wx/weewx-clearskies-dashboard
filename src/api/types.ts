@@ -299,7 +299,6 @@ export interface StationMetadata {
   firstRecord: string | null;
   lastRecord: string | null;
   hardware: string | null;
-  webcam?: WebcamConfig | null;
 }
 
 export interface CapabilityDeclaration {
