@@ -86,7 +86,7 @@ interface CurrentConditionsCardProps {
   /** Weather description text — from forecast when observation lacks it. */
   weatherText?: string | null;
   /** WMO weather code for the current conditions icon. */
-  weatherCode?: number | null;
+  weatherCode?: number | string | null;
   onRetry: () => void;
 }
 
@@ -165,7 +165,7 @@ export function CurrentConditionsCard({
                 <WeatherIcon
                   code={weatherCode}
                   isNight={isNight}
-                  size={56}
+                  size="56px"
                   className="text-foreground mb-1"
                 />
               )}
