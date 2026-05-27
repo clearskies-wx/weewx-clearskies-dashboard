@@ -10,7 +10,7 @@ const NowPage = React.lazy(() => import('./routes/now'));
 const ForecastPage = React.lazy(() => import('./routes/forecast'));
 const ChartsPage = React.lazy(() => import('./routes/charts'));
 const AlmanacPage = React.lazy(() => import('./routes/almanac'));
-const EarthquakesPage = React.lazy(() => import('./routes/earthquakes'));
+const SeismicPage = React.lazy(() => import('./routes/seismic'));
 const RecordsPage = React.lazy(() => import('./routes/records'));
 const ReportsPage = React.lazy(() => import('./routes/reports'));
 const AboutPage = React.lazy(() => import('./routes/about'));
@@ -107,10 +107,10 @@ function App() {
             }
           />
           <Route
-            path="earthquakes"
+            path="seismic"
             element={
-              <Suspense fallback={<PageLoader title={tNav('pages.earthquakes')} />}>
-                <EarthquakesPage />
+              <Suspense fallback={<PageLoader title={tNav('pages.seismic')} />}>
+                <SeismicPage />
               </Suspense>
             }
           />

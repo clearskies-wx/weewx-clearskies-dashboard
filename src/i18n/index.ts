@@ -41,7 +41,7 @@ i18n
       "charts",
       "almanac",
       "records",
-      "earthquakes",
+      "seismic",
       "reports",
       "about",
       "legal",

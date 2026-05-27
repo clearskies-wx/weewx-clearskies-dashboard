@@ -37,7 +37,7 @@ const NAV_ITEMS: NavItemDef[] = [
   { to: '/forecast', pageKey: 'forecast', icon: <CloudSunRain aria-hidden="true" className="h-5 w-5" /> },
   { to: '/charts', pageKey: 'charts', icon: <ChartLine aria-hidden="true" className="h-5 w-5" /> },
   { to: '/almanac', pageKey: 'almanac', icon: <Moon aria-hidden="true" className="h-5 w-5" /> },
-  { to: '/earthquakes', pageKey: 'earthquakes', icon: <Activity aria-hidden="true" className="h-5 w-5" /> },
+  { to: '/seismic', pageKey: 'seismic', icon: <Activity aria-hidden="true" className="h-5 w-5" /> },
   { to: '/records', pageKey: 'records', icon: <Trophy aria-hidden="true" className="h-5 w-5" /> },
   { to: '/reports', pageKey: 'reports', icon: <FileText aria-hidden="true" className="h-5 w-5" /> },
   { to: '/about', pageKey: 'about', icon: <Info aria-hidden="true" className="h-5 w-5" /> },

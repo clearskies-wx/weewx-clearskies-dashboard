@@ -146,7 +146,9 @@ function TileError({ message, onRetry }: { message: string; onRetry: () => void 
 type EclipseType = 'penumbral' | 'partial' | 'total';
 
 const ECLIPSE_BADGE_CLASS: Record<EclipseType, string> = {
-  penumbral: 'bg-muted text-muted-foreground border-muted-foreground/20',
+  // text-foreground on bg-muted: foreground (#171717) on muted (#f5f5f5) ≈ 16.6:1 — passes AA.
+  // text-muted-foreground (#737373) on bg-muted (#f5f5f5) = 4.34:1, which fails AA 4.5 threshold.
+  penumbral: 'bg-muted text-foreground border-muted-foreground/30',
   partial: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700/30',
   total: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700/30',
 };
@@ -162,7 +164,9 @@ const VIEWING_BADGE_CLASS: Record<ViewingCondition, string> = {
   excellent: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700/30',
   good: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700/30',
   fair: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700/30',
-  poor: 'bg-muted text-muted-foreground border-muted-foreground/20',
+  // text-foreground on bg-muted: foreground (#171717) on muted (#f5f5f5) ≈ 16.6:1 — passes AA.
+  // text-muted-foreground (#737373) on bg-muted (#f5f5f5) = 4.34:1, which fails AA 4.5 threshold.
+  poor: 'bg-muted text-foreground border-muted-foreground/30',
 };
 
 // ---------------------------------------------------------------------------
