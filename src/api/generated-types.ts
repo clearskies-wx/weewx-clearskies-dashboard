@@ -1411,7 +1411,7 @@ export interface operations {
             query?: {
                 period?: string;
                 /** @description Restrict to a single section. Omit for all. */
-                section?: "temperature" | "wind" | "rain" | "humidity" | "barometer" | "sun" | "aqi" | "inside-temp" | "custom";
+                section?: "temperature" | "wind" | "rain" | "humidity" | "barometer" | "sun" | "aqi";
             };
             header?: never;
             path?: never;

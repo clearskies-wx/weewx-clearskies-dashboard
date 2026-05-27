@@ -24,5 +24,6 @@
     "report": "Не удалось загрузить отчёт"
   },
   "annual": "Ежегодный",
-  "download": "Скачать .txt"
+  "download": "Скачать .txt",
+  "downloadCsv": "Скачать .csv"
 }

@@ -24,5 +24,6 @@
     "report": "Impossible de charger le rapport"
   },
   "annual": "Annuel",
-  "download": "Télécharger .txt"
+  "download": "Télécharger .txt",
+  "downloadCsv": "Télécharger .csv"
 }

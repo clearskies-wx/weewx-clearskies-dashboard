@@ -24,5 +24,6 @@
     "report": "Não foi possível carregar o relatório"
   },
   "annual": "Anual",
-  "download": "Baixar .txt"
+  "download": "Baixar .txt",
+  "downloadCsv": "Baixar .csv"
 }

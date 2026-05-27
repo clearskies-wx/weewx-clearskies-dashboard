@@ -25,6 +25,7 @@
   },
   "annual": "Annual",
   "download": "Download .txt",
+  "downloadCsv": "Download .csv",
   "viewTable": "View table",
   "viewRawText": "View raw text",
   "sortAscending": "Sort ascending",

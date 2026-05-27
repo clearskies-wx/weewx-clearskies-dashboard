@@ -170,7 +170,7 @@ paths:
           description: Restrict to a single section. Omit for all.
           schema:
             type: string
-            enum: [temperature, wind, rain, humidity, barometer, sun, aqi, inside-temp, custom]
+            enum: [temperature, wind, rain, humidity, barometer, sun, aqi]
       responses:
         '200':
           description: Records bundle

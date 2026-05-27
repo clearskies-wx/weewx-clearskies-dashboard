@@ -8,15 +8,17 @@
 
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Download } from 'lucide-react';
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
 } from '../components/ui/card';
+import { Button } from '../components/ui/button';
 import { useReports, useReport, useYearlyReport } from '../hooks/useWeatherData';
 import { parseMonthlyReport, parseYearlyReport } from '../lib/noaa-parser';
-import type { MonthlyRow, YearlyTable } from '../lib/noaa-parser';
+import type { MonthlyRow, YearlyTable, ParsedMonthlyReport, ParsedYearlyReport } from '../lib/noaa-parser';
 import { cn } from '../lib/utils';
 import { formatValue } from '../utils/format';
 
@@ -29,6 +31,123 @@ function getMonthName(monthNumber: number, locale: string): string {
   return new Intl.DateTimeFormat(locale, { month: 'long' }).format(
     new Date(2000, monthNumber - 1, 1),
   );
+}
+
+/**
+ * Escape a single CSV field value: wrap in quotes if it contains a comma,
+ * double-quote, or newline; always double internal quotes.
+ */
+function csvEscape(value: string | number | null): string {
+  if (value === null) return '';
+  const str = String(value);
+  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
+/** Join a row of values into a CSV line. */
+function csvRow(cells: (string | number | null)[]): string {
+  return cells.map(csvEscape).join(',');
+}
+
+/**
+ * Build CSV text from a parsed monthly report.
+ * Includes a header row, one data row per day, and the summary row if present.
+ */
+function buildMonthlyCsv(parsed: ParsedMonthlyReport): string {
+  const header = csvRow([
+    'Day', 'Mean Temp', 'High Temp', 'High Time', 'Low Temp', 'Low Time',
+    'Heat Deg Days', 'Cool Deg Days', 'Rain', 'Avg Wind Speed',
+    'High Wind Speed', 'High Wind Time', 'Dom Wind Dir',
+  ]);
+
+  const dataRows = parsed.rows.map((row) =>
+    csvRow([
+      row.day,
+      row.meanTemp,
+      row.highTemp,
+      row.highTempTime || '',
+      row.lowTemp,
+      row.lowTempTime || '',
+      row.heatDegDays,
+      row.coolDegDays,
+      row.rain,
+      row.avgWindSpeed,
+      row.highWindSpeed,
+      row.highWindTime || '',
+      row.domWindDir,
+    ]),
+  );
+
+  const lines: string[] = [header, ...dataRows];
+
+  if (parsed.summary) {
+    const s = parsed.summary;
+    lines.push(
+      csvRow([
+        'Summary',
+        s.meanTemp,
+        s.highTemp,
+        s.highTempTime || '',
+        s.lowTemp,
+        s.lowTempTime || '',
+        s.heatDegDays,
+        s.coolDegDays,
+        s.rain,
+        s.avgWindSpeed,
+        s.highWindSpeed,
+        s.highWindTime || '',
+        s.domWindDir,
+      ]),
+    );
+  }
+
+  return lines.join('\n');
+}
+
+/**
+ * Build CSV text from a parsed yearly report.
+ * Emits three sections (Temperature, Precipitation, Wind) separated by
+ * a blank line and a section-header row.
+ */
+function buildYearlyCsv(parsed: ParsedYearlyReport): string {
+  function sectionCsv(label: string, table: YearlyTable): string {
+    const sectionLines: string[] = [
+      // Section label in the first cell, rest empty
+      csvRow([label, ...Array(table.headers.length - 1).fill('')]),
+      csvRow(table.headers),
+      ...table.rows.map((row) => csvRow(row)),
+    ];
+    if (table.summary) {
+      sectionLines.push(csvRow(['Summary', ...table.summary.slice(1)]));
+    }
+    return sectionLines.join('\n');
+  }
+
+  return [
+    sectionCsv('Temperature', parsed.temperature),
+    '',
+    sectionCsv('Precipitation', parsed.precipitation),
+    '',
+    sectionCsv('Wind', parsed.wind),
+  ].join('\n');
+}
+
+/**
+ * Trigger a browser file download via a temporary Blob URL.
+ * The URL is revoked immediately after the click is dispatched.
+ */
+function triggerDownload(content: string, mimeType: string, filename: string): void {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(url);
 }
 
 // ---------------------------------------------------------------------------
@@ -686,7 +805,7 @@ export function ReportsPage() {
                     <h2 className="text-sm font-semibold text-foreground">
                       {periodLabel}
                     </h2>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       {/* Toggle table / raw text */}
                       <button
                         type="button"
@@ -697,14 +816,46 @@ export function ReportsPage() {
                         {showRawText ? t('viewTable') : t('viewRawText')}
                       </button>
 
-                      {/* Download link */}
-                      <a
-                        href={`data:text/plain;charset=utf-8,${encodeURIComponent(activeReport.rawText)}`}
-                        download={activeReport.filename}
-                        className="inline-flex items-center min-h-[44px] md:min-h-0 px-2 text-sm text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+                      {/* Download .txt */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          triggerDownload(
+                            activeReport.rawText,
+                            'text/plain;charset=utf-8',
+                            activeReport.filename,
+                          );
+                        }}
+                        aria-label={t('download')}
                       >
+                        <Download aria-hidden="true" focusable="false" />
                         {t('download')}
-                      </a>
+                      </Button>
+
+                      {/* Download .csv */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const csvFilename = activeReport.filename.replace(/\.txt$/i, '.csv');
+                          if (isAnnual) {
+                            const parsed = parseYearlyReport(activeReport.rawText);
+                            if (parsed) {
+                              triggerDownload(buildYearlyCsv(parsed), 'text/csv;charset=utf-8', csvFilename);
+                            }
+                          } else {
+                            const parsed = parseMonthlyReport(activeReport.rawText);
+                            if (parsed) {
+                              triggerDownload(buildMonthlyCsv(parsed), 'text/csv;charset=utf-8', csvFilename);
+                            }
+                          }
+                        }}
+                        aria-label={t('downloadCsv')}
+                      >
+                        <Download aria-hidden="true" focusable="false" />
+                        {t('downloadCsv')}
+                      </Button>
                     </div>
                   </div>
 

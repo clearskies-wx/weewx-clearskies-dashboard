@@ -24,5 +24,6 @@
     "report": "Bericht konnte nicht geladen werden"
   },
   "annual": "Jährlich",
-  "download": ".txt herunterladen"
+  "download": ".txt herunterladen",
+  "downloadCsv": ".csv herunterladen"
 }

@@ -24,5 +24,6 @@
     "report": "Kan rapport niet laden"
   },
   "annual": "Jaarlijks",
-  "download": "Downloaden als .txt"
+  "download": "Downloaden als .txt",
+  "downloadCsv": "Downloaden als .csv"
 }

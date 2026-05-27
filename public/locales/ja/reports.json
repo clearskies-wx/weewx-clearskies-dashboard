@@ -24,5 +24,6 @@
     "report": "レポートを読み込めません"
   },
   "annual": "年間",
-  "download": ".txtをダウンロード"
+  "download": ".txtをダウンロード",
+  "downloadCsv": ".csvをダウンロード"
 }

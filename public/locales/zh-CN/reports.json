@@ -24,5 +24,6 @@
     "report": "无法加载报告"
   },
   "annual": "年度",
-  "download": "下载 .txt"
+  "download": "下载 .txt",
+  "downloadCsv": "下载 .csv"
 }

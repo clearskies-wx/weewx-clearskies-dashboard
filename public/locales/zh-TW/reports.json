@@ -24,5 +24,6 @@
     "report": "無法載入報告"
   },
   "annual": "年度",
-  "download": "下載 .txt"
+  "download": "下載 .txt",
+  "downloadCsv": "下載 .csv"
 }

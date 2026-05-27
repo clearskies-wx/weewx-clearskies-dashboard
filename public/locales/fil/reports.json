@@ -24,5 +24,6 @@
     "report": "Hindi ma-load ang ulat"
   },
   "annual": "Taunan",
-  "download": "I-download ang .txt"
+  "download": "I-download ang .txt",
+  "downloadCsv": "I-download ang .csv"
 }
