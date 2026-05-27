@@ -13,6 +13,17 @@ export interface BrandingConfig {
   logo?: { light: string; dark?: string; alt: string };
   /** URL of an operator-supplied custom.css file, or null if not configured. */
   customCssUrl?: string | null;
+  /** Optional page title to set on document.title. */
+  siteTitle?: string;
+  /** URL for the site favicon, applied to <link rel="icon">. */
+  faviconUrl?: string;
+  /** Social media profile URLs; only render icons for non-empty values. */
+  social?: {
+    facebook?: string;
+    twitter?: string;
+    instagram?: string;
+    youtube?: string;
+  };
 }
 
 // Curated palette — all light values verified ≥4.5:1 on white (oklch(1 0 0));

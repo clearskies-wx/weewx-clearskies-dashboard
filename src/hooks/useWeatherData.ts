@@ -23,6 +23,13 @@ import {
   getYearlyReport,
   getContent,
   getBranding,
+  getClimatologyMonthly,
+  getAlmanacPlanets,
+  getAlmanacMoonNames,
+  getAlmanacEclipses,
+  getAlmanacMeteorShowers,
+  getEarthquakeConfig,
+  getEarthquakeFaults,
 } from '../api/client';
 import type { ArchiveParams, ApiBrandingConfig } from '../api/client';
 import { asConverted } from '../api/types';
@@ -40,6 +47,11 @@ import { mockRecords } from '../mock/records';
 import { mockStation } from '../mock/station';
 import { mockArchiveData } from '../mock/archive';
 import { mockLightning } from '../mock/lightning';
+import { mockClimatology } from '../mock/climatology';
+import { mockPlanets } from '../mock/planets';
+import { mockMoonNames } from '../mock/moonNames';
+import { mockEclipses } from '../mock/eclipses';
+import { mockMeteorShowers } from '../mock/meteorShowers';
 
 import type {
   Observation,
@@ -47,6 +59,8 @@ import type {
   AlertRecord,
   AlmanacSnapshot,
   EarthquakeRecord,
+  EarthquakeConfig,
+  FaultFeatureCollection,
   AQIReading,
   RecordsBundle,
   StationMetadata,
@@ -61,6 +75,11 @@ import type {
   UnitsBlock,
   TodayStats,
   LightningData,
+  ClimatologyMonthly,
+  PlanetsVisible,
+  MoonNameData,
+  EclipseData,
+  MeteorShowerData,
 } from '../api/types';
 
 // ---------------------------------------------------------------------------
@@ -606,4 +625,169 @@ export function useTodayStats(
       recordsBrokenToday: [],
     };
   }, [observation, todayArchive]);
+}
+
+// ---------------------------------------------------------------------------
+// useClimatologyMonthly — /climatology/monthly
+// ---------------------------------------------------------------------------
+
+export function useClimatologyMonthly(): HookResult<ClimatologyMonthly> {
+  const { data, loading, error, refetch } = useApiQuery<{ data: ClimatologyMonthly }>(
+    (signal) => getClimatologyMonthly(signal),
+    { skip: isMockMode() },
+  );
+
+  if (isMockMode()) {
+    return mockResult<ClimatologyMonthly>(mockClimatology);
+  }
+
+  return {
+    data: data?.data ?? null,
+    loading,
+    error,
+    refetch,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// useAlmanacPlanets — /almanac/planets
+// ---------------------------------------------------------------------------
+
+export function useAlmanacPlanets(): HookResult<PlanetsVisible> {
+  const { data, loading, error, refetch } = useApiQuery<{ data: PlanetsVisible }>(
+    (signal) => getAlmanacPlanets(signal),
+    { skip: isMockMode() },
+  );
+
+  if (isMockMode()) {
+    return mockResult<PlanetsVisible>(mockPlanets);
+  }
+
+  return {
+    data: data?.data ?? null,
+    loading,
+    error,
+    refetch,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// useAlmanacMoonNames — /almanac/moon-names
+// ---------------------------------------------------------------------------
+
+export function useAlmanacMoonNames(): HookResult<MoonNameData> {
+  const { data, loading, error, refetch } = useApiQuery<{ data: MoonNameData }>(
+    (signal) => getAlmanacMoonNames(signal),
+    { skip: isMockMode() },
+  );
+
+  if (isMockMode()) {
+    return mockResult<MoonNameData>(mockMoonNames);
+  }
+
+  return {
+    data: data?.data ?? null,
+    loading,
+    error,
+    refetch,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// useAlmanacEclipses — /almanac/eclipses
+// ---------------------------------------------------------------------------
+
+export function useAlmanacEclipses(): HookResult<EclipseData> {
+  const { data, loading, error, refetch } = useApiQuery<{ data: EclipseData }>(
+    (signal) => getAlmanacEclipses(signal),
+    { skip: isMockMode() },
+  );
+
+  if (isMockMode()) {
+    return mockResult<EclipseData>(mockEclipses);
+  }
+
+  return {
+    data: data?.data ?? null,
+    loading,
+    error,
+    refetch,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// useAlmanacMeteorShowers — /almanac/meteor-showers
+// ---------------------------------------------------------------------------
+
+export function useAlmanacMeteorShowers(): HookResult<MeteorShowerData> {
+  const { data, loading, error, refetch } = useApiQuery<{ data: MeteorShowerData }>(
+    (signal) => getAlmanacMeteorShowers(signal),
+    { skip: isMockMode() },
+  );
+
+  if (isMockMode()) {
+    return mockResult<MeteorShowerData>(mockMeteorShowers);
+  }
+
+  return {
+    data: data?.data ?? null,
+    loading,
+    error,
+    refetch,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// useEarthquakeConfig — /earthquakes/config
+// ---------------------------------------------------------------------------
+
+export function useEarthquakeConfig(): HookResult<EarthquakeConfig> {
+  const { data, loading, error, refetch } = useApiQuery<{ data: EarthquakeConfig }>(
+    (signal) => getEarthquakeConfig(signal),
+    { skip: isMockMode() },
+  );
+
+  if (isMockMode()) {
+    // Reasonable defaults for mock/dev mode — matches ADR-040/ADR-046 field names.
+    return mockResult<EarthquakeConfig>({
+      provider: 'usgs',
+      radiusKm: 100,
+      minMagnitude: 2.0,
+      defaultDays: 7,
+    });
+  }
+
+  return {
+    data: data?.data ?? null,
+    loading,
+    error,
+    refetch,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// useEarthquakeFaults — /earthquakes/faults  (bare GeoJSON FeatureCollection)
+// ---------------------------------------------------------------------------
+
+export function useEarthquakeFaults(): HookResult<FaultFeatureCollection> {
+  const { data, loading, error, refetch } = useApiQuery<FaultFeatureCollection>(
+    (signal) => getEarthquakeFaults(signal),
+    { skip: isMockMode() },
+  );
+
+  if (isMockMode()) {
+    // Empty feature collection in mock mode — faults are optional geographic context.
+    return mockResult<FaultFeatureCollection>({
+      type: 'FeatureCollection',
+      features: [],
+      attribution: 'Active faults: GEM Global Active Faults Database, CC-BY-SA 4.0',
+    });
+  }
+
+  return {
+    data: data ?? null,
+    loading,
+    error,
+    refetch,
+  };
 }

@@ -301,6 +301,39 @@ export interface EarthquakeRecord {
   source: string;
 }
 
+export interface EarthquakeConfig {
+  provider: string;
+  radiusKm: number;
+  minMagnitude: number;
+  defaultDays: number;
+}
+
+/** GeoJSON FeatureCollection returned by /earthquakes/faults.
+ * Extends GeoJSON types with the attribution field bundled by the API. */
+export interface FaultFeatureProperties {
+  /** Fault name, if present in GEM GAF-DB data. */
+  name?: string | null;
+  /** Slip type (e.g. "Normal", "Thrust", "Strike-Slip"), if present. */
+  slip_type?: string | null;
+  [key: string]: unknown;
+}
+
+export interface FaultFeature {
+  type: 'Feature';
+  geometry: {
+    type: string;
+    coordinates: unknown;
+  };
+  properties: FaultFeatureProperties;
+}
+
+export interface FaultFeatureCollection {
+  type: 'FeatureCollection';
+  features: FaultFeature[];
+  /** Attribution text — must be displayed on the map (ADR-046 / CC-BY-SA 4.0). */
+  attribution?: string;
+}
+
 // ---------------------------------------------------------------------------
 // /aqi/current
 // ---------------------------------------------------------------------------
@@ -475,6 +508,89 @@ export interface RadarFrameList {
 export interface RadarFramesResponse {
   data: RadarFrameList;
   generatedAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// /climatology/monthly
+// ---------------------------------------------------------------------------
+
+export interface ClimatologyMonthly {
+  /** 12-element arrays, one entry per month (index 0 = January). */
+  months: string[];
+  avgHighTemp: (number | null)[];
+  avgLowTemp: (number | null)[];
+  avgDewpoint: (number | null)[];
+  avgRainfall: (number | null)[];
+}
+
+// ---------------------------------------------------------------------------
+// /almanac/planets
+// ---------------------------------------------------------------------------
+
+export interface PlanetEntry {
+  name: string;
+  /** Visual magnitude — lower is brighter. */
+  magnitude: number | null;
+  /** UTC ISO-8601 rise time, or null if the planet doesn't rise today. */
+  rise: string | null;
+  /** UTC ISO-8601 set time, or null if the planet doesn't set today. */
+  set: string | null;
+}
+
+export interface PlanetsVisible {
+  evening: PlanetEntry[];
+  morning: PlanetEntry[];
+  allNight: PlanetEntry[];
+}
+
+// ---------------------------------------------------------------------------
+// /almanac/moon-names
+// ---------------------------------------------------------------------------
+
+export interface MoonNameData {
+  /** Traditional name for the full moon in the current month, e.g. "Flower Moon". */
+  name: string | null;
+  /** Special designations that apply, e.g. ["Supermoon", "Blue Moon"]. */
+  specialDesignations: string[];
+}
+
+// ---------------------------------------------------------------------------
+// /almanac/eclipses
+// ---------------------------------------------------------------------------
+
+export interface EclipseEntry {
+  /** UTC ISO-8601 date of the eclipse. */
+  date: string;
+  type: 'penumbral' | 'partial' | 'total';
+}
+
+export interface EclipseData {
+  eclipses: EclipseEntry[];
+}
+
+// ---------------------------------------------------------------------------
+// /almanac/meteor-showers
+// ---------------------------------------------------------------------------
+
+export type MeteorShowerViewingCondition = 'excellent' | 'good' | 'fair' | 'poor';
+
+export interface MeteorShowerEntry {
+  name: string;
+  /** UTC ISO-8601 date of peak activity. */
+  peakDate: string;
+  /** Zenithal Hourly Rate — expected meteors per hour under ideal conditions. */
+  zhr: number | null;
+  /** Radiant altitude in degrees at peak. */
+  radiantAltitudeDeg: number | null;
+  /** Moon illumination percentage at peak (0–100). */
+  moonIlluminationPercent: number | null;
+  viewingConditions: MeteorShowerViewingCondition | null;
+  /** Parent body (comet or asteroid), e.g. "109P/Swift-Tuttle". */
+  parentBody: string | null;
+}
+
+export interface MeteorShowerData {
+  showers: MeteorShowerEntry[];
 }
 
 // ---------------------------------------------------------------------------

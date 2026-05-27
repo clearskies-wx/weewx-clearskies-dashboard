@@ -50,6 +50,9 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
           }
         : undefined,
       customCssUrl: apiData.customCssUrl ?? null,
+      siteTitle: apiData.siteTitle,
+      faviconUrl: apiData.faviconUrl,
+      social: apiData.social,
     };
   }, [apiData]);
 
@@ -64,6 +67,26 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
     root.style.setProperty('--brand-primary-fg-light', palette.lightForeground);
     root.style.setProperty('--brand-primary-fg-dark', palette.darkForeground);
   }, [config.accent]);
+
+  // Apply siteTitle to document.title when the operator has configured one.
+  useEffect(() => {
+    if (config.siteTitle && config.siteTitle.trim().length > 0) {
+      document.title = config.siteTitle;
+    }
+  }, [config.siteTitle]);
+
+  // Apply faviconUrl to the <link rel="icon"> element.
+  // Creates the element if it doesn't exist yet (SSR-safe: runs client-side only).
+  useEffect(() => {
+    if (!config.faviconUrl || config.faviconUrl.trim().length === 0) return;
+    let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.head.appendChild(link);
+    }
+    link.href = config.faviconUrl;
+  }, [config.faviconUrl]);
 
   // Memoize so consumers only re-render when config fields actually change.
   // Without this, every BrandingProvider render creates a new object reference

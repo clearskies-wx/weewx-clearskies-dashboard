@@ -10,6 +10,8 @@ import type {
   AlertList,
   AlmanacSnapshot,
   EarthquakeRecord,
+  EarthquakeConfig,
+  FaultFeatureCollection,
   AQIReading,
   RecordsBundle,
   StationMetadata,
@@ -23,6 +25,11 @@ import type {
   MarkdownContentResponse,
   ProblemDetail,
   RadarFramesResponse,
+  ClimatologyMonthly,
+  PlanetsVisible,
+  MoonNameData,
+  EclipseData,
+  MeteorShowerData,
 } from './types';
 
 // ---------------------------------------------------------------------------
@@ -147,6 +154,14 @@ export function getEarthquakes(signal?: AbortSignal): Promise<ApiResponse<Earthq
   return fetchApi<ApiResponse<EarthquakeRecord[]>>('/earthquakes', undefined, signal);
 }
 
+export function getEarthquakeConfig(signal?: AbortSignal): Promise<ApiResponse<EarthquakeConfig>> {
+  return fetchApi<ApiResponse<EarthquakeConfig>>('/earthquakes/config', undefined, signal);
+}
+
+export function getEarthquakeFaults(signal?: AbortSignal): Promise<FaultFeatureCollection> {
+  return fetchApi<FaultFeatureCollection>('/earthquakes/faults', undefined, signal);
+}
+
 export function getAqiCurrent(signal?: AbortSignal): Promise<ApiResponse<AQIReading | null>> {
   return fetchApi<ApiResponse<AQIReading | null>>('/aqi/current', undefined, signal);
 }
@@ -235,8 +250,66 @@ export interface ApiBrandingConfig {
     alt: string;
   } | null;
   customCssUrl: string | null;
+  siteTitle?: string;
+  faviconUrl?: string;
+  social?: {
+    facebook?: string;
+    twitter?: string;
+    instagram?: string;
+    youtube?: string;
+  };
 }
 
 export function getBranding(signal?: AbortSignal): Promise<ApiResponse<ApiBrandingConfig>> {
   return fetchApi<ApiResponse<ApiBrandingConfig>>('/branding', undefined, signal);
+}
+
+// ---------------------------------------------------------------------------
+// GET /climatology/monthly
+// ---------------------------------------------------------------------------
+
+export function getClimatologyMonthly(
+  signal?: AbortSignal,
+): Promise<ApiResponse<ClimatologyMonthly>> {
+  return fetchApi<ApiResponse<ClimatologyMonthly>>('/climatology/monthly', undefined, signal);
+}
+
+// ---------------------------------------------------------------------------
+// GET /almanac/planets
+// ---------------------------------------------------------------------------
+
+export function getAlmanacPlanets(
+  signal?: AbortSignal,
+): Promise<ApiResponse<PlanetsVisible>> {
+  return fetchApi<ApiResponse<PlanetsVisible>>('/almanac/planets', undefined, signal);
+}
+
+// ---------------------------------------------------------------------------
+// GET /almanac/moon-names
+// ---------------------------------------------------------------------------
+
+export function getAlmanacMoonNames(
+  signal?: AbortSignal,
+): Promise<ApiResponse<MoonNameData>> {
+  return fetchApi<ApiResponse<MoonNameData>>('/almanac/moon-names', undefined, signal);
+}
+
+// ---------------------------------------------------------------------------
+// GET /almanac/eclipses
+// ---------------------------------------------------------------------------
+
+export function getAlmanacEclipses(
+  signal?: AbortSignal,
+): Promise<ApiResponse<EclipseData>> {
+  return fetchApi<ApiResponse<EclipseData>>('/almanac/eclipses', undefined, signal);
+}
+
+// ---------------------------------------------------------------------------
+// GET /almanac/meteor-showers
+// ---------------------------------------------------------------------------
+
+export function getAlmanacMeteorShowers(
+  signal?: AbortSignal,
+): Promise<ApiResponse<MeteorShowerData>> {
+  return fetchApi<ApiResponse<MeteorShowerData>>('/almanac/meteor-showers', undefined, signal);
 }
