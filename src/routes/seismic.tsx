@@ -192,12 +192,14 @@ export function SeismicPage() {
     : '';
 
   return (
-    <div className="flex flex-col gap-4 p-2 md:p-4">
-      <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
+    // h-full + flex-col so the grid below can stretch to fill the available
+    // main-element height rather than overflowing the viewport.
+    <div className="flex flex-col gap-4 p-2 md:p-4 h-full">
+      <h1 className="text-2xl font-bold text-foreground shrink-0">{t('title')}</h1>
 
       {/* Config info bar — compact single-line display of operator settings */}
       {config && (
-        <p className="text-sm text-muted-foreground" aria-label={t('configAriaLabel')}>
+        <p className="text-sm text-muted-foreground shrink-0" aria-label={t('configAriaLabel')}>
           {t('configSummary', {
             provider: config.provider.toUpperCase(),
             radiusKm: config.radiusKm,
@@ -220,14 +222,17 @@ export function SeismicPage() {
       {error && <TileError message={t('unableToLoad')} onRetry={refetch} />}
 
       {!loading && !error && earthquakes !== null && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+        // flex-1 min-h-0: takes remaining height after the h1 + config bar,
+        // min-h-0 prevents flex children from ignoring the overflow boundary.
+        // On desktop: grid-cols-2 side-by-side. On mobile: stacked (grid-cols-1).
+        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* ----------------------------------------------------------------
               LEFT: Map card
-              Desktop: h-[calc(100vh-12rem)] fills the viewport minus header/gap.
+              Desktop: h-full fills the grid row (bounded by flex-1 parent).
               Mobile: fixed h-[300px] so the list is immediately visible below.
           ---------------------------------------------------------------- */}
-          <Card className="overflow-hidden">
-            <CardHeader className="pb-2">
+          <Card className="overflow-hidden flex flex-col h-[300px] lg:h-full">
+            <CardHeader className="pb-2 shrink-0">
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <CardTitle as="h2">{t('mapCardTitle')}</CardTitle>
                 {/* Fault toggle — checkbox with visible label (§5.2 / §5.3) */}
@@ -243,9 +248,9 @@ export function SeismicPage() {
                 </label>
               </div>
             </CardHeader>
-            <CardContent className="p-0">
+            <CardContent className="p-0 flex-1 min-h-0">
               <div
-                className="h-[300px] lg:h-[calc(100vh-12rem)]"
+                className="h-full"
                 role="region"
                 aria-label={t('mapCardTitle')}
               >
@@ -330,21 +335,22 @@ export function SeismicPage() {
 
           {/* ----------------------------------------------------------------
               RIGHT: Scrollable earthquake list
-              Desktop: max-h constrained to match map height + scroll.
-              Mobile: naturally scrollable (no height cap — just flows below map).
+              Desktop: h-full matches the grid row height (set by the map card),
+                       overflow-y-auto makes it scroll within that fixed height.
+              Mobile: naturally tall (grid-cols-1 so each card sizes to content).
           ---------------------------------------------------------------- */}
-          <Card>
-            <CardHeader className="pb-2">
+          <Card className="flex flex-col lg:h-full">
+            <CardHeader className="pb-2 shrink-0">
               <CardTitle as="h2">{t('listCardTitle')}</CardTitle>
             </CardHeader>
-            <CardContent className="p-0">
+            <CardContent className="p-0 lg:flex-1 lg:min-h-0 lg:overflow-hidden">
               {earthquakes.length === 0 ? (
                 <p className="px-4 py-8 text-center text-muted-foreground text-sm">
                   {t('noRecentQuakes')}
                 </p>
               ) : (
                 <div
-                  className="overflow-y-auto lg:max-h-[calc(100vh-12rem)]"
+                  className="overflow-y-auto lg:h-full"
                   role="region"
                   aria-label={t('ariaRecentList')}
                   // tabIndex so keyboard users can scroll the list with arrow keys
