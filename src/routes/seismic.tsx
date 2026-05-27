@@ -49,14 +49,15 @@ function formatTime(isoString: string, timeZone: string, locale: string): string
   }).format(new Date(isoString));
 }
 
-// Returns Tailwind bg+text class pair for the magnitude badge based on the M value.
-// Numeric value always visible alongside color — color alone does not signal severity (§5.1).
+// MMI-scale colors for the magnitude badge. Approximate magnitude-to-MMI mapping:
+// M<3 → MMI I-III (not felt/weak), M3-4 → MMI IV-V (light/moderate),
+// M4-5 → MMI VI (strong), M5-7 → MMI VII-IX (very strong/severe), M7+ → MMI X+ (extreme).
 function magnitudeClasses(mag: number): { bg: string; text: string } {
-  if (mag < 2)   return { bg: 'bg-emerald-100 dark:bg-emerald-900/40', text: 'text-emerald-800 dark:text-emerald-300' };
-  if (mag < 3)   return { bg: 'bg-green-100 dark:bg-green-900/40',    text: 'text-green-800 dark:text-green-300' };
-  if (mag < 4)   return { bg: 'bg-amber-100 dark:bg-amber-900/40',    text: 'text-amber-800 dark:text-amber-300' };
-  if (mag < 5)   return { bg: 'bg-orange-100 dark:bg-orange-900/40',  text: 'text-orange-800 dark:text-orange-300' };
-  return           { bg: 'bg-red-100 dark:bg-red-900/40',             text: 'text-red-800 dark:text-red-300' };
+  if (mag < 3)   return { bg: 'bg-sky-100 dark:bg-sky-900/40',        text: 'text-sky-800 dark:text-sky-200' };
+  if (mag < 4)   return { bg: 'bg-green-500 dark:bg-green-600',       text: 'text-white dark:text-white' };
+  if (mag < 5)   return { bg: 'bg-yellow-400 dark:bg-yellow-500',     text: 'text-yellow-900 dark:text-yellow-950' };
+  if (mag < 7)   return { bg: 'bg-orange-500 dark:bg-red-600',        text: 'text-white dark:text-white' };
+  return           { bg: 'bg-red-800 dark:bg-red-900',                text: 'text-white dark:text-red-100' };
 }
 
 // PAGER alert level badge colors — matches real USGS palette semantics.
