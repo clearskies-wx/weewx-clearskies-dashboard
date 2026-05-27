@@ -1,0 +1,22 @@
+{
+  "title": "地震資訊",
+  "loadingData": "正在載入地震資料…",
+  "unableToLoad": "無法載入地震資料",
+  "noRecentQuakes": "設定範圍內近期無地震。",
+  "ariaRecentList": "近期地震",
+  "ariaMagnitude": "規模 {{mag}}",
+  "unknownLocation": "位置不明",
+  "depth": "深度：{{depth}} km",
+  "source": "來源：{{source}}",
+  "feltBy_one": "{{count}} 人有感",
+  "feltBy_other": "{{count}} 人有感",
+  "mmi": "修正麥卡利震度：{{mmi}}",
+  "tsunamiWatch": "海嘯警報",
+  "pager": "PAGER：{{level}}",
+  "mapCardTitle": "地震地圖",
+  "stationLocation": "測站",
+  "magnitude": "規模",
+  "depthLabel": "深度",
+  "listCardTitle": "地震列表",
+  "rowAriaLabel": "規模 {{mag}}，{{place}}"
+}

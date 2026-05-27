@@ -1,0 +1,22 @@
+{
+  "title": "Сейсмика",
+  "loadingData": "Загрузка сейсмических данных…",
+  "unableToLoad": "Не удалось загрузить сейсмические данные",
+  "noRecentQuakes": "Землетрясений в заданном радиусе не зафиксировано.",
+  "ariaRecentList": "Последние землетрясения",
+  "ariaMagnitude": "Магнитуда {{mag}}",
+  "unknownLocation": "Местоположение неизвестно",
+  "depth": "Глубина: {{depth}} км",
+  "source": "Источник: {{source}}",
+  "feltBy_one": "Ощутил {{count}} человек",
+  "feltBy_other": "Ощутили {{count}} человек",
+  "mmi": "ММИ: {{mmi}}",
+  "tsunamiWatch": "Предупреждение о цунами",
+  "pager": "PAGER: {{level}}",
+  "mapCardTitle": "Сейсмическая карта",
+  "stationLocation": "Станция",
+  "magnitude": "Магнитуда",
+  "depthLabel": "Глубина",
+  "listCardTitle": "Землетрясения",
+  "rowAriaLabel": "Магнитуда {{mag}}, {{place}}"
+}

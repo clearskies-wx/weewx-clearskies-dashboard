@@ -20,7 +20,7 @@ import {
   GeoJSON,
   useMap,
 } from 'react-leaflet';
-import type { Map as LeafletMap, PathOptions } from 'leaflet';
+import type { PathOptions } from 'leaflet';
 import type { GeoJsonObject } from 'geojson';
 import {
   Card,
@@ -160,9 +160,6 @@ export function SeismicPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showFaults, setShowFaults] = useState(true);
 
-  // Map ref — set from MapContainer's ref prop.
-  const mapRef = useRef<LeafletMap | null>(null);
-
   // Row refs — keyed by earthquake id, used for smooth scroll-into-view.
   const rowRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
@@ -257,7 +254,6 @@ export function SeismicPage() {
                   zoom={defaultZoom}
                   className="h-full w-full"
                   scrollWheelZoom={true}
-                  ref={mapRef}
                 >
                   <TileLayer
                     attribution={`&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>${faultAttribution ? ' | ' + faultAttribution : ''}`}

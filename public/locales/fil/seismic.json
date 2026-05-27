@@ -1,0 +1,22 @@
+{
+  "title": "Seismiko",
+  "loadingData": "Naglo-load ng seismikong datos…",
+  "unableToLoad": "Hindi ma-load ang seismikong datos",
+  "noRecentQuakes": "Walang kamakailang lindol sa loob ng naka-configure na radius.",
+  "ariaRecentList": "Mga kamakailang lindol",
+  "ariaMagnitude": "Lakas na {{mag}}",
+  "unknownLocation": "Hindi kilalang lokasyon",
+  "depth": "Lalim: {{depth}} km",
+  "source": "Pinagmulan: {{source}}",
+  "feltBy_one": "Naramdaman ng {{count}} tao",
+  "feltBy_other": "Naramdaman ng {{count}} tao",
+  "mmi": "MMI: {{mmi}}",
+  "tsunamiWatch": "Babala ng tsunami",
+  "pager": "PAGER: {{level}}",
+  "mapCardTitle": "Seismikong Mapa",
+  "stationLocation": "Istasyon",
+  "magnitude": "Lakas",
+  "depthLabel": "Lalim",
+  "listCardTitle": "Mga Lindol",
+  "rowAriaLabel": "Lakas {{mag}}, {{place}}"
+}

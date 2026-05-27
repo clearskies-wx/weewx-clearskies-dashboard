@@ -1,0 +1,22 @@
+{
+  "title": "Seismisch",
+  "loadingData": "Seismische gegevens laden…",
+  "unableToLoad": "Kan seismische gegevens niet laden",
+  "noRecentQuakes": "Geen recente aardbevingen binnen de ingestelde straal.",
+  "ariaRecentList": "Recente aardbevingen",
+  "ariaMagnitude": "Magnitude {{mag}}",
+  "unknownLocation": "Onbekende locatie",
+  "depth": "Diepte: {{depth}} km",
+  "source": "Bron: {{source}}",
+  "feltBy_one": "Gevoeld door {{count}} persoon",
+  "feltBy_other": "Gevoeld door {{count}} personen",
+  "mmi": "MMI: {{mmi}}",
+  "tsunamiWatch": "Tsunamiwaarschuwing",
+  "pager": "PAGER: {{level}}",
+  "mapCardTitle": "Seismische kaart",
+  "stationLocation": "Station",
+  "magnitude": "Magnitude",
+  "depthLabel": "Diepte",
+  "listCardTitle": "Aardbevingen",
+  "rowAriaLabel": "Magnitude {{mag}}, {{place}}"
+}

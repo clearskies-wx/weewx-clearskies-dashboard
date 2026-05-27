@@ -1,0 +1,22 @@
+{
+  "title": "Sismique",
+  "loadingData": "Chargement des données sismiques…",
+  "unableToLoad": "Impossible de charger les données sismiques",
+  "noRecentQuakes": "Aucun séisme récent dans le rayon configuré.",
+  "ariaRecentList": "Séismes récents",
+  "ariaMagnitude": "Magnitude {{mag}}",
+  "unknownLocation": "Emplacement inconnu",
+  "depth": "Profondeur : {{depth}} km",
+  "source": "Source : {{source}}",
+  "feltBy_one": "Ressenti par {{count}} personne",
+  "feltBy_other": "Ressenti par {{count}} personnes",
+  "mmi": "MMI : {{mmi}}",
+  "tsunamiWatch": "Alerte tsunami",
+  "pager": "PAGER : {{level}}",
+  "mapCardTitle": "Carte sismique",
+  "stationLocation": "Station",
+  "magnitude": "Magnitude",
+  "depthLabel": "Profondeur",
+  "listCardTitle": "Séismes",
+  "rowAriaLabel": "Magnitude {{mag}}, {{place}}"
+}
