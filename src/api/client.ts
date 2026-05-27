@@ -27,7 +27,7 @@ import type {
   RadarFramesResponse,
   ClimatologyMonthly,
   PlanetsVisible,
-  MoonNameData,
+  ApiMoonNamesCalendar,
   EclipseData,
   MeteorShowerData,
 } from './types';
@@ -290,8 +290,8 @@ export function getAlmanacPlanets(
 
 export function getAlmanacMoonNames(
   signal?: AbortSignal,
-): Promise<ApiResponse<MoonNameData>> {
-  return fetchApi<ApiResponse<MoonNameData>>('/almanac/moon-names', undefined, signal);
+): Promise<ApiResponse<ApiMoonNamesCalendar>> {
+  return fetchApi<ApiResponse<ApiMoonNamesCalendar>>('/almanac/moon-names', undefined, signal);
 }
 
 // ---------------------------------------------------------------------------

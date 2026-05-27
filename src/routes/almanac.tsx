@@ -405,12 +405,12 @@ export function AlmanacPage() {
             </CardHeader>
             <CardContent>
               {/* Moon name badges — only shown when data is available */}
-              {moonNames && (moonNames.name || moonNames.specialDesignations.length > 0) && (
+              {moonNames && (moonNames.name || (moonNames.specialDesignations?.length ?? 0) > 0) && (
                 <div className="flex flex-wrap gap-1.5 mb-4" aria-label="Special moon designations">
                   {moonNames.name && (
                     <Badge variant="secondary">{moonNames.name}</Badge>
                   )}
-                  {moonNames.specialDesignations.map((designation) => (
+                  {(moonNames.specialDesignations ?? []).map((designation) => (
                     <Badge key={designation} variant="outline">{designation}</Badge>
                   ))}
                 </div>

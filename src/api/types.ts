@@ -547,6 +547,20 @@ export interface PlanetsVisible {
 // /almanac/moon-names
 // ---------------------------------------------------------------------------
 
+export interface ApiSpecialMoonEntry {
+  date: string;
+  traditionalName: string;
+  isHarvestMoon: boolean;
+  isBlueMoon: boolean;
+  isHuntersMoon: boolean;
+  isSupermoon: boolean;
+}
+
+export interface ApiMoonNamesCalendar {
+  year: number;
+  moons: ApiSpecialMoonEntry[];
+}
+
 export interface MoonNameData {
   /** Traditional name for the full moon in the current month, e.g. "Flower Moon". */
   name: string | null;

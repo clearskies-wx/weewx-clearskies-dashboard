@@ -77,6 +77,8 @@ import type {
   LightningData,
   ClimatologyMonthly,
   PlanetsVisible,
+  ApiMoonNamesCalendar,
+  ApiSpecialMoonEntry,
   MoonNameData,
   EclipseData,
   MeteorShowerData,
@@ -675,8 +677,31 @@ export function useAlmanacPlanets(): HookResult<PlanetsVisible> {
 // useAlmanacMoonNames — /almanac/moon-names
 // ---------------------------------------------------------------------------
 
+function _toMoonNameData(cal: ApiMoonNamesCalendar): MoonNameData | null {
+  const now = Date.now();
+  let closest: ApiSpecialMoonEntry | null = null;
+  let closestDist = Infinity;
+  for (const m of cal.moons) {
+    const dist = Math.abs(new Date(m.date).getTime() - now);
+    if (dist < closestDist) {
+      closestDist = dist;
+      closest = m;
+    }
+  }
+  if (!closest) return null;
+  const designations: string[] = [];
+  if (closest.isHarvestMoon) designations.push('Harvest Moon');
+  if (closest.isHuntersMoon) designations.push("Hunter's Moon");
+  if (closest.isBlueMoon) designations.push('Blue Moon');
+  if (closest.isSupermoon) designations.push('Supermoon');
+  return {
+    name: `${closest.traditionalName} Moon`,
+    specialDesignations: designations,
+  };
+}
+
 export function useAlmanacMoonNames(): HookResult<MoonNameData> {
-  const { data, loading, error, refetch } = useApiQuery<{ data: MoonNameData }>(
+  const { data, loading, error, refetch } = useApiQuery<{ data: ApiMoonNamesCalendar }>(
     (signal) => getAlmanacMoonNames(signal),
     { skip: isMockMode() },
   );
@@ -685,8 +710,10 @@ export function useAlmanacMoonNames(): HookResult<MoonNameData> {
     return mockResult<MoonNameData>(mockMoonNames);
   }
 
+  const transformed = data?.data ? _toMoonNameData(data.data) : null;
+
   return {
-    data: data?.data ?? null,
+    data: transformed,
     loading,
     error,
     refetch,
