@@ -20,7 +20,7 @@ import {
   GeoJSON,
   useMap,
 } from 'react-leaflet';
-import type { PathOptions } from 'leaflet';
+import type { PathOptions, LatLngBoundsExpression } from 'leaflet';
 import type { GeoJsonObject } from 'geojson';
 import {
   Card,
@@ -182,9 +182,13 @@ export function SeismicPage() {
     ? [station.latitude, station.longitude]
     : [0, 0];
   const radiusKm = config?.radiusKm ?? 100;
-  const defaultZoom = hasStation
-    ? Math.round(Math.log2((40075 * Math.cos(station.latitude * Math.PI / 180)) / (radiusKm * 2.5)))
-    : 2;
+  const bufferKm = radiusKm * 1.15;
+  const deltaLat = hasStation ? bufferKm / 111 : 90;
+  const deltaLon = hasStation ? bufferKm / (111 * Math.cos(station.latitude * Math.PI / 180)) : 180;
+  const initialBounds: LatLngBoundsExpression = hasStation
+    ? [[station.latitude - deltaLat, station.longitude - deltaLon],
+       [station.latitude + deltaLat, station.longitude + deltaLon]]
+    : [[-60, -180], [60, 180]];
 
   // When selectedId changes via a map marker click, scroll the list row into view.
   useEffect(() => {
@@ -266,8 +270,7 @@ export function SeismicPage() {
                 aria-label={t('mapCardTitle')}
               >
                 <MapContainer
-                  center={center}
-                  zoom={defaultZoom}
+                  bounds={initialBounds}
                   className="h-full w-full"
                   scrollWheelZoom={true}
                 >
