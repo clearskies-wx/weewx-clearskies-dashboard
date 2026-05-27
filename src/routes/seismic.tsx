@@ -71,14 +71,15 @@ function alertClasses(level: EarthquakeRecord['alert']): string {
   }
 }
 
-function alertColor(alert: EarthquakeRecord['alert']): string {
-  switch (alert) {
-    case 'green':  return '#22c55e';
-    case 'yellow': return '#eab308';
-    case 'orange': return '#f97316';
-    case 'red':    return '#ef4444';
-    default:       return '#6b7280';
-  }
+function ageColor(time: string, oldestTime: string, newestTime: string): string {
+  const t = new Date(time).getTime();
+  const lo = new Date(oldestTime).getTime();
+  const hi = new Date(newestTime).getTime();
+  const ratio = hi === lo ? 1 : (t - lo) / (hi - lo);
+  const r = Math.round(239 * ratio + 59 * (1 - ratio));
+  const g = Math.round(68 * ratio + 130 * (1 - ratio));
+  const b = Math.round(68 * ratio + 246 * (1 - ratio));
+  return `rgb(${r},${g},${b})`;
 }
 
 // ---------------------------------------------------------------------------
@@ -159,6 +160,11 @@ export function SeismicPage() {
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showFaults, setShowFaults] = useState(true);
+
+  const oldestTime = earthquakes && earthquakes.length > 0
+    ? earthquakes.reduce((a, b) => (a.time < b.time ? a : b)).time : '';
+  const newestTime = earthquakes && earthquakes.length > 0
+    ? earthquakes.reduce((a, b) => (a.time > b.time ? a : b)).time : '';
 
   // Row refs — keyed by earthquake id, used for smooth scroll-into-view.
   const rowRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -282,8 +288,8 @@ export function SeismicPage() {
                         center={[eq.latitude, eq.longitude]}
                         radius={isSelected ? baseRadius * 1.6 : baseRadius}
                         pathOptions={{
-                          color: alertColor(eq.alert),
-                          fillColor: alertColor(eq.alert),
+                          color: ageColor(eq.time, oldestTime, newestTime),
+                          fillColor: ageColor(eq.time, oldestTime, newestTime),
                           fillOpacity: isSelected ? 0.85 : 0.6,
                           weight: isSelected ? 2.5 : 1,
                         }}
