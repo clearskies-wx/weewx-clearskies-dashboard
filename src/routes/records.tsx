@@ -85,7 +85,7 @@ function TileError({ message, onRetry }: { message: string; onRetry: () => void 
 export function RecordsPage() {
   const { t, i18n } = useTranslation('records');
   const locale = i18n.language;
-  const [period, setPeriod] = useState<Period>('all-time');
+  const [period, setPeriod] = useState<Period>('ytd');
   const { data: records, units, loading, error, refetch } = useRecords(period);
   const { data: observation } = useObservation();
 
