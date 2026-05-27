@@ -158,8 +158,9 @@ export function getEarthquakeConfig(signal?: AbortSignal): Promise<ApiResponse<E
   return fetchApi<ApiResponse<EarthquakeConfig>>('/earthquakes/config', undefined, signal);
 }
 
-export function getEarthquakeFaults(signal?: AbortSignal): Promise<FaultFeatureCollection> {
-  return fetchApi<FaultFeatureCollection>('/earthquakes/faults', undefined, signal);
+export async function getEarthquakeFaults(signal?: AbortSignal): Promise<FaultFeatureCollection> {
+  const resp = await fetchApi<{ data: FaultFeatureCollection; attribution?: string }>('/earthquakes/faults', undefined, signal);
+  return { ...resp.data, attribution: resp.attribution ?? resp.data.attribution };
 }
 
 export function getAqiCurrent(signal?: AbortSignal): Promise<ApiResponse<AQIReading | null>> {
