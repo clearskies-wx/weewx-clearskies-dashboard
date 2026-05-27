@@ -17,6 +17,8 @@ export interface BrandingConfig {
   siteTitle?: string;
   /** URL for the site favicon, applied to <link rel="icon">. */
   faviconUrl?: string;
+  /** Copyright entity name shown in the footer. Falls back to station name if not set. */
+  copyrightEntity?: string;
 }
 
 // Curated palette — all light values verified ≥4.5:1 on white (oklch(1 0 0));

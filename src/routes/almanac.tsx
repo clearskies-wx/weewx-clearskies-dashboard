@@ -154,20 +154,10 @@ const ECLIPSE_BADGE_CLASS: Record<EclipseType, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// Viewing conditions badge
-// Color is paired with text label — never color-only (WCAG 1.4.1)
+// Moon phase display helper
+// Capitalizes a hyphenated phase name: "waxing-crescent" → "Waxing Crescent"
+// Reuses formatPhaseName defined above.
 // ---------------------------------------------------------------------------
-
-type ViewingCondition = 'excellent' | 'good' | 'fair' | 'poor';
-
-const VIEWING_BADGE_CLASS: Record<ViewingCondition, string> = {
-  excellent: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700/30',
-  good: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700/30',
-  fair: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700/30',
-  // text-foreground on bg-muted: foreground (#171717) on muted (#f5f5f5) ≈ 16.6:1 — passes AA.
-  // text-muted-foreground (#737373) on bg-muted (#f5f5f5) = 4.34:1, which fails AA 4.5 threshold.
-  poor: 'bg-muted text-foreground border-muted-foreground/30',
-};
 
 // ---------------------------------------------------------------------------
 // PlanetRow — one row in the planets section
@@ -186,8 +176,8 @@ function PlanetRow({
     <li className="flex items-start justify-between gap-2 py-1.5">
       <span className="font-medium text-foreground">{planet.name}</span>
       <span className="text-right text-muted-foreground text-xs shrink-0">
-        {planet.magnitude !== null && (
-          <span className="mr-2">{planet.magnitude > 0 ? '+' : ''}{planet.magnitude.toFixed(1)} mag</span>
+        {planet.direction !== null && planet.altitude !== null && (
+          <span className="mr-2">{planet.direction}, {planet.altitude.toFixed(1)}° above horizon</span>
         )}
         {planet.rise && (
           <span>
@@ -213,8 +203,12 @@ function MeteorShowerRow({
   locale: string;
   isUpcoming: boolean;
 }) {
-  const condition = shower.viewingConditions as ViewingCondition | null;
-  const conditionClass = condition ? VIEWING_BADGE_CLASS[condition] : VIEWING_BADGE_CLASS.poor;
+  const moonDisplay =
+    shower.moonIlluminationPercent !== null && shower.moonPhase !== null
+      ? `Moon: ${Math.round(shower.moonIlluminationPercent)}% (${formatPhaseName(shower.moonPhase)})`
+      : shower.moonIlluminationPercent !== null
+      ? `Moon: ${Math.round(shower.moonIlluminationPercent)}%`
+      : null;
 
   return (
     <tr className={isUpcoming ? 'bg-primary/5' : undefined}>
@@ -235,16 +229,8 @@ function MeteorShowerRow({
       <td className="py-2 pr-3 text-sm text-muted-foreground text-right">
         {shower.zhr !== null ? shower.zhr : '—'}
       </td>
-      <td className="py-2 text-sm">
-        {condition ? (
-          <span
-            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${conditionClass}`}
-          >
-            {condition.charAt(0).toUpperCase() + condition.slice(1)}
-          </span>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        )}
+      <td className="py-2 text-sm text-muted-foreground">
+        {moonDisplay ?? '—'}
       </td>
     </tr>
   );
@@ -778,7 +764,7 @@ export function AlmanacPage() {
                         ZHR
                       </th>
                       <th scope="col" className="pb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                        Conditions
+                        Moon
                       </th>
                     </tr>
                   </thead>

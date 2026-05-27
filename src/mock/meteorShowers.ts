@@ -10,7 +10,7 @@ export const mockMeteorShowers: MeteorShowerData = {
       zhr: 100,
       radiantAltitudeDeg: 60,
       moonIlluminationPercent: 15,
-      viewingConditions: 'excellent',
+      moonPhase: 'waxing-crescent',
       parentBody: '109P/Swift-Tuttle',
     },
     {
@@ -19,7 +19,7 @@ export const mockMeteorShowers: MeteorShowerData = {
       zhr: 15,
       radiantAltitudeDeg: 45,
       moonIlluminationPercent: 40,
-      viewingConditions: 'good',
+      moonPhase: 'first-quarter',
       parentBody: '55P/Tempel-Tuttle',
     },
     {
@@ -28,7 +28,7 @@ export const mockMeteorShowers: MeteorShowerData = {
       zhr: 120,
       radiantAltitudeDeg: 70,
       moonIlluminationPercent: 60,
-      viewingConditions: 'fair',
+      moonPhase: 'waxing-gibbous',
       parentBody: '3200 Phaethon',
     },
     {
@@ -37,7 +37,7 @@ export const mockMeteorShowers: MeteorShowerData = {
       zhr: 50,
       radiantAltitudeDeg: 25,
       moonIlluminationPercent: 80,
-      viewingConditions: 'poor',
+      moonPhase: 'waning-gibbous',
       parentBody: '1P/Halley',
     },
   ],

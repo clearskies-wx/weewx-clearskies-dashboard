@@ -181,7 +181,10 @@ export function SeismicPage() {
   const center: [number, number] = hasStation
     ? [station.latitude, station.longitude]
     : [0, 0];
-  const defaultZoom = hasStation ? 7 : 2;
+  const radiusKm = config?.radiusKm ?? 100;
+  const defaultZoom = hasStation
+    ? Math.round(Math.log2((40075 * Math.cos(station.latitude * Math.PI / 180)) / (radiusKm * 2.5)))
+    : 2;
 
   // When selectedId changes via a map marker click, scroll the list row into view.
   useEffect(() => {
@@ -218,9 +221,9 @@ export function SeismicPage() {
       {loading && (
         <>
           <span className="sr-only" role="status">{t('loadingData')}</span>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <TileSkeleton className="h-[300px] lg:h-[calc(100vh-12rem)]" />
-            <TileSkeleton className="h-[300px] lg:h-[calc(100vh-12rem)]" />
+          <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <TileSkeleton className="h-[300px] lg:h-full" />
+            <TileSkeleton className="h-[300px] lg:h-full" />
           </div>
         </>
       )}
@@ -231,7 +234,9 @@ export function SeismicPage() {
         // flex-1 min-h-0: takes remaining height after the h1 + config bar,
         // min-h-0 prevents flex children from ignoring the overflow boundary.
         // On desktop: grid-cols-2 side-by-side. On mobile: stacked (grid-cols-1).
-        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4">
+        // Wrapper div so the GEM attribution can sit below the grid as a sibling.
+        <div className="flex-1 min-h-0 flex flex-col gap-2">
+          <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* ----------------------------------------------------------------
               LEFT: Map card
               Desktop: h-full fills the grid row (bounded by flex-1 parent).
@@ -443,6 +448,14 @@ export function SeismicPage() {
               )}
             </CardContent>
           </Card>
+          </div>{/* end grid */}
+
+          {/* GEM fault attribution — only shown when fault layer is visible */}
+          {showFaults && faults && faults.features.length > 0 && (
+            <p className="shrink-0 text-xs text-muted-foreground/70">
+              Fault data © GEM Foundation (CC BY-SA 4.0)
+            </p>
+          )}
         </div>
       )}
     </div>

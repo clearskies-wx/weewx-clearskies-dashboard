@@ -52,6 +52,7 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
       customCssUrl: apiData.customCssUrl ?? null,
       siteTitle: apiData.siteTitle,
       faviconUrl: apiData.faviconUrl,
+      copyrightEntity: apiData.copyrightEntity ?? apiData.copyright_entity,
     };
   }, [apiData]);
 

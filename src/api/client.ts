@@ -253,6 +253,9 @@ export interface ApiBrandingConfig {
   customCssUrl: string | null;
   siteTitle?: string;
   faviconUrl?: string;
+  /** Copyright entity name; the API may use camelCase or snake_case. */
+  copyrightEntity?: string;
+  copyright_entity?: string;
   social?: {
     facebook?: string;
     twitter?: string;

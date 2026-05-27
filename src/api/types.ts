@@ -529,8 +529,10 @@ export interface ClimatologyMonthly {
 
 export interface PlanetEntry {
   name: string;
-  /** Visual magnitude — lower is brighter. */
-  magnitude: number | null;
+  /** Altitude in degrees above the horizon at the reference viewing time. */
+  altitude: number | null;
+  /** 16-point compass direction at the reference viewing time (e.g. "Southwest"). */
+  direction: string | null;
   /** UTC ISO-8601 rise time, or null if the planet doesn't rise today. */
   rise: string | null;
   /** UTC ISO-8601 set time, or null if the planet doesn't set today. */
@@ -586,8 +588,6 @@ export interface EclipseData {
 // /almanac/meteor-showers
 // ---------------------------------------------------------------------------
 
-export type MeteorShowerViewingCondition = 'excellent' | 'good' | 'fair' | 'poor';
-
 export interface MeteorShowerEntry {
   name: string;
   /** UTC ISO-8601 date of peak activity. */
@@ -598,7 +598,8 @@ export interface MeteorShowerEntry {
   radiantAltitudeDeg: number | null;
   /** Moon illumination percentage at peak (0–100). */
   moonIlluminationPercent: number | null;
-  viewingConditions: MeteorShowerViewingCondition | null;
+  /** Moon phase name at peak, e.g. "waxing-crescent". */
+  moonPhase: string | null;
   /** Parent body (comet or asteroid), e.g. "109P/Swift-Tuttle". */
   parentBody: string | null;
 }

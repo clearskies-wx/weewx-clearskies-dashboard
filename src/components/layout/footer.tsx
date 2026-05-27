@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useStation } from '../../hooks/useWeatherData';
+import { useBranding } from '../../lib/branding-provider';
 import poweredBlue from '../../assets/clearskies-powered-blue.svg';
 import poweredLight from '../../assets/clearskies-powered-light.svg';
 
@@ -129,6 +130,9 @@ function ShareRow() {
 export function Footer() {
   const { data: station } = useStation();
   const { t } = useTranslation('common');
+  const branding = useBranding();
+
+  const copyrightName = branding.copyrightEntity || station?.name || 'Clear Skies Weather';
 
   return (
     <footer className={[
@@ -138,43 +142,39 @@ export function Footer() {
       'pb-[calc(56px+12px)] md:pb-3',
     ].join(' ')}>
 
-      {/* Primary row: nav links + copyright + powered-by logo */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-        <Link
-          to="/legal"
-          className="hover:text-foreground underline underline-offset-4 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded"
-        >
-          {t('footer.legal')}
-        </Link>
-        <span aria-hidden="true">·</span>
-        <span>© {new Date().getFullYear()} {station?.name ?? 'Clear Skies Weather'}</span>
-        <span aria-hidden="true">·</span>
-        {/* Blue logo for light mode; light-blue logo for dark mode.
-            Only the visible image is in the a11y tree (display:none removes it).
-            dark: variant maps to [data-theme="dark"] per index.css @custom-variant. */}
-        <img
-          src={poweredBlue}
-          alt="Powered by Clear Skies"
-          height={22}
-          className="h-[22px] w-auto dark:hidden"
-        />
-        <img
-          src={poweredLight}
-          alt="Powered by Clear Skies"
-          height={22}
-          className="h-[22px] w-auto hidden dark:inline"
-        />
-      </div>
+      {/* Single row: left = nav/copyright/logo · right = share icons */}
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        {/* Left side: legal link · copyright · powered-by logo */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <Link
+            to="/legal"
+            className="hover:text-foreground underline underline-offset-4 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded"
+          >
+            {t('footer.legal')}
+          </Link>
+          <span aria-hidden="true">·</span>
+          <span>© {new Date().getFullYear()} {copyrightName}</span>
+          <span aria-hidden="true">·</span>
+          {/* Blue logo for light mode; light-blue logo for dark mode.
+              Only the visible image is in the a11y tree (display:none removes it).
+              dark: variant maps to [data-theme="dark"] per index.css @custom-variant. */}
+          <img
+            src={poweredBlue}
+            alt="Powered by Clear Skies"
+            height={25}
+            className="h-[25px] w-auto dark:hidden"
+          />
+          <img
+            src={poweredLight}
+            alt="Powered by Clear Skies"
+            height={25}
+            className="h-[25px] w-auto hidden dark:inline"
+          />
+        </div>
 
-      {/* Share buttons row */}
-      <div className="mt-2">
+        {/* Right side: share buttons */}
         <ShareRow />
       </div>
-
-      {/* GEM attribution — always shown (earthquake data is always loaded per ADR-040) */}
-      <p className="mt-1 text-xs text-muted-foreground/70">
-        Fault data © GEM Foundation (CC BY-SA 4.0)
-      </p>
     </footer>
   );
 }
