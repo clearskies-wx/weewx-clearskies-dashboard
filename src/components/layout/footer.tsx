@@ -1,125 +1,123 @@
-import React from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useStation } from '../../hooks/useWeatherData';
-import { useBranding } from '../../lib/branding-provider';
 import poweredBlue from '../../assets/clearskies-powered-blue.svg';
 import poweredLight from '../../assets/clearskies-powered-light.svg';
 
 // ---------------------------------------------------------------------------
-// Social icon SVG paths — Simple Icons style, 24×24 viewBox.
-// Each icon is aria-hidden (decorative inside a labelled <a>).
+// Share button SVG icons — Simple Icons style, 20×20 viewBox.
+// All icons are aria-hidden (decorative inside labelled <a>/<button>).
 // ---------------------------------------------------------------------------
+
+function IconReddit() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">
+      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm6.066 13.71c.147.422.22.864.22 1.317 0 2.78-3.144 5.034-7.022 5.034-3.878 0-7.022-2.254-7.022-5.034 0-.453.073-.895.22-1.317a1.764 1.764 0 01-.726-1.425c0-.976.793-1.769 1.769-1.769.468 0 .893.183 1.209.48C8.13 10.009 10.01 9.371 12 9.329l1.169-5.463a.37.37 0 01.448-.283l3.717.79a1.252 1.252 0 012.362.626c0 .692-.56 1.252-1.252 1.252s-1.252-.56-1.252-1.252l-.007-.076-3.277-.696-1.03 4.827c1.934.065 3.757.7 5.163 1.694a1.76 1.76 0 011.209-.48c.976 0 1.769.793 1.769 1.769 0 .578-.278 1.09-.726 1.425zM9.2 12.746c-.692 0-1.252.56-1.252 1.252s.56 1.252 1.252 1.252 1.252-.56 1.252-1.252-.56-1.252-1.252-1.252zm5.6 0c-.692 0-1.252.56-1.252 1.252s.56 1.252 1.252 1.252 1.252-.56 1.252-1.252-.56-1.252-1.252-1.252zm-4.478 3.69a.303.303 0 01.024-.427.303.303 0 01.427.024c.453.5 1.164.786 1.952.786h.004c.788 0 1.499-.287 1.952-.786a.303.303 0 01.427-.024.303.303 0 01.024.427c-.544.6-1.399.945-2.347.954h-.112c-.948-.01-1.803-.354-2.347-.954z"/>
+    </svg>
+  );
+}
+
+function IconX() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">
+      <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/>
+    </svg>
+  );
+}
 
 function IconFacebook() {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      width={20}
-      height={20}
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">
+      <path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 1.09.044 1.613.115v3.146c-.427-.044-.72-.065-.95-.065-1.348 0-1.87.513-1.87 1.846v2.516h3.692l-.724 3.667H13.752v7.98z"/>
     </svg>
   );
 }
 
-function IconTwitterX() {
+function IconPinterest() {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      width={20}
-      height={20}
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">
+      <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.162-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738a.36.36 0 01.083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12.017 24c6.624 0 11.99-5.367 11.99-11.988C24.007 5.367 18.641 0 12.017 0z"/>
     </svg>
   );
 }
 
-function IconInstagram() {
+function IconLink() {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      width={20}
-      height={20}
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678a6.162 6.162 0 100 12.324 6.162 6.162 0 100-12.324zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm7.846-10.405a1.441 1.441 0 11-2.882 0 1.441 1.441 0 012.882 0z" />
-    </svg>
-  );
-}
-
-function IconYouTube() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      width={20}
-      height={20}
-      aria-hidden="true"
-      focusable="false"
-    >
-      {/* Outer shape */}
-      <path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814z" />
-      {/* Play triangle */}
-      <path d="M9.545 15.568V8.432L15.818 12z" fill="currentColor" />
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" focusable="false">
+      <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>
     </svg>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Social link row — only rendered when at least one URL is configured.
-// Each anchor uses aria-label to name the destination (icon is decorative).
-// Focus ring uses ring-2 ring-ring ring-offset-2 per the project convention,
-// visible on both light and dark backgrounds.
+// Share button row — share current page URL and title to social networks.
+// Uses window.location.href + document.title so it updates per-page automatically.
 // ---------------------------------------------------------------------------
 
-interface SocialLinks {
-  facebook?: string;
-  twitter?: string;
-  instagram?: string;
-  youtube?: string;
-}
+const btnClass = [
+  'text-muted-foreground hover:text-foreground transition-colors',
+  'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded',
+].join(' ');
 
-function SocialRow({ social }: { social: SocialLinks }) {
-  const links: { key: keyof SocialLinks; label: string; Icon: () => React.ReactElement }[] = [
-    { key: 'facebook', label: 'Facebook', Icon: IconFacebook },
-    { key: 'twitter', label: 'Twitter / X', Icon: IconTwitterX },
-    { key: 'instagram', label: 'Instagram', Icon: IconInstagram },
-    { key: 'youtube', label: 'YouTube', Icon: IconYouTube },
-  ];
+function ShareRow() {
+  const [copied, setCopied] = useState(false);
 
-  const active = links.filter(({ key }) => Boolean(social[key]));
-  if (active.length === 0) return null;
+  const copyLink = async () => {
+    await navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  const pageUrl = typeof window !== 'undefined' ? window.location.href : '';
+  const pageTitle = typeof window !== 'undefined' ? document.title : '';
 
   return (
-    <div className="flex items-center gap-4">
-      {active.map(({ key, label, Icon }) => (
-        <a
-          key={key}
-          href={social[key]}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={label}
-          className={[
-            'text-muted-foreground hover:text-foreground transition-colors',
-            'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded',
-          ].join(' ')}
-        >
-          <Icon />
-        </a>
-      ))}
+    <div className="flex items-center gap-3">
+      <a
+        href={`https://www.reddit.com/submit?url=${encodeURIComponent(pageUrl)}&title=${encodeURIComponent(pageTitle)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Share on Reddit"
+        className={btnClass}
+      >
+        <IconReddit />
+      </a>
+      <a
+        href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(pageTitle)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Share on X"
+        className={btnClass}
+      >
+        <IconX />
+      </a>
+      <a
+        href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Share on Facebook"
+        className={btnClass}
+      >
+        <IconFacebook />
+      </a>
+      <a
+        href={`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(pageUrl)}&description=${encodeURIComponent(pageTitle)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Pin on Pinterest"
+        className={btnClass}
+      >
+        <IconPinterest />
+      </a>
+      <button
+        type="button"
+        onClick={copyLink}
+        aria-label={copied ? 'Link copied!' : 'Copy link'}
+        className={`${btnClass}${copied ? ' text-foreground' : ''}`}
+      >
+        <IconLink />
+      </button>
     </div>
   );
 }
@@ -131,11 +129,6 @@ function SocialRow({ social }: { social: SocialLinks }) {
 export function Footer() {
   const { data: station } = useStation();
   const { t } = useTranslation('common');
-  const branding = useBranding();
-
-  const hasSocial =
-    branding.social != null &&
-    Object.values(branding.social).some(Boolean);
 
   return (
     <footer className={[
@@ -173,12 +166,10 @@ export function Footer() {
         />
       </div>
 
-      {/* Social icons row — only rendered when at least one URL is configured */}
-      {hasSocial && branding.social != null && (
-        <div className="mt-2 flex flex-col items-start gap-2 sm:flex-row sm:items-center">
-          <SocialRow social={branding.social} />
-        </div>
-      )}
+      {/* Share buttons row */}
+      <div className="mt-2">
+        <ShareRow />
+      </div>
 
       {/* GEM attribution — always shown (earthquake data is always loaded per ADR-040) */}
       <p className="mt-1 text-xs text-muted-foreground/70">
