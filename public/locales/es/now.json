@@ -98,7 +98,7 @@
   },
   "beaufort": {
     "calm": "Calma",
-    "lightAir": "Ventolina",
+    "veryLightBreeze": "Brisa muy ligera",
     "lightBreeze": "Brisa muy débil",
     "gentleBreeze": "Brisa débil",
     "moderateBreeze": "Brisa moderada",

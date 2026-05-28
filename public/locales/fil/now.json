@@ -89,7 +89,7 @@
   },
   "beaufort": {
     "calm": "Tahimik",
-    "lightAir": "Mahinang Hangin",
+    "veryLightBreeze": "Napakagaan na simoy",
     "lightBreeze": "Mahinang Simoy",
     "gentleBreeze": "Malambot na Simoy",
     "moderateBreeze": "Katamtamang Simoy",

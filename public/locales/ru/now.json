@@ -89,7 +89,7 @@
   },
   "beaufort": {
     "calm": "Штиль",
-    "lightAir": "Тихий ветер",
+    "veryLightBreeze": "Очень лёгкий бриз",
     "lightBreeze": "Лёгкий ветер",
     "gentleBreeze": "Слабый ветер",
     "moderateBreeze": "Умеренный ветер",

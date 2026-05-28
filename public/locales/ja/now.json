@@ -89,7 +89,7 @@
   },
   "beaufort": {
     "calm": "静穏",
-    "lightAir": "至軽風",
+    "veryLightBreeze": "微風",
     "lightBreeze": "軽風",
     "gentleBreeze": "軟風",
     "moderateBreeze": "和風",

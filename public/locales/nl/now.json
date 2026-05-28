@@ -89,7 +89,7 @@
   },
   "beaufort": {
     "calm": "Windstil",
-    "lightAir": "Zwak",
+    "veryLightBreeze": "Zeer lichte bries",
     "lightBreeze": "Zwak",
     "gentleBreeze": "Zwak",
     "moderateBreeze": "Matig",

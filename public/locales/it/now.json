@@ -98,7 +98,7 @@
   },
   "beaufort": {
     "calm": "Calma",
-    "lightAir": "Bava di vento",
+    "veryLightBreeze": "Brezza molto leggera",
     "lightBreeze": "Brezza leggera",
     "gentleBreeze": "Brezza tesa",
     "moderateBreeze": "Vento moderato",
