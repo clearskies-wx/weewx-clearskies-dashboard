@@ -15,5 +15,6 @@
   "ariaHourlyList": "逐小时预报",
   "ariaDayForecast": "{{day}} 预报",
   "ariaPrecipBar": "降水概率 {{pct}}%",
-  "ariaWindDir": "来自{{direction}}方向的风"
+  "ariaWindDir": "来自{{direction}}方向的风",
+  "ariaUvIndex": "紫外线指数 {{uv}}，{{level}}"
 }

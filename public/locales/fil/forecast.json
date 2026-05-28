@@ -15,5 +15,6 @@
   "ariaHourlyList": "Oras-oras na hula",
   "ariaDayForecast": "Hula para sa {{day}}",
   "ariaPrecipBar": "{{pct}}% posibilidad ng ulan",
-  "ariaWindDir": "Hangin mula sa {{direction}}"
+  "ariaWindDir": "Hangin mula sa {{direction}}",
+  "ariaUvIndex": "UV index {{uv}}, {{level}}"
 }

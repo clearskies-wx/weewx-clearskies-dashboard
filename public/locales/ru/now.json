@@ -123,6 +123,24 @@
   "temperature": {
     "ariaLabel": "Текущая температура: {{temp}} градусов {{unit}}"
   },
+  "solarUv": {
+    "title": "Солнечное излучение и УФ",
+    "solarRadiation": "Солнечная радиация",
+    "uvIndex": "Индекс УФ",
+    "uvBarAriaLabel": "Индекс УФ {{uv}}, {{level}}",
+    "uvAriaLabel": "Индекс УФ {{uv}}, {{level}}",
+    "uvAriaLabelNA": "Индекс УФ недоступен",
+    "uv": {
+      "low": "Низкий",
+      "moderate": "Умеренный",
+      "high": "Высокий",
+      "veryHigh": "Очень высокий",
+      "extreme": "Экстремальный",
+      "currentUv": "Текущий УФ",
+      "forecastPeak": "Максимальный УФ по прогнозу",
+      "uvIndex": "Индекс УФ"
+    }
+  },
   "webcam": "Веб-камера",
   "webcamAlt": "Вид с веб-камеры в прямом эфире"
 }

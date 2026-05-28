@@ -123,6 +123,24 @@
   "temperature": {
     "ariaLabel": "当前气温：{{temp}} 度 {{unit}}"
   },
+  "solarUv": {
+    "title": "太阳辐射与紫外线",
+    "solarRadiation": "太阳辐射",
+    "uvIndex": "紫外线指数",
+    "uvBarAriaLabel": "紫外线指数 {{uv}}，{{level}}",
+    "uvAriaLabel": "紫外线指数 {{uv}}，{{level}}",
+    "uvAriaLabelNA": "紫外线指数不可用",
+    "uv": {
+      "low": "低",
+      "moderate": "中等",
+      "high": "高",
+      "veryHigh": "很高",
+      "extreme": "极高",
+      "currentUv": "当前紫外线",
+      "forecastPeak": "预测紫外线峰值",
+      "uvIndex": "紫外线指数"
+    }
+  },
   "webcam": "网络摄像头",
   "webcamAlt": "实时网络摄像头画面"
 }

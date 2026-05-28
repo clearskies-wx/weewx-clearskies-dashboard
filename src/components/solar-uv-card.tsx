@@ -2,36 +2,28 @@
 //
 // Displays:
 //   - Solar radiation in W/m²
-//   - UV index with a segmented bar indicator
-//   - Exposure risk label (Low / Moderate / High / Very High / Extreme)
+//   - Current (sensor) UV index with a segmented bar indicator and EPA label
+//   - Forecast UV peak from the day's forecast with EPA label
 //
 // A11y design:
 //   - Color is NOT the sole signal: each UV range has both a color segment
 //     and a visible text label.  The bar carries an aria-label with both the
 //     numeric value and the risk level, so screen readers receive both.
-//   - UV bar segment colors are chosen for ≥3:1 contrast against the card
-//     background (#FFFFFF light / oklch(0.145 0 0) ≈ #1A1A1A dark) per
-//     WCAG 1.4.11 (Non-Text Contrast).  The raw EPA UV palette uses pure
-//     green/yellow which fail that threshold; the shades below are adjusted:
-//
-//       Low (0–2):       #1A7A1A  (~7.0:1 on white, ~5.2:1 on #1A1A1A)
-//       Moderate (3–5):  #B8A000  (~3.4:1 on white, ~4.6:1 on #1A1A1A)
-//       High (6–7):      #C45E00  (~4.0:1 on white, ~5.4:1 on #1A1A1A)
-//       Very High (8–10):#CC0000  (~5.9:1 on white, ~6.8:1 on #1A1A1A)
-//       Extreme (11+):   #6B2D8B  (~5.5:1 on white, ~4.3:1 on #1A1A1A)
-//
-//   Contrast ratios verified via WebAIM Contrast Checker (2025-05).
+//   - UV display elements have aria-label attributes describing value + category.
+//   - EPA segment colors are WCAG-adjusted for ≥3:1 contrast — see uv.ts for
+//     the full color rationale and contrast audit.
 
 import { useTranslation } from 'react-i18next';
 import { Sun } from 'lucide-react';
 import { formatValue } from '../utils/format';
 import { asConverted } from '../api/types';
+import { UV_SEGMENTS, getUvSegment } from '../utils/uv';
 import {
   Card,
   CardHeader,
   CardContent,
 } from './ui/card';
-import type { Observation } from '../api/types';
+import type { Observation, DailyForecastPoint } from '../api/types';
 
 // ---------------------------------------------------------------------------
 // Sub-components (local skeleton / error — mirror now.tsx pattern exactly)
@@ -63,26 +55,6 @@ function TileError({ message, onRetry }: { message: string; onRetry: () => void 
 }
 
 // ---------------------------------------------------------------------------
-// UV range helpers
-// ---------------------------------------------------------------------------
-
-/** EPA UV index ranges mapped to WCAG-accessible colors (see file header). */
-const UV_SEGMENTS = [
-  { max: 2,  colorHex: '#1A7A1A', labelKey: 'solarUv.uv.low'      },
-  { max: 5,  colorHex: '#B8A000', labelKey: 'solarUv.uv.moderate'  },
-  { max: 7,  colorHex: '#C45E00', labelKey: 'solarUv.uv.high'      },
-  { max: 10, colorHex: '#CC0000', labelKey: 'solarUv.uv.veryHigh'  },
-  { max: Infinity, colorHex: '#6B2D8B', labelKey: 'solarUv.uv.extreme' },
-] as const;
-
-function uvSegmentIndex(uv: number): number {
-  for (let i = 0; i < UV_SEGMENTS.length; i++) {
-    if (uv <= UV_SEGMENTS[i].max) return i;
-  }
-  return UV_SEGMENTS.length - 1;
-}
-
-// ---------------------------------------------------------------------------
 // UV Bar sub-component
 // ---------------------------------------------------------------------------
 
@@ -93,18 +65,19 @@ interface UvBarProps {
 }
 
 /**
- * Segmented UV bar.
+ * Segmented UV bar (current sensor reading only — not forecast).
  *
  * The bar is divided into 5 equal segments (Low → Extreme).  The current UV
  * level illuminates the correct segment; all segments to its left are also
- * illuminated at full opacity while segments to the right are dimmed.  The
- * active segment has a small indicator notch below it.
+ * illuminated at full opacity while segments to the right are dimmed.
  *
  * The wrapping div carries the full a11y description; the SVG is aria-hidden.
+ * Criterion 9.4: UV bar shows current sensor value, not forecast.
  */
 function UvBar({ uv, levelLabel }: UvBarProps) {
   const { t } = useTranslation('now');
-  const activeIdx = uvSegmentIndex(uv);
+  const segment = getUvSegment(uv);
+  const activeIdx = segment !== null ? UV_SEGMENTS.indexOf(segment) : -1;
 
   return (
     <div
@@ -119,16 +92,15 @@ function UvBar({ uv, levelLabel }: UvBarProps) {
             key={seg.labelKey}
             className="flex-1 rounded-sm transition-opacity"
             style={{
-              backgroundColor: seg.colorHex,
+              backgroundColor: seg.color,
               opacity: idx <= activeIdx ? 1 : 0.2,
             }}
           />
         ))}
       </div>
 
-      {/* Segment labels — hidden visually but the role="img" aria-label covers
-          SR users.  Shown as tiny tick labels under each segment for sighted
-          users on wider viewports. */}
+      {/* Segment labels — shown as tiny tick labels under each segment for
+          sighted users; the role="img" aria-label covers screen reader users. */}
       <div className="flex gap-0.5 text-[10px] text-muted-foreground" aria-hidden="true">
         {UV_SEGMENTS.map((seg) => (
           <span key={seg.labelKey} className="flex-1 text-center leading-none truncate">
@@ -141,6 +113,30 @@ function UvBar({ uv, levelLabel }: UvBarProps) {
 }
 
 // ---------------------------------------------------------------------------
+// UvBadge — compact color-labeled chip for inline UV display
+// ---------------------------------------------------------------------------
+
+/**
+ * UvBadge — shows a UV index value with its EPA color badge and text label.
+ *
+ * A11y: the color chip is aria-hidden; the text label alongside it conveys
+ * the category without relying on color alone (WCAG 1.4.1).
+ */
+function UvBadge({ uv, label }: { uv: number; label: string }) {
+  return (
+    <span className="flex items-baseline gap-1.5">
+      <span
+        aria-hidden="true"
+        className="inline-block w-2.5 h-2.5 rounded-full shrink-0 self-center"
+        style={{ backgroundColor: getUvSegment(uv)?.color ?? '#888' }}
+      />
+      <span className="text-xl font-semibold text-foreground tabular-nums">{uv}</span>
+      <span className="text-sm font-medium text-foreground">{label}</span>
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Props
 // ---------------------------------------------------------------------------
 
@@ -149,6 +145,8 @@ interface SolarUvCardProps {
   loading: boolean;
   error: Error | null;
   onRetry: () => void;
+  /** Today's forecast — used to show forecast UV peak (criterion 9.2). */
+  todayForecast?: DailyForecastPoint | null;
   /** Optional grid column class — caller controls layout placement. */
   className?: string;
 }
@@ -157,13 +155,20 @@ interface SolarUvCardProps {
 // Component
 // ---------------------------------------------------------------------------
 
-export function SolarUvCard({ observation, loading, error, onRetry, className }: SolarUvCardProps) {
+export function SolarUvCard({ observation, loading, error, onRetry, todayForecast, className }: SolarUvCardProps) {
   const { t } = useTranslation('now');
 
   const uvCV = asConverted(observation?.UV ?? null);
   const uv = uvCV?.value ?? null;
-  const activeIdx = uv != null ? uvSegmentIndex(uv) : -1;
-  const levelLabel = activeIdx >= 0 ? t(UV_SEGMENTS[activeIdx].labelKey) : '';
+
+  // Current sensor UV
+  const currentSegment = getUvSegment(uv);
+  const currentLevelLabel = currentSegment !== null ? t(currentSegment.labelKey) : '';
+
+  // Forecast UV peak — from today's daily forecast point (criterion 9.2, 9.5)
+  const forecastUv = todayForecast?.uvIndexMax ?? null;
+  const forecastSegment = getUvSegment(forecastUv);
+  const forecastLevelLabel = forecastSegment !== null ? t(forecastSegment.labelKey) : '';
 
   return (
     <Card className={className} aria-busy={loading}>
@@ -200,30 +205,52 @@ export function SolarUvCard({ observation, loading, error, onRetry, className }:
                 </dd>
               </div>
 
-              {/* UV index value + risk label */}
+              {/* Current UV index value + risk label (criterion 9.1, 9.6) */}
               <div>
                 <dt className="text-xs text-muted-foreground uppercase tracking-wide">
-                  {t('solarUv.uvIndex')}
+                  {t('solarUv.uv.currentUv')}
                 </dt>
-                <dd className="mt-1 flex items-baseline gap-2">
-                  <span className="text-xl font-semibold text-foreground">
-                    {uvCV !== null ? uvCV.formatted : '—'}
-                  </span>
-                  {levelLabel && (
-                    // Risk label rendered in text-foreground for WCAG 1.4.3 text contrast.
-                    // The colored bar below already conveys the category via color;
-                    // this label conveys it via text alone — no color needed here.
-                    <span className="text-sm font-medium text-foreground">
-                      {levelLabel}
-                    </span>
+                <dd
+                  className="mt-1"
+                  aria-label={
+                    uv !== null
+                      ? t('solarUv.uvAriaLabel', { uv: formatValue(uv, 'uv'), level: currentLevelLabel })
+                      : t('solarUv.uvAriaLabelNA')
+                  }
+                >
+                  {uv !== null ? (
+                    <UvBadge uv={uv} label={currentLevelLabel} />
+                  ) : (
+                    <span className="text-xl font-semibold text-foreground">—</span>
+                  )}
+                </dd>
+              </div>
+
+              {/* Forecast UV peak (criterion 9.2, 9.5) */}
+              <div className="col-span-2">
+                <dt className="text-xs text-muted-foreground uppercase tracking-wide">
+                  {t('solarUv.uv.forecastPeak')}
+                </dt>
+                <dd
+                  className="mt-1"
+                  aria-label={
+                    forecastUv !== null
+                      ? t('solarUv.uvAriaLabel', { uv: formatValue(forecastUv, 'uv'), level: forecastLevelLabel })
+                      : t('solarUv.uvAriaLabelNA')
+                  }
+                >
+                  {forecastUv !== null ? (
+                    <UvBadge uv={forecastUv} label={forecastLevelLabel} />
+                  ) : (
+                    <span className="text-sm text-muted-foreground">{t('noData.forecast')}</span>
                   )}
                 </dd>
               </div>
             </dl>
 
-            {/* UV bar — only rendered when we have a UV value */}
+            {/* UV bar — current sensor value only (criterion 9.4); only rendered when we have a UV value */}
             {uv != null && (
-              <UvBar uv={uv} levelLabel={levelLabel} />
+              <UvBar uv={uv} levelLabel={currentLevelLabel} />
             )}
           </>
         ) : (

@@ -15,5 +15,6 @@
   "ariaHourlyList": "Previsioni orarie",
   "ariaDayForecast": "Previsioni di {{day}}",
   "ariaPrecipBar": "{{pct}}% di probabilità di precipitazioni",
-  "ariaWindDir": "Vento da {{direction}}"
+  "ariaWindDir": "Vento da {{direction}}",
+  "ariaUvIndex": "Indice UV {{uv}}, {{level}}"
 }

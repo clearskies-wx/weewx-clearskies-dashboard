@@ -123,6 +123,24 @@
   "temperature": {
     "ariaLabel": "現在の気温: {{temp}}度 {{unit}}"
   },
+  "solarUv": {
+    "title": "太陽放射・UV",
+    "solarRadiation": "日射量",
+    "uvIndex": "UV指数",
+    "uvBarAriaLabel": "UV指数 {{uv}}、{{level}}",
+    "uvAriaLabel": "UV指数 {{uv}}、{{level}}",
+    "uvAriaLabelNA": "UV指数は利用できません",
+    "uv": {
+      "low": "低い",
+      "moderate": "中程度",
+      "high": "高い",
+      "veryHigh": "非常に高い",
+      "extreme": "極端",
+      "currentUv": "現在のUV",
+      "forecastPeak": "予測UV最高値",
+      "uvIndex": "UV指数"
+    }
+  },
   "webcam": "ウェブカメラ",
   "webcamAlt": "ライブウェブカメラ映像"
 }

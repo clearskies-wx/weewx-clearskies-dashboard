@@ -15,5 +15,6 @@
   "ariaHourlyList": "Hourly forecast",
   "ariaDayForecast": "{{day}} forecast",
   "ariaPrecipBar": "{{pct}}% chance of precipitation",
-  "ariaWindDir": "Wind from the {{direction}}"
+  "ariaWindDir": "Wind from the {{direction}}",
+  "ariaUvIndex": "UV index {{uv}}, {{level}}"
 }

@@ -123,6 +123,24 @@
   "temperature": {
     "ariaLabel": "Kasalukuyang temperatura: {{temp}} degrees {{unit}}"
   },
+  "solarUv": {
+    "title": "Solar at UV",
+    "solarRadiation": "Radyasyon Solar",
+    "uvIndex": "UV Index",
+    "uvBarAriaLabel": "UV index {{uv}}, {{level}}",
+    "uvAriaLabel": "UV index {{uv}}, {{level}}",
+    "uvAriaLabelNA": "Hindi available ang UV index",
+    "uv": {
+      "low": "Mababa",
+      "moderate": "Katamtaman",
+      "high": "Mataas",
+      "veryHigh": "Napakataas",
+      "extreme": "Matinding",
+      "currentUv": "Kasalukuyang UV",
+      "forecastPeak": "Inaasahang Pinakamataas na UV",
+      "uvIndex": "UV Index"
+    }
+  },
   "webcam": "Webcam",
   "webcamAlt": "Tanawin ng live na webcam"
 }

@@ -15,5 +15,6 @@
   "ariaHourlyList": "時間別予報",
   "ariaDayForecast": "{{day}}の予報",
   "ariaPrecipBar": "降水確率{{pct}}%",
-  "ariaWindDir": "{{direction}}からの風"
+  "ariaWindDir": "{{direction}}からの風",
+  "ariaUvIndex": "UV指数 {{uv}}、{{level}}"
 }

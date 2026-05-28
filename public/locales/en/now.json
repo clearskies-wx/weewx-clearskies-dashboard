@@ -152,12 +152,17 @@
     "solarRadiation": "Solar Radiation",
     "uvIndex": "UV Index",
     "uvBarAriaLabel": "UV index {{uv}}, {{level}}",
+    "uvAriaLabel": "UV index {{uv}}, {{level}}",
+    "uvAriaLabelNA": "UV index not available",
     "uv": {
       "low": "Low",
       "moderate": "Moderate",
       "high": "High",
       "veryHigh": "Very High",
-      "extreme": "Extreme"
+      "extreme": "Extreme",
+      "currentUv": "Current UV",
+      "forecastPeak": "Forecast UV Peak",
+      "uvIndex": "UV Index"
     }
   },
 

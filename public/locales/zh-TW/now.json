@@ -123,6 +123,24 @@
   "temperature": {
     "ariaLabel": "目前氣溫：{{temp}} 度 {{unit}}"
   },
+  "solarUv": {
+    "title": "太陽輻射與紫外線",
+    "solarRadiation": "太陽輻射",
+    "uvIndex": "紫外線指數",
+    "uvBarAriaLabel": "紫外線指數 {{uv}}，{{level}}",
+    "uvAriaLabel": "紫外線指數 {{uv}}，{{level}}",
+    "uvAriaLabelNA": "紫外線指數不可用",
+    "uv": {
+      "low": "低",
+      "moderate": "中等",
+      "high": "高",
+      "veryHigh": "很高",
+      "extreme": "極高",
+      "currentUv": "目前紫外線",
+      "forecastPeak": "預測紫外線峰值",
+      "uvIndex": "紫外線指數"
+    }
+  },
   "webcam": "網路攝影機",
   "webcamAlt": "即時網路攝影機畫面"
 }

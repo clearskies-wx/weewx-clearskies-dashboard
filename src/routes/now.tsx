@@ -519,6 +519,7 @@ export function NowPage() {
           loading={obsLoading}
           error={obsError}
           onRetry={obsRefetch}
+          todayForecast={todayForecast}
         />
 
         {/* Row 4 — Precipitation / Barometer */}

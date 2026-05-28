@@ -15,5 +15,6 @@
   "ariaHourlyList": "Uurverwachting",
   "ariaDayForecast": "Verwachting voor {{day}}",
   "ariaPrecipBar": "{{pct}}% kans op neerslag",
-  "ariaWindDir": "Wind uit {{direction}}"
+  "ariaWindDir": "Wind uit {{direction}}",
+  "ariaUvIndex": "UV-index {{uv}}, {{level}}"
 }

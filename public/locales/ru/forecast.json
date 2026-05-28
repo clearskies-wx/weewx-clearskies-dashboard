@@ -15,5 +15,6 @@
   "ariaHourlyList": "Почасовой прогноз",
   "ariaDayForecast": "Прогноз на {{day}}",
   "ariaPrecipBar": "{{pct}}% вероятность осадков",
-  "ariaWindDir": "Ветер с {{direction}}"
+  "ariaWindDir": "Ветер с {{direction}}",
+  "ariaUvIndex": "Индекс УФ {{uv}}, {{level}}"
 }

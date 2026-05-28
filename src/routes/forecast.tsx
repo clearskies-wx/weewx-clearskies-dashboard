@@ -10,6 +10,7 @@ import { useForecast, useAlerts, useStation } from '../hooks/useWeatherData';
 import { useRealtimeObservation } from '../hooks/useRealtimeObservation';
 import { formatValue } from '../utils/format';
 import { asConverted } from '../api/types';
+import { getUvSegment } from '../utils/uv';
 
 /** Convert wind direction degrees to an 16-point cardinal label. */
 function windDirLabel(deg: number): string {
@@ -84,6 +85,40 @@ function WindArrow({ deg, className = '' }: { deg: number; className?: string })
   );
 }
 
+
+/**
+ * UvIndexRow — compact UV index display for daily forecast cards.
+ *
+ * Shows a color-coded dot (aria-hidden), the label key, the numeric value,
+ * and the EPA category text.  The surrounding <p> carries an aria-label so
+ * screen readers receive the full picture without relying on color (WCAG 1.4.1).
+ *
+ * The 'now' namespace is used for UV label keys because UV segment labels
+ * (Low/Moderate/etc.) live in solarUv.uv.* there — shared by both pages.
+ */
+function UvIndexRow({ uv }: { uv: number }) {
+  const { t: tNow } = useTranslation('now');
+  const { t } = useTranslation('forecast');
+  const seg = getUvSegment(uv);
+  // Resolve the translated label from the 'now' namespace where these keys live.
+  const levelLabel = seg ? tNow(seg.labelKey as Parameters<typeof tNow>[0]) : String(uv);
+
+  return (
+    <p
+      className="flex items-center gap-1.5 text-xs text-muted-foreground"
+      aria-label={t('ariaUvIndex', { uv, level: levelLabel })}
+    >
+      <span
+        aria-hidden="true"
+        className="inline-block w-2 h-2 rounded-full shrink-0"
+        style={{ backgroundColor: seg?.color ?? '#888' }}
+      />
+      <span>{tNow('solarUv.uv.uvIndex')}</span>
+      <span className="tabular-nums text-foreground font-medium">{uv}</span>
+      <span>{levelLabel}</span>
+    </p>
+  );
+}
 
 function formatHour(isoString: string, timeZone: string, locale: string): string {
   return new Intl.DateTimeFormat(locale, {
@@ -303,6 +338,13 @@ export function ForecastPage() {
                         <p className="text-xs text-muted-foreground">
                           {t('windUpTo', { speed: formatValue(day.windSpeedMax, 'wind'), unit: windUnit })}
                         </p>
+                      )}
+
+                      {/* UV index max — criterion 9.7: show uvIndexMax on daily cards.
+                          Color badge is aria-hidden; text label conveys category
+                          without relying on color alone (WCAG 1.4.1, criterion 9.3). */}
+                      {day.uvIndexMax !== null && (
+                        <UvIndexRow uv={day.uvIndexMax} />
                       )}
                     </CardContent>
                   </Card>

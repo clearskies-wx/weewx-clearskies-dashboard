@@ -123,6 +123,24 @@
   "temperature": {
     "ariaLabel": "Huidige temperatuur: {{temp}} graden {{unit}}"
   },
+  "solarUv": {
+    "title": "Zonnestraling en UV",
+    "solarRadiation": "Zonnestraling",
+    "uvIndex": "UV-index",
+    "uvBarAriaLabel": "UV-index {{uv}}, {{level}}",
+    "uvAriaLabel": "UV-index {{uv}}, {{level}}",
+    "uvAriaLabelNA": "UV-index niet beschikbaar",
+    "uv": {
+      "low": "Laag",
+      "moderate": "Matig",
+      "high": "Hoog",
+      "veryHigh": "Zeer hoog",
+      "extreme": "Extreem",
+      "currentUv": "Huidige UV",
+      "forecastPeak": "Verwachte UV-piek",
+      "uvIndex": "UV-index"
+    }
+  },
   "webcam": "Webcam",
   "webcamAlt": "Live webcamweergave"
 }

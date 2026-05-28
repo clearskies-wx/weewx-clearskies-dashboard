@@ -123,6 +123,24 @@
   "temperature": {
     "ariaLabel": "Temperatura actual: {{temp}} grados {{unit}}"
   },
+  "solarUv": {
+    "title": "Solar y UV",
+    "solarRadiation": "Radiación solar",
+    "uvIndex": "Índice UV",
+    "uvBarAriaLabel": "Índice UV {{uv}}, {{level}}",
+    "uvAriaLabel": "Índice UV {{uv}}, {{level}}",
+    "uvAriaLabelNA": "Índice UV no disponible",
+    "uv": {
+      "low": "Bajo",
+      "moderate": "Moderado",
+      "high": "Alto",
+      "veryHigh": "Muy alto",
+      "extreme": "Extremo",
+      "currentUv": "UV actual",
+      "forecastPeak": "Pico UV previsto",
+      "uvIndex": "Índice UV"
+    }
+  },
   "webcam": "Cámara web",
   "webcamAlt": "Vista en vivo de la cámara web"
 }
