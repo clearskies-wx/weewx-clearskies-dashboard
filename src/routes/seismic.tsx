@@ -458,7 +458,7 @@ export function SeismicPage() {
           {/* GEM fault attribution — only shown when fault layer is visible */}
           {showFaults && faults && faults.features.length > 0 && (
             <p className="shrink-0 text-xs text-muted-foreground/70">
-              Fault data © GEM Foundation (CC BY-SA 4.0)
+              {faults.attribution}
             </p>
           )}
         </div>
