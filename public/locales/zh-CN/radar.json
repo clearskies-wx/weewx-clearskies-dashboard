@@ -1,11 +1,11 @@
 {
-  "radarTitle": "Radar",
-  "play": "Play animation",
-  "pause": "Pause animation",
-  "previousFrame": "Previous frame",
-  "nextFrame": "Next frame",
-  "noProvider": "No radar provider configured.",
-  "noFrames": "No radar data available.",
-  "loading": "Loading radar data...",
-  "frameOf": "Frame {{current}} of {{total}}"
+  "radarTitle": "雷达",
+  "play": "播放动画",
+  "pause": "暂停动画",
+  "previousFrame": "上一帧",
+  "nextFrame": "下一帧",
+  "noProvider": "未配置雷达数据源。",
+  "noFrames": "暂无雷达数据。",
+  "loading": "正在加载雷达数据…",
+  "frameOf": "第 {{current}} 帧，共 {{total}} 帧"
 }

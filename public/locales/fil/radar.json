@@ -1,11 +1,11 @@
 {
   "radarTitle": "Radar",
-  "play": "Play animation",
-  "pause": "Pause animation",
-  "previousFrame": "Previous frame",
-  "nextFrame": "Next frame",
-  "noProvider": "No radar provider configured.",
-  "noFrames": "No radar data available.",
-  "loading": "Loading radar data...",
-  "frameOf": "Frame {{current}} of {{total}}"
+  "play": "I-play ang animation",
+  "pause": "I-pause ang animation",
+  "previousFrame": "Nakaraang frame",
+  "nextFrame": "Susunod na frame",
+  "noProvider": "Walang naka-configure na radar provider.",
+  "noFrames": "Walang available na datos ng radar.",
+  "loading": "Naglo-load ng datos ng radar…",
+  "frameOf": "Frame {{current}} ng {{total}}"
 }

@@ -8,11 +8,35 @@
   "pageNotFound": "ページが見つかりません。",
   "footer": {
     "legal": "法的情報 / プライバシー",
-    "poweredBy": "Clear Skies 提供"
+    "poweredBy": "Clear Skies 提供",
+    "shareReddit": "Reddit で共有",
+    "shareX": "X で共有",
+    "shareFacebook": "Facebook で共有",
+    "sharePinterest": "Pinterest にピン留め",
+    "copyLink": "リンクをコピー",
+    "linkCopied": "リンクをコピーしました！"
   },
   "theme": {
     "ariaAuto": "テーマ: システム設定に従う — クリックでライトモードに切り替え",
     "ariaLight": "テーマ: ライト — クリックでダークモードに切り替え",
     "ariaDark": "テーマ: ダーク — クリックでシステム設定に切り替え"
+  },
+  "directions": {
+    "N":   "北",
+    "NNE": "北北東",
+    "NE":  "北東",
+    "ENE": "東北東",
+    "E":   "東",
+    "ESE": "東南東",
+    "SE":  "南東",
+    "SSE": "南南東",
+    "S":   "南",
+    "SSW": "南南西",
+    "SW":  "南西",
+    "WSW": "西南西",
+    "W":   "西",
+    "WNW": "西北西",
+    "NW":  "北西",
+    "NNW": "北北西"
   }
 }

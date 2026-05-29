@@ -1,11 +1,11 @@
 {
-  "radarTitle": "Radar",
-  "play": "Play animation",
-  "pause": "Pause animation",
-  "previousFrame": "Previous frame",
-  "nextFrame": "Next frame",
-  "noProvider": "No radar provider configured.",
-  "noFrames": "No radar data available.",
-  "loading": "Loading radar data...",
-  "frameOf": "Frame {{current}} of {{total}}"
+  "radarTitle": "Радар",
+  "play": "Воспроизвести анимацию",
+  "pause": "Приостановить анимацию",
+  "previousFrame": "Предыдущий кадр",
+  "nextFrame": "Следующий кадр",
+  "noProvider": "Поставщик радарных данных не настроен.",
+  "noFrames": "Радарные данные недоступны.",
+  "loading": "Загрузка радарных данных…",
+  "frameOf": "Кадр {{current}} из {{total}}"
 }

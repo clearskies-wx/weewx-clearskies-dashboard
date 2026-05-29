@@ -1,11 +1,11 @@
 {
   "radarTitle": "Radar",
-  "play": "Play animation",
-  "pause": "Pause animation",
-  "previousFrame": "Previous frame",
-  "nextFrame": "Next frame",
-  "noProvider": "No radar provider configured.",
-  "noFrames": "No radar data available.",
-  "loading": "Loading radar data...",
-  "frameOf": "Frame {{current}} of {{total}}"
+  "play": "Animatie afspelen",
+  "pause": "Animatie pauzeren",
+  "previousFrame": "Vorig beeld",
+  "nextFrame": "Volgend beeld",
+  "noProvider": "Geen radarprovider geconfigureerd.",
+  "noFrames": "Geen radargegevens beschikbaar.",
+  "loading": "Radargegevens laden…",
+  "frameOf": "Beeld {{current}} van {{total}}"
 }

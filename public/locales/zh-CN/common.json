@@ -8,11 +8,35 @@
   "pageNotFound": "页面未找到。",
   "footer": {
     "legal": "法律 / 隐私",
-    "poweredBy": "由 Clear Skies 驱动"
+    "poweredBy": "由 Clear Skies 驱动",
+    "shareReddit": "分享到 Reddit",
+    "shareX": "分享到 X",
+    "shareFacebook": "分享到 Facebook",
+    "sharePinterest": "固定到 Pinterest",
+    "copyLink": "复制链接",
+    "linkCopied": "链接已复制！"
   },
   "theme": {
     "ariaAuto": "主题：跟随系统设置 — 点击切换至浅色模式",
     "ariaLight": "主题：浅色 — 点击切换至深色模式",
     "ariaDark": "主题：深色 — 点击切换至系统设置"
+  },
+  "directions": {
+    "N":   "北",
+    "NNE": "北北东",
+    "NE":  "东北",
+    "ENE": "东北东",
+    "E":   "东",
+    "ESE": "东南东",
+    "SE":  "东南",
+    "SSE": "南南东",
+    "S":   "南",
+    "SSW": "南南西",
+    "SW":  "西南",
+    "WSW": "西南西",
+    "W":   "西",
+    "WNW": "西北西",
+    "NW":  "西北",
+    "NNW": "北北西"
   }
 }

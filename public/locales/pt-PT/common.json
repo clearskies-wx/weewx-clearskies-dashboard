@@ -8,11 +8,35 @@
   "pageNotFound": "Página não encontrada.",
   "footer": {
     "legal": "Legal / Privacidade",
-    "poweredBy": "Desenvolvido pelo Clear Skies"
+    "poweredBy": "Desenvolvido pelo Clear Skies",
+    "shareReddit": "Partilhar no Reddit",
+    "shareX": "Partilhar no X",
+    "shareFacebook": "Partilhar no Facebook",
+    "sharePinterest": "Afixar no Pinterest",
+    "copyLink": "Copiar ligação",
+    "linkCopied": "Ligação copiada!"
   },
   "theme": {
     "ariaAuto": "Tema: a seguir a preferência do sistema — clique para mudar para modo claro",
     "ariaLight": "Tema: claro — clique para mudar para modo escuro",
     "ariaDark": "Tema: escuro — clique para mudar para preferência do sistema"
+  },
+  "directions": {
+    "N":   "N",
+    "NNE": "NNE",
+    "NE":  "NE",
+    "ENE": "ENE",
+    "E":   "E",
+    "ESE": "ESE",
+    "SE":  "SE",
+    "SSE": "SSE",
+    "S":   "S",
+    "SSW": "SSO",
+    "SW":  "SO",
+    "WSW": "OSO",
+    "W":   "O",
+    "WNW": "ONO",
+    "NW":  "NO",
+    "NNW": "NNO"
   }
 }

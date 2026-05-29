@@ -1,11 +1,11 @@
 {
-  "radarTitle": "Radar",
-  "play": "Play animation",
-  "pause": "Pause animation",
-  "previousFrame": "Previous frame",
-  "nextFrame": "Next frame",
-  "noProvider": "No radar provider configured.",
-  "noFrames": "No radar data available.",
-  "loading": "Loading radar data...",
-  "frameOf": "Frame {{current}} of {{total}}"
+  "radarTitle": "雷達",
+  "play": "播放動畫",
+  "pause": "暫停動畫",
+  "previousFrame": "上一影格",
+  "nextFrame": "下一影格",
+  "noProvider": "未設定雷達資料來源。",
+  "noFrames": "暫無雷達資料。",
+  "loading": "正在載入雷達資料…",
+  "frameOf": "第 {{current}} 影格，共 {{total}} 影格"
 }
