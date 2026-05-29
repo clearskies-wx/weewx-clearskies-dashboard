@@ -151,8 +151,8 @@ paths:
       summary: Highs and lows
       description: |
         Section-grouped records (Temperature / Wind / Rain / Humidity /
-        Barometer / Sun / AQI / InsideTemp + custom). Each section
-        self-hides when its backing data is unavailable.
+        Barometer / Sun / AQI). Each section self-hides when its backing
+        data is unavailable.
       operationId: getRecords
       parameters:
         - name: period
