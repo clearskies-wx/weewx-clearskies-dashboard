@@ -11,12 +11,7 @@ import { useRealtimeObservation } from '../hooks/useRealtimeObservation';
 import { formatValue } from '../utils/format';
 import { asConverted } from '../api/types';
 import { getUvSegment } from '../utils/uv';
-
-/** Convert wind direction degrees to an 16-point cardinal label. */
-function windDirLabel(deg: number): string {
-  const dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-  return dirs[Math.round(deg / 22.5) % 16];
-}
+import { cardinalFromDegrees } from '../utils/wind';
 
 /**
  * PrecipBar — horizontal progress bar for precipitation probability.
@@ -178,6 +173,7 @@ function TileError({ message, onRetry }: { message: string; onRetry: () => void 
 
 export function ForecastPage() {
   const { t, i18n } = useTranslation('forecast');
+  const { t: tCommon } = useTranslation('common');
   const { data: forecast, loading: fcLoading, error: fcError, refetch: fcRefetch } = useForecast();
   const { data: station } = useStation();
   const { data: alerts, loading: alertLoading } = useAlerts();
@@ -223,8 +219,15 @@ export function ForecastPage() {
                 const hourLabel = formatHour(hour.validTime, tz, locale);
                 const hasWindDir = hour.windDir !== null;
                 const windDirDeg = hour.windDir ?? 0;
+                // cardinalFromDegrees uses the same formula as the BFF (ADR-041).
+                // Forecast data has no BFF-supplied cardinal; compute it client-side
+                // using the shared helper and render via i18n (ADR-021).
+                const windCardinal = hasWindDir ? cardinalFromDegrees(windDirDeg) : null;
+                const windCardinalLabel = windCardinal
+                  ? tCommon(`directions.${windCardinal}`)
+                  : '—';
                 const windLabel = hasWindDir
-                  ? t('ariaWindDir', { direction: windDirLabel(windDirDeg).toLowerCase() })
+                  ? t('ariaWindDir', { direction: windCardinalLabel.toLowerCase() })
                   : undefined;
                 return (
                   <div

@@ -46,11 +46,6 @@ function formatPhaseName(name: string | null): string {
   return name.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 
-function windDirLabel(deg: number): string {
-  const dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-  return dirs[Math.round(deg / 22.5) % 16];
-}
-
 // EPA standard AQI color categories with WCAG AA-accessible shades.
 // The raw EPA palette (#FFFF00 yellow, #00E400 bright green) fails 3:1 contrast
 // against white backgrounds for non-text elements. These replacements preserve
@@ -101,6 +96,7 @@ function formatRelativeTime(iso: string, locale: string): string {
 
 function WindCompass({
   windDirDeg,
+  windDirCardinal,
   windSpeedFormatted,
   windSpeedUnit,
   windGustFormatted,
@@ -110,6 +106,12 @@ function WindCompass({
 }: {
   /** Raw wind direction degrees (from ConvertedValue.value) for SVG rotation. */
   windDirDeg: number;
+  /**
+   * BFF-supplied canonical cardinal code (ADR-041).
+   * Rendered via i18n (ADR-021): t('directions.' + windDirCardinal).
+   * null → display '—'.
+   */
+  windDirCardinal: string | null;
   windSpeedFormatted: string;
   windSpeedUnit: string;
   windGustFormatted: string;
@@ -118,8 +120,10 @@ function WindCompass({
   beaufortDescription: string;
   t: TFunction;
 }) {
-  const dirLabel = windDirLabel(windDirDeg).toLowerCase();
-  const ariaLabel = t('windCompass.ariaLabel', { direction: dirLabel, degrees: formatValue(windDirDeg, 'degrees') });
+  const { t: tCommon } = useTranslation('common');
+  // Translate the cardinal code via i18n (ADR-021). Falls back to '—' when null.
+  const dirTranslated = windDirCardinal ? tCommon(`directions.${windDirCardinal}`) : '—';
+  const ariaLabel = t('windCompass.ariaLabel', { direction: dirTranslated.toLowerCase(), degrees: formatValue(windDirDeg, 'degrees') });
 
   return (
     <div className="flex flex-col items-center gap-3">
@@ -169,10 +173,10 @@ function WindCompass({
 
       <div className="text-center text-sm">
         <p className="font-medium text-foreground text-base">
-          {t('windCompass.directionLabel', { direction: windDirLabel(windDirDeg), degrees: formatValue(windDirDeg, 'degrees') })}
+          {t('windCompass.directionLabel', { direction: dirTranslated, degrees: formatValue(windDirDeg, 'degrees') })}
         </p>
         <p className="text-muted-foreground">
-          {t('windCompass.speed', { speed: windSpeedFormatted, unit: windSpeedUnit, direction: windDirLabel(windDirDeg) })}
+          {t('windCompass.speed', { speed: windSpeedFormatted, unit: windSpeedUnit, direction: dirTranslated })}
         </p>
         <p className="text-muted-foreground">{t('windCompass.gusts', { gust: windGustFormatted, unit: windGustUnit })}</p>
         {beaufortDescription && (
@@ -344,6 +348,10 @@ export function NowPage() {
   const windGustCV = asConverted(observation?.windGust ?? null);
   const windDirDeg = windDirCV?.value ?? 0;
 
+  // BFF-supplied cardinal code for wind direction (ADR-041).
+  // SSE updates overwrite this live via the merge in useRealtimeObservation.
+  const windDirCardinal = observation?.windDirCardinal ?? null;
+
   // Beaufort description comes from the BFF (ADR-042). Empty string when absent.
   const beaufortCV = asConverted(observation?.beaufort ?? null);
   const beaufortDescription = beaufortCV?.label ?? '';
@@ -500,6 +508,7 @@ export function NowPage() {
             ) : observation ? (
               <WindCompass
                 windDirDeg={windDirDeg}
+                windDirCardinal={windDirCardinal}
                 windSpeedFormatted={windSpeedCV?.formatted ?? '--'}
                 windSpeedUnit={windSpeedCV?.label ?? ''}
                 windGustFormatted={windGustCV?.formatted ?? '--'}

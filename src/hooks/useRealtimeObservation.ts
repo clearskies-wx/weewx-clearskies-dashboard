@@ -100,7 +100,7 @@ export const WEEWX_TO_OBSERVATION: Readonly<Record<string, ObservationKey>> = {
   lightning_last_det_time:   'lightning_last_det_time',
   // BFF-computed derived fields (ADR-042):
   beaufort:     'beaufort',
-  // dateTime and comfortIndex are handled separately below.
+  // dateTime, comfortIndex, windDirCardinal, windGustDirCardinal are handled separately below.
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -152,6 +152,23 @@ export function mapPacketToObservation(
   const ci = packet['comfortIndex'];
   if (ci === 'windChill' || ci === 'heatIndex' || ci === 'none') {
     partial.comfortIndex = ci;
+  }
+
+  // Handle windDirCardinal / windGustDirCardinal — BFF emits canonical 16-point
+  // cardinal codes as plain strings (ADR-041).  Pass through as-is; do NOT run
+  // through the numeric coercion path used for weather observation fields.
+  // null is a valid value (direction sensor not available).
+  const wdc = packet['windDirCardinal'];
+  if (typeof wdc === 'string') {
+    partial.windDirCardinal = wdc;
+  } else if (wdc === null) {
+    partial.windDirCardinal = null;
+  }
+  const wgdc = packet['windGustDirCardinal'];
+  if (typeof wgdc === 'string') {
+    partial.windGustDirCardinal = wgdc;
+  } else if (wgdc === null) {
+    partial.windGustDirCardinal = null;
   }
 
   // Map all other fields (ConvertedValue or raw number/null).

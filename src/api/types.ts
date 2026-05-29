@@ -150,6 +150,19 @@ export interface Observation {
    * "none" when neither applies.
    */
   comfortIndex?: 'windChill' | 'heatIndex' | 'none';
+  /**
+   * Canonical 16-point cardinal code for wind direction — computed by BFF (ADR-041).
+   * One of: N NNE NE ENE E ESE SE SSE S SSW SW WSW W WNW NW NNW
+   * null when windDir is null.
+   * Use with i18n: t('directions.' + windDirCardinal) (ADR-021).
+   * Do NOT compute this client-side from windDir degrees for /current; use this value.
+   */
+  windDirCardinal?: string | null;
+  /**
+   * Canonical 16-point cardinal code for wind gust direction — computed by BFF (ADR-041).
+   * Same code set as windDirCardinal. null when windGustDir is null.
+   */
+  windGustDirCardinal?: string | null;
   extras: Record<string, number | string | boolean | null>;
   source: string;
 }
