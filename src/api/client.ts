@@ -3,8 +3,8 @@
 
 import type {
   ApiResponse,
+  CurrentResponse,
   PaginatedResponse,
-  Observation,
   ArchiveRecord,
   ForecastBundle,
   AlertList,
@@ -108,8 +108,8 @@ export async function fetchApi<T>(
 // Each returns the full envelope so callers can access .data, .units, .source, .generatedAt.
 // ---------------------------------------------------------------------------
 
-export function getCurrent(signal?: AbortSignal): Promise<ApiResponse<Observation>> {
-  return fetchApi<ApiResponse<Observation>>('/current', undefined, signal);
+export function getCurrent(signal?: AbortSignal): Promise<CurrentResponse> {
+  return fetchApi<CurrentResponse>('/current', undefined, signal);
 }
 
 export interface ArchiveParams {

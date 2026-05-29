@@ -9,7 +9,7 @@ import {
   CardTitle,
   CardContent,
 } from '../components/ui/card';
-import { useRecords, useObservation } from '../hooks/useWeatherData';
+import { useRecords, useObservation, useStation } from '../hooks/useWeatherData';
 import { formatValue } from '../utils/format';
 import type { Observation } from '../api/types';
 
@@ -45,13 +45,14 @@ function getTodayValue(canonicalField: string, observation: Observation): number
   return null;
 }
 
-function formatDate(isoString: string | null, locale: string): string {
+function formatDate(isoString: string | null, locale: string, tz = 'UTC'): string {
   if (!isoString) return '—';
   return new Intl.DateTimeFormat(locale, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-    timeZone: 'UTC',
+    // ADR-020: display dates in station-local time.
+    timeZone: tz,
   }).format(new Date(isoString));
 }
 
@@ -88,6 +89,8 @@ export function RecordsPage() {
   const [period, setPeriod] = useState<Period>('ytd');
   const { data: records, units, loading, error, refetch } = useRecords(period);
   const { data: observation } = useObservation();
+  const { data: station } = useStation();
+  const tz = station?.timezone ?? 'UTC';
 
   return (
     <div className="flex flex-col gap-6 max-w-2xl mx-auto">
@@ -198,7 +201,7 @@ export function RecordsPage() {
                               : '—'}
                           </td>
                           <td className="py-2.5 text-right text-muted-foreground">
-                            {formatDate(entry.observedAt, locale)}
+                            {formatDate(entry.observedAt, locale, tz)}
                           </td>
                         </tr>
                       ))}

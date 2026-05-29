@@ -10,7 +10,13 @@
   "customPageNoContent": "This page has no content yet.",
   "footer": {
     "legal": "Legal / Privacy",
-    "poweredBy": "Powered by Clear Skies"
+    "poweredBy": "Powered by Clear Skies",
+    "shareReddit": "Share on Reddit",
+    "shareX": "Share on X",
+    "shareFacebook": "Share on Facebook",
+    "sharePinterest": "Pin on Pinterest",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied!"
   },
   "theme": {
     "ariaAuto": "Theme: following system preference — click to switch to light mode",

@@ -3,17 +3,24 @@
  *
  * Extracted from now.tsx for shared use between the Station Observations tile
  * and the PrecipitationBarometerCard component.
+ *
+ * Per ADR-042, the dashboard has zero unit knowledge.  The BFF computes the
+ * trend direction and emits it as a string; helpers here map that string to
+ * display symbols and labels.  The old ±0.01 numeric threshold has been
+ * deleted — it was a unit-knowledge leak (inHg-specific).
  */
 import type { TFunction } from 'i18next';
 
+/** The BFF-emitted direction type — matches CurrentResponse.barometerTrendDirection. */
+export type BarometerTrendDirection = 'rising' | 'falling' | 'steady' | null;
+
 /**
- * Returns a Unicode arrow character representing the direction of the barometer
- * trend.  Threshold of ±0.01 inHg is the standard WeeWx convention.
+ * Returns a Unicode arrow character representing the barometer trend direction.
+ * Mapping: "rising" → ↑, "falling" → ↓, "steady" / null → →
  */
-export function barometerTrendArrow(trend: number | null): string {
-  if (trend === null) return '→';
-  if (trend > 0.01) return '↑';
-  if (trend < -0.01) return '↓';
+export function barometerTrendArrow(direction: BarometerTrendDirection): string {
+  if (direction === 'rising') return '↑';
+  if (direction === 'falling') return '↓';
   return '→';
 }
 
@@ -22,9 +29,8 @@ export function barometerTrendArrow(trend: number | null): string {
  * The `t` function must be from the 'now' namespace.
  * Reads keys: precipBarometer.trend.rising / .falling / .steady
  */
-export function barometerTrendLabel(trend: number | null, t: TFunction): string {
-  if (trend === null) return t('precipBarometer.trend.steady');
-  if (trend > 0.01) return t('precipBarometer.trend.rising');
-  if (trend < -0.01) return t('precipBarometer.trend.falling');
+export function barometerTrendLabel(direction: BarometerTrendDirection, t: TFunction): string {
+  if (direction === 'rising') return t('precipBarometer.trend.rising');
+  if (direction === 'falling') return t('precipBarometer.trend.falling');
   return t('precipBarometer.trend.steady');
 }

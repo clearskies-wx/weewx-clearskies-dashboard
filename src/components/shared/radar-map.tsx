@@ -8,6 +8,12 @@ import type { CapabilityDeclaration, RadarFrame } from '../../api/types';
 interface RadarMapProps {
   center: [number, number];
   zoom?: number;
+  /**
+   * IANA timezone string for the station (e.g. "America/Chicago").
+   * Used to format frame timestamps in station-local time (ADR-020).
+   * Defaults to UTC when absent.
+   */
+  stationTz?: string;
 }
 
 const SUBSTEPS = 5;        // interpolation steps between each real frame pair
@@ -91,7 +97,7 @@ function getFrameOpacity(frameIndex: number, step: number, totalFrames: number):
   return 0;
 }
 
-export function RadarMap({ center, zoom = 7 }: RadarMapProps) {
+export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
   const { t } = useTranslation('radar');
 
   // --- Capabilities fetch to discover radar provider ---
@@ -208,6 +214,8 @@ export function RadarMap({ center, zoom = 7 }: RadarMapProps) {
         hour: 'numeric',
         minute: '2-digit',
         hour12: true,
+        // ADR-020: display in station-local time, not browser time.
+        timeZone: stationTz ?? 'UTC',
       }).format(new Date(isoTime));
     } catch {
       return isoTime;

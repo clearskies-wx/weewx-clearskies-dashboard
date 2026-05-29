@@ -1087,7 +1087,7 @@ export function ChartsPage() {
                       {archiveData.map((record) => (
                         <tr key={record.timestamp}>
                           <td>{formatXAxisHour(record.timestamp, tz, locale)}</td>
-                          <td>{record.outTemp}</td>
+                          <td>{record.outTemp != null ? `${record.outTemp}${tempUnit}` : '—'}</td>
                         </tr>
                       ))}
                     </tbody>

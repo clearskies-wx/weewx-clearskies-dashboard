@@ -314,7 +314,8 @@ export function SeismicPage() {
                             {t('magnitude')}: {formatValue(eq.magnitude, 'earthquakeMag')}{eq.magnitudeType ? ` ${eq.magnitudeType}` : ''}<br />
                             {eq.depth !== null ? <>{t('depthLabel')}: {formatValue(eq.depth, 'earthquakeDepth')} km<br /></> : null}
                             {eq.alert !== null ? <>{t('pager', { level: eq.alert })}<br /></> : null}
-                            {new Date(eq.time).toLocaleString(locale)}
+                            {/* ADR-020: use station-local time, matching the list panel below */}
+                            {formatTime(eq.time, station?.timezone ?? 'UTC', locale)}
                           </div>
                         </Popup>
                       </CircleMarker>

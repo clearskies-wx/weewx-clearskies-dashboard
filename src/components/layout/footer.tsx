@@ -62,6 +62,7 @@ const btnClass = [
 ].join(' ');
 
 function ShareRow() {
+  const { t } = useTranslation('common');
   const [copied, setCopied] = useState(false);
 
   const copyLink = async () => {
@@ -79,7 +80,7 @@ function ShareRow() {
         href={`https://www.reddit.com/submit?url=${encodeURIComponent(pageUrl)}&title=${encodeURIComponent(pageTitle)}`}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label="Share on Reddit"
+        aria-label={t('footer.shareReddit')}
         className={btnClass}
       >
         <IconReddit />
@@ -88,7 +89,7 @@ function ShareRow() {
         href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(pageTitle)}`}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label="Share on X"
+        aria-label={t('footer.shareX')}
         className={btnClass}
       >
         <IconX />
@@ -97,7 +98,7 @@ function ShareRow() {
         href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label="Share on Facebook"
+        aria-label={t('footer.shareFacebook')}
         className={btnClass}
       >
         <IconFacebook />
@@ -106,7 +107,7 @@ function ShareRow() {
         href={`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(pageUrl)}&description=${encodeURIComponent(pageTitle)}`}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label="Pin on Pinterest"
+        aria-label={t('footer.sharePinterest')}
         className={btnClass}
       >
         <IconPinterest />
@@ -114,7 +115,7 @@ function ShareRow() {
       <button
         type="button"
         onClick={copyLink}
-        aria-label={copied ? 'Link copied!' : 'Copy link'}
+        aria-label={copied ? t('footer.linkCopied') : t('footer.copyLink')}
         className={`${btnClass}${copied ? ' text-foreground' : ''}`}
       >
         <IconLink />

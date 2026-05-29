@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { CloudRain, Gauge } from 'lucide-react';
 import { asConverted } from '../api/types';
 import { barometerTrendArrow, barometerTrendLabel } from '../utils/barometer';
+import type { BarometerTrendDirection } from '../utils/barometer';
 import {
   Card,
   CardHeader,
@@ -62,6 +63,12 @@ function TileError({ message, onRetry }: { message: string; onRetry: () => void 
 
 interface PrecipitationBarometerCardProps {
   observation: Observation | null;
+  /**
+   * BFF-computed barometer trend direction from the /current envelope.
+   * Passed separately from observation because it lives at the response
+   * envelope level, not inside the Observation data object (ADR-041/ADR-042).
+   */
+  barometerTrendDirection: BarometerTrendDirection;
   loading: boolean;
   error: Error | null;
   onRetry: () => void;
@@ -75,6 +82,7 @@ interface PrecipitationBarometerCardProps {
 
 export function PrecipitationBarometerCard({
   observation,
+  barometerTrendDirection,
   loading,
   error,
   onRetry,
@@ -82,11 +90,9 @@ export function PrecipitationBarometerCard({
 }: PrecipitationBarometerCardProps) {
   const { t } = useTranslation('now');
 
-  // barometerTrend helpers need a raw number; extract .value from ConvertedValue.
-  const trendCV = asConverted(observation?.barometerTrend ?? null);
-  const trendNumeric = trendCV?.value ?? null;
-  const trendArrow = barometerTrendArrow(trendNumeric);
-  const trendText = barometerTrendLabel(trendNumeric, t);
+  // Use the BFF-supplied direction string directly (ADR-042: no client unit math).
+  const trendArrow = barometerTrendArrow(barometerTrendDirection);
+  const trendText = barometerTrendLabel(barometerTrendDirection, t);
 
   return (
     <Card className={className} aria-busy={loading}>

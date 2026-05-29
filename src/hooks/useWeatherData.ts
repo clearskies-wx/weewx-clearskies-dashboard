@@ -55,6 +55,7 @@ import { mockMeteorShowers } from '../mock/meteorShowers';
 
 import type {
   Observation,
+  CurrentResponse,
   ForecastBundle,
   AlertRecord,
   AlmanacSnapshot,
@@ -117,14 +118,26 @@ function mockResult<T>(data: T, units?: UnitsBlock): HookResult<T> {
 // useObservation — /current
 // ---------------------------------------------------------------------------
 
-export function useObservation(): HookResult<Observation> {
-  const { data, loading, error, refetch } = useApiQuery<{ data: Observation; units?: UnitsBlock; source?: string }>(
+/** Extended result shape for useObservation, adding the BFF-computed direction field. */
+interface ObservationHookResult extends HookResult<Observation> {
+  /**
+   * Pressure trend direction from the BFF envelope (ADR-041/ADR-042).
+   * Not nested inside `data` — it is a top-level CurrentResponse field.
+   */
+  barometerTrendDirection: CurrentResponse['barometerTrendDirection'];
+}
+
+export function useObservation(): ObservationHookResult {
+  const { data, loading, error, refetch } = useApiQuery<CurrentResponse>(
     (signal) => getCurrent(signal),
     { skip: isMockMode() },
   );
 
   if (isMockMode()) {
-    return mockResult<Observation>(mockObservation, mockUnits);
+    return {
+      ...mockResult<Observation>(mockObservation, mockUnits),
+      barometerTrendDirection: 'falling',
+    };
   }
 
   return {
@@ -134,6 +147,7 @@ export function useObservation(): HookResult<Observation> {
     loading,
     error,
     refetch,
+    barometerTrendDirection: data?.barometerTrendDirection ?? null,
   };
 }
 

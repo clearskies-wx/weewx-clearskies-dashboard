@@ -202,6 +202,7 @@ describe('useRealtimeObservation', () => {
       loading: true,
       error: null,
       refetch: mockRefetch,
+      barometerTrendDirection: null,
     });
     mockUseSSE.mockReturnValue({ packet: null, status: 'connecting' });
     // Suppress import.meta.env access in tests
@@ -345,6 +346,7 @@ describe('useRealtimeObservation', () => {
       loading: false,
       error: null,
       refetch: mockRefetch,
+      barometerTrendDirection: null,
     });
     mockUseSSE.mockReturnValue({ packet: null, status: 'disconnected' });
 
@@ -352,5 +354,22 @@ describe('useRealtimeObservation', () => {
     expect(mockUseSSE).toHaveBeenCalledWith('');
     // Falls back to pure REST observation.
     expect(result.current.data).toEqual(obs);
+  });
+
+  it('passes through barometerTrendDirection from the REST envelope', () => {
+    const obs = makeObservation();
+    mockUseObservation.mockReturnValue({
+      data: obs,
+      units: { barometer: 'inHg' },
+      source: 'weewx',
+      loading: false,
+      error: null,
+      refetch: mockRefetch,
+      barometerTrendDirection: 'rising' as const,
+    });
+    mockUseSSE.mockReturnValue({ packet: null, status: 'connected' });
+
+    const { result } = renderHook(() => useRealtimeObservation());
+    expect(result.current.barometerTrendDirection).toBe('rising');
   });
 });

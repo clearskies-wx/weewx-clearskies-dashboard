@@ -286,7 +286,7 @@ export function NowPage() {
   const { t: tRadar } = useTranslation('radar');
   const locale = i18n.language;
 
-  const { data: observation, units, loading: obsLoading, error: obsError, refetch: obsRefetch } = useRealtimeObservation();
+  const { data: observation, units, loading: obsLoading, error: obsError, refetch: obsRefetch, barometerTrendDirection } = useRealtimeObservation();
   const { data: forecast, loading: fcLoading, error: fcError, refetch: fcRefetch } = useForecast();
   const { data: alerts, loading: alertLoading } = useAlerts();
   const { data: almanac, loading: almLoading, error: almError, refetch: almRefetch } = useAlmanac();
@@ -525,6 +525,7 @@ export function NowPage() {
         {/* Row 4 — Precipitation / Barometer */}
         <PrecipitationBarometerCard
           observation={observation}
+          barometerTrendDirection={barometerTrendDirection}
           loading={obsLoading}
           error={obsError}
           onRetry={obsRefetch}
@@ -707,7 +708,10 @@ export function NowPage() {
             </CardHeader>
             <CardContent>
               {station ? (
-                <RadarMap center={[station.latitude, station.longitude]} />
+                <RadarMap
+                  center={[station.latitude, station.longitude]}
+                  stationTz={station.timezone}
+                />
               ) : (
                 <TileSkeleton className="h-96" />
               )}

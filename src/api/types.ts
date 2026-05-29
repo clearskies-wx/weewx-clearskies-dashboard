@@ -68,6 +68,23 @@ export interface ApiResponse<T> {
   generatedAt: string;
 }
 
+/**
+ * CurrentResponse — envelope returned by GET /current.
+ *
+ * Extends the standard ApiResponse with BFF-computed top-level fields.
+ * `barometerTrendDirection` is emitted at the envelope level (alongside `data`,
+ * not nested inside `data`), because it is derived by the BFF from the last
+ * N loop packets and is not a direct weewx observation field (ADR-041/ADR-042).
+ */
+export interface CurrentResponse extends ApiResponse<Observation> {
+  /**
+   * Pressure trend direction computed by the BFF from the last N loop packets.
+   * "rising" | "falling" | "steady" — or null when insufficient data.
+   * Do NOT apply client-side numeric thresholds (ADR-042).
+   */
+  barometerTrendDirection: 'rising' | 'falling' | 'steady' | null;
+}
+
 /** Paginated variant — used by /archive. */
 export interface PaginatedResponse<T> extends ApiResponse<T> {
   page: PageInfo;

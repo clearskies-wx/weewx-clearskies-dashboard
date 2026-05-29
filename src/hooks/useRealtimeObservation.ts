@@ -39,7 +39,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useObservation } from './useWeatherData';
 import { useSSE } from './useSSE';
 import { isMockMode } from '../api/client';
-import type { Observation, UnitsBlock, ConvertedValue } from '../api/types';
+import type { Observation, UnitsBlock, ConvertedValue, CurrentResponse } from '../api/types';
 
 // ---------------------------------------------------------------------------
 // SSE URL config
@@ -194,6 +194,8 @@ interface RealtimeObservationResult {
   loading: boolean;
   error: Error | null;
   refetch: () => void;
+  /** BFF-computed pressure trend direction from the /current envelope (ADR-041/ADR-042). */
+  barometerTrendDirection: CurrentResponse['barometerTrendDirection'];
 }
 
 // ---------------------------------------------------------------------------
@@ -218,6 +220,7 @@ export function useRealtimeObservation(): RealtimeObservationResult {
     loading,
     error,
     refetch,
+    barometerTrendDirection,
   } = useObservation();
 
   // Accumulate SSE overlay patches on top of the REST base observation.
@@ -255,5 +258,6 @@ export function useRealtimeObservation(): RealtimeObservationResult {
     loading,
     error,
     refetch,
+    barometerTrendDirection,
   };
 }
