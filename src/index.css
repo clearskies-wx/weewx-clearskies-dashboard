@@ -97,7 +97,7 @@
 
 :root {
 
-    /* PROVISIONAL — B3 contrast gate sets final value */
+    /* Operator-overridable default card opacity over the scene background. */
     /* Card glass: space-separated RGB channels + alpha for use as rgb(var(--card-glass)).
        backdrop-filter: blur(8px) saturate(1.1) applied alongside this. */
     --card-glass: 255 255 255 / 0.72;
@@ -169,7 +169,6 @@
 
 [data-theme="dark"] {
 
-    /* PROVISIONAL — B3 contrast gate sets final value */
     --card-glass: 30 35 55 / 0.55;
 
     --background: oklch(0.145 0 0);
