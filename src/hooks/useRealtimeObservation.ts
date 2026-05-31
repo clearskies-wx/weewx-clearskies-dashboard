@@ -39,7 +39,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useObservation } from './useWeatherData';
 import { useSSE } from './useSSE';
 import { isMockMode } from '../api/client';
-import type { Observation, UnitsBlock, ConvertedValue, CurrentResponse } from '../api/types';
+import type { Observation, UnitsBlock, ConvertedValue, CurrentResponse, SceneDescriptor } from '../api/types';
 
 // ---------------------------------------------------------------------------
 // SSE URL config
@@ -213,7 +213,16 @@ interface RealtimeObservationResult {
   refetch: () => void;
   /** BFF-computed pressure trend direction from the /current envelope (ADR-041/ADR-042). */
   barometerTrendDirection: CurrentResponse['barometerTrendDirection'];
+  /**
+   * ADR-047 background scene descriptor.  Sourced from the REST /current envelope
+   * via useObservation().  Scene changes on weather-condition timescales (minutes),
+   * not loop-packet timescales, so REST polling is sufficient.
+   * Falls back to SCENE_DEFAULT (clear / daytime / no overlay) when absent.
+   */
+  scene: SceneDescriptor;
 }
+
+const SCENE_DEFAULT: SceneDescriptor = { sky: 'clear', daytime: true, overlay: null };
 
 // ---------------------------------------------------------------------------
 // useRealtimeObservation
@@ -238,6 +247,7 @@ export function useRealtimeObservation(): RealtimeObservationResult {
     error,
     refetch,
     barometerTrendDirection,
+    scene: restScene,
   } = useObservation();
 
   // Accumulate SSE overlay patches on top of the REST base observation.
@@ -268,6 +278,11 @@ export function useRealtimeObservation(): RealtimeObservationResult {
     return { ...initialData, ...sseOverlay };
   }, [initialData, sseOverlay]);
 
+  // Scene: sourced from the REST /current envelope (useObservation).
+  // The scene changes on weather-condition timescales (minutes), not loop-packet
+  // timescales (seconds), so REST polling is sufficient — no SSE tracking needed.
+  const scene = restScene ?? SCENE_DEFAULT;
+
   return {
     data,
     units,
@@ -276,5 +291,6 @@ export function useRealtimeObservation(): RealtimeObservationResult {
     error,
     refetch,
     barometerTrendDirection,
+    scene,
   };
 }

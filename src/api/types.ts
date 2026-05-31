@@ -69,12 +69,38 @@ export interface ApiResponse<T> {
 }
 
 /**
+ * SceneDescriptor — ADR-047 background system scene tag emitted by the realtime
+ * service on GET /current and the SSE stream.
+ *
+ * The dashboard maps this descriptor to asset paths via SCENE_ASSET_MAP
+ * (src/components/background/scene-background.tsx) — no weather logic runs here.
+ *
+ * Field values match scene.py build_scene() exactly:
+ *   sky:     "clear" | "cloudy" | "storm"
+ *   daytime: true when current UTC time is between almanac sunrise and sunset
+ *   overlay: "rain" | "snow" | null (null when no precip or linger expired)
+ *
+ * NOTE: The openapi-v1.yaml contract does not yet include this field (D1
+ * delivered it server-side; the contract update is pending).  This type is
+ * hand-maintained here to match the actual build_scene() return shape.
+ */
+export interface SceneDescriptor {
+  sky: 'clear' | 'cloudy' | 'storm';
+  daytime: boolean;
+  overlay: 'rain' | 'snow' | null;
+}
+
+/**
  * CurrentResponse — envelope returned by GET /current.
  *
  * Extends the standard ApiResponse with BFF-computed top-level fields.
  * `barometerTrendDirection` is emitted at the envelope level (alongside `data`,
  * not nested inside `data`), because it is derived by the BFF from the last
  * N loop packets and is not a direct weewx observation field (ADR-041/ADR-042).
+ *
+ * `scene` is the ADR-047 background-system descriptor computed server-side.
+ * It is optional here so callers can handle the case where the realtime service
+ * is an older version that predates D1 (fall back to clear/day/no-overlay).
  */
 export interface CurrentResponse extends ApiResponse<Observation> {
   /**
@@ -83,6 +109,13 @@ export interface CurrentResponse extends ApiResponse<Observation> {
    * Do NOT apply client-side numeric thresholds (ADR-042).
    */
   barometerTrendDirection: 'rising' | 'falling' | 'steady' | null;
+
+  /**
+   * ADR-047 background scene descriptor.  Optional: absent on older realtime
+   * service versions that predate D1.  Dashboard falls back to the safe default
+   * (clear / daytime / no overlay) when absent.
+   */
+  scene?: SceneDescriptor;
 }
 
 /** Paginated variant — used by /archive. */

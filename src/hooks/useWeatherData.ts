@@ -47,6 +47,7 @@ import { mockRecords } from '../mock/records';
 import { mockStation } from '../mock/station';
 import { mockArchiveData } from '../mock/archive';
 import { mockLightning } from '../mock/lightning';
+import { mockScene } from '../mock/scene';
 import { mockClimatology } from '../mock/climatology';
 import { mockPlanets } from '../mock/planets';
 import { mockMoonNames } from '../mock/moonNames';
@@ -56,6 +57,7 @@ import { mockMeteorShowers } from '../mock/meteorShowers';
 import type {
   Observation,
   CurrentResponse,
+  SceneDescriptor,
   ForecastBundle,
   AlertRecord,
   AlmanacSnapshot,
@@ -118,14 +120,24 @@ function mockResult<T>(data: T, units?: UnitsBlock): HookResult<T> {
 // useObservation — /current
 // ---------------------------------------------------------------------------
 
-/** Extended result shape for useObservation, adding the BFF-computed direction field. */
+/** Extended result shape for useObservation, adding BFF-computed envelope fields. */
 interface ObservationHookResult extends HookResult<Observation> {
   /**
    * Pressure trend direction from the BFF envelope (ADR-041/ADR-042).
    * Not nested inside `data` — it is a top-level CurrentResponse field.
    */
   barometerTrendDirection: CurrentResponse['barometerTrendDirection'];
+
+  /**
+   * ADR-047 background scene descriptor from the realtime service.
+   * Falls back to the safe default (clear / daytime / no overlay) when the
+   * server predates D1 or the response is not yet available.
+   */
+  scene: SceneDescriptor;
 }
+
+/** Safe fallback scene when the server hasn't sent one yet. */
+const SCENE_DEFAULT: SceneDescriptor = { sky: 'clear', daytime: true, overlay: null };
 
 export function useObservation(): ObservationHookResult {
   const { data, loading, error, refetch } = useApiQuery<CurrentResponse>(
@@ -137,6 +149,7 @@ export function useObservation(): ObservationHookResult {
     return {
       ...mockResult<Observation>(mockObservation, mockUnits),
       barometerTrendDirection: 'falling',
+      scene: mockScene,
     };
   }
 
@@ -148,6 +161,7 @@ export function useObservation(): ObservationHookResult {
     error,
     refetch,
     barometerTrendDirection: data?.barometerTrendDirection ?? null,
+    scene: data?.scene ?? SCENE_DEFAULT,
   };
 }
 
