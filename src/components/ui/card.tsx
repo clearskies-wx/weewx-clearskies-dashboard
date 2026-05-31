@@ -2,17 +2,53 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+/** Footprint vocabulary — column span × row declaration per ADR-051. */
+export type CardFootprint = "tile" | "wide" | "panel" | "full";
+
+type CardProps = React.ComponentProps<"div"> & {
+  size?: "default" | "sm";
+  /** Footprint vocabulary (ADR-051) — controls column span in the Grid primitive.
+   *  tile=1col · wide=2col · panel=3col · full=4col */
+  footprint?: CardFootprint;
+  /** Row span declaration for the future grid engine (ADR-051).
+   *  Recorded as data-row-span only — does NOT emit a row-span CSS class and
+   *  does NOT impose a fixed height.  Card height stays content-driven. */
+  rowSpan?: 1 | 2;
+};
+
+/** Column-span classes for each footprint value (ADR-051).
+ *  Grid is 1→2→4 columns (<768px / ≥768px / ≥1024px).
+ *  Column spans are enforced now; row heights stay content-driven until
+ *  the future grid engine ships (ADR-051 "Column rule now vs. later"). */
+const footprintColSpan: Record<CardFootprint, string> = {
+  tile:  "col-span-1",
+  wide:  "col-span-1 md:col-span-2",
+  panel: "col-span-1 md:col-span-2 lg:col-span-3",
+  full:  "col-span-1 md:col-span-2 lg:col-span-4",
+};
+
 function Card({
   className,
   size = "default",
+  footprint,
+  rowSpan,
   ...props
-}: React.ComponentProps<"div"> & { size?: "default" | "sm" }) {
+}: CardProps) {
   return (
     <div
       data-slot="card"
       data-size={size}
+      // rowSpan is documented-only for the future grid engine — stored as a data
+      // attribute so the engine can read it without any CSS side-effect today.
+      data-row-span={rowSpan}
       className={cn(
-        "group/card flex flex-col gap-4 overflow-hidden rounded-xl bg-card py-4 text-sm text-card-foreground ring-1 ring-foreground/10 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+        // Provisional glass surface (PROVISIONAL — B3 contrast gate sets final value).
+        // bg-[rgb(var(--card-glass))] applies the translucent glass background;
+        // backdrop-filter is set inline since there is no Tailwind utility for
+        // the exact blur+saturate combination.
+        "card-glass",
+        "group/card flex flex-col gap-4 overflow-hidden rounded-xl py-4 text-sm text-card-foreground ring-1 ring-foreground/10 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+        footprint !== undefined ? footprintColSpan[footprint] : undefined,
         className
       )}
       {...props}

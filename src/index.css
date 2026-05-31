@@ -256,3 +256,15 @@
     font-family: inherit;
     }
 }
+
+/* ── A4 card glass utility (ADR-051) ──────────────────────────────────────────
+   PROVISIONAL — B3 contrast gate sets final value.
+   Applied as a class by Card to avoid duplicating the backdrop-filter + bg rule
+   at every call site.  Uses --card-glass (set in :root / [data-theme=dark]).   */
+@layer utilities {
+  .card-glass {
+    background: rgb(var(--card-glass));
+    backdrop-filter: blur(8px) saturate(1.1);
+    -webkit-backdrop-filter: blur(8px) saturate(1.1);
+  }
+}
