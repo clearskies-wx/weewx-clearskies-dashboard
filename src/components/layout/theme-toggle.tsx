@@ -2,7 +2,8 @@
 // Cycle order: system → light → dark → system
 // Reads/writes preference via ThemeProvider context (src/lib/theme-provider.tsx).
 
-import { Monitor, Sun, Moon } from 'lucide-react';
+import { Desktop, Sun, Moon } from '@phosphor-icons/react';
+// Desktop: not enumerated in ADR-050; nearest Phosphor match for system-theme option (ph:desktop).
 import { useTranslation } from 'react-i18next';
 import { Button } from '../ui/button';
 import { useTheme } from '../../lib/theme-provider';
@@ -16,7 +17,7 @@ export const NEXT_PREFERENCE: Record<ThemePreference, ThemePreference> = {
 };
 
 export function ThemeIcon({ preference }: { preference: ThemePreference }) {
-  if (preference === 'system') return <Monitor aria-hidden="true" className="h-5 w-5" />;
+  if (preference === 'system') return <Desktop aria-hidden="true" className="h-5 w-5" />;
   if (preference === 'light')  return <Sun     aria-hidden="true" className="h-5 w-5" />;
   return                               <Moon    aria-hidden="true" className="h-5 w-5" />;
 }

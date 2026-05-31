@@ -10,16 +10,15 @@
 // non-component exports live in separate files).
 //
 // A11y:
-//   - Trend arrow is a Unicode character in a span with role="img" and
-//     aria-label describing the trend (e.g. "Pressure trend: Rising") so
-//     screen readers receive text, not an arrow glyph.
+//   - Trend arrow icon carries aria-hidden="true"; the visible text label and
+//     the accessible name on the parent <dd> convey state to screen readers.
 //   - Color is NOT used as the sole state signal — the trend is also conveyed
-//     by the arrow character and the text label.
+//     by the arrow icon and the text label (rules/coding.md §5.1).
 
 import { useTranslation } from 'react-i18next';
-import { CloudRain, Gauge } from 'lucide-react';
+import { CloudRain, Gauge, ArrowUp, ArrowDown, ArrowRight } from '@phosphor-icons/react';
 import { asConverted } from '../api/types';
-import { barometerTrendArrow, barometerTrendLabel } from '../utils/barometer';
+import { barometerTrendLabel } from '../utils/barometer';
 import type { BarometerTrendDirection } from '../utils/barometer';
 import {
   Card,
@@ -57,6 +56,19 @@ function TileError({ message, onRetry }: { message: string; onRetry: () => void 
   );
 }
 
+// Trend arrow — Phosphor reusable set (ADR-050: single set for all metric trends).
+// ph:arrow-up (rising) · ph:arrow-down (falling) · ph:arrow-right (steady).
+// Icon is aria-hidden; accessible name comes from the visible text label.
+function TrendArrow({ direction }: { direction: BarometerTrendDirection }) {
+  if (direction === 'rising') {
+    return <ArrowUp aria-hidden="true" className="h-4 w-4 text-muted-foreground" />;
+  }
+  if (direction === 'falling') {
+    return <ArrowDown aria-hidden="true" className="h-4 w-4 text-muted-foreground" />;
+  }
+  return <ArrowRight aria-hidden="true" className="h-4 w-4 text-muted-foreground" />;
+}
+
 // ---------------------------------------------------------------------------
 // Props
 // ---------------------------------------------------------------------------
@@ -91,7 +103,6 @@ export function PrecipitationBarometerCard({
   const { t } = useTranslation('now');
 
   // Use the BFF-supplied direction string directly (ADR-042: no client unit math).
-  const trendArrow = barometerTrendArrow(barometerTrendDirection);
   const trendText = barometerTrendLabel(barometerTrendDirection, t);
 
   return (
@@ -156,15 +167,9 @@ export function PrecipitationBarometerCard({
                     return <>{cv.formatted}{cv.label && <span className="text-sm font-normal text-muted-foreground"> {cv.label.trimStart()}</span>}</>;
                   })()}
                 </span>
-                {/* Trend arrow — role="img" so the glyph is named, not spelled
-                    out.  The text label also appears visually for all users. */}
-                <span
-                  role="img"
-                  aria-label={t('precipBarometer.trendAriaLabel', { trend: trendText })}
-                  className="text-lg leading-none text-muted-foreground select-none"
-                >
-                  {trendArrow}
-                </span>
+                {/* Trend arrow — Phosphor reusable set (ADR-050).
+                    Icon is aria-hidden; the text label provides the accessible name. */}
+                <TrendArrow direction={barometerTrendDirection} />
                 <span className="text-sm text-muted-foreground">{trendText}</span>
               </dd>
             </div>

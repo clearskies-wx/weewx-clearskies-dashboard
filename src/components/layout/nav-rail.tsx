@@ -8,16 +8,17 @@ import { useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   House,
-  CloudSunRain,
   ChartLine,
-  Moon,
-  Activity,
   Trophy,
   FileText,
   Info,
-  Scale,
-  Ellipsis,
-} from 'lucide-react';
+  Scales,       // ADR-050: ph:scales — legal nav (Lucide Scale → Phosphor Scales)
+  DotsThree,    // ADR-050: ph:dots-three — "more" menu (Lucide Ellipsis → Phosphor DotsThree)
+  CloudSun,     // ADR-050: not enumerated; nearest Phosphor match for weather/Now nav (Lucide CloudSunRain → CloudSun)
+} from '@phosphor-icons/react';
+// TODO(ADR-050 deferred: astro/almanac) — Moon stays on Lucide until C5 lands.
+// TODO(ADR-050 deferred: seismic) — Activity stays on Lucide until seismic ADR lands.
+import { Moon, Activity } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ThemeIcon, NEXT_PREFERENCE } from './theme-toggle';
 import { useTheme } from '../../lib/theme-provider';
@@ -34,14 +35,14 @@ interface NavItemDef {
 // Labels are resolved via t(`pages.${pageKey}`) inside the component.
 const NAV_ITEMS: NavItemDef[] = [
   { to: '/', pageKey: 'now', icon: <House aria-hidden="true" className="h-5 w-5" /> },
-  { to: '/forecast', pageKey: 'forecast', icon: <CloudSunRain aria-hidden="true" className="h-5 w-5" /> },
+  { to: '/forecast', pageKey: 'forecast', icon: <CloudSun aria-hidden="true" className="h-5 w-5" /> },
   { to: '/charts', pageKey: 'charts', icon: <ChartLine aria-hidden="true" className="h-5 w-5" /> },
-  { to: '/almanac', pageKey: 'almanac', icon: <Moon aria-hidden="true" className="h-5 w-5" /> },
-  { to: '/seismic', pageKey: 'seismic', icon: <Activity aria-hidden="true" className="h-5 w-5" /> },
+  { to: '/almanac', pageKey: 'almanac', icon: <Moon aria-hidden="true" className="h-5 w-5" /> /* TODO(ADR-050 deferred: astro/almanac) — C5 */ },
+  { to: '/seismic', pageKey: 'seismic', icon: <Activity aria-hidden="true" className="h-5 w-5" /> /* TODO(ADR-050 deferred: seismic) — seismic ADR */ },
   { to: '/records', pageKey: 'records', icon: <Trophy aria-hidden="true" className="h-5 w-5" /> },
   { to: '/reports', pageKey: 'reports', icon: <FileText aria-hidden="true" className="h-5 w-5" /> },
   { to: '/about', pageKey: 'about', icon: <Info aria-hidden="true" className="h-5 w-5" /> },
-  { to: '/legal', pageKey: 'legal', icon: <Scale aria-hidden="true" className="h-5 w-5" /> },
+  { to: '/legal', pageKey: 'legal', icon: <Scales aria-hidden="true" className="h-5 w-5" /> },
 ];
 
 // Mobile: first 4 slots are always visible; remaining 5 go into the overflow sheet.
@@ -432,7 +433,7 @@ export function NavRail() {
               onClick={openSheet}
               className={mobileSlotClass(moreIsActive)}
             >
-              <Ellipsis aria-hidden="true" className="h-5 w-5" />
+              <DotsThree aria-hidden="true" className="h-5 w-5" />
               <span className="truncate max-w-full leading-none">{t('more')}</span>
             </button>
           </li>

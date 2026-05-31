@@ -8,7 +8,8 @@
 
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Download } from 'lucide-react';
+import { DownloadSimple } from '@phosphor-icons/react';
+// DownloadSimple: not enumerated in ADR-050; nearest Phosphor match for download action (Lucide Download → ph:download-simple).
 import {
   Card,
   CardHeader,
@@ -829,7 +830,7 @@ export function ReportsPage() {
                         }}
                         aria-label={t('download')}
                       >
-                        <Download aria-hidden="true" focusable="false" />
+                        <DownloadSimple aria-hidden="true" focusable="false" />
                         {t('download')}
                       </Button>
 
@@ -853,7 +854,7 @@ export function ReportsPage() {
                         }}
                         aria-label={t('downloadCsv')}
                       >
-                        <Download aria-hidden="true" focusable="false" />
+                        <DownloadSimple aria-hidden="true" focusable="false" />
                         {t('downloadCsv')}
                       </Button>
                     </div>

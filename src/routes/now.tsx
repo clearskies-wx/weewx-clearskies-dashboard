@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Sunrise, Sunset, Moon, Zap, Activity } from 'lucide-react';
+// TODO(ADR-050 deferred: astro/almanac) — Sunrise, Sunset, Moon stay on Lucide until C5 lands.
+// TODO(ADR-050 deferred: seismic) — Activity stays on Lucide until seismic ADR lands.
+import { Sunrise, Sunset, Moon, Activity } from 'lucide-react';
+import { Lightning } from '@phosphor-icons/react';
 import { formatValue } from '../utils/format';
 import { asConverted } from '../api/types';
 import type { TFunction } from 'i18next';
@@ -623,7 +626,7 @@ export function NowPage() {
               ) : (
                 <>
                   <div className="flex items-center gap-2">
-                    <Zap aria-hidden="true" className="h-5 w-5 text-yellow-500 shrink-0" />
+                    <Lightning aria-hidden="true" className="h-5 w-5 text-yellow-500 shrink-0" />
                     <span className="font-medium text-foreground">{t('lightning.strikesLastHour', { count: lightning.count1h })}</span>
                   </div>
                   <p className="text-muted-foreground">{t('lightning.strikesLast24h', { count: lightning.count24h })}</p>

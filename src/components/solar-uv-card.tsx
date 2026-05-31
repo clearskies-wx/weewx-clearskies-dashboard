@@ -14,7 +14,7 @@
 //     the full color rationale and contrast audit.
 
 import { useTranslation } from 'react-i18next';
-import { Sun } from 'lucide-react';
+import { Sun } from '@phosphor-icons/react';
 import { formatValue } from '../utils/format';
 import { asConverted } from '../api/types';
 import { UV_SEGMENTS, getUvSegment } from '../utils/uv';

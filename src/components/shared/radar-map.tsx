@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MapContainer, TileLayer } from 'react-leaflet';
-import { Play, Pause, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Play, Pause, CaretLeft, CaretRight } from '@phosphor-icons/react';
 import { useCapabilities, useRadarFrames } from '../../hooks/useWeatherData';
 import type { CapabilityDeclaration, RadarFrame } from '../../api/types';
 
@@ -358,7 +358,7 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
             aria-label={t('previousFrame')}
             className="rounded p-1 text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
-            <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+            <CaretLeft className="h-5 w-5" aria-hidden="true" />
           </button>
 
           <button
@@ -380,7 +380,7 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
             aria-label={t('nextFrame')}
             className="rounded p-1 text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
-            <ChevronRight className="h-5 w-5" aria-hidden="true" />
+            <CaretRight className="h-5 w-5" aria-hidden="true" />
           </button>
 
           <span className="text-xs text-muted-foreground tabular-nums ml-1">
