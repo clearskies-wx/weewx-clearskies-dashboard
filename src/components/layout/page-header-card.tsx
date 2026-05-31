@@ -1,0 +1,108 @@
+// page-header-card.tsx — Page-header card primitive (ADR-051 D-A4.4).
+//
+// A full-footprint half-row card that opens every page.  On the Now page this
+// card becomes the hero (station logo + station name) — that content is Track C
+// (C1), NOT built here.  On other pages it holds a page title + one-line info.
+//
+// A11y contract (rules/coding.md §5.2):
+// - Renders a real <h1>…<h6> element (consumer controls level via `as` prop).
+// - Default is h1 — the consumer must pass a different level if this card is
+//   not the first/top heading on the page to avoid skipping levels.
+// - The optional `children` slot is right-aligned inline controls; all
+//   interactive controls inside must be keyboard-reachable (Tab-order
+//   follows DOM order, which matches visual order here).
+
+import * as React from 'react';
+import { cn } from '@/lib/utils';
+import { Card } from '@/components/ui/card';
+
+type HeadingLevel = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+
+type PageHeaderCardProps = {
+  /** Page or section title — rendered as a semantic heading element. */
+  title: string;
+  /** Optional one-line descriptive text rendered beneath the title. */
+  info?: string;
+  /**
+   * Heading level for the title element.  Defaults to h1.
+   * Consumers on pages where h1 is already used must pass a lower level
+   * (e.g. as="h2") to maintain document-order heading hierarchy (WCAG 1.3.1).
+   */
+  as?: HeadingLevel;
+  /**
+   * Optional right-aligned inline controls slot (the "few controls" pattern
+   * from ADR-051).  Rendered in a flex row at the inline-end of the header.
+   * All interactive controls passed here must be keyboard-reachable.
+   */
+  children?: React.ReactNode;
+  /** Extra classes passed through to the outer Card. */
+  className?: string;
+};
+
+/**
+ * PageHeaderCard — full-width half-row card for page titles and inline controls.
+ *
+ * Every page opens with this card (ADR-051 universal card discipline).
+ * - `full` footprint: spans all 4 columns on desktop, collapses with the grid.
+ * - Tighter vertical padding (py-2) mirrors the half-row density from the
+ *   A4 page-anatomy mockup — visually about half a normal data card's height.
+ * - Title renders as a real heading element (`as` prop, default h1).
+ * - `children` renders right-aligned for "few controls inline" pattern.
+ *
+ * @example
+ * // Page-header with inline controls
+ * <PageHeaderCard title="Records" info="Historical extremes" as="h1">
+ *   <ThemeToggle />
+ * </PageHeaderCard>
+ *
+ * @example
+ * // Page-header without controls
+ * <PageHeaderCard title="About" as="h1" />
+ */
+export function PageHeaderCard({
+  title,
+  info,
+  as: Heading = 'h1',
+  children,
+  className,
+}: PageHeaderCardProps) {
+  return (
+    <Card
+      footprint="full"
+      className={cn(
+        // Half-row density: tighter vertical padding than a data card.
+        // py-2 (0.5rem top+bottom) gives visual weight matching ~5.5rem row.
+        'py-2',
+        className,
+      )}
+    >
+      {/* Flex row: title+info on the left, optional controls on the right. */}
+      <div className="flex flex-1 items-center justify-between gap-4 px-4">
+        {/* Title + info group */}
+        <div className="min-w-0 flex-1">
+          <Heading
+            className={cn(
+              'font-heading truncate text-base font-semibold leading-snug',
+              // Muted bottom margin when info is present
+              info ? 'mb-0.5' : undefined,
+            )}
+          >
+            {title}
+          </Heading>
+          {info && (
+            <p className="text-muted-foreground truncate text-sm leading-tight">
+              {info}
+            </p>
+          )}
+        </div>
+
+        {/* Right-aligned inline controls slot — only rendered when provided */}
+        {children && (
+          <div className="flex flex-shrink-0 items-center gap-2">
+            {children}
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
