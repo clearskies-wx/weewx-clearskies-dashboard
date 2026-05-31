@@ -9,6 +9,12 @@
 
 @theme inline {
 
+    /* ── A4 layout / sizing tokens (ADR-051) ──────────────────────────────── */
+    --gap-grid: 1rem;
+    --container-max: 80rem;
+    --card-half-row: 5.5rem;
+    --card-row: 11rem;
+
     --font-heading: var(--font-sans);
 
     --font-sans: 'Inter Variable', sans-serif;
@@ -92,6 +98,11 @@
 
 :root {
 
+    /* PROVISIONAL — B3 contrast gate sets final value */
+    /* Card glass: space-separated RGB channels + alpha for use as rgb(var(--card-glass)).
+       backdrop-filter: blur(8px) saturate(1.1) applied alongside this. */
+    --card-glass: 255 255 255 / 0.72;
+
     --background: oklch(1 0 0);
 
     --foreground: oklch(0.145 0 0);
@@ -158,6 +169,9 @@
 }
 
 [data-theme="dark"] {
+
+    /* PROVISIONAL — B3 contrast gate sets final value */
+    --card-glass: 30 35 55 / 0.55;
 
     --background: oklch(0.145 0 0);
 
