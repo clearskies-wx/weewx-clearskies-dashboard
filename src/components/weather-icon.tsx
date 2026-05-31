@@ -12,9 +12,6 @@
  *     read correctly without a sun present, and the locked glyph set has no
  *     moon-behind-cloud variant.  Richer night glyphs are a possible future
  *     follow-up; this simplification is intentional.
- *
- * The weather-icons npm dependency and its CSS import are left in place; the
- * lead removes them in a separate cleanup that touches index.css/package.json.
  */
 import { useTranslation } from 'react-i18next';
 import {
