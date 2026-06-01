@@ -14,6 +14,7 @@ import { CurrentConditionsCard } from '../components/current-conditions-card';
 import { SolarUvCard } from '../components/solar-uv-card';
 import { PrecipitationBarometerCard } from '../components/precipitation-barometer-card';
 import { WindCompassCard } from '../components/WindCompassCard';
+import { NowForecastCard } from '../components/forecast/NowForecastCard';
 import { RadarMap } from '../components/shared/radar-map';
 import { Grid } from '../components/layout/grid';
 import { NowHeroCard } from '../components/layout/now-hero-card';
@@ -292,39 +293,13 @@ export function NowPage() {
           onRetry={obsRefetch}
         />
 
-        {/* ── Today's Forecast — tile ────────────────────────────────────── */}
-        <Card footprint="tile" aria-busy={fcLoading}>
-          <CardHeader>
-            <h2 className="font-heading text-base leading-snug font-medium">{t('todaysForecast')}</h2>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2 text-sm">
-            {fcLoading ? (
-              <>
-                <span className="sr-only" role="status">{t('loading.forecast')}</span>
-                <TileSkeleton className="h-16" />
-              </>
-            ) : fcError ? (
-              <TileError message={t('error.forecast')} onRetry={fcRefetch} />
-            ) : todayForecast ? (
-              <>
-                <p className="text-foreground font-medium">{todayForecast.weatherText}</p>
-                <p className="text-muted-foreground">
-                  {todayForecast.tempMin !== null
-                    ? t('forecast.hiLo', { high: formatValue(todayForecast.tempMax, 'temperature'), low: formatValue(todayForecast.tempMin, 'temperature') })
-                    : t('forecast.hiOnly', { high: formatValue(todayForecast.tempMax, 'temperature') })}
-                </p>
-                {todayForecast.precipProbabilityMax !== null && (
-                  <p className="text-muted-foreground">{t('forecast.precipChance', { percent: formatValue(todayForecast.precipProbabilityMax, 'percent') })}</p>
-                )}
-                {todayForecast.narrative && (
-                  <p className="text-muted-foreground leading-relaxed">{todayForecast.narrative}</p>
-                )}
-              </>
-            ) : (
-              <p className="text-muted-foreground">{t('noData.forecast')}</p>
-            )}
-          </CardContent>
-        </Card>
+        {/* ── Today's Forecast — wide (2×1) ─────────────────────────────── */}
+        <NowForecastCard
+          forecast={forecast}
+          loading={fcLoading}
+          error={fcError}
+          stationTz={station?.timezone}
+        />
 
         {/* ── Today's Highlights — full-width ───────────────────────────── */}
         <Card footprint="full" aria-busy={obsLoading}>
