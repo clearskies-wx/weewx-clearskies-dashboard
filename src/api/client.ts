@@ -133,8 +133,13 @@ export function getArchive(
   return fetchApi<PaginatedResponse<ArchiveRecord[]>>('/archive', p, signal);
 }
 
-export function getForecast(signal?: AbortSignal): Promise<ApiResponse<ForecastBundle>> {
-  return fetchApi<ApiResponse<ForecastBundle>>('/forecast', undefined, signal);
+export function getForecast(
+  hours?: number,
+  signal?: AbortSignal,
+): Promise<ApiResponse<ForecastBundle>> {
+  const p: Record<string, string> = {};
+  if (hours !== undefined) p['hours'] = String(hours);
+  return fetchApi<ApiResponse<ForecastBundle>>('/forecast', Object.keys(p).length ? p : undefined, signal);
 }
 
 export function getAlerts(signal?: AbortSignal): Promise<ApiResponse<AlertList>> {

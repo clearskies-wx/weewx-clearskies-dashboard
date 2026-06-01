@@ -169,10 +169,16 @@ export function useObservation(): ObservationHookResult {
 // useForecast — /forecast
 // ---------------------------------------------------------------------------
 
-export function useForecast(): HookResult<ForecastBundle> {
+export interface UseForecastConfig {
+  /** Optional: limit the number of hourly forecast hours returned by the API. */
+  hours?: number;
+}
+
+export function useForecast(config?: UseForecastConfig): HookResult<ForecastBundle> {
+  const hours = config?.hours;
   const { data, loading, error, refetch } = useApiQuery<{ data: ForecastBundle; units?: UnitsBlock; source?: string }>(
-    (signal) => getForecast(signal),
-    { skip: isMockMode() },
+    (signal) => getForecast(hours, signal),
+    { skip: isMockMode(), deps: [hours] },
   );
 
   if (isMockMode()) {

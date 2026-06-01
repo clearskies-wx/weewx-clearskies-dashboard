@@ -16,5 +16,18 @@
   "ariaDayForecast": "{{day}} forecast",
   "ariaPrecipBar": "{{pct}}% chance of precipitation",
   "ariaWindDir": "Wind from the {{direction}}",
-  "ariaUvIndex": "UV index {{uv}}, {{level}}"
+  "ariaUvIndex": "UV index {{uv}}, {{level}}",
+  "tabToday": "Today",
+  "tabTomorrow": "Tomorrow",
+  "tab7Day": "7-Day",
+  "hourlyForecast": "Hourly Forecast",
+  "discussion": "Forecast Discussion",
+  "discussionIssuedAt": "Issued {{time}} · {{sender}}",
+  "humidity": "Humidity",
+  "windGust": "Gust",
+  "cloudCover": "Cloud",
+  "ariaTabList": "Forecast time range",
+  "ariaExpandRow": "Show details for {{day}}",
+  "ariaDailyTrend": "Temperature trend for the week",
+  "todaysForecast": "Today's Forecast"
 }
