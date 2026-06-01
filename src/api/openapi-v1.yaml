@@ -933,6 +933,14 @@ components:
         windDir: { type: number, nullable: true }
         windGust: { type: number, nullable: true }
         windGustDir: { type: number, nullable: true }
+        windSpeedAvg10m:
+          type: number
+          nullable: true
+          description: BFF-derived 10-minute sustained average wind speed (in operator display units)
+        windGustMax10m:
+          type: number
+          nullable: true
+          description: BFF-derived 10-minute maximum gust (in operator display units)
         barometer: { type: number, nullable: true }
         pressure: { type: number, nullable: true }
         altimeter: { type: number, nullable: true }
