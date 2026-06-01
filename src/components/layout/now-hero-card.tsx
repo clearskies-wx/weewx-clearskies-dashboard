@@ -1,0 +1,163 @@
+// now-hero-card.tsx — C1 Now-page hero card (ADR-051 / C1 composition doc).
+//
+// Full-width half-row card at the top of the Now-page grid.
+// Left side: station logo from branding.
+// Right side: station name (branding.siteTitle) + location line (station.name).
+//
+// Design tokens (LOCKED 2026-05-31):
+//   - Station name:  Manrope (--font-sans) 1.35rem (--text-hero-name) weight 700
+//   - Location line: Manrope (--font-sans) 0.9rem  (--text-body)      muted
+//
+// A11y:
+//   - <header> landmark with aria-label describing the station
+//   - Logo <img> carries alt text from branding.logo.alt; if no logo, renders
+//     a decorative placeholder SVG (aria-hidden)
+//   - Station name is the visible heading (h1) for screen readers
+//   - Color pairs (text on glass) pass WCAG AA in both light and dark themes
+
+import * as React from 'react';
+import { Card } from '@/components/ui/card';
+
+// ---------------------------------------------------------------------------
+// Props
+// ---------------------------------------------------------------------------
+
+interface NowHeroCardProps {
+  /** Station display name from branding.siteTitle. Falls back to "My Weather Station". */
+  stationName?: string;
+  /** Location text from /api/v1/station → data.name (operator's configured location). */
+  location?: string | null;
+  /** Logo URL for the current theme. */
+  logoUrl?: string;
+  /** Alt text for the logo (from branding.logo.alt). */
+  logoAlt?: string;
+  /** Extra class names forwarded to the outer Card. */
+  className?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Placeholder logo SVG (when no branding logo is configured)
+// ---------------------------------------------------------------------------
+
+/**
+ * Decorative placeholder: a simplified sun-behind-cloud icon matching the
+ * C1 mockup's default logo.  aria-hidden — the station name text carries the
+ * accessible label for the hero as a whole.
+ */
+function PlaceholderLogo({ size }: { size: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 40 40"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <defs>
+        <linearGradient id="nhc-gold" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#FFD24D" />
+          <stop offset="1" stopColor="#F5A623" />
+        </linearGradient>
+        <linearGradient id="nhc-grey" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#F3F5F8" />
+          <stop offset="1" stopColor="#C7CDD6" />
+        </linearGradient>
+      </defs>
+      <circle cx="20" cy="17" r="6" fill="url(#nhc-gold)" />
+      <ellipse cx="22" cy="26" rx="8" ry="5" fill="url(#nhc-grey)" />
+      <ellipse cx="16" cy="27" rx="5" ry="4" fill="url(#nhc-grey)" />
+    </svg>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+/**
+ * NowHeroCard — C1 Now-page hero strip.
+ *
+ * Footprint: `full` (col-span-4 on lg, 2 on md, 1 on sm) × visual half-row height.
+ * The half-row visual is achieved via py-2 matching PageHeaderCard's precedent.
+ *
+ * Logo: rendered as <img> when a URL is provided; falls back to PlaceholderLogo.
+ * Station name: always rendered (falls back to "My Weather Station" when unset).
+ * Location: rendered muted below the name when provided; hidden when null.
+ */
+export function NowHeroCard({
+  stationName,
+  location,
+  logoUrl,
+  logoAlt,
+  className,
+}: NowHeroCardProps) {
+  const displayName = stationName?.trim() || 'My Weather Station';
+
+  return (
+    <Card
+      footprint="full"
+      className={['py-2', className].filter(Boolean).join(' ')}
+    >
+      {/*
+        aria-label on the <header> gives screen readers a landmark description
+        that includes both station name and location without duplicating DOM text.
+      */}
+      <header
+        aria-label={
+          location
+            ? `${displayName} — ${location}`
+            : displayName
+        }
+        className="flex flex-1 items-center justify-between gap-4 px-4"
+      >
+        {/* ── Logo (left) ─────────────────────────────────────────────────── */}
+        <div
+          className="flex h-[3.25rem] w-[3.25rem] shrink-0 items-center justify-center"
+          aria-hidden="true"
+        >
+          {logoUrl ? (
+            <img
+              src={logoUrl}
+              alt={logoAlt ?? ''}
+              className="h-full w-full object-contain"
+            />
+          ) : (
+            <PlaceholderLogo size={40} />
+          )}
+        </div>
+
+        {/* ── Station name + location (right) ─────────────────────────────── */}
+        <div className="text-right">
+          {/*
+            h1 — this is the primary page heading on the Now page.
+            Visual: Manrope 1.35rem bold.
+          */}
+          <h1
+            className="leading-tight text-foreground"
+            style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: 'var(--text-hero-name)',
+              fontWeight: 700,
+              lineHeight: 1.15,
+            }}
+          >
+            {displayName}
+          </h1>
+
+          {/* Location line — shown only when the operator has configured a location. */}
+          {location && (
+            <p
+              className="mt-0.5 text-muted-foreground"
+              style={{
+                fontFamily: 'var(--font-sans)',
+                fontSize: 'var(--text-body)',
+              }}
+            >
+              {location}
+            </p>
+          )}
+        </div>
+      </header>
+    </Card>
+  );
+}

@@ -2,6 +2,15 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter";
+@import "@fontsource/manrope/latin-400.css";
+@import "@fontsource/manrope/latin-600.css";
+@import "@fontsource/manrope/latin-700.css";
+@import "@fontsource/outfit/latin-400.css";
+@import "@fontsource/outfit/latin-600.css";
+@import "@fontsource/outfit/latin-700.css";
+@import "@fontsource/lexend/latin-400.css";
+@import "@fontsource/lexend/latin-600.css";
+@import "@fontsource/lexend/latin-700.css";
 @import "leaflet/dist/leaflet.css";
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
@@ -14,9 +23,32 @@
     --card-half-row: 5.5rem;
     --card-row: 11rem;
 
+    /* ── Font families (LOCKED 2026-05-31 — typography token spec) ────────── */
+    /* --font-sans: Manrope — body, labels, card titles, station name (DEFAULT) */
+    /* --font-display: Outfit — every card's large primary stat numeral only    */
+    /* --font-chart: Lexend — SVG chart axis/tick/data labels only              */
     --font-heading: var(--font-sans);
+    --font-display: 'Outfit', system-ui, sans-serif;
+    --font-chart:   'Lexend', system-ui, sans-serif;
 
-    --font-sans: 'Inter Variable', sans-serif;
+    /* ── Font weights ───────────────────────────────────────────────────────── */
+    --font-weight-normal:   400;
+    --font-weight-semibold: 600;
+    --font-weight-bold:     700;
+
+    /* ── Type size scale (role-named, rem) (LOCKED 2026-05-31) ─────────────── */
+    --text-stat-hero:    4.75rem; /* C1 temperature numeral — Outfit 700 */
+    --text-stat-unit:    1.9rem;  /* unit beside it (°F) — Outfit */
+    --text-hero-name:    1.35rem; /* station name — Manrope 700 */
+    --text-section:      0.95rem; /* section heading — Manrope */
+    --text-body:         0.9rem;  /* body sentences — Manrope */
+    --text-secondary:    0.85rem; /* feels-like, hi/lo — Manrope (hi/lo weight 600) */
+    --text-card-title:   0.82rem; /* card title — Manrope 600 (semibold, NOT bold) */
+    --text-label:        0.75rem; /* small labels — Manrope */
+    --text-micro:        0.7rem;  /* uppercase micro-labels — Manrope */
+    --text-chart-label:  0.875rem;/* chart axis/tick/data labels — Lexend */
+
+    --font-sans: 'Manrope', 'Inter Variable', system-ui, sans-serif;
 
     --color-sidebar-ring: var(--sidebar-ring);
 
@@ -249,7 +281,7 @@
     @apply font-sans;
     }
   /* UA stylesheets hard-code font-family on form controls, breaking inheritance.
-     Force them back onto the cascade so Inter Variable applies everywhere. */
+     Force them back onto the cascade so Manrope applies everywhere. */
   button, input, select, textarea {
     font-family: inherit;
     }

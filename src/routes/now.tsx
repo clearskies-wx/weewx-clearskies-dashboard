@@ -15,6 +15,8 @@ import { SolarUvCard } from '../components/solar-uv-card';
 import { PrecipitationBarometerCard } from '../components/precipitation-barometer-card';
 import { WindCompassCard } from '../components/WindCompassCard';
 import { RadarMap } from '../components/shared/radar-map';
+import { Grid } from '../components/layout/grid';
+import { NowHeroCard } from '../components/layout/now-hero-card';
 import {
   Card,
   CardHeader,
@@ -33,6 +35,7 @@ import {
   useTodayStats,
 } from '../hooks/useWeatherData';
 import { useRealtimeObservation } from '../hooks/useRealtimeObservation';
+import { useBranding } from '../lib/branding-provider';
 
 function formatLocalTime(iso: string | null, tz: string, locale: string): string {
   if (!iso) return '—';
@@ -51,18 +54,6 @@ function formatPhaseName(name: string | null): string {
 }
 
 // EPA standard AQI color categories with WCAG AA-accessible shades.
-// The raw EPA palette (#FFFF00 yellow, #00E400 bright green) fails 3:1 contrast
-// against white backgrounds for non-text elements. These replacements preserve
-// the EPA category semantics (green/yellow/orange/red/purple/maroon) while
-// meeting the 3:1 threshold for graphical objects (WCAG 1.4.11).
-// Contrast ratios against #FFFFFF (light) verified via WebAIM:
-//   Good:          #1A7A1A (~7.0:1)
-//   Moderate:      #B8A000 (~3.4:1) — saturated gold replacing pure yellow
-//   USG:           #C45E00 (~4.0:1)
-//   Unhealthy:     #CC0000 (~5.9:1)
-//   Very Unhealthy:#6B2D8B (~5.5:1)
-//   Hazardous:     #7E0023 (~8.3:1)
-// Dark mode strokes render against oklch(0.145 0 0) ≈ #1A1A1A; all pass 3:1 there too.
 function aqiColor(aqi: number): string {
   if (aqi <= 50) return '#1A7A1A';
   if (aqi <= 100) return '#B8A000';
@@ -84,8 +75,6 @@ function aqiCategory(aqi: number, t: TFunction): string {
 function formatRelativeTime(iso: string, locale: string): string {
   const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
   const diffMs = new Date(iso).getTime() - Date.now();
-  // Guard: new Date() returns NaN for invalid/missing strings.
-  // Intl.RelativeTimeFormat.format() throws on NaN — return a safe fallback.
   if (!Number.isFinite(diffMs)) return '—';
   const diffSec = Math.round(diffMs / 1000);
   const diffMin = Math.round(diffSec / 60);
@@ -201,6 +190,8 @@ export function NowPage() {
   const { t: tRadar } = useTranslation('radar');
   const locale = i18n.language;
 
+  const branding = useBranding();
+
   const { data: observation, units, loading: obsLoading, error: obsError, refetch: obsRefetch, barometerTrendDirection } = useRealtimeObservation();
   const { data: forecast, loading: fcLoading, error: fcError, refetch: fcRefetch } = useForecast();
   const { data: alerts, loading: alertLoading } = useAlerts();
@@ -209,7 +200,7 @@ export function NowPage() {
   const { data: aqi, loading: aqiLoading, error: aqiError, refetch: aqiRefetch } = useAqi();
   const { data: station } = useStation();
 
-  // Today's archive for todayStats computation
+  // Today's archive — used for high/low stats AND the temp curve past leg
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
   const { data: todayArchive } = useArchive({ from: todayStart.toISOString() });
@@ -224,9 +215,6 @@ export function NowPage() {
   const [webcamConfig, setWebcamConfig] = useState<WebcamConfig | null>(null);
   const [webcamTab, setWebcamTab] = useState<'live' | 'timelapse'>('live');
 
-  // Fetch webcam config from static JSON written by the wizard (not the station API).
-  // If the file doesn't exist or fails to load, webcamConfig stays null and the card
-  // doesn't render — graceful degradation.
   useEffect(() => {
     fetch('/webcam.json')
       .then(r => r.ok ? r.json() : null)
@@ -236,14 +224,12 @@ export function NowPage() {
 
   const webcamEnabled = webcamConfig?.enabled ?? false;
 
-  // Cache-busting refresh for the still image — interval driven by webcam config (default 60s)
   useEffect(() => {
     const ms = (webcamConfig?.refreshInterval ?? 60) * 1000;
     const interval = setInterval(() => setRefreshTs(Date.now()), ms);
     return () => clearInterval(interval);
   }, [webcamConfig?.refreshInterval]);
 
-  // 15-minute cache-busting refresh for the timelapse video
   useEffect(() => {
     const interval = setInterval(() => setVideoRefreshTs(Date.now()), 900000);
     return () => clearInterval(interval);
@@ -251,46 +237,63 @@ export function NowPage() {
 
   const tz = station?.timezone ?? 'UTC';
 
-  // windGustCV still used by the Today's Highlights peak-gust readout.
+  // windGustCV still used by Today's Highlights peak-gust readout.
   const windGustCV = asConverted(observation?.windGust ?? null);
 
   const firstQuake = earthquakes?.[0] ?? null;
   const todayForecast = forecast?.daily?.[0] ?? null;
+  const hourlyForecast = forecast?.hourly ?? null;
+
+  // Determine logo URL based on current theme
+  // The theme toggle sets data-theme on <html>; detect it from the DOM
+  const isDark = typeof document !== 'undefined'
+    ? document.documentElement.getAttribute('data-theme') === 'dark'
+    : false;
+  const logoUrl = isDark
+    ? (branding.logo?.dark ?? branding.logo?.light)
+    : branding.logo?.light;
+  const logoAlt = branding.logo?.alt;
 
   return (
-    <div className="flex flex-col gap-4 max-w-6xl mx-auto">
+    <div className="flex flex-col gap-4">
+      {/* sr-only h1 for this page (the NowHeroCard renders an h1 that's visible) */}
       <h1 className="sr-only">Now</h1>
 
       {!alertLoading && alerts && <AlertBanner alerts={alerts} />}
 
       {/*
-        Grid layout — mobile-first single column, two equal columns on md+.
-        Row 1: Current Conditions + Today's Forecast (above the fold on desktop).
-        Row 2: Today's Highlights (full-width — summarises the day at a glance).
-        Row 3: Wind + Solar/UV
-        Row 4: Precipitation/Barometer + AQI
-        Row 5: Sun & Moon + Lightning
-        Row 6: Recent Earthquake + Temperature Trend
-        Row 7: Radar + Webcam side-by-side (radar expands to full-width when webcam is disabled)
+        A4 Grid primitive — 4 columns on lg, 2 on md, 1 on mobile.
+        Cards declare their own footprint; the hero is full-width (col-span-4).
+        The "sr-only h1" above is outside the grid; the visible station name
+        heading is inside NowHeroCard as a real <h1>.
       */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <Grid>
 
-        {/* Row 1 — Current Conditions */}
-        <div>
-          <CurrentConditionsCard
-            observation={observation}
-            stationName={station?.name ?? ''}
-            loading={obsLoading}
-            error={obsError}
-            units={units}
-            weatherText={observation?.weatherText ?? todayForecast?.weatherText ?? null}
-            weatherCode={todayForecast?.weatherCode ?? null}
-            onRetry={obsRefetch}
-          />
-        </div>
+        {/* ── Hero bar — full-width × half-row ──────────────────────────── */}
+        <NowHeroCard
+          stationName={branding.siteTitle}
+          location={station?.name ?? undefined}
+          logoUrl={logoUrl}
+          logoAlt={logoAlt}
+        />
 
-        {/* Row 1 — Today's Forecast */}
-        <Card aria-busy={fcLoading}>
+        {/* ── Current Conditions — 2×2 (wide + rowSpan 2) ──────────────── */}
+        <CurrentConditionsCard
+          observation={observation}
+          loading={obsLoading}
+          error={obsError}
+          units={units}
+          weatherText={observation?.weatherText ?? todayForecast?.weatherText ?? null}
+          weatherCode={todayForecast?.weatherCode ?? null}
+          todayHigh={todayStats?.high ?? null}
+          todayLow={todayStats?.low ?? null}
+          todayArchive={todayArchive ?? null}
+          hourlyForecast={hourlyForecast ?? null}
+          onRetry={obsRefetch}
+        />
+
+        {/* ── Today's Forecast — tile ────────────────────────────────────── */}
+        <Card footprint="tile" aria-busy={fcLoading}>
           <CardHeader>
             <h2 className="font-heading text-base leading-snug font-medium">{t('todaysForecast')}</h2>
           </CardHeader>
@@ -323,8 +326,8 @@ export function NowPage() {
           </CardContent>
         </Card>
 
-        {/* Row 2 — Today's Highlights (full-width) */}
-        <Card className="md:col-span-2">
+        {/* ── Today's Highlights — full-width ───────────────────────────── */}
+        <Card footprint="full" aria-busy={obsLoading}>
           <CardHeader>
             <h2 className="font-heading text-base leading-snug font-medium">{t('todaysHighlights')}</h2>
           </CardHeader>
@@ -390,10 +393,10 @@ export function NowPage() {
           </CardContent>
         </Card>
 
-        {/* Row 3 — Wind */}
+        {/* ── Wind Compass — wide (2-col) ────────────────────────────────── */}
         <WindCompassCard observation={observation} />
 
-        {/* Row 3 — Solar / UV */}
+        {/* ── Solar / UV — tile ─────────────────────────────────────────── */}
         <SolarUvCard
           observation={observation}
           loading={obsLoading}
@@ -402,7 +405,7 @@ export function NowPage() {
           todayForecast={todayForecast}
         />
 
-        {/* Row 4 — Precipitation / Barometer */}
+        {/* ── Precipitation / Barometer — tile ──────────────────────────── */}
         <PrecipitationBarometerCard
           observation={observation}
           barometerTrendDirection={barometerTrendDirection}
@@ -411,8 +414,8 @@ export function NowPage() {
           onRetry={obsRefetch}
         />
 
-        {/* Row 4 — AQI */}
-        <Card aria-busy={aqiLoading}>
+        {/* ── AQI — tile ────────────────────────────────────────────────── */}
+        <Card footprint="tile" aria-busy={aqiLoading}>
           <CardHeader>
             <h2 className="font-heading text-base leading-snug font-medium">{t('airQuality')}</h2>
           </CardHeader>
@@ -437,8 +440,8 @@ export function NowPage() {
           </CardContent>
         </Card>
 
-        {/* Row 5 — Sun & Moon */}
-        <Card aria-busy={almLoading}>
+        {/* ── Sun & Moon — tile ─────────────────────────────────────────── */}
+        <Card footprint="tile" aria-busy={almLoading}>
           <CardHeader>
             <h2 className="font-heading text-base leading-snug font-medium">{t('sunAndMoon')}</h2>
           </CardHeader>
@@ -477,8 +480,8 @@ export function NowPage() {
           </CardContent>
         </Card>
 
-        {/* Row 5 — Lightning */}
-        <Card>
+        {/* ── Lightning — tile ──────────────────────────────────────────── */}
+        <Card footprint="tile">
           <CardHeader>
             <h2 className="font-heading text-base leading-snug font-medium">{t('lightning.title')}</h2>
           </CardHeader>
@@ -510,8 +513,8 @@ export function NowPage() {
           </CardContent>
         </Card>
 
-        {/* Row 6 — Recent Earthquake */}
-        <Card aria-busy={eqLoading}>
+        {/* ── Recent Earthquake — tile ───────────────────────────────────── */}
+        <Card footprint="tile" aria-busy={eqLoading}>
           <CardHeader>
             <h2 className="font-heading text-base leading-snug font-medium">{t('recentEarthquake')}</h2>
           </CardHeader>
@@ -542,113 +545,74 @@ export function NowPage() {
           </CardContent>
         </Card>
 
-        {/* Row 6 — Temperature Trend (placeholder, NO Recharts import) */}
-        <Card>
+        {/* ── Radar + Webcam ─────────────────────────────────────────────── */}
+        {/* Radar: wide (2-col) when webcam absent, tile (1-col) when present */}
+        <Card
+          footprint={!(webcamEnabled && webcamAvailable) ? 'wide' : 'tile'}
+        >
           <CardHeader>
-            <h2 className="font-heading text-base leading-snug font-medium">{t('temperatureTrend')}</h2>
+            <CardTitle as="h2">{tRadar('radarTitle')}</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <div
-              aria-hidden="true"
-              className="h-20 w-full rounded-md overflow-hidden bg-gradient-to-r from-blue-100 via-amber-100 to-orange-100 dark:from-blue-950/50 dark:via-amber-950/50 dark:to-orange-950/50 relative"
-            >
-              <svg
-                viewBox="0 0 200 60"
-                className="absolute inset-0 w-full h-full"
-                preserveAspectRatio="none"
-                aria-hidden="true"
-                focusable="false"
-              >
-                <polyline
-                  points="0,50 20,42 40,35 60,28 80,22 100,20 120,22 140,30 160,38 180,44 200,48"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  className="text-primary/60"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <Link
-              to="/charts"
-              className="text-sm text-primary underline-offset-4 hover:underline focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded self-start"
-            >
-              {t('viewCharts')}
-            </Link>
+          <CardContent>
+            {station ? (
+              <RadarMap
+                center={[station.latitude, station.longitude]}
+                stationTz={station.timezone}
+              />
+            ) : (
+              <TileSkeleton className="h-96" />
+            )}
           </CardContent>
         </Card>
 
-        {/* Row 7 — Radar + Webcam (side-by-side on md+; radar expands full-width when webcam is disabled) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
-
-          {/* Radar card — half-width when webcam is present, full-width otherwise */}
-          <Card className={!(webcamEnabled && webcamAvailable) ? 'md:col-span-2' : undefined}>
-            <CardHeader>
-              <CardTitle as="h2">{tRadar('radarTitle')}</CardTitle>
+        {webcamEnabled && webcamAvailable && (
+          <Card footprint="tile">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <h2 className="font-heading text-base leading-snug font-medium">{t('webcam')}</h2>
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  className={`px-2 py-1 text-xs rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${webcamTab === 'live' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+                  onClick={() => setWebcamTab('live')}
+                  aria-pressed={webcamTab === 'live'}
+                >
+                  {t('webcamTabLive', 'Live')}
+                </button>
+                <button
+                  type="button"
+                  className={`px-2 py-1 text-xs rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${webcamTab === 'timelapse' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+                  onClick={() => setWebcamTab('timelapse')}
+                  aria-pressed={webcamTab === 'timelapse'}
+                >
+                  {t('webcamTabTimelapse', 'Timelapse')}
+                </button>
+              </div>
             </CardHeader>
             <CardContent>
-              {station ? (
-                <RadarMap
-                  center={[station.latitude, station.longitude]}
-                  stationTz={station.timezone}
+              {webcamTab === 'live' ? (
+                <img
+                  src={`${webcamConfig!.imageUrl}?t=${refreshTs}`}
+                  alt={t('webcamAlt')}
+                  className="w-full rounded object-cover"
+                  onError={() => setWebcamAvailable(false)}
                 />
+              ) : videoAvailable ? (
+                <video
+                  controls
+                  loop
+                  className="w-full rounded"
+                  onError={() => setVideoAvailable(false)}
+                >
+                  <source src={`${webcamConfig!.videoUrl}?t=${videoRefreshTs}`} type="video/mp4" />
+                </video>
               ) : (
-                <TileSkeleton className="h-96" />
+                <p className="text-muted-foreground text-sm">{t('noData.timelapse', 'No timelapse available')}</p>
               )}
             </CardContent>
           </Card>
+        )}
 
-          {/* Webcam card — shown only when enabled and files load successfully */}
-          {webcamEnabled && webcamAvailable && (
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <h2 className="font-heading text-base leading-snug font-medium">{t('webcam')}</h2>
-                <div className="flex gap-1">
-                  <button
-                    type="button"
-                    className={`px-2 py-1 text-xs rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${webcamTab === 'live' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
-                    onClick={() => setWebcamTab('live')}
-                    aria-pressed={webcamTab === 'live'}
-                  >
-                    {t('webcamTabLive', 'Live')}
-                  </button>
-                  <button
-                    type="button"
-                    className={`px-2 py-1 text-xs rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${webcamTab === 'timelapse' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
-                    onClick={() => setWebcamTab('timelapse')}
-                    aria-pressed={webcamTab === 'timelapse'}
-                  >
-                    {t('webcamTabTimelapse', 'Timelapse')}
-                  </button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {webcamTab === 'live' ? (
-                  <img
-                    src={`${webcamConfig!.imageUrl}?t=${refreshTs}`}
-                    alt={t('webcamAlt')}
-                    className="w-full rounded object-cover"
-                    onError={() => setWebcamAvailable(false)}
-                  />
-                ) : videoAvailable ? (
-                  <video
-                    controls
-                    loop
-                    className="w-full rounded"
-                    onError={() => setVideoAvailable(false)}
-                  >
-                    <source src={`${webcamConfig!.videoUrl}?t=${videoRefreshTs}`} type="video/mp4" />
-                  </video>
-                ) : (
-                  <p className="text-muted-foreground text-sm">{t('noData.timelapse', 'No timelapse available')}</p>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-        </div>
-
-      </div>
+      </Grid>
     </div>
   );
 }
