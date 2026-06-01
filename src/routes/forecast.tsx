@@ -1,142 +1,29 @@
+// forecast.tsx — Forecast page (C3 redesign).
+//
+// Replaces the previous section-based layout with four glass cards in the
+// shared Grid primitive, matching C3-forecast-page.html exactly:
+//
+//   PageHeaderCard   — full width, page title + freshness info
+//   ForecastHourlyCard  — Surface B: tabbed hourly (Today / Tomorrow), scrollable
+//   ForecastDailyCard   — Surface C: 7-day columns with expandable detail
+//   ForecastDiscussionCard — Surface D: AFD text (self-hides when empty)
+//
+// useForecast({ hours: 48 }) requests 48h of hourly data for Tomorrow tab.
+
 import { useTranslation } from 'react-i18next';
-import { WeatherIcon } from '../components/weather-icon';
 import { AlertBanner } from '../components/shared/alert-banner';
-import {
-  Card,
-  CardHeader,
-  CardContent,
-} from '../components/ui/card';
+import { Grid } from '../components/layout/grid';
+import { PageHeaderCard } from '../components/layout/page-header-card';
+import { ForecastHourlyCard } from '../components/forecast/ForecastHourlyCard';
+import { ForecastDailyCard } from '../components/forecast/ForecastDailyCard';
+import { ForecastDiscussionCard } from '../components/forecast/ForecastDiscussionCard';
 import { useForecast, useAlerts, useStation } from '../hooks/useWeatherData';
-import { useRealtimeObservation } from '../hooks/useRealtimeObservation';
-import { formatValue } from '../utils/format';
-import { asConverted } from '../api/types';
-import { getUvSegment } from '../utils/uv';
-import { cardinalFromDegrees } from '../utils/wind';
 
-/**
- * PrecipBar — horizontal progress bar for precipitation probability.
- *
- * Accessibility: role="meter" with aria-valuenow/min/max conveys the
- * proportional value to screen readers. The numeric percentage is always
- * shown alongside so color is never the sole signal (WCAG 1.4.1).
- */
-function PrecipBar({ pct, ariaLabel }: { pct: number; ariaLabel: string }) {
-  const clampedPct = Math.max(0, Math.min(100, pct));
-  return (
-    <div className="flex items-center gap-2">
-      {/* meter track */}
-      <div
-        role="meter"
-        aria-valuenow={clampedPct}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={ariaLabel}
-        className="relative h-1.5 flex-1 rounded-full bg-blue-200 dark:bg-blue-900 overflow-hidden"
-      >
-        {/* filled portion */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-y-0 left-0 rounded-full bg-blue-500 dark:bg-blue-400"
-          style={{ width: `${clampedPct}%` }}
-        />
-      </div>
-      {/* numeric label — always visible; color is not the only signal */}
-      <span
-        aria-hidden="true"
-        className="text-xs tabular-nums text-blue-600 dark:text-blue-400 shrink-0"
-      >
-        {clampedPct}%
-      </span>
-    </div>
-  );
-}
-
-/**
- * WindArrow — small SVG arrow that rotates to indicate the direction the wind
- * is blowing FROM (meteorological convention).
- *
- * Rotation: windDir=0 means FROM the north (arrow tip points up/north).
- * Applies rotate(windDir) around the SVG centre — the same convention used
- * by WindCompass in now.tsx.
- *
- * The element is aria-hidden; the caller supplies an aria-label on the
- * surrounding context element.
- */
-function WindArrow({ deg, className = '' }: { deg: number; className?: string }) {
-  return (
-    <svg
-      aria-hidden="true"
-      focusable="false"
-      width="14"
-      height="14"
-      viewBox="0 0 14 14"
-      className={className}
-      style={{ transform: `rotate(${deg}deg)`, display: 'inline-block' }}
-    >
-      {/* Arrow pointing upward (N) — rotated by deg to show FROM direction */}
-      <polygon points="7,1 9,9 7,7 5,9" fill="currentColor" />
-      <line x1="7" y1="7" x2="7" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-
-/**
- * UvIndexRow — compact UV index display for daily forecast cards.
- *
- * Shows a color-coded dot (aria-hidden), the label key, the numeric value,
- * and the EPA category text.  The surrounding <p> carries an aria-label so
- * screen readers receive the full picture without relying on color (WCAG 1.4.1).
- *
- * The 'now' namespace is used for UV label keys because UV segment labels
- * (Low/Moderate/etc.) live in solarUv.uv.* there — shared by both pages.
- */
-function UvIndexRow({ uv }: { uv: number }) {
-  const { t: tNow } = useTranslation('now');
-  const { t } = useTranslation('forecast');
-  const seg = getUvSegment(uv);
-  // Resolve the translated label from the 'now' namespace where these keys live.
-  const levelLabel = seg ? tNow(seg.labelKey as Parameters<typeof tNow>[0]) : String(uv);
-
-  return (
-    <p
-      className="flex items-center gap-1.5 text-xs text-muted-foreground"
-      aria-label={t('ariaUvIndex', { uv, level: levelLabel })}
-    >
-      <span
-        aria-hidden="true"
-        className="inline-block w-2 h-2 rounded-full shrink-0"
-        style={{ backgroundColor: seg?.color ?? '#888' }}
-      />
-      <span>{tNow('solarUv.uv.uvIndex')}</span>
-      <span className="tabular-nums text-foreground font-medium">{uv}</span>
-      <span>{levelLabel}</span>
-    </p>
-  );
-}
-
-function formatHour(isoString: string, timeZone: string, locale: string): string {
-  return new Intl.DateTimeFormat(locale, {
-    hour: 'numeric',
-    hour12: true,
-    timeZone,
-    timeZoneName: 'short',
-  }).format(new Date(isoString));
-}
-
-function formatDayName(isoDate: string, locale: string): string {
-  const d = new Date(isoDate + 'T12:00:00Z');
-  return new Intl.DateTimeFormat(locale, {
-    weekday: 'long',
-    timeZone: 'UTC',
-  }).format(d);
-}
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatRelativeTime(isoString: string, locale: string): string {
   const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
   const diffMs = new Date(isoString).getTime() - Date.now();
-  // Guard: new Date() returns NaN for invalid/missing strings.
-  // Intl.RelativeTimeFormat.format() throws on NaN — return a safe fallback.
   if (!Number.isFinite(diffMs)) return '—';
   const diffMin = Math.round(diffMs / 60000);
   const diffHr = Math.round(diffMin / 60);
@@ -146,226 +33,56 @@ function formatRelativeTime(isoString: string, locale: string): string {
   return rtf.format(diffDay, 'day');
 }
 
-function TileSkeleton({ className }: { className?: string }) {
-  return (
-    <div
-      className={`animate-pulse rounded-lg bg-muted ${className ?? 'h-32'}`}
-      aria-hidden="true"
-    />
-  );
-}
-
-function TileError({ message, onRetry }: { message: string; onRetry: () => void }) {
-  const { t: tc } = useTranslation('common');
-  return (
-    <div role="alert" className="flex flex-col gap-2 items-start text-sm">
-      <p className="text-destructive">{message}</p>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="text-xs text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
-      >
-        {tc('retry')}
-      </button>
-    </div>
-  );
-}
+// ── Page ─────────────────────────────────────────────────────────────────────
 
 export function ForecastPage() {
   const { t, i18n } = useTranslation('forecast');
-  const { t: tCommon } = useTranslation('common');
-  const { data: forecast, loading: fcLoading, error: fcError, refetch: fcRefetch } = useForecast();
-  const { data: station } = useStation();
-  const { data: alerts, loading: alertLoading } = useAlerts();
-  const { data: observation } = useRealtimeObservation();
-  const tz = station?.timezone ?? 'UTC';
   const locale = i18n.language;
 
-  // Wind unit label from BFF (ADR-042). Forecast data is raw numbers from the
-  // provider — not BFF-converted. We use the current observation's wind label
-  // as the best available proxy for the display unit.
-  const windUnit = asConverted(observation?.windSpeed ?? null)?.label ?? '';
+  // Request 48h of hourly data so the Tomorrow tab is populated.
+  const { data: forecast, loading: fcLoading, error: fcError } = useForecast({ hours: 48 });
+  const { data: station } = useStation();
+  const { data: alerts, loading: alertLoading } = useAlerts();
+
+  const tz = station?.timezone ?? 'UTC';
+
+  // Freshness text: "Updated N minutes ago · Source"
+  const freshnessText = forecast?.generatedAt
+    ? `${t('updated', { time: formatRelativeTime(forecast.generatedAt, locale) })}${forecast.source ? ` · ${forecast.source}` : ''}`
+    : undefined;
 
   return (
-    <div className="flex flex-col gap-6 max-w-4xl mx-auto">
+    <div className="flex flex-col gap-4">
       <h1 className="sr-only">{t('title')}</h1>
 
       {!alertLoading && alerts && <AlertBanner alerts={alerts} />}
 
-      {/* Hourly Forecast Strip */}
-      <section aria-labelledby="hourly-heading" aria-busy={fcLoading}>
-        <h2 id="hourly-heading" className="text-lg font-semibold text-foreground mb-3">{t('next12Hours')}</h2>
-        {fcLoading ? (
-          <>
-            <span className="sr-only" role="status">{t('loadingHourly')}</span>
-            <TileSkeleton className="h-28" />
-          </>
-        ) : fcError ? (
-          <TileError message={t('unableToLoad')} onRetry={fcRefetch} />
-        ) : forecast && forecast.hourly.length > 0 ? (
-          <div className="relative">
-            <div
-              className="overflow-x-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg"
-              tabIndex={0}
-              aria-label={t('ariaHourlyScroll')}
-              style={{ scrollSnapType: 'x mandatory' }}
-            >
-            <div
-              role="list"
-              aria-label={t('ariaHourlyList')}
-              className="flex gap-2 pb-2 min-w-max"
-            >
-              {forecast.hourly.map((hour) => {
-                const hourLabel = formatHour(hour.validTime, tz, locale);
-                const hasWindDir = hour.windDir !== null;
-                const windDirDeg = hour.windDir ?? 0;
-                // cardinalFromDegrees uses the same formula as the BFF (ADR-041).
-                // Forecast data has no BFF-supplied cardinal; compute it client-side
-                // using the shared helper and render via i18n (ADR-021).
-                const windCardinal = hasWindDir ? cardinalFromDegrees(windDirDeg) : null;
-                const windCardinalLabel = windCardinal
-                  ? tCommon(`directions.${windCardinal}`)
-                  : '—';
-                const windLabel = hasWindDir
-                  ? t('ariaWindDir', { direction: windCardinalLabel.toLowerCase() })
-                  : undefined;
-                return (
-                  <div
-                    key={hour.validTime}
-                    role="listitem"
-                    className="flex flex-col items-center gap-1.5 min-w-[72px] rounded-lg border border-border bg-card px-3 py-3 text-center shrink-0"
-                    style={{ scrollSnapAlign: 'start' }}
-                  >
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">{hourLabel}</span>
-                    <WeatherIcon
-                      code={hour.weatherCode}
-                      size={24}
-                      className="text-muted-foreground"
-                    />
-                    <span
-                      className="text-sm font-semibold text-foreground"
-                    >
-                      {formatValue(hour.outTemp, 'temperature')}°
-                    </span>
-                    {hour.precipProbability !== null && hour.precipProbability > 0 && (
-                      <span className="text-xs text-blue-600 dark:text-blue-400">
-                        {formatValue(hour.precipProbability, 'percent')}%
-                      </span>
-                    )}
-                    {hasWindDir && hour.windSpeed !== null && (
-                      <span
-                        className="flex items-center gap-0.5 text-xs text-muted-foreground"
-                        aria-label={windLabel}
-                      >
-                        <WindArrow
-                          deg={windDirDeg}
-                          className="text-muted-foreground"
-                        />
-                        {formatValue(hour.windSpeed, 'wind')}
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-            </div>
-            {/* Scroll fade indicator — always visible on mobile; 12 items always overflow narrow viewports */}
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent"
-            />
-          </div>
-        ) : (
-          <p className="text-muted-foreground text-sm">{t('noHourlyData')}</p>
-        )}
-      </section>
+      <Grid>
+        {/* ── Page header ──────────────────────────────────────────────── */}
+        <PageHeaderCard title={t('title')} info={freshnessText} />
 
-      {/* 7-Day Daily Forecast */}
-      <section aria-labelledby="daily-heading" aria-busy={fcLoading}>
-        <h2 id="daily-heading" className="text-lg font-semibold text-foreground mb-3">{t('sevenDayForecast')}</h2>
-        {fcLoading ? (
-          <>
-            <span className="sr-only" role="status">{t('loadingDaily')}</span>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <TileSkeleton key={i} className="h-36" />
-              ))}
-            </div>
-          </>
-        ) : fcError ? null : forecast && forecast.daily.length > 0 ? (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
-            {forecast.daily.map((day, index) => {
-              const dayName = index === 0 ? t('today') : formatDayName(day.validDate, locale);
-              const hasPrecip = day.precipProbabilityMax !== null && day.precipProbabilityMax > 0;
-              return (
-                <article
-                  key={day.validDate}
-                  aria-label={t('ariaDayForecast', { day: dayName })}
-                >
-                  <Card>
-                    <CardHeader>
-                      <h3 className="font-heading text-base leading-snug font-medium">{dayName}</h3>
-                    </CardHeader>
-                    <CardContent className="flex flex-col gap-3">
-                      {/* Weather icon — dominant visual element */}
-                      <div className="flex justify-center py-1">
-                        <WeatherIcon
-                          code={day.weatherCode}
-                          size="48px"
-                          className="text-foreground"
-                        />
-                      </div>
+        {/* ── Surface B: Hourly ─────────────────────────────────────────── */}
+        <ForecastHourlyCard
+          forecast={forecast}
+          loading={fcLoading}
+          error={fcError}
+          stationTz={tz}
+        />
 
-                      {/* Temperature row — high / low */}
-                      <div className="flex justify-center gap-1 text-base">
-                        <span className="font-semibold text-foreground">{formatValue(day.tempMax, 'temperature')}°</span>
-                        <span className="text-muted-foreground">/</span>
-                        <span className="text-muted-foreground">{formatValue(day.tempMin, 'temperature')}°</span>
-                      </div>
+        {/* ── Surface C: 7-Day ──────────────────────────────────────────── */}
+        <ForecastDailyCard
+          forecast={forecast}
+          loading={fcLoading}
+          error={fcError}
+          stationTz={tz}
+        />
 
-                      {/* Weather description */}
-                      {day.weatherText && (
-                        <p className="text-xs text-muted-foreground text-center leading-tight">{day.weatherText}</p>
-                      )}
-
-                      {/* Precipitation probability bar — only when > 0 */}
-                      {hasPrecip && (
-                        <PrecipBar
-                          pct={day.precipProbabilityMax!}
-                          ariaLabel={t('ariaPrecipBar', { pct: day.precipProbabilityMax! })}
-                        />
-                      )}
-
-                      {/* Wind speed — no windDir on DailyForecastPoint, show speed only */}
-                      {day.windSpeedMax !== null && (
-                        <p className="text-xs text-muted-foreground">
-                          {t('windUpTo', { speed: formatValue(day.windSpeedMax, 'wind'), unit: windUnit })}
-                        </p>
-                      )}
-
-                      {/* UV index max — criterion 9.7: show uvIndexMax on daily cards.
-                          Color badge is aria-hidden; text label conveys category
-                          without relying on color alone (WCAG 1.4.1, criterion 9.3). */}
-                      {day.uvIndexMax !== null && (
-                        <UvIndexRow uv={day.uvIndexMax} />
-                      )}
-                    </CardContent>
-                  </Card>
-                </article>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="text-muted-foreground text-sm">{t('noDailyData')}</p>
-        )}
-      </section>
-
-      {/* Forecast Freshness Indicator */}
-      {forecast && (
-        <p className="text-xs text-muted-foreground text-right">
-          {t('updated', { time: formatRelativeTime(forecast.generatedAt, locale) })}
-        </p>
-      )}
+        {/* ── Surface D: Discussion (self-hides when empty) ─────────────── */}
+        <ForecastDiscussionCard
+          discussion={forecast?.discussion ?? null}
+          stationTz={tz}
+        />
+      </Grid>
     </div>
   );
 }
