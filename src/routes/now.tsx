@@ -13,6 +13,7 @@ import { AlertBanner } from '../components/shared/alert-banner';
 import { CurrentConditionsCard } from '../components/current-conditions-card';
 import { SolarUvCard } from '../components/solar-uv-card';
 import { PrecipitationBarometerCard } from '../components/precipitation-barometer-card';
+import { WindCompassCard } from '../components/WindCompassCard';
 import { RadarMap } from '../components/shared/radar-map';
 import {
   Card,
@@ -95,99 +96,6 @@ function formatRelativeTime(iso: string, locale: string): string {
   if (Math.abs(diffMin) < 60) return rtf.format(diffMin, 'minute');
   if (Math.abs(diffHr) < 24) return rtf.format(diffHr, 'hour');
   return rtf.format(diffDay, 'day');
-}
-
-function WindCompass({
-  windDirDeg,
-  windDirCardinal,
-  windSpeedFormatted,
-  windSpeedUnit,
-  windGustFormatted,
-  windGustUnit,
-  beaufortDescription,
-  t,
-}: {
-  /** Raw wind direction degrees (from ConvertedValue.value) for SVG rotation. */
-  windDirDeg: number;
-  /**
-   * BFF-supplied canonical cardinal code (ADR-041).
-   * Rendered via i18n (ADR-021): t('directions.' + windDirCardinal).
-   * null → display '—'.
-   */
-  windDirCardinal: string | null;
-  windSpeedFormatted: string;
-  windSpeedUnit: string;
-  windGustFormatted: string;
-  windGustUnit: string;
-  /** Beaufort descriptor from BFF (e.g. "Gentle breeze") — empty string when unavailable. */
-  beaufortDescription: string;
-  t: TFunction;
-}) {
-  const { t: tCommon } = useTranslation('common');
-  // Translate the cardinal code via i18n (ADR-021). Falls back to '—' when null.
-  const dirTranslated = windDirCardinal ? tCommon(`directions.${windDirCardinal}`) : '—';
-  const ariaLabel = t('windCompass.ariaLabel', { direction: dirTranslated.toLowerCase(), degrees: formatValue(windDirDeg, 'degrees') });
-
-  return (
-    <div className="flex flex-col items-center gap-3">
-      <svg
-        width="120"
-        height="120"
-        viewBox="0 0 120 120"
-        role="img"
-        aria-label={ariaLabel}
-        focusable="false"
-      >
-        <circle
-          cx="60"
-          cy="60"
-          r="54"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          className="text-border"
-        />
-        <text x="60" y="14" textAnchor="middle" fontSize="11" fill="currentColor" className="text-muted-foreground" dominantBaseline="middle">N</text>
-        <text x="106" y="60" textAnchor="middle" fontSize="11" fill="currentColor" className="text-muted-foreground" dominantBaseline="middle">E</text>
-        <text x="60" y="108" textAnchor="middle" fontSize="11" fill="currentColor" className="text-muted-foreground" dominantBaseline="middle">S</text>
-        <text x="14" y="60" textAnchor="middle" fontSize="11" fill="currentColor" className="text-muted-foreground" dominantBaseline="middle">W</text>
-
-        {/* Outer <g> centers the coordinate system; inner <g> applies CSS rotation
-            so the browser can transition it smoothly between SSE updates. SVG
-            presentation-attribute rotate() cannot be CSS-transitioned. */}
-        <g transform="translate(60,60)">
-          <g
-            style={{
-              transform: `rotate(${(windDirDeg + 180) % 360}deg)`,
-              transformOrigin: '0px 0px',
-              transition: 'transform 0.5s ease',
-            }}
-          >
-            <polygon
-              points="0,-36 5,-16 0,-22 -5,-16"
-              fill="currentColor"
-              className="text-primary"
-            />
-            <line x1="0" y1="-22" x2="0" y2="20" stroke="currentColor" strokeWidth="2" className="text-primary" />
-            <circle cx="0" cy="0" r="3" fill="currentColor" className="text-primary" />
-          </g>
-        </g>
-      </svg>
-
-      <div className="text-center text-sm">
-        <p className="font-medium text-foreground text-base">
-          {t('windCompass.directionLabel', { direction: dirTranslated, degrees: formatValue(windDirDeg, 'degrees') })}
-        </p>
-        <p className="text-muted-foreground">
-          {t('windCompass.speed', { speed: windSpeedFormatted, unit: windSpeedUnit, direction: dirTranslated })}
-        </p>
-        <p className="text-muted-foreground">{t('windCompass.gusts', { gust: windGustFormatted, unit: windGustUnit })}</p>
-        {beaufortDescription && (
-          <p className="text-xs text-muted-foreground mt-0.5">{beaufortDescription}</p>
-        )}
-      </div>
-    </div>
-  );
 }
 
 function AqiGauge({
@@ -343,21 +251,8 @@ export function NowPage() {
 
   const tz = station?.timezone ?? 'UTC';
 
-  // Extract ConvertedValue fields for the wind compass.
-  // .value is the raw numeric degree/speed needed for SVG rotation and
-  // formatValue calls; .formatted and .label come from the BFF.
-  const windDirCV = asConverted(observation?.windDir ?? null);
-  const windSpeedCV = asConverted(observation?.windSpeed ?? null);
+  // windGustCV still used by the Today's Highlights peak-gust readout.
   const windGustCV = asConverted(observation?.windGust ?? null);
-  const windDirDeg = windDirCV?.value ?? 0;
-
-  // BFF-supplied cardinal code for wind direction (ADR-041).
-  // SSE updates overwrite this live via the merge in useRealtimeObservation.
-  const windDirCardinal = observation?.windDirCardinal ?? null;
-
-  // Beaufort description comes from the BFF (ADR-042). Empty string when absent.
-  const beaufortCV = asConverted(observation?.beaufort ?? null);
-  const beaufortDescription = beaufortCV?.label ?? '';
 
   const firstQuake = earthquakes?.[0] ?? null;
   const todayForecast = forecast?.daily?.[0] ?? null;
@@ -496,34 +391,7 @@ export function NowPage() {
         </Card>
 
         {/* Row 3 — Wind */}
-        <Card aria-busy={obsLoading}>
-          <CardHeader>
-            <h2 className="font-heading text-base leading-snug font-medium">{t('wind')}</h2>
-          </CardHeader>
-          <CardContent>
-            {obsLoading ? (
-              <>
-                <span className="sr-only" role="status">{t('loading.wind')}</span>
-                <TileSkeleton className="h-32" />
-              </>
-            ) : obsError ? (
-              <TileError message={t('error.wind')} onRetry={obsRefetch} />
-            ) : observation ? (
-              <WindCompass
-                windDirDeg={windDirDeg}
-                windDirCardinal={windDirCardinal}
-                windSpeedFormatted={windSpeedCV?.formatted ?? '--'}
-                windSpeedUnit={windSpeedCV?.label ?? ''}
-                windGustFormatted={windGustCV?.formatted ?? '--'}
-                windGustUnit={windGustCV?.label ?? ''}
-                beaufortDescription={beaufortDescription}
-                t={t}
-              />
-            ) : (
-              <p className="text-muted-foreground text-sm">{t('noData.wind')}</p>
-            )}
-          </CardContent>
-        </Card>
+        <WindCompassCard observation={observation} />
 
         {/* Row 3 — Solar / UV */}
         <SolarUvCard

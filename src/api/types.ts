@@ -148,6 +148,16 @@ export interface Observation {
   windDir: ConvertedValue | number | null;
   windGust: ConvertedValue | number | null;
   windGustDir: ConvertedValue | number | null;
+  /**
+   * 10-minute average wind speed — computed by BFF (ADR-042).
+   * Absent before BFF rolling-window has sufficient data.
+   */
+  windSpeedAvg10m?: ConvertedValue | number | null;
+  /**
+   * Maximum wind gust over the last 10 minutes — computed by BFF (ADR-042).
+   * Absent before BFF rolling-window has sufficient data.
+   */
+  windGustMax10m?: ConvertedValue | number | null;
   barometer: ConvertedValue | number | null;
   pressure: ConvertedValue | number | null;
   altimeter: ConvertedValue | number | null;

@@ -81,6 +81,14 @@
     "directionLabel": "From the {{direction}} {{degrees}}°"
   },
 
+  "windCard": {
+    "title": "Current Wind",
+    "tenMinAvg": "10-min avg",
+    "maxGust": "Max gust",
+    "svgTitle": "Wind {{speed}} from {{cardinal}} at {{degrees}} degrees. 10-minute average {{avg}}, maximum gust {{gust}}.",
+    "svgTitleNoAvg": "Wind {{speed}} from {{cardinal}} at {{degrees}} degrees."
+  },
+
   "barometer": {
     "trend": {
       "rising": "rising",
