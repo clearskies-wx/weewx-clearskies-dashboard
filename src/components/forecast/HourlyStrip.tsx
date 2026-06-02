@@ -168,7 +168,6 @@ export function HourlyStrip({
   // Row: precipitation — always visible (0% shown muted, non-zero shown normal)
   const precipRow = displayHours.map((hour, i) => {
     const precip = hour.precipProbability;
-    const hasPrecip = precip !== null && precip > 0;
     return (
       <div key={i} style={{ ...colStyle, ...CELL_BASE, height: rowH.precip }}>
         <span

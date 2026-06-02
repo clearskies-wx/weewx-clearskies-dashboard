@@ -280,7 +280,6 @@ export function DailyColumns({
     <div style={{ display: 'flex', flexDirection: 'row', position: 'relative', zIndex: 1 }}>
       {days.map((day, i) => {
         const precip = day.precipProbabilityMax;
-        const hasPrecip = precip !== null && precip > 0;
         return (
           <div key={i} style={{ ...cellBase, height: expandable ? 16 : 12, marginTop: expandable ? 0 : 4 }}>
             <span
