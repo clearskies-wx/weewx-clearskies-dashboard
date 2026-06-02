@@ -101,12 +101,14 @@ export function HourlyStrip({
   // ── Row heights match mockup ─────────────────────────────────────────────
   // threeHourWindows: compact card heights (from C3-now-forecast-card.html)
   // scroll mode:      forecast page heights (from C3-forecast-page.html)
+  // threeHourWindows budget: 116px content height.
+  // time=12 + icon=20 + temp=13 + trendH=18 + trend-padding=4 + precip=12 + wind=22 = 101px → fits.
   const rowH = threeHourWindows
-    ? { time: 13, icon: 26, temp: 15, precip: 13, wind: 26 }
+    ? { time: 12, icon: 20, temp: 13, precip: 12, wind: 22 }
     : { time: 18, icon: 34, temp: 22, precip: 18, wind: 42 };
 
-  // ── Trend SVG: 22px for compact, 40px for page ──────────────────────────
-  const trendH = threeHourWindows ? 22 : 40;
+  // ── Trend SVG: 18px for compact, 40px for page ──────────────────────────
+  const trendH = threeHourWindows ? 18 : 40;
 
   // The trend line SVG spans the full width of ALL columns.
   // We render this as an absolutely-positioned overlay between temp and precip.
@@ -143,7 +145,7 @@ export function HourlyStrip({
   // Row: weather icons
   const iconRow = displayHours.map((hour, i) => (
     <div key={i} style={{ ...colStyle, ...CELL_BASE, height: rowH.icon }}>
-      <WeatherIcon code={toWmoCode(hour.weatherCode)} size={24} />
+      <WeatherIcon code={toWmoCode(hour.weatherCode)} size={threeHourWindows ? 18 : 24} />
     </div>
   ));
 
@@ -224,7 +226,7 @@ export function HourlyStrip({
         {tempRow}
       </div>
       {/* Trend line row — full-width SVG */}
-      <div style={{ padding: '3px 0 2px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+      <div style={{ padding: threeHourWindows ? '2px 0 2px' : '3px 0 2px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
         <TempTrendLine
           highs={temps}
           mode="hourly"

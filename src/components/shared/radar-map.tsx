@@ -249,9 +249,10 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
   // --- Iframe provider: embed directly ---
   if (!capLoading && radarCapability?.providerId === 'iframe' && radarCapability.iframeUrl) {
     return (
-      <div className="flex flex-col gap-2">
+      // h-full so the iframe fills the CardContent flex area (flex-1 min-h-0 on CardContent).
+      <div className="flex flex-col h-full gap-2">
         <div
-          className="h-96 rounded-lg overflow-hidden"
+          className="flex-1 min-h-0 rounded-lg overflow-hidden"
           role="region"
           aria-label={t('radarTitle')}
         >
@@ -263,16 +264,19 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
           />
         </div>
         {radarCapability.operatorNotes && (
-          <p className="text-xs text-muted-foreground">{radarCapability.operatorNotes}</p>
+          <p className="text-xs text-muted-foreground flex-shrink-0">{radarCapability.operatorNotes}</p>
         )}
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    // flex-col h-full: fills the available CardContent height (flex-1 min-h-0).
+    // The map container uses flex-1 min-h-0 so Leaflet fills the available space
+    // rather than a fixed pixel height that extends beyond the card.
+    <div className="flex flex-col h-full gap-3">
       <div
-        className="h-96 rounded-lg overflow-hidden relative"
+        className="flex-1 min-h-0 rounded-lg overflow-hidden relative"
         role="region"
         aria-label={t('radarTitle')}
       >
@@ -376,9 +380,10 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
         {!isLoading && frameCount > 0 && <RadarLegend />}
       </div>
 
-      {/* Animation controls — only shown when there are frames to animate */}
+      {/* Animation controls — only shown when there are frames to animate.
+          flex-shrink-0 keeps the control bar from being squashed by the map. */}
       {frameCount > 0 && (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <button
             type="button"
             onClick={goPrev}

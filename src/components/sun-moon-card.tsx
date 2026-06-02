@@ -456,8 +456,12 @@ export function SunMoonCard({
             onRetry={onRetry ?? (() => undefined)}
           />
         ) : almanac ? (
-          /* aria-live so SSE-driven refreshes are announced (ADR-041) */
-          <div aria-live="polite">
+          /* aria-live so SSE-driven refreshes are announced (ADR-041).
+             The flex wrapper with overflow:hidden constrains the SVG to the
+             available CardContent height so the bottom rise/set labels don't
+             clip — the SVG scales proportionally with width="100%" so at the
+             tile card width (~270px) the rendered height stays within budget. */
+          <div aria-live="polite" style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', alignItems: 'flex-start' }}>
             <ArcVisualization almanac={almanac} tz={stationTz} locale={locale} />
           </div>
         ) : (

@@ -47,26 +47,33 @@ export function WebcamCard({ webcamConfig, refreshTs, videoRefreshTs }: WebcamCa
           </button>
         </div>
       </CardHeader>
-      <CardContent>
-        {webcamTab === 'live' ? (
-          <img
-            src={`${webcamConfig.imageUrl}?t=${refreshTs}`}
-            alt={t('webcamAlt')}
-            className="w-full rounded object-cover"
-            onError={() => setImageAvailable(false)}
-          />
-        ) : videoAvailable ? (
-          <video
-            controls
-            loop
-            className="w-full rounded"
-            onError={() => setVideoAvailable(false)}
-          >
-            <source src={`${webcamConfig.videoUrl}?t=${videoRefreshTs}`} type="video/mp4" />
-          </video>
-        ) : (
-          <p className="text-muted-foreground text-sm">{t('noData.timelapse')}</p>
-        )}
+      {/* CardContent: flex column so the media fills the available height.
+          The img/video use h-full so they fill the flex item without pushing
+          the card beyond its grid row height. */}
+      <CardContent style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+        {/* Media wrapper — flex-grow so it fills CardContent; overflow:hidden clips
+            any residual pixel from the image's natural aspect ratio. */}
+        <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', borderRadius: '0.375rem' }}>
+          {webcamTab === 'live' ? (
+            <img
+              src={`${webcamConfig.imageUrl}?t=${refreshTs}`}
+              alt={t('webcamAlt')}
+              className="w-full h-full rounded object-cover"
+              onError={() => setImageAvailable(false)}
+            />
+          ) : videoAvailable ? (
+            <video
+              controls
+              loop
+              className="w-full h-full rounded object-contain"
+              onError={() => setVideoAvailable(false)}
+            >
+              <source src={`${webcamConfig.videoUrl}?t=${videoRefreshTs}`} type="video/mp4" />
+            </video>
+          ) : (
+            <p className="text-muted-foreground text-sm">{t('noData.timelapse')}</p>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

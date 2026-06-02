@@ -59,12 +59,12 @@ function formatWindField(
 // Tick generation constants (match mockup exactly)
 // ---------------------------------------------------------------------------
 
-const CX = 210;
-const CY = 210;
-const R_OUTER = 175;
-const TICK_LEN = 24;
-const TICK_W_DIM = 4.5;
-const TICK_W_LIT = 6;
+const CX = 130;
+const CY = 130;
+const R_OUTER = 108;
+const TICK_LEN = 15;
+const TICK_W_DIM = 3;
+const TICK_W_LIT = 4;
 const TICK_COUNT = 72;
 const LIT_HALF_RANGE = 8; // degrees either side of bearing — lights up ~3 ticks
 
@@ -205,7 +205,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
   // Coordinates hand-placed to match mockup exactly.
   const CARD_LABEL_STYLE: React.CSSProperties = {
     fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-    fontSize: 14,
+    fontSize: 9,
     fontWeight: 600,
   };
 
@@ -222,11 +222,11 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
         {/* Dial wrapper: SVG + absolute center overlay */}
         <div
           className="relative flex items-center justify-center"
-          style={{ aspectRatio: '1 / 1', maxWidth: '20rem', margin: '0 auto' }}
+          style={{ aspectRatio: '1 / 1', maxWidth: '16rem', margin: '0 auto' }}
         >
           {/* Tick-rim SVG dial */}
           <svg
-            viewBox="0 0 420 420"
+            viewBox="0 0 260 260"
             role="img"
             aria-labelledby="wind-compass-title"
             focusable={false as unknown as boolean}
@@ -240,7 +240,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
             {/* Cardinal labels outside tick ring */}
             <text
               x={CX}
-              y={18}
+              y={11}
               textAnchor="middle"
               dominantBaseline="middle"
               fill="var(--muted-foreground)"
@@ -250,7 +250,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
               N
             </text>
             <text
-              x={402}
+              x={249}
               y={CY}
               textAnchor="middle"
               dominantBaseline="middle"
@@ -262,7 +262,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
             </text>
             <text
               x={CX}
-              y={402}
+              y={249}
               textAnchor="middle"
               dominantBaseline="middle"
               fill="var(--muted-foreground)"
@@ -272,7 +272,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
               S
             </text>
             <text
-              x={18}
+              x={11}
               y={CY}
               textAnchor="middle"
               dominantBaseline="middle"
@@ -295,7 +295,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
               alignItems: 'center',
               justifyContent: 'center',
               textAlign: 'center',
-              gap: '0.15rem',
+              gap: '0.1rem',
               pointerEvents: 'none',
             }}
           >
@@ -303,7 +303,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
             <div
               style={{
                 fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-                fontSize: '0.95rem',
+                fontSize: '0.8125rem',   // ~13px
                 color: 'var(--muted-foreground)',
                 letterSpacing: '0.04em',
               }}
@@ -320,22 +320,22 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
               </span>
             </div>
 
-            {/* Current speed — Outfit display font, ~3rem */}
+            {/* Current speed — Outfit display font, 18px */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'baseline',
                 justifyContent: 'center',
-                gap: '0.3rem',
+                gap: '0.2rem',
                 lineHeight: 1,
-                margin: '0.1rem 0 0.2rem',
+                margin: '0.05rem 0 0.1rem',
               }}
             >
               <span
                 style={{
                   fontFamily: 'var(--font-display, system-ui, sans-serif)',
-                  fontWeight: 400,
-                  fontSize: '3rem',
+                  fontWeight: 600,
+                  fontSize: '1.125rem',  // 18px — matches precipitation card proportions
                   color: 'var(--foreground)',
                   letterSpacing: '-0.01em',
                   // Tabular figures: digits keep fixed width across SSE updates
@@ -349,7 +349,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
                   style={{
                     fontFamily: 'var(--font-display, system-ui, sans-serif)',
                     fontWeight: 400,
-                    fontSize: '1.05rem',
+                    fontSize: '0.75rem',
                     color: 'var(--muted-foreground)',
                   }}
                 >
@@ -364,15 +364,15 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '0.4rem',
-                marginTop: '0.3rem',
+                gap: '0.25rem',
+                marginTop: '0.1rem',
               }}
             >
               {/* Single wind icon spanning both readout lines */}
               <Wind
                 aria-hidden="true"
                 focusable={false}
-                size={26}
+                size={16}
                 style={{
                   flexShrink: 0,
                   opacity: 0.55,
@@ -390,7 +390,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
                 <div
                   style={{
                     fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-                    fontSize: '0.875rem',
+                    fontSize: '0.6875rem',  // ~11px
                     color: 'var(--muted-foreground)',
                   }}
                 >
@@ -410,7 +410,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
                 <div
                   style={{
                     fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-                    fontSize: '0.875rem',
+                    fontSize: '0.6875rem',  // ~11px
                     color: 'var(--muted-foreground)',
                   }}
                 >
