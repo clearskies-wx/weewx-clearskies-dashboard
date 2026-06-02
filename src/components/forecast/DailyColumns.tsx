@@ -291,8 +291,7 @@ export function DailyColumns({
                 fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
                 fontSize: expandable ? '0.7rem' : '0.63rem',
                 color: 'var(--muted-foreground)',
-                opacity: hasPrecip ? 1 : 0.75,
-              }}
+                  }}
             >
               <Drop aria-hidden="true" size={expandable ? 8 : 7} />
               {precip !== null ? `${precip}%` : '—'}
