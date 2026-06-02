@@ -48,31 +48,13 @@ function TileSkeleton({ className }: { className?: string }) {
   );
 }
 
-/** Error message for tile failures. */
-function TileError({ message, onRetry }: { message: string; onRetry: () => void }) {
-  const { t } = useTranslation('common');
-  return (
-    <div role="alert" className="flex flex-col gap-2 items-start text-sm">
-      <p className="text-destructive">{message}</p>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="text-xs text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
-      >
-        {t('retry')}
-      </button>
-    </div>
-  );
-}
-
 export function NowPage() {
-  const { t } = useTranslation('now');
   const { t: tRadar } = useTranslation('radar');
 
   const branding = useBranding();
 
   const { data: observation, units, loading: obsLoading, error: obsError, refetch: obsRefetch, barometerTrendDirection } = useRealtimeObservation();
-  const { data: forecast, loading: fcLoading, error: fcError, refetch: fcRefetch } = useForecast();
+  const { data: forecast, loading: fcLoading, error: fcError } = useForecast();
   const { data: alerts, loading: alertLoading } = useAlerts();
   const { data: almanac, loading: almLoading, error: almError, refetch: almRefetch } = useAlmanac();
   const { data: earthquakes, loading: eqLoading, error: eqError, refetch: eqRefetch } = useEarthquakes();
@@ -189,7 +171,7 @@ export function NowPage() {
         <PrecipitationCard
           observation={observation}
           loading={obsLoading}
-          error={obsError}
+          error={obsError?.message ?? null}
           onRetry={obsRefetch}
         />
 
@@ -198,7 +180,7 @@ export function NowPage() {
           observation={observation}
           barometerTrendDirection={barometerTrendDirection}
           loading={obsLoading}
-          error={obsError}
+          error={obsError?.message ?? null}
           onRetry={obsRefetch}
         />
 
@@ -207,7 +189,7 @@ export function NowPage() {
           observation={observation}
           todayArchive={todayArchive ?? []}
           loading={obsLoading}
-          error={obsError}
+          error={obsError?.message ?? null}
           onRetry={obsRefetch}
         />
 
@@ -217,7 +199,7 @@ export function NowPage() {
           todayArchive={todayArchive ?? []}
           todayForecast={todayForecast}
           loading={obsLoading}
-          error={obsError}
+          error={obsError?.message ?? null}
           onRetry={obsRefetch}
         />
 
@@ -227,7 +209,7 @@ export function NowPage() {
         <AqiCard
           aqi={aqi}
           loading={aqiLoading}
-          error={aqiError}
+          error={aqiError?.message ?? null}
           onRetry={aqiRefetch}
         />
 
@@ -235,7 +217,7 @@ export function NowPage() {
         <SunMoonCard
           almanac={almanac}
           loading={almLoading}
-          error={almError}
+          error={almError?.message ?? null}
           onRetry={almRefetch}
           stationTz={tz}
         />
@@ -245,14 +227,14 @@ export function NowPage() {
           observation={observation}
           lightning={lightning}
           loading={obsLoading}
-          error={obsError}
+          error={obsError?.message ?? null}
         />
 
         {/* ── Earthquake — tile ─────────────────────────────────────────── */}
         <EarthquakeCard
           earthquakes={earthquakes}
           loading={eqLoading}
-          error={eqError}
+          error={eqError?.message ?? null}
           onRetry={eqRefetch}
           stationTz={tz}
         />

@@ -27,7 +27,6 @@
 // the BFF owns distance unit conversion. The "km" suffix is appended here only
 // as a fallback display unit — a future ADR-042 extension point.
 
-import * as React from 'react';
 import { useMemo } from 'react';
 import {
   ResponsiveContainer,
@@ -240,10 +239,10 @@ export function LightningCard({
                         borderRadius: '6px',
                         padding: '4px 8px',
                       }}
-                      formatter={(value: number, name: string) =>
-                        name === 'd' ? [`${value.toFixed(1)} km`, 'Distance'] : [value, name]
+                      formatter={(value, name) =>
+                        name === 'd' ? [`${Number(value).toFixed(1)} km`, 'Distance'] : [value, name]
                       }
-                      labelFormatter={(label: number) => new Date(label).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      labelFormatter={(label) => new Date(Number(label)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     />
                     <Scatter
                       data={strikePoints}

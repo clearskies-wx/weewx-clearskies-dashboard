@@ -26,7 +26,6 @@
 // Units: zero unit knowledge in dashboard (ADR-042).
 // i18n: 'now' namespace for labels (ADR-021).
 
-import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatLocalTime } from '../utils/time';
 import type { AlmanacSnapshot } from '../api/types';

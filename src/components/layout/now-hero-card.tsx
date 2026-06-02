@@ -15,7 +15,6 @@
 //   - Station name is the visible heading (h1) for screen readers
 //   - Color pairs (text on glass) pass WCAG AA in both light and dark themes
 
-import * as React from 'react';
 import { Card } from '@/components/ui/card';
 
 // ---------------------------------------------------------------------------

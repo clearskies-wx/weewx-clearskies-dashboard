@@ -83,8 +83,6 @@ export function WindCompassCard({ observation }: WindCompassCardProps) {
   // We never do unit math here — all conversion is BFF-side.
   const windDirCV = asConverted(observation?.windDir ?? null);
   const windSpeedCV = asConverted(observation?.windSpeed ?? null);
-  const windSpeedAvg10mCV = asConverted(observation?.windSpeedAvg10m ?? null);
-  const windGustMax10mCV = asConverted(observation?.windGustMax10m ?? null);
 
   // Bearing in degrees for tick highlight.  Default 0 (N) when unavailable.
   const windDirDeg: number = windDirCV?.value ?? 0;

@@ -35,7 +35,6 @@
 //         defaults, or receive those as props from the caller.  For v0.1 (US units
 //         default per ADR-042), these constants are correct.
 
-import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowUp, ArrowDown, ArrowRight } from '@phosphor-icons/react';
 import { asConverted } from '../api/types';

@@ -32,7 +32,6 @@
 //   are decorative non-text elements (WCAG requires 3:1 for non-text UI, but unfilled ticks
 //   are grey so only filled ticks carry the color, which is paired with position for state).
 
-import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { SemiCircularGauge } from './ui/semi-circular-gauge';
 import type { ColorBand } from './ui/semi-circular-gauge';

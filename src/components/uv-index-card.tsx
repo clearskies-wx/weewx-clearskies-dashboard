@@ -40,7 +40,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { asConverted } from '../api/types';
-import { UV_SEGMENTS, getUvSegment } from '../utils/uv';
+import { getUvSegment } from '../utils/uv';
 import {
   Card,
   CardHeader,

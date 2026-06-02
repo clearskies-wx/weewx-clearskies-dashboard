@@ -107,84 +107,6 @@ export function HourlyStrip({
   // ── Trend SVG: 22px for compact, 40px for page ──────────────────────────
   const trendH = threeHourWindows ? 22 : 40;
 
-  // Build column elements
-  const columns = displayHours.map((hour, i) => {
-    const timeLabel = formatHourLabel(hour.validTime, stationTz);
-    const precip = hour.precipProbability;
-    const showPrecip = precip !== null && precip > 0;
-    const bearing = hour.windDir ?? 0;
-    const windSpeed = hour.windSpeed !== null ? Math.round(hour.windSpeed) : 0;
-
-    return (
-      <div
-        key={hour.validTime + i}
-        role="listitem"
-        style={{ ...colStyle, display: 'flex', flexDirection: 'column' }}
-      >
-        {/* Time */}
-        <div style={{ ...CELL_BASE, height: rowH.time }}>
-          <span
-            style={{
-              fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-              fontSize: 'var(--text-label, 0.75rem)',
-              fontWeight: 400,
-              color: 'var(--muted-foreground)',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {timeLabel}
-          </span>
-        </div>
-        {/* Icon */}
-        <div style={{ ...CELL_BASE, height: rowH.icon }}>
-          <WeatherIcon code={hour.weatherCode} size={24} />
-        </div>
-        {/* Temperature */}
-        <div style={{ ...CELL_BASE, height: rowH.temp }}>
-          <span
-            style={{
-              fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
-              fontSize: threeHourWindows ? '0.8rem' : '0.85rem',
-              fontWeight: 600,
-              color: 'var(--foreground)',
-              letterSpacing: '-0.01em',
-              lineHeight: 1,
-            }}
-          >
-            {hour.outTemp !== null ? `${Math.round(hour.outTemp)}°` : '—'}
-          </span>
-        </div>
-        {/* Trend line placeholder — rendered as a row-level SVG spanning all cols */}
-        {/* (We render it at the column level with a fixed height spacer) */}
-        <div style={{ height: trendH, flexShrink: 0 }} />
-        {/* Precipitation */}
-        <div style={{ ...CELL_BASE, height: rowH.precip }}>
-          {showPrecip ? (
-            <span
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 2,
-                fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                fontSize: 'var(--text-micro, 0.7rem)',
-                color: 'var(--muted-foreground)',
-              }}
-            >
-              <Drop aria-hidden="true" size={7} />
-              {precip}%
-            </span>
-          ) : (
-            <span style={{ opacity: 0, fontSize: 'var(--text-micro, 0.7rem)' }}>0%</span>
-          )}
-        </div>
-        {/* Wind symbol */}
-        <div style={{ ...CELL_BASE, height: rowH.wind, overflow: 'visible' }}>
-          <WindSymbol bearing={bearing} speed={windSpeed} size={20} />
-        </div>
-      </div>
-    );
-  });
-
   // The trend line SVG spans the full width of ALL columns.
   // We render this as an absolutely-positioned overlay between temp and precip.
   // Since column layout is tricky with an overlay, we use a "table" row approach
@@ -282,7 +204,6 @@ export function HourlyStrip({
 
   // The SVG width calculation: for scrolling mode, use N*72; for fill mode, use N*100 (arbitrary units, viewBox-based)
   const svgViewWidth = isScrollMode ? N * 72 : N * 100;
-  const svgColW = isScrollMode ? 72 : 100;
 
   const tableContent = (
     <div

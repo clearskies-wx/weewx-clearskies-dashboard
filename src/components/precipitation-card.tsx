@@ -21,7 +21,6 @@
 //   - rain.formatted and rainRate.formatted are rendered verbatim (ConvertedValue.formatted).
 //   - asConverted() normalises the ConvertedValue | number | null union from the BFF.
 
-import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { asConverted } from '../api/types';
 import {

@@ -27,7 +27,7 @@ import type { DailyForecastPoint } from '../../api/types';
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
 
-function getDayName(validDate: string, index: number, tz = 'UTC'): string {
+function getDayName(validDate: string, index: number): string {
   if (index === 0) return 'Today';
   // Parse as UTC noon to avoid DST/timezone date shifting
   const d = new Date(validDate + 'T12:00:00Z');
