@@ -179,7 +179,7 @@ export function HourlyStrip({
             fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
             fontSize: 'var(--text-micro, 0.7rem)',
             color: 'var(--muted-foreground)',
-            opacity: hasPrecip ? 1 : 0.5,
+            opacity: hasPrecip ? 1 : 0.75,
           }}
         >
           <Drop aria-hidden="true" size={7} />
