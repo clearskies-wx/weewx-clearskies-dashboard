@@ -23,6 +23,7 @@ import { Drop } from '@phosphor-icons/react';
 import { WeatherIcon } from '../weather-icon';
 import { WindSymbol } from './WindSymbol';
 import { TempTrendLine } from './TempTrendLine';
+import { toWmoCode } from '../../utils/weather-code';
 import type { DailyForecastPoint } from '../../api/types';
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
@@ -222,7 +223,7 @@ export function DailyColumns({
           tabIndex={expandable ? -1 : undefined}
           aria-hidden={expandable ? true : undefined}
         >
-          <WeatherIcon code={day.weatherCode} size={24} />
+          <WeatherIcon code={toWmoCode(day.weatherCode)} size={24} />
         </div>
       ))}
     </div>

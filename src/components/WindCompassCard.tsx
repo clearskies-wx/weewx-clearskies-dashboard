@@ -212,14 +212,8 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
   return (
     <Card footprint="wide" rowSpan={2} aria-busy={observation === null}>
       <CardHeader>
-        {/* Title: wind icon (decorative) + i18n title text */}
-        <h2 className="font-heading leading-snug font-semibold pb-1.5 border-b border-border flex items-center gap-1.5" style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}>
-          <Wind
-            aria-hidden="true"
-            focusable={false}
-            size={16}
-            className="shrink-0 opacity-75"
-          />
+        {/* Title: i18n title text (no decorative icon per operator preference) */}
+        <h2 className="font-heading leading-snug font-semibold pb-1.5 border-b border-border" style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}>
           {t('windCard.title')}
         </h2>
       </CardHeader>

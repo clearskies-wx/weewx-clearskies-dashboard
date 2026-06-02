@@ -20,6 +20,7 @@ import { Drop } from '@phosphor-icons/react';
 import { WeatherIcon } from '../weather-icon';
 import { WindSymbol } from './WindSymbol';
 import { TempTrendLine } from './TempTrendLine';
+import { toWmoCode } from '../../utils/weather-code';
 import type { HourlyForecastPoint } from '../../api/types';
 
 // ── Time formatting ──────────────────────────────────────────────────────────
@@ -142,7 +143,7 @@ export function HourlyStrip({
   // Row: weather icons
   const iconRow = displayHours.map((hour, i) => (
     <div key={i} style={{ ...colStyle, ...CELL_BASE, height: rowH.icon }}>
-      <WeatherIcon code={hour.weatherCode} size={24} />
+      <WeatherIcon code={toWmoCode(hour.weatherCode)} size={24} />
     </div>
   ));
 

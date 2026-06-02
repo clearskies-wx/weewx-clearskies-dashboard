@@ -10,7 +10,6 @@
 
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CalendarBlank } from '@phosphor-icons/react';
 import { Card, CardHeader, CardContent } from '../ui/card';
 import { HourlyStrip } from './HourlyStrip';
 import { DailyColumns } from './DailyColumns';
@@ -72,7 +71,6 @@ export function NowForecastCard({
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.35rem',
             borderBottom: '1px solid var(--border, rgba(0,0,0,0.12))',
             paddingBottom: '0.35rem',
           }}
@@ -81,21 +79,12 @@ export function NowForecastCard({
           <span
             style={{
               flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.35rem',
               fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
               fontSize: 'var(--text-card-title, 0.82rem)',
               fontWeight: 600,
               color: 'var(--foreground)',
             }}
           >
-            <CalendarBlank
-              aria-hidden="true"
-              focusable={false}
-              size={16}
-              style={{ opacity: 0.75, flexShrink: 0 }}
-            />
             {t('todaysForecast')}
           </span>
 

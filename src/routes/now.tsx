@@ -37,6 +37,7 @@ import {
 } from '../hooks/useWeatherData';
 import { useRealtimeObservation } from '../hooks/useRealtimeObservation';
 import { useBranding } from '../lib/branding-provider';
+import { toWmoCode } from '../utils/weather-code';
 
 /** Skeleton tile for loading states. */
 function TileSkeleton({ className }: { className?: string }) {
@@ -98,19 +99,13 @@ export function NowPage() {
   const todayForecast = forecast?.daily?.[0] ?? null;
   const hourlyForecast = forecast?.hourly ?? null;
 
-  // Derive a WMO weather code from the BFF scene descriptor when the forecast
-  // provider doesn't supply one. The scene has sky (clear/cloudy/overcast) and
-  // overlay (rain/snow/null) — enough to pick a representative icon.
-  // Derive a WMO weather code for the CC card icon. The forecast provider may
-  // return a WMO numeric code, a provider-specific string (e.g. Aeris "::SC"),
-  // or null. Only use the forecast code if it's a valid WMO integer (0-99).
-  // Otherwise fall back to deriving from the BFF scene descriptor.
+  // Derive a WMO weather code for the CC card icon. toWmoCode() handles both
+  // WMO numeric codes and provider-specific strings (e.g. Aeris "::SC").
+  // Falls back to deriving from the BFF scene descriptor when not mapped.
   const derivedWeatherCode = (() => {
     const fc = todayForecast?.weatherCode;
-    if (fc != null) {
-      const n = typeof fc === 'number' ? fc : parseInt(String(fc), 10);
-      if (!isNaN(n) && n >= 0 && n <= 99) return n;
-    }
+    const mapped = toWmoCode(fc);
+    if (mapped !== null) return mapped;
     if (!scene) return 0;
     if (scene.overlay === 'snow') return 71;
     if (scene.overlay === 'rain') return 61;
