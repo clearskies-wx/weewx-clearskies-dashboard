@@ -410,7 +410,7 @@ function UvChart({ data, currentUv, gradientId }: UvChartProps) {
               axisLine={false}
               tick={{
                 fontFamily: 'var(--font-chart)',
-                fontSize: 11,
+                fontSize: 8,
                 fill: 'var(--muted-foreground)',
               }}
               interval={0}
@@ -424,7 +424,7 @@ function UvChart({ data, currentUv, gradientId }: UvChartProps) {
               axisLine={false}
               tick={{
                 fontFamily: 'var(--font-chart)',
-                fontSize: 10,
+                fontSize: 7,
                 fill: 'var(--muted-foreground)',
               }}
               width={18}

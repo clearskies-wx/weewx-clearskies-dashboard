@@ -207,8 +207,8 @@ export function LightningCard({
                         return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
                       }}
                       tick={{
-                        fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-                        fontSize: 9,
+                        fontFamily: 'var(--font-chart, system-ui, sans-serif)',
+                        fontSize: 8,
                         fill: 'var(--muted-foreground)',
                       }}
                       axisLine={false}
@@ -220,8 +220,8 @@ export function LightningCard({
                       domain={[yMin, yMax]}
                       tickCount={3}
                       tick={{
-                        fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-                        fontSize: 9,
+                        fontFamily: 'var(--font-chart, system-ui, sans-serif)',
+                        fontSize: 8,
                         fill: 'var(--muted-foreground)',
                       }}
                       axisLine={false}

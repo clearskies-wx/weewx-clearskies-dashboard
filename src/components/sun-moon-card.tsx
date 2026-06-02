@@ -301,7 +301,7 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
               <circle
                 cx={moonMarker.x}
                 cy={moonMarker.y}
-                r={5}
+                r={5.5}
                 fill={MOON_COLOR}
               />
               {/* Crescent shadow — offset dark circle covering the "dark" side */}
@@ -325,6 +325,7 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
         textAnchor={moonLabelAnchor}
         fontSize={8}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
+        fontWeight={600}
         fill={MOON_COLOR}
         aria-hidden="true"
       >
