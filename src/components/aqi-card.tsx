@@ -184,7 +184,7 @@ function GaugeContent({ aqiValue, category, mainPollutant }: GaugeContentProps) 
           style={{
             fontFamily: 'var(--font-display, system-ui, sans-serif)',
             fontWeight: 600,
-            fontSize: '1.125rem',     // 18px
+            fontSize: '1.25rem',      // 20px
             color: 'var(--foreground)',
             letterSpacing: '-0.01em',
             fontFeatureSettings: '"tnum"',
@@ -215,7 +215,7 @@ function GaugeContent({ aqiValue, category, mainPollutant }: GaugeContentProps) 
           style={{
             fontFamily: 'var(--font-sans, system-ui, sans-serif)',
             fontWeight: 400,
-            fontSize: '0.5625rem',     // 9px
+            fontSize: '0.625rem',      // 10px
             color: 'var(--muted-foreground)',
             lineHeight: 1.2,
             textAlign: 'center',

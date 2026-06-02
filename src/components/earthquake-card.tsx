@@ -121,7 +121,7 @@ function EarthquakeRow({ quake }: { quake: EarthquakeRecord }) {
         style={{
           display: 'flex',
           alignItems: 'flex-start',
-          gap: '0.625rem',
+          gap: '0.5rem',
         }}
       >
         {/* Magnitude badge — 34×34px rounded square, colour per magnitudeClasses.
@@ -132,7 +132,7 @@ function EarthquakeRow({ quake }: { quake: EarthquakeRecord }) {
           style={{
             width: 34,
             height: 34,
-            borderRadius: 6,
+            borderRadius: 5,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -297,7 +297,7 @@ export function EarthquakeCard({
                       listStyle: 'none',
                       height: 1,
                       background: 'var(--border)',
-                      margin: '0.5rem 0',
+                      margin: '0.125rem 0',
                       opacity: 0.6,
                     }}
                   />

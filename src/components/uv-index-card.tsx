@@ -435,7 +435,7 @@ function UvChart({ data, currentUv, gradientId }: UvChartProps) {
               <ReferenceDot
                 x={lastUvPoint.ts}
                 y={currentUv}
-                r={4}
+                r={5}
                 fill={getUvSegment(currentUv)?.color ?? '#888'}
                 stroke="var(--background)"
                 strokeWidth={1.5}

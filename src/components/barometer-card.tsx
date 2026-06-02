@@ -263,7 +263,7 @@ export function BarometerCard({
                     fontFamily: 'var(--font-display, system-ui, sans-serif)',
                     fontWeight: 600,
                     // Scale font size down for long values; barometer needs ~5 chars
-                    fontSize: '1.125rem',
+                    fontSize: '1.25rem',
                     color: 'var(--foreground)',
                     letterSpacing: '-0.01em',
                     fontFeatureSettings: '"tnum"',
@@ -277,7 +277,7 @@ export function BarometerCard({
                     style={{
                       fontFamily: 'var(--font-sans, system-ui, sans-serif)',
                       fontWeight: 400,
-                      fontSize: '0.75rem',
+                      fontSize: '0.625rem',
                       color: 'var(--muted-foreground)',
                       lineHeight: 1,
                     }}
@@ -302,7 +302,7 @@ export function BarometerCard({
                     style={{
                       fontFamily: 'var(--font-sans, system-ui, sans-serif)',
                       fontWeight: 400,
-                      fontSize: '0.72rem',
+                      fontSize: '0.625rem',
                       color: 'var(--muted-foreground)',
                       lineHeight: 1,
                     }}

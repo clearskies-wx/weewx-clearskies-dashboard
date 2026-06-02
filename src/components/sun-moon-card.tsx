@@ -255,7 +255,7 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
         d={semicirclePath(CX, CY, MOON_R)}
         fill="none"
         stroke={MOON_COLOR}
-        strokeWidth={2.5}
+        strokeWidth={3}
         strokeDasharray={DASH}
         strokeLinecap="round"
         aria-hidden="true"
@@ -323,7 +323,7 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
         x={moonLabelX}
         y={moonLabelY}
         textAnchor={moonLabelAnchor}
-        fontSize={8}
+        fontSize={7.5}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
         fontWeight={600}
         fill={MOON_COLOR}
@@ -336,7 +336,7 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
         x={moonLabelX}
         y={moonLabelY + 10}
         textAnchor={moonLabelAnchor}
-        fontSize={7.5}
+        fontSize={7}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
         fill="var(--muted-foreground, #64748b)"
         aria-hidden="true"
@@ -349,7 +349,7 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
         x={sunLeftX}
         y={CY + 13}
         textAnchor="start"
-        fontSize={9}
+        fontSize={8}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
         fill={SUN_COLOR}
         aria-hidden="true"
@@ -360,7 +360,7 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
         x={sunLeftX}
         y={CY + 23}
         textAnchor="start"
-        fontSize={9}
+        fontSize={8}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
         fill={MOON_COLOR}
         aria-hidden="true"
@@ -373,7 +373,7 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
         x={sunRightX}
         y={CY + 13}
         textAnchor="end"
-        fontSize={9}
+        fontSize={8}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
         fill={SUN_COLOR}
         aria-hidden="true"
@@ -384,7 +384,7 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
         x={sunRightX}
         y={CY + 23}
         textAnchor="end"
-        fontSize={9}
+        fontSize={8}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
         fill={MOON_COLOR}
         aria-hidden="true"
