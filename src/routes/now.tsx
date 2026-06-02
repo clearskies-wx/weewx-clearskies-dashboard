@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { formatValue } from '../utils/format';
 import { asConverted } from '../api/types';
 import type { WebcamConfig } from '../api/types';
 import { AlertBanner } from '../components/shared/alert-banner';
@@ -9,12 +8,13 @@ import { PrecipitationCard } from '../components/precipitation-card';
 import { BarometerCard } from '../components/barometer-card';
 import { SolarRadiationCard } from '../components/solar-radiation-card';
 import { UvIndexCard } from '../components/uv-index-card';
-import { AqiCard, aqiCategoryLabel } from '../components/aqi-card';
+import { AqiCard } from '../components/aqi-card';
 import { SunMoonCard } from '../components/sun-moon-card';
 import { LightningCard } from '../components/lightning-card';
 import { EarthquakeCard } from '../components/earthquake-card';
 import { WindCompassCard } from '../components/WindCompassCard';
 import { NowForecastCard } from '../components/forecast/NowForecastCard';
+import { TodaysHighlightsCard } from '../components/todays-highlights-card';
 import { RadarMap } from '../components/shared/radar-map';
 import { Grid } from '../components/layout/grid';
 import { NowHeroCard } from '../components/layout/now-hero-card';
@@ -116,9 +116,6 @@ export function NowPage() {
 
   const tz = station?.timezone ?? 'UTC';
 
-  // windGustCV still used by Today's Highlights peak-gust readout.
-  const windGustCV = asConverted(observation?.windGust ?? null);
-
   const todayForecast = forecast?.daily?.[0] ?? null;
   const hourlyForecast = forecast?.hourly ?? null;
 
@@ -180,71 +177,11 @@ export function NowPage() {
         />
 
         {/* ── Today's Highlights — wide (2×1) ───────────────────────────── */}
-        <Card footprint="wide" aria-busy={obsLoading}>
-          <CardHeader>
-            <h2 className="font-heading text-base leading-snug font-medium">{t('todaysHighlights')}</h2>
-          </CardHeader>
-          <CardContent>
-            {obsLoading ? (
-              <>
-                <span className="sr-only" role="status">{t('loading.highlights')}</span>
-                <TileSkeleton className="h-24" />
-              </>
-            ) : todayStats ? (
-              <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-4">
-                <div>
-                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.todaysHigh')}</dt>
-                  <dd className="mt-1 text-xl font-semibold text-foreground">
-                    {todayStats.high !== null
-                      ? `${asConverted(observation?.outTemp ?? null)?.formatted ?? formatValue(todayStats.high, 'temperature')}${asConverted(observation?.outTemp ?? null)?.label ?? ''}`
-                      : '—'}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.todaysLow')}</dt>
-                  <dd className="mt-1 text-xl font-semibold text-foreground">
-                    {todayStats.low !== null
-                      ? `${asConverted(observation?.outTemp ?? null)?.formatted ?? formatValue(todayStats.low, 'temperature')}${asConverted(observation?.outTemp ?? null)?.label ?? ''}`
-                      : '—'}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.peakGust')}</dt>
-                  <dd className="mt-1 text-xl font-semibold text-foreground">
-                    {windGustCV
-                      ? `${windGustCV.formatted}${windGustCV.label}`
-                      : formatValue(todayStats.peakGust, 'wind')}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.rainToday')}</dt>
-                  <dd className="mt-1 text-xl font-semibold text-foreground">
-                    {asConverted(observation?.rain ?? null)
-                      ? `${asConverted(observation?.rain ?? null)!.formatted}${asConverted(observation?.rain ?? null)!.label}`
-                      : formatValue(todayStats.rainSoFar, 'rain')}
-                  </dd>
-                </div>
-                {todayStats.peakAQI > 0 && (
-                  <div>
-                    <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.peakAqi')}</dt>
-                    <dd className="mt-1 text-xl font-semibold text-foreground">
-                      {formatValue(todayStats.peakAQI, 'uv')}
-                      <span className="ml-1 text-xs font-normal text-muted-foreground">{aqiCategoryLabel(todayStats.peakAQI)}</span>
-                    </dd>
-                  </div>
-                )}
-                {todayStats.recordsBrokenToday.length > 0 && (
-                  <div className="col-span-2">
-                    <dt className="text-xs text-muted-foreground uppercase tracking-wide">{t('highlights.recordsBroken')}</dt>
-                    <dd className="mt-1 font-medium text-foreground">{todayStats.recordsBrokenToday.join(', ')}</dd>
-                  </div>
-                )}
-              </dl>
-            ) : (
-              <p className="text-muted-foreground text-sm">{t('noData.highlights')}</p>
-            )}
-          </CardContent>
-        </Card>
+        <TodaysHighlightsCard
+          todayStats={todayStats}
+          observation={observation}
+          loading={obsLoading}
+        />
 
         {/* ── Wind Compass — wide (2-col) ────────────────────────────────── */}
         <WindCompassCard observation={observation} />

@@ -9,7 +9,6 @@
   "todaysForecast": "Today's Forecast",
   "temperatureTrend": "Temperature Trend",
   "viewCharts": "View Charts →",
-
   "loading": {
     "currentConditions": "Loading current conditions…",
     "highlights": "Loading today's highlights…",
@@ -25,7 +24,6 @@
     "precipitation": "Loading precipitation data…",
     "barometer": "Loading barometer data…"
   },
-
   "error": {
     "currentConditions": "Unable to load current conditions",
     "wind": "Unable to load wind data",
@@ -39,7 +37,6 @@
     "precipitation": "Unable to load precipitation data",
     "barometer": "Unable to load barometer data"
   },
-
   "noData": {
     "observation": "No observation data available.",
     "highlights": "No highlights available.",
@@ -49,16 +46,15 @@
     "airQuality": "No air quality provider configured.",
     "forecast": "No forecast data available."
   },
-
   "highlights": {
-    "todaysHigh": "Today's High",
-    "todaysLow": "Today's Low",
-    "peakGust": "Peak Gust",
-    "rainToday": "Rain Today",
-    "peakAqi": "Peak AQI",
+    "todaysHigh": "HIGH",
+    "todaysLow": "LOW",
+    "peakGust": "GUST",
+    "wind": "WIND",
+    "rainToday": "RAIN",
+    "peakAqi": "AQI",
     "recordsBroken": "Records Broken"
   },
-
   "observations": {
     "barometer": "Barometer",
     "dewpoint": "Dewpoint",
@@ -69,22 +65,18 @@
     "solarRadiation": "Solar Radiation",
     "uvIndex": "UV Index"
   },
-
   "sunMoon": {
     "sunrise": "Sunrise",
     "sunset": "Sunset",
     "moon": "Moon"
   },
-
   "feelsLike": "Feels like",
-
   "windCompass": {
     "speed": "Wind: {{speed}}{{unit}} · {{direction}}",
     "gusts": "Gusts: {{gust}}{{unit}}",
     "ariaLabel": "Wind from {{direction}} at {{degrees}} degrees",
     "directionLabel": "From the {{direction}} {{degrees}}°"
   },
-
   "windCard": {
     "title": "Current Wind",
     "tenMinAvg": "10-min avg",
@@ -92,7 +84,6 @@
     "svgTitle": "Wind {{speed}} from {{cardinal}} at {{degrees}} degrees. 10-minute average {{avg}}, maximum gust {{gust}}.",
     "svgTitleNoAvg": "Wind {{speed}} from {{cardinal}} at {{degrees}} degrees."
   },
-
   "barometer": {
     "trend": {
       "rising": "rising",
@@ -101,7 +92,6 @@
     },
     "trendAriaLabel": "Trend: {{trend}}"
   },
-
   "aqi": {
     "good": "Good",
     "moderate": "Moderate",
@@ -113,7 +103,6 @@
     "unknownPollutant": "Unknown",
     "mainPollutant": "Main pollutant: {{pollutant}}"
   },
-
   "beaufort": {
     "calm": "Calm",
     "veryLightBreeze": "Very Light Breeze",
@@ -129,7 +118,6 @@
     "violentStorm": "Violent Storm",
     "hurricane": "Hurricane"
   },
-
   "lightning": {
     "title": "Lightning",
     "strikesLastHour": "{{count}} strikes in last hour",
@@ -139,26 +127,21 @@
     "lastStrikeUnknown": "Unknown",
     "noActivity": "No activity detected"
   },
-
   "earthquake": {
     "magnitude": "M{{magnitude}} — {{place}}",
     "depth": "Depth: {{depth}} km"
   },
-
   "forecast": {
     "hiLo": "Hi {{high}}° / Lo {{low}}°",
     "hiOnly": "Hi {{high}}°",
     "precipChance": "{{percent}}% chance of precipitation"
   },
-
   "temperature": {
     "ariaLabel": "Current temperature: {{temp}} degrees {{unit}}"
   },
-
   "heroLabel": "Current conditions",
   "feelsLikeHero": "Feels like {{temp}}°",
   "noCurrentData": "No current data available",
-
   "todaysTemperature": "Today's Temperature",
   "tempCurveAriaLabel": "Today's temperature chart, midnight to midnight. Past shown as a filled area, forecast as a dashed line.",
   "tempCurveSrCaption": "Today's hourly temperature",
@@ -166,7 +149,6 @@
   "loLabel": "Low",
   "hiAria": "Today's high {{temp}}",
   "loAria": "Today's low {{temp}}",
-
   "solarUv": {
     "title": "Solar & UV",
     "solarRadiation": "Solar Radiation",
@@ -185,7 +167,6 @@
       "uvIndex": "UV Index"
     }
   },
-
   "precipBarometer": {
     "title": "Precipitation & Pressure",
     "rainToday": "Rain Today",
@@ -198,27 +179,22 @@
     },
     "trendAriaLabel": "Pressure trend: {{trend}}"
   },
-
   "webcam": "Webcam",
   "webcamAlt": "Live webcam view",
-
   "precipitationCard": {
     "title": "Precipitation",
     "rainTodayLabel": "Rain today",
     "rainRateLabel": "Rain rate"
   },
-
   "barometerCard": {
     "title": "Barometer"
   },
-
   "solarRadiationCard": {
     "title": "Solar Radiation",
     "noData": "No solar data available",
     "chartAriaLabel": "Solar radiation and clear-sky maximum chart for the last 24 hours",
     "srCaption": "Today's solar radiation readings"
   },
-
   "uvIndexCard": {
     "title": "UV Index",
     "noData": "No UV data available",
@@ -227,11 +203,9 @@
     "nowLabel": "Now",
     "peakLabel": "Peak"
   },
-
   "aqiCard": {
     "title": "AQI"
   },
-
   "alertBanner": {
     "andMore": "+{{count}} more",
     "of": "of",
