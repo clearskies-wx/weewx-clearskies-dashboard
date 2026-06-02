@@ -195,7 +195,7 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
       {/* Chart: role="img" with aria-label for screen readers */}
       <div role="img" aria-label={t('tempCurveAriaLabel')}>
         <ResponsiveContainer width="100%" height={112}>
-          <ComposedChart data={data} margin={{ top: 6, right: 4, bottom: 16, left: -12 }}>
+          <ComposedChart data={data} margin={{ top: 6, right: 8, bottom: 16, left: 0 }}>
             {/* Past actual: solid blue filled area */}
             <Area
               type="monotone"

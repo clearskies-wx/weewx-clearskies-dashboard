@@ -65,6 +65,7 @@ const TICK_LEN = 24;
 const TICK_W_DIM = 4.5;
 const TICK_W_LIT = 6;
 const TICK_COUNT = 72;
+const LIT_HALF_RANGE = 8; // degrees either side of bearing — lights up ~3 ticks
 
 // ---------------------------------------------------------------------------
 // Component
@@ -128,18 +129,24 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
       });
 
   // ---------------------------------------------------------------------------
-  // Tick rendering — all ticks are dim/static; indicator rotates via CSS transform
+  // Tick rendering — ticks within ±8° of bearing light up (change color).
+  // CSS transitions on stroke/opacity provide visual smoothness when ticks
+  // toggle state. The 3-tick highlight slides by one tick at a time as the
+  // wind direction changes by ~5° (one tick spacing).
   // ---------------------------------------------------------------------------
-  const rInner = R_OUTER - TICK_LEN;
   const ticks = Array.from({ length: TICK_COUNT }, (_, i) => {
     const deg = (i / TICK_COUNT) * 360;
     const rad = ((deg - 90) * Math.PI) / 180;
     const cosA = Math.cos(rad);
     const sinA = Math.sin(rad);
+    const rInner = R_OUTER - TICK_LEN;
     const x1 = CX + rInner * cosA;
     const y1 = CY + rInner * sinA;
     const x2 = CX + R_OUTER * cosA;
     const y2 = CY + R_OUTER * sinA;
+
+    const diff = Math.abs(((deg - windDirDeg + 540) % 360) - 180);
+    const lit = diff < LIT_HALF_RANGE;
 
     return (
       <line
@@ -148,31 +155,11 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
         y1={y1}
         x2={x2}
         y2={y2}
-        stroke="var(--muted-foreground)"
-        strokeWidth={TICK_W_DIM}
+        stroke={lit ? 'var(--primary)' : 'var(--muted-foreground)'}
+        strokeWidth={lit ? TICK_W_LIT : TICK_W_DIM}
         strokeLinecap="round"
-        opacity={0.38}
-      />
-    );
-  });
-
-  // Rotating indicator — 3 bright ticks drawn at 0° (top), rotated to bearing via CSS transform.
-  // CSS transition on transform gives smooth dial-like movement.
-  const indicatorTicks = [-5, 0, 5].map((offset) => {
-    const rad = ((offset - 90) * Math.PI) / 180;
-    const cosA = Math.cos(rad);
-    const sinA = Math.sin(rad);
-    return (
-      <line
-        key={offset}
-        x1={CX + rInner * cosA}
-        y1={CY + rInner * sinA}
-        x2={CX + R_OUTER * cosA}
-        y2={CY + R_OUTER * sinA}
-        stroke="var(--primary)"
-        strokeWidth={offset === 0 ? TICK_W_LIT : TICK_W_DIM}
-        strokeLinecap="round"
-        opacity={offset === 0 ? 1 : 0.7}
+        opacity={lit ? 1 : 0.38}
+        style={{ transition: 'stroke 0.4s ease, stroke-width 0.4s ease, opacity 0.4s ease' }}
       />
     );
   });
@@ -216,20 +203,8 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
           >
             <title id="wind-compass-title">{svgTitle}</title>
 
-            {/* Ticks — static dim ring */}
+            {/* Ticks — lit ticks near bearing change color via CSS transition */}
             <g aria-hidden="true">{ticks}</g>
-
-            {/* Rotating indicator — 3 bright ticks that rotate smoothly to bearing */}
-            <g
-              aria-hidden="true"
-              style={{
-                transformOrigin: `${CX}px ${CY}px`,
-                transform: `rotate(${windDirDeg}deg)`,
-                transition: 'transform 1s ease',
-              }}
-            >
-              {indicatorTicks}
-            </g>
 
             {/* Cardinal labels outside tick ring */}
             <text
