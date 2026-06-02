@@ -20,7 +20,6 @@
 import type { ReactElement } from 'react';
 import {
   Warning,
-  WarningCircle,
   Fire,
   Hurricane,
   Lightning,
@@ -43,15 +42,32 @@ import { getAlertCategory } from './alert-category';
 type AlertIconProps = { 'aria-hidden'?: boolean | 'true'; className?: string };
 
 /**
- * AlertIcon — resolves and renders the alert icon for a given event string.
+ * AlertIcon — resolves and renders the alert icon for a given event string or
+ * ADR-052 structured input { event?, hazardType? }.
+ *
+ * Props:
+ *   event    — plain event-name string (backward-compatible NWS path).
+ *   category — pre-resolved AlertCategory (ADR-052 path — pass result of
+ *              getAlertCategory). When supplied, skips internal resolution.
  *
  * Uses an explicit render switch rather than `const Icon = getAlertCategory()`
  * + `<Icon />` to avoid the react-hooks/purity "component created during render"
  * lint rule.
  */
-export function AlertIcon({ event, className }: { event: string; className?: string }): ReactElement {
+export function AlertIcon({
+  event,
+  category: categoryProp,
+  className,
+}: {
+  /** Plain event-name string (backward-compatible NWS path). */
+  event?: string;
+  /** Pre-resolved category (ADR-052 path — pass result of getAlertCategory). */
+  category?: ReturnType<typeof getAlertCategory>;
+  className?: string;
+}): ReactElement {
   const sharedProps: AlertIconProps = { 'aria-hidden': true, className };
-  const category = getAlertCategory(event);
+  // Prefer the pre-resolved category when supplied; fall back to event-string resolution.
+  const category = categoryProp ?? getAlertCategory(event ?? '');
 
   switch (category) {
     case 'tsunami':      return <Tsunami     {...sharedProps} />;
@@ -60,19 +76,18 @@ export function AlertIcon({ event, className }: { event: string; className?: str
     case 'tornado':      return <Tornado     {...sharedProps} />;
     case 'fire':         return <Fire        {...sharedProps} />;
     case 'thunderstorm': return <Lightning   {...sharedProps} />;
-    case 'snow':         return <Snowflake   {...sharedProps} />;
+    case 'winter':       return <Snowflake   {...sharedProps} />;
     case 'heat':         return <Thermometer {...sharedProps} />;
     case 'fog':          return <CloudFog    {...sharedProps} />;
     case 'wind':         return <Wind        {...sharedProps} />;
-    case 'marine':       return <Sailboat     {...sharedProps} />;
+    case 'marine':       return <Sailboat    {...sharedProps} />;
     case 'earthquake':   return <Earthquake  {...sharedProps} />;
     case 'volcano':      return <Volcano     {...sharedProps} />;
     case 'hail':         return <WeatherHail {...sharedProps} />;
     case 'avalanche':    return <Landslide   {...sharedProps} />;
     case 'dust':
     case 'air-quality':  return <Air         {...sharedProps} />;
-    case 'watch':        return <WarningCircle {...sharedProps} />;
-    case 'warning':
+    case 'generic':
     default:             return <Warning     {...sharedProps} />;
   }
 }
