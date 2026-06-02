@@ -110,6 +110,12 @@ export interface CurrentResponse extends ApiResponse<Observation> {
    */
   barometerTrendDirection: 'rising' | 'falling' | 'steady' | null;
 
+  /** 10-minute average wind speed from BFF rolling window (envelope-level field). */
+  windSpeedAvg10m?: ConvertedValue | number | null;
+
+  /** Maximum gust over the last 10 minutes from BFF rolling window (envelope-level field). */
+  windGustMax10m?: ConvertedValue | number | null;
+
   /**
    * ADR-047 background scene descriptor.  Optional: absent on older realtime
    * service versions that predate D1.  Dashboard falls back to the safe default

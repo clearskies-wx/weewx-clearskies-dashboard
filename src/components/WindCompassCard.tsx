@@ -65,7 +65,6 @@ const TICK_LEN = 24;
 const TICK_W_DIM = 4.5;
 const TICK_W_LIT = 6;
 const TICK_COUNT = 72;
-const LIT_HALF_RANGE = 4; // degrees either side of bearing — narrower for smoother 1-tick movement
 
 // ---------------------------------------------------------------------------
 // Component
