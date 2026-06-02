@@ -147,6 +147,9 @@ export function NowPage() {
           onRetry={obsRefetch}
         />
 
+        {/* ── Wind Compass — 2×2 (wide + rowSpan 2), beside CC per A4 ──── */}
+        <WindCompassCard observation={observation} />
+
         {/* ── Today's Forecast — wide (2×1) ─────────────────────────────── */}
         <NowForecastCard
           forecast={forecast}
@@ -161,9 +164,6 @@ export function NowPage() {
           observation={observation}
           loading={obsLoading}
         />
-
-        {/* ── Wind Compass — wide (2-col) ────────────────────────────────── */}
-        <WindCompassCard observation={observation} />
 
         {/* Row: Precipitation · Barometer · Solar Radiation · UV Index ──── */}
 
