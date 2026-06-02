@@ -3,7 +3,7 @@
 // Used by: BarometerCard (uniform mode), AQI tile (gradient mode, future).
 //
 // Geometry:
-//   SVG viewBox 0 0 200 112.  Center (100, 100), radius 88.
+//   SVG viewBox 0 0 200 112.  Center (100, 92), radius 85.
 //   Arc sweeps 180° from the left (9-o-clock = "min") to the right (3-o-clock = "max")
 //   via the top (12-o-clock = midpoint of range).
 //   36 ticks uniformly spaced every 5° across the 180° arc.
@@ -84,8 +84,8 @@ export interface SemiCircularGaugeProps {
 const VB_W = 200;
 const VB_H = 112;
 const CX = 100;           // arc center X
-const CY = 100;           // arc center Y (below bottom of viewBox when full circle)
-const R = 88;             // outer tick radius
+const CY = 92;            // arc center Y — matches C4 mockup semiGauge geometry
+const R = 85;             // outer tick radius — matches C4 mockup semiGauge geometry
 const TICK_COUNT = 36;    // 36 ticks → 5° apart across 180°
 
 // Regular tick dimensions
@@ -100,9 +100,6 @@ const TICK_W_INDICATOR = 5;
 // Threshold tick dimensions (boundary markers)
 const TICK_LEN_THRESHOLD = 22;
 const TICK_W_THRESHOLD = 4;
-
-// Endpoint label radius offset from center
-const LABEL_R = 98;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -247,11 +244,12 @@ export function SemiCircularGauge({
   const indicatorOuter = polarToXY(indicatorAngle, R);
   const indicatorInner = polarToXY(indicatorAngle, R - TICK_LEN_INDICATOR);
 
-  // Endpoint label positions — placed just outside the arc ends.
-  // Left endpoint (Low/min): fraction 0 → angle 180° → 9 o'clock
-  // Right endpoint (High/max): fraction 1 → angle 0° → 3 o'clock
-  const leftLabelPos = polarToXY(fractionToAngleDeg(0), LABEL_R + 8);
-  const rightLabelPos = polarToXY(fractionToAngleDeg(1), LABEL_R + 8);
+  // Endpoint label positions — C4 mockup formula: cx ± r ∓ 8 at y = cy + 14.
+  // Left "Low":  x = CX - R + 8 = 100 - 85 + 8 = 23,  y = CY + 14 = 106
+  // Right "High": x = CX + R - 8 = 100 + 85 - 8 = 177, y = CY + 14 = 106
+  // Both fit comfortably within the 112px viewBox (6px from bottom).
+  const leftLabelPos  = { x: CX - R + 8, y: CY + 14 };
+  const rightLabelPos = { x: CX + R - 8, y: CY + 14 };
 
   const titleId = React.useId();
 
@@ -299,8 +297,7 @@ export function SemiCircularGauge({
             <text
               x={leftLabelPos.x}
               y={leftLabelPos.y}
-              textAnchor="end"
-              dominantBaseline="middle"
+              textAnchor="middle"
               fontSize={9}
               fontFamily="var(--font-sans, system-ui, sans-serif)"
               fontWeight={400}
@@ -311,8 +308,7 @@ export function SemiCircularGauge({
             <text
               x={rightLabelPos.x}
               y={rightLabelPos.y}
-              textAnchor="start"
-              dominantBaseline="middle"
+              textAnchor="middle"
               fontSize={9}
               fontFamily="var(--font-sans, system-ui, sans-serif)"
               fontWeight={400}
@@ -325,9 +321,9 @@ export function SemiCircularGauge({
       </svg>
 
       {/* Children — centered inside the gauge arc.
-          Positioned absolutely over the SVG; the bottom portion of the SVG
-          (below the arc baseline at Y=100) is ~11% of the viewBox height (12px/112px).
-          We sit the children panel at the vertical midpoint of the arc half-circle. */}
+          Positioned absolutely over the SVG; the arc center is at CY=92 (82% of
+          viewBox height).  The children panel sits in the upper half of the arc disc,
+          vertically centered between the arc crown (top) and the baseline (CY). */}
       {children && (
         <div
           style={{

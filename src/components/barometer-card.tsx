@@ -225,10 +225,9 @@ export function BarometerCard({
           />
         ) : (
           /* Flex-grow wrapper keeps the gauge from overflowing the card height.
-             alignItems: flex-start anchors the gauge to the top so the arc is
-             always visible; the labels below the baseline clip cleanly rather
-             than centering and clipping both top and bottom. */
-          <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'flex-start', overflow: 'hidden' }}>
+             alignItems: center matches C4 mockup — gauge is centered vertically
+             in the available card space rather than pinned to the top. */
+          <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
           <SemiCircularGauge
             value={barometerValue ?? (gaugeMin + gaugeMax) / 2}
             min={gaugeMin}
