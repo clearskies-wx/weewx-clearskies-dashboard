@@ -56,15 +56,15 @@ function formatWindField(
 }
 
 // ---------------------------------------------------------------------------
-// Tick generation constants (match mockup exactly)
+// Tick generation constants (match C2 mockup exactly — viewBox 420×420)
 // ---------------------------------------------------------------------------
 
-const CX = 130;
-const CY = 130;
-const R_OUTER = 108;
-const TICK_LEN = 15;
-const TICK_W_DIM = 3;
-const TICK_W_LIT = 4;
+const CX = 210;
+const CY = 210;
+const R_OUTER = 175;
+const TICK_LEN = 24;
+const TICK_W_DIM = 4.5;
+const TICK_W_LIT = 6;
 const TICK_COUNT = 72;
 const LIT_HALF_RANGE = 8; // degrees either side of bearing — lights up ~3 ticks
 
@@ -201,11 +201,11 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
     );
   });
 
-  // Cardinal label positions outside tick ring (radius ~192 from center).
-  // Coordinates hand-placed to match mockup exactly.
+  // Cardinal label positions outside tick ring.
+  // Coordinates match C2 mockup exactly: N(210,18) E(402,210) S(210,402) W(18,210).
   const CARD_LABEL_STYLE: React.CSSProperties = {
-    fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-    fontSize: 9,
+    fontFamily: "'Manrope', var(--font-sans, system-ui, sans-serif)",
+    fontSize: 14,
     fontWeight: 600,
   };
 
@@ -219,64 +219,70 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
       </CardHeader>
 
       <CardContent>
-        {/* Dial wrapper: SVG + absolute center overlay */}
+        {/* Dial wrapper: fills available flex space, constrains SVG by height naturally */}
         <div
-          className="relative flex items-center justify-center"
-          style={{ aspectRatio: '1 / 1', maxWidth: '16rem', margin: '0 auto' }}
+          style={{
+            flex: 1,
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: 0,
+          }}
         >
-          {/* Tick-rim SVG dial */}
+          {/* Tick-rim SVG dial — max-width 20rem, aspect-ratio 1/1, no fixed max-height */}
           <svg
-            viewBox="0 0 260 260"
+            viewBox="0 0 420 420"
             role="img"
             aria-labelledby="wind-compass-title"
             focusable={false as unknown as boolean}
-            style={{ width: '100%', height: '100%', display: 'block' }}
+            style={{ width: '100%', maxWidth: '20rem', aspectRatio: '1 / 1', display: 'block' }}
           >
             <title id="wind-compass-title">{svgTitle}</title>
 
             {/* Ticks — lit ticks near bearing change color via CSS transition */}
             <g aria-hidden="true">{ticks}</g>
 
-            {/* Cardinal labels outside tick ring */}
+            {/* Cardinal labels outside tick ring — positions match C2 mockup (420×420 viewBox) */}
             <text
-              x={CX}
-              y={11}
+              x={210}
+              y={18}
               textAnchor="middle"
               dominantBaseline="middle"
-              fill="var(--muted-foreground)"
+              fill="#71717a"
               style={CARD_LABEL_STYLE}
               aria-hidden="true"
             >
               N
             </text>
             <text
-              x={249}
-              y={CY}
+              x={402}
+              y={210}
               textAnchor="middle"
               dominantBaseline="middle"
-              fill="var(--muted-foreground)"
+              fill="#71717a"
               style={CARD_LABEL_STYLE}
               aria-hidden="true"
             >
               E
             </text>
             <text
-              x={CX}
-              y={249}
+              x={210}
+              y={402}
               textAnchor="middle"
               dominantBaseline="middle"
-              fill="var(--muted-foreground)"
+              fill="#71717a"
               style={CARD_LABEL_STYLE}
               aria-hidden="true"
             >
               S
             </text>
             <text
-              x={11}
-              y={CY}
+              x={18}
+              y={210}
               textAnchor="middle"
               dominantBaseline="middle"
-              fill="var(--muted-foreground)"
+              fill="#71717a"
               style={CARD_LABEL_STYLE}
               aria-hidden="true"
             >
@@ -303,7 +309,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
             <div
               style={{
                 fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-                fontSize: '0.8125rem',   // ~13px
+                fontSize: '0.95rem',
                 color: 'var(--muted-foreground)',
                 letterSpacing: '0.04em',
               }}
@@ -333,13 +339,11 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
             >
               <span
                 style={{
-                  fontFamily: 'var(--font-display, system-ui, sans-serif)',
-                  fontWeight: 600,
-                  fontSize: '1.125rem',  // 18px — matches precipitation card proportions
+                  fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
+                  fontWeight: 400,
+                  fontSize: '3rem',
                   color: 'var(--foreground)',
                   letterSpacing: '-0.01em',
-                  // Tabular figures: digits keep fixed width across SSE updates
-                  fontFeatureSettings: '"tnum"',
                 }}
               >
                 {speedDisplay}
@@ -347,9 +351,9 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
               {speedUnit && (
                 <span
                   style={{
-                    fontFamily: 'var(--font-display, system-ui, sans-serif)',
+                    fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
                     fontWeight: 400,
-                    fontSize: '0.75rem',
+                    fontSize: '1.05rem',
                     color: 'var(--muted-foreground)',
                   }}
                 >
@@ -372,8 +376,9 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
               <Wind
                 aria-hidden="true"
                 focusable={false}
-                size={16}
                 style={{
+                  width: '1.6rem',
+                  height: '1.6rem',
                   flexShrink: 0,
                   opacity: 0.55,
                   alignSelf: 'center',
@@ -390,7 +395,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
                 <div
                   style={{
                     fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-                    fontSize: '0.6875rem',  // ~11px
+                    fontSize: '0.95rem',
                     color: 'var(--muted-foreground)',
                   }}
                 >
@@ -410,7 +415,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
                 <div
                   style={{
                     fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-                    fontSize: '0.6875rem',  // ~11px
+                    fontSize: '0.95rem',
                     color: 'var(--muted-foreground)',
                   }}
                 >
