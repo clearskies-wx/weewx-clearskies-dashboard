@@ -4,8 +4,8 @@
 //   1. Today's High (outTemp unit)
 //   2. Today's Low  (outTemp unit)
 //   3. Peak Gust    (windGust unit)
-//   4. Wind         (windSpeed — current, not avg; no avg field in TodayStats)
-//   5. Rain Today   (rain unit)
+//   4. Wind         (windSpeed — daily average from archive records)
+//   5. Rain Today   (rain unit — accumulated since midnight)
 //   6. Peak AQI     (conditional — only shown when peakAQI > 0)
 //
 // A11y (WCAG 2.1 AA — rules/coding.md §5):
@@ -111,28 +111,41 @@ export function TodaysHighlightsCard({
   const windSpeedCV = asConverted(observation?.windSpeed ?? null);
   const rainCV    = asConverted(observation?.rain ?? null);
 
-  // Helper: format a numeric value + ConvertedValue label, or fall back to
-  // formatValue() when the CV is not available.
+  // Display helpers: each uses the todayStats daily value (high/low/peakGust/
+  // avgWind/rainSoFar) and borrows the unit label from the current observation's
+  // ConvertedValue. The CV's .formatted string is intentionally NOT used here —
+  // that would show the current reading instead of the day's record.
   function tempDisplay(raw: number | null): string {
     if (raw === null) return '—';
-    return tempCV
-      ? `${tempCV.formatted}${tempCV.label}`
-      : formatValue(raw, 'temperature');
+    const unit = tempCV?.label ?? '°F';
+    return `${Math.round(raw * 10) / 10}${unit}`;
   }
 
   function windGustDisplay(): string {
-    if (windGustCV) return `${windGustCV.formatted}${windGustCV.label}`;
-    return formatValue(todayStats?.peakGust ?? 0, 'wind');
+    const gust = todayStats?.peakGust;
+    if (gust === null || gust === undefined) return '—';
+    const unit = windGustCV?.label ?? ' mph';
+    return `${Math.round(gust)}${unit}`;
   }
 
   function windDisplay(): string {
-    if (windSpeedCV) return `${windSpeedCV.formatted}${windSpeedCV.label}`;
-    return '—';
+    // Daily average wind — computed from today's archive records (avgWind).
+    // Falls back to the current observation's wind speed when no archive average
+    // is available (e.g. early morning with no records yet).
+    const avg = todayStats?.avgWind;
+    if (avg === null || avg === undefined) {
+      if (windSpeedCV) return `${windSpeedCV.formatted}${windSpeedCV.label}`;
+      return '—';
+    }
+    const unit = windSpeedCV?.label ?? ' mph';
+    return `${Math.round(avg)}${unit}`;
   }
 
   function rainDisplay(): string {
-    if (rainCV) return `${rainCV.formatted}${rainCV.label}`;
-    return formatValue(todayStats?.rainSoFar ?? 0, 'rain');
+    const rain = todayStats?.rainSoFar;
+    if (rain === null || rain === undefined) return '—';
+    const unit = rainCV?.label ?? ' in';
+    return `${(Math.round(rain * 100) / 100).toFixed(2)}${unit}`;
   }
 
   return (
@@ -174,7 +187,7 @@ export function TodaysHighlightsCard({
               microLabel={t('highlights.peakGust')}
             />
 
-            {/* 4 — Current Wind (no avg wind field in TodayStats; uses observation.windSpeed) */}
+            {/* 4 — Daily Average Wind (avgWind from archive; falls back to observation.windSpeed) */}
             <StatItem
               icon={<Wind size={16} weight="regular" />}
               value={windDisplay()}

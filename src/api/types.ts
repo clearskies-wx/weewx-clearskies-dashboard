@@ -706,6 +706,7 @@ export interface TodayStats {
   high: number | null;
   low: number | null;
   peakGust: number;
+  avgWind: number | null;
   rainSoFar: number;
   peakAQI: number;
   recordsBrokenToday: string[];

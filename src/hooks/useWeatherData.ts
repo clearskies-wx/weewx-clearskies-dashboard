@@ -648,6 +648,7 @@ export function useTodayStats(
         high: 78.2,
         low: 61.5,
         peakGust: 22.3,
+        avgWind: 8.4,
         rainSoFar: 0.12,
         peakAQI: 0,
         recordsBrokenToday: [],
@@ -658,17 +659,37 @@ export function useTodayStats(
 
     const records = todayArchive ?? [];
 
+    // Archive records' numeric fields may arrive as ConvertedValue objects when
+    // the BFF has applied unit conversion (ADR-042). Use asConverted() to
+    // normalise both the raw-number and ConvertedValue cases before computing
+    // statistics so that Math.max/min/sum operate on consistent numeric values.
     const temps = records
-      .map((r) => r.outTemp)
-      .filter((v): v is number => v !== null && v !== undefined);
+      .map((r) => {
+        const cv = asConverted(r.outTemp as any);
+        return cv?.value ?? null;
+      })
+      .filter((v): v is number => v !== null);
 
     const gusts = records
-      .map((r) => r.windGust)
-      .filter((v): v is number => v !== null && v !== undefined);
+      .map((r) => {
+        const cv = asConverted(r.windGust as any);
+        return cv?.value ?? null;
+      })
+      .filter((v): v is number => v !== null);
+
+    const winds = records
+      .map((r) => {
+        const cv = asConverted(r.windSpeed as any);
+        return cv?.value ?? null;
+      })
+      .filter((v): v is number => v !== null);
 
     const rainValues = records
-      .map((r) => r.rain)
-      .filter((v): v is number => v !== null && v !== undefined);
+      .map((r) => {
+        const cv = asConverted(r.rain as any);
+        return cv?.value ?? null;
+      })
+      .filter((v): v is number => v !== null);
 
     // When no archive records exist, fall back to the current observation.
     // observation fields are ConvertedValue | number | null — extract .value.
@@ -677,12 +698,14 @@ export function useTodayStats(
     const high = temps.length > 0 ? Math.max(...temps) : fallbackTemp;
     const low = temps.length > 0 ? Math.min(...temps) : fallbackTemp;
     const peakGust = gusts.length > 0 ? Math.max(...gusts) : fallbackGust;
+    const avgWind = winds.length > 0 ? winds.reduce((a, b) => a + b, 0) / winds.length : null;
     const rainSoFar = rainValues.reduce((sum, v) => sum + v, 0);
 
     return {
       high,
       low,
       peakGust,
+      avgWind,
       rainSoFar: Math.round(rainSoFar * 100) / 100,
       peakAQI: 0, // not available from archive; AQI hook handles this separately
       recordsBrokenToday: [],
