@@ -6,7 +6,7 @@
  * react-refresh/only-export-components rule is satisfied.
  *
  * Classification logic lives in alert-category.ts (pure function, no JSX).
- * See that file for the 13-type table, ADR-050 documentation, and key derivation.
+ * See that file for the 18-category table, ADR-050/ADR-052 documentation, and key derivation.
  *
  * A11y (rules/coding.md §5.5, ADR-050):
  *   - Color is NOT the only signal: the alert pill always shows both the icon
@@ -33,6 +33,11 @@ import {
 } from '@phosphor-icons/react';
 import { Flood } from './flood';
 import { Tsunami } from './tsunami';
+import { Earthquake } from './earthquake';
+import { Volcano } from './volcano';
+import { WeatherHail } from './weather-hail';
+import { Landslide } from './landslide';
+import { Air } from './air';
 import { getAlertCategory } from './alert-category';
 
 type AlertIconProps = { 'aria-hidden'?: boolean | 'true'; className?: string };
@@ -59,7 +64,13 @@ export function AlertIcon({ event, className }: { event: string; className?: str
     case 'heat':         return <Thermometer {...sharedProps} />;
     case 'fog':          return <CloudFog    {...sharedProps} />;
     case 'wind':         return <Wind        {...sharedProps} />;
-    case 'marine':       return <Sailboat    {...sharedProps} />;
+    case 'marine':       return <Sailboat     {...sharedProps} />;
+    case 'earthquake':   return <Earthquake  {...sharedProps} />;
+    case 'volcano':      return <Volcano     {...sharedProps} />;
+    case 'hail':         return <WeatherHail {...sharedProps} />;
+    case 'avalanche':    return <Landslide   {...sharedProps} />;
+    case 'dust':
+    case 'air-quality':  return <Air         {...sharedProps} />;
     case 'watch':        return <WarningCircle {...sharedProps} />;
     case 'warning':
     default:             return <Warning     {...sharedProps} />;
