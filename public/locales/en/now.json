@@ -51,7 +51,7 @@
     "todaysHigh": "HIGH",
     "todaysLow": "LOW",
     "peakGust": "GUST",
-    "wind": "WIND",
+    "wind": "AVG WIND",
     "rainToday": "RAIN",
     "peakAqi": "AQI",
     "recordsBroken": "Records Broken"
