@@ -137,8 +137,6 @@ export function NowPage() {
       {/* sr-only h1 for this page (the NowHeroCard renders an h1 that's visible) */}
       <h1 className="sr-only">Now</h1>
 
-      {!alertLoading && alerts && <AlertBanner alerts={alerts} />}
-
       {/*
         A4 Grid primitive — 4 columns on lg, 2 on md, 1 on mobile.
         Cards declare their own footprint; the hero is full-width (col-span-4).
@@ -146,6 +144,9 @@ export function NowPage() {
         heading is inside NowHeroCard as a real <h1>.
       */}
       <Grid>
+
+        {/* ── Alert Banner — full-width (4×1); self-hides when no alerts ── */}
+        {!alertLoading && alerts && <AlertBanner alerts={alerts} />}
 
         {/* ── Hero bar — full-width × half-row ──────────────────────────── */}
         <NowHeroCard
