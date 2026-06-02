@@ -6,11 +6,12 @@ interface AlertBannerProps {
 }
 
 // WCAG §5.4: aria-live level depends on severity.
-// 'warning' (immediate danger) → assertive (interrupts screen reader immediately).
-// 'watch' and 'advisory' (informational) → polite (waits for current speech to finish).
+// severityLevel >= 3 (watch/warning) → assertive (interrupts screen reader immediately).
+// severityLevel < 3 or null (advisory/informational) → polite (waits for current speech to finish).
 // role="status" gives polite semantics; role="alert" gives assertive.
-function liveProps(severity: AlertRecord['severity']) {
-  if (severity === 'warning') {
+// NOTE: T4.2 will rewrite this component with full ADR-052 severity semantics.
+function liveProps(severityLevel: number | null) {
+  if (severityLevel !== null && severityLevel >= 3) {
     return { role: 'alert' as const };
   }
   return { role: 'status' as const };
@@ -20,7 +21,7 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
   if (alerts.length === 0) return null;
 
   const primary = alerts[0];
-  const live = liveProps(primary.severity);
+  const live = liveProps(primary.severityLevel);
 
   return (
     <div

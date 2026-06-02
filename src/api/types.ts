@@ -177,6 +177,8 @@ export interface Observation {
   lightning_strike_count_1h?: number | null;
   lightning_distance?: number | null;
   lightning_last_det_time?: string | null;
+  /** Rolling 24h window of detected lightning strikes (time + distance pairs). Null when lightning detection is unavailable. Empty array when no strikes in the window. */
+  lightningStrikeHistory?: Array<{ time: string; distance: number }> | null;
   /** Weather description text — present when observation includes a text summary (Phase 0B). */
   weatherText?: string | null;
   /**
@@ -288,7 +290,12 @@ export interface AlertRecord {
   id: string;
   headline: string;
   description?: string;
-  severity: 'advisory' | 'watch' | 'warning';
+  severityLevel: number | null;
+  severityLabel: string | null;
+  alertSystem: string | null;
+  hazardType: string | null;
+  nativeName: string | null;
+  color: string | null;
   urgency: string | null;
   certainty: string | null;
   event: string;
