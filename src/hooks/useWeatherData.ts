@@ -509,9 +509,17 @@ export function useLightning(observation: Observation | null): LightningData | n
     if (isMockMode()) return mockLightning;
     if (!observation) return null;
 
-    const count1h = observation.lightning_strike_count_1h ?? observation.lightning_strike_count ?? null;
-    const count24h = observation.lightning_strike_count ?? null;
-    const nearestDistanceKm = observation.lightning_distance ?? null;
+    const unwrapNum = (v: unknown): number | null => {
+      if (v == null) return null;
+      if (typeof v === 'object' && v !== null && 'value' in v) return Number((v as { value: unknown }).value);
+      if (typeof v === 'number') return v;
+      const n = Number(v);
+      return Number.isNaN(n) ? null : n;
+    };
+
+    const count1h = unwrapNum(observation.lightning_strike_count_1h ?? observation.lightning_strike_count);
+    const count24h = unwrapNum(observation.lightning_strike_count);
+    const nearestDistanceKm = unwrapNum(observation.lightning_distance);
     const lastStrikeTime = observation.lightning_last_det_time ?? null;
 
     // Only return data if at least some lightning fields are present
