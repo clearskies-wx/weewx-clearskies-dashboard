@@ -93,8 +93,8 @@ export function DailyColumns({
 
   const N = days.length;
 
-  // Trend SVG sizes: 45px generous for forecast page, 30px for now card
-  const trendH = expandable ? 45 : 30;
+  // Trend SVG sizes: 45px generous for forecast page, 35px for now card (C3 mockup)
+  const trendH = expandable ? 45 : 35;
   // SVG viewbox width: 700 units for N=7, proportional otherwise
   const svgViewWidth = 100 * N;
 
@@ -288,7 +288,8 @@ export function DailyColumns({
                 alignItems: 'center',
                 gap: '0.08rem',
                 fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                fontSize: 'var(--text-micro, 0.7rem)',
+                // C3 mockup: 0.63rem for now-card, 0.7rem on forecast page
+                fontSize: expandable ? 'var(--text-micro, 0.7rem)' : '0.63rem',
                 color: 'var(--muted-foreground)',
                   }}
             >
@@ -316,9 +317,10 @@ export function DailyColumns({
     </div>
   );
 
-  // Trend line row (full width)
+  // Trend line row (full width).
+  // Uses flex:1 to fill remaining space per C3 mockup; padding 3px/2px matches mockup exactly.
   const trendRow = (
-    <div style={{ padding: '4px 0 3px', position: 'relative', zIndex: 1 }}>
+    <div style={{ padding: '3px 0 2px', flex: expandable ? undefined : 1, display: 'flex', alignItems: 'center', position: 'relative', zIndex: 1 }}>
       <TempTrendLine
         highs={highs}
         lows={lows}
@@ -434,7 +436,17 @@ export function DailyColumns({
 
   return (
     <div
-      style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'visible' }}
+      // For the now-card (non-expandable): flex:1 + min-height:0 + overflow:hidden keeps
+      // the component within CardContent's flex constraints (11rem grid row). Wind tails
+      // use overflow:visible on their own row — card has overflow:hidden at the card level.
+      // For the forecast page (expandable): overflow:visible so the detail panel can extend.
+      style={{
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: expandable ? 'visible' : 'hidden',
+      }}
     >
       <div style={{ position: 'relative', width: '100%', overflow: 'visible' }}>
         {selectedColBg}
