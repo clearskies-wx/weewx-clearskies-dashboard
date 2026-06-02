@@ -49,6 +49,7 @@ export const mockTodayStats: TodayStats = {
   high: 78.2,
   low: 61.5,
   peakGust: 22.3,
+  avgWind: 8.5,
   rainSoFar: 0.12,
   peakAQI: 58,
   recordsBrokenToday: [],
