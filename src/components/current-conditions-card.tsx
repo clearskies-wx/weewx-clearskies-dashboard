@@ -93,6 +93,7 @@ function buildCurveData(
   hourlyForecast: HourlyForecastPoint[] | null,
   nowTs: number,
   todayMidnightMs: number,
+  currentTemp: number | null,
 ): CurvePoint[] {
   const tomorrowMs = todayMidnightMs + 24 * 3600 * 1000;
   const points: CurvePoint[] = [];
@@ -105,6 +106,12 @@ function buildCurveData(
       const temp = cv?.value ?? null;
       points.push({ ts, past: temp, future: null });
     }
+  }
+
+  // Bridge point at "now" — connects past solid line to future dashed line
+  // without a visible gap. Uses currentTemp for both past and future values.
+  if (currentTemp !== null) {
+    points.push({ ts: nowTs, past: currentTemp, future: currentTemp });
   }
 
   if (hourlyForecast) {
@@ -141,8 +148,8 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
   }, []);
 
   const data = useMemo(
-    () => buildCurveData(todayArchive, hourlyForecast, now, todayMidnight),
-    [todayArchive, hourlyForecast, now, todayMidnight],
+    () => buildCurveData(todayArchive, hourlyForecast, now, todayMidnight, currentTemp),
+    [todayArchive, hourlyForecast, now, todayMidnight, currentTemp],
   );
 
   const domainEnd = todayMidnight + 24 * 3600 * 1000;
@@ -195,7 +202,7 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
       {/* Chart: role="img" with aria-label for screen readers */}
       <div role="img" aria-label={t('tempCurveAriaLabel')}>
         <ResponsiveContainer width="100%" height={112}>
-          <ComposedChart data={data} margin={{ top: 6, right: 8, bottom: 16, left: 0 }}>
+          <ComposedChart data={data} margin={{ top: 6, right: 16, bottom: 16, left: 0 }}>
             {/* Past actual: solid blue filled area */}
             <Area
               type="monotone"

@@ -53,7 +53,7 @@ export function NowPage() {
 
   const branding = useBranding();
 
-  const { data: observation, units, loading: obsLoading, error: obsError, refetch: obsRefetch, barometerTrendDirection, windSpeedAvg10m, windGustMax10m } = useRealtimeObservation();
+  const { data: observation, units, loading: obsLoading, error: obsError, refetch: obsRefetch, barometerTrendDirection, windSpeedAvg10m, windGustMax10m, scene } = useRealtimeObservation();
   const { data: forecast, loading: fcLoading, error: fcError } = useForecast();
   const { data: alerts, loading: alertLoading } = useAlerts();
   const { data: almanac, loading: almLoading, error: almError, refetch: almRefetch } = useAlmanac();
@@ -98,6 +98,19 @@ export function NowPage() {
   const todayForecast = forecast?.daily?.[0] ?? null;
   const hourlyForecast = forecast?.hourly ?? null;
 
+  // Derive a WMO weather code from the BFF scene descriptor when the forecast
+  // provider doesn't supply one. The scene has sky (clear/cloudy/overcast) and
+  // overlay (rain/snow/null) — enough to pick a representative icon.
+  const derivedWeatherCode = (() => {
+    if (todayForecast?.weatherCode != null) return todayForecast.weatherCode;
+    if (!scene) return null;
+    if (scene.overlay === 'snow') return 71;  // slight snow
+    if (scene.overlay === 'rain') return 61;  // slight rain
+    if (scene.sky === 'overcast') return 3;   // overcast
+    if (scene.sky === 'cloudy') return 2;     // partly cloudy
+    return 0;                                 // clear sky
+  })();
+
   // Determine logo URL based on current theme
   // The theme toggle sets data-theme on <html>; detect it from the DOM
   const isDark = typeof document !== 'undefined'
@@ -139,7 +152,7 @@ export function NowPage() {
           error={obsError}
           units={units}
           weatherText={observation?.weatherText ?? todayForecast?.weatherText ?? null}
-          weatherCode={todayForecast?.weatherCode ?? null}
+          weatherCode={derivedWeatherCode}
           todayHigh={todayStats?.high ?? null}
           todayLow={todayStats?.low ?? null}
           todayArchive={todayArchive ?? null}

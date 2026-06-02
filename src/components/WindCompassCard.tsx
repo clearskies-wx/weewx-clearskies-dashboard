@@ -18,6 +18,7 @@
 //   - 1 decimal place enforced on all displayed wind values
 //   - Missing avg/gust → "—" fallback (before BFF warm-up)
 
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Wind } from '@phosphor-icons/react';
 import { asConverted } from '../api/types';
@@ -86,8 +87,44 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
   const windDirCV = asConverted(observation?.windDir ?? null);
   const windSpeedCV = asConverted(observation?.windSpeed ?? null);
 
-  // Bearing in degrees for tick highlight.  Default 0 (N) when unavailable.
-  const windDirDeg: number = windDirCV?.value ?? 0;
+  // Bearing in degrees — target value from BFF. Default 0 (N) when unavailable.
+  const targetDeg: number = windDirCV?.value ?? 0;
+
+  // Animated bearing — interpolates from previous to target over 1 second,
+  // lighting up intermediate ticks as it sweeps.
+  const [animatedDeg, setAnimatedDeg] = useState(targetDeg);
+  const animRef = useRef<number | null>(null);
+  const prevTargetRef = useRef(targetDeg);
+
+  useEffect(() => {
+    if (targetDeg === prevTargetRef.current) return;
+    const startDeg = prevTargetRef.current;
+    prevTargetRef.current = targetDeg;
+
+    // Shortest angular path (handles 350°→10° wrap-around)
+    let delta = ((targetDeg - startDeg + 540) % 360) - 180;
+    const startTime = performance.now();
+    const duration = 1000; // 1 second
+
+    if (animRef.current !== null) cancelAnimationFrame(animRef.current);
+
+    function step(now: number) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = progress < 0.5
+        ? 2 * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 2) / 2; // ease-in-out
+      const current = ((startDeg + delta * eased) % 360 + 360) % 360;
+      setAnimatedDeg(current);
+      if (progress < 1) {
+        animRef.current = requestAnimationFrame(step);
+      }
+    }
+    animRef.current = requestAnimationFrame(step);
+    return () => { if (animRef.current !== null) cancelAnimationFrame(animRef.current); };
+  }, [targetDeg]);
+
+  const windDirDeg = animatedDeg;
 
   // BFF-supplied canonical cardinal code (ADR-041).
   const windDirCardinal = observation?.windDirCardinal ?? null;
