@@ -140,7 +140,7 @@ export function DailyColumns({
       {days.map((day, i) => {
         const isSelected = expandable && i === expandedIdx;
         const dayName = expandable
-          ? getDayName(day.validDate, i, stationTz)
+          ? getDayName(day.validDate, i)
           : getShortDayName(day.validDate, i);
         const dateLabel = expandable ? getDateLabel(day.validDate) : null;
 
@@ -336,7 +336,7 @@ export function DailyColumns({
   // ── Expansion detail panel ───────────────────────────────────────────────
   const detailPanel = expandable && expandedIdx !== null ? (() => {
     const day = days[expandedIdx];
-    const dayName = getDayName(day.validDate, expandedIdx, stationTz);
+    const dayName = getDayName(day.validDate, expandedIdx);
     const dateLabel = getDateLabel(day.validDate);
     const gust = day.windGustMax !== null ? `${Math.round(day.windGustMax)} mph` : null;
     const sunrise = formatSunTime(day.sunrise, stationTz);
