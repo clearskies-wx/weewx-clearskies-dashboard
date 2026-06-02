@@ -213,6 +213,10 @@ interface RealtimeObservationResult {
   refetch: () => void;
   /** BFF-computed pressure trend direction from the /current envelope (ADR-041/ADR-042). */
   barometerTrendDirection: CurrentResponse['barometerTrendDirection'];
+  /** 10-minute average wind speed from BFF rolling window. */
+  windSpeedAvg10m: CurrentResponse['windSpeedAvg10m'];
+  /** Max gust over last 10 minutes from BFF rolling window. */
+  windGustMax10m: CurrentResponse['windGustMax10m'];
   /**
    * ADR-047 background scene descriptor.  Sourced from the REST /current envelope
    * via useObservation().  Scene changes on weather-condition timescales (minutes),
@@ -247,6 +251,8 @@ export function useRealtimeObservation(): RealtimeObservationResult {
     error,
     refetch,
     barometerTrendDirection,
+    windSpeedAvg10m,
+    windGustMax10m,
     scene: restScene,
   } = useObservation();
 
@@ -291,6 +297,8 @@ export function useRealtimeObservation(): RealtimeObservationResult {
     error,
     refetch,
     barometerTrendDirection,
+    windSpeedAvg10m,
+    windGustMax10m,
     scene,
   };
 }

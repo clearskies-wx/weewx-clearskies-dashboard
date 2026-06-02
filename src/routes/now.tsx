@@ -53,7 +53,7 @@ export function NowPage() {
 
   const branding = useBranding();
 
-  const { data: observation, units, loading: obsLoading, error: obsError, refetch: obsRefetch, barometerTrendDirection } = useRealtimeObservation();
+  const { data: observation, units, loading: obsLoading, error: obsError, refetch: obsRefetch, barometerTrendDirection, windSpeedAvg10m, windGustMax10m } = useRealtimeObservation();
   const { data: forecast, loading: fcLoading, error: fcError } = useForecast();
   const { data: alerts, loading: alertLoading } = useAlerts();
   const { data: almanac, loading: almLoading, error: almError, refetch: almRefetch } = useAlmanac();
@@ -148,7 +148,7 @@ export function NowPage() {
         />
 
         {/* ── Wind Compass — 2×2 (wide + rowSpan 2), beside CC per A4 ──── */}
-        <WindCompassCard observation={observation} />
+        <WindCompassCard observation={observation} windSpeedAvg10m={windSpeedAvg10m} windGustMax10m={windGustMax10m} />
 
         {/* ── Today's Forecast — wide (2×1) ─────────────────────────────── */}
         <NowForecastCard

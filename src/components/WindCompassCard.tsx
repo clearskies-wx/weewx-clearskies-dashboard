@@ -73,9 +73,11 @@ const LIT_HALF_RANGE = 4; // degrees either side of bearing — narrower for smo
 
 export interface WindCompassCardProps {
   observation: Observation | null;
+  windSpeedAvg10m?: import('../api/types').ConvertedValue | number | null;
+  windGustMax10m?: import('../api/types').ConvertedValue | number | null;
 }
 
-export function WindCompassCard({ observation }: WindCompassCardProps) {
+export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, windGustMax10m: gustMax10mProp }: WindCompassCardProps) {
   const { t } = useTranslation('now');
   const { t: tCommon } = useTranslation('common');
 
@@ -106,9 +108,9 @@ export function WindCompassCard({ observation }: WindCompassCardProps) {
     ? `${Math.round(windDirCV.value)}°`
     : '—';
 
-  // 10-min avg and max gust — may be absent before BFF warm-up.
-  const avg10m = formatWindField(observation?.windSpeedAvg10m, speedUnit);
-  const gustMax10m = formatWindField(observation?.windGustMax10m, speedUnit);
+  // 10-min avg and max gust — from BFF envelope (wired via props, not observation).
+  const avg10m = formatWindField(avg10mProp ?? null, speedUnit);
+  const gustMax10m = formatWindField(gustMax10mProp ?? null, speedUnit);
 
   // SVG <title> summarises all wind data for screen readers.
   const hasAvg = avg10m.display !== '—';
@@ -127,24 +129,18 @@ export function WindCompassCard({ observation }: WindCompassCardProps) {
       });
 
   // ---------------------------------------------------------------------------
-  // Tick rendering — declarative React, no DOM manipulation
+  // Tick rendering — all ticks are dim/static; indicator rotates via CSS transform
   // ---------------------------------------------------------------------------
+  const rInner = R_OUTER - TICK_LEN;
   const ticks = Array.from({ length: TICK_COUNT }, (_, i) => {
     const deg = (i / TICK_COUNT) * 360;
-    // SVG angles: 0° = top (N), increasing clockwise.
-    // Math angles (cos/sin): 0 = right, CCW.  Offset by -90° to align N=top.
     const rad = ((deg - 90) * Math.PI) / 180;
     const cosA = Math.cos(rad);
     const sinA = Math.sin(rad);
-    const rInner = R_OUTER - TICK_LEN;
     const x1 = CX + rInner * cosA;
     const y1 = CY + rInner * sinA;
     const x2 = CX + R_OUTER * cosA;
     const y2 = CY + R_OUTER * sinA;
-
-    // Shortest angular distance between this tick and the bearing.
-    const diff = Math.abs(((deg - windDirDeg + 540) % 360) - 180);
-    const lit = diff < LIT_HALF_RANGE;
 
     return (
       <line
@@ -153,11 +149,31 @@ export function WindCompassCard({ observation }: WindCompassCardProps) {
         y1={y1}
         x2={x2}
         y2={y2}
-        stroke={lit ? 'var(--primary)' : 'var(--muted-foreground)'}
-        strokeWidth={lit ? TICK_W_LIT : TICK_W_DIM}
+        stroke="var(--muted-foreground)"
+        strokeWidth={TICK_W_DIM}
         strokeLinecap="round"
-        opacity={lit ? 1 : 0.38}
-        style={{ transition: 'stroke 0.3s ease, stroke-width 0.3s ease, opacity 0.3s ease' }}
+        opacity={0.38}
+      />
+    );
+  });
+
+  // Rotating indicator — 3 bright ticks drawn at 0° (top), rotated to bearing via CSS transform.
+  // CSS transition on transform gives smooth dial-like movement.
+  const indicatorTicks = [-5, 0, 5].map((offset) => {
+    const rad = ((offset - 90) * Math.PI) / 180;
+    const cosA = Math.cos(rad);
+    const sinA = Math.sin(rad);
+    return (
+      <line
+        key={offset}
+        x1={CX + rInner * cosA}
+        y1={CY + rInner * sinA}
+        x2={CX + R_OUTER * cosA}
+        y2={CY + R_OUTER * sinA}
+        stroke="var(--primary)"
+        strokeWidth={offset === 0 ? TICK_W_LIT : TICK_W_DIM}
+        strokeLinecap="round"
+        opacity={offset === 0 ? 1 : 0.7}
       />
     );
   });
@@ -201,8 +217,20 @@ export function WindCompassCard({ observation }: WindCompassCardProps) {
           >
             <title id="wind-compass-title">{svgTitle}</title>
 
-            {/* Ticks — position on rim conveys direction (non-color signal) */}
+            {/* Ticks — static dim ring */}
             <g aria-hidden="true">{ticks}</g>
+
+            {/* Rotating indicator — 3 bright ticks that rotate smoothly to bearing */}
+            <g
+              aria-hidden="true"
+              style={{
+                transformOrigin: `${CX}px ${CY}px`,
+                transform: `rotate(${windDirDeg}deg)`,
+                transition: 'transform 1s ease',
+              }}
+            >
+              {indicatorTicks}
+            </g>
 
             {/* Cardinal labels outside tick ring */}
             <text

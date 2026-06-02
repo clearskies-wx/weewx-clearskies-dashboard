@@ -128,6 +128,12 @@ interface ObservationHookResult extends HookResult<Observation> {
    */
   barometerTrendDirection: CurrentResponse['barometerTrendDirection'];
 
+  /** 10-minute average wind speed from the BFF envelope (rolling window). */
+  windSpeedAvg10m: CurrentResponse['windSpeedAvg10m'];
+
+  /** Maximum gust over the last 10 minutes from the BFF envelope (rolling window). */
+  windGustMax10m: CurrentResponse['windGustMax10m'];
+
   /**
    * ADR-047 background scene descriptor from the realtime service.
    * Falls back to the safe default (clear / daytime / no overlay) when the
@@ -149,6 +155,8 @@ export function useObservation(): ObservationHookResult {
     return {
       ...mockResult<Observation>(mockObservation, mockUnits),
       barometerTrendDirection: 'falling',
+      windSpeedAvg10m: null,
+      windGustMax10m: null,
       scene: mockScene,
     };
   }
@@ -161,6 +169,8 @@ export function useObservation(): ObservationHookResult {
     error,
     refetch,
     barometerTrendDirection: data?.barometerTrendDirection ?? null,
+    windSpeedAvg10m: data?.windSpeedAvg10m ?? null,
+    windGustMax10m: data?.windGustMax10m ?? null,
     scene: data?.scene ?? SCENE_DEFAULT,
   };
 }

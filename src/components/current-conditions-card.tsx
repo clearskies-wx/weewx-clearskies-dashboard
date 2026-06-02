@@ -101,7 +101,8 @@ function buildCurveData(
     for (const rec of todayArchive) {
       const ts = new Date(rec.timestamp).getTime();
       if (ts < todayMidnightMs || ts > tomorrowMs) continue;
-      const temp = typeof rec.outTemp === 'number' ? rec.outTemp : null;
+      const cv = asConverted(rec.outTemp as import('../api/types').ConvertedValue | number | null);
+      const temp = cv?.value ?? null;
       points.push({ ts, past: temp, future: null });
     }
   }
