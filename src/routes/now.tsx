@@ -106,7 +106,7 @@ export function NowPage() {
     if (!scene) return null;
     if (scene.overlay === 'snow') return 71;  // slight snow
     if (scene.overlay === 'rain') return 61;  // slight rain
-    if (scene.sky === 'overcast') return 3;   // overcast
+    if (scene.sky === 'storm') return 95;     // thunderstorm
     if (scene.sky === 'cloudy') return 2;     // partly cloudy
     return 0;                                 // clear sky
   })();
