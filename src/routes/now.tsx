@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { asConverted } from '../api/types';
 import type { WebcamConfig } from '../api/types';
 import { AlertBanner } from '../components/shared/alert-banner';
 import { CurrentConditionsCard } from '../components/current-conditions-card';
@@ -16,6 +15,7 @@ import { WindCompassCard } from '../components/WindCompassCard';
 import { NowForecastCard } from '../components/forecast/NowForecastCard';
 import { TodaysHighlightsCard } from '../components/todays-highlights-card';
 import { RadarMap } from '../components/shared/radar-map';
+import { WebcamCard } from '../components/webcam-card';
 import { Grid } from '../components/layout/grid';
 import { NowHeroCard } from '../components/layout/now-hero-card';
 import {
@@ -89,10 +89,7 @@ export function NowPage() {
 
   const [refreshTs, setRefreshTs] = useState(Date.now());
   const [videoRefreshTs, setVideoRefreshTs] = useState(Date.now());
-  const [webcamAvailable, setWebcamAvailable] = useState(true);
-  const [videoAvailable, setVideoAvailable] = useState(true);
   const [webcamConfig, setWebcamConfig] = useState<WebcamConfig | null>(null);
-  const [webcamTab, setWebcamTab] = useState<'live' | 'timelapse'>('live');
 
   useEffect(() => {
     fetch('/webcam.json')
@@ -260,11 +257,8 @@ export function NowPage() {
           stationTz={tz}
         />
 
-        {/* ── Radar + Webcam ─────────────────────────────────────────────── */}
-        {/* Radar: wide (2-col) when webcam absent, tile (1-col) when present */}
-        <Card
-          footprint={!(webcamEnabled && webcamAvailable) ? 'wide' : 'tile'}
-        >
+        {/* ── Radar — 2×2 (wide + rowSpan 2) ────────────────────────────── */}
+        <Card footprint="wide" rowSpan={2}>
           <CardHeader>
             <CardTitle as="h2">{tRadar('radarTitle')}</CardTitle>
           </CardHeader>
@@ -280,51 +274,13 @@ export function NowPage() {
           </CardContent>
         </Card>
 
-        {webcamEnabled && webcamAvailable && (
-          <Card footprint="tile">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <h2 className="font-heading text-base leading-snug font-medium">{t('webcam')}</h2>
-              <div className="flex gap-1">
-                <button
-                  type="button"
-                  className={`px-2 py-1 text-xs rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${webcamTab === 'live' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
-                  onClick={() => setWebcamTab('live')}
-                  aria-pressed={webcamTab === 'live'}
-                >
-                  {t('webcamTabLive', 'Live')}
-                </button>
-                <button
-                  type="button"
-                  className={`px-2 py-1 text-xs rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${webcamTab === 'timelapse' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
-                  onClick={() => setWebcamTab('timelapse')}
-                  aria-pressed={webcamTab === 'timelapse'}
-                >
-                  {t('webcamTabTimelapse', 'Timelapse')}
-                </button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {webcamTab === 'live' ? (
-                <img
-                  src={`${webcamConfig!.imageUrl}?t=${refreshTs}`}
-                  alt={t('webcamAlt')}
-                  className="w-full rounded object-cover"
-                  onError={() => setWebcamAvailable(false)}
-                />
-              ) : videoAvailable ? (
-                <video
-                  controls
-                  loop
-                  className="w-full rounded"
-                  onError={() => setVideoAvailable(false)}
-                >
-                  <source src={`${webcamConfig!.videoUrl}?t=${videoRefreshTs}`} type="video/mp4" />
-                </video>
-              ) : (
-                <p className="text-muted-foreground text-sm">{t('noData.timelapse', 'No timelapse available')}</p>
-              )}
-            </CardContent>
-          </Card>
+        {/* ── Webcam — 2×2 (wide + rowSpan 2) ───────────────────────────── */}
+        {webcamEnabled && webcamConfig && (
+          <WebcamCard
+            webcamConfig={webcamConfig}
+            refreshTs={refreshTs}
+            videoRefreshTs={videoRefreshTs}
+          />
         )}
 
       </Grid>

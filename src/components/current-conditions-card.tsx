@@ -514,7 +514,7 @@ export function CurrentConditionsCard({
                       }}
                     >
                       {highDisplay !== null && (
-                        <span style={{ color: '#c81e1e' }}>
+                        <span style={{ color: 'var(--temp-hi)' }}>
                           {t('hiLabel')} {highDisplay}
                         </span>
                       )}
@@ -522,7 +522,7 @@ export function CurrentConditionsCard({
                         <span className="text-muted-foreground"> &nbsp; </span>
                       )}
                       {lowDisplay !== null && (
-                        <span style={{ color: '#1d4ed8' }}>
+                        <span style={{ color: 'var(--temp-lo)' }}>
                           {t('loLabel')} {lowDisplay}
                         </span>
                       )}

@@ -44,7 +44,8 @@
     "lightning": "No lightning sensor configured.",
     "earthquake": "No recent earthquakes in configured radius.",
     "airQuality": "No air quality provider configured.",
-    "forecast": "No forecast data available."
+    "forecast": "No forecast data available.",
+    "timelapse": "No timelapse available"
   },
   "highlights": {
     "todaysHigh": "HIGH",
@@ -181,6 +182,8 @@
   },
   "webcam": "Webcam",
   "webcamAlt": "Live webcam view",
+  "webcamTabLive": "Live",
+  "webcamTabTimelapse": "Timelapse",
   "precipitationCard": {
     "title": "Precipitation",
     "rainTodayLabel": "Rain today",

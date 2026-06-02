@@ -7,5 +7,7 @@
   "noProvider": "No radar provider configured.",
   "noFrames": "No radar data available.",
   "loading": "Loading radar data...",
-  "frameOf": "Frame {{current}} of {{total}}"
+  "frameOf": "Frame {{current}} of {{total}}",
+  "legendLight": "Light",
+  "legendHeavy": "Heavy"
 }

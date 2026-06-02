@@ -27,7 +27,7 @@ const PRELOAD_DELAY_MS = 1500;
 
 // RainViewer tile defaults.
 // {size}    — tile size in pixels; 512 is the high-DPI option (also valid: 256).
-// {color}   — colour scheme index; 2 = "Original" (meteorological standard).
+// {color}   — colour scheme index; 2 = "Universal Blue" (meteorological standard).
 // {options} — "<smooth>_<snow>"; 0_0 = no smoothing, no snow highlight.
 // These are display preferences that belong in the dashboard, not the API.
 // The CAPABILITY template keeps the placeholders generic; we resolve them here
@@ -95,6 +95,30 @@ function getFrameOpacity(frameIndex: number, step: number, totalFrames: number):
     return 1 - Math.pow(transparency, t);
   }
   return 0;
+}
+
+// RainViewer "Universal Blue" (scheme 2) precipitation intensity color stops.
+// Source: RainViewer API color-schemes page + rendered tile sampling.
+const LEGEND_GRADIENT =
+  'linear-gradient(to right, #96C8FA, #0096FA, #00D800, #FFFF00, #FF9600, #E80000, #C000C0)';
+
+function RadarLegend() {
+  const { t } = useTranslation('radar');
+  return (
+    <div
+      className="absolute bottom-8 right-2 z-10 flex flex-col gap-0.5 rounded bg-background/80 px-2 py-1.5 backdrop-blur-sm"
+      aria-hidden="true"
+    >
+      <div
+        className="h-2.5 w-36 rounded-sm"
+        style={{ background: LEGEND_GRADIENT }}
+      />
+      <div className="flex justify-between text-[10px] leading-tight text-muted-foreground">
+        <span>{t('legendLight')}</span>
+        <span>{t('legendHeavy')}</span>
+      </div>
+    </div>
+  );
 }
 
 export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
@@ -347,6 +371,9 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
             );
           })}
         </MapContainer>
+
+        {/* Color legend — visible when radar frames are loaded */}
+        {!isLoading && frameCount > 0 && <RadarLegend />}
       </div>
 
       {/* Animation controls — only shown when there are frames to animate */}
