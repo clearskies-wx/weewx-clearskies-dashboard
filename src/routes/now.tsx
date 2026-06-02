@@ -101,14 +101,22 @@ export function NowPage() {
   // Derive a WMO weather code from the BFF scene descriptor when the forecast
   // provider doesn't supply one. The scene has sky (clear/cloudy/overcast) and
   // overlay (rain/snow/null) — enough to pick a representative icon.
+  // Derive a WMO weather code for the CC card icon. The forecast provider may
+  // return a WMO numeric code, a provider-specific string (e.g. Aeris "::SC"),
+  // or null. Only use the forecast code if it's a valid WMO integer (0-99).
+  // Otherwise fall back to deriving from the BFF scene descriptor.
   const derivedWeatherCode = (() => {
-    if (todayForecast?.weatherCode != null) return todayForecast.weatherCode;
-    if (!scene) return null;
-    if (scene.overlay === 'snow') return 71;  // slight snow
-    if (scene.overlay === 'rain') return 61;  // slight rain
-    if (scene.sky === 'storm') return 95;     // thunderstorm
-    if (scene.sky === 'cloudy') return 2;     // partly cloudy
-    return 0;                                 // clear sky
+    const fc = todayForecast?.weatherCode;
+    if (fc != null) {
+      const n = typeof fc === 'number' ? fc : parseInt(String(fc), 10);
+      if (!isNaN(n) && n >= 0 && n <= 99) return n;
+    }
+    if (!scene) return 0;
+    if (scene.overlay === 'snow') return 71;
+    if (scene.overlay === 'rain') return 61;
+    if (scene.sky === 'storm') return 95;
+    if (scene.sky === 'cloudy') return 2;
+    return 0;
   })();
 
   // Determine logo URL based on current theme
