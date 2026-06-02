@@ -10,16 +10,21 @@ type CardProps = React.ComponentProps<"div"> & {
   /** Footprint vocabulary (ADR-051) — controls column span in the Grid primitive.
    *  tile=1col · wide=2col · panel=3col · full=4col */
   footprint?: CardFootprint;
-  /** Row span declaration for the future grid engine (ADR-051).
-   *  Recorded as data-row-span only — does NOT emit a row-span CSS class and
-   *  does NOT impose a fixed height.  Card height stays content-driven. */
+  /**
+   * Row span — 1 (default, 11rem via md:row-span-2) or 2 (22rem via md:row-span-4).
+   * Row spans only apply at md+ (≥768px); mobile rows are auto-height.
+   */
   rowSpan?: 1 | 2;
+  /**
+   * Half-row mode — emits md:row-span-1 (5.5rem) instead of the default md:row-span-2.
+   * Use for hero bar and alert banner strip cards that occupy only half a standard row.
+   */
+  halfRow?: boolean;
 };
 
 /** Column-span classes for each footprint value (ADR-051).
  *  Grid is 1→2→4 columns (<768px / ≥768px / ≥1024px).
- *  Column spans are enforced now; row heights stay content-driven until
- *  the future grid engine ships (ADR-051 "Column rule now vs. later"). */
+ *  Column spans are enforced now; row heights use --card-half-row track at md+. */
 const footprintColSpan: Record<CardFootprint, string> = {
   tile:  "col-span-1",
   wide:  "col-span-1 md:col-span-2",
@@ -27,19 +32,32 @@ const footprintColSpan: Record<CardFootprint, string> = {
   full:  "col-span-1 md:col-span-2 lg:col-span-4",
 };
 
+/**
+ * Row-span class for the card's grid placement at md+ (≥768px).
+ * Mobile rows are auto — no row-span class emitted at the base breakpoint.
+ *
+ * halfRow  → md:row-span-1 (1 × 5.5rem = 5.5rem) — hero bar / alert strip
+ * rowSpan=2 → md:row-span-4 (4 × 5.5rem = 22rem) — tall cards
+ * default   → md:row-span-2 (2 × 5.5rem = 11rem)  — standard tiles
+ */
+function rowSpanClass(halfRow: boolean, rowSpan: 1 | 2 | undefined): string {
+  if (halfRow) return "md:row-span-1";
+  if (rowSpan === 2) return "md:row-span-4";
+  return "md:row-span-2";
+}
+
 function Card({
   className,
   size = "default",
   footprint,
   rowSpan,
+  halfRow = false,
   ...props
 }: CardProps) {
   return (
     <div
       data-slot="card"
       data-size={size}
-      // rowSpan is documented-only for the future grid engine — stored as a data
-      // attribute so the engine can read it without any CSS side-effect today.
       data-row-span={rowSpan}
       className={cn(
         // Provisional glass surface (PROVISIONAL — B3 contrast gate sets final value).
@@ -49,6 +67,7 @@ function Card({
         "card-glass",
         "group/card flex flex-col gap-4 overflow-hidden rounded-xl py-4 text-sm text-card-foreground ring-1 ring-foreground/10 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
         footprint !== undefined ? footprintColSpan[footprint] : undefined,
+        rowSpanClass(halfRow, rowSpan),
         className
       )}
       {...props}

@@ -95,6 +95,7 @@ export function NowHeroCard({
   return (
     <Card
       footprint="full"
+      halfRow
       className={['py-2', className].filter(Boolean).join(' ')}
     >
       {/*
