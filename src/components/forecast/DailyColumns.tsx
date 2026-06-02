@@ -288,7 +288,7 @@ export function DailyColumns({
                 alignItems: 'center',
                 gap: '0.08rem',
                 fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                fontSize: expandable ? '0.7rem' : '0.63rem',
+                fontSize: 'var(--text-micro, 0.7rem)',
                 color: 'var(--muted-foreground)',
                   }}
             >
