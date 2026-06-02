@@ -169,7 +169,7 @@ export function LightningCard({
             <div
               aria-label={chartAriaLabel}
               role="img"
-              style={{ width: '100%', height: 110, position: 'relative' }}
+              style={{ width: '100%', height: 80, position: 'relative' }}
             >
               {!hasActivity ? (
                 /* No-activity state: centered text, vertically centred in chart zone */
@@ -329,8 +329,8 @@ export function LightningCard({
                 </span>
               </div>
 
-              {/* Nearest distance sub-line */}
-              {nearestDisplay !== null && (
+              {/* Nearest distance sub-line — only when there's actual activity */}
+              {hasActivity && nearestDisplay !== null && (
                 <span
                   style={{
                     fontFamily: 'var(--font-sans, system-ui, sans-serif)',

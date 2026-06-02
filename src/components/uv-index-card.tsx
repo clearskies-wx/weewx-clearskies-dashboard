@@ -364,7 +364,7 @@ function UvChart({ data, currentUv, gradientId }: UvChartProps) {
     <>
       {/* Chart — role="img" wraps for screen-reader summary */}
       <div role="img" aria-label={t('uvIndexCard.chartAriaLabel')}>
-        <ResponsiveContainer width="100%" height={110}>
+        <ResponsiveContainer width="100%" height={80}>
           <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -12 }}>
             <defs>
               {/*

@@ -50,7 +50,7 @@ const CY = 90;
 /** Total SVG width */
 const SVG_W = 200;
 /** Total SVG height — enough room for arcs + labels below */
-const SVG_H = 130;
+const SVG_H = 115;
 
 /** Sun color — gold/amber, WCAG AA on dark backgrounds */
 const SUN_COLOR = '#f59e0b';
@@ -236,7 +236,7 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
       aria-label={svgTitle}
       viewBox={`0 0 ${SVG_W} ${SVG_H}`}
       width="100%"
-      style={{ display: 'block', overflow: 'visible' }}
+      style={{ display: 'block' }}
     >
       <title>{svgTitle}</title>
 
@@ -356,102 +356,52 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
         {illumText} illuminated
       </text>
 
-      {/* ── Sunrise / Sunset endpoint labels ───────────────────────────── */}
-      {/* Sunrise label — below left endpoint of sun arc */}
+      {/* ── Rise labels — left side, stacked: sun then moon ──────────── */}
       <text
         x={sunLeftX}
-        y={CY + 14}
-        textAnchor="middle"
-        fontSize={7.5}
+        y={CY + 12}
+        textAnchor="start"
+        fontSize={7}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
-        fill="var(--muted-foreground, #64748b)"
+        fill={SUN_COLOR}
         aria-hidden="true"
       >
-        {sunriseText}
+        ☀ {sunriseText}
       </text>
       <text
         x={sunLeftX}
-        y={CY + 23}
-        textAnchor="middle"
+        y={CY + 22}
+        textAnchor="start"
         fontSize={7}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
-        fill="var(--muted-foreground, #64748b)"
+        fill={MOON_COLOR}
         aria-hidden="true"
       >
-        Sunrise
+        ☽ {moonriseText}
       </text>
 
-      {/* Sunset label — below right endpoint of sun arc */}
+      {/* ── Set labels — right side, stacked: sun then moon ──────────── */}
       <text
         x={sunRightX}
-        y={CY + 14}
-        textAnchor="middle"
-        fontSize={7.5}
+        y={CY + 12}
+        textAnchor="end"
+        fontSize={7}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
-        fill="var(--muted-foreground, #64748b)"
+        fill={SUN_COLOR}
         aria-hidden="true"
       >
-        {sunsetText}
+        {sunsetText} ☀
       </text>
       <text
         x={sunRightX}
-        y={CY + 23}
-        textAnchor="middle"
+        y={CY + 22}
+        textAnchor="end"
         fontSize={7}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
-        fill="var(--muted-foreground, #64748b)"
+        fill={MOON_COLOR}
         aria-hidden="true"
       >
-        Sunset
-      </text>
-
-      {/* ── Moonrise / Moonset endpoint labels ─────────────────────────── */}
-      {/* Moonrise label — below left endpoint of moon arc */}
-      <text
-        x={moonLeftX}
-        y={CY + 14}
-        textAnchor="middle"
-        fontSize={7}
-        fontFamily="var(--font-sans, system-ui, sans-serif)"
-        fill="var(--muted-foreground, #64748b)"
-        aria-hidden="true"
-      >
-        {moonriseText}
-      </text>
-      <text
-        x={moonLeftX}
-        y={CY + 23}
-        textAnchor="middle"
-        fontSize={6.5}
-        fontFamily="var(--font-sans, system-ui, sans-serif)"
-        fill="var(--muted-foreground, #64748b)"
-        aria-hidden="true"
-      >
-        Moonrise
-      </text>
-
-      {/* Moonset label — below right endpoint of moon arc */}
-      <text
-        x={moonRightX}
-        y={CY + 14}
-        textAnchor="middle"
-        fontSize={7}
-        fontFamily="var(--font-sans, system-ui, sans-serif)"
-        fill="var(--muted-foreground, #64748b)"
-        aria-hidden="true"
-      >
-        {moonsetText}
-      </text>
-      <text
-        x={moonRightX}
-        y={CY + 23}
-        textAnchor="middle"
-        fontSize={6.5}
-        fontFamily="var(--font-sans, system-ui, sans-serif)"
-        fill="var(--muted-foreground, #64748b)"
-        aria-hidden="true"
-      >
-        Moonset
+        {moonsetText} ☽
       </text>
     </svg>
   );

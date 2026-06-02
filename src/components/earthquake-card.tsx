@@ -30,7 +30,6 @@
 //   1–24 h    → hours 1dp      ("2.3 hrs ago")
 //   > 24 h    → days 1dp       ("1.5 days ago")
 
-import * as React from 'react';
 import {
   Card,
   CardHeader,
