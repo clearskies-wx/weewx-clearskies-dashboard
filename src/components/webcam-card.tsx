@@ -47,10 +47,8 @@ export function WebcamCard({ webcamConfig, refreshTs, videoRefreshTs }: WebcamCa
           </button>
         </div>
       </CardHeader>
-      {/* CardContent: flex column so the media fills the available height.
-          The img/video use h-full so they fill the flex item without pushing
-          the card beyond its grid row height. */}
-      <CardContent style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+      {/* CardContent is always flex-col (card.tsx base class) — media fills available height. */}
+      <CardContent>
         {/* Media wrapper — flex-grow so it fills CardContent; overflow:hidden clips
             any residual pixel from the image's natural aspect ratio. */}
         <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', borderRadius: '0.375rem' }}>

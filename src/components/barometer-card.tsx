@@ -212,14 +212,7 @@ export function BarometerCard({
         </h2>
       </CardHeader>
 
-      <CardContent
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          flex: 1,
-          minHeight: 0,
-        }}
-      >
+      <CardContent>
         {loading ? (
           <>
             <span className="sr-only" role="status">{t('loading.barometer')}</span>

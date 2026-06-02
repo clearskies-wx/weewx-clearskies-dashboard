@@ -260,6 +260,8 @@ export function SemiCircularGauge({
       style={{
         position: 'relative',
         width: '100%',
+        flex: 1,
+        minHeight: 0,
       }}
     >
       <svg
@@ -268,7 +270,7 @@ export function SemiCircularGauge({
         aria-labelledby={svgTitle ? titleId : undefined}
         aria-hidden={svgTitle ? undefined : true}
         focusable={false as unknown as boolean}
-        style={{ width: '100%', height: 'auto', display: 'block' }}
+        style={{ width: '100%', height: '100%', display: 'block' }}
       >
         {svgTitle && <title id={titleId}>{svgTitle}</title>}
 

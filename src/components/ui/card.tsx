@@ -1,24 +1,24 @@
-import * as React from "react"
+﻿import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-/** Footprint vocabulary — column span × row declaration per ADR-051. */
+/** Footprint vocabulary â€” column span Ã— row declaration per ADR-051. */
 export type CardFootprint = "tile" | "wide" | "panel" | "full";
 
 type CardProps = React.ComponentProps<"div"> & {
   size?: "default" | "sm";
-  /** Footprint vocabulary (ADR-051) — controls column span in the Grid primitive.
-   *  tile=1col · wide=2col · panel=3col · full=4col */
+  /** Footprint vocabulary (ADR-051) â€” controls column span in the Grid primitive.
+   *  tile=1col Â· wide=2col Â· panel=3col Â· full=4col */
   footprint?: CardFootprint;
   /**
-   * Row span — 1 (default, 11rem via md:row-span-1) or 2 (22rem via md:row-span-2).
-   * Row spans only apply at md+ (≥768px); mobile rows are auto-height.
+   * Row span â€” 1 (default, 11rem via md:row-span-1) or 2 (22rem via md:row-span-2).
+   * Row spans only apply at md+ (â‰¥768px); mobile rows are auto-height.
    */
   rowSpan?: 1 | 2;
 };
 
 /** Column-span classes for each footprint value (ADR-051).
- *  Grid is 1→2→4 columns (<768px / ≥768px / ≥1024px).
+ *  Grid is 1â†’2â†’4 columns (<768px / â‰¥768px / â‰¥1024px).
  *  Column spans are enforced now; row heights use --card-row (11rem) track at md+. */
 const footprintColSpan: Record<CardFootprint, string> = {
   tile:  "col-span-1",
@@ -28,11 +28,11 @@ const footprintColSpan: Record<CardFootprint, string> = {
 };
 
 /**
- * Row-span class for the card's grid placement at md+ (≥768px).
- * Mobile rows are auto — no row-span class emitted at the base breakpoint.
+ * Row-span class for the card's grid placement at md+ (â‰¥768px).
+ * Mobile rows are auto â€” no row-span class emitted at the base breakpoint.
  *
- * rowSpan=2 → md:row-span-2 (2 × 11rem + 1rem gap = 23rem) — tall cards
- * default   → md:row-span-1 (1 × 11rem = 11rem)             — standard tiles
+ * rowSpan=2 â†’ md:row-span-2 (2 Ã— 11rem + 1rem gap = 23rem) â€” tall cards
+ * default   â†’ md:row-span-1 (1 Ã— 11rem = 11rem)             â€” standard tiles
  */
 function rowSpanClass(rowSpan: 1 | 2 | undefined): string {
   if (rowSpan === 2) return "md:row-span-2";
@@ -52,7 +52,7 @@ function Card({
       data-size={size}
       data-row-span={rowSpan}
       className={cn(
-        // Provisional glass surface (PROVISIONAL — B3 contrast gate sets final value).
+        // Provisional glass surface (PROVISIONAL â€” B3 contrast gate sets final value).
         // bg-[rgb(var(--card-glass))] applies the translucent glass background;
         // backdrop-filter is set inline since there is no Tailwind utility for
         // the exact blur+saturate combination.
@@ -129,7 +129,7 @@ function CardContent({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-content"
-      className={cn("px-4 group-data-[size=sm]/card:px-3 overflow-hidden flex-1 min-h-0", className)}
+      className={cn("px-4 group-data-[size=sm]/card:px-3 overflow-hidden flex-1 min-h-0 flex flex-col", className)}
       {...props}
     />
   )
@@ -157,3 +157,4 @@ export {
   CardDescription,
   CardContent,
 }
+

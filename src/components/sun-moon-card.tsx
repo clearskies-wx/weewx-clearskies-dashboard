@@ -223,7 +223,7 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
       aria-label={svgTitle}
       viewBox={`0 0 ${SVG_W} ${SVG_H}`}
       width="100%"
-      style={{ display: 'block' }}
+      style={{ display: 'block', height: '100%' }}
     >
       <title>{svgTitle}</title>
 
