@@ -99,19 +99,19 @@ export function NowPage() {
   const todayForecast = forecast?.daily?.[0] ?? null;
   const hourlyForecast = forecast?.hourly ?? null;
 
-  // Derive a WMO weather code for the CC card icon. toWmoCode() handles both
-  // WMO numeric codes and provider-specific strings (e.g. Aeris "::SC").
-  // Falls back to deriving from the BFF scene descriptor when not mapped.
+  // Derive a WMO weather code for the CC card icon. Scene (from BFF) reflects
+  // actual current sky conditions and takes priority over the forecast daily
+  // code, which is a summary that may not match the current moment.
   const derivedWeatherCode = (() => {
-    const fc = todayForecast?.weatherCode;
-    const mapped = toWmoCode(fc);
-    if (mapped !== null) return mapped;
-    if (!scene) return 0;
-    if (scene.overlay === 'snow') return 71;
-    if (scene.overlay === 'rain') return 61;
-    if (scene.sky === 'storm') return 95;
-    if (scene.sky === 'cloudy') return 2;
-    return 0;
+    if (scene) {
+      if (scene.overlay === 'snow') return 71;
+      if (scene.overlay === 'rain') return 61;
+      if (scene.sky === 'storm') return 95;
+      if (scene.sky === 'cloudy') return 2;
+      return 0; // clear
+    }
+    const mapped = toWmoCode(todayForecast?.weatherCode);
+    return mapped ?? 0;
   })();
 
   // Determine logo URL based on current theme
