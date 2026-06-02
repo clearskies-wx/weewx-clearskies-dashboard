@@ -63,6 +63,15 @@ function ariaRole(severityLevel: number | null): 'alert' | 'status' {
 }
 
 /**
+ * ariaLive — explicit live-region politeness to match the role.
+ * 'alert'  implies 'assertive'; 'status' implies 'polite'.
+ * Stated explicitly for reliable cross-screen-reader behavior.
+ */
+function ariaLive(role: 'alert' | 'status'): 'assertive' | 'polite' {
+  return role === 'alert' ? 'assertive' : 'polite';
+}
+
+/**
  * formatExpiry — produces a human-readable "until X" string from an ISO
  * expires timestamp. Falls back to "ongoing" when expires is null or invalid.
  */
@@ -227,6 +236,7 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
      */
     <div
       role={role}
+      aria-live={ariaLive(role)}
       aria-label={
         multiAlert
           ? t('alertBanner.alertN', { n: safeIndex + 1, total: sorted.length })
