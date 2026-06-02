@@ -39,18 +39,18 @@ import {
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Sun arc — outer semicircle geometry */
-const SUN_R = 72;
-/** Moon arc — inner semicircle geometry */
-const MOON_R = 46;
-/** SVG viewBox half-width; center X = cx */
-const CX = 100;
+/** Sun arc — outer semicircle geometry (matches C4 mockup: r=78) */
+const SUN_R = 78;
+/** Moon arc — inner semicircle geometry (matches C4 mockup: r=44) */
+const MOON_R = 44;
+/** SVG viewBox half-width; center X = cx (matches C4 mockup viewBox 220×110) */
+const CX = 110;
 /** SVG viewBox baseline Y; arcs curve upward (negative Y direction) */
-const CY = 90;
-/** Total SVG width */
-const SVG_W = 200;
-/** Total SVG height — enough room for arcs + labels below */
-const SVG_H = 115;
+const CY = 88;
+/** Total SVG width (matches C4 mockup) */
+const SVG_W = 220;
+/** Total SVG height (matches C4 mockup) */
+const SVG_H = 110;
 
 /** Sun color — gold/amber, WCAG AA on dark backgrounds */
 const SUN_COLOR = '#f59e0b';
@@ -212,21 +212,10 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
     `Phase: ${phaseName}, ${illumText} illuminated`,
   ].join('. ');
 
-  // Moon phase label: positioned just above and to the right of the moon marker
-  // (or above center when no moon marker is computable)
-  let moonLabelX: number;
-  let moonLabelY: number;
-  if (moonMarker) {
-    // Nudge label right of the marker; flip to left when near right edge
-    const nudge = moonMarker.x > CX ? -10 : 10;
-    moonLabelX = moonMarker.x + nudge;
-    moonLabelY = moonMarker.y - 12;
-  } else {
-    moonLabelX = CX;
-    moonLabelY = CY - MOON_R - 12;
-  }
-  const moonLabelAnchor =
-    moonMarker && moonMarker.x > CX ? 'end' : 'middle';
+  // Moon phase label: positioned at bottom center of arcs (operator request 2026-06-02)
+  const moonLabelX = CX;
+  const moonLabelY = CY + 3;
+  const moonLabelAnchor = 'middle';
 
   return (
     <svg
@@ -357,9 +346,9 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
       {/* ── Rise labels — left side, stacked: sun then moon ──────────── */}
       <text
         x={sunLeftX}
-        y={CY + 12}
+        y={CY + 13}
         textAnchor="start"
-        fontSize={7}
+        fontSize={9}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
         fill={SUN_COLOR}
         aria-hidden="true"
@@ -368,9 +357,9 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
       </text>
       <text
         x={sunLeftX}
-        y={CY + 22}
+        y={CY + 23}
         textAnchor="start"
-        fontSize={7}
+        fontSize={9}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
         fill={MOON_COLOR}
         aria-hidden="true"
@@ -381,9 +370,9 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
       {/* ── Set labels — right side, stacked: sun then moon ──────────── */}
       <text
         x={sunRightX}
-        y={CY + 12}
+        y={CY + 13}
         textAnchor="end"
-        fontSize={7}
+        fontSize={9}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
         fill={SUN_COLOR}
         aria-hidden="true"
@@ -392,9 +381,9 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
       </text>
       <text
         x={sunRightX}
-        y={CY + 22}
+        y={CY + 23}
         textAnchor="end"
-        fontSize={7}
+        fontSize={9}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
         fill={MOON_COLOR}
         aria-hidden="true"
@@ -447,7 +436,7 @@ export function SunMoonCard({
     <Card footprint="tile" aria-busy={loading}>
       <CardHeader>
         {/* Title: text-only per spec — NO icon. Manrope 600 via font-heading. */}
-        <h2 className="font-heading text-base leading-snug font-semibold">
+        <h2 className="font-heading leading-snug font-semibold pb-1.5 border-b border-border" style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}>
           {t('sunAndMoon')}
         </h2>
       </CardHeader>

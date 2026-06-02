@@ -335,7 +335,7 @@ export function AqiCard({
     <Card footprint="tile" aria-busy={loading}>
       <CardHeader>
         {/* Title: text-only per spec.  Manrope 600 via font-heading. */}
-        <h2 className="font-heading text-base leading-snug font-semibold">
+        <h2 className="font-heading leading-snug font-semibold pb-1.5 border-b border-border" style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}>
           {t('aqiCard.title')}
         </h2>
       </CardHeader>
@@ -352,55 +352,76 @@ export function AqiCard({
             onRetry={onRetry ?? (() => undefined)}
           />
         ) : (
-          /* Flex row: gauge left (62%) · pollutant column right (38%) */
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '0.5rem',
-            }}
-          >
-            {/* ── Left: gauge (62%) ─────────────────────────────────────── */}
-            <div style={{ flex: '0 0 62%', minWidth: 0 }}>
-              <SemiCircularGauge
-                value={gaugeValue}
-                min={0}
-                max={500}
-                colorMode="gradient"
-                colorBands={EPA_GAUGE_COLOR_BANDS}
-                svgTitle={svgTitle}
-              >
-                <GaugeContent
-                  aqiValue={aqiValue ?? 0}
-                  category={category}
-                  mainPollutant={mainPollutant}
-                />
-              </SemiCircularGauge>
-            </div>
+          (() => {
+            const hasPollutants = [
+              aqi?.pollutantPM25, aqi?.pollutantPM10, aqi?.pollutantO3,
+              aqi?.pollutantNO2, aqi?.pollutantSO2, aqi?.pollutantCO,
+            ].some(v => v !== null);
 
-            {/* ── Right: pollutant column (38%) ─────────────────────────── */}
-            <div
-              style={{
-                flex: '0 0 38%',
-                minWidth: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                // Align vertically with the center of the gauge arc.
-                // The gauge SVG is 112/200 = 56% tall relative to its width,
-                // and the arc midpoint is ~50% down; padding-top nudges the
-                // pollutant column to sit near the middle of the gauge visual.
-                paddingTop: '1rem',
-              }}
-            >
-              <PollutantRow name="PM2.5" value={aqi?.pollutantPM25 ?? null} />
-              <PollutantRow name="PM10"  value={aqi?.pollutantPM10 ?? null} />
-              <PollutantRow name="O3"    value={aqi?.pollutantO3   ?? null} />
-              <PollutantRow name="NO2"   value={aqi?.pollutantNO2  ?? null} />
-              <PollutantRow name="SO2"   value={aqi?.pollutantSO2  ?? null} />
-              <PollutantRow name="CO"    value={aqi?.pollutantCO   ?? null} />
-            </div>
-          </div>
+            return hasPollutants ? (
+              /* Split layout: gauge left (62%) + pollutant column right (38%) */
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'stretch',
+                  gap: '0.5rem',
+                  flex: 1,
+                  minHeight: 0,
+                }}
+              >
+                <div style={{ flex: '0 0 62%', minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <SemiCircularGauge
+                    value={gaugeValue}
+                    min={0}
+                    max={500}
+                    colorMode="gradient"
+                    colorBands={EPA_GAUGE_COLOR_BANDS}
+                    svgTitle={svgTitle}
+                  >
+                    <GaugeContent
+                      aqiValue={aqiValue ?? 0}
+                      category={category}
+                      mainPollutant={mainPollutant}
+                    />
+                  </SemiCircularGauge>
+                </div>
+                <div
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <PollutantRow name="PM2.5" value={aqi?.pollutantPM25 ?? null} />
+                  <PollutantRow name="PM10"  value={aqi?.pollutantPM10 ?? null} />
+                  <PollutantRow name="O3"    value={aqi?.pollutantO3   ?? null} />
+                  <PollutantRow name="NO2"   value={aqi?.pollutantNO2  ?? null} />
+                  <PollutantRow name="SO2"   value={aqi?.pollutantSO2  ?? null} />
+                  <PollutantRow name="CO"    value={aqi?.pollutantCO   ?? null} />
+                </div>
+              </div>
+            ) : (
+              /* No pollutant data (e.g. IQAir free tier) — gauge fills entire card */
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minHeight: 0 }}>
+                <SemiCircularGauge
+                  value={gaugeValue}
+                  min={0}
+                  max={500}
+                  colorMode="gradient"
+                  colorBands={EPA_GAUGE_COLOR_BANDS}
+                  svgTitle={svgTitle}
+                >
+                  <GaugeContent
+                    aqiValue={aqiValue ?? 0}
+                    category={category}
+                    mainPollutant={mainPollutant}
+                  />
+                </SemiCircularGauge>
+              </div>
+            );
+          })()
         )}
       </CardContent>
     </Card>

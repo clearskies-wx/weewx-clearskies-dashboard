@@ -149,7 +149,7 @@ export function LightningCard({
     <Card footprint="tile" aria-busy={loading}>
       <CardHeader>
         {/* Title: text-only per spec. Manrope 600 via font-heading. */}
-        <h2 className="font-heading text-base leading-snug font-semibold">
+        <h2 className="font-heading leading-snug font-semibold pb-1.5 border-b border-border" style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}>
           Lightning
         </h2>
       </CardHeader>
@@ -169,7 +169,7 @@ export function LightningCard({
             <div
               aria-label={chartAriaLabel}
               role="img"
-              style={{ width: '100%', height: 80, position: 'relative' }}
+              style={{ width: '100%', flex: 1, minHeight: 0, position: 'relative' }}
             >
               {!hasActivity ? (
                 /* No-activity state: centered text, vertically centred in chart zone */
@@ -258,25 +258,27 @@ export function LightningCard({
               )}
             </div>
 
-            {/* Screen-reader data table — hidden visually (§5.5: chart a11y). */}
+            {/* Screen-reader data table — inline sr-only styles (table sr-only ghost text fix). */}
             {strikePoints.length > 0 && (
-              <table className="sr-only">
-                <caption>Lightning strike history — last 24 hours</caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Time</th>
-                    <th scope="col">Distance (km)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {strikePoints.map((s) => (
-                    <tr key={s.timeIso}>
-                      <td>{new Date(s.timeIso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-                      <td>{s.d.toFixed(1)}</td>
+              <div style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', clipPath: 'inset(50%)', whiteSpace: 'nowrap', margin: '-1px', padding: 0, border: 0 }}>
+                <table>
+                  <caption>Lightning strike history — last 24 hours</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Time</th>
+                      <th scope="col">Distance (km)</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {strikePoints.map((s) => (
+                      <tr key={s.timeIso}>
+                        <td>{new Date(s.timeIso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                        <td>{s.d.toFixed(1)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
 
             {/* ── Stats zone (below chart) ────────────────────────────── */}

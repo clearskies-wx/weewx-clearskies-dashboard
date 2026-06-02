@@ -207,8 +207,9 @@ function SolarChart({ data }: SolarChartProps) {
       <div
         role="img"
         aria-label={t('solarRadiationCard.chartAriaLabel')}
+        style={{ flex: 1, minHeight: 0 }}
       >
-        <ResponsiveContainer width="100%" height={80}>
+        <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -28 }}>
             {/* Clear-sky theoretical max — yellow fill area */}
             <Area
@@ -261,31 +262,33 @@ function SolarChart({ data }: SolarChartProps) {
         </ResponsiveContainer>
       </div>
 
-      {/* Screen-reader fallback table */}
-      <table className="sr-only">
-        <caption>{t('solarRadiationCard.srCaption')}</caption>
-        <thead>
-          <tr>
-            <th scope="col">Time</th>
-            <th scope="col">Solar Radiation (W/m²)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {srRows.map((row) => {
-            const timeStr = new Intl.DateTimeFormat(undefined, {
-              hour: 'numeric',
-              minute: '2-digit',
-              hour12: true,
-            }).format(new Date(row.ts));
-            return (
-              <tr key={row.ts}>
-                <td>{timeStr}</td>
-                <td>{row.radiation !== null ? Math.round(row.radiation) : '—'}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      {/* Screen-reader fallback table — inline sr-only styles (table sr-only ghost text fix). */}
+      <div style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', clipPath: 'inset(50%)', whiteSpace: 'nowrap', margin: '-1px', padding: 0, border: 0 }}>
+        <table>
+          <caption>{t('solarRadiationCard.srCaption')}</caption>
+          <thead>
+            <tr>
+              <th scope="col">Time</th>
+              <th scope="col">Solar Radiation (W/m²)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {srRows.map((row) => {
+              const timeStr = new Intl.DateTimeFormat(undefined, {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true,
+              }).format(new Date(row.ts));
+              return (
+                <tr key={row.ts}>
+                  <td>{timeStr}</td>
+                  <td>{row.radiation !== null ? Math.round(row.radiation) : '—'}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </>
   );
 }
@@ -328,7 +331,7 @@ export function SolarRadiationCard({
     <Card footprint="tile" aria-busy={loading}>
       <CardHeader>
         {/* Title: text-only per ADR-050 (no title icon on C4 tiles). Manrope 600 via font-heading. */}
-        <h2 className="font-heading text-base leading-snug font-semibold">
+        <h2 className="font-heading leading-snug font-semibold pb-1.5 border-b border-border" style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}>
           {t('solarRadiationCard.title')}
         </h2>
       </CardHeader>
@@ -337,7 +340,9 @@ export function SolarRadiationCard({
         style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '0.5rem',
+          flex: 1,
+          minHeight: 0,
+          gap: '0.25rem',
         }}
       >
         {loading ? (

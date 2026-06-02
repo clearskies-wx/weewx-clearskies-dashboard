@@ -65,7 +65,7 @@ const TICK_LEN = 24;
 const TICK_W_DIM = 4.5;
 const TICK_W_LIT = 6;
 const TICK_COUNT = 72;
-const LIT_HALF_RANGE = 8; // degrees either side of bearing
+const LIT_HALF_RANGE = 4; // degrees either side of bearing — narrower for smoother 1-tick movement
 
 // ---------------------------------------------------------------------------
 // Component
@@ -157,6 +157,7 @@ export function WindCompassCard({ observation }: WindCompassCardProps) {
         strokeWidth={lit ? TICK_W_LIT : TICK_W_DIM}
         strokeLinecap="round"
         opacity={lit ? 1 : 0.38}
+        style={{ transition: 'stroke 0.3s ease, stroke-width 0.3s ease, opacity 0.3s ease' }}
       />
     );
   });
@@ -173,7 +174,7 @@ export function WindCompassCard({ observation }: WindCompassCardProps) {
     <Card footprint="wide" rowSpan={2} aria-busy={observation === null}>
       <CardHeader>
         {/* Title: wind icon (decorative) + i18n title text */}
-        <h2 className="font-heading text-base leading-snug font-medium flex items-center gap-1.5">
+        <h2 className="font-heading leading-snug font-semibold pb-1.5 border-b border-border flex items-center gap-1.5" style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}>
           <Wind
             aria-hidden="true"
             focusable={false}

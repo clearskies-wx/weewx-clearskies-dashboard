@@ -132,7 +132,7 @@
     /* Operator-overridable default card opacity over the scene background. */
     /* Card glass: space-separated RGB channels + alpha for use as rgb(var(--card-glass)).
        backdrop-filter: blur(8px) saturate(1.1) applied alongside this. */
-    --card-glass: 255 255 255 / 0.72;
+    --card-glass: 255 255 255 / 0.88;
 
     /* ── Alert glass tokens (ADR-052) ───────────────────────────────────────── */
     --alert-glass:  rgba(255, 210, 100, 0.55);
@@ -217,7 +217,7 @@
 
 [data-theme="dark"] {
 
-    --card-glass: 30 35 55 / 0.55;
+    --card-glass: 30 35 55 / 0.72;
 
     /* ── Alert glass tokens (ADR-052) ───────────────────────────────────────── */
     --alert-glass:  rgba(120, 85, 10, 0.55);

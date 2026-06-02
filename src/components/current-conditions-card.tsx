@@ -19,7 +19,7 @@
 //   - All values via ConvertedValue.formatted — no client unit math
 //   - Missing values → "—" or element hidden
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ComposedChart,
@@ -126,7 +126,12 @@ interface TempCurveProps {
 
 function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: TempCurveProps) {
   const { t } = useTranslation('now');
-  const now = Date.now();
+
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(interval);
+  }, []);
 
   const todayMidnight = useMemo(() => {
     const d = new Date();
@@ -136,8 +141,7 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
 
   const data = useMemo(
     () => buildCurveData(todayArchive, hourlyForecast, now, todayMidnight),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [todayArchive, hourlyForecast, todayMidnight],
+    [todayArchive, hourlyForecast, now, todayMidnight],
   );
 
   const domainEnd = todayMidnight + 24 * 3600 * 1000;
@@ -190,7 +194,7 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
       {/* Chart: role="img" with aria-label for screen readers */}
       <div role="img" aria-label={t('tempCurveAriaLabel')}>
         <ResponsiveContainer width="100%" height={112}>
-          <ComposedChart data={data} margin={{ top: 6, right: 4, bottom: 0, left: -12 }}>
+          <ComposedChart data={data} margin={{ top: 6, right: 4, bottom: 16, left: -12 }}>
             {/* Past actual: solid blue filled area */}
             <Area
               type="monotone"
@@ -273,35 +277,38 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
         </ResponsiveContainer>
       </div>
 
-      {/* Screen-reader fallback table */}
-      <table className="sr-only">
-        <caption>{t('tempCurveSrCaption')}</caption>
-        <thead>
-          <tr>
-            <th scope="col">Time</th>
-            <th scope="col">{tempUnit || '°'}</th>
-            <th scope="col">Type</th>
-          </tr>
-        </thead>
-        <tbody>
-          {srRows.map((row) => {
-            const timeStr = new Intl.DateTimeFormat(undefined, {
-              hour: 'numeric',
-              minute: '2-digit',
-              hour12: true,
-            }).format(new Date(row.ts));
-            const temp = (row.past ?? row.future);
-            const type = row.future !== null ? 'Forecast' : 'Actual';
-            return (
-              <tr key={row.ts}>
-                <td>{timeStr}</td>
-                <td>{temp !== null ? Math.round(temp) : '—'}</td>
-                <td>{type}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      {/* Screen-reader fallback table — inline sr-only styles because className="sr-only"
+           on <table> elements does not clip reliably (captions leak as visible ghost text). */}
+      <div style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', clipPath: 'inset(50%)', whiteSpace: 'nowrap', margin: '-1px', padding: 0, border: 0 }}>
+        <table>
+          <caption>{t('tempCurveSrCaption')}</caption>
+          <thead>
+            <tr>
+              <th scope="col">Time</th>
+              <th scope="col">{tempUnit || '°'}</th>
+              <th scope="col">Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            {srRows.map((row) => {
+              const timeStr = new Intl.DateTimeFormat(undefined, {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true,
+              }).format(new Date(row.ts));
+              const temp = (row.past ?? row.future);
+              const type = row.future !== null ? 'Forecast' : 'Actual';
+              return (
+                <tr key={row.ts}>
+                  <td>{timeStr}</td>
+                  <td>{temp !== null ? Math.round(temp) : '—'}</td>
+                  <td>{type}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

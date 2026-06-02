@@ -52,8 +52,8 @@ import type { Observation } from '../api/types';
 // Constants (inHg scale — see unit note in file header)
 // ---------------------------------------------------------------------------
 
-const DEFAULT_MIN = 29.32;
-const DEFAULT_MAX = 30.52;
+const DEFAULT_MIN = 29.40;
+const DEFAULT_MAX = 30.60;
 const EXPAND_MARGIN = 0.15;  // expand when value is within this of min or max
 const EXPAND_STEP = 0.5;     // expand by this amount per step
 const SCALE_FLOOR = 27.0;    // never expand below this
@@ -90,7 +90,7 @@ function computeScale(value: number | null): { min: number; max: number } {
 
   // Re-center around 29.92 if there is room (keep the wider half).
   // This keeps the "standard" pressure near the visual midpoint of the arc.
-  const CENTER = 29.92;
+  const CENTER = 30.00;
   const halfSpan = Math.max(CENTER - min, max - CENTER);
   const idealMin = CENTER - halfSpan;
   const idealMax = CENTER + halfSpan;
@@ -207,7 +207,7 @@ export function BarometerCard({
     <Card footprint="tile" aria-busy={loading}>
       <CardHeader>
         {/* Title: text-only per spec — NO icon.  Manrope 600 via font-heading. */}
-        <h2 className="font-heading text-base leading-snug font-semibold">
+        <h2 className="font-heading leading-snug font-semibold pb-1.5 border-b border-border" style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}>
           {t('barometerCard.title')}
         </h2>
       </CardHeader>
@@ -258,7 +258,7 @@ export function BarometerCard({
                     fontFamily: 'var(--font-display, system-ui, sans-serif)',
                     fontWeight: 600,
                     // Scale font size down for long values; barometer needs ~5 chars
-                    fontSize: '1.6rem',
+                    fontSize: '1.125rem',
                     color: 'var(--foreground)',
                     letterSpacing: '-0.01em',
                     fontFeatureSettings: '"tnum"',

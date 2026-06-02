@@ -82,9 +82,10 @@ function CardTitle({
     <Tag
       data-slot="card-title"
       className={cn(
-        "font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm",
+        "font-heading leading-snug font-semibold pb-1.5 border-b border-border group-data-[size=sm]/card:text-sm",
         className
       )}
+      style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}
       {...props}
     />
   )
@@ -117,7 +118,7 @@ function CardContent({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-content"
-      className={cn("px-4 group-data-[size=sm]/card:px-3 overflow-hidden", className)}
+      className={cn("px-4 group-data-[size=sm]/card:px-3 overflow-hidden flex-1 min-h-0", className)}
       {...props}
     />
   )
