@@ -1,6 +1,6 @@
 // now-hero-card.tsx — C1 Now-page hero card (ADR-051 / C1 composition doc).
 //
-// Full-width half-row card at the top of the Now-page grid.
+// Full-width strip rendered OUTSIDE the grid (block-level, naturally full-width).
 // Left side: station logo from branding.
 // Right side: station name (branding.siteTitle) + location line (station.name).
 //
@@ -76,8 +76,9 @@ function PlaceholderLogo({ size }: { size: number }) {
 /**
  * NowHeroCard — C1 Now-page hero strip.
  *
- * Footprint: `full` (col-span-4 on lg, 2 on md, 1 on sm) × visual half-row height.
- * The half-row visual is achieved via py-2 matching PageHeaderCard's precedent.
+ * Rendered OUTSIDE the grid — a block-level card that is naturally full-width.
+ * No footprint or row-span props needed (col/row classes only apply inside a grid).
+ * The compact visual is achieved via py-2.
  *
  * Logo: rendered as <img> when a URL is provided; falls back to PlaceholderLogo.
  * Station name: always rendered (falls back to "My Weather Station" when unset).
@@ -94,8 +95,6 @@ export function NowHeroCard({
 
   return (
     <Card
-      footprint="full"
-      halfRow
       className={['py-2', className].filter(Boolean).join(' ')}
     >
       {/*

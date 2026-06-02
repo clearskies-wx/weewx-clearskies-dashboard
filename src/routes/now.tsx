@@ -129,24 +129,23 @@ export function NowPage() {
       {/* sr-only h1 for this page (the NowHeroCard renders an h1 that's visible) */}
       <h1 className="sr-only">Now</h1>
 
+      {/* ── Alert Banner — block-level, naturally full-width outside grid ── */}
+      {!alertLoading && alerts && <AlertBanner alerts={alerts} />}
+
+      {/* ── Hero bar — block-level, naturally full-width outside grid ─────── */}
+      <NowHeroCard
+        stationName={branding.siteTitle}
+        location={station?.name ?? undefined}
+        logoUrl={logoUrl}
+        logoAlt={logoAlt}
+      />
+
       {/*
         A4 Grid primitive — 4 columns on lg, 2 on md, 1 on mobile.
-        Cards declare their own footprint; the hero is full-width (col-span-4).
-        The "sr-only h1" above is outside the grid; the visible station name
-        heading is inside NowHeroCard as a real <h1>.
+        Only weather data cards live here; hero and alert are above.
+        Row track: --card-row (11rem) at md+.
       */}
       <Grid>
-
-        {/* ── Alert Banner — full-width (4×1); self-hides when no alerts ── */}
-        {!alertLoading && alerts && <AlertBanner alerts={alerts} />}
-
-        {/* ── Hero bar — full-width × half-row ──────────────────────────── */}
-        <NowHeroCard
-          stationName={branding.siteTitle}
-          location={station?.name ?? undefined}
-          logoUrl={logoUrl}
-          logoAlt={logoAlt}
-        />
 
         {/* ── Current Conditions — 2×2 (wide + rowSpan 2) ──────────────── */}
         <CurrentConditionsCard

@@ -11,20 +11,15 @@ type CardProps = React.ComponentProps<"div"> & {
    *  tile=1col · wide=2col · panel=3col · full=4col */
   footprint?: CardFootprint;
   /**
-   * Row span — 1 (default, 11rem via md:row-span-2) or 2 (22rem via md:row-span-4).
+   * Row span — 1 (default, 11rem via md:row-span-1) or 2 (22rem via md:row-span-2).
    * Row spans only apply at md+ (≥768px); mobile rows are auto-height.
    */
   rowSpan?: 1 | 2;
-  /**
-   * Half-row mode — emits md:row-span-1 (5.5rem) instead of the default md:row-span-2.
-   * Use for hero bar and alert banner strip cards that occupy only half a standard row.
-   */
-  halfRow?: boolean;
 };
 
 /** Column-span classes for each footprint value (ADR-051).
  *  Grid is 1→2→4 columns (<768px / ≥768px / ≥1024px).
- *  Column spans are enforced now; row heights use --card-half-row track at md+. */
+ *  Column spans are enforced now; row heights use --card-row (11rem) track at md+. */
 const footprintColSpan: Record<CardFootprint, string> = {
   tile:  "col-span-1",
   wide:  "col-span-1 md:col-span-2",
@@ -36,14 +31,12 @@ const footprintColSpan: Record<CardFootprint, string> = {
  * Row-span class for the card's grid placement at md+ (≥768px).
  * Mobile rows are auto — no row-span class emitted at the base breakpoint.
  *
- * halfRow  → md:row-span-1 (1 × 5.5rem = 5.5rem) — hero bar / alert strip
- * rowSpan=2 → md:row-span-4 (4 × 5.5rem = 22rem) — tall cards
- * default   → md:row-span-2 (2 × 5.5rem = 11rem)  — standard tiles
+ * rowSpan=2 → md:row-span-2 (2 × 11rem + 1rem gap = 23rem) — tall cards
+ * default   → md:row-span-1 (1 × 11rem = 11rem)             — standard tiles
  */
-function rowSpanClass(halfRow: boolean, rowSpan: 1 | 2 | undefined): string {
-  if (halfRow) return "md:row-span-1";
-  if (rowSpan === 2) return "md:row-span-4";
-  return "md:row-span-2";
+function rowSpanClass(rowSpan: 1 | 2 | undefined): string {
+  if (rowSpan === 2) return "md:row-span-2";
+  return "md:row-span-1";
 }
 
 function Card({
@@ -51,7 +44,6 @@ function Card({
   size = "default",
   footprint,
   rowSpan,
-  halfRow = false,
   ...props
 }: CardProps) {
   return (
@@ -67,7 +59,7 @@ function Card({
         "card-glass",
         "group/card flex flex-col gap-4 overflow-hidden rounded-xl py-4 text-sm text-card-foreground ring-1 ring-foreground/10 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
         footprint !== undefined ? footprintColSpan[footprint] : undefined,
-        rowSpanClass(halfRow, rowSpan),
+        rowSpanClass(rowSpan),
         className
       )}
       {...props}
