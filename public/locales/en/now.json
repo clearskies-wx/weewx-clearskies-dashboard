@@ -230,5 +230,9 @@
 
   "aqiCard": {
     "title": "AQI"
+  },
+
+  "alertBanner": {
+    "andMore": "+{{count}} more"
   }
 }
