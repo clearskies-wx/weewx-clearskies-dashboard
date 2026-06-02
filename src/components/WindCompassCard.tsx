@@ -249,7 +249,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
               y={18}
               textAnchor="middle"
               dominantBaseline="middle"
-              fill="#71717a"
+              fill="var(--muted-foreground)"
               style={CARD_LABEL_STYLE}
               aria-hidden="true"
             >
@@ -260,7 +260,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
               y={210}
               textAnchor="middle"
               dominantBaseline="middle"
-              fill="#71717a"
+              fill="var(--muted-foreground)"
               style={CARD_LABEL_STYLE}
               aria-hidden="true"
             >
@@ -271,7 +271,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
               y={402}
               textAnchor="middle"
               dominantBaseline="middle"
-              fill="#71717a"
+              fill="var(--muted-foreground)"
               style={CARD_LABEL_STYLE}
               aria-hidden="true"
             >
@@ -282,7 +282,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
               y={210}
               textAnchor="middle"
               dominantBaseline="middle"
-              fill="#71717a"
+              fill="var(--muted-foreground)"
               style={CARD_LABEL_STYLE}
               aria-hidden="true"
             >
