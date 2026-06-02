@@ -134,6 +134,11 @@
        backdrop-filter: blur(8px) saturate(1.1) applied alongside this. */
     --card-glass: 255 255 255 / 0.72;
 
+    /* ── Alert glass tokens (ADR-052) ───────────────────────────────────────── */
+    --alert-glass:  rgba(255, 210, 100, 0.55);
+    --alert-border: rgba(200, 140, 0, 0.30);
+    --alert-fg:     #78350f;
+
     --background: oklch(1 0 0);
 
     --foreground: oklch(0.145 0 0);
@@ -213,6 +218,11 @@
 [data-theme="dark"] {
 
     --card-glass: 30 35 55 / 0.55;
+
+    /* ── Alert glass tokens (ADR-052) ───────────────────────────────────────── */
+    --alert-glass:  rgba(120, 85, 10, 0.55);
+    --alert-border: rgba(255, 200, 60, 0.25);
+    --alert-fg:     #fbbf24;
 
     --background: oklch(0.145 0 0);
 
@@ -315,5 +325,16 @@
     background: rgb(var(--card-glass));
     backdrop-filter: blur(8px) saturate(1.1);
     -webkit-backdrop-filter: blur(8px) saturate(1.1);
+  }
+
+  /* ── Alert glass utility (ADR-052) ──────────────────────────────────────────
+     Uses --alert-glass / --alert-border / --alert-fg (set in :root and
+     [data-theme=dark]).  border-color relies on the caller setting a border
+     (e.g. Tailwind border class) — this class only supplies the color.        */
+  .alert-glass {
+    background: var(--alert-glass);
+    border-color: var(--alert-border);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
 }
