@@ -1,0 +1,534 @@
+// sun-moon-card.tsx — Sun & Moon tile for the Now page.
+//
+// Renders a nested-arcs SVG visualization (Option A, operator-confirmed 2026-06-01).
+// The outer arc represents the sun's daily arc (sunrise → sunset).
+// The inner arc represents the moon's arc (moonrise → moonset).
+// Each body has a position marker proportional to the current time.
+//
+// Design:
+//   - Card footprint "tile" (1 column, ADR-051).
+//   - Title: "Sun & Moon" — text-only, Manrope 600 per design token.
+//   - Sun arc: gold/amber (#f59e0b), dashed stroke, outer radius.
+//   - Moon arc: silver (#94a3b8), dashed stroke, inner radius.
+//   - Moon phase label positioned next to the moon marker.
+//   - Horizon line: very subtle (opacity 0.15).
+//   - New moon: outlined circle (thin ring, dark fill) when illumination = 0%.
+//
+// A11y (WCAG 2.1 AA):
+//   - SVG has role="img" and <title> summarising the astronomical state.
+//   - aria-live="polite" on content container for SSE live updates.
+//   - Card uses aria-busy during loading.
+//   - State signals use position + label, not color alone (§5.1).
+//   - All time labels and phase text visible as SVG <text> elements.
+//   - Error and loading states use role="alert" / role="status".
+//
+// Time: formatLocalTime from src/utils/time.ts (ADR-020).
+// Units: zero unit knowledge in dashboard (ADR-042).
+// i18n: 'now' namespace for labels (ADR-021).
+
+import * as React from 'react';
+import { useTranslation } from 'react-i18next';
+import { formatLocalTime } from '../utils/time';
+import type { AlmanacSnapshot } from '../api/types';
+import {
+  Card,
+  CardHeader,
+  CardContent,
+} from './ui/card';
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+/** Sun arc — outer semicircle geometry */
+const SUN_R = 72;
+/** Moon arc — inner semicircle geometry */
+const MOON_R = 46;
+/** SVG viewBox half-width; center X = cx */
+const CX = 100;
+/** SVG viewBox baseline Y; arcs curve upward (negative Y direction) */
+const CY = 90;
+/** Total SVG width */
+const SVG_W = 200;
+/** Total SVG height — enough room for arcs + labels below */
+const SVG_H = 130;
+
+/** Sun color — gold/amber, WCAG AA on dark backgrounds */
+const SUN_COLOR = '#f59e0b';
+/** Moon color — silver/grey */
+const MOON_COLOR = '#94a3b8';
+/** Dash pattern shared by both arcs */
+const DASH = '7 4';
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Compute the (x, y) coordinate on a semicircular arc at a given percentage.
+ *
+ * The arc curves UPWARD (above the horizon line at cy).
+ * pct = 0 → left endpoint (rise); pct = 1 → right endpoint (set).
+ *
+ * @param pct  Progress along the arc, clamped to [0, 1].
+ * @param cx   Horizontal center of the semicircle.
+ * @param cy   Vertical center (horizon baseline).
+ * @param r    Radius of the semicircle.
+ */
+function arcPoint(
+  pct: number,
+  cx: number,
+  cy: number,
+  r: number,
+): { x: number; y: number } {
+  const clamped = Math.max(0, Math.min(1, pct));
+  // angle=PI at left (rise), angle=0 at right (set)
+  const angle = Math.PI * (1 - clamped);
+  return {
+    x: cx + r * Math.cos(angle),
+    y: cy - r * Math.sin(angle),
+  };
+}
+
+/**
+ * Build an SVG arc path string for an upper semicircle.
+ * Sweeps counterclockwise (sweep-flag=0) so it arcs upward in SVG coords
+ * (SVG Y axis is inverted vs. Cartesian).
+ */
+function semicirclePath(cx: number, cy: number, r: number): string {
+  const x0 = cx - r; // left endpoint (rise)
+  const x1 = cx + r; // right endpoint (set)
+  // large-arc-flag=1, sweep-flag=0 → upper semicircle
+  return `M ${x0} ${cy} A ${r} ${r} 0 1 1 ${x1} ${cy}`;
+}
+
+/**
+ * Convert a dash-separated phase name to title case.
+ * "waxing-gibbous" → "Waxing Gibbous"
+ */
+function formatPhaseName(name: string | null): string {
+  if (!name) return '—';
+  return name
+    .split('-')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
+
+/**
+ * Compute proportion [0, 1] of how far along the arc the body is at `nowMs`.
+ * Returns null when either endpoint is missing.
+ */
+function arcProgress(
+  riseIso: string | null,
+  setIso: string | null,
+  nowMs: number,
+): number | null {
+  if (!riseIso || !setIso) return null;
+  const riseMs = new Date(riseIso).getTime();
+  const setMs = new Date(setIso).getTime();
+  if (!isFinite(riseMs) || !isFinite(setMs) || setMs <= riseMs) return null;
+  return (nowMs - riseMs) / (setMs - riseMs);
+}
+
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
+
+function SunMoonSkeleton() {
+  return (
+    <div
+      className="animate-pulse rounded-lg bg-muted"
+      style={{ height: SVG_H }}
+      aria-hidden="true"
+    />
+  );
+}
+
+function SunMoonError({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry: () => void;
+}) {
+  const { t } = useTranslation('common');
+  return (
+    <div role="alert" className="flex flex-col gap-2 items-start text-sm">
+      <p className="text-destructive">{message}</p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="text-xs text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+      >
+        {t('retry')}
+      </button>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main SVG visualization
+// ---------------------------------------------------------------------------
+
+interface ArcVisualizationProps {
+  almanac: AlmanacSnapshot;
+  tz: string;
+  locale: string;
+}
+
+function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
+  const nowMs = Date.now();
+
+  // Sun arc progress
+  const sunPct = arcProgress(almanac.sun.rise, almanac.sun.set, nowMs);
+  const sunMarker =
+    sunPct !== null ? arcPoint(sunPct, CX, CY, SUN_R) : null;
+
+  // Moon arc progress
+  const moonPct = arcProgress(almanac.moon.rise, almanac.moon.set, nowMs);
+  const moonMarker =
+    moonPct !== null ? arcPoint(moonPct, CX, CY, MOON_R) : null;
+
+  // Moon phase info
+  const illumination = almanac.moon.illuminationPercent;
+  const isNewMoon = illumination !== null && illumination === 0;
+  const phaseName = formatPhaseName(almanac.moon.phaseName);
+  const illumText =
+    illumination !== null ? `${Math.round(illumination)}%` : '—';
+
+  // Formatted times
+  const sunriseText = formatLocalTime(almanac.sun.rise, tz, locale);
+  const sunsetText = formatLocalTime(almanac.sun.set, tz, locale);
+  const moonriseText = formatLocalTime(almanac.moon.rise, tz, locale);
+  const moonsetText = formatLocalTime(almanac.moon.set, tz, locale);
+
+  // Endpoint X coordinates
+  const sunLeftX = CX - SUN_R;
+  const sunRightX = CX + SUN_R;
+  const moonLeftX = CX - MOON_R;
+  const moonRightX = CX + MOON_R;
+
+  // SVG accessible title — summarises state for screen readers
+  const svgTitle = [
+    `Sun: rises ${sunriseText}, sets ${sunsetText}`,
+    `Moon: rises ${moonriseText}, sets ${moonsetText}`,
+    `Phase: ${phaseName}, ${illumText} illuminated`,
+  ].join('. ');
+
+  // Moon phase label: positioned just above and to the right of the moon marker
+  // (or above center when no moon marker is computable)
+  let moonLabelX: number;
+  let moonLabelY: number;
+  if (moonMarker) {
+    // Nudge label right of the marker; flip to left when near right edge
+    const nudge = moonMarker.x > CX ? -10 : 10;
+    moonLabelX = moonMarker.x + nudge;
+    moonLabelY = moonMarker.y - 12;
+  } else {
+    moonLabelX = CX;
+    moonLabelY = CY - MOON_R - 12;
+  }
+  const moonLabelAnchor =
+    moonMarker && moonMarker.x > CX ? 'end' : 'middle';
+
+  return (
+    <svg
+      role="img"
+      aria-label={svgTitle}
+      viewBox={`0 0 ${SVG_W} ${SVG_H}`}
+      width="100%"
+      style={{ display: 'block', overflow: 'visible' }}
+    >
+      <title>{svgTitle}</title>
+
+      {/* ── Horizon line ───────────────────────────────────────────────── */}
+      <line
+        x1={CX - SUN_R}
+        y1={CY}
+        x2={CX + SUN_R}
+        y2={CY}
+        stroke="currentColor"
+        strokeWidth={1}
+        style={{ opacity: 0.15 }}
+        aria-hidden="true"
+      />
+
+      {/* ── Sun arc (outer) ────────────────────────────────────────────── */}
+      <path
+        d={semicirclePath(CX, CY, SUN_R)}
+        fill="none"
+        stroke={SUN_COLOR}
+        strokeWidth={3}
+        strokeDasharray={DASH}
+        strokeLinecap="round"
+        aria-hidden="true"
+      />
+
+      {/* ── Moon arc (inner) ───────────────────────────────────────────── */}
+      <path
+        d={semicirclePath(CX, CY, MOON_R)}
+        fill="none"
+        stroke={MOON_COLOR}
+        strokeWidth={2.5}
+        strokeDasharray={DASH}
+        strokeLinecap="round"
+        aria-hidden="true"
+      />
+
+      {/* ── Sun position marker ────────────────────────────────────────── */}
+      {sunMarker && (
+        <g aria-hidden="true">
+          {/* Glow ring */}
+          <circle
+            cx={sunMarker.x}
+            cy={sunMarker.y}
+            r={9}
+            fill={SUN_COLOR}
+            fillOpacity={0.2}
+          />
+          {/* Solid marker */}
+          <circle
+            cx={sunMarker.x}
+            cy={sunMarker.y}
+            r={6}
+            fill={SUN_COLOR}
+          />
+        </g>
+      )}
+
+      {/* ── Moon position marker ───────────────────────────────────────── */}
+      {moonMarker && (
+        <g aria-hidden="true">
+          {isNewMoon ? (
+            /* New moon: outlined ring with dark fill (no illumination) */
+            <circle
+              cx={moonMarker.x}
+              cy={moonMarker.y}
+              r={5}
+              fill="var(--background, #0f172a)"
+              stroke={MOON_COLOR}
+              strokeWidth={1.5}
+            />
+          ) : (
+            /* Illuminated moon: solid marker with crescent shadow overlay */
+            <>
+              <circle
+                cx={moonMarker.x}
+                cy={moonMarker.y}
+                r={5}
+                fill={MOON_COLOR}
+              />
+              {/* Crescent shadow — offset dark circle covering the "dark" side */}
+              <circle
+                cx={moonMarker.x + 2}
+                cy={moonMarker.y}
+                r={4}
+                fill="var(--card-background, #1e293b)"
+                fillOpacity={0.55}
+              />
+            </>
+          )}
+        </g>
+      )}
+
+      {/* ── Moon phase label (next to moon marker) ─────────────────────── */}
+      {/* Phase name */}
+      <text
+        x={moonLabelX}
+        y={moonLabelY}
+        textAnchor={moonLabelAnchor}
+        fontSize={8}
+        fontFamily="var(--font-sans, system-ui, sans-serif)"
+        fill={MOON_COLOR}
+        aria-hidden="true"
+      >
+        {phaseName}
+      </text>
+      {/* Illumination percent — one line below phase name */}
+      <text
+        x={moonLabelX}
+        y={moonLabelY + 10}
+        textAnchor={moonLabelAnchor}
+        fontSize={7.5}
+        fontFamily="var(--font-sans, system-ui, sans-serif)"
+        fill="var(--muted-foreground, #64748b)"
+        aria-hidden="true"
+      >
+        {illumText} illuminated
+      </text>
+
+      {/* ── Sunrise / Sunset endpoint labels ───────────────────────────── */}
+      {/* Sunrise label — below left endpoint of sun arc */}
+      <text
+        x={sunLeftX}
+        y={CY + 14}
+        textAnchor="middle"
+        fontSize={7.5}
+        fontFamily="var(--font-sans, system-ui, sans-serif)"
+        fill="var(--muted-foreground, #64748b)"
+        aria-hidden="true"
+      >
+        {sunriseText}
+      </text>
+      <text
+        x={sunLeftX}
+        y={CY + 23}
+        textAnchor="middle"
+        fontSize={7}
+        fontFamily="var(--font-sans, system-ui, sans-serif)"
+        fill="var(--muted-foreground, #64748b)"
+        aria-hidden="true"
+      >
+        Sunrise
+      </text>
+
+      {/* Sunset label — below right endpoint of sun arc */}
+      <text
+        x={sunRightX}
+        y={CY + 14}
+        textAnchor="middle"
+        fontSize={7.5}
+        fontFamily="var(--font-sans, system-ui, sans-serif)"
+        fill="var(--muted-foreground, #64748b)"
+        aria-hidden="true"
+      >
+        {sunsetText}
+      </text>
+      <text
+        x={sunRightX}
+        y={CY + 23}
+        textAnchor="middle"
+        fontSize={7}
+        fontFamily="var(--font-sans, system-ui, sans-serif)"
+        fill="var(--muted-foreground, #64748b)"
+        aria-hidden="true"
+      >
+        Sunset
+      </text>
+
+      {/* ── Moonrise / Moonset endpoint labels ─────────────────────────── */}
+      {/* Moonrise label — below left endpoint of moon arc */}
+      <text
+        x={moonLeftX}
+        y={CY + 14}
+        textAnchor="middle"
+        fontSize={7}
+        fontFamily="var(--font-sans, system-ui, sans-serif)"
+        fill="var(--muted-foreground, #64748b)"
+        aria-hidden="true"
+      >
+        {moonriseText}
+      </text>
+      <text
+        x={moonLeftX}
+        y={CY + 23}
+        textAnchor="middle"
+        fontSize={6.5}
+        fontFamily="var(--font-sans, system-ui, sans-serif)"
+        fill="var(--muted-foreground, #64748b)"
+        aria-hidden="true"
+      >
+        Moonrise
+      </text>
+
+      {/* Moonset label — below right endpoint of moon arc */}
+      <text
+        x={moonRightX}
+        y={CY + 14}
+        textAnchor="middle"
+        fontSize={7}
+        fontFamily="var(--font-sans, system-ui, sans-serif)"
+        fill="var(--muted-foreground, #64748b)"
+        aria-hidden="true"
+      >
+        {moonsetText}
+      </text>
+      <text
+        x={moonRightX}
+        y={CY + 23}
+        textAnchor="middle"
+        fontSize={6.5}
+        fontFamily="var(--font-sans, system-ui, sans-serif)"
+        fill="var(--muted-foreground, #64748b)"
+        aria-hidden="true"
+      >
+        Moonset
+      </text>
+    </svg>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Props
+// ---------------------------------------------------------------------------
+
+export interface SunMoonCardProps {
+  almanac: AlmanacSnapshot | null;
+  loading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
+  /** IANA time zone identifier from StationMetadata.timezone (ADR-020). */
+  stationTz: string;
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+/**
+ * SunMoonCard — displays nested semicircular arc visualization of today's
+ * sun and moon arcs with position markers for the current time.
+ *
+ * Props:
+ *   almanac    — AlmanacSnapshot from useAlmanac() hook, or null.
+ *   loading    — Show skeleton while data is loading.
+ *   error      — Show error + retry when non-null.
+ *   onRetry    — Callback for retry button.
+ *   stationTz  — IANA TZ from StationMetadata for local time display.
+ */
+export function SunMoonCard({
+  almanac,
+  loading = false,
+  error = null,
+  onRetry,
+  stationTz,
+}: SunMoonCardProps) {
+  const { t, i18n } = useTranslation('now');
+  const locale = i18n.language;
+
+  return (
+    <Card footprint="tile" aria-busy={loading}>
+      <CardHeader>
+        {/* Title: text-only per spec — NO icon. Manrope 600 via font-heading. */}
+        <h2 className="font-heading text-base leading-snug font-semibold">
+          {t('sunAndMoon')}
+        </h2>
+      </CardHeader>
+
+      <CardContent>
+        {loading ? (
+          <>
+            <span className="sr-only" role="status">
+              {t('loading.sunMoon')}
+            </span>
+            <SunMoonSkeleton />
+          </>
+        ) : error ? (
+          <SunMoonError
+            message={t('error.almanac')}
+            onRetry={onRetry ?? (() => undefined)}
+          />
+        ) : almanac ? (
+          /* aria-live so SSE-driven refreshes are announced (ADR-041) */
+          <div aria-live="polite">
+            <ArcVisualization almanac={almanac} tz={stationTz} locale={locale} />
+          </div>
+        ) : (
+          <p className="text-muted-foreground text-sm">
+            {t('noData.observation')}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

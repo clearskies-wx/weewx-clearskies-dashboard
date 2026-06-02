@@ -31,6 +31,7 @@ import {
 import type { EarthquakeRecord } from '../api/types';
 import { useEarthquakes, useStation, useEarthquakeConfig, useEarthquakeFaults } from '../hooks/useWeatherData';
 import { formatValue } from '../utils/format';
+import { magnitudeClasses, alertClasses } from '../utils/earthquake';
 
 // ---------------------------------------------------------------------------
 // Helper utilities
@@ -47,29 +48,6 @@ function formatTime(isoString: string, timeZone: string, locale: string): string
     timeZone,
     timeZoneName: 'short',
   }).format(new Date(isoString));
-}
-
-// MMI-scale colors for the magnitude badge. Approximate magnitude-to-MMI mapping:
-// M<3 → MMI I-III (not felt/weak), M3-4 → MMI IV-V (light/moderate),
-// M4-5 → MMI VI (strong), M5-7 → MMI VII-IX (very strong/severe), M7+ → MMI X+ (extreme).
-function magnitudeClasses(mag: number): { bg: string; text: string } {
-  if (mag < 3)   return { bg: 'bg-sky-100 dark:bg-sky-900/40',        text: 'text-sky-800 dark:text-sky-200' };
-  if (mag < 4)   return { bg: 'bg-green-500 dark:bg-green-600',       text: 'text-white dark:text-white' };
-  if (mag < 5)   return { bg: 'bg-yellow-400 dark:bg-yellow-500',     text: 'text-yellow-900 dark:text-yellow-950' };
-  if (mag < 7)   return { bg: 'bg-orange-500 dark:bg-red-600',        text: 'text-white dark:text-white' };
-  return           { bg: 'bg-red-800 dark:bg-red-900',                text: 'text-white dark:text-red-100' };
-}
-
-// PAGER alert level badge colors — matches real USGS palette semantics.
-// Text label always present alongside color (§5.1).
-function alertClasses(level: EarthquakeRecord['alert']): string {
-  switch (level) {
-    case 'green':  return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300';
-    case 'yellow': return 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300';
-    case 'orange': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300';
-    case 'red':    return 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300';
-    default:       return '';
-  }
 }
 
 function ageColor(time: string, oldestTime: string, newestTime: string): string {

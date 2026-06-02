@@ -227,13 +227,13 @@ paths:
         the station — no error.
       operationId: getAlerts
       parameters:
-        - name: severity
+        - name: minLevel
           in: query
           required: false
-          description: Filter by minimum severity level.
           schema:
-            type: string
-            enum: [advisory, watch, warning]
+            type: integer
+            enum: [1, 2, 3, 4]
+          description: "Filter alerts by minimum severity level. Records with null severityLevel are included when not specified, excluded when specified."
       responses:
         '200':
           description: Active alerts
@@ -977,6 +977,19 @@ components:
         lightning_distance: { type: number, nullable: true }
         lightning_noise_count: { type: number, nullable: true }
         lightning_disturber_count: { type: number, nullable: true }
+        lightningStrikeHistory:
+          type: array
+          nullable: true
+          description: Rolling 24h window of detected lightning strikes (time + distance pairs). Null when lightning detection is unavailable. Empty array when no strikes in the window.
+          items:
+            type: object
+            properties:
+              time:
+                type: string
+                description: ISO 8601 timestamp of the detected strike
+              distance:
+                type: number
+                description: Distance to the strike in the station's configured distance unit
 
         # Snow (wview_extended)
         snow: { type: number, nullable: true }
@@ -1130,9 +1143,6 @@ components:
         id: { type: string }
         headline: { type: string }
         description: { type: string }
-        severity:
-          type: string
-          enum: [advisory, watch, warning]
         urgency: { type: string, nullable: true }
         certainty: { type: string, nullable: true }
         event: { type: string }
@@ -1142,7 +1152,32 @@ components:
         areaDesc: { type: string, nullable: true }
         category: { type: string, nullable: true }
         source: { type: string }
-      required: [id, headline, severity, event, effective, source]
+        severityLevel:
+          type: integer
+          nullable: true
+          enum: [1, 2, 3, 4]
+          description: "Ordinal severity level (1=lowest, 4=highest). Null for passthrough providers."
+        severityLabel:
+          type: string
+          nullable: true
+          description: "Human-readable severity label, locale-appropriate (e.g., 'Warning', 'Amber', 'Vigilance jaune')."
+        alertSystem:
+          type: string
+          nullable: true
+          description: "Originating alert system identifier (e.g., 'nws', 'meteoalarm', 'ukmet')."
+        hazardType:
+          type: string
+          nullable: true
+          description: "Hazard category (e.g., 'thunderstorm', 'fire', 'earthquake')."
+        nativeName:
+          type: string
+          nullable: true
+          description: "Alert name in original language."
+        color:
+          type: string
+          nullable: true
+          description: "Provider-supplied hex color code."
+      required: [id, headline, event, effective, source]
 
     AlertList:
       type: object

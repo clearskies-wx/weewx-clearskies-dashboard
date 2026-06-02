@@ -164,6 +164,17 @@
 
     --destructive: oklch(0.577 0.245 27.325);
 
+    --temp-hi: #c81e1e;
+    --temp-lo: #1d4ed8;
+
+    /* ── Semi-circular gauge (barometer, AQI) ────────────────────────────────
+       --gauge-fill:      filled-arc tick color (uniform mode)
+       --gauge-unfill:    unfilled-arc tick color
+       --gauge-indicator: indicator (current-value) tick color              */
+    --gauge-fill:      #3b82f6;
+    --gauge-unfill:    rgba(0, 0, 0, 0.22);
+    --gauge-indicator: #1e40af;
+
     --border: oklch(0.922 0 0);
 
     --input: oklch(0.922 0 0);
@@ -232,6 +243,14 @@
     --accent-foreground: oklch(0.985 0 0);
 
     --destructive: oklch(0.704 0.191 22.216);
+
+    --temp-hi: #f87171;
+    --temp-lo: #93c5fd;
+
+    /* ── Semi-circular gauge (dark theme) ───────────────────────────────── */
+    --gauge-fill:      #60a5fa;
+    --gauge-unfill:    rgba(255, 255, 255, 0.35);
+    --gauge-indicator: #93c5fd;
 
     --border: oklch(1 0 0 / 10%);
 

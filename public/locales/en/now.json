@@ -21,7 +21,9 @@
     "earthquake": "Loading earthquake data…",
     "forecast": "Loading forecast…",
     "solarUv": "Loading solar and UV data…",
-    "precipBarometer": "Loading precipitation and pressure data…"
+    "precipBarometer": "Loading precipitation and pressure data…",
+    "precipitation": "Loading precipitation data…",
+    "barometer": "Loading barometer data…"
   },
 
   "error": {
@@ -33,7 +35,9 @@
     "earthquake": "Unable to load earthquake data",
     "forecast": "Unable to load forecast",
     "solarUv": "Unable to load solar and UV data",
-    "precipBarometer": "Unable to load precipitation and pressure data"
+    "precipBarometer": "Unable to load precipitation and pressure data",
+    "precipitation": "Unable to load precipitation data",
+    "barometer": "Unable to load barometer data"
   },
 
   "noData": {
@@ -196,5 +200,35 @@
   },
 
   "webcam": "Webcam",
-  "webcamAlt": "Live webcam view"
+  "webcamAlt": "Live webcam view",
+
+  "precipitationCard": {
+    "title": "Precipitation",
+    "rainTodayLabel": "Rain today",
+    "rainRateLabel": "Rain rate"
+  },
+
+  "barometerCard": {
+    "title": "Barometer"
+  },
+
+  "solarRadiationCard": {
+    "title": "Solar Radiation",
+    "noData": "No solar data available",
+    "chartAriaLabel": "Solar radiation and clear-sky maximum chart for the last 24 hours",
+    "srCaption": "Today's solar radiation readings"
+  },
+
+  "uvIndexCard": {
+    "title": "UV Index",
+    "noData": "No UV data available",
+    "chartAriaLabel": "UV index chart for today",
+    "srCaption": "Today's UV index readings",
+    "nowLabel": "Now",
+    "peakLabel": "Peak"
+  },
+
+  "aqiCard": {
+    "title": "AQI"
+  }
 }
