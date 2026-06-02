@@ -2,7 +2,7 @@
 // Each hook checks isMockMode() first; if true, returns mock data synchronously.
 // Otherwise it delegates to useApiQuery with the appropriate endpoint function.
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useApiQuery } from './useApiQuery';
 import { isMockMode, ApiError } from '../api/client';
 import {
@@ -146,9 +146,18 @@ interface ObservationHookResult extends HookResult<Observation> {
 const SCENE_DEFAULT: SceneDescriptor = { sky: 'clear', daytime: true, overlay: null };
 
 export function useObservation(): ObservationHookResult {
+  // Re-fetch /current every 60 seconds to pick up envelope fields
+  // (windSpeedAvg10m, windGustMax10m, barometerTrendDirection, scene)
+  // that are not available in SSE packets.
+  const [pollTick, setPollTick] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setPollTick(t => t + 1), 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
   const { data, loading, error, refetch } = useApiQuery<CurrentResponse>(
     (signal) => getCurrent(signal),
-    { skip: isMockMode() },
+    { skip: isMockMode(), deps: [pollTick] },
   );
 
   if (isMockMode()) {
