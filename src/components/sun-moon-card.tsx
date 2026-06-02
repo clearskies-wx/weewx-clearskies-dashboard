@@ -201,11 +201,9 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
   const moonriseText = formatLocalTime(almanac.moon.rise, tz, locale);
   const moonsetText = formatLocalTime(almanac.moon.set, tz, locale);
 
-  // Endpoint X coordinates
+  // Endpoint X coordinates (sun arc endpoints used for label positioning)
   const sunLeftX = CX - SUN_R;
   const sunRightX = CX + SUN_R;
-  const moonLeftX = CX - MOON_R;
-  const moonRightX = CX + MOON_R;
 
   // SVG accessible title — summarises state for screen readers
   const svgTitle = [
