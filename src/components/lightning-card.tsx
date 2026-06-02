@@ -154,7 +154,14 @@ export function LightningCard({
         </h2>
       </CardHeader>
 
-      <CardContent>
+      <CardContent
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          flex: 1,
+          minHeight: 0,
+        }}
+      >
         {loading ? (
           <>
             <span className="sr-only" role="status">Loading lightning data</span>
@@ -163,7 +170,7 @@ export function LightningCard({
         ) : error ? (
           <p className="text-sm text-muted-foreground">{error}</p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1, minHeight: 0 }}>
 
             {/* ── Chart zone (upper ~70%) ────────────────────────────── */}
             <div

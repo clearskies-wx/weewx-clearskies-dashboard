@@ -212,7 +212,14 @@ export function BarometerCard({
         </h2>
       </CardHeader>
 
-      <CardContent>
+      <CardContent
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          flex: 1,
+          minHeight: 0,
+        }}
+      >
         {loading ? (
           <>
             <span className="sr-only" role="status">{t('loading.barometer')}</span>
@@ -224,6 +231,8 @@ export function BarometerCard({
             onRetry={onRetry ?? (() => undefined)}
           />
         ) : (
+          /* Flex-grow wrapper keeps the gauge from overflowing the card height. */
+          <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center' }}>
           <SemiCircularGauge
             value={barometerValue ?? (gaugeMin + gaugeMax) / 2}
             min={gaugeMin}
@@ -308,6 +317,7 @@ export function BarometerCard({
               )}
             </div>
           </SemiCircularGauge>
+          </div>
         )}
       </CardContent>
     </Card>
