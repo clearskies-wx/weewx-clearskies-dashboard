@@ -275,31 +275,28 @@ export function DailyColumns({
     </div>
   );
 
-  // Precip row
+  // Precip row — always visible (0% shown muted, non-zero shown normal)
   const precipRow = (
     <div style={{ display: 'flex', flexDirection: 'row', position: 'relative', zIndex: 1 }}>
       {days.map((day, i) => {
         const precip = day.precipProbabilityMax;
-        const showPrecip = precip !== null && precip > 0;
+        const hasPrecip = precip !== null && precip > 0;
         return (
           <div key={i} style={{ ...cellBase, height: expandable ? 16 : 12, marginTop: expandable ? 0 : 4 }}>
-            {showPrecip ? (
-              <span
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.08rem',
-                  fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                  fontSize: expandable ? '0.7rem' : '0.63rem',
-                  color: 'var(--muted-foreground)',
-                }}
-              >
-                <Drop aria-hidden="true" size={expandable ? 8 : 7} />
-                {precip}%
-              </span>
-            ) : (
-              <span style={{ opacity: 0, fontSize: '0.63rem' }}>0%</span>
-            )}
+            <span
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.08rem',
+                fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                fontSize: expandable ? '0.7rem' : '0.63rem',
+                color: 'var(--muted-foreground)',
+                opacity: hasPrecip ? 1 : 0.5,
+              }}
+            >
+              <Drop aria-hidden="true" size={expandable ? 8 : 7} />
+              {precip !== null ? `${precip}%` : '—'}
+            </span>
           </div>
         );
       })}

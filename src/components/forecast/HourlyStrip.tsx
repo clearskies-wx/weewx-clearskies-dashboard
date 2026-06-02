@@ -165,29 +165,26 @@ export function HourlyStrip({
     </div>
   ));
 
-  // Row: precipitation
+  // Row: precipitation — always visible (0% shown muted, non-zero shown normal)
   const precipRow = displayHours.map((hour, i) => {
     const precip = hour.precipProbability;
-    const showPrecip = precip !== null && precip > 0;
+    const hasPrecip = precip !== null && precip > 0;
     return (
       <div key={i} style={{ ...colStyle, ...CELL_BASE, height: rowH.precip }}>
-        {showPrecip ? (
-          <span
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 2,
-              fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-              fontSize: 'var(--text-micro, 0.7rem)',
-              color: 'var(--muted-foreground)',
-            }}
-          >
-            <Drop aria-hidden="true" size={7} />
-            {precip}%
-          </span>
-        ) : (
-          <span style={{ opacity: 0, fontSize: 'var(--text-micro, 0.7rem)' }}>0%</span>
-        )}
+        <span
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+            fontSize: 'var(--text-micro, 0.7rem)',
+            color: 'var(--muted-foreground)',
+            opacity: hasPrecip ? 1 : 0.5,
+          }}
+        >
+          <Drop aria-hidden="true" size={7} />
+          {precip !== null ? `${precip}%` : '—'}
+        </span>
       </div>
     );
   });
