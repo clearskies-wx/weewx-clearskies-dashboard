@@ -233,6 +233,20 @@
   },
 
   "alertBanner": {
-    "andMore": "+{{count}} more"
+    "andMore": "+{{count}} more",
+    "of": "of",
+    "previousAlert": "Previous alert",
+    "nextAlert": "Next alert",
+    "expand": "Show alert details",
+    "collapse": "Hide alert details",
+    "ongoing": "ongoing",
+    "until": "until {{time}}",
+    "effective": "Effective",
+    "expires": "Expires",
+    "urgency": "Urgency",
+    "certainty": "Certainty",
+    "issuedBy": "Issued by",
+    "alertSystem": "Alert system",
+    "alertN": "Alert {{n}} of {{total}}"
   }
 }
