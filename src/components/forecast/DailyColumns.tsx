@@ -94,7 +94,7 @@ export function DailyColumns({
   const N = days.length;
 
   // Trend SVG sizes: 45px generous for forecast page, 35px for now card (C3 mockup)
-  const trendH = expandable ? 45 : 35;
+  const trendH = expandable ? 45 : 25;
   // SVG viewbox width: 700 units for N=7, proportional otherwise
   const svgViewWidth = 100 * N;
 
@@ -257,7 +257,7 @@ export function DailyColumns({
               alignItems: 'baseline',
               gap: 0,
               fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
-              fontSize: expandable ? '0.85rem' : '0.85rem',
+              fontSize: expandable ? '0.85rem' : '0.75rem',
               fontWeight: 600,
               lineHeight: 1,
             }}
