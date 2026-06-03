@@ -612,7 +612,7 @@ export function UvIndexCard({
   );
 
   return (
-    <Card footprint="tile" aria-busy={loading}>
+    <Card footprint="tile" aria-busy={loading} className="pb-[1px]">
       <CardHeader>
         {/* Title: text-only per ADR-050 (no title icon on C4 tiles). Manrope 600 via font-heading. */}
         <h2 className="font-heading leading-snug font-semibold pb-1.5 border-b border-border" style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}>
