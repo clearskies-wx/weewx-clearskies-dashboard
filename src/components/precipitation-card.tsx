@@ -16,7 +16,7 @@ import {
   CardHeader,
   CardContent,
 } from './ui/card';
-import type { Observation } from '../api/types';
+import type { Observation, UnitsBlock } from '../api/types';
 
 // ---------------------------------------------------------------------------
 // Sub-components
@@ -129,6 +129,7 @@ const secondaryValueStyle: React.CSSProperties = {
 
 export interface PrecipitationCardProps {
   observation: Observation | null;
+  units?: UnitsBlock | null;
   loading?: boolean;
   error?: string | null;
   onRetry?: () => void;
@@ -140,6 +141,7 @@ export interface PrecipitationCardProps {
 
 export function PrecipitationCard({
   observation,
+  units,
   loading = false,
   error = null,
   onRetry,
@@ -157,7 +159,10 @@ export function PrecipitationCard({
   const humidityFormatted = humidityVal !== null ? `${humidityVal.toFixed(1)}%` : '—';
 
   const dewpointCV = asConverted(observation?.dewpoint ?? null);
-  const dewpointFormatted = dewpointCV?.formatted ?? '—';
+  const dewpointUnit = dewpointCV?.label || units?.dewpoint || '';
+  const dewpointFormatted = dewpointCV?.value !== null && dewpointCV?.value !== undefined
+    ? `${dewpointCV.value.toFixed(1)} ${dewpointUnit}`.trim()
+    : '—';
 
   return (
     <Card footprint="tile" aria-busy={loading}>

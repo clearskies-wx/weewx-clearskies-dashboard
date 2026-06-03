@@ -187,6 +187,7 @@ export function NowPage() {
         {/* ── Precipitation — tile ──────────────────────────────────────── */}
         <PrecipitationCard
           observation={observation}
+          units={units}
           loading={obsLoading}
           error={obsError?.message ?? null}
           onRetry={obsRefetch}
