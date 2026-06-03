@@ -253,13 +253,7 @@ function SolarChart({ data }: SolarChartProps) {
               scale="time"
             />
 
-            <YAxis
-              domain={[0, yMax * 1.1]}
-              tickLine={false}
-              axisLine={false}
-              tick={false}
-              width={1}
-            />
+            {/* YAxis removed to test if it blocks XAxis labels */}
           </AreaChart>
         </ResponsiveContainer>
       </div>
