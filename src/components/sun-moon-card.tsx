@@ -174,7 +174,7 @@ interface ArcVisualizationProps {
   locale: string;
 }
 
-function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
+function ArcVisualization({ almanac, tz }: ArcVisualizationProps) {
   const nowMs = Date.now();
 
   // Sun arc progress
