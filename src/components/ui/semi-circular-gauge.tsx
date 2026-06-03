@@ -179,8 +179,9 @@ export function SemiCircularGauge({
     const angleDeg = fractionToAngleDeg(tickFraction);
 
     const isIndicator = i === indicatorTickIndex;
-    // Tick is "filled" (on the value side) when its index ≤ indicatorTickIndex
-    const isFilled = i <= indicatorTickIndex;
+    // Tick is "filled" (on the value side) when its index is strictly before the indicator.
+    // The indicator line itself (rendered separately below) marks the exact position.
+    const isFilled = i < indicatorTickIndex;
 
     // Is this tick a threshold? Check if any threshold fraction is close to this tick.
     const isThreshold = thresholdFractions.some(
