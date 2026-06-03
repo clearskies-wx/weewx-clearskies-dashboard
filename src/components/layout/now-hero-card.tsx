@@ -111,7 +111,7 @@ export function NowHeroCard({
       >
         {/* ── Logo (left) ─────────────────────────────────────────────────── */}
         <div
-          className="flex h-[3.25rem] shrink-0 items-center justify-center"
+          className="flex shrink-0 items-center justify-center self-stretch"
           aria-hidden="true"
         >
           {logoUrl ? (
