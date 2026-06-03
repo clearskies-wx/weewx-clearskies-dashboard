@@ -421,7 +421,7 @@ function UvChart({ data, currentUv, gradientId, peakUv }: UvChartProps) {
           the SVG rather than creating a CSS gap between the title and the chart container. */}
       <div role="img" aria-label={t('uvIndexCard.chartAriaLabel')} style={{ flex: 1, minHeight: 0 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: 6 }}>
+          <AreaChart data={data} margin={{ top: 5, right: 10, left: 20, bottom: 20 }}>
             <defs>
               {/*
                 Vertical linearGradient: EPA UV severity colors.
