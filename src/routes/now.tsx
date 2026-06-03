@@ -62,10 +62,11 @@ export function NowPage() {
   const { data: aqi, loading: aqiLoading, error: aqiError, refetch: aqiRefetch } = useAqi();
   const { data: station } = useStation();
 
-  // Today's archive — used for high/low stats AND the temp curve past leg
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const { data: todayArchive } = useArchive({ from: todayStart.toISOString() });
+  // archiveStart — 24h rolling window so the Solar Radiation chart has complete
+  // data for its full window.  The UV chart filters internally to midnight-to-midnight,
+  // so fetching 24h of history here is safe for both charts.
+  const archiveStart = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const { data: todayArchive } = useArchive({ from: archiveStart.toISOString() });
 
   const lightning = useLightning(observation);
   const todayStats = useTodayStats(observation, todayArchive);
@@ -213,6 +214,8 @@ export function NowPage() {
           observation={observation}
           todayArchive={todayArchive ?? []}
           todayForecast={todayForecast}
+          sunrise={almanac?.sun?.rise ?? null}
+          sunset={almanac?.sun?.set ?? null}
           loading={obsLoading}
           error={obsError?.message ?? null}
           onRetry={obsRefetch}

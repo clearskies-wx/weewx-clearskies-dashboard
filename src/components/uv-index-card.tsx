@@ -4,10 +4,11 @@
 //
 // Chart:
 //   - Fixed daily window: midnight to midnight (NOT rolling).
-//   - `UV` field from archive: area fill using EPA severity gradient (SVG linearGradient,
-//     vertical, green at bottom → purple at top matching EPA UV scale).
-//   - ReferenceDot marks the current observed UV reading.
-//   - Y-axis: 0–12 (UV scale), minimal visible labels.
+//   - Predicted bell curve: UV(t) = uvIndexMax * sin²(π*(t-rise)/(set-rise)) using almanac
+//     sunrise/sunset + todayForecast.uvIndexMax; area fill with EPA severity gradient
+//     (SVG linearGradient, vertical, green at bottom → purple at top).
+//   - ReferenceDot marks the current observed UV reading at the current time.
+//   - Y-axis: 0–12 (UV scale), ticks at 0/4/8/12.
 //   - X-axis: fixed daily window ticks (midnight, 6am, noon, 6pm, midnight+1).
 //
 // Below chart: flex row, center-justified:
@@ -55,8 +56,8 @@ import type { Observation, ArchiveRecord } from '../api/types';
 /** UV scale upper bound for chart Y-axis. */
 const UV_Y_MAX = 12;
 
-/** Y-axis tick values. */
-const UV_Y_TICKS = [0, 3, 6, 9, 12];
+/** Y-axis tick values. Matches mockup: 0, 4, 8, 12 (EPA band midpoints). */
+const UV_Y_TICKS = [0, 4, 8, 12];
 
 // ---------------------------------------------------------------------------
 // Types
@@ -71,20 +72,61 @@ interface UvChartPoint {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function buildUvChartData(archive: ArchiveRecord[]): UvChartPoint[] {
+/**
+ * buildUvBellCurve — synthesises a predicted UV day curve from forecast data.
+ *
+ * Formula (EPA sinusoidal model):
+ *   UV(t) = uvIndexMax * sin²(π * (t − sunrise) / (sunset − sunrise))
+ *   for t ∈ [sunrise, sunset]; 0 outside that window.
+ *
+ * Points are generated every 15 minutes from midnight to midnight (97 points).
+ * When sunrise/sunset strings are unavailable, sensible defaults are used
+ * (06:00–20:00 local time) so the chart always renders a curve shape.
+ *
+ * @param uvIndexMax   Forecast UV peak for the day (from /forecast daily[0]).
+ * @param sunriseIso   ISO-8601 string for today's sunrise, or null.
+ * @param sunsetIso    ISO-8601 string for today's sunset, or null.
+ */
+function buildUvBellCurve(
+  uvIndexMax: number | null,
+  sunriseIso: string | null,
+  sunsetIso: string | null,
+): UvChartPoint[] {
+  const peak = uvIndexMax ?? 0;
+
   const now = new Date();
   const midnight = new Date(now);
   midnight.setHours(0, 0, 0, 0);
   const midnightMs = midnight.getTime();
   const endMs = midnightMs + 24 * 60 * 60 * 1000;
 
-  return archive
-    .map((rec) => ({
-      ts: new Date(rec.timestamp).getTime(),
-      uv: typeof rec.UV === 'number' ? rec.UV : null,
-    }))
-    .filter((pt) => pt.ts >= midnightMs && pt.ts <= endMs)
-    .sort((a, b) => a.ts - b.ts);
+  // Parse sunrise/sunset — fall back to 06:00/20:00 local when unavailable.
+  const sunriseMs = sunriseIso
+    ? new Date(sunriseIso).getTime()
+    : midnightMs + 6 * 3600 * 1000;
+  const sunsetMs = sunsetIso
+    ? new Date(sunsetIso).getTime()
+    : midnightMs + 20 * 3600 * 1000;
+
+  const spanMs = sunsetMs - sunriseMs;
+
+  const INTERVAL_MS = 15 * 60 * 1000; // 15-minute steps
+  const points: UvChartPoint[] = [];
+
+  for (let ts = midnightMs; ts <= endMs; ts += INTERVAL_MS) {
+    let uv: number;
+    if (peak <= 0 || spanMs <= 0 || ts < sunriseMs || ts > sunsetMs) {
+      uv = 0;
+    } else {
+      const ratio = (ts - sunriseMs) / spanMs; // 0 → 1 across the day
+      uv = peak * Math.pow(Math.sin(Math.PI * ratio), 2);
+      // Round to 1 decimal — matches the precision of a UV index reading.
+      uv = Math.round(uv * 10) / 10;
+    }
+    points.push({ ts, uv });
+  }
+
+  return points;
 }
 
 /** Returns the daily-window domain and ticks (midnight to next midnight). */
@@ -343,11 +385,9 @@ function UvChart({ data, currentUv, gradientId }: UvChartProps) {
   // Build sr-only table rows — every ~4 data points
   const srRows = data.filter((_, i) => i % Math.max(1, Math.floor(data.length / 8)) === 0);
 
-  // Find the timestamp of the most recent UV data point for the ReferenceDot
-  const lastUvPoint = useMemo(
-    () => data.filter((d) => d.uv !== null).at(-1) ?? null,
-    [data],
-  );
+  // Current time — X coordinate for the ReferenceDot (observed UV now).
+  // Memoised so it doesn't shift on every render within the same mount.
+  const nowTs = useMemo(() => Date.now(), []);
 
   if (data.length === 0) {
     return (
@@ -363,7 +403,8 @@ function UvChart({ data, currentUv, gradientId }: UvChartProps) {
   return (
     <>
       {/* Chart — role="img" wraps for screen-reader summary */}
-      <div role="img" aria-label={t('uvIndexCard.chartAriaLabel')} style={{ flex: 1, minHeight: 0 }}>
+      {/* marginTop adds ~10px breathing room between the card title and the chart area. */}
+      <div role="img" aria-label={t('uvIndexCard.chartAriaLabel')} style={{ flex: 1, minHeight: 0, marginTop: '0.625rem' }}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -12 }}>
             <defs>
@@ -430,10 +471,10 @@ function UvChart({ data, currentUv, gradientId }: UvChartProps) {
               width={18}
             />
 
-            {/* ReferenceDot: marks current observed UV on the chart */}
-            {currentUv !== null && lastUvPoint !== null && (
+            {/* ReferenceDot: marks current observed UV on the chart at the current time */}
+            {currentUv !== null && (
               <ReferenceDot
-                x={lastUvPoint.ts}
+                x={nowTs}
                 y={currentUv}
                 r={5}
                 fill={getUvSegment(currentUv)?.color ?? '#888'}
@@ -503,8 +544,12 @@ function GroupSeparator() {
 export interface UvIndexCardProps {
   observation: Observation | null;
   todayArchive: ArchiveRecord[];
-  /** Today's daily forecast — used to show the forecast UV peak. */
+  /** Today's daily forecast — used to show the forecast UV peak and for the predicted bell curve. */
   todayForecast: { uvIndexMax?: number | null } | null;
+  /** Almanac sunrise time (ISO-8601 string) — shapes the bell curve left edge. Null = use 06:00 default. */
+  sunrise: string | null;
+  /** Almanac sunset time (ISO-8601 string) — shapes the bell curve right edge. Null = use 20:00 default. */
+  sunset: string | null;
   loading?: boolean;
   error?: string | null;
   onRetry?: () => void;
@@ -516,8 +561,10 @@ export interface UvIndexCardProps {
 
 export function UvIndexCard({
   observation,
-  todayArchive,
+  todayArchive: _todayArchive,
   todayForecast,
+  sunrise,
+  sunset,
   loading = false,
   error = null,
   onRetry,
@@ -545,8 +592,8 @@ export function UvIndexCard({
   const forecastAbbr = forecastSegment?.label ?? '';
 
   const chartData = useMemo(
-    () => buildUvChartData(todayArchive),
-    [todayArchive],
+    () => buildUvBellCurve(forecastUv, sunrise, sunset),
+    [forecastUv, sunrise, sunset],
   );
 
   return (
