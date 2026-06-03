@@ -217,7 +217,7 @@
 
 [data-theme="dark"] {
 
-    --card-glass: 30 35 55 / 0.72;
+    --card-glass: 30 35 55 / 0.85;
 
     /* ── Alert glass tokens (ADR-052) ───────────────────────────────────────── */
     --alert-glass:  rgba(120, 85, 10, 0.55);
