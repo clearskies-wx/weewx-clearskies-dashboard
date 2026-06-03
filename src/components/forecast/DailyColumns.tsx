@@ -321,7 +321,7 @@ export function DailyColumns({
                 alignItems: 'center',
                 gap: '0.08rem',
                 fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                fontSize: expandable ? 'var(--text-micro, 0.7rem)' : '0.66rem',
+                fontSize: expandable ? 'var(--text-micro, 0.7rem)' : '0.75rem',
                 color: 'var(--muted-foreground)',
                   }}
             >
@@ -342,7 +342,7 @@ export function DailyColumns({
         const windSpeed = day.windSpeedMax !== null ? Math.round(day.windSpeedMax) : 0;
         return (
           <div key={i} style={{ ...cellBase, height: expandable ? 44 : 15, overflow: 'visible' }}>
-            <WindSymbol bearing={bearing} speed={windSpeed} size={expandable ? 20 : 14} />
+            <WindSymbol bearing={bearing} speed={windSpeed} size={expandable ? 20 : 18} />
           </div>
         );
       })}

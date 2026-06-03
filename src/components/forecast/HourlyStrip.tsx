@@ -106,7 +106,7 @@ export function HourlyStrip({
   // C3 mockup compact budget (card-pad=0.75rem each side):
   //   time=13 + icon=26 + temp=15 + trendH=22 + trend-padding=5 + precip=13 + wind=26 = 120px → fits.
   const rowH = threeHourWindows
-    ? { time: 13, icon: 26, temp: 15, precip: 13, wind: 15 }
+    ? { time: 15, icon: 28, temp: 17, precip: 16, wind: 22 }
     : { time: 18, icon: 34, temp: 22, precip: 18, wind: 42 };
 
   // ── Trend SVG: 22px for compact, 40px for page ──────────────────────────
@@ -180,11 +180,11 @@ export function HourlyStrip({
             alignItems: 'center',
             gap: 2,
             fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-            fontSize: threeHourWindows ? '0.66rem' : 'var(--text-micro, 0.7rem)',
+            fontSize: threeHourWindows ? '0.75rem' : 'var(--text-micro, 0.7rem)',
             color: 'var(--muted-foreground)',
           }}
         >
-          <Drop aria-hidden="true" size={7} />
+          <Drop aria-hidden="true" size={9} />
           {precip !== null ? `${precip}%` : '—'}
         </span>
       </div>
@@ -197,7 +197,7 @@ export function HourlyStrip({
     const windSpeed = hour.windSpeed !== null ? Math.round(hour.windSpeed) : 0;
     return (
       <div key={i} style={{ ...colStyle, ...CELL_BASE, height: rowH.wind, overflow: 'visible' }}>
-        <WindSymbol bearing={bearing} speed={windSpeed} size={threeHourWindows ? 14 : 20} />
+        <WindSymbol bearing={bearing} speed={windSpeed} size={threeHourWindows ? 18 : 20} />
       </div>
     );
   });
@@ -216,15 +216,15 @@ export function HourlyStrip({
       }}
     >
       {/* Time row */}
-      <div style={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
+      <div style={{ display: 'flex', flexDirection: 'row', width: '100%', marginBottom: threeHourWindows ? 2 : 0 }}>
         {timeRow}
       </div>
       {/* Icon row */}
-      <div style={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
+      <div style={{ display: 'flex', flexDirection: 'row', width: '100%', marginBottom: threeHourWindows ? 2 : 0 }}>
         {iconRow}
       </div>
       {/* Temp row */}
-      <div style={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
+      <div style={{ display: 'flex', flexDirection: 'row', width: '100%', marginBottom: threeHourWindows ? 3 : 0 }}>
         {tempRow}
       </div>
       {/* Trend line row — full-width SVG (hidden when hideTrend is set) */}
