@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useStation } from '../../hooks/useWeatherData';
 import { useBranding } from '../../lib/branding-provider';
-import poweredBlue from '../../assets/clearskies-powered-blue.svg';
 import poweredLight from '../../assets/clearskies-powered-light.svg';
 
 // ---------------------------------------------------------------------------
@@ -177,20 +176,13 @@ export function Footer({ photoCredit }: FooterProps) {
           <span aria-hidden="true">·</span>
           <span>© {new Date().getFullYear()} {copyrightName}</span>
           <span aria-hidden="true">·</span>
-          {/* Blue logo for light mode; light-blue logo for dark mode.
-              Only the visible image is in the a11y tree (display:none removes it).
-              dark: variant maps to [data-theme="dark"] per index.css @custom-variant. */}
-          <img
-            src={poweredBlue}
-            alt="Powered by Clear Skies"
-            height={25}
-            className="h-[25px] w-auto dark:hidden"
-          />
+          {/* Always use the light logo — the footer background is always dark glass
+              (rgba(0,0,0,0.65)), so the dark blue logo would be invisible in light mode. */}
           <img
             src={poweredLight}
             alt="Powered by Clear Skies"
             height={25}
-            className="h-[25px] w-auto hidden dark:inline"
+            className="h-[25px] w-auto"
           />
         </div>
 
@@ -205,7 +197,7 @@ export function Footer({ photoCredit }: FooterProps) {
         <p
           aria-hidden="true"
           className="mt-1 text-xs"
-          style={{ color: 'rgba(255, 255, 255, 0.6)' }}
+          style={{ color: 'rgba(255, 255, 255, 0.75)' }}
         >
           Photo: {photoCredit}
         </p>

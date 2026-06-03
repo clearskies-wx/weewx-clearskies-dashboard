@@ -1,10 +1,11 @@
 // app-layout.tsx — top-level shell: skip-link + nav-rail + main + footer
 // Outlet renders the active route's page component.
 //
-// Also mounts the ADR-047 global background layer (SceneBackground +
-// SceneAttribution) behind all app content.  Scene data comes from
-// useObservation() (REST polling) — the background does not need SSE
-// sub-second reactivity; page-level components use useRealtimeObservation().
+// Also mounts the ADR-047 global background layer (SceneBackground) behind
+// all app content.  Scene data comes from useObservation() (REST polling) —
+// the background does not need SSE sub-second reactivity; page-level
+// components use useRealtimeObservation().  Photo credit for the current
+// scene is passed to Footer via the photoCredit prop.
 
 import { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
