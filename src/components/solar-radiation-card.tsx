@@ -30,7 +30,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  ComposedChart,
+  AreaChart,
   Area,
   Line,
   XAxis,
@@ -210,7 +210,7 @@ function SolarChart({ data }: SolarChartProps) {
         style={{ flex: 1, minHeight: 0 }}
       >
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
+          <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
             {/* Clear-sky theoretical max — yellow fill area */}
             <Area
               type="monotone"
@@ -262,7 +262,7 @@ function SolarChart({ data }: SolarChartProps) {
               tickLine={false}
               width={1}
             />
-          </ComposedChart>
+          </AreaChart>
         </ResponsiveContainer>
       </div>
 
