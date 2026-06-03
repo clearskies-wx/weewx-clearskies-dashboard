@@ -370,10 +370,9 @@ export function CurrentConditionsCard({
   const outTempCV = asConverted(observation?.outTemp ?? null);
   const tempUnit = outTempCV?.label ?? units?.outTemp ?? '';
 
-  // Integer display (no decimal for temperature)
   const tempDisplay = useMemo(() => {
     if (!outTempCV || outTempCV.value === null) return '—';
-    return Math.round(outTempCV.value).toString();
+    return outTempCV.value.toFixed(1);
   }, [outTempCV]);
 
   // Raw float for the chart reference dot
@@ -496,7 +495,7 @@ export function CurrentConditionsCard({
                   >
                     {t('feelsLike')}{' '}
                     <span style={{ fontWeight: 500 }}>
-                      {Math.round(feelsLikeCV.value)}{feelsLikeCV.label || '°'}
+                      {feelsLikeCV.value.toFixed(1)}{feelsLikeCV.label || '°'}
                     </span>
                   </p>
                 )}
