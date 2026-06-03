@@ -323,7 +323,7 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
         x={moonLabelX}
         y={moonLabelY}
         textAnchor={moonLabelAnchor}
-        fontSize={7.5}
+        fontSize={9}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
         fontWeight={600}
         fill={MOON_COLOR}
@@ -334,9 +334,9 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
       {/* Illumination percent — one line below phase name */}
       <text
         x={moonLabelX}
-        y={moonLabelY + 10}
+        y={moonLabelY + 11}
         textAnchor={moonLabelAnchor}
-        fontSize={7}
+        fontSize={8}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
         fill="var(--muted-foreground, #64748b)"
         aria-hidden="true"
@@ -349,7 +349,7 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
         x={sunLeftX}
         y={CY + 13}
         textAnchor="start"
-        fontSize={8}
+        fontSize={10}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
         fill={SUN_COLOR}
         aria-hidden="true"
@@ -358,9 +358,9 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
       </text>
       <text
         x={sunLeftX}
-        y={CY + 23}
+        y={CY + 24}
         textAnchor="start"
-        fontSize={8}
+        fontSize={10}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
         fill={MOON_COLOR}
         aria-hidden="true"
@@ -373,7 +373,7 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
         x={sunRightX}
         y={CY + 13}
         textAnchor="end"
-        fontSize={8}
+        fontSize={10}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
         fill={SUN_COLOR}
         aria-hidden="true"
@@ -382,9 +382,9 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
       </text>
       <text
         x={sunRightX}
-        y={CY + 23}
+        y={CY + 24}
         textAnchor="end"
-        fontSize={8}
+        fontSize={10}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
         fill={MOON_COLOR}
         aria-hidden="true"
@@ -461,7 +461,7 @@ export function SunMoonCard({
              available CardContent height so the bottom rise/set labels don't
              clip — the SVG scales proportionally with width="100%" so at the
              tile card width (~270px) the rendered height stays within budget. */
-          <div aria-live="polite" style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', alignItems: 'flex-start' }}>
+          <div aria-live="polite" style={{ flex: 1, minWidth: 0, minHeight: 0, width: '100%', height: '100%', overflow: 'hidden', display: 'flex', alignItems: 'stretch' }}>
             <ArcVisualization almanac={almanac} tz={stationTz} locale={locale} />
           </div>
         ) : (
