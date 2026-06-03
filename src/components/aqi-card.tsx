@@ -152,39 +152,31 @@ function GaugeContent({ aqiValue, category, mainPollutant }: GaugeContentProps) 
       aria-live="polite"
       style={{
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: 'row',
         alignItems: 'center',
-        gap: '0.15rem',
+        gap: '0.3rem',
         pointerEvents: 'none',
       }}
     >
-      {/* Leaf icon + AQI value — inline flex row so the icon sits left of the number */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.3rem',
-        }}
+      {/* Phosphor Leaf (Regular) — sized to span the full text block */}
+      <svg
+        aria-hidden="true"
+        focusable="false"
+        viewBox="0 0 256 256"
+        style={{ width: '36px', height: '36px', flexShrink: 0, opacity: 0.65 }}
+        fill="currentColor"
       >
-        {/* Phosphor Leaf (Regular) — decorative; aria-hidden */}
-        <svg
-          aria-hidden="true"
-          focusable="false"
-          viewBox="0 0 256 256"
-          // Height matches the value text block (~18px Outfit 600 + line-height).
-          // Width scales proportionally from the 256×256 viewBox.
-          style={{ width: '18px', height: '18px', flexShrink: 0 }}
-          fill="currentColor"
-        >
-          <path d={LEAF_PATH} />
-        </svg>
+        <path d={LEAF_PATH} />
+      </svg>
 
-        {/* AQI numeric value — Outfit 600 18px */}
+      {/* Text column: value + category + pollutant */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.1rem' }}>
+        {/* AQI numeric value — Outfit 600 20px */}
         <span
           style={{
             fontFamily: 'var(--font-display, system-ui, sans-serif)',
             fontWeight: 600,
-            fontSize: '1.25rem',      // 20px
+            fontSize: '1.25rem',
             color: 'var(--foreground)',
             letterSpacing: '-0.01em',
             fontFeatureSettings: '"tnum"',
@@ -193,37 +185,37 @@ function GaugeContent({ aqiValue, category, mainPollutant }: GaugeContentProps) 
         >
           {aqiValue}
         </span>
-      </div>
 
-      {/* AQI category — Manrope 600 12px */}
-      <span
-        style={{
-          fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-          fontWeight: 600,
-          fontSize: '0.75rem',         // 12px
-          color: 'var(--foreground)',
-          lineHeight: 1.2,
-          textAlign: 'center',
-        }}
-      >
-        {category}
-      </span>
-
-      {/* Main pollutant — Manrope 400 9px muted */}
-      {mainPollutant && (
+        {/* AQI category — Manrope 600 12px */}
         <span
           style={{
             fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-            fontWeight: 400,
-            fontSize: '0.625rem',      // 10px
-            color: 'var(--muted-foreground)',
+            fontWeight: 600,
+            fontSize: '0.75rem',
+            color: 'var(--foreground)',
             lineHeight: 1.2,
             textAlign: 'center',
           }}
         >
-          {mainPollutant}
+          {category}
         </span>
-      )}
+
+        {/* Main pollutant — Manrope 400 10px muted */}
+        {mainPollutant && (
+          <span
+            style={{
+              fontFamily: 'var(--font-sans, system-ui, sans-serif)',
+              fontWeight: 400,
+              fontSize: '0.625rem',
+              color: 'var(--muted-foreground)',
+              lineHeight: 1.2,
+              textAlign: 'center',
+            }}
+          >
+            {mainPollutant}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
