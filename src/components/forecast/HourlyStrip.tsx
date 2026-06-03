@@ -53,6 +53,8 @@ export interface HourlyStripProps {
   threeHourWindows?: boolean;
   /** Station timezone, e.g. "America/New_York". Default "UTC". */
   stationTz?: string;
+  /** When true, hide the temperature trend line between temp and precip rows. */
+  hideTrend?: boolean;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -61,6 +63,7 @@ export function HourlyStrip({
   hours,
   threeHourWindows = false,
   stationTz = 'UTC',
+  hideTrend = false,
 }: HourlyStripProps) {
   // Select the data to display
   const displayHours = useMemo(() => {
@@ -224,15 +227,17 @@ export function HourlyStrip({
       <div style={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
         {tempRow}
       </div>
-      {/* Trend line row — full-width SVG */}
-      <div style={{ padding: threeHourWindows ? '2px 0 2px' : '3px 0 2px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-        <TempTrendLine
-          highs={temps}
-          mode="hourly"
-          width={svgViewWidth}
-          height={trendH}
-        />
-      </div>
+      {/* Trend line row — full-width SVG (hidden when hideTrend is set) */}
+      {!hideTrend && (
+        <div style={{ padding: threeHourWindows ? '2px 0 2px' : '3px 0 2px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+          <TempTrendLine
+            highs={temps}
+            mode="hourly"
+            width={svgViewWidth}
+            height={trendH}
+          />
+        </div>
+      )}
       {/* Precip row */}
       <div style={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
         {precipRow}

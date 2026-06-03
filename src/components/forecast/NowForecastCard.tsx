@@ -182,6 +182,7 @@ export function NowForecastCard({
                 <HourlyStrip
                   hours={next24hours}
                   threeHourWindows
+                  hideTrend
                   stationTz={stationTz}
                 />
               ) : (
