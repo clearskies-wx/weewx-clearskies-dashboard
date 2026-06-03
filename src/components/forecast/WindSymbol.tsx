@@ -14,8 +14,8 @@
 // ALL wind symbols in the app use size=20 (r=10) per the locked spec.
 
 export interface WindSymbolProps {
-  /** Wind direction bearing in degrees (0=N, 90=E, 180=S, 270=W). */
-  bearing: number;
+  /** Wind direction bearing in degrees (0=N, 90=E, 180=S, 270=W). Null hides the tail. */
+  bearing: number | null;
   /** Wind speed to display inside the circle (number or pre-formatted string). */
   speed: number | string;
   /** Circle diameter in px. Default 20 (r=10). ALL app symbols use 20. */
@@ -56,16 +56,18 @@ export function WindSymbol({ bearing, speed, size = 20 }: WindSymbolProps) {
       focusable="false"
       style={{ display: 'inline-block', flexShrink: 0 }}
     >
-      {/* Tail group: rotated bearing° around circle centre */}
-      <g transform={`rotate(${bearing}, ${cx}, ${cy})`}>
-        <polygon
-          points={`${tipX},${tipY} ${bLX},${bLY} ${bRX},${bRY}`}
-          fill="#94a3b8"
-          stroke="#6b7280"
-          strokeWidth={0.5}
-          strokeLinejoin="round"
-        />
-      </g>
+      {/* Tail group: rotated bearing° around circle centre; hidden when direction unknown */}
+      {bearing !== null && (
+        <g transform={`rotate(${bearing}, ${cx}, ${cy})`}>
+          <polygon
+            points={`${tipX},${tipY} ${bLX},${bLY} ${bRX},${bRY}`}
+            fill="#94a3b8"
+            stroke="#6b7280"
+            strokeWidth={0.5}
+            strokeLinejoin="round"
+          />
+        </g>
+      )}
       {/* Circle body (rendered on top of tail so it masks the base join) */}
       <circle
         cx={cx}

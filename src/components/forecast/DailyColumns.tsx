@@ -305,7 +305,7 @@ export function DailyColumns({
   const windRow = (
     <div style={{ display: 'flex', flexDirection: 'row', overflow: 'visible', position: 'relative', zIndex: 1, marginTop: expandable ? 0 : 5 }}>
       {days.map((day, i) => {
-        const bearing = typeof day.extras?.windDir === 'number' ? day.extras.windDir : 0;
+        const bearing = typeof day.extras?.windDir === 'number' ? day.extras.windDir : null;
         const windSpeed = day.windSpeedMax !== null ? Math.round(day.windSpeedMax) : 0;
         return (
           <div key={i} style={{ ...cellBase, height: expandable ? 44 : 15, overflow: 'visible' }}>
