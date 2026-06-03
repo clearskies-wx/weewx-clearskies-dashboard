@@ -410,9 +410,9 @@ function UvChart({ data, currentUv, gradientId }: UvChartProps) {
       {/* margin.top on AreaChart adds space inside the SVG between the card title and the chart
           area. CSS marginTop on the wrapper div was ineffective because the card has fixed height
           + overflow:hidden; the Recharts margin is the correct mechanism here. */}
-      <div role="img" aria-label={t('uvIndexCard.chartAriaLabel')} style={{ flex: 1, minHeight: 0 }}>
+      <div role="img" aria-label={t('uvIndexCard.chartAriaLabel')} style={{ flex: 1, minHeight: 0, marginTop: '0.94rem' }}>
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 16, right: 4, bottom: 0, left: -12 }}>
+          <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -12 }}>
             <defs>
               {/*
                 Vertical linearGradient: EPA UV severity colors.
@@ -639,6 +639,7 @@ export function UvIndexCard({
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '0.5rem',
+                flexShrink: 0,
               }}
             >
               {/* Custom UV icon — 36px tall, decorative, aria-hidden */}

@@ -70,7 +70,12 @@ export function NowPage() {
     () => new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
     [],
   );
-  const { data: todayArchive } = useArchive({ from: archiveStart24h });
+  const { data: todayArchive, refetch: archiveRefetch } = useArchive({ from: archiveStart24h });
+
+  useEffect(() => {
+    const id = setInterval(() => archiveRefetch(), 5 * 60 * 1000);
+    return () => clearInterval(id);
+  }, [archiveRefetch]);
 
   const lightning = useLightning(observation);
   const todayStats = useTodayStats(observation, todayArchive);

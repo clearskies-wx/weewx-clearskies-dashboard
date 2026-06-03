@@ -207,10 +207,10 @@ function SolarChart({ data }: SolarChartProps) {
       <div
         role="img"
         aria-label={t('solarRadiationCard.chartAriaLabel')}
-        style={{ flex: 1, minHeight: 0 }}
+        style={{ flex: 1, minHeight: 0, marginTop: '0.94rem' }}
       >
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -28 }}>
+          <ComposedChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
             {/* Clear-sky theoretical max — yellow fill area */}
             <Area
               type="monotone"
@@ -250,13 +250,13 @@ function SolarChart({ data }: SolarChartProps) {
                 fill: 'var(--muted-foreground)',
               }}
               interval="preserveStartEnd"
-              scale="time"
             />
 
             {/* Y-axis: minimal — just provides domain context, no tick labels */}
             <YAxis
               domain={[0, yMax * 1.1]}
               hide
+              width={0}
             />
           </ComposedChart>
         </ResponsiveContainer>
