@@ -57,7 +57,7 @@ export function ForecastPage() {
 
       {!alertLoading && alerts && <AlertBanner alerts={alerts} />}
 
-      <Grid>
+      <Grid className="md:auto-rows-[auto]">
         {/* ── Page header ──────────────────────────────────────────────── */}
         <PageHeaderCard title={t('title')} info={freshnessText} />
 

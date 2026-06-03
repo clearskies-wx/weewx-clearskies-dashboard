@@ -36,8 +36,9 @@ const AERIS_TO_WMO: Record<string, number> = {
 export function toWmoCode(code: number | string | null | undefined): number | null {
   if (code == null) return null;
   if (typeof code === 'number') return code;
-  // Strip any leading colons (e.g. "::SC" → "SC", ":SC" → "SC", "SC" → "SC")
-  const key = code.replace(/^:+/, '');
-  const mapped = AERIS_TO_WMO[key];
+  const stripped = code.replace(/^:+/, '');
+  const segments = stripped.split(':').map(s => s.replace(/^[+-]/, ''));
+  if (segments.some(s => s === 'T' || s === 'TW')) return 95;
+  const mapped = AERIS_TO_WMO[segments[0]];
   return mapped !== undefined ? mapped : null;
 }

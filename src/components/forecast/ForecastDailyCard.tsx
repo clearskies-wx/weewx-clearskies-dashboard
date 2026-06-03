@@ -79,7 +79,7 @@ export function ForecastDailyCard({
         </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="overflow-visible">
         {loading ? (
           <>
             <span className="sr-only" role="status">Loading 7-day forecast…</span>

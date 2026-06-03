@@ -88,7 +88,6 @@ export function HourlyStrip({
     ? { display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }
     : {
         overflowX: 'scroll',
-        overflowY: 'hidden',
         paddingBottom: 8,
         scrollSnapType: 'x mandatory',
         flex: 1,

@@ -173,7 +173,7 @@ export function ForecastHourlyCard({
         </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="overflow-visible">
         {loading ? (
           <>
             <span className="sr-only" role="status">Loading hourly forecast…</span>
