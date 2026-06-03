@@ -32,7 +32,6 @@ import { useTranslation } from 'react-i18next';
 import {
   AreaChart,
   Area,
-  Line,
   XAxis,
   YAxis,
   ResponsiveContainer,
@@ -210,7 +209,7 @@ function SolarChart({ data }: SolarChartProps) {
         style={{ flex: 1, minHeight: 0 }}
       >
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 20 }}>
+          <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: 6 }}>
             {/* Clear-sky theoretical max — yellow fill area */}
             <Area
               type="monotone"
@@ -225,11 +224,12 @@ function SolarChart({ data }: SolarChartProps) {
             />
 
             {/* Actual radiation — orange line, no fill */}
-            <Line
+            <Area
               type="monotone"
               dataKey="radiation"
               stroke={COLOR_RADIATION}
               strokeWidth={2}
+              fill="none"
               dot={false}
               activeDot={false}
               isAnimationActive={false}
@@ -255,15 +255,10 @@ function SolarChart({ data }: SolarChartProps) {
 
             <YAxis
               domain={[0, yMax * 1.1]}
-              ticks={[]}
               tickLine={false}
               axisLine={false}
-              tick={{
-                fontFamily: 'var(--font-chart)',
-                fontSize: 7,
-                fill: 'var(--muted-foreground)',
-              }}
-              width={18}
+              tick={false}
+              width={1}
             />
           </AreaChart>
         </ResponsiveContainer>
