@@ -16,24 +16,42 @@ import { useObservation } from '../../hooks/useWeatherData';
 import { useTheme } from '../../lib/theme-provider';
 import { SceneBackground } from '../background/scene-background';
 import { sceneAttribution } from '../background/scene-background-types';
+import type { SceneDescriptor } from '../../api/types';
 
 export function AppLayout() {
-  const { scene } = useObservation();
-  const { setDaytime } = useTheme();
+  const { scene, sceneLoaded } = useObservation();
+  const { preference, setDaytime } = useTheme();
 
   useEffect(() => {
     setDaytime(scene.daytime);
   }, [scene.daytime, setDaytime]);
 
-  const photoCredit = sceneAttribution(scene);
+  // When the user has forced a manual light/dark preference, honour it for the
+  // background as well: light → always daytime photo, dark → always night photo,
+  // auto → use the server-computed scene.daytime value.
+  const bgDaytime = preference === 'light' ? true
+                  : preference === 'dark'  ? false
+                  : scene.daytime;
+
+  const resolvedScene: SceneDescriptor = {
+    sky: scene.sky,
+    daytime: bgDaytime,
+    overlay: scene.overlay,
+  };
+
+  const photoCredit = sceneAttribution(resolvedScene);
 
   return (
     <>
       {/* ADR-047 global background: fixed, z-index -1, behind all content.
-          aria-hidden / role="presentation" are set inside the component. */}
-      <SceneBackground scene={scene} />
+          aria-hidden / role="presentation" are set inside the component.
+          visible=false until the first /current response arrives to avoid a
+          flash of the wrong (default) scene before real data loads. */}
+      <SceneBackground scene={resolvedScene} visible={sceneLoaded} />
 
-      <div className="h-screen flex flex-col text-foreground overflow-hidden">
+      {/* h-[100dvh]: dynamic viewport height adjusts when mobile browser
+          URL bar hides/shows, preventing the bottom nav from clipping. */}
+      <div className="h-[100dvh] flex flex-col text-foreground overflow-hidden">
         {/* Skip link is the FIRST focusable element in the DOM per WCAG 2.4.1 */}
         <SkipLink />
 
@@ -46,8 +64,14 @@ export function AppLayout() {
               Mobile: this div scrolls so footer scrolls with page content
               (the mobile nav bar is already fixed at the bottom).
               Desktop: this div doesn't scroll; main scrolls independently and
-              footer stays at the viewport bottom. */}
-          <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-y-auto md:overflow-hidden">
+              footer stays at the viewport bottom.
+              overflow-x-hidden: prevents child tables with overflow-x-auto from
+              causing horizontal viewport scroll.
+              overscrollBehaviorY contain: stops rubber-band overscroll tearing. */}
+          <div
+            className="flex flex-col flex-1 min-w-0 min-h-0 overflow-y-auto overflow-x-hidden md:overflow-hidden"
+            style={{ overscrollBehaviorY: 'contain' }}
+          >
             <main
               id="main-content"
               className={[

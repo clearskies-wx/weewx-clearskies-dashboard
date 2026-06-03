@@ -308,6 +308,10 @@
     }
   html {
     @apply font-sans;
+    /* Prevent horizontal viewport scroll from child tables with overflow-x-auto.
+       overscroll-behavior: none eliminates rubber-band overscroll tearing the background. */
+    overflow-x: hidden;
+    overscroll-behavior: none;
     }
   /* UA stylesheets hard-code font-family on form controls, breaking inheritance.
      Force them back onto the cascade so Manrope applies everywhere. */

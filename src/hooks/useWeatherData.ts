@@ -136,14 +136,21 @@ interface ObservationHookResult extends HookResult<Observation> {
 
   /**
    * ADR-047 background scene descriptor from the realtime service.
-   * Falls back to the safe default (clear / daytime / no overlay) when the
+   * Falls back to the safe default (clear / night / no overlay) when the
    * server predates D1 or the response is not yet available.
    */
   scene: SceneDescriptor;
+
+  /** True once the first /current response has provided real scene data.
+   *  SceneBackground uses this to fade in, preventing a flash of the wrong
+   *  default scene before real data arrives. */
+  sceneLoaded: boolean;
 }
 
-/** Safe fallback scene when the server hasn't sent one yet. */
-const SCENE_DEFAULT: SceneDescriptor = { sky: 'clear', daytime: true, overlay: null };
+/** Safe fallback scene when the server hasn't sent one yet.
+ *  daytime: false prevents a flash of a bright daytime photo before the first
+ *  /current response arrives; the dark navy SceneBackground base fills instead. */
+const SCENE_DEFAULT: SceneDescriptor = { sky: 'clear', daytime: false, overlay: null };
 
 export function useObservation(): ObservationHookResult {
   // Re-fetch /current every 60 seconds to pick up envelope fields
@@ -167,6 +174,7 @@ export function useObservation(): ObservationHookResult {
       windSpeedAvg10m: null,
       windGustMax10m: null,
       scene: mockScene,
+      sceneLoaded: true,
     };
   }
 
@@ -181,6 +189,7 @@ export function useObservation(): ObservationHookResult {
     windSpeedAvg10m: data?.windSpeedAvg10m ?? null,
     windGustMax10m: data?.windGustMax10m ?? null,
     scene: data?.scene ?? SCENE_DEFAULT,
+    sceneLoaded: data?.scene != null,
   };
 }
 

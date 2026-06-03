@@ -32,6 +32,12 @@ import {
 interface SceneBackgroundProps {
   /** Scene descriptor from the realtime service (useObservation / useRealtimeObservation). */
   scene: SceneDescriptor;
+  /**
+   * When false, the photo layers are faded out (opacity 0).  The dark navy base
+   * colour is always visible so the app never flashes white before the first
+   * /current response arrives.  Defaults to true.
+   */
+  visible?: boolean;
 }
 
 /**
@@ -47,7 +53,7 @@ interface SceneBackgroundProps {
  *
  * All layers are presentational / aria-hidden — no content for AT.
  */
-export function SceneBackground({ scene }: SceneBackgroundProps) {
+export function SceneBackground({ scene, visible = true }: SceneBackgroundProps) {
   const key = sceneKey(scene);
   const asset = SCENE_ASSET_MAP[key] ?? SCENE_ASSET_MAP['clear-day'];
   const overlayConfig = scene.overlay !== null ? OVERLAY_MAP[scene.overlay] : null;
@@ -62,6 +68,10 @@ export function SceneBackground({ scene }: SceneBackgroundProps) {
     // Outer container: fixed, full-viewport, behind all content (z-index -1).
     // aria-hidden="true" + role="presentation": purely decorative.
     // (WCAG 1.1.1 / coding.md §5.5 decorative image rule)
+    //
+    // backgroundColor: dark navy (#0a0e1a) rather than black so the base
+    // colour visible before the first photo loads matches the night-sky palette
+    // and doesn't cause a jarring white flash on initial render.
     <div
       aria-hidden="true"
       role="presentation"
@@ -69,60 +79,72 @@ export function SceneBackground({ scene }: SceneBackgroundProps) {
         position: 'fixed',
         inset: 0,
         zIndex: -1,
-        backgroundColor: '#000',
+        backgroundColor: '#0a0e1a',
         overflow: 'hidden',
       }}
     >
-      {/* Layer 1: scene photo base.
-          Slightly over-scaled (inset: -40px + scale 1.05) so blur doesn't
-          leave dark edges.  background-size: cover + center for all ratios. */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: '-40px',
-          backgroundImage: `url(${asset.url})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          filter: baseFilter,
-          transform: 'scale(1.05)',
-          transformOrigin: 'center',
-          willChange: 'filter',
-        }}
-      />
-
-      {/* Layer 2: precipitation overlay (real on-glass photo).
-          Rendered only when scene.overlay is non-null.
-          Opacity: 0.75 day / 0.25 night (ADR-047 §Decision 1 locked values). */}
-      {hasOverlay && overlayConfig !== null && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            backgroundImage: `url(${overlayConfig.url})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            opacity: overlayOpacity(scene.daytime),
-            // Cast: CSSProperties['mixBlendMode'] is a broad string union; the
-            // ADR-047 locked values ("overlay" | "screen") are valid CSS spec values.
-            mixBlendMode: overlayConfig.blendMode as CSSProperties['mixBlendMode'],
-          }}
-        />
-      )}
-
-      {/* Layer 3: bottom scrim — legibility gradient.
-          transparent 60% → rgba(0,0,0,0.32) 100%.
-          Always present; this is the WCAG AA contrast mechanism for text
-          near the bottom of the viewport over busy photos.
-          (ADR-026 / ADR-047 §Decision + implementation notes) */}
+      {/* Fade wrapper: opacity 0 → 1 over 0.6 s once real scene data arrives.
+          The dark navy base above is always visible; only the photos fade in.
+          This prevents a flash of the wrong default scene on first load. */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
-          background:
-            'linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.32) 100%)',
-          pointerEvents: 'none',
+          opacity: visible ? 1 : 0,
+          transition: 'opacity 0.6s ease-in-out',
         }}
-      />
+      >
+        {/* Layer 1: scene photo base.
+            Slightly over-scaled (inset: -40px + scale 1.05) so blur doesn't
+            leave dark edges.  background-size: cover + center for all ratios. */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: '-40px',
+            backgroundImage: `url(${asset.url})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            filter: baseFilter,
+            transform: 'scale(1.05)',
+            transformOrigin: 'center',
+            willChange: 'filter',
+          }}
+        />
+
+        {/* Layer 2: precipitation overlay (real on-glass photo).
+            Rendered only when scene.overlay is non-null.
+            Opacity: 0.75 day / 0.25 night (ADR-047 §Decision 1 locked values). */}
+        {hasOverlay && overlayConfig !== null && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              backgroundImage: `url(${overlayConfig.url})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              opacity: overlayOpacity(scene.daytime),
+              // Cast: CSSProperties['mixBlendMode'] is a broad string union; the
+              // ADR-047 locked values ("overlay" | "screen") are valid CSS spec values.
+              mixBlendMode: overlayConfig.blendMode as CSSProperties['mixBlendMode'],
+            }}
+          />
+        )}
+
+        {/* Layer 3: bottom scrim — legibility gradient.
+            transparent 60% → rgba(0,0,0,0.32) 100%.
+            Always present; this is the WCAG AA contrast mechanism for text
+            near the bottom of the viewport over busy photos.
+            (ADR-026 / ADR-047 §Decision + implementation notes) */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background:
+              'linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.32) 100%)',
+            pointerEvents: 'none',
+          }}
+        />
+      </div>
     </div>
   );
 }
