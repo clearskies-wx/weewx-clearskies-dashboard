@@ -1,5 +1,5 @@
 // nav-rail.tsx — icon-rail navigation
-// Desktop (≥768px): left rail, vertical stack, ~64px wide. All 9 items always visible.
+// Desktop (≥768px): floating auto-hide panel with grab bar and pin toggle, vertically centered.
 // Mobile (<768px): bottom nav bar — 4 primary slots + "More" button (5 total, per ADR-024).
 // "More" opens a bottom sheet listing the 5 overflow pages.
 // Active page: bg shift + accent-colored border per ADR-009/ADR-024.
@@ -455,11 +455,14 @@ export function NavRail() {
           'border-0 p-0',
         ].join(' ')}
         style={{
-          // Semi-transparent: light rgba(255,255,255,0.3), dark rgba(255,255,255,0.5).
+          // Visible on both bright (clear-day) and dark (storm-night) photo backgrounds.
+          // Dark mode: light pill; light mode: dark pill. Box-shadow guarantees a
+          // contrast edge against any scene colour.
           background:
             resolved === 'dark'
-              ? 'rgba(255,255,255,0.5)'
-              : 'rgba(255,255,255,0.3)',
+              ? 'rgba(255,255,255,0.35)'
+              : 'rgba(0,0,0,0.25)',
+          boxShadow: '0 0 4px rgba(0,0,0,0.3)',
         }}
       />
 
@@ -469,6 +472,13 @@ export function NavRail() {
           Desktop-only (hidden on mobile). */}
       <nav
         aria-label={t('ariaMain')}
+        // inert removes all children from the tab order and AT tree when rail is hidden.
+        // aria-hidden mirrors the state for AT that may not fully support inert.
+        // Pattern mirrors the MoreSheet inert={!isOpen} usage in this file.
+        // inert={false} is omitted (undefined) so the attribute is absent from the DOM
+        // when the rail is visible — browsers treat absent inert as interactive.
+        inert={!visible ? true : undefined}
+        aria-hidden={!visible}
         onMouseEnter={handleRailMouseEnter}
         onMouseLeave={handleRailMouseLeave}
         className={[
