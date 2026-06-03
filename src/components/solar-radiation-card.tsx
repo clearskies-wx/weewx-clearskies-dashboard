@@ -244,7 +244,7 @@ function SolarChart({ data }: SolarChartProps) {
               type="number"
               domain={[now - WINDOW_MS, now]}
               ticks={ticks}
-              tickFormatter={() => 'X'}
+              tickFormatter={fmtAxisTime}
               tickLine={false}
               axisLine={false}
               tick={{
@@ -256,7 +256,13 @@ function SolarChart({ data }: SolarChartProps) {
               scale="time"
             />
 
-            {/* YAxis removed to test if it blocks XAxis labels */}
+            <YAxis
+              domain={[0, yMax * 1.1]}
+              tick={false}
+              axisLine={false}
+              tickLine={false}
+              width={1}
+            />
           </AreaChart>
         </ResponsiveContainer>
       </div>
