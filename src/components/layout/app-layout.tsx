@@ -13,7 +13,8 @@ import { NavRail } from './nav-rail';
 import { Footer } from './footer';
 import { useObservation } from '../../hooks/useWeatherData';
 import { useTheme } from '../../lib/theme-provider';
-import { SceneBackground, SceneAttribution } from '../background/scene-background';
+import { SceneBackground } from '../background/scene-background';
+import { sceneAttribution } from '../background/scene-background-types';
 
 export function AppLayout() {
   const { scene } = useObservation();
@@ -23,14 +24,13 @@ export function AppLayout() {
     setDaytime(scene.daytime);
   }, [scene.daytime, setDaytime]);
 
+  const photoCredit = sceneAttribution(scene);
+
   return (
     <>
       {/* ADR-047 global background: fixed, z-index -1, behind all content.
           aria-hidden / role="presentation" are set inside the component. */}
       <SceneBackground scene={scene} />
-
-      {/* Attribution pill — fixed bottom-right corner; renders null when no credit. */}
-      <SceneAttribution scene={scene} />
 
       <div className="h-screen flex flex-col text-foreground overflow-hidden">
         {/* Skip link is the FIRST focusable element in the DOM per WCAG 2.4.1 */}
@@ -57,7 +57,7 @@ export function AppLayout() {
               <Outlet />
             </main>
 
-            <Footer />
+            <Footer photoCredit={photoCredit} />
           </div>
         </div>
       </div>

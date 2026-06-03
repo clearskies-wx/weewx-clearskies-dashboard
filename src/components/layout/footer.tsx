@@ -56,9 +56,11 @@ function IconLink() {
 // Uses window.location.href + document.title so it updates per-page automatically.
 // ---------------------------------------------------------------------------
 
+// Share icon buttons sit inside the dark glass footer — use explicit white tones
+// so they read correctly regardless of light/dark theme CSS variable values.
 const btnClass = [
-  'text-muted-foreground hover:text-foreground transition-colors',
-  'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded',
+  'transition-colors',
+  'focus:outline-none focus:ring-2 focus:ring-white/60 focus:ring-offset-2 focus:ring-offset-black/50 rounded',
 ].join(' ');
 
 function ShareRow() {
@@ -116,7 +118,8 @@ function ShareRow() {
         type="button"
         onClick={copyLink}
         aria-label={copied ? t('footer.linkCopied') : t('footer.copyLink')}
-        className={`${btnClass}${copied ? ' text-foreground' : ''}`}
+        className={btnClass}
+        style={copied ? { color: 'rgba(255,255,255,1)' } : undefined}
       >
         <IconLink />
       </button>
@@ -128,7 +131,16 @@ function ShareRow() {
 // Footer
 // ---------------------------------------------------------------------------
 
-export function Footer() {
+interface FooterProps {
+  /**
+   * Photographer credit for the current background scene, or null when none
+   * is required (e.g. clear-day). Supplied by AppLayout via sceneAttribution().
+   * Rendered as aria-hidden decorative text (ADR-047 §Decision 7).
+   */
+  photoCredit?: string | null;
+}
+
+export function Footer({ photoCredit }: FooterProps) {
   const { data: station } = useStation();
   const { t } = useTranslation('common');
   const branding = useBranding();
@@ -136,12 +148,20 @@ export function Footer() {
   const copyrightName = branding.copyrightEntity || station?.name || 'Clear Skies Weather';
 
   return (
-    <footer className={[
-      'mt-auto border-t border-border px-4 py-3 text-sm text-muted-foreground',
-      // On mobile the bottom nav bar is fixed at 56px. Without bottom padding the footer
-      // renders beneath it and is invisible. md:pb-0 restores normal flow on desktop.
-      'pb-[calc(56px+12px)] md:pb-3',
-    ].join(' ')}>
+    <footer
+      className={[
+        // On mobile the bottom nav bar is fixed at 56px. Without bottom padding the footer
+        // renders beneath it and is invisible. md:pb-3 restores normal flow on desktop.
+        'mt-auto px-4 py-3 text-sm',
+        'pb-[calc(56px+12px)] md:pb-3',
+      ].join(' ')}
+      style={{
+        background: 'rgba(0, 0, 0, 0.65)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        color: 'rgba(255, 255, 255, 0.8)',
+      }}
+    >
 
       {/* Single row: left = nav/copyright/logo · right = share icons */}
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
@@ -149,7 +169,8 @@ export function Footer() {
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <Link
             to="/legal"
-            className="hover:text-foreground underline underline-offset-4 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded"
+            className="underline underline-offset-4 focus:outline-none focus:ring-2 focus:ring-white/60 focus:ring-offset-2 focus:ring-offset-black/50 rounded"
+            style={{ color: 'inherit' }}
           >
             {t('footer.legal')}
           </Link>
@@ -176,6 +197,19 @@ export function Footer() {
         {/* Right side: share buttons */}
         <ShareRow />
       </div>
+
+      {/* Photo credit — shown only when the current background scene has attribution.
+          aria-hidden: decorative provenance text; not meaningful to AT users.
+          (Same treatment as the original fixed-position pill — ADR-047 §Decision 7) */}
+      {photoCredit != null && (
+        <p
+          aria-hidden="true"
+          className="mt-1 text-xs"
+          style={{ color: 'rgba(255, 255, 255, 0.6)' }}
+        >
+          Photo: {photoCredit}
+        </p>
+      )}
     </footer>
   );
 }

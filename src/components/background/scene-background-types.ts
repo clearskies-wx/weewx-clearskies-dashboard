@@ -71,3 +71,9 @@ export function sceneKey(scene: SceneDescriptor): string {
 export function overlayOpacity(daytime: boolean): number {
   return daytime ? 0.75 : 0.25;
 }
+
+/** Photographer credit for the current scene, or null when none required. */
+export function sceneAttribution(scene: SceneDescriptor): string | null {
+  const asset = SCENE_ASSET_MAP[sceneKey(scene)] ?? SCENE_ASSET_MAP['clear-day'];
+  return asset.attribution;
+}

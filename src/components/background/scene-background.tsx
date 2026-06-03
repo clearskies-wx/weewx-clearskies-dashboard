@@ -28,6 +28,9 @@ import {
   overlayOpacity,
 } from './scene-background-types';
 
+// Re-export sceneAttribution for consumers (e.g. Footer).
+export { sceneAttribution } from './scene-background-types';
+
 // ---------------------------------------------------------------------------
 // SceneBackground
 // ---------------------------------------------------------------------------
