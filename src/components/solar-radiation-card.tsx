@@ -251,6 +251,7 @@ function SolarChart({ data }: SolarChartProps) {
                 fill: 'var(--muted-foreground)',
               }}
               interval={0}
+              height={20}
             />
 
             {/* Y-axis: minimal — just provides domain context, no tick labels */}
