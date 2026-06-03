@@ -187,23 +187,20 @@ export function SemiCircularGauge({
       (tf) => Math.abs(tf - tickFraction) < 0.5 / (TICK_COUNT - 1),
     );
 
-    // Tick dimensions — indicator wins over threshold wins over normal
+    // Tick dimensions — threshold wins over normal.
+    // The indicator tick in the array renders as a normal filled tick;
+    // the separate animated indicator line (below) handles the visual.
     let tickLen = TICK_LEN_NORMAL;
     let tickWidth = isFilled ? TICK_W_NORMAL : TICK_W_UNFILLED;
 
-    if (isIndicator) {
-      tickLen = TICK_LEN_INDICATOR;
-      tickWidth = TICK_W_INDICATOR;
-    } else if (isThreshold) {
+    if (!isIndicator && isThreshold) {
       tickLen = TICK_LEN_THRESHOLD;
       tickWidth = TICK_W_THRESHOLD;
     }
 
     // Tick color
     let stroke: string;
-    if (isIndicator) {
-      stroke = 'var(--gauge-indicator)';
-    } else if (isFilled) {
+    if (isFilled) {
       if (colorMode === 'gradient' && colorBands.length > 0) {
         stroke = bandColorForValue(tickScaleValue, colorBands);
       } else {
