@@ -45,7 +45,7 @@ const MOON_R = 52;
 /** SVG viewBox half-width; center X = cx (matches C4 mockup viewBox 220×110) */
 const CX = 110;
 /** SVG viewBox baseline Y; arcs curve upward (negative Y direction) */
-const CY = 84;
+const CY = 87;
 /** Total SVG width (matches C4 mockup) */
 const SVG_W = 220;
 /** Total SVG height (matches C4 mockup) */
