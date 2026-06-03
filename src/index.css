@@ -180,7 +180,7 @@
     --gauge-unfill:    rgba(0, 0, 0, 0.22);
     --gauge-indicator: #1e40af;
 
-    --border: oklch(0.922 0 0);
+    --border: rgba(0, 0, 0, 0.12);
 
     --input: oklch(0.922 0 0);
 

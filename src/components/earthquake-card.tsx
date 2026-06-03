@@ -298,7 +298,6 @@ export function EarthquakeCard({
                       height: 1,
                       background: 'var(--border)',
                       margin: '0.125rem 0',
-                      opacity: 0.6,
                     }}
                   />
                 )}
