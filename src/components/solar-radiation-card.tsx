@@ -210,7 +210,7 @@ function SolarChart({ data }: SolarChartProps) {
         style={{ flex: 1, minHeight: 0 }}
       >
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 15, right: 4, bottom: 0, left: 4 }}>
+          <ComposedChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
             {/* Clear-sky theoretical max — yellow fill area */}
             <Area
               type="monotone"
@@ -250,7 +250,7 @@ function SolarChart({ data }: SolarChartProps) {
                 fontSize: 8,
                 fill: 'var(--muted-foreground)',
               }}
-              interval="preserveStartEnd"
+              interval={0}
             />
 
             {/* Y-axis: minimal — just provides domain context, no tick labels */}
@@ -337,7 +337,7 @@ export function SolarRadiationCard({
         </h2>
       </CardHeader>
 
-      <CardContent className="gap-1">
+      <CardContent className="gap-1 pt-[15px]">
         {loading ? (
           <>
             <span className="sr-only" role="status">{t('loading.solarUv')}</span>
