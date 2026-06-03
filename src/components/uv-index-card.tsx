@@ -419,8 +419,8 @@ function UvChart({ data, currentUv, gradientId, peakUv }: UvChartProps) {
       {/* margin.top on AreaChart adds space inside the SVG between the card title and the chart
           area. The Recharts margin is the correct mechanism here — it pushes content down within
           the SVG rather than creating a CSS gap between the title and the chart container. */}
-      <div role="img" aria-label={t('uvIndexCard.chartAriaLabel')} style={{ flex: 1, minHeight: 0 }}>
-        <ResponsiveContainer width="100%" height="100%">
+      <div role="img" aria-label={t('uvIndexCard.chartAriaLabel')} style={{ flex: 1, minWidth: 0, minHeight: 0, width: '100%', height: '100%' }}>
+        <ResponsiveContainer width="99%" height="100%">
           <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: 6 }}>
             <defs>
               {/*
@@ -471,6 +471,7 @@ function UvChart({ data, currentUv, gradientId, peakUv }: UvChartProps) {
               }}
               interval={0}
               scale="time"
+              height={15}
             />
 
             <YAxis
@@ -612,7 +613,7 @@ export function UvIndexCard({
   );
 
   return (
-    <Card footprint="tile" aria-busy={loading} style={{ paddingBottom: 0 }}>
+    <Card footprint="tile" aria-busy={loading}>
       <CardHeader>
         {/* Title: text-only per ADR-050 (no title icon on C4 tiles). Manrope 600 via font-heading. */}
         <h2 className="font-heading leading-snug font-semibold pb-1.5 border-b border-border" style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}>
