@@ -337,7 +337,7 @@ export function SolarRadiationCard({
         </h2>
       </CardHeader>
 
-      <CardContent className="gap-1 pt-[15px]">
+      <CardContent className="gap-1">
         {loading ? (
           <>
             <span className="sr-only" role="status">{t('loading.solarUv')}</span>
