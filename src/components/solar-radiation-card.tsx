@@ -244,7 +244,7 @@ function SolarChart({ data }: SolarChartProps) {
               type="number"
               domain={[now - WINDOW_MS, now]}
               ticks={ticks}
-              tickFormatter={fmtAxisTime}
+              tickFormatter={() => 'X'}
               tickLine={false}
               axisLine={false}
               tick={{
