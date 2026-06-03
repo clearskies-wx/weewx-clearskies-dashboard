@@ -53,11 +53,9 @@ import type { Observation, ArchiveRecord } from '../api/types';
 // Constants
 // ---------------------------------------------------------------------------
 
-/** UV scale upper bound for chart Y-axis. */
-const UV_Y_MAX = 12;
-
-/** Y-axis tick values. Matches mockup: 0, 4, 8, 12 (EPA band midpoints). */
-const UV_Y_TICKS = [0, 4, 8, 12];
+// UV_Y_MAX and UV_Y_TICKS were removed in favour of dynamic computation
+// (see buildYAxisScale below). Y-axis max is now one unit above the peak UV
+// forecast value so the curve fills the chart height rather than sitting flat.
 
 // ---------------------------------------------------------------------------
 // Types
@@ -380,11 +378,22 @@ interface UvChartProps {
   currentUv: number | null;
   /** Stable gradient ID to avoid collision when multiple charts on page. */
   gradientId: string;
+  /** Forecast peak UV — used to compute dynamic Y-axis max and ticks. */
+  peakUv: number | null;
 }
 
-function UvChart({ data, currentUv, gradientId }: UvChartProps) {
+function UvChart({ data, currentUv, gradientId, peakUv }: UvChartProps) {
   const { t } = useTranslation('now');
   const { domain, ticks } = useMemo(buildDailyDomainAndTicks, []);
+
+  // Dynamic Y-axis: one unit above the forecast peak, minimum ceiling of 4.
+  // e.g. peakUv=9 → yMax=10, ticks=[0,2,4,6,8,10]
+  // e.g. peakUv=5 → yMax=6,  ticks=[0,2,4,6]
+  const yMax = Math.max(Math.ceil((peakUv ?? 0) + 1), 4);
+  const yTicks = Array.from(
+    { length: Math.ceil(yMax / 2) + 1 },
+    (_, i) => i * 2,
+  ).filter((t) => t <= yMax);
 
   // Build sr-only table rows — every ~4 data points
   const srRows = data.filter((_, i) => i % Math.max(1, Math.floor(data.length / 8)) === 0);
@@ -408,11 +417,11 @@ function UvChart({ data, currentUv, gradientId }: UvChartProps) {
     <>
       {/* Chart — role="img" wraps for screen-reader summary */}
       {/* margin.top on AreaChart adds space inside the SVG between the card title and the chart
-          area. CSS marginTop on the wrapper div was ineffective because the card has fixed height
-          + overflow:hidden; the Recharts margin is the correct mechanism here. */}
-      <div role="img" aria-label={t('uvIndexCard.chartAriaLabel')} style={{ flex: 1, minHeight: 0, marginTop: '0.94rem' }}>
+          area. The Recharts margin is the correct mechanism here — it pushes content down within
+          the SVG rather than creating a CSS gap between the title and the chart container. */}
+      <div role="img" aria-label={t('uvIndexCard.chartAriaLabel')} style={{ flex: 1, minHeight: 0 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -12 }}>
+          <AreaChart data={data} margin={{ top: 15, right: 4, bottom: 0, left: -12 }}>
             <defs>
               {/*
                 Vertical linearGradient: EPA UV severity colors.
@@ -465,8 +474,8 @@ function UvChart({ data, currentUv, gradientId }: UvChartProps) {
             />
 
             <YAxis
-              domain={[0, UV_Y_MAX]}
-              ticks={UV_Y_TICKS}
+              domain={[0, yMax]}
+              ticks={yTicks}
               tickLine={false}
               axisLine={false}
               tick={{
@@ -629,6 +638,7 @@ export function UvIndexCard({
               data={chartData}
               currentUv={currentUv}
               gradientId={gradientId}
+              peakUv={forecastUv}
             />
 
             {/* Lower: custom UV icon + Now/Peak value groups */}
