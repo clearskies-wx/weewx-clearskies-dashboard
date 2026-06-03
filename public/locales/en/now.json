@@ -185,9 +185,11 @@
   "webcamTabLive": "Live",
   "webcamTabTimelapse": "Timelapse",
   "precipitationCard": {
-    "title": "Precipitation",
+    "title": "Precipitation & Humidity",
     "rainTodayLabel": "Rain today",
-    "rainRateLabel": "Rain rate"
+    "rainRateLabel": "Rain rate",
+    "humidityLabel": "Humidity",
+    "dewpointLabel": "Dewpoint"
   },
   "barometerCard": {
     "title": "Barometer"
