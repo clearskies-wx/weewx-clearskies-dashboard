@@ -20,6 +20,7 @@ import {
   GeoJSON,
   useMap,
 } from 'react-leaflet';
+import { useTheme } from '../lib/theme-provider';
 import type { PathOptions, LatLngBoundsExpression } from 'leaflet';
 import type { GeoJsonObject } from 'geojson';
 import {
@@ -115,6 +116,26 @@ function MapFlyTo({ earthquakes, selectedId }: MapFlyToProps) {
 }
 
 // ---------------------------------------------------------------------------
+// Basemap tile configurations for light and dark themes.
+// Light: standard OpenStreetMap tiles.
+// Dark: CartoDB dark_all — free, no API key required.
+// The key prop on TileLayer forces Leaflet to re-mount when the URL changes
+// because Leaflet's TileLayer does not support dynamic URL updates in-place.
+// ---------------------------------------------------------------------------
+
+const TILE_CONFIG = {
+  light: {
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  },
+  dark: {
+    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+  },
+} as const;
+
+// ---------------------------------------------------------------------------
 // Fault layer style — amber color per ADR-046 implementation guidance.
 // ---------------------------------------------------------------------------
 
@@ -131,6 +152,8 @@ const FAULT_STYLE: PathOptions = {
 export function SeismicPage() {
   const { t, i18n } = useTranslation('seismic');
   const locale = i18n.language;
+  const { resolved: resolvedTheme } = useTheme();
+  const baseTile = TILE_CONFIG[resolvedTheme];
 
   const { data: earthquakes, loading, error, refetch } = useEarthquakes();
   const { data: station } = useStation();
@@ -254,8 +277,9 @@ export function SeismicPage() {
                   scrollWheelZoom={true}
                 >
                   <TileLayer
-                    attribution={`&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>${faultAttribution ? ' | ' + faultAttribution : ''}`}
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    key={baseTile.url}
+                    url={baseTile.url}
+                    attribution={`${baseTile.attribution}${faultAttribution ? ' | ' + faultAttribution : ''}`}
                   />
 
                   {/* Station marker */}

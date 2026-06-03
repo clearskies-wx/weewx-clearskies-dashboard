@@ -4,6 +4,7 @@ import { MapContainer, TileLayer } from 'react-leaflet';
 import { Play, Pause, CaretLeft, CaretRight } from '@phosphor-icons/react';
 import { useCapabilities, useRadarFrames } from '../../hooks/useWeatherData';
 import type { CapabilityDeclaration, RadarFrame } from '../../api/types';
+import { useTheme } from '../../lib/theme-provider';
 
 interface RadarMapProps {
   center: [number, number];
@@ -121,8 +122,27 @@ function RadarLegend() {
   );
 }
 
+// Basemap tile configurations for light and dark themes.
+// Light: standard OpenStreetMap tiles.
+// Dark: CartoDB dark_all — free, no API key required.
+// The key prop on TileLayer forces Leaflet to re-mount when the URL changes
+// because Leaflet's TileLayer does not support dynamic URL updates in-place.
+const TILE_CONFIG = {
+  light: {
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  },
+  dark: {
+    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+  },
+} as const;
+
 export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
   const { t } = useTranslation('radar');
+  const { resolved: resolvedTheme } = useTheme();
+  const baseTile = TILE_CONFIG[resolvedTheme];
 
   // --- Capabilities fetch to discover radar provider ---
   const { data: capabilities, loading: capLoading, error: capError } = useCapabilities();
@@ -339,8 +359,9 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
           zoomControl={true}
         >
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            key={baseTile.url}
+            url={baseTile.url}
+            attribution={baseTile.attribution}
           />
           {radarCapability !== null && frames.map((frame, i) => {
             // Capture the non-null capability so TypeScript can confirm it inside
