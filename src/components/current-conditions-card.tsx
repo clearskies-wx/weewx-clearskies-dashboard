@@ -334,6 +334,11 @@ interface CurrentConditionsCardProps {
   weatherText?: string | null;
   /** WMO weather code for the icon. */
   weatherCode?: number | string | null;
+  /**
+   * Whether it is currently night — from the BFF scene.daytime flag (actual
+   * sunrise/sunset).  Defaults to false when absent (safe daytime fallback).
+   */
+  isNight?: boolean;
   /** Today's high temperature (raw number, native unit — from useTodayStats). */
   todayHigh?: number | null;
   /** Today's low temperature (raw number, native unit — from useTodayStats). */
@@ -356,6 +361,7 @@ export function CurrentConditionsCard({
   units,
   weatherText,
   weatherCode,
+  isNight = false,
   todayHigh,
   todayLow,
   todayArchive,
@@ -363,8 +369,6 @@ export function CurrentConditionsCard({
   onRetry,
 }: CurrentConditionsCardProps) {
   const { t } = useTranslation('now');
-  const hour = new Date().getHours();
-  const isNight = hour < 6 || hour >= 20;
 
   // Temperature — via ConvertedValue; no client unit math
   const outTempCV = asConverted(observation?.outTemp ?? null);

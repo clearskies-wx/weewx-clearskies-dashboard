@@ -109,20 +109,11 @@ export function NowPage() {
   const todayForecast = forecast?.daily?.[0] ?? null;
   const hourlyForecast = forecast?.hourly ?? null;
 
-  // Derive a WMO weather code for the CC card icon. Scene (from BFF) reflects
-  // actual current sky conditions and takes priority over the forecast daily
-  // code, which is a summary that may not match the current moment.
-  const derivedWeatherCode = (() => {
-    if (scene) {
-      if (scene.overlay === 'snow') return 71;
-      if (scene.overlay === 'rain') return 61;
-      if (scene.sky === 'storm') return 95;
-      if (scene.sky === 'cloudy') return 2;
-      return 0; // clear
-    }
-    const mapped = toWmoCode(todayForecast?.weatherCode);
-    return mapped ?? 0;
-  })();
+  // Derive a WMO weather code for the CC card icon.
+  // Priority: conditions engine weatherCode (integer, from BFF) > forecast daily
+  // code (string, mapped via toWmoCode) > 0 (clear fallback).
+  // Scene is NOT used here; it drives background theming only (4d).
+  const derivedWeatherCode = observation?.weatherCode ?? toWmoCode(todayForecast?.weatherCode) ?? 0;
 
   // Determine logo URL based on current theme
   // The theme toggle sets data-theme on <html>; detect it from the DOM
@@ -165,6 +156,7 @@ export function NowPage() {
           units={units}
           weatherText={observation?.weatherText ?? todayForecast?.weatherText ?? null}
           weatherCode={derivedWeatherCode}
+          isNight={scene ? !scene.daytime : false}
           todayHigh={todayStats?.high ?? null}
           todayLow={todayStats?.low ?? null}
           todayArchive={todayArchive ?? null}

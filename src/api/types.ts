@@ -188,6 +188,12 @@ export interface Observation {
   /** Weather description text — present when observation includes a text summary (Phase 0B). */
   weatherText?: string | null;
   /**
+   * WMO weather code from the conditions engine — integer (e.g. 0 = clear, 61 = rain,
+   * 71 = snow, 95 = thunderstorm).  Present when the BFF conditions engine is active.
+   * Use this in preference to scene-derived codes for the weather icon.
+   */
+  weatherCode?: number | null;
+  /**
    * Beaufort scale — computed by BFF (ADR-042).
    * .value: Beaufort number (0–12).
    * .label: localised descriptor (e.g. "Gentle breeze").
