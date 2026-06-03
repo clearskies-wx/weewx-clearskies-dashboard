@@ -210,7 +210,7 @@ function SolarChart({ data }: SolarChartProps) {
         style={{ flex: 1, minHeight: 0 }}
       >
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 4, right: 4, bottom: 14, left: 4 }}>
+          <ComposedChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
             {/* Clear-sky theoretical max — yellow fill area */}
             <Area
               type="monotone"
