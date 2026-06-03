@@ -20,6 +20,7 @@ interface ThemeContextValue {
   preference: ThemePreference;
   resolved: ResolvedTheme;
   setTheme: (t: ThemePreference) => void;
+  setDaytime: (d: boolean | null) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -32,15 +33,22 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 //   'auto-sunrise-sunset' → matchMedia as the synchronous starting value;
 //     the useEffect below replaces it with almanac-derived times once the
 //     fetch resolves (ADR-023).
-function resolveTheme(preference: ThemePreference, operatorDefault: OperatorDefault): ResolvedTheme {
+function resolveTheme(
+  preference: ThemePreference,
+  operatorDefault: OperatorDefault,
+  daytime: boolean | null,
+): ResolvedTheme {
   if (preference === 'light') return 'light';
   if (preference === 'dark') return 'dark';
 
-  // preference === 'system': resolve via operator default.
+  // preference === 'system': use BFF scene.daytime when available (ADR-047).
+  // This keeps UI theme in sync with the background scene.
+  if (daytime !== null) return daytime ? 'light' : 'dark';
+
+  // Fallback before BFF responds: operator default or OS preference.
   if (operatorDefault === 'light') return 'light';
   if (operatorDefault === 'dark') return 'dark';
 
-  // 'auto-os' or 'auto-sunrise-sunset' (before almanac fetch): use matchMedia.
   if (typeof window !== 'undefined') {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
@@ -65,17 +73,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const operatorDefault: OperatorDefault = branding?.defaultThemeMode ?? 'auto-os';
 
   const [preference, setPreferenceState] = useState<ThemePreference>(readStoredPreference);
+  const [daytime, setDaytimeState] = useState<boolean | null>(null);
   const [resolved, setResolved] = useState<ResolvedTheme>(() =>
-    resolveTheme(readStoredPreference(), operatorDefault),
+    resolveTheme(readStoredPreference(), operatorDefault, null),
   );
 
-  // Apply resolved theme to DOM + keep it in sync when preference or operatorDefault changes.
+  // Apply resolved theme to DOM + keep it in sync when preference, operatorDefault, or daytime changes.
   useEffect(() => {
-    const newResolved = resolveTheme(preference, operatorDefault);
+    const newResolved = resolveTheme(preference, operatorDefault, daytime);
     setResolved(newResolved);
     document.documentElement.setAttribute('data-theme', newResolved);
     localStorage.setItem(STORAGE_KEY, preference);
-  }, [preference, operatorDefault]);
+  }, [preference, operatorDefault, daytime]);
 
   // When preference is 'system' AND operatorDefault is 'auto-os', subscribe to
   // OS-level changes. auto-sunrise-sunset has its own effect below and does NOT
@@ -105,8 +114,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const sunTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const midnightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Fallback: fetch almanac and run local sunrise/sunset timer only when
+  // the BFF scene.daytime is not available (standalone deployment without SSE).
   useEffect(() => {
     if (preference !== 'system' || operatorDefault !== 'auto-sunrise-sunset') return;
+    if (daytime !== null) return;
 
     const abortController = new AbortController();
 
@@ -228,22 +240,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         midnightTimerRef.current = null;
       }
     };
-  }, [preference, operatorDefault]);
+  }, [preference, operatorDefault, daytime]);
 
-  // useCallback so setTheme has a stable identity across renders — required for the
-  // useMemo context value below to remain stable when only resolved or preference changes.
   const setTheme = useCallback((t: ThemePreference) => {
     setPreferenceState(t);
   }, []);
 
-  // Memoize the context value so consumers only re-render when preference or resolved
-  // actually changes. Without this, every ThemeProvider render (e.g. triggered by a
-  // sibling state update) produces a new object reference, causing all useTheme()
-  // consumers to re-render — which can close an infinite loop if any consumer has a
-  // useEffect that writes state (e.g. a data-fetching hook).
+  const setDaytime = useCallback((d: boolean | null) => {
+    setDaytimeState(d);
+  }, []);
+
   const contextValue = useMemo(
-    () => ({ preference, resolved, setTheme }),
-    [preference, resolved, setTheme],
+    () => ({ preference, resolved, setTheme, setDaytime }),
+    [preference, resolved, setTheme, setDaytime],
   );
 
   return (

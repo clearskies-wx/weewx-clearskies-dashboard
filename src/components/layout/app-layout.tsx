@@ -6,17 +6,22 @@
 // useObservation() (REST polling) — the background does not need SSE
 // sub-second reactivity; page-level components use useRealtimeObservation().
 
+import { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { SkipLink } from './skip-link';
 import { NavRail } from './nav-rail';
 import { Footer } from './footer';
 import { useObservation } from '../../hooks/useWeatherData';
+import { useTheme } from '../../lib/theme-provider';
 import { SceneBackground, SceneAttribution } from '../background/scene-background';
 
 export function AppLayout() {
-  // scene is always present: useObservation returns SCENE_DEFAULT when the
-  // server hasn't responded yet or predates D1 (see useWeatherData.ts).
   const { scene } = useObservation();
+  const { setDaytime } = useTheme();
+
+  useEffect(() => {
+    setDaytime(scene.daytime);
+  }, [scene.daytime, setDaytime]);
 
   return (
     <>
