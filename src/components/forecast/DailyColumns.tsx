@@ -163,7 +163,7 @@ export function DailyColumns({
             } : undefined}
             style={{
               ...cellBase,
-              height: expandable ? 28 : 16,
+              height: expandable ? 28 : 20,
               paddingTop: expandable ? 8 : 0,
               cursor: expandable ? 'pointer' : 'default',
               flexDirection: 'column',
@@ -174,7 +174,7 @@ export function DailyColumns({
             <span
               style={{
                 fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                fontSize: expandable ? '0.85rem' : '0.66rem',
+                fontSize: expandable ? '0.85rem' : '0.75rem',
                 fontWeight: 600,
                 color: isSelected ? 'var(--primary)' : 'var(--foreground)',
                 whiteSpace: 'nowrap',
@@ -211,7 +211,7 @@ export function DailyColumns({
           key={i}
           style={{
             ...cellBase,
-            height: expandable ? 40 : 26,
+            height: expandable ? 40 : 30,
             paddingTop: expandable ? 6 : 3,
             cursor: expandable ? 'pointer' : 'default',
           }}
@@ -242,7 +242,7 @@ export function DailyColumns({
           key={i}
           style={{
             ...cellBase,
-            height: expandable ? 22 : 16,
+            height: expandable ? 22 : 20,
             cursor: expandable ? 'pointer' : 'default',
           }}
           onClick={expandable ? () => handleColClick(i) : undefined}
@@ -314,7 +314,7 @@ export function DailyColumns({
       {days.map((day, i) => {
         const precip = day.precipProbabilityMax;
         return (
-          <div key={i} style={{ ...cellBase, height: expandable ? 16 : 13, marginTop: expandable ? 0 : 0 }}>
+          <div key={i} style={{ ...cellBase, height: expandable ? 16 : 16, marginTop: expandable ? 0 : 0 }}>
             <span
               style={{
                 display: 'flex',
@@ -341,7 +341,7 @@ export function DailyColumns({
         const bearing = typeof day.extras?.windDir === 'number' ? day.extras.windDir : null;
         const windSpeed = day.windSpeedMax !== null ? Math.round(day.windSpeedMax) : 0;
         return (
-          <div key={i} style={{ ...cellBase, height: expandable ? 44 : 15, overflow: 'visible' }}>
+          <div key={i} style={{ ...cellBase, height: expandable ? 44 : 22, overflow: 'visible' }}>
             <WindSymbol bearing={bearing} speed={windSpeed} size={expandable ? 20 : 18} />
           </div>
         );
