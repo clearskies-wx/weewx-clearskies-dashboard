@@ -369,7 +369,7 @@ export function AqiCard({
                   minHeight: 0,
                 }}
               >
-                <div style={{ flex: '0 0 62%', minWidth: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', overflow: 'hidden' }}>
+                <div style={{ flex: '0 0 62%', minWidth: 0, display: 'flex', alignItems: 'stretch', justifyContent: 'center', overflow: 'hidden' }}>
                   <SemiCircularGauge
                     value={gaugeValue}
                     min={0}
@@ -406,7 +406,7 @@ export function AqiCard({
               /* No pollutant data (e.g. IQAir free tier) — gauge fills entire card.
                  alignItems: flex-start anchors the gauge arc to the top so the arc
                  is always visible; the baseline labels clip cleanly below. */
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'stretch', justifyContent: 'center', flex: 1, minHeight: 0, overflow: 'hidden' }}>
                 <SemiCircularGauge
                   value={gaugeValue}
                   min={0}
