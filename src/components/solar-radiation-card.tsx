@@ -211,8 +211,7 @@ function SolarChart({ data }: SolarChartProps) {
         aria-label={t('solarRadiationCard.chartAriaLabel')}
         style={{ flex: 1, minHeight: 0 }}
       >
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: 6 }}>
+          <AreaChart data={data} width="100%" height="100%" responsive margin={{ top: 4, right: 4, bottom: 0, left: 6 }}>
             {/* Clear-sky theoretical max — yellow fill area */}
             <Area
               type="monotone"
@@ -258,7 +257,6 @@ function SolarChart({ data }: SolarChartProps) {
 
             {/* YAxis removed to test if it blocks XAxis labels */}
           </AreaChart>
-        </ResponsiveContainer>
       </div>
 
       {/* Screen-reader fallback table — inline sr-only styles (table sr-only ghost text fix). */}
