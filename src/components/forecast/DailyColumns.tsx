@@ -282,22 +282,20 @@ export function DailyColumns({
               </span>
             </span>
           ) : (
-            // Now card column layout (desktop only — mobile uses mobileRows)
+            // Now card: stack hi/lo vertically on mobile, inline on desktop
             <span
               style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: 0,
                 fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
                 fontSize: '0.75rem',
                 fontWeight: 600,
                 lineHeight: 1,
               }}
+              className="flex flex-col items-center gap-0 md:flex-row md:items-baseline"
             >
               <span style={{ color: 'var(--temp-hi)' }}>
                 {day.tempMax !== null ? `${Math.round(day.tempMax)}°` : '—'}
               </span>
-              <span style={{ color: 'var(--muted-foreground)', margin: '0 1px' }}>/</span>
+              <span style={{ color: 'var(--muted-foreground)', margin: '0 1px' }} className="hidden md:inline" aria-hidden="true">/</span>
               <span style={{ color: 'var(--temp-lo)' }}>
                 {day.tempMin !== null ? `${Math.round(day.tempMin)}°` : '—'}
               </span>
