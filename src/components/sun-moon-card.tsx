@@ -39,13 +39,13 @@ import {
 // ---------------------------------------------------------------------------
 
 /** Sun arc — outer semicircle geometry (matches C4 mockup: r=78) */
-const SUN_R = 78;
+const SUN_R = 88;
 /** Moon arc — inner semicircle geometry (matches C4 mockup: r=44) */
-const MOON_R = 44;
+const MOON_R = 52;
 /** SVG viewBox half-width; center X = cx (matches C4 mockup viewBox 220×110) */
 const CX = 110;
 /** SVG viewBox baseline Y; arcs curve upward (negative Y direction) */
-const CY = 88;
+const CY = 84;
 /** Total SVG width (matches C4 mockup) */
 const SVG_W = 220;
 /** Total SVG height (matches C4 mockup) */
@@ -328,7 +328,7 @@ function ArcVisualization({ almanac, tz }: ArcVisualizationProps) {
         x={moonLabelX}
         y={moonLabelY}
         textAnchor={moonLabelAnchor}
-        fontSize={7.5}
+        fontSize={9}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
         fontWeight={600}
         fill="var(--muted-foreground)"
@@ -341,7 +341,7 @@ function ArcVisualization({ almanac, tz }: ArcVisualizationProps) {
         x={moonLabelX}
         y={moonLabelY + 9}
         textAnchor={moonLabelAnchor}
-        fontSize={7}
+        fontSize={8}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
         fill="var(--muted-foreground, #64748b)"
         aria-hidden="true"
@@ -351,17 +351,17 @@ function ArcVisualization({ almanac, tz }: ArcVisualizationProps) {
 
       {/* ── Rise/set labels per C4 mockup: compact time centered on arc endpoint, label word below ── */}
       {/* Sun rise — left endpoint of sun arc */}
-      <text x={CX - SUN_R} y={CY + 11} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize={8} fill="var(--foreground)" aria-hidden="true">{sunriseText}</text>
-      <text x={CX - SUN_R} y={CY + 19} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize={7} fill="var(--muted-foreground)" aria-hidden="true">Sunrise</text>
+      <text x={CX - SUN_R} y={CY + 12} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize={10} fill="var(--foreground)" aria-hidden="true">{sunriseText}</text>
+      <text x={CX - SUN_R} y={CY + 22} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize={8} fill="var(--muted-foreground)" aria-hidden="true">Sunrise</text>
       {/* Moon rise — left endpoint of moon arc */}
-      <text x={CX - MOON_R} y={CY + 11} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize={8} fill="var(--foreground)" aria-hidden="true">{moonriseText}</text>
-      <text x={CX - MOON_R} y={CY + 19} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize={7} fill="var(--muted-foreground)" aria-hidden="true">Moonrise</text>
+      <text x={CX - MOON_R} y={CY + 12} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize={10} fill="var(--foreground)" aria-hidden="true">{moonriseText}</text>
+      <text x={CX - MOON_R} y={CY + 22} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize={8} fill="var(--muted-foreground)" aria-hidden="true">Moonrise</text>
       {/* Moon set — right endpoint of moon arc */}
-      <text x={CX + MOON_R} y={CY + 11} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize={8} fill="var(--foreground)" aria-hidden="true">{moonsetText}</text>
-      <text x={CX + MOON_R} y={CY + 19} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize={7} fill="var(--muted-foreground)" aria-hidden="true">Moonset</text>
+      <text x={CX + MOON_R} y={CY + 12} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize={10} fill="var(--foreground)" aria-hidden="true">{moonsetText}</text>
+      <text x={CX + MOON_R} y={CY + 22} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize={8} fill="var(--muted-foreground)" aria-hidden="true">Moonset</text>
       {/* Sun set — right endpoint of sun arc */}
-      <text x={CX + SUN_R} y={CY + 11} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize={8} fill="var(--foreground)" aria-hidden="true">{sunsetText}</text>
-      <text x={CX + SUN_R} y={CY + 19} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize={7} fill="var(--muted-foreground)" aria-hidden="true">Sunset</text>
+      <text x={CX + SUN_R} y={CY + 12} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize={10} fill="var(--foreground)" aria-hidden="true">{sunsetText}</text>
+      <text x={CX + SUN_R} y={CY + 22} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize={8} fill="var(--muted-foreground)" aria-hidden="true">Sunset</text>
     </svg>
   );
 }
