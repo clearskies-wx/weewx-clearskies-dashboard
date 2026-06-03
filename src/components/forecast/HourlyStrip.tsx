@@ -195,7 +195,7 @@ export function HourlyStrip({
     const windSpeed = hour.windSpeed !== null ? Math.round(hour.windSpeed) : 0;
     return (
       <div key={i} style={{ ...colStyle, ...CELL_BASE, height: rowH.wind, overflow: 'visible' }}>
-        <WindSymbol bearing={bearing} speed={windSpeed} size={threeHourWindows ? 12 : 20} />
+        <WindSymbol bearing={bearing} speed={windSpeed} size={threeHourWindows ? 14 : 20} />
       </div>
     );
   });
