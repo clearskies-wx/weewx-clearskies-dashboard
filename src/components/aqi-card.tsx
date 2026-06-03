@@ -154,7 +154,7 @@ function GaugeContent({ aqiValue, category, mainPollutant }: GaugeContentProps) 
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center',
-        gap: '0.3rem',
+        gap: '0.1rem',
         pointerEvents: 'none',
       }}
     >
