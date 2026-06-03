@@ -14,9 +14,12 @@
 //   - Click a column to expand it (accent top border + 8% blue tint background)
 //   - One cohesive full-width detail panel below ALL columns (no borders/dividers)
 //   - Detail panel: day header + wind gust + sunrise/sunset + narrative
+//   - Mobile: hi/lo temps stack vertically (flex-col) below md breakpoint
 //
 // expandable=false (now card 7-day tab):
 //   - No accent bars, no dates, no expansion, simpler layout
+//   - Mobile (< md): renders as stacked horizontal rows instead of columns
+//   - Desktop (≥ md): standard column layout (trend line visible)
 
 import { useState } from 'react';
 import { Drop } from '@phosphor-icons/react';
@@ -230,6 +233,8 @@ export function DailyColumns({
   );
 
   // Hi/Lo row
+  // expandable=true (forecast page): stack hi and lo vertically on mobile (< md).
+  // expandable=false (now card): shown only in the desktop column layout (see mobileRows below).
   const hiloRow = (
     <div style={{ display: 'flex', flexDirection: 'row', position: 'relative', zIndex: 1 }}>
       {days.map((day, i) => (
@@ -251,25 +256,53 @@ export function DailyColumns({
           tabIndex={expandable ? -1 : undefined}
           aria-hidden={expandable ? true : undefined}
         >
-          <span
-            style={{
-              display: 'flex',
-              alignItems: 'baseline',
-              gap: 0,
-              fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
-              fontSize: expandable ? '0.85rem' : '0.75rem',
-              fontWeight: 600,
-              lineHeight: 1,
-            }}
-          >
-            <span style={{ color: 'var(--temp-hi)' }}>
-              {day.tempMax !== null ? `${Math.round(day.tempMax)}°` : '—'}
+          {expandable ? (
+            // Forecast page: stack hi/lo vertically on mobile, inline on desktop
+            <span
+              style={{
+                fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                lineHeight: 1,
+              }}
+              className="flex flex-col items-center gap-0 md:flex-row md:items-baseline"
+            >
+              <span style={{ color: 'var(--temp-hi)' }}>
+                {day.tempMax !== null ? `${Math.round(day.tempMax)}°` : '—'}
+              </span>
+              <span
+                style={{ color: 'var(--muted-foreground)', margin: '0 1px' }}
+                className="hidden md:inline"
+                aria-hidden="true"
+              >
+                /
+              </span>
+              <span style={{ color: 'var(--temp-lo)' }}>
+                {day.tempMin !== null ? `${Math.round(day.tempMin)}°` : '—'}
+              </span>
             </span>
-            <span style={{ color: 'var(--muted-foreground)', margin: '0 1px' }}>/</span>
-            <span style={{ color: 'var(--temp-lo)' }}>
-              {day.tempMin !== null ? `${Math.round(day.tempMin)}°` : '—'}
+          ) : (
+            // Now card column layout (desktop only — mobile uses mobileRows)
+            <span
+              style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: 0,
+                fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                lineHeight: 1,
+              }}
+            >
+              <span style={{ color: 'var(--temp-hi)' }}>
+                {day.tempMax !== null ? `${Math.round(day.tempMax)}°` : '—'}
+              </span>
+              <span style={{ color: 'var(--muted-foreground)', margin: '0 1px' }}>/</span>
+              <span style={{ color: 'var(--temp-lo)' }}>
+                {day.tempMin !== null ? `${Math.round(day.tempMin)}°` : '—'}
+              </span>
             </span>
-          </span>
+          )}
         </div>
       ))}
     </div>
@@ -433,6 +466,101 @@ export function DailyColumns({
     />
   ) : null;
 
+  // ── Mobile stacked rows (non-expandable / Now page only) ───────────────────
+  // Rendered as a simple list of horizontal rows.  Hidden at md+ where the
+  // column layout takes over.  Each row: icon | day name | hi°/lo° | precip | wind.
+  const mobileRows = !expandable ? (
+    <div
+      className="md:hidden"
+      style={{ display: 'flex', flexDirection: 'column' }}
+      role="list"
+      aria-label="7-day forecast"
+    >
+      {days.map((day, i) => {
+        const dayName = getDayName(day.validDate, i);
+        const bearing = typeof day.extras?.windDir === 'number' ? day.extras.windDir : null;
+        const windSpeed = day.windSpeedMax !== null ? Math.round(day.windSpeedMax) : 0;
+        const precip = day.precipProbabilityMax;
+        return (
+          <div
+            key={i}
+            role="listitem"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.35rem 0',
+              borderBottom: i < days.length - 1 ? '1px solid var(--border, rgba(0,0,0,0.10))' : 'none',
+            }}
+          >
+            {/* Weather icon — sr-only description handled inside WeatherIcon */}
+            <WeatherIcon
+              code={toWmoCode(day.weatherCode)}
+              size={22}
+            />
+            {/* Day name */}
+            <span
+              style={{
+                flex: 1,
+                fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                color: 'var(--foreground)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {dayName}
+            </span>
+            {/* Hi / Lo temps — screen readers read these naturally */}
+            <span
+              style={{
+                fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                lineHeight: 1,
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: 0,
+                flexShrink: 0,
+              }}
+            >
+              <span style={{ color: 'var(--temp-hi)' }}>
+                {day.tempMax !== null ? `${Math.round(day.tempMax)}°` : '—'}
+              </span>
+              <span style={{ color: 'var(--muted-foreground)', margin: '0 1px' }} aria-hidden="true">/</span>
+              <span style={{ color: 'var(--temp-lo)' }}>
+                {day.tempMin !== null ? `${Math.round(day.tempMin)}°` : '—'}
+              </span>
+            </span>
+            {/* Precipitation probability — Drop icon is decorative */}
+            <span
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.08rem',
+                fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                fontSize: '0.72rem',
+                color: 'var(--muted-foreground)',
+                flexShrink: 0,
+                minWidth: '2.2rem',
+                justifyContent: 'flex-end',
+              }}
+            >
+              <Drop aria-hidden="true" size={7} />
+              {precip !== null ? `${precip}%` : '—'}
+            </span>
+            {/* Wind symbol */}
+            <div style={{ flexShrink: 0, overflow: 'visible' }}>
+              <WindSymbol bearing={bearing} speed={windSpeed} size={16} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  ) : null;
+
   return (
     <div
       // For the now-card (non-expandable): flex:1 + min-height:0 + overflow:hidden keeps
@@ -447,7 +575,16 @@ export function DailyColumns({
         overflow: expandable ? 'visible' : 'hidden',
       }}
     >
-      <div style={{ position: 'relative', width: '100%', overflow: 'visible' }}>
+      {/* Mobile stacked rows — non-expandable (Now page) only, visible < md */}
+      {mobileRows}
+
+      {/* Column layout:
+          - expandable=true  (forecast page): always visible, no class override
+          - expandable=false (now card):      hidden < md, shown md+ via Tailwind */}
+      <div
+        className={!expandable ? 'hidden md:flex md:flex-col md:flex-1' : undefined}
+        style={{ position: 'relative', width: '100%', overflow: 'visible' }}
+      >
         {selectedColBg}
         <div style={{ display: 'flex', flexDirection: 'column', position: 'relative', width: '100%', overflow: 'visible' }}>
           {accentBarRow}
