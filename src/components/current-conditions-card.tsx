@@ -391,9 +391,10 @@ export function CurrentConditionsCard({
     return asConverted(observation?.heatindex ?? null);
   }, [observation]);
 
-  // High/Low display: integer + degree symbol
-  const highDisplay = todayHigh != null ? `${Math.round(todayHigh)}°` : null;
-  const lowDisplay = todayLow != null ? `${Math.round(todayLow)}°` : null;
+  // High/Low display: integer + unit (e.g. "72°F")
+  const tempUnitShort = tempUnit || '°';
+  const highDisplay = todayHigh != null ? `${Math.round(todayHigh)}${tempUnitShort}` : null;
+  const lowDisplay = todayLow != null ? `${Math.round(todayLow)}${tempUnitShort}` : null;
 
   return (
     <Card footprint="wide" rowSpan={2} aria-busy={loading}>
