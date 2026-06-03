@@ -257,8 +257,10 @@ function SolarChart({ data }: SolarChartProps) {
             {/* Y-axis: minimal — just provides domain context, no tick labels */}
             <YAxis
               domain={[0, yMax * 1.1]}
-              hide
-              width={0}
+              tick={false}
+              axisLine={false}
+              tickLine={false}
+              width={1}
             />
           </ComposedChart>
         </ResponsiveContainer>
