@@ -82,7 +82,7 @@ export function WindSymbol({ bearing, speed, size = 20 }: WindSymbolProps) {
         textAnchor="middle"
         dominantBaseline="central"
         fontFamily="system-ui, -apple-system, sans-serif"
-        fontWeight={700}
+        fontWeight={400}
         fontSize={fontSize}
         fill="#1a1a1a"
       >

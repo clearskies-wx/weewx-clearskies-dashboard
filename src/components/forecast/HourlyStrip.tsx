@@ -104,7 +104,7 @@ export function HourlyStrip({
   // C3 mockup compact budget (card-pad=0.75rem each side):
   //   time=13 + icon=26 + temp=15 + trendH=22 + trend-padding=5 + precip=13 + wind=26 = 120px → fits.
   const rowH = threeHourWindows
-    ? { time: 13, icon: 26, temp: 15, precip: 13, wind: 26 }
+    ? { time: 13, icon: 26, temp: 15, precip: 13, wind: 15 }
     : { time: 18, icon: 34, temp: 22, precip: 18, wind: 42 };
 
   // ── Trend SVG: 22px for compact, 40px for page ──────────────────────────
@@ -195,7 +195,7 @@ export function HourlyStrip({
     const windSpeed = hour.windSpeed !== null ? Math.round(hour.windSpeed) : 0;
     return (
       <div key={i} style={{ ...colStyle, ...CELL_BASE, height: rowH.wind, overflow: 'visible' }}>
-        <WindSymbol bearing={bearing} speed={windSpeed} size={20} />
+        <WindSymbol bearing={bearing} speed={windSpeed} size={threeHourWindows ? 12 : 20} />
       </div>
     );
   });
