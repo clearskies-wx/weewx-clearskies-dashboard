@@ -62,21 +62,15 @@ export function NowPage() {
   const { data: aqi, loading: aqiLoading, error: aqiError, refetch: aqiRefetch } = useAqi();
   const { data: station } = useStation();
 
-  // todayArchive — midnight-to-now window for useTodayStats (high/low/rain)
-  // and all cards that expect today-only data.
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const { data: todayArchive } = useArchive({ from: todayStart.toISOString() });
-
-  // rollingArchive — 24h rolling window for SolarRadiationCard so its chart
-  // always has a full 24h of history regardless of time of day.
+  // Single 24h rolling archive — covers both SolarRadiationCard (needs full 24h)
+  // and useTodayStats (filters to midnight-onward internally).
   // Memoized with [] deps so the ISO string is stable across renders and does
   // not cause useArchive to re-fetch on every render cycle.
   const archiveStart24h = useMemo(
     () => new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
     [],
   );
-  const { data: rollingArchive } = useArchive({ from: archiveStart24h });
+  const { data: todayArchive } = useArchive({ from: archiveStart24h });
 
   const lightning = useLightning(observation);
   const todayStats = useTodayStats(observation, todayArchive);
@@ -213,7 +207,7 @@ export function NowPage() {
         {/* ── Solar Radiation — tile ────────────────────────────────────── */}
         <SolarRadiationCard
           observation={observation}
-          todayArchive={rollingArchive ?? []}
+          todayArchive={todayArchive ?? []}
           loading={obsLoading}
           error={obsError?.message ?? null}
           onRetry={obsRefetch}

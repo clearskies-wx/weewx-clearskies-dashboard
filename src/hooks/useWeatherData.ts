@@ -657,7 +657,18 @@ export function useTodayStats(
 
     if (!observation && (!todayArchive || todayArchive.length === 0)) return null;
 
-    const records = todayArchive ?? [];
+    // Filter to today-only records (midnight local time onwards).
+    // todayArchive may span 24h rolling; useTodayStats only cares about
+    // records from the current calendar day.
+    const todayMidnight = new Date();
+    todayMidnight.setHours(0, 0, 0, 0);
+    const todayMs = todayMidnight.getTime();
+    const todayRecords = (todayArchive ?? []).filter(rec => {
+      const ts = new Date(rec.timestamp).getTime();
+      return ts >= todayMs;
+    });
+
+    const records = todayRecords;
 
     // Archive records' numeric fields may arrive as ConvertedValue objects when
     // the BFF has applied unit conversion (ADR-042). Use asConverted() to
