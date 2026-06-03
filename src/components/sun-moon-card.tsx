@@ -49,7 +49,7 @@ const CY = 87;
 /** Total SVG width (matches C4 mockup) */
 const SVG_W = 220;
 /** Total SVG height (matches C4 mockup) */
-const SVG_H = 110;
+const SVG_H = 122;
 
 /** Sun color — gold/amber, WCAG AA on dark backgrounds */
 const SUN_COLOR = '#f59e0b';
@@ -226,7 +226,7 @@ function ArcVisualization({ almanac, tz }: ArcVisualizationProps) {
     <svg
       role="img"
       aria-label={svgTitle}
-      viewBox={`0 0 ${SVG_W} ${SVG_H}`}
+      viewBox={`0 -12 ${SVG_W} ${SVG_H}`}
       width="100%"
       style={{ display: 'block', height: '100%' }}
     >
