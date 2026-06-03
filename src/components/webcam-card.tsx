@@ -56,7 +56,7 @@ export function WebcamCard({ webcamConfig, refreshTs, videoRefreshTs }: WebcamCa
             <img
               src={`${webcamConfig.imageUrl}?t=${refreshTs}`}
               alt={t('webcamAlt')}
-              className="w-full h-full rounded object-cover"
+              className="w-full h-full rounded object-contain"
               onError={() => setImageAvailable(false)}
             />
           ) : videoAvailable ? (
