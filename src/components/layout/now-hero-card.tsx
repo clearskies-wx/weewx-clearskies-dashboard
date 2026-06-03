@@ -118,7 +118,7 @@ export function NowHeroCard({
             <img
               src={logoUrl}
               alt={logoAlt ?? ''}
-              style={{ height: '100%', width: 'auto', maxWidth: '12rem', objectFit: 'contain' }}
+              style={{ height: '2.75rem', width: 'auto', maxWidth: '14rem', objectFit: 'contain' }}
             />
           ) : (
             <PlaceholderLogo size={40} />
