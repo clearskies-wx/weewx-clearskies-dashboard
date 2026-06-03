@@ -239,7 +239,7 @@ export function HourlyStrip({
         {precipRow}
       </div>
       {/* Wind row */}
-      <div style={{ display: 'flex', flexDirection: 'row', width: '100%', overflow: 'visible' }}>
+      <div style={{ display: 'flex', flexDirection: 'row', width: '100%', overflow: 'visible', marginTop: 3 }}>
         {windRow}
       </div>
     </div>
