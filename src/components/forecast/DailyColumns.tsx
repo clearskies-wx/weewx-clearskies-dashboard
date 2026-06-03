@@ -171,7 +171,7 @@ export function DailyColumns({
             <span
               style={{
                 fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                fontSize: expandable ? '0.85rem' : '0.85rem',
+                fontSize: expandable ? '0.85rem' : '0.66rem',
                 fontWeight: 600,
                 color: isSelected ? 'var(--primary)' : 'var(--foreground)',
                 whiteSpace: 'nowrap',
@@ -208,8 +208,8 @@ export function DailyColumns({
           key={i}
           style={{
             ...cellBase,
-            height: expandable ? 40 : 30,
-            paddingTop: expandable ? 6 : 5,
+            height: expandable ? 40 : 26,
+            paddingTop: expandable ? 6 : 3,
             cursor: expandable ? 'pointer' : 'default',
           }}
           onClick={expandable ? () => handleColClick(i) : undefined}
@@ -257,7 +257,7 @@ export function DailyColumns({
               alignItems: 'baseline',
               gap: 0,
               fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
-              fontSize: expandable ? '0.85rem' : '0.8rem',
+              fontSize: expandable ? '0.85rem' : '0.85rem',
               fontWeight: 600,
               lineHeight: 1,
             }}
@@ -281,15 +281,14 @@ export function DailyColumns({
       {days.map((day, i) => {
         const precip = day.precipProbabilityMax;
         return (
-          <div key={i} style={{ ...cellBase, height: expandable ? 16 : 12, marginTop: expandable ? 0 : 4 }}>
+          <div key={i} style={{ ...cellBase, height: expandable ? 16 : 13, marginTop: expandable ? 0 : 0 }}>
             <span
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.08rem',
                 fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                // C3 mockup: 0.63rem for now-card, 0.7rem on forecast page
-                fontSize: expandable ? 'var(--text-micro, 0.7rem)' : '0.63rem',
+                fontSize: expandable ? 'var(--text-micro, 0.7rem)' : '0.66rem',
                 color: 'var(--muted-foreground)',
                   }}
             >
@@ -304,13 +303,13 @@ export function DailyColumns({
 
   // Wind row
   const windRow = (
-    <div style={{ display: 'flex', flexDirection: 'row', overflow: 'visible', position: 'relative', zIndex: 1 }}>
+    <div style={{ display: 'flex', flexDirection: 'row', overflow: 'visible', position: 'relative', zIndex: 1, marginTop: expandable ? 0 : 3 }}>
       {days.map((day, i) => {
         const bearing = typeof day.extras?.windDir === 'number' ? day.extras.windDir : 0;
         const windSpeed = day.windSpeedMax !== null ? Math.round(day.windSpeedMax) : 0;
         return (
-          <div key={i} style={{ ...cellBase, height: 44, overflow: 'visible' }}>
-            <WindSymbol bearing={bearing} speed={windSpeed} size={20} />
+          <div key={i} style={{ ...cellBase, height: expandable ? 44 : 15, overflow: 'visible' }}>
+            <WindSymbol bearing={bearing} speed={windSpeed} size={expandable ? 20 : 14} />
           </div>
         );
       })}
