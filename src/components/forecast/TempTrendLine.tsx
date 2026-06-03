@@ -95,27 +95,17 @@ export function TempTrendLine({
 
   if (hiVals.length < 2 && loVals.length < 2) return null;
 
-  // Hi and Lo each use their own min/max to maximise visible variation.
-  const minH = hiVals.length ? Math.min(...hiVals) : 0;
-  const maxH = hiVals.length ? Math.max(...hiVals) : 1;
-  const ranH = maxH - minH || 1;
+  // Shared scale across ALL temps so visual gap reflects actual spread.
+  const allVals = [...hiVals, ...loVals];
+  const minV = allVals.length ? Math.min(...allVals) : 0;
+  const maxV = allVals.length ? Math.max(...allVals) : 1;
+  const ranV = maxV - minV || 1;
 
-  const minL = loVals.length ? Math.min(...loVals) : 0;
-  const maxL = loVals.length ? Math.max(...loVals) : 1;
-  const ranL = maxL - minL || 1;
-
-  // Hi occupies top half; Lo occupies bottom half (split-axis)
-  const hiTop = pad;
-  const hiBot = height * 0.52;
-  const loTop = height * 0.50;
-  const loBot = height - pad;
-
-  function toHiY(v: number): number {
-    return hiBot - ((v - minH) / ranH) * (hiBot - hiTop);
+  function toY(v: number): number {
+    return (height - pad) - ((v - minV) / ranV) * (height - 2 * pad);
   }
-  function toLoY(v: number): number {
-    return loBot - ((v - minL) / ranL) * (loBot - loTop);
-  }
+  const toHiY = toY;
+  const toLoY = toY;
 
   const hiPoints = highs
     .map((v, i) => {
