@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WebcamConfig } from '../api/types';
 import { AlertBanner } from '../components/shared/alert-banner';
@@ -70,8 +70,13 @@ export function NowPage() {
 
   // rollingArchive — 24h rolling window for SolarRadiationCard so its chart
   // always has a full 24h of history regardless of time of day.
-  const archiveStart24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  const { data: rollingArchive } = useArchive({ from: archiveStart24h.toISOString() });
+  // Memoized with [] deps so the ISO string is stable across renders and does
+  // not cause useArchive to re-fetch on every render cycle.
+  const archiveStart24h = useMemo(
+    () => new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+    [],
+  );
+  const { data: rollingArchive } = useArchive({ from: archiveStart24h });
 
   const lightning = useLightning(observation);
   const todayStats = useTodayStats(observation, todayArchive);

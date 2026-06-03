@@ -94,6 +94,10 @@ function buildUvBellCurve(
 ): UvChartPoint[] {
   const peak = uvIndexMax ?? 0;
 
+  // No forecast UV available — return empty so the chart renders its no-data state
+  // rather than a flat zero curve that looks broken.
+  if (peak <= 0) return [];
+
   const now = new Date();
   const midnight = new Date(now);
   midnight.setHours(0, 0, 0, 0);
@@ -403,10 +407,12 @@ function UvChart({ data, currentUv, gradientId }: UvChartProps) {
   return (
     <>
       {/* Chart — role="img" wraps for screen-reader summary */}
-      {/* marginTop adds ~10px breathing room between the card title and the chart area. */}
-      <div role="img" aria-label={t('uvIndexCard.chartAriaLabel')} style={{ flex: 1, minHeight: 0, marginTop: '0.625rem' }}>
+      {/* margin.top on AreaChart adds space inside the SVG between the card title and the chart
+          area. CSS marginTop on the wrapper div was ineffective because the card has fixed height
+          + overflow:hidden; the Recharts margin is the correct mechanism here. */}
+      <div role="img" aria-label={t('uvIndexCard.chartAriaLabel')} style={{ flex: 1, minHeight: 0 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -12 }}>
+          <AreaChart data={data} margin={{ top: 16, right: 4, bottom: 0, left: -12 }}>
             <defs>
               {/*
                 Vertical linearGradient: EPA UV severity colors.
