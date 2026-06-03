@@ -204,10 +204,10 @@ export function PrecipitationCard({
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0, justifyContent: 'center' }}>
               <DropHalfBottomIcon size={36} />
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                <span style={primaryValueStyle}>{humidityFormatted}</span>
-                <span style={labelStyle}>{t('precipitationCard.humidityLabel')}</span>
-                <span style={secondaryValueStyle}>{dewpointFormatted}</span>
+                <span style={primaryValueStyle}>{dewpointFormatted}</span>
                 <span style={labelStyle}>{t('precipitationCard.dewpointLabel')}</span>
+                <span style={secondaryValueStyle}>{humidityFormatted}</span>
+                <span style={labelStyle}>{t('precipitationCard.humidityLabel')}</span>
               </div>
             </div>
           </div>
