@@ -525,22 +525,23 @@ export function CurrentConditionsCard({
                     {/* Visual display — aria-hidden; sr-only sibling carries the spoken text */}
                     <p
                       aria-hidden="true"
+                      className="text-muted-foreground"
                       style={{
                         fontFamily: 'var(--font-sans)',
                         fontSize: 'var(--text-secondary)',
-                        fontWeight: 600,
+                        marginBottom: '-0.15rem',
                       }}
                     >
                       {highDisplay !== null && (
-                        <span style={{ color: 'var(--temp-hi)' }}>
+                        <span style={{ color: 'var(--temp-hi)', fontWeight: 500 }}>
                           {t('hiLabel')} {highDisplay}
                         </span>
                       )}
                       {highDisplay !== null && lowDisplay !== null && (
-                        <span className="text-muted-foreground"> &nbsp; </span>
+                        <span> &nbsp; </span>
                       )}
                       {lowDisplay !== null && (
-                        <span style={{ color: 'var(--temp-lo)' }}>
+                        <span style={{ color: 'var(--temp-lo)', fontWeight: 500 }}>
                           {t('loLabel')} {lowDisplay}
                         </span>
                       )}
@@ -564,7 +565,6 @@ export function CurrentConditionsCard({
                       style={{
                         fontFamily: 'var(--font-sans)',
                         fontSize: 'var(--text-secondary)',
-                        fontWeight: 600,
                         color: 'var(--muted-foreground)',
                       }}
                     >
