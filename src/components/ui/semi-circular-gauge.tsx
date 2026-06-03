@@ -95,7 +95,7 @@ const TICK_W_UNFILLED = 2.5;
 
 // Indicator tick dimensions (current value marker)
 const TICK_LEN_INDICATOR = 24;
-const TICK_W_INDICATOR = 5;
+const TICK_W_INDICATOR = 3;
 
 // Threshold tick dimensions (boundary markers)
 const TICK_LEN_THRESHOLD = 22;
