@@ -50,7 +50,7 @@ const CY = 88;
 /** Total SVG width (matches C4 mockup) */
 const SVG_W = 220;
 /** Total SVG height (matches C4 mockup) */
-const SVG_H = 110;
+const SVG_H = 135;
 
 /** Sun color — gold/amber, WCAG AA on dark backgrounds */
 const SUN_COLOR = '#f59e0b';
@@ -214,7 +214,7 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
 
   // Moon phase label: positioned at bottom center of arcs (operator request 2026-06-02)
   const moonLabelX = CX;
-  const moonLabelY = CY + 3;
+  const moonLabelY = CY + 5;
   const moonLabelAnchor = 'middle';
 
   return (
@@ -334,7 +334,7 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
       {/* Illumination percent — one line below phase name */}
       <text
         x={moonLabelX}
-        y={moonLabelY + 11}
+        y={moonLabelY + 12}
         textAnchor={moonLabelAnchor}
         fontSize={8}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
@@ -347,7 +347,7 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
       {/* ── Rise labels — left side, stacked: sun then moon ──────────── */}
       <text
         x={sunLeftX}
-        y={CY + 13}
+        y={CY + 22}
         textAnchor="start"
         fontSize={10}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
@@ -358,7 +358,7 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
       </text>
       <text
         x={sunLeftX}
-        y={CY + 24}
+        y={CY + 35}
         textAnchor="start"
         fontSize={10}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
@@ -371,7 +371,7 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
       {/* ── Set labels — right side, stacked: sun then moon ──────────── */}
       <text
         x={sunRightX}
-        y={CY + 13}
+        y={CY + 22}
         textAnchor="end"
         fontSize={10}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
@@ -382,7 +382,7 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
       </text>
       <text
         x={sunRightX}
-        y={CY + 24}
+        y={CY + 35}
         textAnchor="end"
         fontSize={10}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
