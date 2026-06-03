@@ -308,8 +308,8 @@ export function DailyColumns({
         const bearing = typeof day.extras?.windDir === 'number' ? day.extras.windDir : null;
         const windSpeed = day.windSpeedMax !== null ? Math.round(day.windSpeedMax) : 0;
         return (
-          <div key={i} style={{ ...cellBase, height: expandable ? 44 : 15, overflow: 'visible' }}>
-            <WindSymbol bearing={bearing} speed={windSpeed} size={expandable ? 20 : 14} />
+          <div key={i} style={{ ...cellBase, height: expandable ? 44 : 34, overflow: 'visible' }}>
+            <WindSymbol bearing={bearing} speed={windSpeed} size={20} />
           </div>
         );
       })}
