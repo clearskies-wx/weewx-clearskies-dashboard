@@ -574,14 +574,9 @@ export function DailyColumns({
         overflow: expandable ? 'visible' : 'hidden',
       }}
     >
-      {/* Mobile stacked rows — non-expandable (Now page) only, visible < md */}
-      {mobileRows}
-
-      {/* Column layout:
-          - expandable=true  (forecast page): always visible, no class override
-          - expandable=false (now card):      hidden < md, shown md+ via Tailwind */}
+      {/* Column layout — always visible on all breakpoints.
+          Hi/lo temps stack vertically on mobile via responsive classes in hiloRow. */}
       <div
-        className={!expandable ? 'hidden md:flex md:flex-col md:flex-1' : undefined}
         style={{ position: 'relative', width: '100%', overflow: 'visible' }}
       >
         {selectedColBg}
