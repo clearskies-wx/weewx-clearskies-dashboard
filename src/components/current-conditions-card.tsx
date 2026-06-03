@@ -504,13 +504,14 @@ export function CurrentConditionsCard({
                   </p>
                 )}
 
-                {/* Condition sentence */}
+                {/* Condition sentence — slightly larger than supporting stats */}
                 {weatherText && (
                   <p
                     className="text-foreground"
                     style={{
                       fontFamily: 'var(--font-sans)',
-                      fontSize: 'var(--text-body)',
+                      fontSize: '0.95rem',
+                      fontWeight: 500,
                       lineHeight: 1.35,
                     }}
                   >
@@ -533,16 +534,18 @@ export function CurrentConditionsCard({
                       }}
                     >
                       {highDisplay !== null && (
-                        <span style={{ color: 'var(--temp-hi)', fontWeight: 500 }}>
-                          {t('hiLabel')} {highDisplay}
+                        <span>
+                          {t('hiLabel')}{' '}
+                          <span style={{ color: 'var(--temp-hi)', fontWeight: 500 }}>{highDisplay}</span>
                         </span>
                       )}
                       {highDisplay !== null && lowDisplay !== null && (
                         <span> &nbsp; </span>
                       )}
                       {lowDisplay !== null && (
-                        <span style={{ color: 'var(--temp-lo)', fontWeight: 500 }}>
-                          {t('loLabel')} {lowDisplay}
+                        <span>
+                          {t('loLabel')}{' '}
+                          <span style={{ color: 'var(--temp-lo)', fontWeight: 500 }}>{lowDisplay}</span>
                         </span>
                       )}
                     </p>
