@@ -159,20 +159,20 @@ export function Footer({ photoCredit }: FooterProps) {
       }}
     >
 
-      {/* Single row: left = nav/copyright/logo · right = share icons */}
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      {/* Single row on desktop, stacked on mobile: left = nav/copyright/logo · right = share icons */}
+      <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-x-4 md:gap-y-2">
         {/* Left side: legal link · copyright · powered-by logo */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <Link
             to="/legal"
-            className="underline underline-offset-4 focus:outline-none focus:ring-2 focus:ring-white/60 focus:ring-offset-2 focus:ring-offset-black/50 rounded"
+            className="hidden md:inline underline underline-offset-4 focus:outline-none focus:ring-2 focus:ring-white/60 focus:ring-offset-2 focus:ring-offset-black/50 rounded"
             style={{ color: 'inherit' }}
           >
             {t('footer.legal')}
           </Link>
-          <span aria-hidden="true">·</span>
+          <span aria-hidden="true" className="hidden md:inline">·</span>
           <span>© {new Date().getFullYear()} {copyrightName}</span>
-          <span aria-hidden="true">·</span>
+          <span aria-hidden="true" className="hidden md:inline">·</span>
           {/* Always use the light logo — the footer background is always dark glass
               (rgba(0,0,0,0.65)), so the dark blue logo would be invisible in light mode. */}
           <img
@@ -193,7 +193,7 @@ export function Footer({ photoCredit }: FooterProps) {
       {photoCredit != null && (
         <p
           aria-hidden="true"
-          className="mt-0.5 text-[0.65rem] leading-tight"
+          className="hidden md:block mt-0.5 text-[0.65rem] leading-tight"
           style={{ color: 'rgba(255, 255, 255, 0.55)' }}
         >
           Photo: {photoCredit}

@@ -22,6 +22,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Wind } from '@phosphor-icons/react';
 import { asConverted } from '../api/types';
+import { cardinalFromDegrees } from '../utils/wind';
 import {
   Card,
   CardHeader,
@@ -128,9 +129,14 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
 
   // BFF-supplied canonical cardinal code (ADR-041).
   const windDirCardinal = observation?.windDirCardinal ?? null;
+  const windDirDegrees = windDirCV?.value ?? null;
+  // When BFF nulls windDirCardinal (zero-speed calm), derive from bearing degrees
+  // so both the cardinal label and bearing display stay consistent (ADR-041).
+  const effectiveCardinal = windDirCardinal
+    ?? (windDirDegrees != null ? cardinalFromDegrees(windDirDegrees) : null);
   // Translate via i18n (ADR-021).  Falls back to '—' when null.
-  const cardinalLabel = windDirCardinal
-    ? tCommon(`directions.${windDirCardinal}`)
+  const cardinalLabel = effectiveCardinal
+    ? tCommon(`directions.${effectiveCardinal}`)
     : '—';
 
   // Formatted speed parts.  Split formatted into numeric + unit so the
