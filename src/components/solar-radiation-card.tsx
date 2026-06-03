@@ -240,7 +240,6 @@ function SolarChart({ data }: SolarChartProps) {
               dataKey="ts"
               type="number"
               domain={[now - WINDOW_MS, now]}
-              scale="time"
               ticks={ticks}
               tickFormatter={fmtAxisTime}
               tickLine={false}
@@ -251,16 +250,20 @@ function SolarChart({ data }: SolarChartProps) {
                 fill: 'var(--muted-foreground)',
               }}
               interval={0}
-              height={20}
+              scale="time"
             />
 
-            {/* Y-axis: minimal — just provides domain context, no tick labels */}
             <YAxis
               domain={[0, yMax * 1.1]}
-              tick={false}
-              axisLine={false}
+              ticks={[]}
               tickLine={false}
-              width={1}
+              axisLine={false}
+              tick={{
+                fontFamily: 'var(--font-chart)',
+                fontSize: 7,
+                fill: 'var(--muted-foreground)',
+              }}
+              width={18}
             />
           </AreaChart>
         </ResponsiveContainer>
