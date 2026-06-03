@@ -27,7 +27,6 @@
 // i18n: 'now' namespace for labels (ADR-021).
 
 import { useTranslation } from 'react-i18next';
-import { formatLocalTime } from '../utils/time';
 import type { AlmanacSnapshot } from '../api/types';
 import {
   Card,
@@ -210,9 +209,6 @@ function ArcVisualization({ almanac, tz, locale }: ArcVisualizationProps) {
   const moonriseText = fmtCompact(almanac.moon.rise);
   const moonsetText = fmtCompact(almanac.moon.set);
 
-  // Endpoint X coordinates (sun arc endpoints used for label positioning)
-  const sunLeftX = CX - SUN_R;
-  const sunRightX = CX + SUN_R;
 
   // SVG accessible title — summarises state for screen readers
   const svgTitle = [
