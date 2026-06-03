@@ -37,11 +37,12 @@ export function AppLayout() {
         {/* Skip link is the FIRST focusable element in the DOM per WCAG 2.4.1 */}
         <SkipLink />
 
-        <div className="flex flex-1 min-h-0">
-          {/* Left rail (desktop). NavRail also renders mobile bottom nav. */}
-          <NavRail />
+        {/* NavRail: desktop rail is position:fixed (overlays content).
+            Mobile bottom nav is also rendered inside NavRail. */}
+        <NavRail />
 
-          {/* Content column */}
+        <div className="flex flex-1 min-h-0">
+          {/* Content column — full width on desktop since rail is fixed overlay */}
           <div className="flex flex-col flex-1 min-w-0 min-h-0">
             {/* main-content target for skip link */}
             <main

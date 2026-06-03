@@ -27,5 +27,8 @@
   "ariaMain": "Main navigation",
   "ariaPrimary": "Primary navigation",
   "ariaAdditional": "Additional navigation",
-  "ariaAdditionalPages": "Additional pages"
+  "ariaAdditionalPages": "Additional pages",
+  "pinNav": "Pin navigation",
+  "unpinNav": "Unpin navigation",
+  "showNav": "Show navigation"
 }

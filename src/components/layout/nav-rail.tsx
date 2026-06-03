@@ -4,7 +4,7 @@
 // "More" opens a bottom sheet listing the 5 overflow pages.
 // Active page: bg shift + accent-colored border per ADR-009/ADR-024.
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   House,
@@ -15,6 +15,8 @@ import {
   Scales,       // ADR-050: ph:scales — legal nav (Lucide Scale → Phosphor Scales)
   DotsThree,    // ADR-050: ph:dots-three — "more" menu (Lucide Ellipsis → Phosphor DotsThree)
   CloudSun,     // ADR-050: not enumerated; nearest Phosphor match for weather/Now nav (Lucide CloudSunRain → CloudSun)
+  PushPin,
+  PushPinSlash,
 } from '@phosphor-icons/react';
 // TODO(ADR-050 deferred: astro/almanac) — Moon stays on Lucide until C5 lands.
 // TODO(ADR-050 deferred: seismic) — Activity stays on Lucide until seismic ADR lands.
@@ -22,7 +24,6 @@ import { Moon, Activity } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ThemeIcon, NEXT_PREFERENCE } from './theme-toggle';
 import { useTheme } from '../../lib/theme-provider';
-import { useBranding } from '../../lib/branding-provider';
 
 interface NavItemDef {
   to: string;
@@ -312,13 +313,92 @@ function MoreSheet({ isOpen, onClose, triggerRef }: MoreSheetProps) {
   );
 }
 
+// ── Desktop nav rail auto-hide constants ──────────────────────────────────────
+const LS_KEY = 'clearskies.nav.pinned';
+const AUTO_HIDE_MS = 30_000;
+
 export function NavRail() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
   const location = useLocation();
-  const branding = useBranding();
   const { resolved } = useTheme();
   const { t } = useTranslation('nav');
+
+  // ── Desktop auto-hide state ──────────────────────────────────────────────
+  // Read initial pinned state from localStorage on mount.
+  const [pinned, setPinned] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(LS_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [visible, setVisible] = useState(true);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearHideTimer = useCallback(() => {
+    if (hideTimerRef.current !== null) {
+      clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
+    }
+  }, []);
+
+  const startHideTimer = useCallback(() => {
+    clearHideTimer();
+    hideTimerRef.current = setTimeout(() => {
+      setVisible(false);
+    }, AUTO_HIDE_MS);
+  }, [clearHideTimer]);
+
+  // On mount: if pinned, stay visible. If not pinned, start auto-hide timer.
+  useEffect(() => {
+    if (!pinned) {
+      startHideTimer();
+    }
+    return () => clearHideTimer();
+    // Only run on mount — intentionally no dependency on pinned here.
+    // The pin-toggle handler manages timer state after mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Cleanup timer on unmount.
+  useEffect(() => {
+    return () => clearHideTimer();
+  }, [clearHideTimer]);
+
+  function handleRailMouseEnter() {
+    clearHideTimer();
+    setVisible(true);
+  }
+
+  function handleRailMouseLeave() {
+    if (!pinned) {
+      startHideTimer();
+    }
+  }
+
+  function handleGrabBarActivate() {
+    clearHideTimer();
+    setVisible(true);
+  }
+
+  function togglePin() {
+    const next = !pinned;
+    setPinned(next);
+    try {
+      localStorage.setItem(LS_KEY, String(next));
+    } catch {
+      // localStorage unavailable — continue without persistence.
+    }
+    if (next) {
+      // Now pinned: clear any pending hide timer.
+      clearHideTimer();
+      setVisible(true);
+    } else {
+      // Now unpinned: start auto-hide timer.
+      startHideTimer();
+    }
+  }
 
   // "More" is active when the current route is one of the overflow pages.
   const moreIsActive = OVERFLOW_ROUTES.has(location.pathname);
@@ -345,29 +425,101 @@ export function NavRail() {
 
   return (
     <>
-      {/* Desktop: left rail — all 9 items, unchanged */}
+      {/* ── Desktop: grab bar — shown when rail is hidden ────────────────────
+          Fixed at left edge, vertically centered. Desktop-only (hidden on mobile).
+          Uses <button> (not <div onClick>) per accessibility requirements. */}
+      <button
+        type="button"
+        aria-label={t('showNav')}
+        aria-expanded={visible}
+        // Remove from tab order when the rail is visible — keyboard users don't
+        // need to reach an invisible element.
+        tabIndex={visible ? -1 : 0}
+        onMouseEnter={handleGrabBarActivate}
+        onClick={handleGrabBarActivate}
+        className={[
+          // Desktop only
+          'hidden md:block',
+          // Fixed position, left edge, vertically centered
+          'fixed left-0 top-1/2 -translate-y-1/2 z-20',
+          // Pill shape: ~4px wide, 40px tall, rounded ends
+          'w-1 h-10 rounded-full',
+          // Show grab bar only when rail is hidden
+          'transition-opacity duration-200',
+          visible ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto',
+          // Cursor
+          'cursor-pointer',
+          // Focus indicator
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+          // Remove default button appearance
+          'border-0 p-0',
+        ].join(' ')}
+        style={{
+          // Semi-transparent: light rgba(255,255,255,0.3), dark rgba(255,255,255,0.5).
+          background:
+            resolved === 'dark'
+              ? 'rgba(255,255,255,0.5)'
+              : 'rgba(255,255,255,0.3)',
+        }}
+      />
+
+      {/* ── Desktop: floating rail panel ────────────────────────────────────
+          Floats at left:12px, vertically centered via top:50%+translateY(-50%).
+          Glass background, rounded, shadow. Slides in/out on visible change.
+          Desktop-only (hidden on mobile). */}
       <nav
         aria-label={t('ariaMain')}
-        className="hidden md:flex md:flex-col md:w-16 md:min-h-screen md:border-r md:border-border md:bg-background md:pt-4 md:pb-4 md:gap-1 md:items-center md:overflow-y-auto"
+        onMouseEnter={handleRailMouseEnter}
+        onMouseLeave={handleRailMouseLeave}
+        className={[
+          // Desktop only
+          'hidden md:flex md:flex-col',
+          // Fixed, floating, vertically centered
+          'fixed z-20',
+          // Glass card styling
+          'card-glass shadow-lg ring-1 ring-foreground/10 rounded-xl',
+          // Internal padding
+          'py-3 px-2',
+        ].join(' ')}
+        style={{
+          left: '12px',
+          top: '50%',
+          transform: visible
+            ? 'translateX(0) translateY(-50%)'
+            : 'translateX(-100%) translateY(-50%)',
+          opacity: visible ? 1 : 0,
+          pointerEvents: visible ? 'auto' : 'none',
+          // Slide + fade transition per spec (200ms ease).
+          // translateY(-50%) must be combined with the horizontal slide, so the
+          // full transform string lives in inline style — Tailwind cannot compose
+          // multiple transform values alongside inline overrides safely.
+          transition: 'opacity 200ms ease, transform 200ms ease',
+        }}
       >
-        {branding.logo && (
-          <div className="mb-2 flex w-full justify-center px-2">
-            <img
-              src={
-                resolved === 'dark' && branding.logo.dark
-                  ? branding.logo.dark
-                  : branding.logo.light
-              }
-              alt={branding.logo.alt}
-              className={[
-                'max-h-10 w-auto',
-                // When in dark mode with only a light logo, invert so the logo
-                // remains visible against the dark rail background (ADR-022).
-                resolved === 'dark' && !branding.logo.dark ? 'invert' : '',
-              ].join(' ').trim()}
-            />
-          </div>
-        )}
+        {/* Pin toggle — top of rail, above nav items */}
+        <div className="w-full px-1 pb-1">
+          <button
+            type="button"
+            aria-label={pinned ? t('unpinNav') : t('pinNav')}
+            onClick={togglePin}
+            className={[
+              'flex flex-col items-center justify-center gap-1 rounded-lg px-2 py-3 w-full',
+              'text-xs font-medium transition-colors duration-150',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+              'min-h-[44px]',
+              pinned
+                ? 'text-primary hover:bg-accent/50'
+                : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground',
+            ].join(' ')}
+          >
+            {pinned
+              ? <PushPin aria-hidden="true" className="h-5 w-5" weight="fill" />
+              : <PushPinSlash aria-hidden="true" className="h-5 w-5" />
+            }
+          </button>
+        </div>
+
+        {/* Nav items */}
         <ul className="flex flex-col gap-1 w-full px-1" role="list">
           {NAV_ITEMS.map((item) => {
             const label = t(`pages.${item.pageKey}`);
@@ -386,9 +538,9 @@ export function NavRail() {
             );
           })}
         </ul>
-        {/* Theme toggle at bottom of desktop rail — styled as a nav item so it
-            is visually discoverable and matches the icon+label pattern of all nav items. */}
-        <div className="mt-auto w-full px-1">
+
+        {/* Theme toggle at bottom of desktop rail */}
+        <div className="mt-1 w-full px-1">
           <DesktopThemeButton />
         </div>
       </nav>
