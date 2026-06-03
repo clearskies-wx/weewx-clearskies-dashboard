@@ -98,11 +98,14 @@ function fmtAxisTime(ts: number): string {
 
 /** Build hour-boundary ticks for the rolling 24h window. */
 function buildTicks(now: number): number[] {
-  const ticks: number[] = [];
   const windowStart = now - WINDOW_MS;
-  // Start at the next whole hour at or after windowStart
-  const startHour = Math.ceil(windowStart / (3600 * 1000)) * (3600 * 1000);
-  for (let t = startHour; t <= now; t += 6 * 3600 * 1000) {
+  const ticks: number[] = [];
+  const d = new Date(windowStart);
+  const h = d.getHours();
+  const nextSix = Math.ceil(h / 6) * 6;
+  d.setMinutes(0, 0, 0);
+  d.setHours(nextSix);
+  for (let t = d.getTime(); t <= now; t += 6 * 3600 * 1000) {
     ticks.push(t);
   }
   return ticks;
