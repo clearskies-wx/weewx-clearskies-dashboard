@@ -272,7 +272,7 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
       // h-full so the iframe fills the CardContent flex area (flex-1 min-h-0 on CardContent).
       <div className="flex flex-col h-full gap-2">
         <div
-          className="flex-1 min-h-[300px] md:min-h-0 rounded-lg overflow-hidden"
+          className="flex-1 min-h-0 rounded-lg overflow-hidden"
           role="region"
           aria-label={t('radarTitle')}
         >
@@ -296,7 +296,7 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
     // rather than a fixed pixel height that extends beyond the card.
     <div className="flex flex-col h-full gap-3">
       <div
-        className="flex-1 min-h-[300px] md:min-h-0 rounded-lg overflow-hidden relative"
+        className="flex-1 min-h-0 rounded-lg overflow-hidden relative"
         role="region"
         aria-label={t('radarTitle')}
       >

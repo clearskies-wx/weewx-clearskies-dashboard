@@ -154,16 +154,6 @@ export function PrecipitationCard({
   const rainRateCV = asConverted(observation?.rainRate ?? null);
   const rainRateFormatted = rainRateCV?.formatted ?? '—';
 
-  const humidityCV = asConverted(observation?.outHumidity ?? null);
-  const humidityVal = humidityCV?.value ?? null;
-  const humidityFormatted = humidityVal !== null ? `${humidityVal.toFixed(1)}%` : '—';
-
-  const dewpointCV = asConverted(observation?.dewpoint ?? null);
-  const dewpointUnit = dewpointCV?.label || units?.dewpoint || '';
-  const dewpointFormatted = dewpointCV?.value !== null && dewpointCV?.value !== undefined
-    ? `${dewpointCV.value.toFixed(1)} ${dewpointUnit}`.trim()
-    : '—';
-
   return (
     <Card footprint="tile" aria-busy={loading}>
       <CardHeader>
@@ -188,32 +178,17 @@ export function PrecipitationCard({
             aria-live="polite"
             style={{
               display: 'flex',
-              flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '10px',
+              gap: '6px',
             }}
           >
-            {/* Left column: precipitation */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0, justifyContent: 'center' }}>
-              <DropIcon size={36} />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                <span style={primaryValueStyle}>{rainFormatted}</span>
-                <span style={labelStyle}>{t('precipitationCard.rainTodayLabel')}</span>
-                <span style={secondaryValueStyle}>{rainRateFormatted}</span>
-                <span style={labelStyle}>{t('precipitationCard.rainRateLabel')}</span>
-              </div>
-            </div>
-
-            {/* Right column: humidity */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0, justifyContent: 'center' }}>
-              <DropHalfBottomIcon size={36} />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                <span style={primaryValueStyle}>{dewpointFormatted}</span>
-                <span style={labelStyle}>{t('precipitationCard.dewpointLabel')}</span>
-                <span style={secondaryValueStyle}>{humidityFormatted}</span>
-                <span style={labelStyle}>{t('precipitationCard.humidityLabel')}</span>
-              </div>
+            <DropIcon size={36} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+              <span style={primaryValueStyle}>{rainFormatted}</span>
+              <span style={labelStyle}>{t('precipitationCard.rainTodayLabel')}</span>
+              <span style={secondaryValueStyle}>{rainRateFormatted}</span>
+              <span style={labelStyle}>{t('precipitationCard.rainRateLabel')}</span>
             </div>
           </div>
         )}

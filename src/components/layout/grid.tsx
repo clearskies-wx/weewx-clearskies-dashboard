@@ -45,9 +45,8 @@ export function Grid({ className, children }: GridProps) {
         'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
         // Gap uses the --gap-grid token (1rem) on both axes
         'gap-[var(--gap-grid)]',
-        // md+: fixed 11rem track (--card-row). Cards emit md:row-span-1 for 11rem standard height.
-        // Mobile: no fixed track — rows are auto (stacked phone layout).
-        'md:auto-rows-[var(--card-row)]',
+        // Fixed 11rem track (--card-row) on ALL breakpoints — same card height mobile and desktop.
+        'auto-rows-[var(--card-row)]',
         // max-width uses the --container-max token (80rem)
         'max-w-[var(--container-max)]',
         className,

@@ -471,8 +471,7 @@ export function DailyColumns({
   // column layout takes over.  Each row: icon | day name | hi°/lo° | precip | wind.
   const mobileRows = !expandable ? (
     <div
-      className="md:hidden"
-      style={{ display: 'flex', flexDirection: 'column' }}
+      className="flex flex-col md:hidden"
       role="list"
       aria-label="7-day forecast"
     >
@@ -591,7 +590,7 @@ export function DailyColumns({
           {dayRow}
           {iconRow}
           {hiloRow}
-          {trendRow}
+          {expandable && trendRow}
           {precipRow}
           {windRow}
         </div>

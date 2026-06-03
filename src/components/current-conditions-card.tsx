@@ -553,6 +553,33 @@ export function CurrentConditionsCard({
                     </span>
                   </>
                 )}
+
+                {/* Dewpoint + Humidity — moved here from precipitation card */}
+                {(() => {
+                  const dewCV = asConverted(observation?.dewpoint ?? null);
+                  const humCV = asConverted(observation?.outHumidity ?? null);
+                  if ((dewCV === null || dewCV.value === null) && (humCV === null || humCV.value === null)) return null;
+                  return (
+                    <p
+                      style={{
+                        fontFamily: 'var(--font-sans)',
+                        fontSize: 'var(--text-secondary)',
+                        fontWeight: 600,
+                        color: 'var(--muted-foreground)',
+                      }}
+                    >
+                      {dewCV !== null && dewCV.value !== null && (
+                        <span>{t('observations.dewpoint')} {dewCV.value.toFixed(1)}{dewCV.label || '°'}</span>
+                      )}
+                      {dewCV !== null && dewCV.value !== null && humCV !== null && humCV.value !== null && (
+                        <span> &nbsp;·&nbsp; </span>
+                      )}
+                      {humCV !== null && humCV.value !== null && (
+                        <span>{t('observations.humidity')} {Math.round(humCV.value)}{humCV.label || '%'}</span>
+                      )}
+                    </p>
+                  );
+                })()}
               </div>
             </div>
 

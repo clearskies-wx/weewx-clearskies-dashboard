@@ -169,7 +169,7 @@ export function LightningCard({
             <div
               aria-label={chartAriaLabel}
               role="img"
-              style={{ width: '100%', flex: 1, minHeight: '180px', position: 'relative' }}
+              style={{ width: '100%', flex: 1, minHeight: 0, position: 'relative' }}
             >
               {!hasActivity ? (
                 /* No-activity state: centered text, vertically centred in chart zone */

@@ -284,7 +284,7 @@ export function EarthquakeCard({
           <ul
             aria-live="polite"
             aria-label="Recent earthquake events"
-            style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 0, minHeight: '160px' }}
+            style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 0 }}
           >
             {visibleQuakes.map((quake, idx) => (
               <Fragment key={quake.id}>
