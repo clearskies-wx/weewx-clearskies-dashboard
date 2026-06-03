@@ -42,18 +42,21 @@ export function AppLayout() {
         <NavRail />
 
         <div className="flex flex-1 min-h-0">
-          {/* Content column — full width on desktop since rail is fixed overlay */}
-          <div className="flex flex-col flex-1 min-w-0 min-h-0">
-            {/* main-content target for skip link */}
+          {/* Content column — full width on desktop since rail is fixed overlay.
+              Mobile: this div scrolls so footer scrolls with page content
+              (the mobile nav bar is already fixed at the bottom).
+              Desktop: this div doesn't scroll; main scrolls independently and
+              footer stays at the viewport bottom. */}
+          <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-y-auto md:overflow-hidden">
             <main
               id="main-content"
               className={[
-                'flex-1 min-h-0 overflow-y-auto px-4 py-6',
-                // Bottom padding on mobile so content isn't hidden behind bottom nav
-                'pb-24 md:pb-6',
+                'flex-1 px-4 py-6',
+                // Mobile: bottom padding clears the fixed bottom nav bar
+                'pb-24',
+                // Desktop: main scrolls independently; min-h-0 allows flex shrinking
+                'md:min-h-0 md:overflow-y-auto md:pb-6',
               ].join(' ')}
-              // tabIndex={-1} allows skip-link focus to land here without
-              // making the element part of the normal tab order.
               tabIndex={-1}
             >
               <Outlet />

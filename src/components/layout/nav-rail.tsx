@@ -442,8 +442,8 @@ export function NavRail() {
           'hidden md:block',
           // Fixed position, left edge, vertically centered
           'fixed left-0 top-1/2 -translate-y-1/2 z-20',
-          // Pill shape: ~4px wide, 40px tall, rounded ends
-          'w-1 h-10 rounded-full',
+          // Pull tab: 6px wide, 80px tall, rounded right side only (left flush with browser edge)
+          'w-1.5 h-20 rounded-r-full',
           // Show grab bar only when rail is hidden
           'transition-opacity duration-200',
           visible ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto',
@@ -460,9 +460,9 @@ export function NavRail() {
           // contrast edge against any scene colour.
           background:
             resolved === 'dark'
-              ? 'rgba(255,255,255,0.35)'
-              : 'rgba(0,0,0,0.25)',
-          boxShadow: '0 0 4px rgba(0,0,0,0.3)',
+              ? 'rgba(255,255,255,0.45)'
+              : 'rgba(0,0,0,0.35)',
+          boxShadow: '0 1px 6px rgba(0,0,0,0.4)',
         }}
       />
 
@@ -486,13 +486,13 @@ export function NavRail() {
           'hidden md:flex md:flex-col',
           // Fixed, floating, vertically centered
           'fixed z-20',
-          // Glass card styling
-          'card-glass shadow-lg ring-1 ring-foreground/10 rounded-xl',
+          // Glass card styling — flush left edge, rounded right side only
+          'card-glass shadow-lg ring-1 ring-foreground/10 rounded-r-xl',
           // Internal padding
           'py-3 px-2',
         ].join(' ')}
         style={{
-          left: '12px',
+          left: 0,
           top: '50%',
           transform: visible
             ? 'translateX(0) translateY(-50%)'

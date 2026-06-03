@@ -149,10 +149,7 @@ export function Footer({ photoCredit }: FooterProps) {
   return (
     <footer
       className={[
-        // On mobile the bottom nav bar is fixed at 56px. Without bottom padding the footer
-        // renders beneath it and is invisible. md:pb-3 restores normal flow on desktop.
-        'mt-auto px-4 py-3 text-sm',
-        'pb-[calc(56px+12px)] md:pb-3',
+        'mt-auto px-4 py-2 text-sm',
       ].join(' ')}
       style={{
         background: 'rgba(0, 0, 0, 0.65)',
@@ -196,8 +193,8 @@ export function Footer({ photoCredit }: FooterProps) {
       {photoCredit != null && (
         <p
           aria-hidden="true"
-          className="mt-1 text-xs"
-          style={{ color: 'rgba(255, 255, 255, 0.75)' }}
+          className="mt-0.5 text-[0.65rem] leading-tight"
+          style={{ color: 'rgba(255, 255, 255, 0.55)' }}
         >
           Photo: {photoCredit}
         </p>
