@@ -529,7 +529,7 @@ export function CurrentConditionsCard({
                       style={{
                         fontFamily: 'var(--font-sans)',
                         fontSize: 'var(--text-secondary)',
-                        marginBottom: '-0.15rem',
+                        marginBottom: '-0.35rem',
                       }}
                     >
                       {highDisplay !== null && (
