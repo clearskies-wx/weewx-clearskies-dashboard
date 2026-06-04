@@ -29,5 +29,16 @@
   "ariaTabList": "Forecast time range",
   "ariaExpandRow": "Show details for {{day}}",
   "ariaDailyTrend": "Temperature trend for the week",
-  "todaysForecast": "Today's Forecast"
+  "todaysForecast": "Today's Forecast",
+  "dewpoint": "Dewpoint",
+  "visibility": "Visibility",
+  "uvIndex": "UV Index",
+  "rain": "Rain",
+  "snow": "Snow",
+  "sunrise": "Sunrise",
+  "sunset": "Sunset",
+  "thunder": "Thunder",
+  "tornado": "Tornado",
+  "hail": "Hail",
+  "windRisk": "Wind Risk"
 }

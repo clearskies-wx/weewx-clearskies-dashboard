@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { CalendarBlank } from '@phosphor-icons/react';
 import { Card, CardHeader, CardContent } from '../ui/card';
 import { DailyColumns } from './DailyColumns';
-import type { ForecastBundle } from '../../api/types';
+import type { ForecastBundle, UnitsBlock } from '../../api/types';
 
 // ── Skeleton ─────────────────────────────────────────────────────────────────
 
@@ -29,6 +29,7 @@ export interface ForecastDailyCardProps {
   loading: boolean;
   error: Error | null;
   stationTz?: string;
+  units?: UnitsBlock;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -38,6 +39,7 @@ export function ForecastDailyCard({
   loading,
   error,
   stationTz = 'UTC',
+  units,
 }: ForecastDailyCardProps) {
   const { t } = useTranslation('forecast');
 
@@ -94,6 +96,7 @@ export function ForecastDailyCard({
             days={days}
             expandable
             stationTz={stationTz}
+            units={units}
           />
         ) : (
           <p style={{ color: 'var(--muted-foreground)', fontSize: 'var(--text-body, 0.9rem)' }}>

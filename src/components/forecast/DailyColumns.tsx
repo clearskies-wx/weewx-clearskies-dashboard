@@ -22,12 +22,13 @@
 //   - Desktop (≥ md): standard column layout (trend line visible)
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Drop, Snowflake } from '@phosphor-icons/react';
 import { WeatherIcon } from '../weather-icon';
 import { WindSymbol } from './WindSymbol';
 import { TempTrendLine } from './TempTrendLine';
 import { toWmoCode } from '../../utils/weather-code';
-import type { DailyForecastPoint } from '../../api/types';
+import type { DailyForecastPoint, UnitsBlock } from '../../api/types';
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
 
@@ -81,6 +82,8 @@ export interface DailyColumnsProps {
   expandable?: boolean;
   /** Station timezone. Default "UTC". */
   stationTz?: string;
+  /** Units block from the API response — drives suffixes in the detail panel. */
+  units?: UnitsBlock;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -89,8 +92,11 @@ export function DailyColumns({
   days,
   expandable = false,
   stationTz = 'UTC',
+  units,
 }: DailyColumnsProps) {
-  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+  const { t } = useTranslation('forecast');
+  // Auto-select first column when expandable so users discover the detail panel.
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(expandable ? 0 : null);
 
   if (!days || days.length === 0) return null;
 
@@ -103,6 +109,14 @@ export function DailyColumns({
 
   const highs = days.map((d) => d.tempMax);
   const lows = days.map((d) => d.tempMin);
+
+  // ── Unit suffixes from API units block ──────────────────────────────────
+  const u = (field: string, fallback: string) => units?.[field] ?? fallback;
+  const tempSuffix = u('dewpoint', '°');
+  const precipSuffix = u('precipAmount', 'in');
+  const snowSuffix = u('snow', precipSuffix);
+  const windSuffix = u('windGustMax', 'mph');
+  const visSuffix = u('windrun', 'mile') === 'mile' ? 'mi' : 'km';
 
   // ── Column click handler ─────────────────────────────────────────────────
   function handleColClick(idx: number) {
@@ -338,7 +352,7 @@ export function DailyColumns({
                   opacity: 0.8,
                 }}
               >
-                {day.precipAmount.toFixed(2)}"
+                {day.precipAmount.toFixed(2)} {precipSuffix}
               </span>
             )}
             {/* Snow amount — only when > 0, with snowflake icon */}
@@ -355,7 +369,7 @@ export function DailyColumns({
                 }}
               >
                 <Snowflake aria-hidden="true" size={7} />
-                {day.snowAmount.toFixed(1)}"
+                {day.snowAmount.toFixed(1)} {snowSuffix}
               </span>
             )}
           </div>
@@ -424,17 +438,16 @@ export function DailyColumns({
       </div>
     );
 
-    // Dewpoint range: show "min° – max°" when both exist, single value otherwise.
     const dewpointChip = (() => {
       const { dewpointMax, dewpointMin } = day;
       if (dewpointMax === null && dewpointMin === null) return null;
       const value =
         dewpointMax !== null && dewpointMin !== null
-          ? `${Math.round(dewpointMin)}° – ${Math.round(dewpointMax)}°`
+          ? `${Math.round(dewpointMin)}${tempSuffix} – ${Math.round(dewpointMax)}${tempSuffix}`
           : dewpointMax !== null
-            ? `${Math.round(dewpointMax)}°`
-            : `${Math.round(dewpointMin!)}°`;
-      return chip('Dewpoint', value);
+            ? `${Math.round(dewpointMax)}${tempSuffix}`
+            : `${Math.round(dewpointMin!)}${tempSuffix}`;
+      return chip(t('dewpoint'), value);
     })();
 
     // Humidity range: show "min% – max%" when both exist, single value otherwise.
@@ -447,7 +460,7 @@ export function DailyColumns({
           : humidityMax !== null
             ? `${Math.round(humidityMax)}%`
             : `${Math.round(humidityMin!)}%`;
-      return chip('Humidity', value);
+      return chip(t('humidity'), value);
     })();
 
     const anyStormRisk =
@@ -511,18 +524,17 @@ export function DailyColumns({
         <div style={{ display: 'flex', flexDirection: 'row', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
           {dewpointChip}
           {humidityChip}
-          {day.visibilityMax !== null && chip('Visibility', `${day.visibilityMax} mi`)}
-          {day.uvIndexMax !== null && chip('UV Index', String(day.uvIndexMax))}
-          {day.precipAmount !== null && day.precipAmount > 0 && chip('Rain', `${day.precipAmount} in`)}
-          {day.snowAmount !== null && day.snowAmount > 0 && chip('Snow', `❄ ${day.snowAmount} in`)}
-          {day.windGustMax !== null && chip('Gust', `${Math.round(day.windGustMax)} mph`)}
-          {sunrise !== '—' && chip('Sunrise', sunrise)}
-          {sunset !== '—' && chip('Sunset', sunset)}
-          {/* Storm outlook chips — only rendered when at least one risk > 0 */}
-          {anyStormRisk && day.thunderRisk !== null && day.thunderRisk > 0 && chip('⚡ Thunder', String(day.thunderRisk))}
-          {anyStormRisk && day.tornadoRisk !== null && day.tornadoRisk > 0 && chip('🌪️ Tornado', String(day.tornadoRisk))}
-          {anyStormRisk && day.hailRisk !== null && day.hailRisk > 0 && chip('Hail', String(day.hailRisk))}
-          {anyStormRisk && day.windRisk !== null && day.windRisk > 0 && chip('Wind Risk', String(day.windRisk))}
+          {day.visibilityMax !== null && chip(t('visibility'), `${day.visibilityMax} ${visSuffix}`)}
+          {day.uvIndexMax !== null && chip(t('uvIndex'), String(day.uvIndexMax))}
+          {day.precipAmount !== null && day.precipAmount > 0 && chip(t('rain'), `${day.precipAmount} ${precipSuffix}`)}
+          {day.snowAmount !== null && day.snowAmount > 0 && chip(t('snow'), `${day.snowAmount} ${snowSuffix}`)}
+          {day.windGustMax !== null && chip(t('windGust'), `${Math.round(day.windGustMax)} ${windSuffix}`)}
+          {sunrise !== '—' && chip(t('sunrise'), sunrise)}
+          {sunset !== '—' && chip(t('sunset'), sunset)}
+          {anyStormRisk && day.thunderRisk !== null && day.thunderRisk > 0 && chip(t('thunder'), String(day.thunderRisk))}
+          {anyStormRisk && day.tornadoRisk !== null && day.tornadoRisk > 0 && chip(t('tornado'), String(day.tornadoRisk))}
+          {anyStormRisk && day.hailRisk !== null && day.hailRisk > 0 && chip(t('hail'), String(day.hailRisk))}
+          {anyStormRisk && day.windRisk !== null && day.windRisk > 0 && chip(t('windRisk'), String(day.windRisk))}
         </div>
       </div>
     );

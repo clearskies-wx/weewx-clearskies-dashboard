@@ -76,7 +76,14 @@ export function ForecastHourlyCard({
   stationTz = 'UTC',
 }: ForecastHourlyCardProps) {
   const { t } = useTranslation('forecast');
-  const [activeTab, setActiveTab] = useState<HourTab>('today');
+  const { today: todayHours, tomorrow: tomorrowHours } = forecast?.hourly
+    ? partitionHours(forecast.hourly, stationTz)
+    : { today: [], tomorrow: [] };
+
+  // Default to Tomorrow when today has fewer than 6 hours remaining.
+  const [activeTab, setActiveTab] = useState<HourTab>(
+    todayHours.length < 6 && tomorrowHours.length > 0 ? 'tomorrow' : 'today'
+  );
 
   const handleTabKey = useCallback((e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === 'ArrowRight') {
@@ -87,10 +94,6 @@ export function ForecastHourlyCard({
       (e.currentTarget.previousElementSibling as HTMLButtonElement | null)?.focus();
     }
   }, []);
-
-  const { today: todayHours, tomorrow: tomorrowHours } = forecast?.hourly
-    ? partitionHours(forecast.hourly, stationTz)
-    : { today: [], tomorrow: [] };
 
   const tabStyle = (isActive: boolean): React.CSSProperties => ({
     fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',

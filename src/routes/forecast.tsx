@@ -40,7 +40,7 @@ export function ForecastPage() {
   const locale = i18n.language;
 
   // Request 48h of hourly data so the Tomorrow tab is populated.
-  const { data: forecast, loading: fcLoading, error: fcError } = useForecast({ hours: 48 });
+  const { data: forecast, units: fcUnits, loading: fcLoading, error: fcError } = useForecast({ hours: 48 });
   const { data: station } = useStation();
   const { data: alerts, loading: alertLoading } = useAlerts();
 
@@ -75,6 +75,7 @@ export function ForecastPage() {
           loading={fcLoading}
           error={fcError}
           stationTz={tz}
+          units={fcUnits}
         />
 
         {/* ── Surface D: Discussion (self-hides when empty) ─────────────── */}
