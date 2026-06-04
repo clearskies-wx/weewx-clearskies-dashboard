@@ -63,8 +63,16 @@ export function useSmartAlmanac(): SmartAlmanacResult {
   const merged = useMemo<AlmanacSnapshot | null>(() => {
     if (!today.data) return null;
 
-    const sunData = (sunNeedsTomorrow && tomorrow.data) ? tomorrow.data.sun : today.data.sun;
-    const moonData = (moonNeedsTomorrow && tomorrow.data) ? tomorrow.data.moon : today.data.moon;
+    const tomorrowSun = tomorrow.data?.sun;
+    const tomorrowMoon = tomorrow.data?.moon;
+    const sunData = (sunNeedsTomorrow && tomorrowSun) ? {
+      ...today.data.sun,
+      ...Object.fromEntries(Object.entries(tomorrowSun).filter(([, v]) => v != null)),
+    } : today.data.sun;
+    const moonData = (moonNeedsTomorrow && tomorrowMoon) ? {
+      ...today.data.moon,
+      ...Object.fromEntries(Object.entries(tomorrowMoon).filter(([, v]) => v != null)),
+    } : today.data.moon;
 
     return {
       date: today.data.date,
