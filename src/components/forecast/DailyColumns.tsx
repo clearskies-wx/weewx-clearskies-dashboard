@@ -366,7 +366,6 @@ export function DailyColumns({
     const day = days[expandedIdx];
     const dayName = getDayName(day.validDate, expandedIdx);
     const dateLabel = getDateLabel(day.validDate);
-    const gust = day.windGustMax !== null ? `${Math.round(day.windGustMax)} mph` : null;
     const sunrise = formatSunTime(day.sunrise, stationTz);
     const sunset = formatSunTime(day.sunset, stationTz);
 
@@ -374,6 +373,55 @@ export function DailyColumns({
     // This creates the "seamless block" visual: selected col looks continuous with column background.
     const selLeft = `calc(${expandedIdx} / ${N} * 100%)`;
     const selRight = `calc(${expandedIdx + 1} / ${N} * 100%)`;
+
+    // Reusable label/value chip — matches the existing gust/sunrise/sunset chip style.
+    const chip = (label: string, value: string) => (
+      <div
+        key={label}
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          gap: '0.3rem',
+          fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+          fontSize: '0.82rem',
+        }}
+      >
+        <span style={{ fontSize: '0.72rem', color: 'var(--muted-foreground)', flexShrink: 0 }}>{label}</span>
+        <span style={{ color: 'var(--foreground)', fontWeight: 600 }}>{value}</span>
+      </div>
+    );
+
+    // Dewpoint range: show "min° – max°" when both exist, single value otherwise.
+    const dewpointChip = (() => {
+      const { dewpointMax, dewpointMin } = day;
+      if (dewpointMax === null && dewpointMin === null) return null;
+      const value =
+        dewpointMax !== null && dewpointMin !== null
+          ? `${Math.round(dewpointMin)}° – ${Math.round(dewpointMax)}°`
+          : dewpointMax !== null
+            ? `${Math.round(dewpointMax)}°`
+            : `${Math.round(dewpointMin!)}°`;
+      return chip('Dewpoint', value);
+    })();
+
+    // Humidity range: show "min% – max%" when both exist, single value otherwise.
+    const humidityChip = (() => {
+      const { humidityMax, humidityMin } = day;
+      if (humidityMax === null && humidityMin === null) return null;
+      const value =
+        humidityMax !== null && humidityMin !== null
+          ? `${Math.round(humidityMin)}% – ${Math.round(humidityMax)}%`
+          : humidityMax !== null
+            ? `${Math.round(humidityMax)}%`
+            : `${Math.round(humidityMin!)}%`;
+      return chip('Humidity', value);
+    })();
+
+    const anyStormRisk =
+      (day.thunderRisk !== null && day.thunderRisk > 0) ||
+      (day.tornadoRisk !== null && day.tornadoRisk > 0) ||
+      (day.hailRisk !== null && day.hailRisk > 0) ||
+      (day.windRisk !== null && day.windRisk > 0);
 
     return (
       <div
@@ -396,6 +444,7 @@ export function DailyColumns({
         }}
         aria-live="polite"
       >
+        {/* Day header */}
         <div
           style={{
             fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
@@ -408,40 +457,39 @@ export function DailyColumns({
         >
           {dayName}, {dateLabel}
         </div>
+
+        {/* Narrative — full width, sits above the chip row */}
+        {day.narrative && (
+          <p
+            style={{
+              fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+              fontSize: '0.82rem',
+              color: 'var(--muted-foreground)',
+              lineHeight: 1.55,
+              fontStyle: 'italic',
+              margin: '0 0 0.5rem',
+            }}
+          >
+            {day.narrative}
+          </p>
+        )}
+
+        {/* Chip grid — wrapping flex row of label/value pairs */}
         <div style={{ display: 'flex', flexDirection: 'row', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
-          {gust && (
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)', fontSize: '0.82rem' }}>
-              <span style={{ fontSize: '0.72rem', color: 'var(--muted-foreground)', flexShrink: 0 }}>Gust</span>
-              <span style={{ color: 'var(--foreground)', fontWeight: 600 }}>{gust}</span>
-            </div>
-          )}
-          {sunrise !== '—' && (
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)', fontSize: '0.82rem' }}>
-              <span style={{ fontSize: '0.72rem', color: 'var(--muted-foreground)', flexShrink: 0 }}>Sunrise</span>
-              <span style={{ color: 'var(--foreground)', fontWeight: 600 }}>{sunrise}</span>
-            </div>
-          )}
-          {sunset !== '—' && (
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)', fontSize: '0.82rem' }}>
-              <span style={{ fontSize: '0.72rem', color: 'var(--muted-foreground)', flexShrink: 0 }}>Sunset</span>
-              <span style={{ color: 'var(--foreground)', fontWeight: 600 }}>{sunset}</span>
-            </div>
-          )}
-          {day.narrative && (
-            <p
-              style={{
-                fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                fontSize: '0.82rem',
-                color: 'var(--muted-foreground)',
-                lineHeight: 1.55,
-                fontStyle: 'italic',
-                flex: '1 1 200px',
-                margin: 0,
-              }}
-            >
-              {day.narrative}
-            </p>
-          )}
+          {dewpointChip}
+          {humidityChip}
+          {day.visibilityMax !== null && chip('Visibility', `${day.visibilityMax} mi`)}
+          {day.uvIndexMax !== null && chip('UV Index', String(day.uvIndexMax))}
+          {day.precipAmount !== null && day.precipAmount > 0 && chip('Rain', `${day.precipAmount} in`)}
+          {day.snowAmount !== null && day.snowAmount > 0 && chip('Snow', `❄ ${day.snowAmount} in`)}
+          {day.windGustMax !== null && chip('Gust', `${Math.round(day.windGustMax)} mph`)}
+          {sunrise !== '—' && chip('Sunrise', sunrise)}
+          {sunset !== '—' && chip('Sunset', sunset)}
+          {/* Storm outlook chips — only rendered when at least one risk > 0 */}
+          {anyStormRisk && day.thunderRisk !== null && day.thunderRisk > 0 && chip('⚡ Thunder', String(day.thunderRisk))}
+          {anyStormRisk && day.tornadoRisk !== null && day.tornadoRisk > 0 && chip('🌪️ Tornado', String(day.tornadoRisk))}
+          {anyStormRisk && day.hailRisk !== null && day.hailRisk > 0 && chip('Hail', String(day.hailRisk))}
+          {anyStormRisk && day.windRisk !== null && day.windRisk > 0 && chip('Wind Risk', String(day.windRisk))}
         </div>
       </div>
     );
