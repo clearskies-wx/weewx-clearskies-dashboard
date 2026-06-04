@@ -27,7 +27,6 @@ import {
 import {
   useForecast,
   useAlerts,
-  useAlmanac,
   useEarthquakes,
   useAqi,
   useStation,
@@ -35,6 +34,7 @@ import {
   useArchive,
   useTodayStats,
 } from '../hooks/useWeatherData';
+import { useSmartAlmanac } from '../hooks/useSmartAlmanac';
 import { useRealtimeObservation } from '../hooks/useRealtimeObservation';
 import { useBranding } from '../lib/branding-provider';
 import { toWmoCode } from '../utils/weather-code';
@@ -57,7 +57,7 @@ export function NowPage() {
   const { data: observation, units, loading: obsLoading, error: obsError, refetch: obsRefetch, barometerTrendDirection, windSpeedAvg10m, windGustMax10m, scene } = useRealtimeObservation();
   const { data: forecast, loading: fcLoading, error: fcError } = useForecast();
   const { data: alerts, loading: alertLoading } = useAlerts();
-  const { data: almanac, loading: almLoading, error: almError, refetch: almRefetch } = useAlmanac();
+  const { data: almanac, loading: almLoading, error: almError, refetch: almRefetch } = useSmartAlmanac();
   const { data: earthquakes, loading: eqLoading, error: eqError, refetch: eqRefetch } = useEarthquakes();
   const { data: aqi, loading: aqiLoading, error: aqiError, refetch: aqiRefetch } = useAqi();
   const { data: station } = useStation();
