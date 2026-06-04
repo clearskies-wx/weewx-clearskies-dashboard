@@ -149,7 +149,7 @@ export function Footer({ photoCredit }: FooterProps) {
   return (
     <footer
       className={[
-        'mt-auto px-4 py-2 pb-20 md:pb-2 text-sm',
+        'mt-auto px-4 py-2 pb-20 md:pb-2 text-xs',
       ].join(' ')}
       style={{
         background: 'rgba(0, 0, 0, 0.65)',
