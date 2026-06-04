@@ -692,6 +692,27 @@ export interface EclipseData {
 }
 
 // ---------------------------------------------------------------------------
+// /almanac/positions
+// ---------------------------------------------------------------------------
+
+export interface SunPosition {
+  azimuth: number;
+  altitude: number;
+}
+
+export interface MoonPosition {
+  azimuth: number;
+  altitude: number;
+  illuminationPercent: number;
+  phaseName: string;
+}
+
+export interface PositionsSnapshot {
+  sun: SunPosition;
+  moon: MoonPosition;
+}
+
+// ---------------------------------------------------------------------------
 // /almanac/meteor-showers
 // ---------------------------------------------------------------------------
 

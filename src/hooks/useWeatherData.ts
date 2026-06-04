@@ -30,6 +30,7 @@ import {
   getAlmanacMeteorShowers,
   getEarthquakeConfig,
   getEarthquakeFaults,
+  getAlmanacPositions,
 } from '../api/client';
 import type { ArchiveParams, ApiBrandingConfig } from '../api/client';
 import { asConverted } from '../api/types';
@@ -85,6 +86,7 @@ import type {
   MoonNameData,
   EclipseData,
   MeteorShowerData,
+  PositionsSnapshot,
 } from '../api/types';
 
 // ---------------------------------------------------------------------------
@@ -917,6 +919,37 @@ export function useEarthquakeFaults(): HookResult<FaultFeatureCollection> {
 
   return {
     data: data ?? null,
+    loading,
+    error,
+    refetch,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// useAlmanacPositions — /almanac/positions (60-second polling)
+// ---------------------------------------------------------------------------
+
+export function useAlmanacPositions(): HookResult<PositionsSnapshot> {
+  const [pollTick, setPollTick] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setPollTick(t => t + 1), 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const { data, loading, error, refetch } = useApiQuery<{ data: PositionsSnapshot }>(
+    (signal) => getAlmanacPositions(signal),
+    { skip: isMockMode(), deps: [pollTick] },
+  );
+
+  if (isMockMode()) {
+    return mockResult<PositionsSnapshot>({
+      sun: { azimuth: 238.4, altitude: 42.1 },
+      moon: { azimuth: 142.7, altitude: 28.3, illuminationPercent: 88, phaseName: 'waxing-gibbous' },
+    });
+  }
+
+  return {
+    data: data?.data ?? null,
     loading,
     error,
     refetch,

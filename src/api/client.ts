@@ -30,6 +30,7 @@ import type {
   ApiMoonNamesCalendar,
   EclipseData,
   MeteorShowerData,
+  PositionsSnapshot,
 } from './types';
 
 // ---------------------------------------------------------------------------
@@ -321,4 +322,14 @@ export function getAlmanacMeteorShowers(
   signal?: AbortSignal,
 ): Promise<ApiResponse<MeteorShowerData>> {
   return fetchApi<ApiResponse<MeteorShowerData>>('/almanac/meteor-showers', undefined, signal);
+}
+
+// ---------------------------------------------------------------------------
+// GET /almanac/positions
+// ---------------------------------------------------------------------------
+
+export function getAlmanacPositions(
+  signal?: AbortSignal,
+): Promise<ApiResponse<PositionsSnapshot>> {
+  return fetchApi<ApiResponse<PositionsSnapshot>>('/almanac/positions', {}, signal);
 }
