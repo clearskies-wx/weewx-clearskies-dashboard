@@ -111,14 +111,15 @@ export function NowHeroCard({
       >
         {/* ── Logo (left) ─────────────────────────────────────────────────── */}
         <div
-          className="flex shrink-0 items-center justify-center self-stretch py-1"
+          className="shrink-0"
           aria-hidden="true"
+          style={{ width: '10rem', height: '2.5rem' }}
         >
           {logoUrl ? (
             <img
               src={logoUrl}
               alt={logoAlt ?? ''}
-              className="!h-[2.75rem] !max-w-[14rem] w-auto object-contain"
+              className="!h-full !w-full object-contain object-left"
             />
           ) : (
             <PlaceholderLogo size={40} />
