@@ -26,6 +26,7 @@
 // Units: zero unit knowledge in dashboard (ADR-042).
 // i18n: 'now' namespace for labels (ADR-021).
 
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AlmanacSnapshot } from '../api/types';
 import {
@@ -176,7 +177,11 @@ interface ArcVisualizationProps {
 }
 
 function ArcVisualization({ almanac, tz }: ArcVisualizationProps) {
-  const nowMs = Date.now();
+  const [nowMs, setNowMs] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowMs(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   // Sun arc progress
   const sunPct = arcProgress(almanac.sun.rise, almanac.sun.set, nowMs);
