@@ -2,47 +2,17 @@
 //
 // Card footprint: full (4×auto)
 // Tabs:
-//   "Today"    — hours for today (from midnight to midnight station-local)
-//   "Tomorrow" — hours for tomorrow
+//   "Today"    — next 24 hours of hourly data
+//   "Tomorrow" — the following 24 hours (hours 25–48)
 //
 // HourlyStrip is rendered in scrollable mode (all hours, visible scrollbar).
-// No expansion panel on the hourly card.
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Clock } from '@phosphor-icons/react';
 import { Card, CardHeader, CardContent } from '../ui/card';
 import { HourlyStrip } from './HourlyStrip';
-import type { ForecastBundle, HourlyForecastPoint } from '../../api/types';
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-/**
- * Partition hourly points into today / tomorrow buckets using station timezone.
- * "Today" = validTime on the current calendar date in tz.
- * "Tomorrow" = validTime on the next calendar date in tz.
- */
-function partitionHours(
-  hours: HourlyForecastPoint[],
-  tz: string,
-): { today: HourlyForecastPoint[]; tomorrow: HourlyForecastPoint[] } {
-  const now = new Date();
-  const todayDateStr = new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(now);
-  const tomorrowDate = new Date(now);
-  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-  const tomorrowDateStr = new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(tomorrowDate);
-
-  const today: HourlyForecastPoint[] = [];
-  const tomorrow: HourlyForecastPoint[] = [];
-
-  for (const h of hours) {
-    const localDate = new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(new Date(h.validTime));
-    if (localDate === todayDateStr) today.push(h);
-    else if (localDate === tomorrowDateStr) tomorrow.push(h);
-  }
-
-  return { today, tomorrow };
-}
+import type { ForecastBundle } from '../../api/types';
 
 // ── Skeleton ─────────────────────────────────────────────────────────────────
 
@@ -76,14 +46,15 @@ export function ForecastHourlyCard({
   stationTz = 'UTC',
 }: ForecastHourlyCardProps) {
   const { t } = useTranslation('forecast');
-  const { today: todayHours, tomorrow: tomorrowHours } = forecast?.hourly
-    ? partitionHours(forecast.hourly, stationTz)
-    : { today: [], tomorrow: [] };
+  const [activeTab, setActiveTab] = useState<HourTab>('today');
 
-  // Default to Tomorrow when today has fewer than 6 hours remaining.
-  const [activeTab, setActiveTab] = useState<HourTab>(
-    todayHours.length < 6 && tomorrowHours.length > 0 ? 'tomorrow' : 'today'
-  );
+  const { todayHours, tomorrowHours } = useMemo(() => {
+    const all = forecast?.hourly ?? [];
+    return {
+      todayHours: all.slice(0, 24),
+      tomorrowHours: all.slice(24, 48),
+    };
+  }, [forecast]);
 
   const handleTabKey = useCallback((e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === 'ArrowRight') {
@@ -179,12 +150,12 @@ export function ForecastHourlyCard({
       <CardContent className="overflow-visible">
         {loading ? (
           <>
-            <span className="sr-only" role="status">Loading hourly forecast…</span>
+            <span className="sr-only" role="status">{t('loadingHourly')}</span>
             <Skeleton />
           </>
         ) : error ? (
           <p role="alert" style={{ color: 'var(--destructive)', fontSize: 'var(--text-body, 0.9rem)' }}>
-            Unable to load hourly forecast.
+            {t('unableToLoad')}
           </p>
         ) : (
           <>
