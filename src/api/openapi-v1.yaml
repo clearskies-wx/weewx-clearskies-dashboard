@@ -1101,6 +1101,17 @@ components:
           type: string
           nullable: true
           description: Multi-sentence per-day summary (NWS, some Aeris plans).
+        dewpointMax: { type: number, nullable: true }
+        dewpointMin: { type: number, nullable: true }
+        humidityMax: { type: number, nullable: true, minimum: 0, maximum: 100 }
+        humidityMin: { type: number, nullable: true, minimum: 0, maximum: 100 }
+        visibilityMax: { type: number, nullable: true }
+        visibilityMin: { type: number, nullable: true }
+        snowAmount: { type: number, nullable: true }
+        thunderRisk: { type: number, nullable: true }
+        tornadoRisk: { type: number, nullable: true }
+        hailRisk: { type: number, nullable: true }
+        windRisk: { type: number, nullable: true }
         source: { type: string }
         extras: { $ref: '#/components/schemas/Observation/properties/extras' }
       required: [validDate, source]

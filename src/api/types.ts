@@ -172,6 +172,9 @@ export interface Observation {
   heatindex: ConvertedValue | number | null;
   rainRate: ConvertedValue | number | null;
   rain: ConvertedValue | number | null;
+  snow: ConvertedValue | number | null;
+  snowRate: ConvertedValue | number | null;
+  snowDepth: ConvertedValue | number | null;
   barometerTrend: ConvertedValue | number | null;
   radiation: ConvertedValue | number | null;
   UV: ConvertedValue | number | null;
@@ -255,6 +258,7 @@ export interface HourlyForecastPoint {
   precipProbability: number | null;
   precipAmount: number | null;
   precipType: string | null;
+  snowAmount: number | null;
   cloudCover: number | null;
   weatherCode: string | null;
   weatherText: string | null;
@@ -276,6 +280,17 @@ export interface DailyForecastPoint {
   weatherCode: string | null;
   weatherText: string | null;
   narrative: string | null;
+  dewpointMax: number | null;
+  dewpointMin: number | null;
+  humidityMax: number | null;
+  humidityMin: number | null;
+  visibilityMax: number | null;
+  visibilityMin: number | null;
+  snowAmount: number | null;
+  thunderRisk: number | null;
+  tornadoRisk: number | null;
+  hailRisk: number | null;
+  windRisk: number | null;
   source: string;
   extras: Record<string, number | string | boolean | null>;
 }
