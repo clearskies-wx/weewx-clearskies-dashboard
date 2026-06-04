@@ -540,6 +540,20 @@ paths:
               schema: { $ref: '#/components/schemas/AlmanacMeteorShowersResponse' }
         default: { $ref: '#/components/responses/Problem' }
 
+  /almanac/seeing-forecast:
+    get:
+      summary: Astronomical seeing forecast (72-hour, 3-hour intervals from 7Timer)
+      tags: [Almanac]
+      responses:
+        '200':
+          description: Seeing forecast data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeeingForecastResponse'
+        '404':
+          description: Seeing provider not configured
+
   /almanac/positions:
     get:
       summary: Current sun and moon positions
@@ -1629,12 +1643,77 @@ components:
       description: One visible planet's visibility data for the requested date.
       properties:
         name: { type: string, description: "Planet name (e.g. Venus, Mars, Jupiter)." }
+        altitude:
+          type: number
+          nullable: true
+          description: Altitude in degrees above the horizon at the reference viewing time.
+        direction:
+          type: string
+          nullable: true
+          description: 16-point compass direction at the reference viewing time (e.g. "Southwest").
+        rise: { type: string, format: date-time, nullable: true }
+        set: { type: string, format: date-time, nullable: true }
+        constellation:
+          type: string
+          nullable: true
+          description: Constellation the planet is currently in.
+        # API-computed fields (Task 2b)
         magnitude:
           type: number
           nullable: true
           description: Visual magnitude (lower = brighter; negative values are very bright).
-        rise: { type: string, format: date-time, nullable: true }
-        set: { type: string, format: date-time, nullable: true }
+        transitTime:
+          type: string
+          format: date-time
+          nullable: true
+          description: UTC time when planet crosses the meridian (highest altitude).
+        rightAscension:
+          type: number
+          nullable: true
+          description: Right Ascension in degrees (0-360).
+        declination:
+          type: number
+          nullable: true
+          description: Declination in degrees (-90 to +90).
+        elongation:
+          type: number
+          nullable: true
+          description: Angular distance from the Sun in degrees.
+        # BFF-enriched fields (Task 3 — planet viewing quality)
+        viewingQuality:
+          type: string
+          nullable: true
+          enum: [excellent, good, fair, poor, not_visible]
+          description: Computed per-planet viewing quality based on seeing forecast, altitude, and atmospheric conditions.
+        viewingScore:
+          type: number
+          nullable: true
+          minimum: 0
+          maximum: 1
+          description: Composite viewing quality score (0-1). Seeing 80%, altitude 15%, transparency 5%.
+        bestViewingTime:
+          type: string
+          format: date-time
+          nullable: true
+          description: Best time to observe this planet tonight (typically transit or nearest clear period).
+        clearWindowStart:
+          type: string
+          format: date-time
+          nullable: true
+          description: Start of the clear viewing window (altitude > 0° AND cloudcover ≤ 6/9).
+        clearWindowEnd:
+          type: string
+          format: date-time
+          nullable: true
+          description: End of the clear viewing window.
+        conjunction:
+          type: string
+          nullable: true
+          description: Conjunction label when planet is within 5° of Moon (e.g., "Close Conjunction with Moon Tonight").
+        viewingNote:
+          type: string
+          nullable: true
+          description: Explanatory note (e.g., "In Sun's Glare" for Mercury, "Bright moon nearby" for faint planets).
       required: [name]
 
     PlanetVisibility:
@@ -1692,6 +1771,47 @@ components:
           nullable: true
           description: Parent comet or asteroid (e.g. "109P/Swift-Tuttle").
       required: [name, peakDate]
+
+    # ---------- Seeing forecast ----------
+
+    SeeingForecastPointResponse:
+      type: object
+      description: One 3-hour forecast step from the 7Timer ASTRO product.
+      properties:
+        validTime: { type: string, format: date-time }
+        seeingIndex: { type: integer, minimum: 1, maximum: 8 }
+        transparencyIndex: { type: integer, minimum: 1, maximum: 8 }
+        cloudCoverOctet: { type: integer, minimum: 1, maximum: 9 }
+        liftedIndex: { type: integer }
+        windSpeedClass: { type: integer, minimum: 1, maximum: 8 }
+        windDirection:
+          type: string
+          enum: [N, NE, E, SE, S, SW, W, NW]
+        temp2mC: { type: integer }
+        humidityClass: { type: integer }
+        precType:
+          type: string
+          enum: [none, rain, snow, frzr, icep]
+      required: [validTime, seeingIndex, transparencyIndex, cloudCoverOctet, liftedIndex, windSpeedClass, windDirection, temp2mC, humidityClass, precType]
+
+    SeeingForecastData:
+      type: object
+      properties:
+        initTime:
+          type: string
+          format: date-time
+          description: "7Timer model initialization time"
+        points:
+          type: array
+          items: { $ref: '#/components/schemas/SeeingForecastPointResponse' }
+      required: [initTime, points]
+
+    SeeingForecastResponse:
+      type: object
+      properties:
+        data: { $ref: '#/components/schemas/SeeingForecastData' }
+        generatedAt: { type: string, format: date-time }
+      required: [data, generatedAt]
 
     # ---------- Climatology ----------
 

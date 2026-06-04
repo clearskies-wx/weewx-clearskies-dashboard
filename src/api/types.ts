@@ -644,6 +644,34 @@ export interface PlanetEntry {
   rise: string | null;
   /** UTC ISO-8601 set time, or null if the planet doesn't set today. */
   set: string | null;
+  /** Constellation the planet is currently in. */
+  constellation: string | null;
+  // API-computed fields (Task 2b)
+  /** Visual magnitude (lower = brighter; negative values are very bright). */
+  magnitude: number | null;
+  /** UTC time when planet crosses the meridian (highest altitude). */
+  transitTime: string | null;
+  /** Right Ascension in degrees (0-360). */
+  rightAscension: number | null;
+  /** Declination in degrees (-90 to +90). */
+  declination: number | null;
+  /** Angular distance from the Sun in degrees. */
+  elongation: number | null;
+  // BFF-enriched fields (Task 3 — planet viewing quality)
+  /** Computed per-planet viewing quality based on seeing forecast, altitude, and atmospheric conditions. */
+  viewingQuality: 'excellent' | 'good' | 'fair' | 'poor' | 'not_visible' | null;
+  /** Composite viewing quality score (0-1). Seeing 80%, altitude 15%, transparency 5%. */
+  viewingScore: number | null;
+  /** Best time to observe this planet tonight (typically transit or nearest clear period). */
+  bestViewingTime: string | null;
+  /** Start of the clear viewing window (altitude > 0° AND cloudcover ≤ 6/9). */
+  clearWindowStart: string | null;
+  /** End of the clear viewing window. */
+  clearWindowEnd: string | null;
+  /** Conjunction label when planet is within 5° of Moon (e.g., "Close Conjunction with Moon Tonight"). */
+  conjunction: string | null;
+  /** Explanatory note (e.g., "In Sun's Glare" for Mercury, "Bright moon nearby" for faint planets). */
+  viewingNote: string | null;
 }
 
 export interface PlanetsVisible {
@@ -734,6 +762,45 @@ export interface MeteorShowerEntry {
 
 export interface MeteorShowerData {
   showers: MeteorShowerEntry[];
+}
+
+// ---------------------------------------------------------------------------
+// /almanac/seeing-forecast
+// ---------------------------------------------------------------------------
+
+export interface SeeingForecastPoint {
+  /** UTC ISO-8601 datetime for the start of this 3-hour forecast step. */
+  validTime: string;
+  /** Astronomical seeing index (1=best, 8=worst). */
+  seeingIndex: number;
+  /** Atmospheric transparency index (1=best, 8=worst). */
+  transparencyIndex: number;
+  /** Cloud cover in oktas (1=clear, 9=overcast). */
+  cloudCoverOctet: number;
+  /** Lifted index — measure of atmospheric instability. */
+  liftedIndex: number;
+  /** Wind speed class (1=calm, 8=storm). */
+  windSpeedClass: number;
+  /** Wind direction as 8-point compass. */
+  windDirection: string;
+  /** Temperature at 2m in Celsius. */
+  temp2mC: number;
+  /** Relative humidity class. */
+  humidityClass: number;
+  /** Precipitation type. */
+  precType: string;
+}
+
+export interface SeeingForecastData {
+  /** 7Timer model initialization time (UTC ISO-8601). */
+  initTime: string;
+  /** Array of 3-hour forecast steps covering up to 72 hours. */
+  points: SeeingForecastPoint[];
+}
+
+export interface SeeingForecastResponse {
+  data: SeeingForecastData;
+  generatedAt: string;
 }
 
 // ---------------------------------------------------------------------------
