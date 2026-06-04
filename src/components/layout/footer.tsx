@@ -149,7 +149,7 @@ export function Footer({ photoCredit }: FooterProps) {
   return (
     <footer
       className={[
-        'mt-auto px-4 py-2 text-sm',
+        'mt-auto px-4 py-2 pb-20 md:pb-2 text-sm',
       ].join(' ')}
       style={{
         background: 'rgba(0, 0, 0, 0.65)',
@@ -178,8 +178,8 @@ export function Footer({ photoCredit }: FooterProps) {
           <img
             src={poweredLight}
             alt="Powered by Clear Skies"
-            height={25}
-            className="h-[25px] w-auto"
+            height={50}
+            className="h-[50px] w-auto"
           />
         </div>
 
