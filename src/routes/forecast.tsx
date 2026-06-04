@@ -11,6 +11,7 @@
 // useForecast({ hours: 48 }) requests 48h of hourly data for Tomorrow tab.
 
 import { useTranslation } from 'react-i18next';
+import { CloudSun } from '@phosphor-icons/react';
 import { AlertBanner } from '../components/shared/alert-banner';
 import { Grid } from '../components/layout/grid';
 import { PageHeaderCard } from '../components/layout/page-header-card';
@@ -59,7 +60,7 @@ export function ForecastPage() {
 
       <Grid className="md:auto-rows-[auto]">
         {/* ── Page header ──────────────────────────────────────────────── */}
-        <PageHeaderCard title={t('title')} info={freshnessText} />
+        <PageHeaderCard title={t('title')} info={freshnessText} icon={<CloudSun weight="duotone" />} />
 
         {/* ── Surface B: Hourly ─────────────────────────────────────────── */}
         <ForecastHourlyCard

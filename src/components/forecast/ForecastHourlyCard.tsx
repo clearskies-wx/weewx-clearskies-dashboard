@@ -9,7 +9,6 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Clock } from '@phosphor-icons/react';
 import { Card, CardHeader, CardContent } from '../ui/card';
 import { HourlyStrip } from './HourlyStrip';
 import type { ForecastBundle } from '../../api/types';
@@ -94,21 +93,12 @@ export function ForecastHourlyCard({
           <span
             style={{
               flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.35rem',
               fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
               fontSize: 'var(--text-card-title, 0.82rem)',
               fontWeight: 600,
               color: 'var(--foreground)',
             }}
           >
-            <Clock
-              aria-hidden="true"
-              focusable={false}
-              size={16}
-              style={{ opacity: 0.75, flexShrink: 0 }}
-            />
             {t('hourlyForecast')}
           </span>
 

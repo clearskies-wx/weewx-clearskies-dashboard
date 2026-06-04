@@ -5,7 +5,6 @@
 // No tabs.
 
 import { useTranslation } from 'react-i18next';
-import { CalendarBlank } from '@phosphor-icons/react';
 import { Card, CardHeader, CardContent } from '../ui/card';
 import { DailyColumns } from './DailyColumns';
 import type { ForecastBundle, UnitsBlock } from '../../api/types';
@@ -61,21 +60,12 @@ export function ForecastDailyCard({
           <span
             style={{
               flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.35rem',
               fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
               fontSize: 'var(--text-card-title, 0.82rem)',
               fontWeight: 600,
               color: 'var(--foreground)',
             }}
           >
-            <CalendarBlank
-              aria-hidden="true"
-              focusable={false}
-              size={16}
-              style={{ opacity: 0.75, flexShrink: 0 }}
-            />
             {t('sevenDayForecast')}
           </span>
         </div>

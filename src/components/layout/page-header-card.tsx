@@ -24,6 +24,11 @@ type PageHeaderCardProps = {
   /** Optional one-line descriptive text rendered beneath the title. */
   info?: string;
   /**
+   * Optional page icon rendered to the left of the title/info block,
+   * sized to match the full height of the text block.
+   */
+  icon?: React.ReactNode;
+  /**
    * Heading level for the title element.  Defaults to h1.
    * Consumers on pages where h1 is already used must pass a lower level
    * (e.g. as="h2") to maintain document-order heading hierarchy (WCAG 1.3.1).
@@ -62,6 +67,7 @@ type PageHeaderCardProps = {
 export function PageHeaderCard({
   title,
   info,
+  icon,
   as: Heading = 'h1',
   children,
   className,
@@ -70,33 +76,39 @@ export function PageHeaderCard({
     <Card
       footprint="full"
       className={cn(
-        // Half-row density: tighter vertical padding than a data card.
-        // py-2 (0.5rem top+bottom) gives visual weight matching ~5.5rem row.
         'py-2',
         className,
       )}
     >
-      {/* Flex row: title+info on the left, optional controls on the right. */}
       <div className="flex flex-1 items-center justify-between gap-4 px-4">
-        {/* Title + info group */}
-        <div className="min-w-0 flex-1">
-          <Heading
-            className={cn(
-              'font-heading truncate text-base font-semibold leading-snug',
-              // Muted bottom margin when info is present
-              info ? 'mb-0.5' : undefined,
-            )}
-          >
-            {title}
-          </Heading>
-          {info && (
-            <p className="text-muted-foreground truncate text-sm leading-tight">
-              {info}
-            </p>
+        {/* Icon + title group */}
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          {icon && (
+            <div
+              className="text-primary flex-shrink-0"
+              style={{ fontSize: info ? '2rem' : '1.5rem', lineHeight: 1 }}
+              aria-hidden="true"
+            >
+              {icon}
+            </div>
           )}
+          <div className="min-w-0 flex-1">
+            <Heading
+              className={cn(
+                'font-heading truncate text-base font-semibold leading-snug',
+                info ? 'mb-0.5' : undefined,
+              )}
+            >
+              {title}
+            </Heading>
+            {info && (
+              <p className="text-muted-foreground truncate text-sm leading-tight">
+                {info}
+              </p>
+            )}
+          </div>
         </div>
 
-        {/* Right-aligned inline controls slot — only rendered when provided */}
         {children && (
           <div className="flex flex-shrink-0 items-center gap-2">
             {children}
