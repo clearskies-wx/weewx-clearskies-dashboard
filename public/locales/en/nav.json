@@ -30,5 +30,6 @@
   "ariaAdditionalPages": "Additional pages",
   "pinNav": "Pin navigation",
   "unpinNav": "Unpin navigation",
-  "showNav": "Show navigation"
+  "showNav": "Show navigation",
+  "hideNav": "Hide navigation"
 }

@@ -425,46 +425,57 @@ export function NavRail() {
 
   return (
     <>
-      {/* ── Desktop: grab bar — shown when rail is hidden ────────────────────
-          Fixed at left edge, vertically centered. Desktop-only (hidden on mobile).
-          Uses <button> (not <div onClick>) per accessibility requirements. */}
+      {/* ── Desktop: grab handle — always visible at left edge.
+          Collapsed: right-pointing chevron ("pull to open").
+          Expanded: left-pointing chevron ("click to close").
+          Positioned just right of the rail panel when open. */}
       <button
         type="button"
-        aria-label={t('showNav')}
+        aria-label={visible ? t('hideNav') : t('showNav')}
         aria-expanded={visible}
-        // Remove from tab order when the rail is visible — keyboard users don't
-        // need to reach an invisible element.
-        tabIndex={visible ? -1 : 0}
-        onMouseEnter={handleGrabBarActivate}
-        onClick={handleGrabBarActivate}
+        onMouseEnter={!visible ? handleGrabBarActivate : undefined}
+        onClick={visible ? () => { setPinned(false); try { localStorage.setItem(LS_KEY, 'false'); } catch {} setVisible(false); } : handleGrabBarActivate}
         className={[
-          // Desktop only
-          'hidden md:block',
-          // Fixed position, left edge, vertically centered
-          'fixed left-0 top-1/2 -translate-y-1/2 z-20',
-          // Pull tab: 6px wide, 80px tall, rounded right side only (left flush with browser edge)
-          'w-1.5 h-20 rounded-r-full',
-          // Show grab bar only when rail is hidden
-          'transition-opacity duration-200',
-          visible ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto',
-          // Cursor
+          'hidden md:flex md:items-center md:justify-center',
+          'fixed top-1/2 -translate-y-1/2 z-20',
+          'w-5 h-14 rounded-r-lg',
+          'card-glass shadow-md ring-1 ring-foreground/10',
           'cursor-pointer',
-          // Focus indicator
           'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-          // Remove default button appearance
           'border-0 p-0',
         ].join(' ')}
         style={{
-          // Visible on both bright (clear-day) and dark (storm-night) photo backgrounds.
-          // Dark mode: light pill; light mode: dark pill. Box-shadow guarantees a
-          // contrast edge against any scene colour.
-          background:
-            resolved === 'dark'
-              ? 'rgba(255,255,255,0.45)'
-              : 'rgba(0,0,0,0.35)',
-          boxShadow: '0 1px 6px rgba(0,0,0,0.4)',
+          left: 0,
+          transition: 'left 200ms ease',
         }}
-      />
+        ref={(el) => {
+          if (!el) return;
+          if (visible) {
+            const rail = el.nextElementSibling as HTMLElement | null;
+            if (rail) {
+              const w = rail.getBoundingClientRect().width;
+              el.style.left = `${w}px`;
+            }
+          } else {
+            el.style.left = '0px';
+          }
+        }}
+      >
+        <svg
+          width="10"
+          height="14"
+          viewBox="0 0 10 14"
+          fill="none"
+          aria-hidden="true"
+          style={{
+            transform: visible ? 'rotate(180deg)' : 'none',
+            transition: 'transform 200ms ease',
+            opacity: 0.6,
+          }}
+        >
+          <path d="M2 1L8 7L2 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
 
       {/* ── Desktop: floating rail panel ────────────────────────────────────
           Floats at left:12px, vertically centered via top:50%+translateY(-50%).
