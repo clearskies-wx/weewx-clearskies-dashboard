@@ -321,7 +321,6 @@ export function NavRail() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
   const location = useLocation();
-  const { resolved } = useTheme();
   const { t } = useTranslation('nav');
 
   // ── Desktop auto-hide state ──────────────────────────────────────────────
