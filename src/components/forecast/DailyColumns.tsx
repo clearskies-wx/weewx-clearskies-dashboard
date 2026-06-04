@@ -22,7 +22,7 @@
 //   - Desktop (≥ md): standard column layout (trend line visible)
 
 import { useState } from 'react';
-import { Drop } from '@phosphor-icons/react';
+import { Drop, Snowflake } from '@phosphor-icons/react';
 import { WeatherIcon } from '../weather-icon';
 import { WindSymbol } from './WindSymbol';
 import { TempTrendLine } from './TempTrendLine';
@@ -307,12 +307,14 @@ export function DailyColumns({
   );
 
   // Precip row — always visible (0% shown muted, non-zero shown normal)
+  // Amounts (precipAmount, snowAmount) are appended below the probability when > 0.
+  // minHeight instead of fixed height allows the cell to grow when amounts are present.
   const precipRow = (
     <div style={{ display: 'flex', flexDirection: 'row', position: 'relative', zIndex: 1 }}>
       {days.map((day, i) => {
         const precip = day.precipProbabilityMax;
         return (
-          <div key={i} style={{ ...cellBase, height: expandable ? 16 : 16, marginTop: expandable ? 0 : 0 }}>
+          <div key={i} style={{ ...cellBase, minHeight: 16, alignItems: 'flex-start', flexDirection: 'column', justifyContent: 'center' }}>
             <span
               style={{
                 display: 'flex',
@@ -321,11 +323,41 @@ export function DailyColumns({
                 fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
                 fontSize: expandable ? 'var(--text-micro, 0.7rem)' : '0.75rem',
                 color: 'var(--muted-foreground)',
-                  }}
+              }}
             >
               <Drop aria-hidden="true" size={expandable ? 8 : 7} />
               {precip !== null ? `${precip}%` : '—'}
             </span>
+            {/* Rain amount — only when > 0 */}
+            {day.precipAmount !== null && day.precipAmount > 0 && (
+              <span
+                style={{
+                  fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                  fontSize: expandable ? '0.6rem' : '0.65rem',
+                  color: 'var(--muted-foreground)',
+                  opacity: 0.8,
+                }}
+              >
+                {day.precipAmount.toFixed(2)}"
+              </span>
+            )}
+            {/* Snow amount — only when > 0, with snowflake icon */}
+            {day.snowAmount !== null && day.snowAmount > 0 && (
+              <span
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.05rem',
+                  fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                  fontSize: expandable ? '0.6rem' : '0.65rem',
+                  color: 'var(--muted-foreground)',
+                  opacity: 0.8,
+                }}
+              >
+                <Snowflake aria-hidden="true" size={7} />
+                {day.snowAmount.toFixed(1)}"
+              </span>
+            )}
           </div>
         );
       })}

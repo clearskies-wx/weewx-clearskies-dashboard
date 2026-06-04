@@ -16,7 +16,7 @@
 //   Wind:    WindSymbol size=20
 
 import { useMemo } from 'react';
-import { Drop } from '@phosphor-icons/react';
+import { Drop, Snowflake } from '@phosphor-icons/react';
 import { WeatherIcon } from '../weather-icon';
 import { WindSymbol } from './WindSymbol';
 import { TempTrendLine } from './TempTrendLine';
@@ -172,6 +172,8 @@ export function HourlyStrip({
   // Row: precipitation — always visible (0% shown muted, non-zero shown normal)
   const precipRow = displayHours.map((hour, i) => {
     const precip = hour.precipProbability;
+    const isSnow = hour.precipType === 'snow';
+    const PrecipIcon = isSnow ? Snowflake : Drop;
     return (
       <div key={i} style={{ ...colStyle, ...CELL_BASE, height: rowH.precip }}>
         <span
@@ -184,7 +186,7 @@ export function HourlyStrip({
             color: 'var(--muted-foreground)',
           }}
         >
-          <Drop aria-hidden="true" size={9} />
+          <PrecipIcon aria-hidden="true" size={9} />
           {precip !== null ? `${precip}%` : '—'}
         </span>
       </div>
