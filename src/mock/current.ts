@@ -26,6 +26,9 @@ export const mockObservation: Observation = {
   inTemp: null,
   inHumidity: null,
   appTemp: 71.8,
+  snow: null,
+  snowRate: null,
+  snowDepth: null,
   extras: {},
   source: 'weewx',
 };
