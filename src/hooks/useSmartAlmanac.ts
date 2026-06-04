@@ -1,17 +1,18 @@
-// useSmartAlmanac.ts — Wraps useAlmanac with smart date switching.
+// useSmartAlmanac.ts — Wraps useAlmanac with smart period switching.
 //
-// After sunset + 2 hours, sun fields switch to tomorrow's data.
-// After moonset + 2 hours, moon fields switch to tomorrow's data.
-// Re-evaluates every 60 seconds so the switch happens automatically.
+// Shows the NEXT rise/set period for each body. The 2-hour buffer after
+// set keeps the previous period visible briefly so it doesn't vanish
+// the instant the body sets.
+//
+// Key insight: today's API data may already contain the next period.
+// If moonrise > moonset in today's data, the moon set this morning and
+// rises tonight — today's data IS the next period. Only fetch tomorrow
+// when today's data doesn't have a future rise after the set.
 
 import { useState, useEffect, useMemo } from 'react';
 import { useAlmanac } from './useWeatherData';
 import type { AlmanacSnapshot } from '../api/types';
 
-/**
- * Compatible subset of the non-exported HookResult<T> interface from useWeatherData.
- * Must stay in sync with the shape returned by useAlmanac().
- */
 interface SmartAlmanacResult {
   data: AlmanacSnapshot | null;
   loading: boolean;
@@ -21,12 +22,12 @@ interface SmartAlmanacResult {
 
 const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
 
-/**
- * Wraps useAlmanac with smart date switching:
- * - Sun fields switch to tomorrow 2 hours after today's sunset
- * - Moon fields switch to tomorrow 2 hours after today's moonset
- * - Re-evaluates every 60 seconds
- */
+function isoMs(iso: string | null): number | null {
+  if (!iso) return null;
+  const t = new Date(iso).getTime();
+  return Number.isNaN(t) ? null : t;
+}
+
 export function useSmartAlmanac(): SmartAlmanacResult {
   const [tick, setTick] = useState(0);
   useEffect(() => {
@@ -35,21 +36,24 @@ export function useSmartAlmanac(): SmartAlmanacResult {
   }, []);
 
   const today = useAlmanac();
-
-  // Determine if we need tomorrow's data
   const now = Date.now();
 
-  const sunNeedsTomorrow = today.data?.sun.set
-    ? now > new Date(today.data.sun.set).getTime() + TWO_HOURS_MS
-    : false;
-  const moonNeedsTomorrow = today.data?.moon.set
-    ? now > new Date(today.data.moon.set).getTime() + TWO_HOURS_MS
-    : false;
+  // --- Sun: need tomorrow only if past sunset + 2hr ---
+  const sunSetMs = isoMs(today.data?.sun.set ?? null);
+  const sunNeedsTomorrow = sunSetMs !== null && now > sunSetMs + TWO_HOURS_MS;
+
+  // --- Moon: need tomorrow only if past moonset + 2hr AND today's data
+  // doesn't already contain the next rise (rise > set means tonight's
+  // rise is in today's data — don't fetch tomorrow) ---
+  const moonSetMs = isoMs(today.data?.moon.set ?? null);
+  const moonRiseMs = isoMs(today.data?.moon.rise ?? null);
+  const todayHasNextMoonRise = moonRiseMs !== null && moonSetMs !== null && moonRiseMs > moonSetMs;
+  const moonNeedsTomorrow = moonSetMs !== null
+    && now > moonSetMs + TWO_HOURS_MS
+    && !todayHasNextMoonRise;
 
   const needsTomorrow = sunNeedsTomorrow || moonNeedsTomorrow;
 
-  // Compute tomorrow's date string — recalculated on each tick so a day rollover
-  // that happens while the page is open is picked up within 60 seconds.
   const tomorrowStr = useMemo(() => {
     const d = new Date();
     d.setDate(d.getDate() + 1);
@@ -59,26 +63,18 @@ export function useSmartAlmanac(): SmartAlmanacResult {
 
   const tomorrow = useAlmanac(needsTomorrow ? tomorrowStr : undefined);
 
-  // Merge: use tomorrow's sun if sunNeedsTomorrow, tomorrow's moon if moonNeedsTomorrow
   const merged = useMemo<AlmanacSnapshot | null>(() => {
     if (!today.data) return null;
 
-    const tomorrowSun = tomorrow.data?.sun;
-    const tomorrowMoon = tomorrow.data?.moon;
-    const sunData = (sunNeedsTomorrow && tomorrowSun) ? {
-      ...today.data.sun,
-      ...Object.fromEntries(Object.entries(tomorrowSun).filter(([, v]) => v != null)),
-    } : today.data.sun;
-    const moonData = (moonNeedsTomorrow && tomorrowMoon) ? {
-      ...today.data.moon,
-      ...Object.fromEntries(Object.entries(tomorrowMoon).filter(([, v]) => v != null)),
-    } : today.data.moon;
+    const sunData = (sunNeedsTomorrow && tomorrow.data)
+      ? tomorrow.data.sun
+      : today.data.sun;
 
-    return {
-      date: today.data.date,
-      sun: sunData,
-      moon: moonData,
-    };
+    const moonData = (moonNeedsTomorrow && tomorrow.data)
+      ? tomorrow.data.moon
+      : today.data.moon;
+
+    return { date: today.data.date, sun: sunData, moon: moonData };
   }, [today.data, tomorrow.data, sunNeedsTomorrow, moonNeedsTomorrow]);
 
   return {
