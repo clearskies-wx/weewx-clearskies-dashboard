@@ -163,6 +163,24 @@ const ECLIPSE_BADGE_CLASS: Record<EclipseType, string> = {
 // PlanetRow — one row in the planets section
 // ---------------------------------------------------------------------------
 
+type ViewingQuality = 'excellent' | 'good' | 'fair' | 'poor' | 'not_visible';
+
+const QUALITY_BADGE_CLASSES: Record<ViewingQuality, string> = {
+  excellent: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+  good:      'bg-blue-500/15 text-blue-600 dark:text-blue-400',
+  fair:      'bg-amber-500/15 text-amber-600 dark:text-amber-400',
+  poor:      'bg-red-500/15 text-red-600 dark:text-red-400',
+  not_visible: 'bg-muted text-muted-foreground',
+};
+
+const QUALITY_LABEL: Record<ViewingQuality, string> = {
+  excellent:   'Excellent',
+  good:        'Good',
+  fair:        'Fair',
+  poor:        'Poor',
+  not_visible: 'Not Visible',
+};
+
 function PlanetRow({
   planet,
   tz,
@@ -172,12 +190,48 @@ function PlanetRow({
   tz: string;
   locale: string;
 }) {
+  const quality = planet.viewingQuality as ViewingQuality | null;
+  const showTimes = quality !== 'not_visible' && quality !== null;
+
   return (
     <li className="flex items-start justify-between gap-2 py-1.5">
-      <span className="font-medium text-foreground">{planet.name}</span>
-      <span className="text-right text-muted-foreground text-xs shrink-0">
+      {/* Left column: name, badge, conjunction, viewing note */}
+      <div className="flex flex-col gap-0.5 min-w-0">
+        {/* Planet name + quality badge */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="font-medium text-foreground">{planet.name}</span>
+          {quality !== null && (
+            <span
+              className={`inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-full ${QUALITY_BADGE_CLASSES[quality]}`}
+              aria-label={`Viewing quality: ${QUALITY_LABEL[quality]}`}
+            >
+              {QUALITY_LABEL[quality]}
+            </span>
+          )}
+          {planet.viewingNote !== null && quality !== 'not_visible' && (
+            <span className="text-[10px] text-muted-foreground italic">
+              ({planet.viewingNote})
+            </span>
+          )}
+        </div>
+        {/* "In Sun's Glare" note shown after badge for not_visible */}
+        {quality === 'not_visible' && planet.viewingNote !== null && (
+          <span className="text-[10px] text-muted-foreground italic">
+            ({planet.viewingNote})
+          </span>
+        )}
+        {/* Conjunction line */}
+        {planet.conjunction !== null && (
+          <span className="text-[10px] text-violet-600 dark:text-violet-400">
+            {planet.conjunction}
+          </span>
+        )}
+      </div>
+
+      {/* Right column: direction/altitude, rise/set, best viewing time */}
+      <div className="text-right text-muted-foreground text-xs shrink-0 flex flex-col gap-0.5">
         {planet.direction !== null && planet.altitude !== null && (
-          <span className="mr-2">{planet.direction}, {planet.altitude.toFixed(1)}° above horizon</span>
+          <span>{planet.direction}, {planet.altitude.toFixed(1)}° above horizon</span>
         )}
         {planet.rise && (
           <span>
@@ -185,7 +239,21 @@ function PlanetRow({
             {planet.set ? ` – ${formatLocalTime(planet.set, tz, locale)}` : ''}
           </span>
         )}
-      </span>
+        {showTimes && planet.bestViewingTime !== null && (
+          <span className="text-[10px] text-muted-foreground">
+            {'Best at '}
+            {formatLocalTime(planet.bestViewingTime, tz, locale)}
+            {planet.clearWindowStart !== null && planet.clearWindowEnd !== null && (
+              <>
+                {', clear '}
+                {formatLocalTime(planet.clearWindowStart, tz, locale)}
+                {'–'}
+                {formatLocalTime(planet.clearWindowEnd, tz, locale)}
+              </>
+            )}
+          </span>
+        )}
+      </div>
     </li>
   );
 }
