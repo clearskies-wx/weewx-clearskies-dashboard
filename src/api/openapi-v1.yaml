@@ -86,6 +86,10 @@ tags:
     description: Station identity, location, time zone, units.
   - name: Capabilities
     description: Runtime capability registry (which providers configured, which canonical fields supplied) per ADR-038.
+  - name: Climatology
+    description: Monthly climatology averages computed from the weewx archive.
+  - name: Branding
+    description: Operator branding configuration (site title, logo, favicon, social links).
   - name: Health
     description: Health and readiness probes per ADR-030.
 
@@ -303,12 +307,20 @@ paths:
         the time + radius window — not an error.
       operationId: getEarthquakes
       parameters:
-        - { $ref: '#/components/parameters/From' }
+        - name: from
+          in: query
+          required: false
+          description: |
+            Lower bound (UTC ISO 8601 with `Z`). Inclusive. Defaults to
+            `now - config.defaultDays` when omitted.
+          schema: { type: string, format: date-time }
         - { $ref: '#/components/parameters/To' }
         - name: min_magnitude
           in: query
           required: false
-          description: Filter to events at or above this magnitude.
+          description: |
+            Filter to events at or above this magnitude. Defaults to
+            `config.minMagnitude` when omitted.
           schema: { type: number, minimum: 0 }
         - name: radius_km
           in: query
@@ -325,6 +337,42 @@ paths:
               schema: { $ref: '#/components/schemas/EarthquakeListResponse' }
         '502': { $ref: '#/components/responses/ProviderError' }
         '503': { $ref: '#/components/responses/ProviderUnavailable' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /earthquakes/config:
+    get:
+      tags: [Earthquakes]
+      summary: Earthquake provider configuration
+      description: |
+        Returns the active earthquake provider configuration: provider
+        id, search radius, minimum magnitude threshold, and default
+        query window in days. Useful for the dashboard to display
+        the operator's configured defaults alongside the event list.
+      operationId: getEarthquakesConfig
+      responses:
+        '200':
+          description: Earthquake provider configuration
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EarthquakeConfigResponse' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /earthquakes/faults:
+    get:
+      tags: [Earthquakes]
+      summary: Active fault lines (GeoJSON)
+      description: |
+        Returns a GeoJSON FeatureCollection of active fault lines from
+        the GEM Global Active Faults Database (CC-BY-SA 4.0). Used to
+        overlay fault lines on the dashboard's earthquake map.
+        The `attribution` field carries the required attribution string.
+      operationId: getEarthquakesFaults
+      responses:
+        '200':
+          description: GeoJSON fault-line FeatureCollection
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EarthquakeFaultsResponse' }
         default: { $ref: '#/components/responses/Problem' }
 
   # -------------------------------------------------------------------
@@ -377,7 +425,9 @@ paths:
       summary: Moon-phase calendar
       description: |
         Returns a month grid (or full year) of moon phases for the
-        Almanac page calendar.
+        Almanac page calendar. Each full-moon day includes special
+        naming metadata: traditional name, and flags for harvest moon,
+        blue moon, hunter's moon, and supermoon.
       operationId: getMoonPhases
       parameters:
         - name: year
@@ -397,6 +447,138 @@ paths:
               schema: { $ref: '#/components/schemas/MoonPhaseResponse' }
         default: { $ref: '#/components/responses/Problem' }
 
+  /almanac/planets:
+    get:
+      tags: [Almanac]
+      summary: Planet visibility for a given date
+      description: |
+        Returns visible planets grouped by viewing window: evening sky,
+        morning sky, and all-night. Each entry includes the planet's
+        name, visual magnitude, rise time, and set time.
+        Skyfield-computed locally per ADR-014.
+      operationId: getAlmanacPlanets
+      parameters:
+        - name: date
+          in: query
+          required: false
+          description: ISO date (YYYY-MM-DD). Default = station-local today.
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Planet visibility
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AlmanacPlanetsResponse' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /almanac/moon-names:
+    get:
+      tags: [Almanac]
+      summary: Full moon names for a given year
+      description: |
+        Returns all full moons in the requested year with their
+        traditional names and special flags (harvest moon, blue moon,
+        hunter's moon, supermoon).
+      operationId: getAlmanacMoonNames
+      parameters:
+        - name: year
+          in: query
+          required: false
+          description: Four-digit year. Default = current year.
+          schema: { type: integer, minimum: 1900 }
+      responses:
+        '200':
+          description: Full moon names
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AlmanacMoonNamesResponse' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /almanac/eclipses:
+    get:
+      tags: [Almanac]
+      summary: Lunar eclipses for a given year
+      description: |
+        Returns all lunar eclipses (penumbral, partial, or total) in
+        the requested year. Skyfield-computed locally per ADR-014.
+      operationId: getAlmanacEclipses
+      parameters:
+        - name: year
+          in: query
+          required: false
+          description: Four-digit year. Default = current year.
+          schema: { type: integer, minimum: 1900 }
+      responses:
+        '200':
+          description: Eclipse list
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AlmanacEclipsesResponse' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /almanac/meteor-showers:
+    get:
+      tags: [Almanac]
+      summary: Meteor showers for a given year
+      description: |
+        Returns notable meteor showers in the requested year with peak
+        date, zenithal hourly rate (ZHR), radiant altitude, moon
+        illumination at peak, and a computed viewing-conditions
+        classification.
+      operationId: getAlmanacMeteorShowers
+      parameters:
+        - name: year
+          in: query
+          required: false
+          description: Four-digit year. Default = current year.
+          schema: { type: integer, minimum: 1900 }
+      responses:
+        '200':
+          description: Meteor shower list
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AlmanacMeteorShowersResponse' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /almanac/positions:
+    get:
+      summary: Current sun and moon positions
+      description: Real-time sun and moon azimuth/altitude computed at request time. No caching.
+      operationId: getAlmanacPositions
+      tags:
+        - Almanac
+      responses:
+        '200':
+          description: Current positions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PositionsResponse'
+
+  # -------------------------------------------------------------------
+  # Climatology
+  # -------------------------------------------------------------------
+
+  /climatology/monthly:
+    get:
+      tags: [Climatology]
+      summary: Monthly climatology averages
+      description: |
+        Returns 12-element arrays of historical monthly averages derived
+        from the weewx archive: average high temp, average low temp,
+        average dewpoint, and average rainfall. Fields self-hide when
+        the corresponding columns are absent from the capability
+        registry. Every array is either 12 elements (one per month,
+        Jan–Dec) or omitted entirely — no partial arrays.
+      operationId: getClimatologyMonthly
+      responses:
+        '200':
+          description: Monthly climatology averages
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClimatologyMonthlyResponse' }
+        default: { $ref: '#/components/responses/Problem' }
+
   # -------------------------------------------------------------------
   # Station / units / capabilities
   # -------------------------------------------------------------------
@@ -412,6 +594,23 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/StationResponse' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /branding:
+    get:
+      tags: [Branding]
+      summary: Operator branding configuration
+      description: |
+        Returns the operator-configured branding metadata: site title,
+        logo (light and dark variants), favicon URL, and social media
+        profile links. Fields are omitted when not configured.
+      operationId: getBranding
+      responses:
+        '200':
+          description: Branding configuration
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BrandingResponse' }
         default: { $ref: '#/components/responses/Problem' }
 
   /capabilities:
@@ -1386,8 +1585,223 @@ components:
               date: { type: string, format: date }
               phaseName: { $ref: '#/components/schemas/AlmanacSnapshot/properties/moon/properties/phaseName' }
               illuminationPercent: { type: number, minimum: 0, maximum: 100 }
+              traditionalName:
+                type: string
+                nullable: true
+                description: |
+                  Traditional name for the full moon (e.g. "Wolf",
+                  "Snow"). Present only on full-moon days; null otherwise.
+              isHarvestMoon:
+                type: boolean
+                nullable: true
+                description: Full-moon days only; null on non-full days.
+              isBlueMoon:
+                type: boolean
+                nullable: true
+                description: Full-moon days only; null on non-full days.
+              isHuntersMoon:
+                type: boolean
+                nullable: true
+                description: Full-moon days only; null on non-full days.
+              isSupermoon:
+                type: boolean
+                nullable: true
+                description: Full-moon days only; null on non-full days.
             required: [date, phaseName, illuminationPercent]
       required: [year, days]
+
+    # ---------- Almanac extended entities ----------
+
+    FullMoonEntry:
+      type: object
+      description: One full moon in the year, with traditional name and special flags.
+      properties:
+        date: { type: string, format: date }
+        traditionalName: { type: string, nullable: true }
+        isHarvestMoon: { type: boolean }
+        isBlueMoon: { type: boolean }
+        isHuntersMoon: { type: boolean }
+        isSupermoon: { type: boolean }
+      required: [date, isHarvestMoon, isBlueMoon, isHuntersMoon, isSupermoon]
+
+    PlanetEntry:
+      type: object
+      description: One visible planet's visibility data for the requested date.
+      properties:
+        name: { type: string, description: "Planet name (e.g. Venus, Mars, Jupiter)." }
+        magnitude:
+          type: number
+          nullable: true
+          description: Visual magnitude (lower = brighter; negative values are very bright).
+        rise: { type: string, format: date-time, nullable: true }
+        set: { type: string, format: date-time, nullable: true }
+      required: [name]
+
+    PlanetVisibility:
+      type: object
+      properties:
+        evening:
+          type: array
+          description: Planets visible in the evening sky.
+          items: { $ref: '#/components/schemas/PlanetEntry' }
+        morning:
+          type: array
+          description: Planets visible in the morning sky.
+          items: { $ref: '#/components/schemas/PlanetEntry' }
+        allNight:
+          type: array
+          description: Planets visible throughout the night.
+          items: { $ref: '#/components/schemas/PlanetEntry' }
+      required: [evening, morning, allNight]
+
+    EclipseEntry:
+      type: object
+      properties:
+        date: { type: string, format: date }
+        type:
+          type: string
+          enum: [penumbral, partial, total]
+      required: [date, type]
+
+    MeteorShowerEntry:
+      type: object
+      properties:
+        name: { type: string, description: "Common shower name (e.g. Perseids, Leonids)." }
+        peakDate: { type: string, format: date }
+        zhr:
+          type: integer
+          nullable: true
+          description: Zenithal hourly rate (peak rate under ideal conditions).
+        radiantAltitudeDeg:
+          type: number
+          nullable: true
+          description: Altitude of the shower's radiant point at peak (degrees above horizon, station-local).
+        moonIlluminationPercent:
+          type: number
+          nullable: true
+          minimum: 0
+          maximum: 100
+          description: Moon illumination percentage at peak.
+        viewingConditions:
+          type: string
+          nullable: true
+          enum: [excellent, good, fair, poor, null]
+          description: Computed viewing-conditions classification based on ZHR and moon interference.
+        parentBody:
+          type: string
+          nullable: true
+          description: Parent comet or asteroid (e.g. "109P/Swift-Tuttle").
+      required: [name, peakDate]
+
+    # ---------- Climatology ----------
+
+    ClimatologyMonthly:
+      type: object
+      description: |
+        Monthly climatology averages derived from the weewx archive.
+        Arrays are always 12-element when present (index 0 = January).
+        A field array is omitted entirely when the corresponding column
+        is absent from the capability registry — no partial arrays.
+      properties:
+        months:
+          type: array
+          description: Month label array — always ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].
+          items: { type: string }
+          minItems: 12
+          maxItems: 12
+        avgHighTemp:
+          type: array
+          description: Average high temperature per month. Omitted when outTemp unavailable.
+          items: { type: number, nullable: true }
+          minItems: 12
+          maxItems: 12
+        avgLowTemp:
+          type: array
+          description: Average low temperature per month. Omitted when outTemp unavailable.
+          items: { type: number, nullable: true }
+          minItems: 12
+          maxItems: 12
+        avgDewpoint:
+          type: array
+          description: Average dewpoint per month. Omitted when dewpoint unavailable.
+          items: { type: number, nullable: true }
+          minItems: 12
+          maxItems: 12
+        avgRainfall:
+          type: array
+          description: Average total rainfall per month. Omitted when rain unavailable.
+          items: { type: number, nullable: true }
+          minItems: 12
+          maxItems: 12
+      required: [months]
+
+    # ---------- Earthquake config / faults ----------
+
+    EarthquakeConfig:
+      type: object
+      properties:
+        provider:
+          type: string
+          description: Active earthquake provider id (e.g. "usgs", "geonet", "emsc", "renass").
+        radiusKm:
+          type: number
+          description: Search radius in kilometers from station lat/lon.
+        minMagnitude:
+          type: number
+          description: Minimum magnitude threshold for the default query.
+        defaultDays:
+          type: integer
+          description: Default query window in days (from now backward).
+      required: [provider, radiusKm, minMagnitude, defaultDays]
+
+    # ---------- Branding ----------
+
+    BrandingConfig:
+      type: object
+      description: |
+        Operator-configured branding metadata. All fields are optional
+        and omitted from the response when not configured.
+      properties:
+        siteTitle:
+          type: string
+          nullable: true
+          description: Operator's site title (overrides the default dashboard title).
+        logo:
+          type: object
+          nullable: true
+          description: Logo URLs for light and dark display modes, plus WCAG alt text.
+          properties:
+            light:
+              type: string
+              format: uri
+              nullable: true
+              description: Logo URL for use on light-mode backgrounds.
+            dark:
+              type: string
+              format: uri
+              nullable: true
+              description: Logo URL for use on dark-mode backgrounds.
+            alt:
+              type: string
+              description: >
+                Alt text for the logo image (WCAG 2.1 AA, ADR-022 §5.5).
+                Always non-empty when a logo is configured: if the operator has
+                not set explicit alt text the API falls back to
+                "<site_title> logo" or "Weather station logo".
+        faviconUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: Favicon URL.
+        social:
+          type: object
+          nullable: true
+          description: Social media profile URLs. Each field is omitted when not configured.
+          properties:
+            facebook:  { type: string, format: uri, nullable: true }
+            twitter:   { type: string, format: uri, nullable: true }
+            instagram: { type: string, format: uri, nullable: true }
+            youtube:   { type: string, format: uri, nullable: true }
 
     # ---------- Records ----------
 
@@ -1822,5 +2236,148 @@ components:
       type: object
       properties:
         data: { $ref: '#/components/schemas/RadarFrameList' }
+        generatedAt: { type: string, format: date-time }
+      required: [data, generatedAt]
+
+    AlmanacPlanetsResponse:
+      type: object
+      properties:
+        data: { $ref: '#/components/schemas/PlanetVisibility' }
+        generatedAt: { type: string, format: date-time }
+      required: [data, generatedAt]
+
+    AlmanacMoonNamesResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            fullMoons:
+              type: array
+              items: { $ref: '#/components/schemas/FullMoonEntry' }
+          required: [fullMoons]
+        generatedAt: { type: string, format: date-time }
+      required: [data, generatedAt]
+
+    AlmanacEclipsesResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            eclipses:
+              type: array
+              items: { $ref: '#/components/schemas/EclipseEntry' }
+          required: [eclipses]
+        generatedAt: { type: string, format: date-time }
+      required: [data, generatedAt]
+
+    AlmanacMeteorShowersResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            showers:
+              type: array
+              items: { $ref: '#/components/schemas/MeteorShowerEntry' }
+          required: [showers]
+        generatedAt: { type: string, format: date-time }
+      required: [data, generatedAt]
+
+    SunPosition:
+      type: object
+      required: [azimuth, altitude]
+      properties:
+        azimuth:
+          type: number
+          format: float
+          description: Sun azimuth in degrees (0-360)
+        altitude:
+          type: number
+          format: float
+          description: Sun altitude in degrees above horizon
+
+    MoonPosition:
+      type: object
+      required: [azimuth, altitude, illuminationPercent, phaseName]
+      properties:
+        azimuth:
+          type: number
+          format: float
+          description: Moon azimuth in degrees (0-360)
+        altitude:
+          type: number
+          format: float
+          description: Moon altitude in degrees above horizon
+        illuminationPercent:
+          type: number
+          format: float
+          description: Moon illumination percentage (0-100)
+        phaseName:
+          type: string
+          description: Moon phase name
+          enum: [new, waxing-crescent, first-quarter, waxing-gibbous, full, waning-gibbous, last-quarter, waning-crescent]
+
+    PositionsSnapshot:
+      type: object
+      required: [sun, moon]
+      properties:
+        sun:
+          $ref: '#/components/schemas/SunPosition'
+        moon:
+          $ref: '#/components/schemas/MoonPosition'
+
+    PositionsResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/PositionsSnapshot'
+
+    ClimatologyMonthlyResponse:
+      type: object
+      properties:
+        data: { $ref: '#/components/schemas/ClimatologyMonthly' }
+        source:
+          type: string
+          description: Always `"weewx"` for archive-derived climatology.
+        generatedAt: { type: string, format: date-time }
+      required: [data, source, generatedAt]
+
+    EarthquakeConfigResponse:
+      type: object
+      properties:
+        data: { $ref: '#/components/schemas/EarthquakeConfig' }
+        generatedAt: { type: string, format: date-time }
+      required: [data, generatedAt]
+
+    EarthquakeFaultsResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          description: GeoJSON FeatureCollection of active fault lines.
+          properties:
+            type:
+              type: string
+              enum: [FeatureCollection]
+            features:
+              type: array
+              description: GeoJSON Feature array. Feature geometry and properties are provider-defined.
+              items:
+                type: object
+          required: [type, features]
+        attribution:
+          type: string
+          description: Required attribution string for the fault data source.
+          example: "Active faults: GEM Global Active Faults Database, CC-BY-SA 4.0"
+        generatedAt: { type: string, format: date-time }
+      required: [data, attribution, generatedAt]
+
+    BrandingResponse:
+      type: object
+      properties:
+        data: { $ref: '#/components/schemas/BrandingConfig' }
         generatedAt: { type: string, format: date-time }
       required: [data, generatedAt]
