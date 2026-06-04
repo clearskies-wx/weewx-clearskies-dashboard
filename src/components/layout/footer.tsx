@@ -178,8 +178,8 @@ export function Footer({ photoCredit }: FooterProps) {
           <img
             src={poweredLight}
             alt="Powered by Clear Skies"
-            height={50}
-            className="h-[50px] w-auto"
+            height={32}
+            className="h-[32px] w-auto"
           />
         </div>
 
