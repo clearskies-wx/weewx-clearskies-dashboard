@@ -314,7 +314,7 @@ export function DailyColumns({
       {days.map((day, i) => {
         const precip = day.precipProbabilityMax;
         return (
-          <div key={i} style={{ ...cellBase, minHeight: 16, alignItems: 'flex-start', flexDirection: 'column', justifyContent: 'center' }}>
+          <div key={i} style={{ ...cellBase, minHeight: 16, flexDirection: 'column' }}>
             <span
               style={{
                 display: 'flex',
@@ -402,9 +402,10 @@ export function DailyColumns({
     const sunset = formatSunTime(day.sunset, stationTz);
 
     // Background gradient: transparent over the selected column, tinted everywhere else.
-    // This creates the "seamless block" visual: selected col looks continuous with column background.
-    const selLeft = `calc(${expandedIdx} / ${N} * 100%)`;
-    const selRight = `calc(${expandedIdx + 1} / ${N} * 100%)`;
+    // The detail panel is wider than the column area by 2rem (1rem negative margin each side),
+    // so column positions must be offset by 1rem and scaled to (100% - 2rem).
+    const selLeft = `calc(1rem + ${expandedIdx} / ${N} * (100% - 2rem))`;
+    const selRight = `calc(1rem + ${expandedIdx + 1} / ${N} * (100% - 2rem))`;
 
     // Reusable label/value chip — matches the existing gust/sunrise/sunset chip style.
     const chip = (label: string, value: string) => (
@@ -469,7 +470,7 @@ export function DailyColumns({
             var(--detail-panel-bg, rgba(80,100,255,0.08)) 100%
           )`,
           borderRadius: '0 0 calc(0.875rem - 1px) calc(0.875rem - 1px)',
-          padding: '0.5rem 1rem 0.85rem',
+          padding: '0.75rem 1rem 1.25rem',
           flexShrink: 0,
           position: 'relative',
           zIndex: 1,
