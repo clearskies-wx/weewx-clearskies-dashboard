@@ -640,9 +640,18 @@ export function LunarEclipseCard({
             Mobile: stacks vertically (flex-col on <sm, flex-row on sm+).
             Per spec: "Columns stack on mobile."
         */}
-        {hasEclipses && eclipses !== null && (
+        {/* Progressive fill: 2yr first, backfill to 4 max, no scroll */}
+        {hasEclipses && eclipses !== null && (() => {
+          const MAX_COLS = 4;
+          const TWO_YEARS_MS = 2 * 365.25 * 24 * 60 * 60 * 1000;
+          const cutoff = new Date(Date.now() + TWO_YEARS_MS);
+          const twoYr = eclipses.eclipses.filter(e => new Date(e.date) <= cutoff);
+          const display = twoYr.length >= MAX_COLS
+            ? twoYr.slice(0, MAX_COLS)
+            : eclipses.eclipses.slice(0, MAX_COLS);
+          return (
           <div className="flex flex-col sm:flex-row gap-6 sm:gap-4 flex-wrap">
-            {eclipses.eclipses.map((eclipse) => (
+            {display.map((eclipse) => (
               <EclipseColumn
                 key={`${eclipse.date}-${eclipse.type}`}
                 eclipse={eclipse}
@@ -651,7 +660,8 @@ export function LunarEclipseCard({
               />
             ))}
           </div>
-        )}
+          );
+        })()}
 
         {/* Footer note */}
         {hasEclipses && (

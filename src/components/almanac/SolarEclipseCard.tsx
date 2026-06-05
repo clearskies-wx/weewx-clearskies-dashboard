@@ -574,14 +574,22 @@ export function SolarEclipseCard({
                 </div>
               )}
 
-              {/* Eclipse columns */}
-              {eclipses && eclipses.eclipses.length > 0 && (
+              {/* Eclipse columns — progressive fill: 2yr first, backfill to 4 max */}
+              {eclipses && eclipses.eclipses.length > 0 && (() => {
+                const MAX_COLS = 4;
+                const TWO_YEARS_MS = 2 * 365.25 * 24 * 60 * 60 * 1000;
+                const cutoff = new Date(Date.now() + TWO_YEARS_MS);
+                const twoYr = eclipses.eclipses.filter(e => new Date(e.date) <= cutoff);
+                const display = twoYr.length >= MAX_COLS
+                  ? twoYr.slice(0, MAX_COLS)
+                  : eclipses.eclipses.slice(0, MAX_COLS);
+                return (
                 <div
                   className="flex gap-8 pb-2 flex-col md:flex-row"
                   role="list"
                   aria-label={t('solarEclipses.listLabel', 'Upcoming solar eclipses')}
                 >
-                  {eclipses.eclipses.map((entry) => (
+                  {display.map((entry) => (
                     <div key={entry.date} role="listitem" className="flex-1 min-w-0">
                       <EclipseColumn
                         entry={entry}
@@ -592,7 +600,8 @@ export function SolarEclipseCard({
                     </div>
                   ))}
                 </div>
-              )}
+                );
+              })()}
             </>
           )}
         </CardContent>
