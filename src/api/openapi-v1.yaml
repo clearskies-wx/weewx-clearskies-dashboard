@@ -497,23 +497,65 @@ paths:
   /almanac/eclipses:
     get:
       tags: [Almanac]
-      summary: Lunar eclipses for a given year
+      summary: Lunar eclipses for a date range
       description: |
         Returns all lunar eclipses (penumbral, partial, or total) in
-        the requested year. Skyfield-computed locally per ADR-014.
+        the requested date window. Skyfield-computed locally per ADR-014.
+        Optionally enriched with contact times, obscuration, and visibility
+        from AstronomyAPI.com when that provider is configured.
       operationId: getAlmanacEclipses
       parameters:
-        - name: year
-          in: query
-          required: false
-          description: Four-digit year. Default = current year.
-          schema: { type: integer, minimum: 1900 }
+        - { $ref: '#/components/parameters/From' }
+        - { $ref: '#/components/parameters/To' }
       responses:
         '200':
-          description: Eclipse list
+          description: Lunar eclipse list
           content:
             application/json:
               schema: { $ref: '#/components/schemas/AlmanacEclipsesResponse' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /almanac/eclipses/lunar:
+    get:
+      tags: [Almanac]
+      summary: Lunar eclipses for a date range (explicit alias)
+      description: |
+        Alias for `/almanac/eclipses`. Returns all lunar eclipses
+        (penumbral, partial, or total) in the requested date window.
+        Skyfield-computed locally per ADR-014. Optionally enriched with
+        contact times, obscuration, and visibility from AstronomyAPI.com
+        when that provider is configured.
+      operationId: getAlmanacEclipsesLunar
+      parameters:
+        - { $ref: '#/components/parameters/From' }
+        - { $ref: '#/components/parameters/To' }
+      responses:
+        '200':
+          description: Lunar eclipse list
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AlmanacEclipsesResponse' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /almanac/eclipses/solar:
+    get:
+      tags: [Almanac]
+      summary: Solar eclipses for a date range
+      description: |
+        Returns all solar eclipses (total, annular, or partial) in the
+        requested date window. Optionally enriched with contact times,
+        obscuration, and visibility from AstronomyAPI.com when that
+        provider is configured.
+      operationId: getAlmanacEclipsesSolar
+      parameters:
+        - { $ref: '#/components/parameters/From' }
+        - { $ref: '#/components/parameters/To' }
+      responses:
+        '200':
+          description: Solar eclipse list
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SolarEclipseResponse' }
         default: { $ref: '#/components/responses/Problem' }
 
   /almanac/meteor-showers:
@@ -1733,14 +1775,153 @@ components:
           items: { $ref: '#/components/schemas/PlanetEntry' }
       required: [evening, morning, allNight]
 
-    EclipseEntry:
+    EclipseContactPoint:
       type: object
+      description: One eclipse contact time with the Sun/Moon altitude at that moment.
+      properties:
+        date:
+          type: string
+          description: ISO-8601 UTC datetime of the contact event.
+        altitude:
+          type: number
+          description: Altitude of the Sun or Moon above the horizon at that moment (degrees).
+      required: [date, altitude]
+
+    LunarEclipseEntry:
+      type: object
+      description: One lunar eclipse (penumbral, partial, or total) with optional enrichment from AstronomyAPI.com.
       properties:
         date: { type: string, format: date }
         type:
           type: string
           enum: [penumbral, partial, total]
+        contactTimes:
+          type: object
+          nullable: true
+          description: |
+            Contact-time events for the eclipse. Each key maps to an
+            EclipseContactPoint or null when that phase does not occur
+            (e.g. penumbral-only eclipses have null partialStart/fullStart etc.).
+          properties:
+            penumbralStart:
+              oneOf:
+                - { $ref: '#/components/schemas/EclipseContactPoint' }
+                - { type: 'null' }
+            partialStart:
+              oneOf:
+                - { $ref: '#/components/schemas/EclipseContactPoint' }
+                - { type: 'null' }
+            fullStart:
+              oneOf:
+                - { $ref: '#/components/schemas/EclipseContactPoint' }
+                - { type: 'null' }
+            peak:
+              oneOf:
+                - { $ref: '#/components/schemas/EclipseContactPoint' }
+                - { type: 'null' }
+            fullEnd:
+              oneOf:
+                - { $ref: '#/components/schemas/EclipseContactPoint' }
+                - { type: 'null' }
+            partialEnd:
+              oneOf:
+                - { $ref: '#/components/schemas/EclipseContactPoint' }
+                - { type: 'null' }
+            penumbralEnd:
+              oneOf:
+                - { $ref: '#/components/schemas/EclipseContactPoint' }
+                - { type: 'null' }
+        obscuration:
+          type: number
+          nullable: true
+          description: Fraction of the Moon's disk obscured at peak (0.0–1.0).
+        visibility:
+          type: string
+          nullable: true
+          enum: ["Visible All Night", "Mostly Visible", "Low in Sky", "Barely Visible", "Not Visible"]
+          description: Visibility classification at the observer's station location.
       required: [date, type]
+
+    LunarEclipseList:
+      type: object
+      description: List of lunar eclipses for a date window.
+      properties:
+        fromDate:
+          type: string
+          format: date
+          description: Start of the search window (YYYY-MM-DD).
+        toDate:
+          type: string
+          format: date
+          description: End of the search window (YYYY-MM-DD).
+        eclipses:
+          type: array
+          items: { $ref: '#/components/schemas/LunarEclipseEntry' }
+      required: [fromDate, toDate, eclipses]
+
+    SolarEclipseEntry:
+      type: object
+      description: One solar eclipse (total, annular, or partial) with optional enrichment from AstronomyAPI.com.
+      properties:
+        date: { type: string, format: date }
+        type:
+          type: string
+          enum: [total, annular, partial]
+        contactTimes:
+          type: object
+          nullable: true
+          description: |
+            Contact-time events for the eclipse. Each key maps to an
+            EclipseContactPoint or null when that phase does not occur
+            (e.g. partial eclipses have null totalStart/totalEnd).
+          properties:
+            partialStart:
+              oneOf:
+                - { $ref: '#/components/schemas/EclipseContactPoint' }
+                - { type: 'null' }
+            totalStart:
+              oneOf:
+                - { $ref: '#/components/schemas/EclipseContactPoint' }
+                - { type: 'null' }
+            peak:
+              oneOf:
+                - { $ref: '#/components/schemas/EclipseContactPoint' }
+                - { type: 'null' }
+            totalEnd:
+              oneOf:
+                - { $ref: '#/components/schemas/EclipseContactPoint' }
+                - { type: 'null' }
+            partialEnd:
+              oneOf:
+                - { $ref: '#/components/schemas/EclipseContactPoint' }
+                - { type: 'null' }
+        obscuration:
+          type: number
+          nullable: true
+          description: Fraction of the Sun's disk obscured at peak (0.0–1.0).
+        visibility:
+          type: string
+          nullable: true
+          enum: ["Fully Visible", "Mostly Visible", "Partially Visible", "Barely Visible", "Not Visible"]
+          description: Visibility classification at the observer's station location.
+      required: [date, type]
+
+    SolarEclipseList:
+      type: object
+      description: List of solar eclipses for a date window.
+      properties:
+        fromDate:
+          type: string
+          format: date
+          description: Start of the search window (YYYY-MM-DD).
+        toDate:
+          type: string
+          format: date
+          description: End of the search window (YYYY-MM-DD).
+        eclipses:
+          type: array
+          items: { $ref: '#/components/schemas/SolarEclipseEntry' }
+      required: [fromDate, toDate, eclipses]
 
     MeteorShowerEntry:
       type: object
@@ -1761,15 +1942,44 @@ components:
           minimum: 0
           maximum: 100
           description: Moon illumination percentage at peak.
+        moonPhase:
+          type: string
+          nullable: true
+          description: Moon phase name at peak (e.g. "waxing-gibbous").
         viewingConditions:
           type: string
           nullable: true
           enum: [excellent, good, fair, poor, null]
           description: Computed viewing-conditions classification based on ZHR and moon interference.
+        viewingQuality:
+          type: string
+          nullable: true
+          enum: ["Excellent", "Good", "Fair", "Poor", "Not Visible"]
+          description: Human-readable viewing quality label.
         parentBody:
           type: string
           nullable: true
           description: Parent comet or asteroid (e.g. "109P/Swift-Tuttle").
+        activeStart:
+          type: string
+          nullable: true
+          description: ISO date when the shower activity begins (approximately peakDate minus half the active duration).
+        activeEnd:
+          type: string
+          nullable: true
+          description: ISO date when the shower activity ends (approximately peakDate plus half the active duration).
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description of the shower from the catalog.
+        velocityKms:
+          type: number
+          nullable: true
+          description: Meteoroid entry velocity in km/s.
+        image:
+          type: string
+          nullable: true
+          description: Catalog image filename for the shower (used by dashboard for imagery display).
       required: [name, peakDate]
 
     # ---------- Seeing forecast ----------
@@ -2381,27 +2591,40 @@ components:
 
     AlmanacEclipsesResponse:
       type: object
+      description: Envelope for GET /almanac/eclipses and GET /almanac/eclipses/lunar.
       properties:
-        data:
-          type: object
-          properties:
-            eclipses:
-              type: array
-              items: { $ref: '#/components/schemas/EclipseEntry' }
-          required: [eclipses]
+        data: { $ref: '#/components/schemas/LunarEclipseList' }
+        generatedAt: { type: string, format: date-time }
+      required: [data, generatedAt]
+
+    SolarEclipseResponse:
+      type: object
+      description: Envelope for GET /almanac/eclipses/solar.
+      properties:
+        data: { $ref: '#/components/schemas/SolarEclipseList' }
         generatedAt: { type: string, format: date-time }
       required: [data, generatedAt]
 
     AlmanacMeteorShowersResponse:
       type: object
+      description: Envelope for GET /almanac/meteor-showers.
       properties:
         data:
           type: object
+          description: Meteor shower list with date window.
           properties:
+            fromDate:
+              type: string
+              format: date
+              description: Start of the search window (YYYY-MM-DD).
+            toDate:
+              type: string
+              format: date
+              description: End of the search window (YYYY-MM-DD).
             showers:
               type: array
               items: { $ref: '#/components/schemas/MeteorShowerEntry' }
-          required: [showers]
+          required: [fromDate, toDate, showers]
         generatedAt: { type: string, format: date-time }
       required: [data, generatedAt]
 
