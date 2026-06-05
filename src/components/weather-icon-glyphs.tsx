@@ -72,6 +72,10 @@ function GradientDefs({ p }: { p: string }): ReactElement {
 // Helper — wraps children in a sized SVG with the shared gradient defs.
 // ---------------------------------------------------------------------------
 
+// Thin outline on cloud shapes so they don't vanish against light backgrounds.
+const CLOUD_STROKE = 'rgba(0,0,0,0.12)';
+const CLOUD_STROKE_WIDTH = 0.4;
+
 function Svg({ size, p, children }: { size: number; p: string; children: ReactElement | ReactElement[] }): ReactElement {
   return (
     <svg
@@ -127,7 +131,7 @@ export function GlyphPartlyCloudy({ size }: GlyphProps): ReactElement {
     'M14.975 17.2q-.1-1.575-1.137-2.725t-2.613-1.425q-.775-1.35-2.087-2.137T6.25 10q.65-1.825 2.225-2.912T12 6q2.5 0 4.25 1.75T18 12q0 1.625-.8 3.013T14.975 17.2M11 5V1h2v4zm6.65 2.75l-1.4-1.4l2.8-2.85l1.425 1.425zM19 13v-2h4v2zm.05 7.5l-2.8-2.85l1.4-1.4l2.85 2.8zM6.35 7.75L3.525 4.925L4.95 3.5l2.8 2.85z';
   return (
     <Svg size={size} p={p}>
-      <path fillRule="nonzero" fill={`url(#${p}greyGrad)`} d={cloudPath} />
+      <path fillRule="nonzero" fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={cloudPath} />
       <path fillRule="nonzero" fill={`url(#${p}goldGrad)`} d={sunPath} />
     </Svg>
   );
@@ -145,7 +149,7 @@ export function GlyphCloud({ size }: GlyphProps): ReactElement {
     'M6.5 20q-2.275 0-3.887-1.575T1 14.575q0-1.95 1.175-3.475T5.25 9.15q.625-2.3 2.5-3.725T12 4q2.925 0 4.963 2.038T19 11q1.725.2 2.863 1.488T23 15.5q0 1.875-1.312 3.188T18.5 20z';
   return (
     <Svg size={size} p={p}>
-      <path fill={`url(#${p}greyGrad)`} d={d} />
+      <path fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={d} />
     </Svg>
   );
 }
@@ -162,7 +166,7 @@ export function GlyphFoggy({ size }: GlyphProps): ReactElement {
     'M18 19q-.425 0-.712-.288T17 18t.288-.712T18 17t.713.288T19 18t-.288.713T18 19M7 22q-.425 0-.712-.288T6 21t.288-.712T7 20t.713.288T8 21t-.288.713T7 22m-1-3q-.425 0-.712-.288T5 18t.288-.712T6 17h9q.425 0 .713.288T16 18t-.288.713T15 19zm4 3q-.425 0-.712-.288T9 21t.288-.712T10 20h7q.425 0 .713.288T18 21t-.288.713T17 22zm-2.5-6q-2.275 0-3.887-1.612T2 10.5q0-2.075 1.375-3.625t3.4-1.825q.8-1.425 2.188-2.238T12 2q2.25 0 3.913 1.438t2.012 3.587q1.725.15 2.9 1.425T22 11.5q0 1.875-1.312 3.188T17.5 16z';
   return (
     <Svg size={size} p={p}>
-      <path fill={`url(#${p}greyGrad)`} d={d} />
+      <path fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={d} />
     </Svg>
   );
 }
@@ -181,7 +185,7 @@ export function GlyphRainy({ size }: GlyphProps): ReactElement {
     'M13.95 21.9q-.375.2-.762.063t-.588-.513l-1.5-3q-.2-.375-.062-.762t.512-.588t.763-.062t.587.512l1.5 3q.2.375.063.763t-.513.587m6 0q-.375.2-.762.063t-.588-.513l-1.5-3q-.2-.375-.062-.762t.512-.588t.763-.062t.587.512l1.5 3q.2.375.063.763t-.513.587m-12 0q-.375.2-.762.063T6.6 21.45l-1.5-3q-.2-.375-.062-.762t.512-.588t.763-.062t.587.512l1.5 3q.2.375.063.763t-.513.587';
   return (
     <Svg size={size} p={p}>
-      <path fill={`url(#${p}greyGrad)`} d={cloudPath} />
+      <path fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={cloudPath} />
       <path fill={`url(#${p}rainGrad)`} d={rainPath} />
     </Svg>
   );
@@ -201,7 +205,7 @@ export function GlyphSnowy({ size }: GlyphProps): ReactElement {
     'M5.613 18.638q-.363-.363-.363-.888t.363-.888t.887-.362t.888.363t.362.887t-.363.888T6.5 19t-.888-.363m3 3q-.362-.362-.362-.887t.363-.888t.887-.362t.888.363t.362.887t-.363.888T9.5 22t-.888-.363m3-3q-.362-.362-.362-.887t.363-.888t.887-.362t.888.363t.362.887t-.363.888T12.5 19t-.888-.363m6 0q-.362-.362-.362-.887t.363-.888t.887-.362t.888.363t.362.887t-.363.888T18.5 19t-.888-.363m-3 3q-.362-.362-.362-.887t.363-.888t.887-.362t.888.363t.362.887t-.363.888T15.5 22t-.888-.363';
   return (
     <Svg size={size} p={p}>
-      <path fill={`url(#${p}greyGrad)`} d={cloudPath} />
+      <path fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={cloudPath} />
       <path fill={`url(#${p}snowGrad)`} d={snowPath} />
     </Svg>
   );
@@ -222,7 +226,7 @@ export function GlyphThunderstorm({ size }: GlyphProps): ReactElement {
     'm7.5 23l.9-2.5H6.5L7.75 17h2.5l-1.075 2.5h2.075L8.5 23zm6.75-1l.7-2H13l1.075-3h2.5l-.875 2h2.05l-2.5 3z';
   return (
     <Svg size={size} p={p}>
-      <path fill={`url(#${p}greyGrad)`} d={cloudPath} />
+      <path fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={cloudPath} />
       <path fill={`url(#${p}goldGrad)`} d={boltPath} />
     </Svg>
   );
