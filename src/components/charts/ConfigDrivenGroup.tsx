@@ -74,21 +74,6 @@ function buildYearList(stationFirstYear: number | undefined): number[] {
   return years;
 }
 
-/** Month labels (1-indexed, Jan=1) for the month dropdown. */
-const MONTH_LABELS: { value: number; label: string }[] = [
-  { value: 1, label: 'January' },
-  { value: 2, label: 'February' },
-  { value: 3, label: 'March' },
-  { value: 4, label: 'April' },
-  { value: 5, label: 'May' },
-  { value: 6, label: 'June' },
-  { value: 7, label: 'July' },
-  { value: 8, label: 'August' },
-  { value: 9, label: 'September' },
-  { value: 10, label: 'October' },
-  { value: 11, label: 'November' },
-  { value: 12, label: 'December' },
-];
 
 /**
  * Map from `${observationType}:${averageType}` → ClimatologyMonthly field key.
@@ -170,7 +155,7 @@ export function ConfigDrivenGroup({
   reducedMotion = false,
   stationFirstYear,
 }: ConfigDrivenGroupProps) {
-  const { t } = useTranslation('charts');
+  const { t, i18n } = useTranslation('charts');
 
   // -------------------------------------------------------------------------
   // State
@@ -270,7 +255,10 @@ export function ConfigDrivenGroup({
   // The hook treats undefined params as "skip" (returns empty/null gracefully).
   // -------------------------------------------------------------------------
 
-  const archiveResult = useArchive(isClimatology ? undefined : archiveParams);
+  const archiveResult = useArchive(
+    isClimatology ? undefined : archiveParams ?? undefined,
+    { skip: isClimatology },
+  );
   const climatologyResult = useClimatologyMonthly();
 
   // -------------------------------------------------------------------------
@@ -465,11 +453,14 @@ export function ConfigDrivenGroup({
                 className="min-h-[44px] md:min-h-0 rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <option value="">{t('allMonths')}</option>
-                {MONTH_LABELS.map((m) => (
-                  <option key={m.value} value={m.value}>
-                    {m.label}
-                  </option>
-                ))}
+                {Array.from({ length: 12 }, (_, i) => {
+                  const label = new Intl.DateTimeFormat(i18n.language, { month: 'long' }).format(new Date(2000, i));
+                  return (
+                    <option key={i + 1} value={i + 1}>
+                      {label}
+                    </option>
+                  );
+                })}
               </select>
             </div>
           )}

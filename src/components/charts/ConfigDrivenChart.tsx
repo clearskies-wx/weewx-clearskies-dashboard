@@ -342,7 +342,7 @@ export function ConfigDrivenChart({
         as a graphic rather than an anonymous div (WCAG 1.1.1).
         The sr-only table above is the text alternative.
       */}
-      <div role="img" aria-label={chartTitle} aria-hidden="false">
+      <div role="img" aria-label={chartTitle}>
         <ResponsiveContainer width="99%" height={height}>
           <ComposedChart
             data={data}
@@ -365,9 +365,6 @@ export function ConfigDrivenChart({
               tick={{ fontSize: 10, fontFamily: CHART_FONT }}
               className="fill-muted-foreground"
               domain={leftDomain}
-              tickCount={
-                leftAxisCfg.tickInterval != null ? undefined : undefined
-              }
               label={
                 leftAxisCfg.label != null
                   ? {

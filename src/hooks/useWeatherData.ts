@@ -373,7 +373,7 @@ export function useStation(): HookResult<StationMetadata> {
 // useArchive — /archive
 // ---------------------------------------------------------------------------
 
-export function useArchive(params?: ArchiveParams): HookResult<ArchiveRecord[]> {
+export function useArchive(params?: ArchiveParams, options?: { skip?: boolean }): HookResult<ArchiveRecord[]> {
   const fromStr = params?.from ?? '';
   const toStr = params?.to ?? '';
   const limitStr = params?.limit ?? '';
@@ -382,7 +382,7 @@ export function useArchive(params?: ArchiveParams): HookResult<ArchiveRecord[]> 
 
   const { data, loading, error, refetch } = useApiQuery<{ data: ArchiveRecord[]; units?: UnitsBlock; source?: string }>(
     (signal) => getArchive(params, signal) as Promise<{ data: ArchiveRecord[]; units?: UnitsBlock; source?: string; generatedAt: string }>,
-    { skip: isMockMode(), deps: [fromStr, toStr, limitStr, fieldsStr, intervalStr] },
+    { skip: isMockMode() || options?.skip, deps: [fromStr, toStr, limitStr, fieldsStr, intervalStr] },
   );
 
   if (isMockMode()) {
