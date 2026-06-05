@@ -36,5 +36,20 @@
     "moonAltitude": "Moon Altitude"
   },
 
-  "daylightDelta": "({{delta}}m vs yesterday)"
+  "daylightDelta": "({{delta}}m vs yesterday)",
+
+  "meteorShowers": {
+    "title": "Meteor Showers",
+    "timesLocal": "All times local",
+    "subtitle": "Upcoming meteor showers visible from your location over the next year.",
+    "empty": "No meteor showers in the next year.",
+    "scrollRegionLabel": "Meteor shower list",
+    "scrollLeft": "Scroll showers left",
+    "scrollRight": "Scroll showers right",
+    "footNote": "Rates shown are predicted zenith hourly rate (ZHR) under ideal conditions.",
+    "peakNight": "Peak Night",
+    "rate": "Rate",
+    "rateValue": "Up to {{zhr}} meteors/hr",
+    "visibility": "Visibility"
+  }
 }
