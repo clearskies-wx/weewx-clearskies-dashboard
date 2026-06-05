@@ -19,11 +19,12 @@
 //   - Loading state: sr-only role="status" announcement
 //   - Visible data table in table mode (not sr-only)
 //
-// No DOMPurify dep available in Phase 2; pageContent rendered as plain text.
-// Phase 4 T4.5 handles proper Markdown rendering.
+// T4.5: pageContent rendered as Markdown via react-markdown + remark-gfm.
 
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useArchive, useClimatologyMonthly } from '../../hooks/useWeatherData';
 import { ConfigDrivenChart } from './ConfigDrivenChart';
 import type { ChartGroupConfig } from '../../api/types';
@@ -368,9 +369,11 @@ export function ConfigDrivenGroup({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* pageContent — plain text in Phase 2; Phase 4 T4.5 handles Markdown */}
-      {group.pageContent != null && group.pageContent !== '' && (
-        <p className="text-sm text-muted-foreground">{group.pageContent}</p>
+      {/* pageContent — Markdown rendered via react-markdown (T4.5) */}
+      {group.pageContent && (
+        <div className="prose prose-sm dark:prose-invert max-w-none mb-4 [&_h1]:text-xl [&_h2]:text-lg [&_h3]:text-base [&_a]:text-primary [&_a]:underline [&_ul]:list-disc [&_ol]:list-decimal [&_code]:bg-muted [&_code]:px-1 [&_code]:rounded">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{group.pageContent}</ReactMarkdown>
+        </div>
       )}
 
       {/* ------------------------------------------------------------------ */}
