@@ -27,6 +27,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useArchive, useClimatologyMonthly } from '../../hooks/useWeatherData';
 import { ConfigDrivenChart } from './ConfigDrivenChart';
+import { lttbDownsample } from '../../utils/lttb';
 import type { ChartGroupConfig } from '../../api/types';
 
 // ---------------------------------------------------------------------------
@@ -41,6 +42,16 @@ export interface ConfigDrivenGroupProps {
   /** From station.firstRecord, used to compute year dropdown range. */
   stationFirstYear?: number;
 }
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+/** Maximum raw points before LTTB downsampling is applied to archive data. */
+const MAX_RAW_POINTS = 1000;
+
+/** Target point count after LTTB downsampling (per ADR-009: >1000 → 500). */
+const LTTB_THRESHOLD = 500;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -285,6 +296,20 @@ export function ConfigDrivenGroup({
     });
   }, [archiveResult.data, group.charts]);
 
+  // LTTB downsampling (archive only — climatology has exactly 12 points, never needs it)
+  // Applied only for chart rendering; the raw archiveData is still used for the table view.
+  const downsampledArchiveData = useMemo(() => {
+    if (isClimatology || archiveData.length <= MAX_RAW_POINTS) return archiveData;
+    // Use the first visible series' seriesId as the y-key for LTTB triangle selection.
+    // LTTB selects points by maximising visual area; it needs a representative y-axis field.
+    // If no visible series exists, fall back to returning the full data unsampled.
+    const firstVisibleSeries = group.charts[0]?.series?.find(
+      (s) => s.visible !== false,
+    );
+    if (!firstVisibleSeries) return archiveData;
+    return lttbDownsample(archiveData, LTTB_THRESHOLD, 'timestamp', firstVisibleSeries.seriesId);
+  }, [isClimatology, archiveData, group.charts]);
+
   // Climatology path: map ClimatologyMonthly 12-element arrays into month rows
   const climatologyData = useMemo(() => {
     if (!climatologyResult.data) return [];
@@ -314,7 +339,11 @@ export function ConfigDrivenGroup({
   // Derived display values
   // -------------------------------------------------------------------------
 
+  // Full dataset — used by the data table view so users see every raw row.
   const chartData = isClimatology ? climatologyData : archiveData;
+  // Downsampled dataset — used by ConfigDrivenChart for efficient rendering.
+  // For climatology (12 points) and small archive sets, this equals chartData.
+  const chartRenderData = isClimatology ? climatologyData : downsampledArchiveData;
   const xKey = isClimatology ? 'month' : 'timestamp';
   const xFormatter = isClimatology
     ? undefined
@@ -568,7 +597,7 @@ export function ConfigDrivenGroup({
               <ConfigDrivenChart
                 key={chart.chartId}
                 config={chart}
-                data={chartData}
+                data={chartRenderData}
                 xKey={xKey}
                 xFormatter={xFormatter}
                 globalColors={globalColors}
