@@ -25,7 +25,8 @@ import { useState, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useArchive, useClimatologyMonthly, useWindRose } from '../../hooks/useWeatherData';
+import { useArchive, useClimatologyMonthly } from '../../hooks/useWeatherData';
+import { buildWindRoseMatrix, defaultBeaufortColors } from '../../utils/wind-rose-binning';
 import { ConfigDrivenChart } from './ConfigDrivenChart';
 import { WindRoseChart } from './WindRoseChart';
 import { lttbDownsample } from '../../utils/lttb';
@@ -206,7 +207,10 @@ export function ConfigDrivenGroup({
   const archiveParams = useMemo(() => {
     if (isClimatology) return undefined;
 
-    // Collect unique observation types across all visible series
+    // Collect unique observation types across all visible series.
+    // For wind rose groups, always include windSpeed and windDir so the
+    // BFF can inject the beaufort field (ADR-042) and the binning utility
+    // has the direction data it needs.
     const fields = new Set<string>();
     group.charts.forEach((chart) => {
       chart.series.forEach((s) => {
@@ -215,6 +219,10 @@ export function ConfigDrivenGroup({
         }
       });
     });
+    if (hasWindRose) {
+      fields.add('windSpeed');
+      fields.add('windDir');
+    }
 
     let from: string;
     let to: string;
@@ -262,6 +270,7 @@ export function ConfigDrivenGroup({
     };
   }, [
     isClimatology,
+    hasWindRose,
     group.charts,
     group.timespanStart,
     group.timespanStop,
@@ -277,7 +286,7 @@ export function ConfigDrivenGroup({
   // Data fetching (all hooks called unconditionally — Rules of Hooks)
   // Pass undefined to useArchive when in climatology mode to prevent a fetch.
   // The hook treats undefined params as "skip" (returns empty/null gracefully).
-  // useWindRose is skipped unless this group has a windRose series and is not climatology.
+  // Wind rose data is derived from the same archive fetch (T3.2: client-side binning).
   // -------------------------------------------------------------------------
 
   const archiveResult = useArchive(
@@ -285,16 +294,6 @@ export function ConfigDrivenGroup({
     { skip: isClimatology },
   );
   const climatologyResult = useClimatologyMonthly();
-
-  // Wind rose params: reuse the same date range computed for archive data
-  const windRoseParams = useMemo(() => {
-    if (!hasWindRose || !archiveParams) return undefined;
-    return { from: archiveParams.from, to: archiveParams.to };
-  }, [hasWindRose, archiveParams]);
-
-  const windRoseResult = useWindRose(windRoseParams, {
-    skip: !hasWindRose,
-  });
 
   // -------------------------------------------------------------------------
   // Data transformation (useMemo to avoid re-computation on unrelated renders)
@@ -318,6 +317,14 @@ export function ConfigDrivenGroup({
       return row;
     });
   }, [archiveResult.data, group.charts]);
+
+  // Wind rose data: derived client-side from the same archive fetch (T3.2).
+  // Uses raw archiveResult.data (ArchiveRecord[]) so the BFF-injected `beaufort`
+  // ConvertedValue is accessible without the seriesId remapping done in archiveData.
+  const windRoseData = useMemo(() => {
+    if (!hasWindRose || !archiveResult.data || archiveResult.data.length === 0) return null;
+    return buildWindRoseMatrix(archiveResult.data as unknown as Record<string, unknown>[]);
+  }, [hasWindRose, archiveResult.data]);
 
   // LTTB downsampling (archive only — climatology has exactly 12 points, never needs it)
   // Applied only for chart rendering; the raw archiveData is still used for the table view.
@@ -730,7 +737,7 @@ export function ConfigDrivenGroup({
               );
 
               if (isWindRoseChart) {
-                if (!windRoseResult.data) {
+                if (!windRoseData) {
                   // Wind rose data still loading or unavailable — show skeleton
                   return (
                     <TileSkeleton key={chart.chartId} className="h-[300px]" />
@@ -739,11 +746,14 @@ export function ConfigDrivenGroup({
                 const windRoseSeries = chart.series.find(
                   (s) => s.seriesId === 'windRose',
                 );
-                const beaufortColors = windRoseSeries?.beaufortColors ?? {};
+                // Merge operator-configured colors over the default palette.
+                const beaufortColors = Object.keys(windRoseSeries?.beaufortColors ?? {}).length > 0
+                  ? windRoseSeries!.beaufortColors
+                  : defaultBeaufortColors;
                 return (
                   <WindRoseChart
                     key={chart.chartId}
-                    data={windRoseResult.data}
+                    data={windRoseData}
                     beaufortColors={beaufortColors}
                     height={300}
                     reducedMotion={reducedMotion}
