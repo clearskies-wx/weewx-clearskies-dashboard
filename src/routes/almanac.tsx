@@ -57,6 +57,13 @@ export function AlmanacPage() {
           as="h1"
         />
 
+        {/* ── Surface D: Monthly Averages chart (first per approved mockup) ── */}
+        <MonthlyAveragesCard
+          climatology={climatology.data}
+          loading={climatology.loading}
+          error={climatology.error?.message ?? null}
+        />
+
         {/* ── Surface B: Sun & Moon detail ──────────────────────────────── */}
         <SunMoonDetailCard
           almanac={almanac.data}
@@ -73,13 +80,6 @@ export function AlmanacPage() {
           stationTz={stationTz}
           loading={planets.loading}
           error={planets.error?.message ?? null}
-        />
-
-        {/* ── Surface D: Monthly Averages chart ─────────────────────────── */}
-        <MonthlyAveragesCard
-          climatology={climatology.data}
-          loading={climatology.loading}
-          error={climatology.error?.message ?? null}
         />
 
         {/* ── Surface E: Solar Eclipses ─────────────────────────────────── */}
