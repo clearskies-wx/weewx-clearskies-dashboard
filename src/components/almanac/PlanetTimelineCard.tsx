@@ -86,7 +86,9 @@ function qualityTextClass(quality: PlanetViewingQuality): string {
   }
 }
 
-/** Human-readable quality label for display and aria. */
+/** Human-readable quality label for display and aria.
+ *  Returns empty string for null so the badge is hidden rather than showing "—".
+ */
 function qualityLabel(quality: PlanetViewingQuality, t: (k: string) => string): string {
   switch (quality) {
     case 'excellent':    return t('planets.qualityExcellent');
@@ -94,7 +96,7 @@ function qualityLabel(quality: PlanetViewingQuality, t: (k: string) => string): 
     case 'fair':         return t('planets.qualityFair');
     case 'poor':         return t('planets.qualityPoor');
     case 'not_visible':  return t('planets.qualityNotVisible');
-    default:             return '—';
+    default:             return '';
   }
 }
 
@@ -245,15 +247,18 @@ function PlanetColumn({ planet, stationTz, locale, t }: PlanetColumnProps) {
       {/*
        * Viewing quality: colored dot + text label.
        * Color is NEVER the sole signal — text label always present (WCAG 1.4.1).
+       * Hidden entirely when quality is null (qLabel is empty string).
        */}
-      <span
-        className={`flex items-center gap-[0.25rem] text-[0.75rem] font-semibold ${qClass}`}
-        aria-label={`${t('planets.viewingQuality')}: ${qLabel}`}
-      >
-        {/* Colored dot — decorative, meaning carried by adjacent text */}
-        <span aria-hidden="true" className="text-[0.6rem]">&#x25cf;</span>
-        {qLabel}
-      </span>
+      {qLabel && (
+        <span
+          className={`flex items-center gap-[0.25rem] text-[0.75rem] font-semibold ${qClass}`}
+          aria-label={`${t('planets.viewingQuality')}: ${qLabel}`}
+        >
+          {/* Colored dot — decorative, meaning carried by adjacent text */}
+          <span aria-hidden="true" className="text-[0.6rem]">&#x25cf;</span>
+          {qLabel}
+        </span>
+      )}
 
       {/* Planet image — fixed-height wrapper centers image of any size */}
       <div
@@ -312,9 +317,9 @@ const VB_WIDTH  = 1000;
 const VB_HEIGHT = 280;
 
 /** Layout constants */
-const LEFT_MARGIN  = 20;   // X where the sunset tick starts
+const LEFT_MARGIN  = 95;   // X where the sunset tick starts (wide enough for "Neptune" label)
 const RIGHT_MARGIN = 980;  // X where the sunrise tick ends
-const CHART_WIDTH  = RIGHT_MARGIN - LEFT_MARGIN; // 960 SVG units
+const CHART_WIDTH  = RIGHT_MARGIN - LEFT_MARGIN; // 885 SVG units
 const AXIS_Y       = 245;  // Y of the time axis line
 const BAR_HEIGHT   = 16;   // px height of each planet bar
 const BAR_GAP      = 40;   // px between bar rows (center-to-center)
@@ -412,15 +417,22 @@ function GanttTimeline({ planets, almanac, stationTz }: GanttTimelineProps) {
     const color  = getPlanetColor(planet.name);
     const gradId = `plt-bar-${planet.name.toLowerCase()}`;
 
-    if (!rise && !set) return; // not visible — no bar
+    // When both rise and set are null the planet is above the horizon all
+    // night (no rise/set event during this window) — draw a full-width bar.
+    // Only skip if both are null AND the planet is explicitly not visible;
+    // that case is handled by it not being in the planets array at all.
 
-    // Clamp rise/set to the sunset→sunrise window
-    const barStart = rise ? new Date(Math.max(rise.getTime(), sunsetNN.getTime())) : sunsetNN;
-    const barEnd   = set
+    // Clamp rise/set to the sunset→sunrise window.
+    // If rise is null, assume the planet was already up at sunset (use window start).
+    // If set is null, assume the planet stays up until sunrise (use window end).
+    const barStart = rise
+      ? new Date(Math.max(rise.getTime(), sunsetNN.getTime()))
+      : sunsetNN;
+    const barEnd = set
       ? new Date(Math.min(set.getTime(), sunriseDate.getTime()))
       : sunriseDate;
 
-    if (barEnd <= barStart) return; // fully outside window
+    if (barEnd <= barStart) return; // fully outside window (e.g. planet set before sunset)
 
     bars.push({
       planet,
