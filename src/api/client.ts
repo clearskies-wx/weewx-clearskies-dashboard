@@ -32,6 +32,7 @@ import type {
   SolarEclipseData,
   MeteorShowerData,
   PositionsSnapshot,
+  ChartsConfigData,
 } from './types';
 
 // ---------------------------------------------------------------------------
@@ -195,6 +196,10 @@ export function getChartGroups(signal?: AbortSignal): Promise<ApiResponse<{ grou
   return fetchApi<ApiResponse<{ groups: ChartGroup[] }>>('/charts/groups', undefined, signal);
 }
 
+export function getChartsConfig(signal?: AbortSignal): Promise<ApiResponse<ChartsConfigData>> {
+  return fetchApi<ApiResponse<ChartsConfigData>>('/charts/config', undefined, signal);
+}
+
 export function getReports(signal?: AbortSignal): Promise<ApiResponse<{ reports: ReportEntry[] }>> {
   return fetchApi<ApiResponse<{ reports: ReportEntry[] }>>('/reports', undefined, signal);
 }
@@ -280,9 +285,13 @@ export function getBranding(signal?: AbortSignal): Promise<ApiResponse<ApiBrandi
 // ---------------------------------------------------------------------------
 
 export function getClimatologyMonthly(
+  params?: { fields?: string; agg?: string },
   signal?: AbortSignal,
 ): Promise<ApiResponse<ClimatologyMonthly>> {
-  return fetchApi<ApiResponse<ClimatologyMonthly>>('/climatology/monthly', undefined, signal);
+  const p: Record<string, string> = {};
+  if (params?.fields) p['fields'] = params.fields;
+  if (params?.agg) p['agg'] = params.agg;
+  return fetchApi<ApiResponse<ClimatologyMonthly>>('/climatology/monthly', Object.keys(p).length ? p : undefined, signal);
 }
 
 // ---------------------------------------------------------------------------

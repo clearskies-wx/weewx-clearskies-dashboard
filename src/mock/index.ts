@@ -11,6 +11,9 @@ import { mockRecords } from './records';
 import { mockStation, mockCapabilities } from './station';
 import { mockLightning } from './lightning';
 import { mockArchiveData } from './archive';
+import { mockChartsConfig } from './chartsConfig';
+
+export { mockChartsConfig };
 
 // Re-export types from the canonical location for backward-compatibility.
 export type {

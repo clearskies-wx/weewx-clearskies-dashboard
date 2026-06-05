@@ -559,6 +559,87 @@ export interface ChartDefinition {
 }
 
 // ---------------------------------------------------------------------------
+// /charts/config  (Phase 2 configurable charts)
+// ---------------------------------------------------------------------------
+
+export interface SeriesConfig {
+  seriesId: string;
+  observationType: string | null;
+  name: string | null;
+  color: string | null;
+  type: string | null;
+  zIndex: number | null;
+  yAxis: number | null;
+  yAxisMin: number | null;
+  yAxisMax: number | null;
+  yAxisLabel: string | null;
+  yAxisTickInterval: number | null;
+  lineWidth: number | null;
+  connectNulls: boolean | null;
+  visible: boolean | null;
+  opacity: number | null;
+  stacking: string | null;
+  aggregateType: string | null;
+  averageType: string | null;
+  markerEnabled: boolean | null;
+  markerRadius: number | null;
+  beaufortColors: Record<string, string>;
+  rangeType: string | null;
+  areaDisplay: number | null;
+  useCustomSql: boolean;
+  customSqlQuery: string | null;
+  xColumn: string | null;
+  yColumn: string | null;
+}
+
+export interface ChartConfig {
+  chartId: string;
+  title: string | null;
+  type: string | null;
+  connectNulls: boolean | null;
+  yAxisMin: number | null;
+  aggregateType: string | null;
+  aggregateInterval: number | null;
+  xAxisGroupby: string | null;
+  xAxisCategories: string[];
+  forceFullYear: boolean | null;
+  series: SeriesConfig[];
+}
+
+export interface ChartGroupConfig {
+  groupId: string;
+  title: string | null;
+  showButton: boolean;
+  buttonText: string | null;
+  type: string | null;
+  enableDateRanges: boolean;
+  rollingRanges: string[];
+  availableYears: number[];
+  enableMonthlyBreakdown: boolean;
+  timeLength: number | string | null;
+  timespanStart: number | null;
+  timespanStop: number | null;
+  tooltipDateFormat: string | null;
+  gapsize: number | null;
+  aggregateInterval: number | null;
+  aggregateType: string | null;
+  forceFullYear: boolean;
+  startAtBeginningOfMonth: boolean;
+  pageContent: string | null;
+  generate: string | null;
+  charts: ChartConfig[];
+}
+
+export interface ChartsConfigData {
+  aggregateType: string | null;
+  timeLength: number | string | null;
+  type: string;
+  colors: string[];
+  tooltipDateFormat: string | null;
+  groups: ChartGroupConfig[];
+}
+
+// ---------------------------------------------------------------------------
 // /reports  /reports/{year}/{month}  /reports/{year}
 // ---------------------------------------------------------------------------
 

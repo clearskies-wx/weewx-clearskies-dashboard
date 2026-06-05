@@ -32,6 +32,7 @@ import {
   getEarthquakeConfig,
   getEarthquakeFaults,
   getAlmanacPositions,
+  getChartsConfig,
 } from '../api/client';
 import type { ArchiveParams, ApiBrandingConfig } from '../api/client';
 import { asConverted } from '../api/types';
@@ -55,6 +56,7 @@ import { mockPlanets } from '../mock/planets';
 import { mockMoonNames } from '../mock/moonNames';
 import { mockEclipses } from '../mock/eclipses';
 import { mockMeteorShowers } from '../mock/meteorShowers';
+import { mockChartsConfig } from '../mock/chartsConfig';
 
 import type {
   Observation,
@@ -89,6 +91,7 @@ import type {
   SolarEclipseData,
   MeteorShowerData,
   PositionsSnapshot,
+  ChartsConfigData,
 } from '../api/types';
 
 // ---------------------------------------------------------------------------
@@ -743,7 +746,7 @@ export function useTodayStats(
 
 export function useClimatologyMonthly(): HookResult<ClimatologyMonthly> {
   const { data, loading, error, refetch } = useApiQuery<{ data: ClimatologyMonthly }>(
-    (signal) => getClimatologyMonthly(signal),
+    (signal) => getClimatologyMonthly(undefined, signal),
     { skip: isMockMode() },
   );
 
@@ -973,6 +976,28 @@ export function useAlmanacPositions(): HookResult<PositionsSnapshot> {
       sun: { azimuth: 238.4, altitude: 42.1 },
       moon: { azimuth: 142.7, altitude: 28.3, illuminationPercent: 88, phaseName: 'waxing-gibbous' },
     });
+  }
+
+  return {
+    data: data?.data ?? null,
+    loading,
+    error,
+    refetch,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// useChartsConfig — /charts/config
+// ---------------------------------------------------------------------------
+
+export function useChartsConfig(): HookResult<ChartsConfigData> {
+  const { data, loading, error, refetch } = useApiQuery<{ data: ChartsConfigData; generatedAt: string }>(
+    (signal) => getChartsConfig(signal),
+    { skip: isMockMode() },
+  );
+
+  if (isMockMode()) {
+    return mockResult<ChartsConfigData>(mockChartsConfig);
   }
 
   return {
