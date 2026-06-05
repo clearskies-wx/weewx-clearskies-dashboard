@@ -67,5 +67,59 @@
     "rate": "Rate",
     "rateValue": "Up to {{zhr}} meteors/hr",
     "visibility": "Visibility"
+  },
+
+  "climatology": {
+    "title": "Average Climatological Values by Month",
+    "loading": "Loading climatology data…",
+    "error": "Unable to load climatology data.",
+    "noData": "No climatology data available.",
+    "series": {
+      "avgHigh": "Average High Temperature",
+      "avgLow": "Average Low Temperature",
+      "avgDewpoint": "Average Dewpoint",
+      "avgRainfall": "Avg Monthly Rain Total"
+    },
+    "yAxisTemp": "Average Temperature (°F)",
+    "yAxisRain": "Avg Monthly Rain (in)"
+  },
+
+  "solarEclipses": {
+    "title": "Solar Eclipses",
+    "timesLocal": "All times local",
+    "subtitle": "The next solar eclipses visible from your location.",
+    "noEclipses": "No solar eclipses visible from your location in the next several years.",
+    "listLabel": "Upcoming solar eclipses",
+    "footNote": "Visibility can vary based on cloud cover and your exact location.",
+    "begins": "Begins",
+    "maximum": "Maximum",
+    "totality": "Totality",
+    "ends": "Ends",
+    "visible": "Visible",
+    "notVisible": "Not Visible",
+    "fullyVisible": "Within the path of totality",
+    "mostlyVisible": "Well placed in your location",
+    "partiallyVisible": "Partially visible from your location",
+    "barelyVisible": "Low on the horizon",
+    "descTotal": "Total solar eclipse. The Sun will be completely covered by the Moon.",
+    "descAnnular": "The Moon will pass in front of the Sun, leaving a brilliant ring of sunlight visible.",
+    "descPartial": "The Moon will pass in front of the Sun, covering a portion of its disk."
+  },
+
+  "lunarEclipses": {
+    "title": "Lunar Eclipses",
+    "timesLocal": "All times local",
+    "subtitle": "The next lunar eclipses visible from your location.",
+    "noEclipses": "No lunar eclipses visible from your location in the next several years.",
+    "listLabel": "Upcoming lunar eclipses",
+    "footNote": "Eclipse visibility can vary based on weather and your exact location.",
+    "visibleAllNight": "Visible All Night",
+    "mostlyVisible": "Mostly Visible",
+    "lowInSky": "Low in Sky",
+    "barelyVisible": "Barely Visible",
+    "notVisible": "Not Visible",
+    "descTotal": "Total lunar eclipse. The entire Moon will pass through Earth's umbra.",
+    "descPartial": "Partial lunar eclipse. Part of the Moon will pass through Earth's umbra.",
+    "descPenumbral": "Penumbral lunar eclipse. A subtle dimming as the Moon passes through Earth's penumbra."
   }
 }

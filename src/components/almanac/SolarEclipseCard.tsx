@@ -563,14 +563,14 @@ export function SolarEclipseCard({
               <p className="text-[0.75rem] text-muted-foreground mb-4">
                 {t(
                   'solarEclipses.subtitle',
-                  'The next solar eclipses visible from your location over the next two years.',
+                  'The next solar eclipses visible from your location.',
                 )}
               </p>
 
               {/* Empty state */}
               {(!eclipses || eclipses.eclipses.length === 0) && (
                 <div className="text-[0.85rem] text-muted-foreground text-center py-6">
-                  {t('solarEclipses.noEclipses', 'No solar eclipses in the next two years.')}
+                  {t('solarEclipses.noEclipses', 'No solar eclipses visible from your location in the next several years.')}
                 </div>
               )}
 
