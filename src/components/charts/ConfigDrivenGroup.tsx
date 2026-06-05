@@ -136,7 +136,15 @@ function TileSkeleton({ className }: { className?: string }) {
   );
 }
 
-function TileError({ message, onRetry }: { message: string; onRetry: () => void }) {
+function TileError({
+  message,
+  onRetry,
+  retryLabel,
+}: {
+  message: string;
+  onRetry: () => void;
+  retryLabel: string;
+}) {
   return (
     <div role="alert" className="flex flex-col gap-2 items-start text-sm">
       <p className="text-destructive">{message}</p>
@@ -145,7 +153,7 @@ function TileError({ message, onRetry }: { message: string; onRetry: () => void 
         onClick={onRetry}
         className="text-xs text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
       >
-        Retry
+        {retryLabel}
       </button>
     </div>
   );
@@ -456,7 +464,7 @@ export function ConfigDrivenGroup({
                 }}
                 className="min-h-[44px] md:min-h-0 rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
-                <option value="">All months</option>
+                <option value="">{t('allMonths')}</option>
                 {MONTH_LABELS.map((m) => (
                   <option key={m.value} value={m.value}>
                     {m.label}
@@ -494,7 +502,7 @@ export function ConfigDrivenGroup({
             <TileSkeleton className="h-[300px]" />
           </>
         ) : fetchError ? (
-          <TileError message={t('unableToLoad')} onRetry={onRetry} />
+          <TileError message={t('unableToLoad')} onRetry={onRetry} retryLabel={t('retry')} />
         ) : showTable ? (
           /* ---------------------------------------------------------------- */
           /* Visible data table (not sr-only — this is the explicit table view) */
@@ -502,7 +510,7 @@ export function ConfigDrivenGroup({
           <div className="overflow-x-auto">
             <table className="w-full text-sm border-collapse">
               <caption className="sr-only">
-                {group.title ?? 'Chart data'}
+                {group.title ?? t('tableDataCaption')}
               </caption>
               <thead>
                 <tr className="border-b border-border">
@@ -510,7 +518,7 @@ export function ConfigDrivenGroup({
                     scope="col"
                     className="py-2 px-3 text-left font-medium text-muted-foreground"
                   >
-                    {xKey === 'timestamp' ? 'Time' : 'Month'}
+                    {xKey === 'timestamp' ? t('tableColumnTime') : t('tableColumnMonth')}
                   </th>
                   {allVisibleSeries.map((s) => (
                     <th
