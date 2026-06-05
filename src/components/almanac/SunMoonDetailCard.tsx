@@ -1056,15 +1056,15 @@ export function SunMoonDetailCard({
           <SunMoonDetailError message={error} />
         ) : almanac ? (
           <div aria-live="polite">
-            {/* 3-column grid: sun | arc | moon at md+, single column mobile */}
+            {/* 3-column grid: sun | arc | moon at md+, single column mobile.
+                Inline style cannot be used for the column template because
+                Tailwind responsive overrides (max-md:) cannot beat inline style
+                specificity without !important, which requires explicit Tailwind
+                config. Instead we use a CSS class that sets the grid template
+                via a utility-friendly approach: md:grid-cols-[1fr_2fr_1fr]
+                using Tailwind arbitrary value syntax (supported in v3+). */}
             <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 2fr 1fr',
-                gap: '1rem',
-                alignItems: 'start',
-              }}
-              className="max-md:!grid-cols-1"
+              className="grid gap-4 items-start grid-cols-1 md:grid-cols-[1fr_2fr_1fr]"
             >
               <SunPanel almanac={almanac} tz={stationTz} locale={locale} />
               <ArcPanel
