@@ -559,7 +559,7 @@ export interface ChartDefinition {
 }
 
 // ---------------------------------------------------------------------------
-// /charts/wind-rose  (Phase 4 wind rose chart)
+// Wind rose chart types — used by wind-rose-binning.ts (client-side)
 // ---------------------------------------------------------------------------
 
 export interface BeaufortCategory {
