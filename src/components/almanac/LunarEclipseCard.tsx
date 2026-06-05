@@ -16,10 +16,10 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Eye } from '@phosphor-icons/react';
 import {
   Card,
   CardHeader,
-  CardTitle,
   CardContent,
 } from '../ui/card';
 import type { LunarEclipseData, LunarEclipseEntry } from '../../api/types';
@@ -66,6 +66,8 @@ type LunarVisibility =
 interface VisibilityStyle {
   /** Tailwind color class(es) applied to time-range text and visibility label */
   textClass: string;
+  /** Raw CSS color for the Phosphor icon fill (currentColor won't cross themed Tailwind boundaries) */
+  iconColor: string;
   /** Aria-label suffix for screen readers — matches label text, so this is the label */
   label: string;
 }
@@ -73,22 +75,27 @@ interface VisibilityStyle {
 const VISIBILITY_STYLE: Record<LunarVisibility, VisibilityStyle> = {
   'Visible All Night': {
     textClass: 'text-green-600 dark:text-green-400',
+    iconColor: '#22c55e',
     label: 'Visible All Night',
   },
   'Mostly Visible': {
     textClass: 'text-lime-700 dark:text-lime-400',
+    iconColor: '#84cc16',
     label: 'Mostly Visible',
   },
   'Low in Sky': {
     textClass: 'text-amber-700 dark:text-amber-400',
+    iconColor: '#eab308',
     label: 'Low in Sky',
   },
   'Barely Visible': {
     textClass: 'text-orange-700 dark:text-orange-400',
+    iconColor: '#f97316',
     label: 'Barely Visible',
   },
   'Not Visible': {
     textClass: 'text-muted-foreground',
+    iconColor: 'currentColor',
     label: 'Not Visible',
   },
 };
@@ -162,42 +169,6 @@ const MODAL_CONTENT: Record<LunarEclipseType, ModalContent> = {
 };
 
 // ---------------------------------------------------------------------------
-// Eye icon SVG (Phosphor ph:eye — regular)
-// Used for visibility row. aria-hidden on the icon; label carries meaning.
-// ---------------------------------------------------------------------------
-
-function EyeIcon({ color }: { color: string }) {
-  return (
-    <svg
-      aria-hidden="true"
-      focusable="false"
-      width="16"
-      height="16"
-      viewBox="0 0 256 256"
-      fill={color}
-    >
-      <path d="M247.31,124.76c-.35-.79-8.82-19.58-27.65-38.41C194.57,61.26,162.88,48,128,48S61.43,61.26,36.34,86.35C17.51,105.18,9,124,8.69,124.76a8,8,0,0,0,0,6.5c.35.79,8.82,19.57,27.65,38.4C61.43,194.74,93.12,208,128,208s66.57-13.26,91.66-38.34c18.83-18.83,27.3-37.61,27.65-38.4A8,8,0,0,0,247.31,124.76ZM128,192c-30.78,0-57.67-11.19-79.93-33.25A133.47,133.47,0,0,1,25,128,133.33,133.33,0,0,1,48.07,97.25C70.33,75.19,97.22,64,128,64s57.67,11.19,79.93,33.25A133.46,133.46,0,0,1,231.05,128C223.84,141.46,192.43,192,128,192Zm0-112a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Z" />
-    </svg>
-  );
-}
-
-// Resolve the raw CSS color value for use in the SVG fill attribute.
-// We map the Tailwind class names to explicit color values for the SVG fill.
-// This avoids the need for currentColor trick which doesn't work across themes
-// when the parent text color comes from a conditional class.
-function resolveVisibilityIconColor(visibility: LunarVisibility | null | undefined): string {
-  if (!visibility) return 'currentColor';
-  const map: Record<LunarVisibility, string> = {
-    'Visible All Night': '#22c55e',
-    'Mostly Visible': '#84cc16',
-    'Low in Sky': '#eab308',
-    'Barely Visible': '#f97316',
-    'Not Visible': 'currentColor',
-  };
-  return map[visibility];
-}
-
-// ---------------------------------------------------------------------------
 // Info icon for footer note
 // ---------------------------------------------------------------------------
 
@@ -220,9 +191,8 @@ function InfoIcon() {
 // ---------------------------------------------------------------------------
 // Time range extraction
 //
-// For total:     penumbralStart to penumbralEnd
-// For partial:   partialStart to partialEnd
-// For penumbral: penumbralStart to penumbralEnd
+// For total/penumbral: penumbralStart → penumbralEnd (full event window)
+// For partial:         partialStart  → partialEnd
 // ---------------------------------------------------------------------------
 
 interface TimeRange {
@@ -240,7 +210,7 @@ function extractTimeRange(eclipse: LunarEclipseEntry): TimeRange {
       end: ct.partialEnd?.date ?? null,
     };
   }
-  // total or penumbral
+  // total or penumbral — use the full penumbral window
   return {
     start: ct.penumbralStart?.date ?? null,
     end: ct.penumbralEnd?.date ?? null,
@@ -258,9 +228,8 @@ function formatTime(isoString: string | null, tz: string, locale: string): strin
   }).format(new Date(isoString));
 }
 
-/** Format a UTC ISO date string to "Mon D, YYYY" locale date. */
+/** Format a YYYY-MM-DD date string to "Mon D, YYYY" locale date (UTC midnight parse). */
 function formatDate(isoString: string, locale: string): string {
-  // The date field is "YYYY-MM-DD" — parse as UTC midnight.
   return new Intl.DateTimeFormat(locale, {
     month: 'short',
     day: 'numeric',
@@ -269,7 +238,7 @@ function formatDate(isoString: string, locale: string): string {
   }).format(new Date(`${isoString}T00:00:00Z`));
 }
 
-/** Format a UTC ISO date string to the long day-of-week name, e.g. "Sunday". */
+/** Format a YYYY-MM-DD date string to the long day-of-week name, e.g. "Sunday". */
 function formatDayOfWeek(isoString: string, locale: string): string {
   return new Intl.DateTimeFormat(locale, {
     weekday: 'long',
@@ -359,7 +328,7 @@ function EclipseTypeModal({ type, onClose }: EclipseTypeModalProps) {
           onClick={onClose}
           className="absolute top-3 right-3 text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded p-0.5"
         >
-          {/* Close × character — decorative; aria-label on button carries meaning */}
+          {/* Close × — decorative; aria-label on button carries meaning */}
           <svg
             aria-hidden="true"
             focusable="false"
@@ -407,21 +376,21 @@ function EclipseColumn({ eclipse, stationTz, locale }: EclipseColumnProps) {
   const imageSrc = TYPE_IMAGE[type];
   const imageAlt = `${typeLabel} lunar eclipse`;
 
+  // Time range — extracted from contactTimes; shown when at least one timestamp exists.
   const { start, end } = extractTimeRange(eclipse);
   const hasContactTimes = eclipse.contactTimes != null && (start !== null || end !== null);
 
+  // Visibility — shown independently of contact times when the field is present.
   const visibility = eclipse.visibility as LunarVisibility | null | undefined;
   const visStyle = visibility ? VISIBILITY_STYLE[visibility] : null;
-  const iconColor = resolveVisibilityIconColor(visibility);
 
-  // Time range string — format as "h:mm PM – h:mm AM" color-matched to visibility
+  // Time range string — "h:mm PM – h:mm AM" color-matched to visibility tier.
   let timeRangeText = '';
   if (hasContactTimes && start && end) {
     const startStr = formatTime(start, stationTz, locale);
     const endStr = formatTime(end, stationTz, locale);
-    timeRangeText = `${startStr}–${endStr}`;
-  } else if (hasContactTimes && (start || end)) {
-    // One side available
+    timeRangeText = `${startStr} – ${endStr}`;
+  } else if (hasContactTimes && (start ?? end)) {
     timeRangeText = formatTime(start ?? end, stationTz, locale);
   }
 
@@ -442,19 +411,21 @@ function EclipseColumn({ eclipse, stationTz, locale }: EclipseColumnProps) {
 
   return (
     <div className="flex flex-col items-center gap-1.5 flex-1 min-w-[200px]">
-      {/* Date row: date+day left, type badge right */}
+      {/*
+        Date row: date+day stacked on left, type badge right-justified.
+        Pattern mirrors SolarEclipseCard's EclipseColumn date row.
+      */}
       <div className="flex items-start justify-between w-full gap-2">
         <div className="flex flex-col">
-          <span
-            className="font-bold text-foreground"
-            style={{ fontSize: 'var(--text-body, 0.9rem)' }}
-          >
+          {/*
+            Date — uses inherited foreground color (no explicit text-color class)
+            so it renders as normal foreground text in both light and dark themes.
+            Do NOT add a colored class here; only the badge carries type color.
+          */}
+          <span className="text-[0.9rem] font-bold leading-snug">
             {formatDate(eclipse.date, locale)}
           </span>
-          <span
-            className="text-muted-foreground"
-            style={{ fontSize: 'var(--text-label, 0.75rem)' }}
-          >
+          <span className="text-[0.75rem] text-muted-foreground leading-snug">
             {formatDayOfWeek(eclipse.date, locale)}
           </span>
         </div>
@@ -467,6 +438,7 @@ function EclipseColumn({ eclipse, stationTz, locale }: EclipseColumnProps) {
           ref={badgeButtonRef}
           type="button"
           onClick={() => setModalOpen(true)}
+          aria-haspopup="dialog"
           aria-label={`${typeLabel} — learn more about this eclipse type`}
           className={`
             inline-flex items-center shrink-0 px-2.5 py-0.5 rounded-full
@@ -489,8 +461,9 @@ function EclipseColumn({ eclipse, stationTz, locale }: EclipseColumnProps) {
       />
 
       {/*
-        Time range — shown only when contact times are available.
-        Color matches the visibility tier per spec.
+        Time range — shown when contact times are available.
+        Color matches the visibility tier per spec (mockup line 610, 620, 630, 640).
+        en-dash (U+2013) separates start and end times per mockup.
       */}
       {hasContactTimes && timeRangeText && (
         <span
@@ -507,16 +480,23 @@ function EclipseColumn({ eclipse, stationTz, locale }: EclipseColumnProps) {
 
       {/*
         Visibility row — eye icon + label, centered.
+        Shown when eclipse.visibility is present, independently of contactTimes.
         Icon is aria-hidden; label carries the information (WCAG 1.4.1).
-        Less padding between time and visibility per spec (gap-1 on container).
+        Uses Phosphor Eye icon (matching SolarEclipseCard).
       */}
-      {hasContactTimes && visibility && visStyle && (
+      {visibility && visStyle && (
         <div
-          className={`flex items-center justify-center gap-1.5 w-full ${visStyle.textClass}`}
+          className={`flex items-center justify-center gap-1.5 w-full font-semibold ${visStyle.textClass}`}
           style={{ fontSize: 'var(--text-secondary, 0.85rem)' }}
+          aria-label={`Visibility: ${visStyle.label}`}
         >
-          <EyeIcon color={iconColor} />
-          <span className="font-semibold">{visStyle.label}</span>
+          <Eye
+            size={16}
+            weight="regular"
+            aria-hidden="true"
+            color={visStyle.iconColor}
+          />
+          <span>{visStyle.label}</span>
         </div>
       )}
 
@@ -568,10 +548,14 @@ function CardSkeleton() {
  * - WCAG 1.1.1: images carry descriptive alt text
  * - WCAG 2.4.7: focus visible on all interactive elements (ring classes)
  *
+ * Header layout (matches SolarEclipseCard pattern):
+ * - CardHeader contains an inner flex div: title left, "All times local" right.
+ * - Does NOT use CardTitle (which adds a bottom border that would split the header).
+ *
  * Typography (locked 2026-05-31):
  * - Card title: --font-sans (Manrope) via font-heading class, weight 600
  * - Time range: --font-display (Outfit), weight 600, --text-secondary
- * - Date: --text-body, weight 700; day: --text-label, muted
+ * - Date: text-[0.9rem], weight 700; day: text-[0.75rem], muted
  * - Description: --text-secondary, muted
  */
 export function LunarEclipseCard({
@@ -581,7 +565,7 @@ export function LunarEclipseCard({
   error,
 }: LunarEclipseCardProps) {
   const { t, i18n } = useTranslation('almanac');
-  const locale = i18n.language;
+  const locale = i18n.language ?? 'en';
 
   if (loading) {
     return <CardSkeleton />;
@@ -603,17 +587,27 @@ export function LunarEclipseCard({
 
   return (
     <Card footprint="full">
-      {/* Card header: title left, note right */}
-      <CardHeader className="flex-row items-center justify-between pb-0">
-        <CardTitle as="h2">
-          {t('lunarEclipses.title', 'Lunar Eclipses')}
-        </CardTitle>
-        <span
-          className="text-muted-foreground shrink-0"
-          style={{ fontSize: 'var(--text-label, 0.75rem)' }}
-        >
-          {t('lunarEclipses.allTimesLocal', 'All times local')}
-        </span>
+      {/*
+        Card header: title left, "All times local" note right.
+        Uses inner flex div pattern (matches SolarEclipseCard) — CardHeader is
+        a grid by default, so the flex wrapper is required to achieve the
+        title-left / note-right layout.
+      */}
+      <CardHeader>
+        <div className="flex items-center justify-between w-full">
+          <span
+            className="font-heading font-semibold"
+            style={{
+              fontSize: 'var(--text-card-title, 0.82rem)',
+              fontFamily: 'var(--font-sans)',
+            }}
+          >
+            {t('lunarEclipses.title', 'Lunar Eclipses')}
+          </span>
+          <span className="text-[0.75rem] text-muted-foreground">
+            {t('lunarEclipses.allTimesLocal', 'All times local')}
+          </span>
+        </div>
       </CardHeader>
 
       <CardContent>
@@ -635,12 +629,11 @@ export function LunarEclipseCard({
           </p>
         )}
 
-        {/* Eclipse columns
-            Desktop: horizontal flex row, wraps on very wide lists.
-            Mobile: stacks vertically (flex-col on <sm, flex-row on sm+).
-            Per spec: "Columns stack on mobile."
+        {/*
+          Eclipse columns.
+          Progressive fill: 2-year window first; backfill to 4 max.
+          Desktop: horizontal flex row. Mobile: stacks vertically (flex-col → sm:flex-row).
         */}
-        {/* Progressive fill: 2yr first, backfill to 4 max, no scroll */}
         {hasEclipses && eclipses !== null && (() => {
           const MAX_COLS = 4;
           const TWO_YEARS_MS = 2 * 365.25 * 24 * 60 * 60 * 1000;
@@ -650,16 +643,21 @@ export function LunarEclipseCard({
             ? twoYr.slice(0, MAX_COLS)
             : eclipses.eclipses.slice(0, MAX_COLS);
           return (
-          <div className="flex flex-col sm:flex-row gap-6 sm:gap-4 flex-wrap">
-            {display.map((eclipse) => (
-              <EclipseColumn
-                key={`${eclipse.date}-${eclipse.type}`}
-                eclipse={eclipse}
-                stationTz={stationTz}
-                locale={locale}
-              />
-            ))}
-          </div>
+            <div
+              className="flex flex-col sm:flex-row gap-6 sm:gap-4 flex-wrap"
+              role="list"
+              aria-label={t('lunarEclipses.listLabel', 'Upcoming lunar eclipses')}
+            >
+              {display.map((eclipse) => (
+                <div key={`${eclipse.date}-${eclipse.type}`} role="listitem" className="flex-1 min-w-0">
+                  <EclipseColumn
+                    eclipse={eclipse}
+                    stationTz={stationTz}
+                    locale={locale}
+                  />
+                </div>
+              ))}
+            </div>
           );
         })()}
 
