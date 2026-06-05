@@ -430,7 +430,7 @@ export function ConfigDrivenChart({
                 fontSize: '0.75rem',
                 borderRadius: '0.5rem',
               }}
-              labelFormatter={tooltipLabelFormatter}
+              labelFormatter={tooltipLabelFormatter ? (label: unknown) => tooltipLabelFormatter(label as string | number) : undefined}
             />
 
             <Legend

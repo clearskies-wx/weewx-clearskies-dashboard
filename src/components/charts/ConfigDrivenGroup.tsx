@@ -299,7 +299,7 @@ export function ConfigDrivenGroup({
               ];
             if (fieldKey && fieldKey in clim) {
               row[series.seriesId] =
-                (clim as Record<string, (number | null)[]>)[fieldKey]?.[i] ??
+                (clim as unknown as Record<string, (number | null)[]>)[fieldKey]?.[i] ??
                 null;
             }
           }
