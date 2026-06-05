@@ -38,6 +38,22 @@
 
   "daylightDelta": "({{delta}}m vs yesterday)",
 
+  "planets": {
+    "title": "Tonight's Planet Outlook",
+    "empty": "No planets visible tonight.",
+    "listLabel": "Planet list",
+    "timelineLabel": "Planet visibility timeline",
+    "conjunctionsLabel": "Planetary conjunctions",
+    "viewingQuality": "Viewing quality",
+    "bestTime": "Best viewing time",
+    "qualityExcellent": "Excellent View",
+    "qualityGood": "Good View",
+    "qualityFair": "Fair View",
+    "qualityPoor": "Poor View",
+    "qualityNotVisible": "Not Visible",
+    "footNote": "Times shown in local station time. Visibility varies based on seeing conditions and sky darkness."
+  },
+
   "meteorShowers": {
     "title": "Meteor Showers",
     "timesLocal": "All times local",
