@@ -176,7 +176,6 @@ interface TooltipState {
 interface WeatherRangeSvgProps {
   highData: Array<{ dateTime: number; value: number | null }>;
   lowData: Array<{ dateTime: number; value: number | null }>;
-  field: string;
   unit: string;
   size: number;
   reducedMotion: boolean;
@@ -186,7 +185,6 @@ interface WeatherRangeSvgProps {
 function WeatherRangeSvg({
   highData,
   lowData,
-  field: _field,
   unit,
   size,
   reducedMotion,
@@ -294,7 +292,6 @@ function WeatherRangeSvg({
         stroke="var(--background)"
         strokeWidth={0.5}
         tabIndex={0}
-        role="img"
         aria-label={`${label}: high ${highVal.toFixed(1)}${unit}, low ${lowVal.toFixed(1)}${unit}`}
         style={{
           cursor: 'pointer',
@@ -542,7 +539,6 @@ export function WeatherRangeChart({
           <WeatherRangeSvg
             highData={highData}
             lowData={lowData}
-            field={field}
             unit={unit}
             size={chartSize}
             reducedMotion={reducedMotion}
