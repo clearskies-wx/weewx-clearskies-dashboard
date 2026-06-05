@@ -157,8 +157,8 @@ export function NowPage() {
           weatherText={observation?.weatherText ?? todayForecast?.weatherText ?? null}
           weatherCode={derivedWeatherCode}
           isNight={scene ? !scene.daytime : false}
-          todayHigh={todayStats?.high ?? null}
-          todayLow={todayStats?.low ?? null}
+          todayHigh={todayForecast?.tempMax ?? todayStats?.high ?? null}
+          todayLow={todayForecast?.tempMin ?? todayStats?.low ?? null}
           todayArchive={todayArchive ?? null}
           hourlyForecast={hourlyForecast ?? null}
           onRetry={obsRefetch}
