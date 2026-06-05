@@ -19,6 +19,10 @@
 //   - Loading state: sr-only role="status" announcement
 //   - Visible data table in table mode (not sr-only)
 //
+// T4.1/T4.2: Range charts detected via rangeType series field.
+//   - Dual-fetch: one useArchive call with agg=max (high), one with agg=min (low)
+//   - WeatherRangeChart rendered in place of ConfigDrivenChart for range chart groups
+//
 // T4.5: pageContent rendered as Markdown via react-markdown + remark-gfm.
 
 import { useState, useMemo, useRef } from 'react';
@@ -29,6 +33,7 @@ import { useArchive, useClimatologyMonthly } from '../../hooks/useWeatherData';
 import { buildWindRoseMatrix, defaultBeaufortColors } from '../../utils/wind-rose-binning';
 import { ConfigDrivenChart } from './ConfigDrivenChart';
 import { WindRoseChart } from './WindRoseChart';
+import { WeatherRangeChart } from './WeatherRangeChart';
 import { lttbDownsample } from '../../utils/lttb';
 import { exportChartAsCsv, exportChartAsPng, buildExportFilename } from '../../utils/chart-export';
 import type { ChartGroupConfig } from '../../api/types';
@@ -200,6 +205,27 @@ export function ConfigDrivenGroup({
       chart.series.some((s) => s.seriesId === 'windRose'),
     );
 
+  // Range chart mode (T4.1/T4.2): any chart has a series with rangeType set.
+  // Range charts require two separate archive fetches (agg=max and agg=min).
+  const hasRangeChart =
+    !isClimatology &&
+    group.charts.some((chart) =>
+      chart.series.some((s) => s.rangeType != null),
+    );
+
+  // The observation field to fetch for range charts (e.g. 'outTemp')
+  const rangeField = useMemo(() => {
+    if (!hasRangeChart) return null;
+    for (const chart of group.charts) {
+      for (const s of chart.series) {
+        if (s.rangeType != null && s.observationType) {
+          return s.observationType;
+        }
+      }
+    }
+    return null;
+  }, [hasRangeChart, group.charts]);
+
   // -------------------------------------------------------------------------
   // Archive fetch params (useMemo — prevents infinite re-render loops)
   // -------------------------------------------------------------------------
@@ -282,11 +308,36 @@ export function ConfigDrivenGroup({
     selectedMonth,
   ]);
 
+  // Build params for range chart dual-fetch (agg=max and agg=min).
+  // Range charts always use interval=day so each point represents one day.
+  const rangeArchiveParamsMax = useMemo(() => {
+    if (!hasRangeChart || !rangeField || !archiveParams) return undefined;
+    return {
+      from: archiveParams.from,
+      to: archiveParams.to,
+      fields: rangeField,
+      interval: 'day',
+      agg: 'max',
+    };
+  }, [hasRangeChart, rangeField, archiveParams]);
+
+  const rangeArchiveParamsMin = useMemo(() => {
+    if (!hasRangeChart || !rangeField || !archiveParams) return undefined;
+    return {
+      from: archiveParams.from,
+      to: archiveParams.to,
+      fields: rangeField,
+      interval: 'day',
+      agg: 'min',
+    };
+  }, [hasRangeChart, rangeField, archiveParams]);
+
   // -------------------------------------------------------------------------
   // Data fetching (all hooks called unconditionally — Rules of Hooks)
   // Pass undefined to useArchive when in climatology mode to prevent a fetch.
   // The hook treats undefined params as "skip" (returns empty/null gracefully).
   // Wind rose data is derived from the same archive fetch (T3.2: client-side binning).
+  // Range chart data uses two separate fetches (agg=max and agg=min).
   // -------------------------------------------------------------------------
 
   const archiveResult = useArchive(
@@ -294,6 +345,16 @@ export function ConfigDrivenGroup({
     { skip: isClimatology },
   );
   const climatologyResult = useClimatologyMonthly();
+
+  // Range chart dual-fetch — both hooks called unconditionally; skip when not a range chart.
+  const rangeHighResult = useArchive(
+    rangeArchiveParamsMax,
+    { skip: !hasRangeChart || rangeArchiveParamsMax === undefined },
+  );
+  const rangeLowResult = useArchive(
+    rangeArchiveParamsMin,
+    { skip: !hasRangeChart || rangeArchiveParamsMin === undefined },
+  );
 
   // -------------------------------------------------------------------------
   // Data transformation (useMemo to avoid re-computation on unrelated renders)
@@ -365,6 +426,29 @@ export function ConfigDrivenGroup({
     });
   }, [climatologyResult.data, group.charts]);
 
+  // Range chart data transformation (T4.1/T4.2):
+  // Map archive records into { dateTime, value } pairs for WeatherRangeChart.
+  // dateTime is epoch seconds (from ISO timestamp); value is the field value.
+  const rangeHighPoints = useMemo(() => {
+    if (!hasRangeChart || !rangeField || !rangeHighResult.data) return [];
+    return rangeHighResult.data
+      .filter((r) => r[rangeField] !== null && r[rangeField] !== undefined)
+      .map((r) => ({
+        dateTime: Math.floor(new Date(r.timestamp).getTime() / 1000),
+        value: r[rangeField] as number | null,
+      }));
+  }, [hasRangeChart, rangeField, rangeHighResult.data]);
+
+  const rangeLowPoints = useMemo(() => {
+    if (!hasRangeChart || !rangeField || !rangeLowResult.data) return [];
+    return rangeLowResult.data
+      .filter((r) => r[rangeField] !== null && r[rangeField] !== undefined)
+      .map((r) => ({
+        dateTime: Math.floor(new Date(r.timestamp).getTime() / 1000),
+        value: r[rangeField] as number | null,
+      }));
+  }, [hasRangeChart, rangeField, rangeLowResult.data]);
+
   // -------------------------------------------------------------------------
   // Derived display values
   // -------------------------------------------------------------------------
@@ -379,14 +463,21 @@ export function ConfigDrivenGroup({
     ? undefined
     : (v: string | number) => formatTimestamp(v, selectedRange);
 
+  // Loading and error state: for range charts, both fetches must complete.
   const isLoading = isClimatology
     ? climatologyResult.loading
+    : hasRangeChart
+    ? rangeHighResult.loading || rangeLowResult.loading
     : archiveResult.loading;
   const fetchError = isClimatology
     ? climatologyResult.error
+    : hasRangeChart
+    ? rangeHighResult.error ?? rangeLowResult.error
     : archiveResult.error;
   const onRetry = isClimatology
     ? climatologyResult.refetch
+    : hasRangeChart
+    ? () => { rangeHighResult.refetch(); rangeLowResult.refetch(); }
     : archiveResult.refetch;
 
   // -------------------------------------------------------------------------
@@ -727,13 +818,18 @@ export function ConfigDrivenGroup({
         ) : (
           /* ---------------------------------------------------------------- */
           /* Chart view: one chart per chart in the group.                    */
-          /* Wind rose charts render as WindRoseChart; others as ConfigDrivenChart. */
+          /* Wind rose charts render as WindRoseChart.                        */
+          /* Range charts render as WeatherRangeChart.                        */
+          /* All others render as ConfigDrivenChart.                          */
           /* ref is used by PNG export to locate the chart SVG.              */
           /* ---------------------------------------------------------------- */
           <div ref={chartContainerRef} className="flex flex-col gap-6">
             {group.charts.map((chart) => {
               const isWindRoseChart = chart.series.some(
                 (s) => s.seriesId === 'windRose',
+              );
+              const isRangeChart = chart.series.some(
+                (s) => s.rangeType != null,
               );
 
               if (isWindRoseChart) {
@@ -755,6 +851,31 @@ export function ConfigDrivenGroup({
                     key={chart.chartId}
                     data={windRoseData}
                     beaufortColors={beaufortColors}
+                    height={300}
+                    reducedMotion={reducedMotion}
+                  />
+                );
+              }
+
+              if (isRangeChart) {
+                // Show skeleton until both high and low data are available
+                if (rangeHighPoints.length === 0 || rangeLowPoints.length === 0) {
+                  return (
+                    <TileSkeleton key={chart.chartId} className="h-[300px]" />
+                  );
+                }
+                // Extract field and unit from the range series
+                const rangeSeries = chart.series.find((s) => s.rangeType != null);
+                const fieldName = rangeSeries?.observationType ?? rangeField ?? 'value';
+                // Unit from yAxisLabel or empty string
+                const unitLabel = rangeSeries?.yAxisLabel ?? '';
+                return (
+                  <WeatherRangeChart
+                    key={chart.chartId}
+                    highData={rangeHighPoints}
+                    lowData={rangeLowPoints}
+                    field={fieldName}
+                    unit={unitLabel}
                     height={300}
                     reducedMotion={reducedMotion}
                   />
