@@ -98,6 +98,37 @@ function hasUsableData(climatology: ClimatologyMonthly): boolean {
 }
 
 // ---------------------------------------------------------------------------
+// Custom dot shapes — match approved mockup marker styles
+// ---------------------------------------------------------------------------
+
+function CircleRingDot(props: any) {
+  const { cx, cy, fill } = props;
+  if (cx == null || cy == null) return null;
+  return (
+    <g>
+      <circle cx={cx} cy={cy} r={4} fill={fill} />
+      <circle cx={cx} cy={cy} r={1.5} fill="var(--background, #0d0f18)" />
+    </g>
+  );
+}
+
+function DiamondDot(props: any) {
+  const { cx, cy, fill } = props;
+  if (cx == null || cy == null) return null;
+  return (
+    <g transform={`translate(${cx},${cy}) rotate(45)`}>
+      <rect x={-3.5} y={-3.5} width={7} height={7} fill={fill} />
+    </g>
+  );
+}
+
+function SquareDot(props: any) {
+  const { cx, cy, fill } = props;
+  if (cx == null || cy == null) return null;
+  return <rect x={cx - 3} y={cy - 3} width={6} height={6} rx={1} fill={fill} />;
+}
+
+// ---------------------------------------------------------------------------
 // MonthlyAveragesCard
 // ---------------------------------------------------------------------------
 
@@ -194,32 +225,39 @@ export function MonthlyAveragesCard({
           <ResponsiveContainer width="100%" height={300}>
             <ComposedChart
               data={chartData}
-              margin={{ top: 8, right: 16, left: 0, bottom: 0 }}
+              margin={{ top: 8, right: 55, left: 15, bottom: 8 }}
             >
               <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
               <XAxis
                 dataKey="month"
-                tick={{ fontSize: 12, fontFamily: 'var(--font-chart)' }}
+                tick={{ fontSize: 11, fontFamily: 'var(--font-chart)', fontWeight: 600 }}
                 className="fill-muted-foreground"
               />
-              {/* Left Y-axis: temperature */}
               <YAxis
                 yAxisId="temp"
-                tick={{ fontSize: 12, fontFamily: 'var(--font-chart)' }}
+                tick={{ fontSize: 10, fontFamily: 'var(--font-chart)' }}
                 className="fill-muted-foreground"
+                tickFormatter={(v: number) => `${v}°`}
                 label={{
-                  value: '°',
+                  value: t('climatology.yAxisTemp', 'Average Temperature (°F)'),
+                  angle: -90,
                   position: 'insideLeft',
-                  offset: 4,
-                  style: { fontSize: 12, fontFamily: 'var(--font-chart)' },
+                  offset: -5,
+                  style: { fontSize: 10, fontFamily: 'var(--font-chart)', fill: 'var(--muted-foreground, #a1a1aa)', textAnchor: 'middle' },
                 }}
               />
-              {/* Right Y-axis: rainfall */}
               <YAxis
                 yAxisId="rain"
                 orientation="right"
-                tick={{ fontSize: 12, fontFamily: 'var(--font-chart)' }}
+                tick={{ fontSize: 10, fontFamily: 'var(--font-chart)' }}
                 className="fill-muted-foreground"
+                label={{
+                  value: t('climatology.yAxisRain', 'Avg Monthly Rain (in)'),
+                  angle: 90,
+                  position: 'insideRight',
+                  offset: -5,
+                  style: { fontSize: 10, fontFamily: 'var(--font-chart)', fill: 'var(--muted-foreground, #a1a1aa)', textAnchor: 'middle' },
+                }}
               />
               <Tooltip
                 contentStyle={{
@@ -228,45 +266,47 @@ export function MonthlyAveragesCard({
                 }}
               />
               <Legend wrapperStyle={{ fontSize: '0.75rem', fontFamily: 'var(--font-chart)' }} />
-              {/* Rainfall bars rendered behind temperature lines */}
               <Bar
                 yAxisId="rain"
                 dataKey="avgRainfall"
                 name={t('climatology.series.avgRainfall')}
-                fill="hsl(210 80% 65%)"
+                fill="#3b82f6"
                 fillOpacity={0.4}
                 radius={[2, 2, 0, 0]}
+                legendType="rect"
               />
               <Line
                 yAxisId="temp"
                 type="monotone"
                 dataKey="avgHigh"
                 name={t('climatology.series.avgHigh')}
-                stroke="hsl(12 90% 52%)"
-                strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 4 }}
+                stroke="#ef4444"
+                strokeWidth={2.5}
+                dot={<CircleRingDot />}
+                activeDot={{ r: 5 }}
+                legendType="circle"
               />
               <Line
                 yAxisId="temp"
                 type="monotone"
                 dataKey="avgLow"
                 name={t('climatology.series.avgLow')}
-                stroke="hsl(210 80% 55%)"
+                stroke="#93c5fd"
                 strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 4 }}
+                dot={<DiamondDot />}
+                activeDot={{ r: 5 }}
+                legendType="diamond"
               />
               <Line
                 yAxisId="temp"
                 type="monotone"
                 dataKey="avgDewpoint"
                 name={t('climatology.series.avgDewpoint')}
-                stroke="hsl(270 60% 55%)"
+                stroke="#a855f7"
                 strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 4 }}
-                strokeDasharray="4 2"
+                dot={<SquareDot />}
+                activeDot={{ r: 5 }}
+                legendType="square"
               />
             </ComposedChart>
           </ResponsiveContainer>
