@@ -28,7 +28,8 @@ import type {
   ClimatologyMonthly,
   PlanetsVisible,
   ApiMoonNamesCalendar,
-  EclipseData,
+  LunarEclipseData,
+  SolarEclipseData,
   MeteorShowerData,
   PositionsSnapshot,
 } from './types';
@@ -305,13 +306,23 @@ export function getAlmanacMoonNames(
 }
 
 // ---------------------------------------------------------------------------
-// GET /almanac/eclipses
+// GET /almanac/eclipses/lunar
 // ---------------------------------------------------------------------------
 
 export function getAlmanacEclipses(
   signal?: AbortSignal,
-): Promise<ApiResponse<EclipseData>> {
-  return fetchApi<ApiResponse<EclipseData>>('/almanac/eclipses', undefined, signal);
+): Promise<ApiResponse<LunarEclipseData>> {
+  return fetchApi<ApiResponse<LunarEclipseData>>('/almanac/eclipses/lunar', undefined, signal);
+}
+
+// ---------------------------------------------------------------------------
+// GET /almanac/eclipses/solar
+// ---------------------------------------------------------------------------
+
+export function getSolarEclipses(
+  signal?: AbortSignal,
+): Promise<ApiResponse<SolarEclipseData>> {
+  return fetchApi<ApiResponse<SolarEclipseData>>('/almanac/eclipses/solar', undefined, signal);
 }
 
 // ---------------------------------------------------------------------------

@@ -27,6 +27,7 @@ import {
   getAlmanacPlanets,
   getAlmanacMoonNames,
   getAlmanacEclipses,
+  getSolarEclipses,
   getAlmanacMeteorShowers,
   getEarthquakeConfig,
   getEarthquakeFaults,
@@ -84,7 +85,8 @@ import type {
   ApiMoonNamesCalendar,
   ApiSpecialMoonEntry,
   MoonNameData,
-  EclipseData,
+  LunarEclipseData,
+  SolarEclipseData,
   MeteorShowerData,
   PositionsSnapshot,
 } from '../api/types';
@@ -827,17 +829,42 @@ export function useAlmanacMoonNames(): HookResult<MoonNameData> {
 }
 
 // ---------------------------------------------------------------------------
-// useAlmanacEclipses — /almanac/eclipses
+// useAlmanacEclipses — /almanac/eclipses/lunar
 // ---------------------------------------------------------------------------
 
-export function useAlmanacEclipses(): HookResult<EclipseData> {
-  const { data, loading, error, refetch } = useApiQuery<{ data: EclipseData }>(
+export function useAlmanacEclipses(): HookResult<LunarEclipseData> {
+  const { data, loading, error, refetch } = useApiQuery<{ data: LunarEclipseData }>(
     (signal) => getAlmanacEclipses(signal),
     { skip: isMockMode() },
   );
 
   if (isMockMode()) {
-    return mockResult<EclipseData>(mockEclipses);
+    // mockEclipses is typed as EclipseData (deprecated looser shape); cast is safe because
+    // the runtime value is structurally compatible with LunarEclipseData — the missing
+    // from_date/to_date fields simply default to undefined which components tolerate.
+    return mockResult<LunarEclipseData>(mockEclipses as unknown as LunarEclipseData);
+  }
+
+  return {
+    data: data?.data ?? null,
+    loading,
+    error,
+    refetch,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// useSolarEclipses — /almanac/eclipses/solar
+// ---------------------------------------------------------------------------
+
+export function useSolarEclipses(): HookResult<SolarEclipseData> {
+  const { data, loading, error, refetch } = useApiQuery<{ data: SolarEclipseData }>(
+    (signal) => getSolarEclipses(signal),
+    { skip: isMockMode() },
+  );
+
+  if (isMockMode()) {
+    return mockResult<SolarEclipseData>({ from_date: '', to_date: '', eclipses: [] });
   }
 
   return {
