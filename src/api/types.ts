@@ -709,14 +709,84 @@ export interface MoonNameData {
 // /almanac/eclipses
 // ---------------------------------------------------------------------------
 
-export interface EclipseEntry {
+/** One eclipse contact-time event with body altitude at that moment. */
+export interface EclipseContactPoint {
+  /** UTC ISO-8601 datetime of the contact event. */
+  date: string;
+  /** Altitude of the Sun or Moon above the horizon at that moment (degrees). */
+  altitude: number;
+}
+
+export interface LunarEclipseEntry {
   /** UTC ISO-8601 date of the eclipse. */
   date: string;
   type: 'penumbral' | 'partial' | 'total';
+  /**
+   * Contact-time events for the eclipse. Each key maps to an EclipseContactPoint or
+   * null when that phase does not occur (e.g. penumbral-only eclipses have null
+   * partialStart/fullStart etc.). Absent when AstronomyAPI enrichment is not configured.
+   */
+  contactTimes?: {
+    penumbralStart: EclipseContactPoint | null;
+    partialStart: EclipseContactPoint | null;
+    fullStart: EclipseContactPoint | null;
+    peak: EclipseContactPoint | null;
+    fullEnd: EclipseContactPoint | null;
+    partialEnd: EclipseContactPoint | null;
+    penumbralEnd: EclipseContactPoint | null;
+  } | null;
+  /** Fraction of the Moon's disk obscured at peak (0.0–1.0). Absent when not enriched. */
+  obscuration?: number | null;
+  /** Visibility classification at the observer's station location. Absent when not enriched. */
+  visibility?: 'Visible All Night' | 'Mostly Visible' | 'Low in Sky' | 'Barely Visible' | 'Not Visible' | null;
 }
 
+export interface LunarEclipseData {
+  from_date: string;
+  to_date: string;
+  eclipses: LunarEclipseEntry[];
+}
+
+export interface SolarEclipseEntry {
+  /** UTC ISO-8601 date of the eclipse. */
+  date: string;
+  type: 'total' | 'annular' | 'partial';
+  /**
+   * Contact-time events for the eclipse. Each key maps to an EclipseContactPoint or
+   * null when that phase does not occur (e.g. partial eclipses have null
+   * totalStart/totalEnd). Absent when AstronomyAPI enrichment is not configured.
+   */
+  contactTimes?: {
+    partialStart: EclipseContactPoint | null;
+    totalStart: EclipseContactPoint | null;
+    peak: EclipseContactPoint | null;
+    totalEnd: EclipseContactPoint | null;
+    partialEnd: EclipseContactPoint | null;
+  } | null;
+  /** Fraction of the Sun's disk obscured at peak (0.0–1.0). Absent when not enriched. */
+  obscuration?: number | null;
+  /** Visibility classification at the observer's station location. Absent when not enriched. */
+  visibility?: 'Fully Visible' | 'Mostly Visible' | 'Partially Visible' | 'Barely Visible' | 'Not Visible' | null;
+}
+
+export interface SolarEclipseData {
+  from_date: string;
+  to_date: string;
+  eclipses: SolarEclipseEntry[];
+}
+
+// Backward-compat aliases — kept so that client.ts / useWeatherData.ts / mock files
+// continue to compile while their own updates are deferred to a subsequent task.
+/** @deprecated Use LunarEclipseEntry. */
+export type EclipseEntry = LunarEclipseEntry;
+/**
+ * @deprecated Use LunarEclipseData.
+ * Looser variant without from_date/to_date for backward compat with existing callers.
+ */
 export interface EclipseData {
-  eclipses: EclipseEntry[];
+  from_date?: string;
+  to_date?: string;
+  eclipses: LunarEclipseEntry[];
 }
 
 // ---------------------------------------------------------------------------
@@ -758,6 +828,18 @@ export interface MeteorShowerEntry {
   moonPhase: string | null;
   /** Parent body (comet or asteroid), e.g. "109P/Swift-Tuttle". */
   parentBody: string | null;
+  /** ISO date when the shower activity begins. */
+  activeStart?: string | null;
+  /** ISO date when the shower activity ends. */
+  activeEnd?: string | null;
+  /** Human-readable description of the shower from the catalog. */
+  description?: string | null;
+  /** Human-readable viewing quality label (ADR-053 unified 5-tier scale). */
+  viewingQuality?: 'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Not Visible' | null;
+  /** Meteoroid entry velocity in km/s. */
+  velocityKms?: number | null;
+  /** Catalog image filename for the shower (used by dashboard for imagery display). */
+  image?: string | null;
 }
 
 export interface MeteorShowerData {
