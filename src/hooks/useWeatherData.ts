@@ -33,8 +33,9 @@ import {
   getEarthquakeFaults,
   getAlmanacPositions,
   getChartsConfig,
+  getWindRose,
 } from '../api/client';
-import type { ArchiveParams, ApiBrandingConfig } from '../api/client';
+import type { ArchiveParams, ApiBrandingConfig, WindRoseParams } from '../api/client';
 import { asConverted } from '../api/types';
 
 // Mock data
@@ -92,6 +93,7 @@ import type {
   MeteorShowerData,
   PositionsSnapshot,
   ChartsConfigData,
+  WindRoseData,
 } from '../api/types';
 
 // ---------------------------------------------------------------------------
@@ -1002,6 +1004,68 @@ export function useChartsConfig(): HookResult<ChartsConfigData> {
 
   return {
     data: data?.data ?? null,
+    loading,
+    error,
+    refetch,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// useWindRose — /charts/wind-rose
+// ---------------------------------------------------------------------------
+
+export function useWindRose(
+  params?: WindRoseParams,
+  options?: { skip?: boolean },
+): HookResult<WindRoseData> {
+  const fromStr = params?.from ?? '';
+  const toStr = params?.to ?? '';
+
+  const { data, loading, error, refetch } = useApiQuery<{ data: WindRoseData; source?: string; generatedAt: string }>(
+    (signal) => getWindRose(params, signal),
+    { skip: isMockMode() || options?.skip, deps: [fromStr, toStr] },
+  );
+
+  if (isMockMode()) {
+    // Minimal mock: 16 directions, 7 Beaufort categories, all zeroes except calm
+    const mockWindRose: WindRoseData = {
+      directions: ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'],
+      categories: [
+        { beaufort: 0, label: 'Calm' },
+        { beaufort: 1, label: 'Light Air' },
+        { beaufort: 2, label: 'Light Breeze' },
+        { beaufort: 3, label: 'Gentle Breeze' },
+        { beaufort: 4, label: 'Moderate Breeze' },
+        { beaufort: 5, label: 'Fresh Breeze' },
+        { beaufort: 6, label: 'Strong Breeze+' },
+      ],
+      bins: [
+        [3.2, 1.8, 0.9, 0.4, 0.1, 0.0, 0.0],
+        [1.5, 0.9, 0.4, 0.2, 0.0, 0.0, 0.0],
+        [2.1, 1.2, 0.6, 0.3, 0.1, 0.0, 0.0],
+        [1.8, 1.0, 0.5, 0.2, 0.0, 0.0, 0.0],
+        [4.5, 2.5, 1.2, 0.6, 0.2, 0.0, 0.0],
+        [2.3, 1.3, 0.7, 0.3, 0.1, 0.0, 0.0],
+        [3.8, 2.1, 1.0, 0.5, 0.1, 0.0, 0.0],
+        [2.0, 1.1, 0.5, 0.2, 0.0, 0.0, 0.0],
+        [5.2, 2.9, 1.4, 0.7, 0.2, 0.1, 0.0],
+        [1.9, 1.0, 0.5, 0.2, 0.0, 0.0, 0.0],
+        [3.1, 1.7, 0.8, 0.4, 0.1, 0.0, 0.0],
+        [2.4, 1.3, 0.6, 0.3, 0.1, 0.0, 0.0],
+        [6.1, 3.4, 1.7, 0.8, 0.3, 0.1, 0.0],
+        [2.2, 1.2, 0.6, 0.3, 0.1, 0.0, 0.0],
+        [4.0, 2.2, 1.1, 0.5, 0.2, 0.0, 0.0],
+        [2.6, 1.4, 0.7, 0.3, 0.1, 0.0, 0.0],
+      ],
+      totalRecords: 1440,
+      calmPercentage: 5.2,
+    };
+    return mockResult<WindRoseData>(mockWindRose);
+  }
+
+  return {
+    data: data?.data ?? null,
+    source: data?.source,
     loading,
     error,
     refetch,

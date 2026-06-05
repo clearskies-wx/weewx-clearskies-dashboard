@@ -559,6 +559,23 @@ export interface ChartDefinition {
 }
 
 // ---------------------------------------------------------------------------
+// /charts/wind-rose  (Phase 4 wind rose chart)
+// ---------------------------------------------------------------------------
+
+export interface BeaufortCategory {
+  beaufort: number;
+  label: string;
+}
+
+export interface WindRoseData {
+  directions: string[];
+  categories: BeaufortCategory[];
+  bins: number[][];
+  totalRecords: number;
+  calmPercentage: number;
+}
+
+// ---------------------------------------------------------------------------
 // /charts/config  (Phase 2 configurable charts)
 // ---------------------------------------------------------------------------
 

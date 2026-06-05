@@ -25,8 +25,9 @@ import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useArchive, useClimatologyMonthly } from '../../hooks/useWeatherData';
+import { useArchive, useClimatologyMonthly, useWindRose } from '../../hooks/useWeatherData';
 import { ConfigDrivenChart } from './ConfigDrivenChart';
+import { WindRoseChart } from './WindRoseChart';
 import { lttbDownsample } from '../../utils/lttb';
 import type { ChartGroupConfig } from '../../api/types';
 
@@ -187,6 +188,13 @@ export function ConfigDrivenGroup({
   // Climatology mode: any chart in the group uses monthly x-axis grouping
   const isClimatology = group.charts.some((c) => c.xAxisGroupby === 'month');
 
+  // Wind rose mode: any chart in the group has a series with seriesId === 'windRose'
+  const hasWindRose =
+    !isClimatology &&
+    group.charts.some((chart) =>
+      chart.series.some((s) => s.seriesId === 'windRose'),
+    );
+
   // -------------------------------------------------------------------------
   // Archive fetch params (useMemo — prevents infinite re-render loops)
   // -------------------------------------------------------------------------
@@ -262,9 +270,10 @@ export function ConfigDrivenGroup({
   ]);
 
   // -------------------------------------------------------------------------
-  // Data fetching (both hooks called unconditionally — Rules of Hooks)
+  // Data fetching (all hooks called unconditionally — Rules of Hooks)
   // Pass undefined to useArchive when in climatology mode to prevent a fetch.
   // The hook treats undefined params as "skip" (returns empty/null gracefully).
+  // useWindRose is skipped unless this group has a windRose series and is not climatology.
   // -------------------------------------------------------------------------
 
   const archiveResult = useArchive(
@@ -272,6 +281,16 @@ export function ConfigDrivenGroup({
     { skip: isClimatology },
   );
   const climatologyResult = useClimatologyMonthly();
+
+  // Wind rose params: reuse the same date range computed for archive data
+  const windRoseParams = useMemo(() => {
+    if (!hasWindRose || !archiveParams) return undefined;
+    return { from: archiveParams.from, to: archiveParams.to };
+  }, [hasWindRose, archiveParams]);
+
+  const windRoseResult = useWindRose(windRoseParams, {
+    skip: !hasWindRose,
+  });
 
   // -------------------------------------------------------------------------
   // Data transformation (useMemo to avoid re-computation on unrelated renders)
@@ -590,22 +609,51 @@ export function ConfigDrivenGroup({
           </div>
         ) : (
           /* ---------------------------------------------------------------- */
-          /* Chart view: one ConfigDrivenChart per chart in the group          */
+          /* Chart view: one chart per chart in the group.                    */
+          /* Wind rose charts render as WindRoseChart; others as ConfigDrivenChart. */
           /* ---------------------------------------------------------------- */
           <div className="flex flex-col gap-6">
-            {group.charts.map((chart) => (
-              <ConfigDrivenChart
-                key={chart.chartId}
-                config={chart}
-                data={chartRenderData}
-                xKey={xKey}
-                xFormatter={xFormatter}
-                globalColors={globalColors}
-                globalType={globalType}
-                height={300}
-                reducedMotion={reducedMotion}
-              />
-            ))}
+            {group.charts.map((chart) => {
+              const isWindRoseChart = chart.series.some(
+                (s) => s.seriesId === 'windRose',
+              );
+
+              if (isWindRoseChart) {
+                if (!windRoseResult.data) {
+                  // Wind rose data still loading or unavailable — show skeleton
+                  return (
+                    <TileSkeleton key={chart.chartId} className="h-[300px]" />
+                  );
+                }
+                const windRoseSeries = chart.series.find(
+                  (s) => s.seriesId === 'windRose',
+                );
+                const beaufortColors = windRoseSeries?.beaufortColors ?? {};
+                return (
+                  <WindRoseChart
+                    key={chart.chartId}
+                    data={windRoseResult.data}
+                    beaufortColors={beaufortColors}
+                    height={300}
+                    reducedMotion={reducedMotion}
+                  />
+                );
+              }
+
+              return (
+                <ConfigDrivenChart
+                  key={chart.chartId}
+                  config={chart}
+                  data={chartRenderData}
+                  xKey={xKey}
+                  xFormatter={xFormatter}
+                  globalColors={globalColors}
+                  globalType={globalType}
+                  height={300}
+                  reducedMotion={reducedMotion}
+                />
+              );
+            })}
           </div>
         )}
       </div>

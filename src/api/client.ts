@@ -33,6 +33,7 @@ import type {
   MeteorShowerData,
   PositionsSnapshot,
   ChartsConfigData,
+  WindRoseData,
 } from './types';
 
 // ---------------------------------------------------------------------------
@@ -352,4 +353,23 @@ export function getAlmanacPositions(
   signal?: AbortSignal,
 ): Promise<ApiResponse<PositionsSnapshot>> {
   return fetchApi<ApiResponse<PositionsSnapshot>>('/almanac/positions', {}, signal);
+}
+
+// ---------------------------------------------------------------------------
+// GET /charts/wind-rose
+// ---------------------------------------------------------------------------
+
+export interface WindRoseParams {
+  from?: string;
+  to?: string;
+}
+
+export function getWindRose(
+  params?: WindRoseParams,
+  signal?: AbortSignal,
+): Promise<ApiResponse<WindRoseData>> {
+  const p: Record<string, string> = {};
+  if (params?.from) p['from'] = params.from;
+  if (params?.to) p['to'] = params.to;
+  return fetchApi<ApiResponse<WindRoseData>>('/charts/wind-rose', Object.keys(p).length ? p : undefined, signal);
 }
