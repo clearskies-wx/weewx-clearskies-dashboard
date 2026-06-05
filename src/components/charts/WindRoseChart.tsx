@@ -181,6 +181,7 @@ function WindRoseSvg({
   titleId,
 }: WindRoseSvgProps) {
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
+  const [focusedKey, setFocusedKey] = useState<string | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
   const cx = size / 2;
@@ -249,8 +250,11 @@ function WindRoseSvg({
     setTooltip(null);
   }, []);
 
-  // Build arc path segments for each direction × category combination
+  // Build arc path segments for each direction × category combination.
+  // Also track path data for focused segment so we can draw a focus ring.
   const segments: React.ReactNode[] = [];
+  let focusedPathD: string | null = null;
+
   data.directions.forEach((direction, dirIndex) => {
     const dirBin = data.bins[dirIndex];
     if (!dirBin) return;
@@ -275,9 +279,16 @@ function WindRoseSvg({
       const pathD = describeArc(cx, cy, innerR, outerR, startAngle, endAngle);
       if (!pathD) return;
 
+      const segmentKey = `${dirIndex}-${catIndex}`;
+
+      // Capture the path for the currently-focused segment focus ring
+      if (focusedKey === segmentKey) {
+        focusedPathD = pathD;
+      }
+
       segments.push(
         <path
-          key={`${dirIndex}-${catIndex}`}
+          key={segmentKey}
           d={pathD}
           fill={color}
           stroke="var(--background)"
@@ -285,9 +296,12 @@ function WindRoseSvg({
           tabIndex={0}
           role="img"
           aria-label={`${direction}: ${category.label} ${pct.toFixed(1)}%`}
+          // Do NOT suppress outline globally — browser outline is suppressed only via
+          // CSS :focus-visible is not available on SVG paths, so we render a custom
+          // focus ring path in the focusRing layer below.
           style={{
             cursor: 'pointer',
-            outline: 'none',
+            outline: 'none', // replaced by explicit focus ring rendered below
             transition: reducedMotion ? 'none' : 'opacity 0.15s ease',
           }}
           onPointerEnter={(e) =>
@@ -296,6 +310,7 @@ function WindRoseSvg({
           onPointerMove={handlePointerMove}
           onPointerLeave={handlePointerLeave}
           onFocus={(e) => {
+            setFocusedKey(segmentKey);
             const rect = e.currentTarget.getBoundingClientRect();
             const svgRect = svgRef.current?.getBoundingClientRect();
             if (!svgRect) return;
@@ -307,7 +322,10 @@ function WindRoseSvg({
               y: rect.top + rect.height / 2 - svgRect.top,
             });
           }}
-          onBlur={() => setTooltip(null)}
+          onBlur={() => {
+            setFocusedKey(null);
+            setTooltip(null);
+          }}
         />,
       );
     });
@@ -424,6 +442,21 @@ function WindRoseSvg({
 
         {/* Arc segments — rendered above gridlines */}
         {segments}
+
+        {/* Focus ring: rendered on top of segments when a segment has keyboard focus.
+            SVG <path> elements cannot use CSS :focus-visible with outline replacement,
+            so we render an explicit highlight path to satisfy WCAG 2.4.7 Focus Visible.
+            The ring uses the same path geometry with a contrasting stroke. */}
+        {focusedPathD && (
+          <path
+            d={focusedPathD}
+            fill="none"
+            stroke="var(--ring)"
+            strokeWidth={2.5}
+            aria-hidden="true"
+            pointerEvents="none"
+          />
+        )}
 
         {/* Center calm percentage */}
         <text
