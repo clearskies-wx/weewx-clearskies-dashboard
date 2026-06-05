@@ -32,13 +32,21 @@ const AERIS_TO_WMO: Record<string, number> = {
  * - null/undefined → null
  * - number → returned as-is (already WMO)
  * - string → strip leading colons, look up in Aeris map; null if not found
+ *
+ * Aeris codes use the format "[modifier]::[weather_type]" — e.g. "PA::F"
+ * (Patchy Fog), "::SC" (Scattered Clouds). Modifiers (PA, SH, IN, etc.)
+ * are not weather types. We scan all non-empty segments for the first
+ * one that maps to a WMO code.
  */
 export function toWmoCode(code: number | string | null | undefined): number | null {
   if (code == null) return null;
   if (typeof code === 'number') return code;
   const stripped = code.replace(/^:+/, '');
-  const segments = stripped.split(':').map(s => s.replace(/^[+-]/, ''));
+  const segments = stripped.split(':').map(s => s.replace(/^[+-]/, '')).filter(Boolean);
   if (segments.some(s => s === 'T' || s === 'TW')) return 95;
-  const mapped = AERIS_TO_WMO[segments[0]];
-  return mapped !== undefined ? mapped : null;
+  for (const seg of segments) {
+    const mapped = AERIS_TO_WMO[seg];
+    if (mapped !== undefined) return mapped;
+  }
+  return null;
 }
