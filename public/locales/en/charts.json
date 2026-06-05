@@ -59,5 +59,7 @@
   "averageClimateNoData": "Not enough historical data to compute averages.",
   "averageClimateSeriesAvgTemp": "Avg Temperature",
   "ariaMonthlyChartFigure": "Daily temperature for {{monthName}} {{year}}",
-  "ariaAnnualChartFigure": "Daily temperature for {{year}}"
+  "ariaAnnualChartFigure": "Daily temperature for {{year}}",
+  "exportPng": "Export as PNG",
+  "exportCsv": "Export as CSV"
 }

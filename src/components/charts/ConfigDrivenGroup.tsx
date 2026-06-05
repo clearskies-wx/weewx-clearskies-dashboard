@@ -21,7 +21,7 @@
 //
 // T4.5: pageContent rendered as Markdown via react-markdown + remark-gfm.
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -29,6 +29,7 @@ import { useArchive, useClimatologyMonthly, useWindRose } from '../../hooks/useW
 import { ConfigDrivenChart } from './ConfigDrivenChart';
 import { WindRoseChart } from './WindRoseChart';
 import { lttbDownsample } from '../../utils/lttb';
+import { exportChartAsCsv, exportChartAsPng, buildExportFilename } from '../../utils/chart-export';
 import type { ChartGroupConfig } from '../../api/types';
 
 // ---------------------------------------------------------------------------
@@ -180,6 +181,9 @@ export function ConfigDrivenGroup({
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const [showTable, setShowTable] = useState(false);
+
+  // Ref to the chart rendering container — used by PNG export to locate the SVG.
+  const chartContainerRef = useRef<HTMLDivElement>(null);
 
   // -------------------------------------------------------------------------
   // Data mode detection
@@ -412,6 +416,36 @@ export function ConfigDrivenGroup({
   );
 
   // -------------------------------------------------------------------------
+  // Export handlers
+  // -------------------------------------------------------------------------
+
+  function handleCsvExport(): void {
+    // Build column list: xKey first, then each visible series.
+    const xLabel =
+      xKey === 'timestamp' ? t('tableColumnTime') : t('tableColumnMonth');
+    const columns: { key: string; label: string }[] = [
+      { key: xKey, label: xLabel },
+      ...allVisibleSeries.map((s) => ({ key: s.seriesId, label: s.name ?? s.seriesId })),
+    ];
+    const title = group.title ?? 'Chart';
+    // Use full (non-downsampled) chartData so the CSV includes every data point.
+    exportChartAsCsv(
+      chartData as Record<string, unknown>[],
+      columns,
+      buildExportFilename(title, 'csv'),
+    );
+  }
+
+  function handlePngExport(): void {
+    const container = chartContainerRef.current;
+    if (!container) return;
+    const title = group.title ?? 'Chart';
+    // exportChartAsPng is async but we don't need to await it here —
+    // errors are swallowed silently (download either starts or it doesn't).
+    void exportChartAsPng(container, buildExportFilename(title, 'png'));
+  }
+
+  // -------------------------------------------------------------------------
   // Render
   // -------------------------------------------------------------------------
 
@@ -523,8 +557,64 @@ export function ConfigDrivenGroup({
       {/* ------------------------------------------------------------------ */}
 
       <div aria-busy={isLoading || undefined}>
-        {/* Toggle button row */}
-        <div className="flex justify-end mb-2">
+        {/* Toggle + export button row */}
+        <div className="flex justify-end items-center gap-2 mb-2">
+          {/* PNG export — icon-only button; aria-label satisfies §5.4 */}
+          <button
+            type="button"
+            onClick={handlePngExport}
+            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            aria-label={t('exportPng')}
+            title={t('exportPng')}
+          >
+            {/* Download-arrow icon — decorative; aria-hidden per §5.5 */}
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          </button>
+
+          {/* CSV export — icon-only button; aria-label satisfies §5.4 */}
+          <button
+            type="button"
+            onClick={handleCsvExport}
+            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            aria-label={t('exportCsv')}
+            title={t('exportCsv')}
+          >
+            {/* CSV / file-lines icon — decorative; aria-hidden per §5.5 */}
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+            </svg>
+          </button>
+
+          {/* Chart / table toggle */}
           <button
             type="button"
             onClick={() => setShowTable((prev) => !prev)}
@@ -611,8 +701,9 @@ export function ConfigDrivenGroup({
           /* ---------------------------------------------------------------- */
           /* Chart view: one chart per chart in the group.                    */
           /* Wind rose charts render as WindRoseChart; others as ConfigDrivenChart. */
+          /* ref is used by PNG export to locate the chart SVG.              */
           /* ---------------------------------------------------------------- */
-          <div className="flex flex-col gap-6">
+          <div ref={chartContainerRef} className="flex flex-col gap-6">
             {group.charts.map((chart) => {
               const isWindRoseChart = chart.series.some(
                 (s) => s.seriesId === 'windRose',
