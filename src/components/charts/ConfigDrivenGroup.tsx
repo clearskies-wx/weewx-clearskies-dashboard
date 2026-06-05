@@ -468,6 +468,25 @@ export function ConfigDrivenGroup({
           role="radiogroup"
           aria-label={t('ariaRangeGroupLabel')}
           className="flex flex-wrap gap-2"
+          onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
+            const ranges = group.rollingRanges;
+            const currentIdx = ranges.indexOf(selectedRange);
+            let nextIdx = currentIdx;
+
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+              e.preventDefault();
+              nextIdx = (currentIdx + 1) % ranges.length;
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+              e.preventDefault();
+              nextIdx = (currentIdx - 1 + ranges.length) % ranges.length;
+            } else {
+              return;
+            }
+
+            setSelectedRange(ranges[nextIdx]);
+            const buttons = e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="radio"]');
+            buttons[nextIdx]?.focus();
+          }}
         >
           {group.rollingRanges.map((range) => {
             const isSelected = range === selectedRange;
@@ -477,6 +496,7 @@ export function ConfigDrivenGroup({
                 type="button"
                 role="radio"
                 aria-checked={isSelected}
+                tabIndex={isSelected ? 0 : -1}
                 onClick={() => setSelectedRange(range)}
                 className={[
                   'min-h-[44px] md:min-h-0 px-3 py-1.5 rounded-md border text-sm',

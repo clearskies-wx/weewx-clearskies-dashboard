@@ -79,29 +79,6 @@ const INLINE_STYLE_PROPS: ReadonlyArray<string> = [
   'dominant-baseline',
 ];
 
-function inlineSvgStyles(svgElement: SVGElement): void {
-  const allElements = svgElement.querySelectorAll('*');
-  allElements.forEach((el) => {
-    const htmlEl = el as HTMLElement;
-    const computed = window.getComputedStyle(htmlEl);
-    const inlineStyle: string[] = [];
-    for (const prop of INLINE_STYLE_PROPS) {
-      const value = computed.getPropertyValue(prop);
-      // Skip empty / browser-default "none" for fill on non-filled elements
-      // but keep explicit values (including 'none' when intentionally set).
-      if (value !== '') {
-        inlineStyle.push(`${prop}:${value}`);
-      }
-    }
-    // Merge with any existing inline style — existing wins (it's more specific)
-    const existing = htmlEl.getAttribute('style') ?? '';
-    const merged = existing ? `${existing};${inlineStyle.join(';')}` : inlineStyle.join(';');
-    if (merged) {
-      htmlEl.setAttribute('style', merged);
-    }
-  });
-}
-
 /**
  * Export the chart(s) inside `containerElement` as a PNG file.
  *
