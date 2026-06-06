@@ -270,8 +270,8 @@ export function MonthlyAveragesCard({
                 yAxisId="rain"
                 dataKey="avgRainfall"
                 name={t('climatology.series.avgRainfall')}
-                fill="#3b82f6"
-                fillOpacity={0.4}
+                fill="#93c5fd"
+                fillOpacity={0.55}
                 radius={[2, 2, 0, 0]}
                 legendType="rect"
               />
@@ -291,7 +291,7 @@ export function MonthlyAveragesCard({
                 type="monotone"
                 dataKey="avgLow"
                 name={t('climatology.series.avgLow')}
-                stroke="#93c5fd"
+                stroke="#1d4ed8"
                 strokeWidth={2}
                 dot={<DiamondDot />}
                 activeDot={{ r: 5 }}
