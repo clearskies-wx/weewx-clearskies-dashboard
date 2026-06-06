@@ -274,8 +274,7 @@ function buildPlanetList(
   const sunsetMs = sunsetIso ? new Date(sunsetIso).getTime() : null;
 
   const visible = all.filter((p) => {
-    if (effectiveQuality(p) === 'not_visible') return false;
-    // Exclude planets that set before sunset (not visible tonight)
+    // Exclude planets that set before sunset (below horizon all night)
     if (p.set && sunsetMs !== null) {
       const setMs = new Date(p.set).getTime();
       if (setMs <= sunsetMs) return false;
@@ -850,6 +849,7 @@ export function PlanetTimelineCard({
       case 'good':      return t('planets.conditionsGood');
       case 'fair':      return t('planets.conditionsFair');
       case 'poor':      return t('planets.conditionsPoor');
+      case 'not_visible': return t('planets.conditionsNotVisible', 'Overcast — viewing unlikely');
       default:          return '';
     }
   }
