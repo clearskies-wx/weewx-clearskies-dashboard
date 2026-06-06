@@ -208,21 +208,47 @@ function naturalPosition(direction: string | null, altitude: number | null): str
 function formatViewingWindow(
   start: string | null | undefined,
   end: string | null | undefined,
+  sunsetIso: string | null | undefined,
   sunriseIso: string | null | undefined,
   tz: string,
   locale: string,
   t: (k: string) => string,
 ): string {
   if (!start && !end) return '';
-  const startStr = start ? formatTimeOnly(start, tz, locale) : '—';
-  if (end && sunriseIso) {
-    const endMs = new Date(end).getTime();
-    const srMs  = new Date(sunriseIso).getTime();
-    if (Math.abs(endMs - srMs) < 30 * 60_000) {
-      return `${startStr} – ${t('planets.sunrise')}`;
+
+  // Clamp start to sunset (don't show afternoon times for planets already up)
+  let effectiveStart = start ? new Date(start) : null;
+  if (effectiveStart && sunsetIso) {
+    const sunsetMs = new Date(sunsetIso).getTime();
+    if (effectiveStart.getTime() < sunsetMs) {
+      effectiveStart = new Date(sunsetMs);
     }
   }
-  const endStr = end ? formatTimeOnly(end, tz, locale) : '—';
+
+  // Clamp end to sunrise
+  let effectiveEnd = end ? new Date(end) : null;
+  let endIsSunrise = false;
+  if (effectiveEnd && sunriseIso) {
+    const srMs = new Date(sunriseIso).getTime();
+    let srAdj = srMs;
+    if (effectiveStart && srAdj < effectiveStart.getTime()) {
+      srAdj += 24 * 60 * 60 * 1000;
+    }
+    if (effectiveEnd.getTime() >= srAdj - 30 * 60_000) {
+      endIsSunrise = true;
+    }
+    if (effectiveEnd.getTime() > srAdj) {
+      effectiveEnd = new Date(srAdj);
+    }
+  }
+
+  const startStr = effectiveStart
+    ? formatTimeOnly(effectiveStart.toISOString(), tz, locale)
+    : '—';
+  if (endIsSunrise) return `${startStr} – ${t('planets.sunrise')}`;
+  const endStr = effectiveEnd
+    ? formatTimeOnly(effectiveEnd.toISOString(), tz, locale)
+    : '—';
   return `${startStr} – ${endStr}`;
 }
 
@@ -230,7 +256,10 @@ function formatViewingWindow(
 // Build a deduplicated, sorted planet list from PlanetsVisible
 // ---------------------------------------------------------------------------
 
-function buildPlanetList(planets: PlanetsVisible): PlanetEntry[] {
+function buildPlanetList(
+  planets: PlanetsVisible,
+  sunsetIso: string | null,
+): PlanetEntry[] {
   const seen = new Set<string>();
   const all: PlanetEntry[] = [];
 
@@ -242,10 +271,17 @@ function buildPlanetList(planets: PlanetsVisible): PlanetEntry[] {
     }
   }
 
-  // Filter out planets that are explicitly not visible.
-  // Use effectiveQuality (BFF quality → magnitude fallback) so the filter
-  // works even when BFF enrichment is unavailable.
-  const visible = all.filter((p) => effectiveQuality(p) !== 'not_visible');
+  const sunsetMs = sunsetIso ? new Date(sunsetIso).getTime() : null;
+
+  const visible = all.filter((p) => {
+    if (effectiveQuality(p) === 'not_visible') return false;
+    // Exclude planets that set before sunset (not visible tonight)
+    if (p.set && sunsetMs !== null) {
+      const setMs = new Date(p.set).getTime();
+      if (setMs <= sunsetMs) return false;
+    }
+    return true;
+  });
 
   // Sort by rise time (planets with no rise time go to the end)
   visible.sort((a, b) => {
@@ -285,12 +321,13 @@ function InfoIcon() {
 interface PlanetColumnProps {
   planet: PlanetEntry;
   stationTz: string;
+  sunsetIso: string | null;
   sunriseIso: string | null;
   locale: string;
   t: (key: string) => string;
 }
 
-function PlanetColumn({ planet, stationTz, sunriseIso, locale, t }: PlanetColumnProps) {
+function PlanetColumn({ planet, stationTz, sunsetIso, sunriseIso, locale, t }: PlanetColumnProps) {
   const name = planet.name;
   const nameLower = name.toLowerCase();
   const imgSrc = `/images/planets/${nameLower}.webp`;
@@ -299,11 +336,12 @@ function PlanetColumn({ planet, stationTz, sunriseIso, locale, t }: PlanetColumn
   const qLabel = qualityLabel(quality, t);
   const qClass = qualityTextClass(quality);
 
-  // Use BFF clear window if available, otherwise fall back to rise/set times
+  // Use BFF clear window if available, otherwise fall back to rise/set times.
+  // Clamp to sunset–sunrise so we don't show afternoon times.
   const windowText = formatViewingWindow(
     planet.clearWindowStart ?? planet.rise,
     planet.clearWindowEnd ?? planet.set,
-    sunriseIso, stationTz, locale, t,
+    sunsetIso, sunriseIso, stationTz, locale, t,
   );
   const posText = naturalPosition(planet.direction, planet.altitude);
 
@@ -486,22 +524,23 @@ function GanttTimeline({ planets, almanac, stationTz }: GanttTimelineProps) {
     gradId: string;
   }
 
-  const bars: BarData[] = [];
-  planets.forEach((planet, idx) => {
-    const barY   = FIRST_BAR_Y + idx * BAR_GAP;
+  // Collect bar candidates, then assign consecutive Y positions
+  // so invisible planets don't leave gaps.
+  interface BarCandidate {
+    planet: PlanetEntry;
+    barX1: number;
+    barX2: number;
+    color: string;
+    gradId: string;
+  }
+
+  const candidates: BarCandidate[] = [];
+  for (const planet of planets) {
     const rise   = parseISO(planet.rise);
     const set    = parseISO(planet.set);
     const color  = getPlanetColor(planet.name);
     const gradId = `plt-bar-${planet.name.toLowerCase()}`;
 
-    // When both rise and set are null the planet is above the horizon all
-    // night (no rise/set event during this window) — draw a full-width bar.
-    // Only skip if both are null AND the planet is explicitly not visible;
-    // that case is handled by it not being in the planets array at all.
-
-    // Clamp rise/set to the sunset→sunrise window.
-    // If rise is null, assume the planet was already up at sunset (use window start).
-    // If set is null, assume the planet stays up until sunrise (use window end).
     const barStart = rise
       ? new Date(Math.max(rise.getTime(), sunsetNN.getTime()))
       : sunsetNN;
@@ -509,17 +548,21 @@ function GanttTimeline({ planets, almanac, stationTz }: GanttTimelineProps) {
       ? new Date(Math.min(set.getTime(), sunriseDate.getTime()))
       : sunriseDate;
 
-    if (barEnd <= barStart) return; // fully outside window (e.g. planet set before sunset)
+    if (barEnd <= barStart) continue;
 
-    bars.push({
+    candidates.push({
       planet,
       barX1: timeToX(barStart),
       barX2: timeToX(barEnd),
-      barY,
       color,
       gradId,
     });
-  });
+  }
+
+  const bars: BarData[] = candidates.map((c, idx) => ({
+    ...c,
+    barY: FIRST_BAR_Y + idx * BAR_GAP,
+  }));
 
   // ---- Build accessible description ----
   const descParts = bars.map(
@@ -787,7 +830,8 @@ export function PlanetTimelineCard({
     );
   }
 
-  const planetList = buildPlanetList(planets!);
+  const sunsetIso = almanac?.sun.set ?? null;
+  const planetList = buildPlanetList(planets!, sunsetIso);
 
   // Derive overall viewing conditions from best planet quality (BFF or fallback)
   const qualityRank: Record<string, number> = {
@@ -822,7 +866,7 @@ export function PlanetTimelineCard({
 
   return (
     <Card footprint="full">
-      <CardHeader className="flex items-center justify-between">
+      <CardHeader className="flex items-center justify-between" style={{ flexWrap: 'wrap' }}>
         <CardTitle as="h2">{t('planets.title')}</CardTitle>
         {overallText && (
           <span className={`flex items-center gap-[0.25rem] text-[0.75rem] font-semibold ${overallClass}`}>
@@ -855,6 +899,7 @@ export function PlanetTimelineCard({
               <PlanetColumn
                 planet={planet}
                 stationTz={stationTz}
+                sunsetIso={sunsetIso}
                 sunriseIso={sunriseIso}
                 locale={locale}
                 t={t}
