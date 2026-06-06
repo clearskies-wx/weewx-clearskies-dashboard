@@ -404,13 +404,13 @@ function EclipseColumn({ entry, stationTz, locale, onBadgeClick }: EclipseColumn
         />
       </div>
 
-      {/* Eclipse image — scaled up within overflow-hidden to crop dark sky border */}
-      <div className="w-full rounded overflow-hidden" style={{ aspectRatio: '4/3' }}>
+      {/* Eclipse image — zoomed within overflow-hidden to crop dark sky border */}
+      <div className="w-full rounded overflow-hidden" style={{ aspectRatio: '3/2' }}>
         <img
           src={`/images/eclipses/solar-${entry.type}.webp`}
           alt={imgAlt}
           className="w-full h-full object-cover"
-          style={{ transform: 'scale(1.4)' }}
+          style={{ transform: 'scale(1.5)' }}
           loading="lazy"
         />
       </div>
