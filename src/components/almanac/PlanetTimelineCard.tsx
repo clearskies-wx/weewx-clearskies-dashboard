@@ -171,6 +171,25 @@ function svgTickLabel(date: Date, tz: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// Magnitude-based quality fallback when BFF enrichment is unavailable.
+// Uses apparent magnitude as a rough naked-eye brightness proxy.
+// ---------------------------------------------------------------------------
+
+function qualityFromMagnitude(mag: number | null): PlanetViewingQuality {
+  if (mag === null) return null;
+  if (mag < 0)   return 'excellent';
+  if (mag < 1.5) return 'good';
+  if (mag < 3.5) return 'fair';
+  if (mag < 5.5) return 'poor';
+  return 'not_visible';
+}
+
+function effectiveQuality(planet: PlanetEntry): PlanetViewingQuality {
+  if (planet.viewingQuality) return planet.viewingQuality;
+  return qualityFromMagnitude(planet.magnitude);
+}
+
+// ---------------------------------------------------------------------------
 // Natural-language position (mockup: "In the southwest", "High in the south")
 // ---------------------------------------------------------------------------
 
@@ -223,10 +242,10 @@ function buildPlanetList(planets: PlanetsVisible): PlanetEntry[] {
     }
   }
 
-  // Filter out planets that are not visible (below horizon / not_visible quality)
-  const visible = all.filter(
-    (p) => p.viewingQuality !== 'not_visible' && (p.altitude === null || p.altitude > 0),
-  );
+  // Filter out planets that are explicitly not visible.
+  // Use effectiveQuality (BFF quality → magnitude fallback) so the filter
+  // works even when BFF enrichment is unavailable.
+  const visible = all.filter((p) => effectiveQuality(p) !== 'not_visible');
 
   // Sort by rise time (planets with no rise time go to the end)
   visible.sort((a, b) => {
@@ -276,11 +295,14 @@ function PlanetColumn({ planet, stationTz, sunriseIso, locale, t }: PlanetColumn
   const nameLower = name.toLowerCase();
   const imgSrc = `/images/planets/${nameLower}.webp`;
 
-  const qLabel = qualityLabel(planet.viewingQuality, t);
-  const qClass = qualityTextClass(planet.viewingQuality);
+  const quality = effectiveQuality(planet);
+  const qLabel = qualityLabel(quality, t);
+  const qClass = qualityTextClass(quality);
 
+  // Use BFF clear window if available, otherwise fall back to rise/set times
   const windowText = formatViewingWindow(
-    planet.clearWindowStart, planet.clearWindowEnd,
+    planet.clearWindowStart ?? planet.rise,
+    planet.clearWindowEnd ?? planet.set,
     sunriseIso, stationTz, locale, t,
   );
   const posText = naturalPosition(planet.direction, planet.altitude);
@@ -767,16 +789,15 @@ export function PlanetTimelineCard({
 
   const planetList = buildPlanetList(planets!);
 
-  // Derive overall viewing conditions from best planet quality
+  // Derive overall viewing conditions from best planet quality (BFF or fallback)
   const qualityRank: Record<string, number> = {
     excellent: 4, good: 3, fair: 2, poor: 1, not_visible: 0,
   };
   const bestQuality = planetList.reduce<string | null>((best, p) => {
-    if (!p.viewingQuality) return best;
-    if (!best) return p.viewingQuality;
-    return (qualityRank[p.viewingQuality] ?? 0) > (qualityRank[best] ?? 0)
-      ? p.viewingQuality
-      : best;
+    const q = effectiveQuality(p);
+    if (!q) return best;
+    if (!best) return q;
+    return (qualityRank[q] ?? 0) > (qualityRank[best] ?? 0) ? q : best;
   }, null);
 
   function overallLabel(q: string | null): string {
