@@ -431,9 +431,9 @@ interface GanttTimelineProps {
 const VB_WIDTH  = 1000;
 const VB_HEIGHT = 280;
 
-/** Layout constants — mockup: x=20 to x=980, no Y-axis labels */
-const LEFT_MARGIN  = 20;
-const RIGHT_MARGIN = 980;
+/** Layout constants — small inset so images/bars don't clip at edges */
+const LEFT_MARGIN  = 40;
+const RIGHT_MARGIN = 970;
 const CHART_WIDTH  = RIGHT_MARGIN - LEFT_MARGIN; // 960 SVG units
 const AXIS_Y       = 245;  // Y of the time axis line
 const BAR_HEIGHT   = 16;   // px height of each planet bar
