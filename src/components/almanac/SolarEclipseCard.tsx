@@ -404,12 +404,12 @@ function EclipseColumn({ entry, stationTz, locale, onBadgeClick }: EclipseColumn
         />
       </div>
 
-      {/* Eclipse image — 4:3 aspect, same as lunar card */}
+      {/* Eclipse image — 4:3 container, cover fills width (trims dark bg edges of 1:1 source) */}
       <img
         src={`/images/eclipses/solar-${entry.type}.webp`}
         alt={imgAlt}
         className="w-full rounded"
-        style={{ aspectRatio: '4/3', objectFit: 'contain' }}
+        style={{ aspectRatio: '4/3', objectFit: 'cover' }}
         loading="lazy"
       />
 
