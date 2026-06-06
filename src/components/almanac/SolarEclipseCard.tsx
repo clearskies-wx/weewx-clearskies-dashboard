@@ -386,7 +386,7 @@ function EclipseColumn({ entry, stationTz, locale, onBadgeClick }: EclipseColumn
         : t('solarEclipses.descPartial', 'The Moon will pass in front of the Sun, covering a portion of its disk.');
 
   return (
-    <div className="flex-1 min-w-[220px] flex flex-col gap-2 items-center">
+    <div className="flex flex-col gap-1.5 items-center flex-1 min-w-[200px]">
       {/* Date row: date+day on left, type badge on right */}
       <div className="flex items-start justify-between w-full gap-2">
         <div className="flex flex-col">
@@ -404,12 +404,12 @@ function EclipseColumn({ entry, stationTz, locale, onBadgeClick }: EclipseColumn
         />
       </div>
 
-      {/* Eclipse image — 1:1, object-cover to match lunar card sizing */}
+      {/* Eclipse image — 4:3 aspect, same as lunar card */}
       <img
         src={`/images/eclipses/solar-${entry.type}.webp`}
         alt={imgAlt}
         className="w-full rounded"
-        style={{ aspectRatio: '1/1', objectFit: 'cover' }}
+        style={{ aspectRatio: '4/3', objectFit: 'contain' }}
         loading="lazy"
       />
 
@@ -425,11 +425,7 @@ function EclipseColumn({ entry, stationTz, locale, onBadgeClick }: EclipseColumn
             ) : (
               <EyeSlash size={16} weight="regular" aria-hidden="true" />
             )}
-            <span>
-              {visible
-                ? t('solarEclipses.visible', 'Visible')
-                : t('solarEclipses.notVisible', 'Not Visible')}
-            </span>
+            <span>{entry.visibility}</span>
           </div>
 
           {/* Visibility sub-text */}
@@ -586,7 +582,7 @@ export function SolarEclipseCard({
                   : eclipses.eclipses.slice(0, MAX_COLS);
                 return (
                 <div
-                  className="flex gap-8 pb-2 flex-col md:flex-row"
+                  className="flex flex-col sm:flex-row gap-6 sm:gap-4 flex-wrap"
                   role="list"
                   aria-label={t('solarEclipses.listLabel', 'Upcoming solar eclipses')}
                 >
