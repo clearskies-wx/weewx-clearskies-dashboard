@@ -56,15 +56,18 @@ export interface SolarEclipseCardProps {
 type EclipseType = 'total' | 'annular' | 'partial';
 
 // ---------------------------------------------------------------------------
-// Constants — visibility color palette (ADR-053 5-tier scale)
+// Constants — visibility color classes (theme-aware, ADR-053 5-tier scale)
+//
+// Light theme uses darker shades to pass WCAG AA (≥4.5:1) on white glass card.
+// Dark theme uses vivid shades that pass on dark backgrounds.
 // ---------------------------------------------------------------------------
 
-const VISIBILITY_COLORS: Record<string, string> = {
-  'Fully Visible':     '#22c55e',  // green-500
-  'Mostly Visible':    '#84cc16',  // lime-400
-  'Partially Visible': '#eab308',  // yellow-500
-  'Barely Visible':    '#f97316',  // orange-500
-  'Not Visible':       'var(--muted-foreground)',
+const VISIBILITY_CLASSES: Record<string, string> = {
+  'Fully Visible':     'text-green-700 dark:text-green-400',
+  'Mostly Visible':    'text-lime-700 dark:text-lime-400',
+  'Partially Visible': 'text-amber-700 dark:text-amber-400',
+  'Barely Visible':    'text-orange-700 dark:text-orange-400',
+  'Not Visible':       'text-muted-foreground',
 };
 
 // ---------------------------------------------------------------------------
@@ -144,9 +147,9 @@ function formatEclipseDate(
 // Helper — resolve visibility color (falls back to muted if unknown value)
 // ---------------------------------------------------------------------------
 
-function visibilityColor(visibility: string | null | undefined): string {
-  if (!visibility) return 'var(--muted-foreground)';
-  return VISIBILITY_COLORS[visibility] ?? 'var(--muted-foreground)';
+function visibilityClass(visibility: string | null | undefined): string {
+  if (!visibility) return 'text-muted-foreground';
+  return VISIBILITY_CLASSES[visibility] ?? 'text-muted-foreground';
 }
 
 // ---------------------------------------------------------------------------
@@ -356,7 +359,7 @@ function EclipseColumn({ entry, stationTz, locale, onBadgeClick }: EclipseColumn
   const hasContactTimes = entry.contactTimes != null;
   const hasVisibility = entry.visibility != null && hasContactTimes;
 
-  const visColor = visibilityColor(entry.visibility);
+  const visClass = visibilityClass(entry.visibility);
   const visible = isVisible(entry.visibility);
 
   // Eclipse type label (capitalized)
@@ -401,12 +404,12 @@ function EclipseColumn({ entry, stationTz, locale, onBadgeClick }: EclipseColumn
         />
       </div>
 
-      {/* Eclipse image — 4:3, object-fit contain */}
+      {/* Eclipse image — 1:1, object-cover to match lunar card sizing */}
       <img
         src={`/images/eclipses/solar-${entry.type}.webp`}
         alt={imgAlt}
-        className="w-full"
-        style={{ aspectRatio: '4/3', objectFit: 'contain' }}
+        className="w-full rounded"
+        style={{ aspectRatio: '1/1', objectFit: 'cover' }}
         loading="lazy"
       />
 
@@ -414,8 +417,7 @@ function EclipseColumn({ entry, stationTz, locale, onBadgeClick }: EclipseColumn
       {hasVisibility && (
         <>
           <div
-            className="flex items-center justify-center gap-1.5 text-[0.85rem] font-semibold w-full"
-            style={{ color: visColor }}
+            className={`flex items-center justify-center gap-1.5 text-[0.85rem] font-semibold w-full ${visClass}`}
             aria-label={`${t('solarEclipses.visibility', 'Visibility')}: ${entry.visibility}`}
           >
             {visible ? (
@@ -433,8 +435,7 @@ function EclipseColumn({ entry, stationTz, locale, onBadgeClick }: EclipseColumn
           {/* Visibility sub-text */}
           {entry.visibility && (
             <div
-              className="text-[0.75rem] text-center leading-tight -mt-1"
-              style={{ color: visColor }}
+              className={`text-[0.75rem] text-center leading-tight -mt-1 ${visClass}`}
               aria-hidden="true"
             >
               {visibilitySubText(entry.visibility, t)}

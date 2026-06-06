@@ -4,6 +4,7 @@
 
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Eye, EyeSlash } from '@phosphor-icons/react';
 import {
   Card,
   CardHeader,
@@ -34,14 +35,14 @@ export interface MeteorShowerCardProps {
  * Icon fill also uses this color so the eye icon matches the quality text (non-color-only
  * signal: both icon and text label carry the quality information, satisfying WCAG 1.4.1).
  */
-function viewingQualityColor(quality: MeteorShowerEntry['viewingQuality']): string {
+function viewingQualityClass(quality: MeteorShowerEntry['viewingQuality']): string {
   switch (quality) {
-    case 'Excellent':    return '#22c55e';
-    case 'Good':         return '#84cc16';
-    case 'Fair':         return '#eab308';
-    case 'Poor':         return '#f97316';
-    case 'Not Visible':  return '#ef4444';
-    default:             return 'currentColor';
+    case 'Excellent':    return 'text-green-700 dark:text-green-400';
+    case 'Good':         return 'text-lime-700 dark:text-lime-400';
+    case 'Fair':         return 'text-amber-700 dark:text-amber-400';
+    case 'Poor':         return 'text-orange-700 dark:text-orange-400';
+    case 'Not Visible':  return 'text-red-700 dark:text-red-400';
+    default:             return 'text-muted-foreground';
   }
 }
 
@@ -154,22 +155,6 @@ function ShootingStarIcon({ className }: { className?: string }) {
   );
 }
 
-/** Eye icon (Phosphor eye regular) — used for "Visibility" */
-function EyeIcon({ className, color }: { className?: string; color?: string }) {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 256 256"
-      fill={color ?? 'currentColor'}
-      aria-hidden="true"
-      focusable="false"
-      className={className}
-    >
-      <path d="M247.31,124.76c-.35-.79-8.82-19.58-27.65-38.41C194.57,61.26,162.88,48,128,48S61.43,61.26,36.34,86.35C17.51,105.18,9,124,8.69,124.76a8,8,0,0,0,0,6.5c.35.79,8.82,19.57,27.65,38.4C61.43,194.74,93.12,208,128,208s66.57-13.26,91.66-38.34c18.83-18.83,27.3-37.61,27.65-38.4A8,8,0,0,0,247.31,124.76ZM128,192c-30.78,0-57.67-11.19-79.93-33.25A133.47,133.47,0,0,1,25,128,133.33,133.33,0,0,1,48.07,97.25C70.33,75.19,97.22,64,128,64s57.67,11.19,79.93,33.25A133.46,133.46,0,0,1,231.05,128C223.84,141.46,192.43,192,128,192Zm0-112a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Z" />
-    </svg>
-  );
-}
 
 /** Info icon (Phosphor info regular) — used in the footer note */
 function InfoIcon() {
@@ -197,7 +182,8 @@ interface ShowerColumnProps {
 }
 
 function ShowerColumn({ shower }: ShowerColumnProps) {
-  const qualityColor = viewingQualityColor(shower.viewingQuality ?? null);
+  const qClass = viewingQualityClass(shower.viewingQuality ?? null);
+  const isNotVisible = shower.viewingQuality === 'Not Visible';
   const imageSrc = shower.image
     ? `/images/meteors/${shower.image}`
     : null;
@@ -299,14 +285,17 @@ function ShowerColumn({ shower }: ShowerColumnProps) {
          * quality value text also carry the quality label — no color-only signal
          * (WCAG 1.4.1 satisfied).
          */}
-        <EyeIcon color={qualityColor} />
+        {isNotVisible
+          ? <EyeSlash size={16} weight="regular" aria-hidden="true" className={qClass} />
+          : <Eye size={16} weight="regular" aria-hidden="true" className={qClass} />
+        }
         <div className="flex flex-col gap-0 leading-none">
           <span className="text-[0.7rem] uppercase tracking-wide text-muted-foreground font-semibold leading-[1.2]">
             Visibility
           </span>
           <span
-            className="text-[0.75rem] font-semibold leading-[1.3]"
-            style={{ fontFamily: 'var(--font-display)', color: qualityColor }}
+            className={`text-[0.75rem] font-semibold leading-[1.3] ${qClass}`}
+            style={{ fontFamily: 'var(--font-display)' }}
           >
             {shower.viewingQuality ?? '—'}
           </span>
