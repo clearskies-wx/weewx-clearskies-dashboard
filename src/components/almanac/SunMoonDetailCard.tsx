@@ -366,10 +366,11 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
   ): string {
     const from = arcPoint(fromPct, cx, cy, rx, ry);
     const to = arcPoint(toPct, cx, cy, rx, ry);
-    const span = toPct - fromPct;
-    const largeArc = span > 0.5 ? 1 : 0;
-    // sweep-flag=1 matches ellipsePath (clockwise in SVG = upward arc)
-    return `M ${from.x} ${from.y} A ${rx} ${ry} 0 ${largeArc} 1 ${to.x} ${to.y}`;
+    // Partial arcs on the upper semi-ellipse: always large-arc=0 (max span
+    // is 180°) and sweep=0 (counterclockwise in SVG = upward path).
+    // The full arc (ellipsePath) uses sweep=1 only because its endpoints are
+    // diametrically opposite, making the two sweep directions equivalent.
+    return `M ${from.x} ${from.y} A ${rx} ${ry} 0 0 0 ${to.x} ${to.y}`;
   }
 
   // Determine if sun/moon are currently above the horizon
