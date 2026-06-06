@@ -40,18 +40,25 @@
 
   "planets": {
     "title": "Tonight's Planet Outlook",
+    "subtitle": "Clear skies make for great viewing. Here's when each planet will be at its best.",
+    "overallConditions": "Viewing Conditions",
     "empty": "No planets visible tonight.",
     "listLabel": "Planet list",
     "timelineLabel": "Planet visibility timeline",
     "conjunctionsLabel": "Planetary conjunctions",
     "viewingQuality": "Viewing quality",
     "bestTime": "Best viewing time",
+    "sunrise": "Sunrise",
     "qualityExcellent": "Excellent View",
     "qualityGood": "Good View",
     "qualityFair": "Fair View",
     "qualityPoor": "Poor View",
     "qualityNotVisible": "Not Visible",
-    "footNote": "Times shown in local station time. Visibility varies based on seeing conditions and sky darkness."
+    "conditionsExcellent": "Excellent Viewing Conditions",
+    "conditionsGood": "Good Viewing Conditions",
+    "conditionsFair": "Fair Viewing Conditions",
+    "conditionsPoor": "Poor Viewing Conditions",
+    "footNote": "Times shown are local time. Planets rise and set at different times throughout the week."
   },
 
   "meteorShowers": {

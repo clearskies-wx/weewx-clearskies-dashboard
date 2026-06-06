@@ -64,6 +64,20 @@ function getPlanetColor(name: string): string {
   return PLANET_BAR_COLOR[name.toLowerCase()] ?? '#94a3b8';
 }
 
+const PLANET_CHART_IMG_SIZE: Record<string, number> = {
+  saturn:  60,
+  jupiter: 40,
+  mars:    32,
+  venus:   28,
+  uranus:  28,
+  neptune: 28,
+  mercury: 22,
+};
+
+function getChartImgSize(name: string): number {
+  return PLANET_CHART_IMG_SIZE[name.toLowerCase()] ?? 28;
+}
+
 // ---------------------------------------------------------------------------
 // Viewing quality — ADR-053 unified 5-tier color scale
 // PlanetEntry.viewingQuality uses lowercase snake_case values.
@@ -157,6 +171,43 @@ function svgTickLabel(date: Date, tz: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// Natural-language position (mockup: "In the southwest", "High in the south")
+// ---------------------------------------------------------------------------
+
+function naturalPosition(direction: string | null, altitude: number | null): string {
+  if (!direction) return '';
+  const dir = direction.toLowerCase();
+  if (altitude !== null && altitude > 45) return `High in the ${dir}`;
+  if (altitude !== null && altitude > 0 && altitude < 15) return `Low in the ${dir}`;
+  return `In the ${dir}`;
+}
+
+// ---------------------------------------------------------------------------
+// Viewing window range ("8:30 PM – 1:00 AM", "4:30 AM – Sunrise")
+// ---------------------------------------------------------------------------
+
+function formatViewingWindow(
+  start: string | null | undefined,
+  end: string | null | undefined,
+  sunriseIso: string | null | undefined,
+  tz: string,
+  locale: string,
+  t: (k: string) => string,
+): string {
+  if (!start && !end) return '';
+  const startStr = start ? formatTimeOnly(start, tz, locale) : '—';
+  if (end && sunriseIso) {
+    const endMs = new Date(end).getTime();
+    const srMs  = new Date(sunriseIso).getTime();
+    if (Math.abs(endMs - srMs) < 30 * 60_000) {
+      return `${startStr} – ${t('planets.sunrise')}`;
+    }
+  }
+  const endStr = end ? formatTimeOnly(end, tz, locale) : '—';
+  return `${startStr} – ${endStr}`;
+}
+
+// ---------------------------------------------------------------------------
 // Build a deduplicated, sorted planet list from PlanetsVisible
 // ---------------------------------------------------------------------------
 
@@ -172,14 +223,19 @@ function buildPlanetList(planets: PlanetsVisible): PlanetEntry[] {
     }
   }
 
+  // Filter out planets that are not visible (below horizon / not_visible quality)
+  const visible = all.filter(
+    (p) => p.viewingQuality !== 'not_visible' && (p.altitude === null || p.altitude > 0),
+  );
+
   // Sort by rise time (planets with no rise time go to the end)
-  all.sort((a, b) => {
+  visible.sort((a, b) => {
     const ta = a.rise ? new Date(a.rise).getTime() : Infinity;
     const tb = b.rise ? new Date(b.rise).getTime() : Infinity;
     return ta - tb;
   });
 
-  return all;
+  return visible;
 }
 
 // ---------------------------------------------------------------------------
@@ -210,11 +266,12 @@ function InfoIcon() {
 interface PlanetColumnProps {
   planet: PlanetEntry;
   stationTz: string;
+  sunriseIso: string | null;
   locale: string;
   t: (key: string) => string;
 }
 
-function PlanetColumn({ planet, stationTz, locale, t }: PlanetColumnProps) {
+function PlanetColumn({ planet, stationTz, sunriseIso, locale, t }: PlanetColumnProps) {
   const name = planet.name;
   const nameLower = name.toLowerCase();
   const imgSrc = `/images/planets/${nameLower}.webp`;
@@ -222,13 +279,11 @@ function PlanetColumn({ planet, stationTz, locale, t }: PlanetColumnProps) {
   const qLabel = qualityLabel(planet.viewingQuality, t);
   const qClass = qualityTextClass(planet.viewingQuality);
 
-  const bestTime = formatTimeOnly(planet.bestViewingTime, stationTz, locale);
-  const posText = [
-    planet.direction,
-    planet.altitude !== null ? `${planet.altitude}°` : null,
-  ]
-    .filter(Boolean)
-    .join(', ');
+  const windowText = formatViewingWindow(
+    planet.clearWindowStart, planet.clearWindowEnd,
+    sunriseIso, stationTz, locale, t,
+  );
+  const posText = naturalPosition(planet.direction, planet.altitude);
 
   return (
     /*
@@ -278,10 +333,10 @@ function PlanetColumn({ planet, stationTz, locale, t }: PlanetColumnProps) {
         />
       </div>
 
-      {/* Best viewing time */}
-      {planet.bestViewingTime !== null && (
+      {/* Viewing window range */}
+      {windowText && (
         <span className="text-[0.75rem] text-muted-foreground text-center">
-          {bestTime}
+          {windowText}
         </span>
       )}
 
@@ -316,10 +371,10 @@ interface GanttTimelineProps {
 const VB_WIDTH  = 1000;
 const VB_HEIGHT = 280;
 
-/** Layout constants */
-const LEFT_MARGIN  = 95;   // X where the sunset tick starts (wide enough for "Neptune" label)
-const RIGHT_MARGIN = 980;  // X where the sunrise tick ends
-const CHART_WIDTH  = RIGHT_MARGIN - LEFT_MARGIN; // 885 SVG units
+/** Layout constants — mockup: x=20 to x=980, no Y-axis labels */
+const LEFT_MARGIN  = 20;
+const RIGHT_MARGIN = 980;
+const CHART_WIDTH  = RIGHT_MARGIN - LEFT_MARGIN; // 960 SVG units
 const AXIS_Y       = 245;  // Y of the time axis line
 const BAR_HEIGHT   = 16;   // px height of each planet bar
 const BAR_GAP      = 40;   // px between bar rows (center-to-center)
@@ -358,32 +413,32 @@ function GanttTimeline({ planets, almanac, stationTz }: GanttTimelineProps) {
     return LEFT_MARGIN + frac * CHART_WIDTH;
   }
 
-  // ---- Time-axis ticks at 2-hour intervals ----
+  // ---- Time-axis ticks at even LOCAL hours, 2-hour intervals ----
   const tickDates: Date[] = [];
-  // Find first even hour after sunset in TZ
-  // We step in 2-hour increments across the window
-  const STEP_MS = 2 * 60 * 60 * 1000;
-  // Round sunset UP to the next even hour boundary
-  const firstEvenMs =
-    Math.ceil(sunsetNN.getTime() / STEP_MS) * STEP_MS;
-  let t = new Date(firstEvenMs);
-  while (t <= sunriseDate) {
-    tickDates.push(new Date(t));
-    t = new Date(t.getTime() + STEP_MS);
+  const ONE_HOUR_MS = 60 * 60 * 1000;
+
+  // Walk hour-by-hour from sunset to find even local hours
+  {
+    let cursor = new Date(sunsetNN.getTime() + ONE_HOUR_MS);
+    while (cursor < sunriseDate) {
+      const localHourStr = new Intl.DateTimeFormat('en-US', {
+        hour: 'numeric', hour12: false, timeZone: stationTz,
+      }).format(cursor);
+      const localHour = parseInt(localHourStr, 10);
+      if (localHour % 2 === 0) {
+        tickDates.push(new Date(cursor));
+        cursor = new Date(cursor.getTime() + 2 * ONE_HOUR_MS);
+      } else {
+        cursor = new Date(cursor.getTime() + ONE_HOUR_MS);
+      }
+    }
   }
 
-  // ---- Section boundaries ----
-  // EVENING: sunset → midnight, NIGHT: around midnight, MORNING: → sunrise
-  const midnightApprox = new Date(
-    Math.round((sunsetNN.getTime() + sunriseDate.getTime()) / 2),
-  );
-  const eveningCenterX = timeToX(
-    new Date((sunsetNN.getTime() + midnightApprox.getTime()) / 2),
-  );
-  const nightCenterX   = timeToX(midnightApprox);
-  const morningCenterX = timeToX(
-    new Date((midnightApprox.getTime() + sunriseDate.getTime()) / 2),
-  );
+  // ---- Section boundaries (thirds of the night) ----
+  const third = windowMs / 3;
+  const eveningCenterX = timeToX(new Date(sunsetNN.getTime() + third / 2));
+  const nightCenterX   = timeToX(new Date(sunsetNN.getTime() + windowMs / 2));
+  const morningCenterX = timeToX(new Date(sunriseDate.getTime() - third / 2));
 
   // ---- Sky gradient (matches mockup) ----
   const skyGradientId = 'planet-sky-bg';
@@ -501,47 +556,32 @@ function GanttTimeline({ planets, almanac, stationTz }: GanttTimelineProps) {
         fill={`url(#${skyGradientId})`}
       />
 
-      {/* Section labels */}
-      <text
-        x={eveningCenterX}
-        y="28"
-        textAnchor="middle"
-        fill="rgba(255,255,255,0.55)"
-        fontFamily="var(--font-sans)"
-        fontSize="11"
-        fontWeight="700"
-        letterSpacing="0.06em"
-      >
-        EVENING
-      </text>
-      <text
-        x={nightCenterX}
-        y="28"
-        textAnchor="middle"
-        fill="rgba(255,255,255,0.55)"
-        fontFamily="var(--font-sans)"
-        fontSize="11"
-        fontWeight="700"
-        letterSpacing="0.06em"
-      >
-        NIGHT
-      </text>
-      <text
-        x={morningCenterX}
-        y="28"
-        textAnchor="middle"
-        fill="rgba(255,255,255,0.55)"
-        fontFamily="var(--font-sans)"
-        fontSize="11"
-        fontWeight="700"
-        letterSpacing="0.06em"
-      >
-        MORNING
-      </text>
+      {/* Section labels with Phosphor icons */}
+      <g transform={`translate(${eveningCenterX},30)`}>
+        <svg x="-28" y="-10" width="20" height="20" viewBox="0 0 256 256" fill="#f59e0b" aria-hidden="true">
+          <path d="M240,152H199.55a73.54,73.54,0,0,0,.45-8,72,72,0,0,0-144,0,73.54,73.54,0,0,0,.45,8H16a8,8,0,0,0,0,16H240a8,8,0,0,0,0-16ZM72,144a56,56,0,1,1,111.41,8H72.59A56.13,56.13,0,0,1,72,144Zm144,56a8,8,0,0,1-8,8H48a8,8,0,0,1,0-16H208A8,8,0,0,1,216,200ZM72.84,43.58a8,8,0,0,1,14.32-7.16l8,16a8,8,0,0,1-14.32,7.16Zm-56,48.84a8,8,0,0,1,10.74-3.57l16,8a8,8,0,0,1-7.16,14.31l-16-8A8,8,0,0,1,16.84,92.42Zm192,15.16a8,8,0,0,1,3.58-10.73l16-8a8,8,0,1,1,7.16,14.31l-16,8a8,8,0,0,1-10.74-3.58Zm-48-55.16,8-16a8,8,0,0,1,14.32,7.16l-8,16a8,8,0,1,1-14.32-7.16Z" />
+        </svg>
+        <text x="0" y="3" fill="var(--fg-muted)" fontFamily="var(--font-sans)" fontSize="13" fontWeight="700" letterSpacing="0.06em">EVENING</text>
+      </g>
+      <g transform={`translate(${nightCenterX},30)`}>
+        <svg x="-28" y="-10" width="20" height="20" viewBox="0 0 256 256" fill="#94a3b8" aria-hidden="true">
+          <path d="M240,96a8,8,0,0,1-8,8H216v16a8,8,0,0,1-16,0V104H184a8,8,0,0,1,0-16h16V72a8,8,0,0,1,16,0V88h16A8,8,0,0,1,240,96ZM144,56h8v8a8,8,0,0,0,16,0V56h8a8,8,0,0,0,0-16h-8V32a8,8,0,0,0-16,0v8h-8a8,8,0,0,0,0,16Zm72.77,97a8,8,0,0,1,1.43,8A96,96,0,1,1,95.07,37.8a8,8,0,0,1,10.6,9.06A88.07,88.07,0,0,0,209.14,150.33,8,8,0,0,1,216.77,153Zm-19.39,14.88c-1.79.09-3.59.14-5.38.14A104.11,104.11,0,0,1,88,64c0-1.79,0-3.59.14-5.38A80,80,0,1,0,197.38,167.86Z" />
+        </svg>
+        <text x="0" y="3" fill="var(--fg-muted)" fontFamily="var(--font-sans)" fontSize="13" fontWeight="700" letterSpacing="0.06em">NIGHT</text>
+      </g>
+      <g transform={`translate(${morningCenterX},30)`}>
+        <svg x="-28" y="-10" width="20" height="20" viewBox="0 0 256 256" fill="#f59e0b" aria-hidden="true">
+          <path d="M240,152H199.55a73.54,73.54,0,0,0,.45-8,72,72,0,0,0-144,0,73.54,73.54,0,0,0,.45,8H16a8,8,0,0,0,0,16H240a8,8,0,0,0,0-16ZM72,144a56,56,0,1,1,111.41,8H72.59A56.13,56.13,0,0,1,72,144Zm144,56a8,8,0,0,1-8,8H48a8,8,0,0,1,0-16H208A8,8,0,0,1,216,200ZM72.84,43.58a8,8,0,0,1,14.32-7.16l8,16a8,8,0,0,1-14.32,7.16Zm-56,48.84a8,8,0,0,1,10.74-3.57l16,8a8,8,0,0,1-7.16,14.31l-16-8A8,8,0,0,1,16.84,92.42Zm192,15.16a8,8,0,0,1,3.58-10.73l16-8a8,8,0,1,1,7.16,14.31l-16,8a8,8,0,0,1-10.74-3.58Zm-48-55.16,8-16a8,8,0,0,1,14.32,7.16l-8,16a8,8,0,1,1-14.32-7.16Z" />
+        </svg>
+        <text x="0" y="3" fill="var(--fg-muted)" fontFamily="var(--font-sans)" fontSize="13" fontWeight="700" letterSpacing="0.06em">MORNING</text>
+      </g>
 
-      {/* Planet bars */}
+      {/* Planet bars with proportionally-sized images */}
       {bars.map((b) => {
         const barWidth = Math.max(0, b.barX2 - b.barX1);
+        const imgSize = getChartImgSize(b.planet.name);
+        const imgX = b.barX1 - imgSize / 2;
+        const imgY = b.barY + BAR_HEIGHT / 2 - imgSize / 2;
         return (
           <g key={b.planet.name}>
             <rect
@@ -552,35 +592,15 @@ function GanttTimeline({ planets, almanac, stationTz }: GanttTimelineProps) {
               rx={BAR_HEIGHT / 2}
               fill={`url(#${b.gradId})`}
             />
-            {/* Planet image positioned at bar start */}
             <image
               href={`/images/planets/${b.planet.name.toLowerCase()}.webp`}
-              x={b.barX1 - 18}
-              y={b.barY - 6}
-              width="28"
-              height="28"
+              x={imgX}
+              y={imgY}
+              width={imgSize}
+              height={imgSize}
               filter="url(#plt-shadow)"
             />
           </g>
-        );
-      })}
-
-      {/* Y-axis: planet name labels on left side */}
-      {planets.map((planet, idx) => {
-        const barY   = FIRST_BAR_Y + idx * BAR_GAP;
-        const labelY = barY + BAR_HEIGHT / 2 + 4; // vertically centered on bar
-        return (
-          <text
-            key={planet.name}
-            x={LEFT_MARGIN - 2}
-            y={labelY}
-            textAnchor="end"
-            fill="rgba(255,255,255,0.60)"
-            fontFamily="var(--font-chart)"
-            fontSize="10"
-          >
-            {planet.name}
-          </text>
         );
       })}
 
@@ -594,13 +614,13 @@ function GanttTimeline({ planets, almanac, stationTz }: GanttTimelineProps) {
         strokeWidth="1"
       />
 
-      {/* Sunset tick + label */}
+      {/* Sunset tick + actual time label */}
       <line
         x1={LEFT_MARGIN}
         y1={AXIS_Y - 4}
         x2={LEFT_MARGIN}
         y2={AXIS_Y + 3}
-        stroke="rgba(255,255,255,0.3)"
+        stroke="rgba(255,255,255,0.2)"
         strokeWidth="1"
       />
       <text
@@ -609,17 +629,16 @@ function GanttTimeline({ planets, almanac, stationTz }: GanttTimelineProps) {
         textAnchor="start"
         fill="#f59e0b"
         fontFamily="var(--font-chart)"
-        fontSize="12"
+        fontSize="13"
         fontWeight="600"
       >
-        Sunset
+        {svgTickLabel(sunsetNN, stationTz)}
       </text>
 
-      {/* Intermediate ticks at 2-hour intervals */}
+      {/* Intermediate ticks at even local 2-hour intervals */}
       {tickDates.map((td, i) => {
         const tx = timeToX(td);
-        // Skip ticks that would overlap sunset or sunrise labels
-        if (tx < LEFT_MARGIN + 40 || tx > RIGHT_MARGIN - 50) return null;
+        if (tx < LEFT_MARGIN + 50 || tx > RIGHT_MARGIN - 60) return null;
         return (
           <g key={i}>
             <line
@@ -636,7 +655,7 @@ function GanttTimeline({ planets, almanac, stationTz }: GanttTimelineProps) {
               textAnchor="middle"
               fill="rgba(255,255,255,0.45)"
               fontFamily="var(--font-chart)"
-              fontSize="11"
+              fontSize="12"
             >
               {svgTickLabel(td, stationTz)}
             </text>
@@ -650,7 +669,7 @@ function GanttTimeline({ planets, almanac, stationTz }: GanttTimelineProps) {
         y1={AXIS_Y - 4}
         x2={RIGHT_MARGIN}
         y2={AXIS_Y + 3}
-        stroke="rgba(255,255,255,0.3)"
+        stroke="rgba(255,255,255,0.2)"
         strokeWidth="1"
       />
       <text
@@ -659,7 +678,7 @@ function GanttTimeline({ planets, almanac, stationTz }: GanttTimelineProps) {
         textAnchor="end"
         fill="#f59e0b"
         fontFamily="var(--font-chart)"
-        fontSize="12"
+        fontSize="13"
         fontWeight="600"
       >
         Sunrise
@@ -748,18 +767,56 @@ export function PlanetTimelineCard({
 
   const planetList = buildPlanetList(planets!);
 
+  // Derive overall viewing conditions from best planet quality
+  const qualityRank: Record<string, number> = {
+    excellent: 4, good: 3, fair: 2, poor: 1, not_visible: 0,
+  };
+  const bestQuality = planetList.reduce<string | null>((best, p) => {
+    if (!p.viewingQuality) return best;
+    if (!best) return p.viewingQuality;
+    return (qualityRank[p.viewingQuality] ?? 0) > (qualityRank[best] ?? 0)
+      ? p.viewingQuality
+      : best;
+  }, null);
+
+  function overallLabel(q: string | null): string {
+    switch (q) {
+      case 'excellent': return t('planets.conditionsExcellent');
+      case 'good':      return t('planets.conditionsGood');
+      case 'fair':      return t('planets.conditionsFair');
+      case 'poor':      return t('planets.conditionsPoor');
+      default:          return '';
+    }
+  }
+
+  const overallText = overallLabel(bestQuality);
+  const overallClass = bestQuality ? qualityTextClass(bestQuality as PlanetViewingQuality) : '';
+
   // Collect conjunction notes across all planets
   const conjunctions = planetList.filter(
     (p) => p.conjunction !== null && p.conjunction !== undefined,
   );
 
+  const sunriseIso = almanac?.sun.rise ?? null;
+
   return (
     <Card footprint="full">
-      <CardHeader>
+      <CardHeader className="flex items-center justify-between">
         <CardTitle as="h2">{t('planets.title')}</CardTitle>
+        {overallText && (
+          <span className={`flex items-center gap-[0.25rem] text-[0.75rem] font-semibold ${overallClass}`}>
+            <span aria-hidden="true" className="text-[0.6rem]">&#x25cf;</span>
+            {overallText}
+          </span>
+        )}
       </CardHeader>
 
       <CardContent>
+        {/* Subtitle */}
+        <p className="text-[0.75rem] text-muted-foreground mb-4">
+          {t('planets.subtitle')}
+        </p>
+
         {/*
          * Top section: horizontal scrollable planet row.
          * overflow-x-auto + flex — scrollable on mobile, spread on wide screens.
@@ -777,6 +834,7 @@ export function PlanetTimelineCard({
               <PlanetColumn
                 planet={planet}
                 stationTz={stationTz}
+                sunriseIso={sunriseIso}
                 locale={locale}
                 t={t}
               />
