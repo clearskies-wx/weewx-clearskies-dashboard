@@ -26,6 +26,7 @@
 // Icons: inline SVG paths (Phosphor-style) — all aria-hidden.
 
 import { useTranslation } from 'react-i18next';
+import { Eye } from '@phosphor-icons/react';
 import {
   Card,
   CardHeader,
@@ -368,8 +369,7 @@ function PlanetColumn({ planet, stationTz, sunsetIso, sunriseIso, locale, t }: P
           className={`flex items-center gap-[0.25rem] text-[0.75rem] font-semibold ${qClass}`}
           aria-label={`${t('planets.viewingQuality')}: ${qLabel}`}
         >
-          {/* Colored dot — decorative, meaning carried by adjacent text */}
-          <span aria-hidden="true" className="text-[0.6rem]">&#x25cf;</span>
+          <Eye size={14} weight="bold" aria-hidden="true" />
           {qLabel}
         </span>
       )}
@@ -870,7 +870,7 @@ export function PlanetTimelineCard({
         <CardTitle as="h2">{t('planets.title')}</CardTitle>
         {overallText && (
           <span className={`flex items-center gap-[0.25rem] text-[0.75rem] font-semibold ${overallClass}`}>
-            <span aria-hidden="true" className="text-[0.6rem]">&#x25cf;</span>
+            <Eye size={14} weight="bold" aria-hidden="true" />
             {overallText}
           </span>
         )}

@@ -347,33 +347,20 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
     ? PHASE_R * (2 * illumFrac - 1)
     : PHASE_R * (1 - 2 * illumFrac);
 
-  // The split arc trick for traveled vs remaining (per approved mockup):
-  // We use clip-path to only show the above-horizon arc portion.
-  // For simplicity, we draw the full arc dashed and overdraw the traveled portion solid.
-  // "Traveled" = from rise endpoint to current marker position.
-  // We implement this via two separate arc paths:
-  //   1. Full arc — dashed (remaining)
-  //   2. Arc from 0 to sunPct — solid (traveled), if progress is active
-
-  // Build a partial arc path from pct=0 to pct=targetPct
-  function partialArcPath(
-    cx: number,
-    cy: number,
-    rx: number,
-    ry: number,
-    fromPct: number,
-    toPct: number,
-  ): string {
-    const from = arcPoint(fromPct, cx, cy, rx, ry);
-    const to = arcPoint(toPct, cx, cy, rx, ry);
-    // Partial arcs on the upper semi-ellipse: always large-arc=0 (max span
-    // is 180°) and sweep=0 (counterclockwise in SVG = upward path).
-    // The full arc (ellipsePath) uses sweep=1 only because its endpoints are
-    // diametrically opposite, making the two sweep directions equivalent.
-    return `M ${from.x} ${from.y} A ${rx} ${ry} 0 0 0 ${to.x} ${to.y}`;
+  // Traveled-arc technique: draw the SAME full elliptical path as the dashed
+  // background, but use stroke-dasharray to reveal only the traveled portion.
+  // This guarantees the solid arc follows the identical ellipse — no SVG arc
+  // endpoint-fitting issues.
+  //
+  // Ramanujan semi-perimeter approximation for a semi-ellipse:
+  //   half of π(3(a+b) − √((3a+b)(a+3b)))
+  function semiPerimeter(rx: number, ry: number): number {
+    return Math.PI * (3 * (rx + ry) - Math.sqrt((3 * rx + ry) * (rx + 3 * ry))) / 2;
   }
 
-  // Determine if sun/moon are currently above the horizon
+  const sunArcLen = semiPerimeter(SUN_RX, SUN_RY);
+  const moonArcLen = semiPerimeter(MOON_RX, MOON_RY);
+
   const sunActive = sunPct !== null && sunPct >= 0 && sunPct <= 1;
   const moonActive = moonPct !== null && moonPct >= 0 && moonPct <= 1;
 
@@ -420,14 +407,15 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
           aria-hidden="true"
         />
 
-        {/* ── Sun arc — traveled portion solid ───────────────────────────── */}
+        {/* ── Sun arc — traveled portion solid (dasharray on same path) ──── */}
         {sunActive && sunPct !== null && sunPct > 0 && (
           <path
-            d={partialArcPath(CX, CY, SUN_RX, SUN_RY, 0, Math.min(sunPct, 1))}
+            d={ellipsePath(CX, CY, SUN_RX, SUN_RY)}
             fill="none"
             stroke={SUN_COLOR}
             strokeWidth={2.5}
             strokeLinecap="round"
+            strokeDasharray={`${sunPct * sunArcLen} ${sunArcLen}`}
             clipPath="url(#smdc-above-horizon)"
             aria-hidden="true"
           />
@@ -446,14 +434,15 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
           aria-hidden="true"
         />
 
-        {/* ── Moon arc — traveled portion solid ──────────────────────────── */}
+        {/* ── Moon arc — traveled portion solid (dasharray on same path) ── */}
         {moonActive && moonPct !== null && moonPct > 0 && (
           <path
-            d={partialArcPath(CX, CY, MOON_RX, MOON_RY, 0, Math.min(moonPct, 1))}
+            d={ellipsePath(CX, CY, MOON_RX, MOON_RY)}
             fill="none"
             stroke={MOON_COLOR}
             strokeWidth={1.8}
             strokeLinecap="round"
+            strokeDasharray={`${moonPct * moonArcLen} ${moonArcLen}`}
             clipPath="url(#smdc-above-horizon)"
             aria-hidden="true"
           />
