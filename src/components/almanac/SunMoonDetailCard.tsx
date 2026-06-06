@@ -880,13 +880,11 @@ function SunPanel({ almanac, tomorrow, tz, locale }: SunPanelProps) {
           </tr>
           <tr>
             <td style={labelStyle}>Azimuth</td>
-            {hasTomorrow && <td style={valueStyle} />}
-            <td style={valueStyle}>{azimuthText}</td>
+            <td colSpan={hasTomorrow ? 2 : 1} style={{ ...valueStyle, textAlign: hasTomorrow ? 'center' : 'right' }}>{azimuthText}</td>
           </tr>
           <tr>
             <td style={labelStyle}>Altitude</td>
-            {hasTomorrow && <td style={valueStyle} />}
-            <td style={valueStyle}>{altitudeText}</td>
+            <td colSpan={hasTomorrow ? 2 : 1} style={{ ...valueStyle, textAlign: hasTomorrow ? 'center' : 'right' }}>{altitudeText}</td>
           </tr>
         </tbody>
       </table>
@@ -1000,23 +998,19 @@ function MoonPanel({ almanac, tomorrow, tz, locale }: MoonPanelProps) {
           </tr>
           <tr>
             <td style={labelStyle}>Full Moon</td>
-            {hasTomorrow && <td style={valueStyle} />}
-            <td style={valueStyle}>{fullMoonText}</td>
+            <td colSpan={hasTomorrow ? 2 : 1} style={{ ...valueStyle, textAlign: hasTomorrow ? 'center' : 'right' }}>{fullMoonText}</td>
           </tr>
           <tr>
             <td style={labelStyle}>New Moon</td>
-            {hasTomorrow && <td style={valueStyle} />}
-            <td style={valueStyle}>{newMoonText}</td>
+            <td colSpan={hasTomorrow ? 2 : 1} style={{ ...valueStyle, textAlign: hasTomorrow ? 'center' : 'right' }}>{newMoonText}</td>
           </tr>
           <tr>
             <td style={labelStyle}>Azimuth</td>
-            {hasTomorrow && <td style={valueStyle} />}
-            <td style={valueStyle}>{azimuthText}</td>
+            <td colSpan={hasTomorrow ? 2 : 1} style={{ ...valueStyle, textAlign: hasTomorrow ? 'center' : 'right' }}>{azimuthText}</td>
           </tr>
           <tr>
             <td style={labelStyle}>Altitude</td>
-            {hasTomorrow && <td style={valueStyle} />}
-            <td style={valueStyle}>{altitudeText}</td>
+            <td colSpan={hasTomorrow ? 2 : 1} style={{ ...valueStyle, textAlign: hasTomorrow ? 'center' : 'right' }}>{altitudeText}</td>
           </tr>
         </tbody>
       </table>
