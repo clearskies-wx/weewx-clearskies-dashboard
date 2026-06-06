@@ -58,8 +58,8 @@ function navLinkClass({ isActive }: { isActive: boolean }): string {
     'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium',
     'transition-colors duration-150',
     'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-    // Desktop: flex-col to stack icon above label
-    'md:flex-col md:gap-1 md:px-2 md:py-3 md:text-xs md:rounded-lg',
+    // Desktop: flex-col to stack icon above label, tight padding
+    'md:flex-col md:gap-0.5 md:px-1 md:py-2 md:text-[0.6rem] md:rounded-lg',
     // Touch target min 44×44px per WCAG 2.5.5
     'min-h-[44px] min-w-[44px] justify-center',
   ].join(' ');
@@ -315,7 +315,7 @@ function MoreSheet({ isOpen, onClose, triggerRef }: MoreSheetProps) {
 
 // ── Desktop nav rail auto-hide constants ──────────────────────────────────────
 const LS_KEY = 'clearskies.nav.pinned';
-const AUTO_HIDE_MS = 30_000;
+const AUTO_HIDE_MS = 4_000;
 
 export function NavRail() {
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -498,8 +498,8 @@ export function NavRail() {
           'fixed z-20',
           // Glass card styling — flush left edge, rounded right side only
           'card-glass shadow-lg ring-1 ring-foreground/10 rounded-r-xl',
-          // Internal padding
-          'py-3 px-2',
+          // Internal padding — tight to minimize overlap with content
+          'py-2 px-1',
         ].join(' ')}
         style={{
           left: 0,
@@ -517,13 +517,13 @@ export function NavRail() {
         }}
       >
         {/* Pin toggle — top of rail, above nav items */}
-        <div className="w-full px-1 pb-1">
+        <div className="w-full pb-0.5">
           <button
             type="button"
             aria-label={pinned ? t('unpinNav') : t('pinNav')}
             onClick={togglePin}
             className={[
-              'flex flex-col items-center justify-center gap-1 rounded-lg px-2 py-3 w-full',
+              'flex flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-2 w-full',
               'text-xs font-medium transition-colors duration-150',
               'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
               'min-h-[44px]',
