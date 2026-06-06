@@ -404,14 +404,16 @@ function EclipseColumn({ entry, stationTz, locale, onBadgeClick }: EclipseColumn
         />
       </div>
 
-      {/* Eclipse image — 4:3 container, cover fills width (trims dark bg edges of 1:1 source) */}
-      <img
-        src={`/images/eclipses/solar-${entry.type}.webp`}
-        alt={imgAlt}
-        className="w-full rounded"
-        style={{ aspectRatio: '4/3', objectFit: 'cover' }}
-        loading="lazy"
-      />
+      {/* Eclipse image — scaled up within overflow-hidden to crop dark sky border */}
+      <div className="w-full rounded overflow-hidden" style={{ aspectRatio: '4/3' }}>
+        <img
+          src={`/images/eclipses/solar-${entry.type}.webp`}
+          alt={imgAlt}
+          className="w-full h-full object-cover"
+          style={{ transform: 'scale(1.4)' }}
+          loading="lazy"
+        />
+      </div>
 
       {/* Visibility row — only if enriched data is present */}
       {hasVisibility && (
