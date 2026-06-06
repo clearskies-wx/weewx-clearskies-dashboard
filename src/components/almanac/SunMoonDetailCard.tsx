@@ -366,16 +366,10 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
   ): string {
     const from = arcPoint(fromPct, cx, cy, rx, ry);
     const to = arcPoint(toPct, cx, cy, rx, ry);
-    // Large-arc-flag: 1 if arc spans > 180°
-    const sweep = toPct - fromPct;
-    const largeArc = sweep > 0.5 ? 1 : 0;
-    // sweep-flag=1 → clockwise; since we arc left→right (pct 0→1), clockwise in SVG
-    // Wait — ellipsePath uses sweep-flag=1 for the full arc (counterclockwise to go upward).
-    // For partial arcs: pct=0 is left point, pct=1 is right point.
-    // At angle=PI (pct=0) → left; at angle=0 (pct=1) → right.
-    // The full arc sweeps counterclockwise (sweep=0 in SVG, which visually goes up).
-    // So partial arc also uses sweep-flag=0.
-    return `M ${from.x} ${from.y} A ${rx} ${ry} 0 ${largeArc} 0 ${to.x} ${to.y}`;
+    const span = toPct - fromPct;
+    const largeArc = span > 0.5 ? 1 : 0;
+    // sweep-flag=1 matches ellipsePath (clockwise in SVG = upward arc)
+    return `M ${from.x} ${from.y} A ${rx} ${ry} 0 ${largeArc} 1 ${to.x} ${to.y}`;
   }
 
   // Determine if sun/moon are currently above the horizon
