@@ -36,7 +36,7 @@ import {
   CardTitle,
   CardContent,
 } from '../ui/card';
-import { formatLocalTime } from '../../utils/time';
+// formatLocalTime import removed — two-column layout uses compact fmtTime() below
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -224,6 +224,7 @@ function fmtEventDate(iso: string | null, tz: string, locale: string): string {
 
 export interface SunMoonDetailCardProps {
   almanac: AlmanacSnapshot | null;
+  almanacTomorrow: AlmanacSnapshot | null;
   moonNames: MoonNameData | null;
   stationTz: string;
   loading: boolean;
@@ -746,14 +747,35 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
 
 interface SunPanelProps {
   almanac: AlmanacSnapshot;
+  tomorrow: AlmanacSnapshot | null;
   tz: string;
   locale: string;
 }
 
-function SunPanel({ almanac, tz, locale }: SunPanelProps) {
+function fmtTime(iso: string | null, tz: string): string {
+  if (!iso) return '—';
+  try {
+    return new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: tz,
+    }).format(new Date(iso));
+  } catch {
+    return '—';
+  }
+}
+
+function SunPanel({ almanac, tomorrow, tz, locale }: SunPanelProps) {
   const todayLabel = formatShortDate(almanac.date, tz, locale);
+  const tomorrowLabel = tomorrow ? formatShortDate(tomorrow.date, tz, locale) : null;
+  const hasTomorrow = tomorrow !== null;
+
   const daylightText = formatDaylight(almanac.sun.daylightMinutes);
   const deltaText = formatDelta(almanac.sun.daylightDeltaVsYesterdayMinutes);
+  const daylightTextTmw = tomorrow ? formatDaylight(tomorrow.sun.daylightMinutes) : null;
+  const deltaTextTmw = tomorrow ? formatDelta(tomorrow.sun.daylightDeltaVsYesterdayMinutes) : null;
+
   const azimuthText =
     almanac.sun.azimuth !== null
       ? `${almanac.sun.azimuth.toFixed(1)}°`
@@ -763,14 +785,20 @@ function SunPanel({ almanac, tz, locale }: SunPanelProps) {
       ? `${almanac.sun.altitude.toFixed(1)}°`
       : '—';
 
+  const colHeaderStyle: React.CSSProperties = {
+    textAlign: 'right',
+    fontWeight: 600,
+    color: 'var(--muted-foreground)',
+    paddingBottom: '0.3rem',
+    fontSize: 'var(--text-label, 0.75rem)',
+  };
+
   return (
     <div className="flex flex-col items-center gap-2">
-      {/* Section header */}
       <h3
         className="flex items-center justify-center gap-1.5 uppercase tracking-wider font-semibold text-muted-foreground"
         style={{ fontSize: 'var(--text-secondary, 0.85rem)' }}
       >
-        {/* Sun icon — Phosphor ph:sun regular */}
         <svg
           width="15"
           height="15"
@@ -784,7 +812,6 @@ function SunPanel({ almanac, tz, locale }: SunPanelProps) {
         Sun
       </h3>
 
-      {/* Data table */}
       <table
         style={{
           width: '100%',
@@ -796,72 +823,69 @@ function SunPanel({ almanac, tz, locale }: SunPanelProps) {
           <tr>
             <th
               scope="col"
-              style={{
-                textAlign: 'left',
-                fontWeight: 400,
-                color: 'var(--muted-foreground)',
-                paddingBottom: '0.3rem',
-                fontSize: 'var(--text-label, 0.75rem)',
-              }}
+              style={{ ...colHeaderStyle, textAlign: 'left', fontWeight: 400 }}
             />
-            <th
-              scope="col"
-              style={{
-                textAlign: 'right',
-                fontWeight: 600,
-                color: 'var(--muted-foreground)',
-                paddingBottom: '0.3rem',
-                fontSize: 'var(--text-label, 0.75rem)',
-              }}
-            >
-              {todayLabel}
-            </th>
+            <th scope="col" style={colHeaderStyle}>{todayLabel}</th>
+            {hasTomorrow && (
+              <th scope="col" style={colHeaderStyle}>{tomorrowLabel}</th>
+            )}
           </tr>
         </thead>
         <tbody>
           <tr>
             <td style={labelStyle}>Sunrise</td>
-            <td style={valueStyle}>{formatLocalTime(almanac.sun.rise, tz, locale)}</td>
+            <td style={valueStyle}>{fmtTime(almanac.sun.rise, tz)}</td>
+            {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.sun.rise, tz)}</td>}
           </tr>
           <tr>
             <td style={labelStyle}>Sunset</td>
-            <td style={valueStyle}>{formatLocalTime(almanac.sun.set, tz, locale)}</td>
+            <td style={valueStyle}>{fmtTime(almanac.sun.set, tz)}</td>
+            {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.sun.set, tz)}</td>}
           </tr>
           <tr>
             <td style={labelStyle}>Civil Dawn</td>
-            <td style={valueStyle}>{formatLocalTime(almanac.sun.civilTwilightDawn, tz, locale)}</td>
+            <td style={valueStyle}>{fmtTime(almanac.sun.civilTwilightDawn, tz)}</td>
+            {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.sun.civilTwilightDawn, tz)}</td>}
           </tr>
           <tr>
             <td style={labelStyle}>Civil Dusk</td>
-            <td style={valueStyle}>{formatLocalTime(almanac.sun.civilTwilightDusk, tz, locale)}</td>
+            <td style={valueStyle}>{fmtTime(almanac.sun.civilTwilightDusk, tz)}</td>
+            {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.sun.civilTwilightDusk, tz)}</td>}
           </tr>
           <tr>
             <td style={labelStyle}>Solar Noon</td>
-            <td style={valueStyle}>{formatLocalTime(almanac.sun.transit, tz, locale)}</td>
+            <td style={valueStyle}>{fmtTime(almanac.sun.transit, tz)}</td>
+            {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.sun.transit, tz)}</td>}
           </tr>
           <tr>
             <td style={labelStyle}>Daylight</td>
             <td style={valueStyle}>
               {daylightText}
               {deltaText && (
-                <span
-                  style={{
-                    color: DELTA_COLOR_POS,
-                    fontSize: 'var(--text-micro, 0.7rem)',
-                    marginLeft: '0.25rem',
-                  }}
-                >
+                <span style={{ color: DELTA_COLOR_POS, fontSize: 'var(--text-micro, 0.7rem)', marginLeft: '0.25rem' }}>
                   {deltaText}
                 </span>
               )}
             </td>
+            {hasTomorrow && (
+              <td style={valueStyle}>
+                {daylightTextTmw}
+                {deltaTextTmw && (
+                  <span style={{ color: DELTA_COLOR_POS, fontSize: 'var(--text-micro, 0.7rem)', marginLeft: '0.25rem' }}>
+                    {deltaTextTmw}
+                  </span>
+                )}
+              </td>
+            )}
           </tr>
           <tr>
             <td style={labelStyle}>Azimuth</td>
+            {hasTomorrow && <td style={valueStyle} />}
             <td style={valueStyle}>{azimuthText}</td>
           </tr>
           <tr>
             <td style={labelStyle}>Altitude</td>
+            {hasTomorrow && <td style={valueStyle} />}
             <td style={valueStyle}>{altitudeText}</td>
           </tr>
         </tbody>
@@ -876,17 +900,22 @@ function SunPanel({ almanac, tz, locale }: SunPanelProps) {
 
 interface MoonPanelProps {
   almanac: AlmanacSnapshot;
+  tomorrow: AlmanacSnapshot | null;
   tz: string;
   locale: string;
 }
 
-function MoonPanel({ almanac, tz, locale }: MoonPanelProps) {
+function MoonPanel({ almanac, tomorrow, tz, locale }: MoonPanelProps) {
   const todayLabel = formatShortDate(almanac.date, tz, locale);
+  const tomorrowLabel = tomorrow ? formatShortDate(tomorrow.date, tz, locale) : null;
+  const hasTomorrow = tomorrow !== null;
+
   const phaseName = formatPhaseName(almanac.moon.phaseName);
-  const illumText =
-    almanac.moon.illuminationPercent !== null
-      ? `${Math.round(almanac.moon.illuminationPercent)}%`
-      : '—';
+  const phaseNameTmw = tomorrow ? formatPhaseName(tomorrow.moon.phaseName) : null;
+
+  const fmtIllum = (pct: number | null) =>
+    pct !== null ? `${Math.round(pct)}%` : '—';
+
   const azimuthText =
     almanac.moon.azimuth !== null
       ? `${almanac.moon.azimuth.toFixed(1)}°`
@@ -898,14 +927,24 @@ function MoonPanel({ almanac, tz, locale }: MoonPanelProps) {
   const fullMoonText = fmtEventDate(almanac.moon.nextFullMoon, tz, locale);
   const newMoonText = fmtEventDate(almanac.moon.nextNewMoon, tz, locale);
 
+  // Abbreviate phase names when showing two columns to save space
+  const abbrevPhase = (name: string) =>
+    name.replace('Waxing ', 'Wax. ').replace('Waning ', 'Wan. ');
+
+  const colHeaderStyle: React.CSSProperties = {
+    textAlign: 'right',
+    fontWeight: 600,
+    color: 'var(--muted-foreground)',
+    paddingBottom: '0.3rem',
+    fontSize: 'var(--text-label, 0.75rem)',
+  };
+
   return (
     <div className="flex flex-col items-center gap-2">
-      {/* Section header */}
       <h3
         className="flex items-center justify-center gap-1.5 uppercase tracking-wider font-semibold text-muted-foreground"
         style={{ fontSize: 'var(--text-secondary, 0.85rem)' }}
       >
-        {/* Moon icon — Phosphor ph:moon regular */}
         <svg
           width="15"
           height="15"
@@ -919,7 +958,6 @@ function MoonPanel({ almanac, tz, locale }: MoonPanelProps) {
         Moon
       </h3>
 
-      {/* Data table */}
       <table
         style={{
           width: '100%',
@@ -931,59 +969,53 @@ function MoonPanel({ almanac, tz, locale }: MoonPanelProps) {
           <tr>
             <th
               scope="col"
-              style={{
-                textAlign: 'left',
-                fontWeight: 400,
-                color: 'var(--muted-foreground)',
-                paddingBottom: '0.3rem',
-                fontSize: 'var(--text-label, 0.75rem)',
-              }}
+              style={{ ...colHeaderStyle, textAlign: 'left', fontWeight: 400 }}
             />
-            <th
-              scope="col"
-              style={{
-                textAlign: 'right',
-                fontWeight: 600,
-                color: 'var(--muted-foreground)',
-                paddingBottom: '0.3rem',
-                fontSize: 'var(--text-label, 0.75rem)',
-              }}
-            >
-              {todayLabel}
-            </th>
+            <th scope="col" style={colHeaderStyle}>{todayLabel}</th>
+            {hasTomorrow && (
+              <th scope="col" style={colHeaderStyle}>{tomorrowLabel}</th>
+            )}
           </tr>
         </thead>
         <tbody>
           <tr>
             <td style={labelStyle}>Phase</td>
-            <td style={valueStyle}>{phaseName}</td>
+            <td style={valueStyle}>{hasTomorrow ? abbrevPhase(phaseName) : phaseName}</td>
+            {hasTomorrow && <td style={valueStyle}>{abbrevPhase(phaseNameTmw!)}</td>}
           </tr>
           <tr>
             <td style={labelStyle}>Illumination</td>
-            <td style={valueStyle}>{illumText}</td>
+            <td style={valueStyle}>{fmtIllum(almanac.moon.illuminationPercent)}</td>
+            {hasTomorrow && <td style={valueStyle}>{fmtIllum(tomorrow.moon.illuminationPercent)}</td>}
           </tr>
           <tr>
             <td style={labelStyle}>Moonrise</td>
-            <td style={valueStyle}>{formatLocalTime(almanac.moon.rise, tz, locale)}</td>
+            <td style={valueStyle}>{fmtTime(almanac.moon.rise, tz)}</td>
+            {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.moon.rise, tz)}</td>}
           </tr>
           <tr>
             <td style={labelStyle}>Moonset</td>
-            <td style={valueStyle}>{formatLocalTime(almanac.moon.set, tz, locale)}</td>
+            <td style={valueStyle}>{fmtTime(almanac.moon.set, tz)}</td>
+            {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.moon.set, tz)}</td>}
           </tr>
           <tr>
             <td style={labelStyle}>Full Moon</td>
+            {hasTomorrow && <td style={valueStyle} />}
             <td style={valueStyle}>{fullMoonText}</td>
           </tr>
           <tr>
             <td style={labelStyle}>New Moon</td>
+            {hasTomorrow && <td style={valueStyle} />}
             <td style={valueStyle}>{newMoonText}</td>
           </tr>
           <tr>
             <td style={labelStyle}>Azimuth</td>
+            {hasTomorrow && <td style={valueStyle} />}
             <td style={valueStyle}>{azimuthText}</td>
           </tr>
           <tr>
             <td style={labelStyle}>Altitude</td>
+            {hasTomorrow && <td style={valueStyle} />}
             <td style={valueStyle}>{altitudeText}</td>
           </tr>
         </tbody>
@@ -1030,6 +1062,7 @@ const valueStyle: React.CSSProperties = {
  */
 export function SunMoonDetailCard({
   almanac,
+  almanacTomorrow,
   moonNames,
   stationTz,
   loading,
@@ -1066,13 +1099,13 @@ export function SunMoonDetailCard({
             <div
               className="grid gap-4 items-start grid-cols-1 md:grid-cols-[1fr_2fr_1fr]"
             >
-              <SunPanel almanac={almanac} tz={stationTz} locale={locale} />
+              <SunPanel almanac={almanac} tomorrow={almanacTomorrow} tz={stationTz} locale={locale} />
               <ArcPanel
                 almanac={almanac}
                 moonNames={moonNames}
                 tz={stationTz}
               />
-              <MoonPanel almanac={almanac} tz={stationTz} locale={locale} />
+              <MoonPanel almanac={almanac} tomorrow={almanacTomorrow} tz={stationTz} locale={locale} />
             </div>
 
             {/* Footer row: Next Solstice / Next Equinox */}

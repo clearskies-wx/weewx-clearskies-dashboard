@@ -14,6 +14,7 @@ import { MonthlyAveragesCard } from '../components/almanac/MonthlyAveragesCard';
 import { SolarEclipseCard } from '../components/almanac/SolarEclipseCard';
 import { LunarEclipseCard } from '../components/almanac/LunarEclipseCard';
 import { MeteorShowerCard } from '../components/almanac/MeteorShowerCard';
+import { useMemo } from 'react';
 import {
   useAlmanac,
   useAlmanacMoonNames,
@@ -24,6 +25,13 @@ import {
   useAlmanacMeteorShowers,
   useStation,
 } from '../hooks/useWeatherData';
+
+/** Compute a YYYY-MM-DD date string in the station timezone. */
+function stationDate(tz: string, offsetDays: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(d);
+}
 
 // ---------------------------------------------------------------------------
 // Page
@@ -36,9 +44,14 @@ export function AlmanacPage() {
   const { data: station } = useStation();
   const stationTz = station?.timezone ?? 'UTC';
 
-  // Data hooks
-  const almanac       = useAlmanac();
-  const moonNames     = useAlmanacMoonNames();
+  // Compute today/tomorrow date strings in station timezone
+  const todayStr = useMemo(() => stationDate(stationTz, 0), [stationTz]);
+  const tomorrowStr = useMemo(() => stationDate(stationTz, 1), [stationTz]);
+
+  // Data hooks — fetch today and tomorrow for Sun & Moon two-column layout
+  const almanac         = useAlmanac(todayStr);
+  const almanacTomorrow = useAlmanac(tomorrowStr);
+  const moonNames       = useAlmanacMoonNames();
   const planets       = useAlmanacPlanets();
   const climatology   = useClimatologyMonthly();
   const solarEclipses = useSolarEclipses();
@@ -67,6 +80,7 @@ export function AlmanacPage() {
         {/* ── Surface B: Sun & Moon detail ──────────────────────────────── */}
         <SunMoonDetailCard
           almanac={almanac.data}
+          almanacTomorrow={almanacTomorrow.data}
           moonNames={moonNames.data}
           stationTz={stationTz}
           loading={almanac.loading}
