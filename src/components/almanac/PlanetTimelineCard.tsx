@@ -336,11 +336,11 @@ function PlanetColumn({ planet, stationTz, sunsetIso, sunriseIso, locale, t }: P
   const qLabel = qualityLabel(quality, t);
   const qClass = qualityTextClass(quality);
 
-  // Use BFF clear window if available, otherwise fall back to rise/set times.
-  // Clamp to sunset–sunrise so we don't show afternoon times.
+  // Viewing window = when the planet is above the horizon tonight.
+  // Use rise/set clamped to sunset–sunrise (not the BFF clearWindow,
+  // which represents clear-sky forecast intervals, not visibility).
   const windowText = formatViewingWindow(
-    planet.clearWindowStart ?? planet.rise,
-    planet.clearWindowEnd ?? planet.set,
+    planet.rise, planet.set,
     sunsetIso, sunriseIso, stationTz, locale, t,
   );
   const posText = naturalPosition(planet.direction, planet.altitude);
@@ -626,19 +626,19 @@ function GanttTimeline({ planets, almanac, stationTz }: GanttTimelineProps) {
         <svg x="-28" y="-10" width="20" height="20" viewBox="0 0 256 256" fill="#f59e0b" aria-hidden="true">
           <path d="M240,152H199.55a73.54,73.54,0,0,0,.45-8,72,72,0,0,0-144,0,73.54,73.54,0,0,0,.45,8H16a8,8,0,0,0,0,16H240a8,8,0,0,0,0-16ZM72,144a56,56,0,1,1,111.41,8H72.59A56.13,56.13,0,0,1,72,144Zm144,56a8,8,0,0,1-8,8H48a8,8,0,0,1,0-16H208A8,8,0,0,1,216,200ZM72.84,43.58a8,8,0,0,1,14.32-7.16l8,16a8,8,0,0,1-14.32,7.16Zm-56,48.84a8,8,0,0,1,10.74-3.57l16,8a8,8,0,0,1-7.16,14.31l-16-8A8,8,0,0,1,16.84,92.42Zm192,15.16a8,8,0,0,1,3.58-10.73l16-8a8,8,0,1,1,7.16,14.31l-16,8a8,8,0,0,1-10.74-3.58Zm-48-55.16,8-16a8,8,0,0,1,14.32,7.16l-8,16a8,8,0,1,1-14.32-7.16Z" />
         </svg>
-        <text x="0" y="3" fill="var(--fg-muted)" fontFamily="var(--font-sans)" fontSize="13" fontWeight="700" letterSpacing="0.06em">EVENING</text>
+        <text x="0" y="3" fill="rgba(255,255,255,0.7)" fontFamily="var(--font-sans)" fontSize="13" fontWeight="700" letterSpacing="0.06em">EVENING</text>
       </g>
       <g transform={`translate(${nightCenterX},30)`}>
         <svg x="-28" y="-10" width="20" height="20" viewBox="0 0 256 256" fill="#94a3b8" aria-hidden="true">
           <path d="M240,96a8,8,0,0,1-8,8H216v16a8,8,0,0,1-16,0V104H184a8,8,0,0,1,0-16h16V72a8,8,0,0,1,16,0V88h16A8,8,0,0,1,240,96ZM144,56h8v8a8,8,0,0,0,16,0V56h8a8,8,0,0,0,0-16h-8V32a8,8,0,0,0-16,0v8h-8a8,8,0,0,0,0,16Zm72.77,97a8,8,0,0,1,1.43,8A96,96,0,1,1,95.07,37.8a8,8,0,0,1,10.6,9.06A88.07,88.07,0,0,0,209.14,150.33,8,8,0,0,1,216.77,153Zm-19.39,14.88c-1.79.09-3.59.14-5.38.14A104.11,104.11,0,0,1,88,64c0-1.79,0-3.59.14-5.38A80,80,0,1,0,197.38,167.86Z" />
         </svg>
-        <text x="0" y="3" fill="var(--fg-muted)" fontFamily="var(--font-sans)" fontSize="13" fontWeight="700" letterSpacing="0.06em">NIGHT</text>
+        <text x="0" y="3" fill="rgba(255,255,255,0.7)" fontFamily="var(--font-sans)" fontSize="13" fontWeight="700" letterSpacing="0.06em">NIGHT</text>
       </g>
       <g transform={`translate(${morningCenterX},30)`}>
         <svg x="-28" y="-10" width="20" height="20" viewBox="0 0 256 256" fill="#f59e0b" aria-hidden="true">
           <path d="M240,152H199.55a73.54,73.54,0,0,0,.45-8,72,72,0,0,0-144,0,73.54,73.54,0,0,0,.45,8H16a8,8,0,0,0,0,16H240a8,8,0,0,0,0-16ZM72,144a56,56,0,1,1,111.41,8H72.59A56.13,56.13,0,0,1,72,144Zm144,56a8,8,0,0,1-8,8H48a8,8,0,0,1,0-16H208A8,8,0,0,1,216,200ZM72.84,43.58a8,8,0,0,1,14.32-7.16l8,16a8,8,0,0,1-14.32,7.16Zm-56,48.84a8,8,0,0,1,10.74-3.57l16,8a8,8,0,0,1-7.16,14.31l-16-8A8,8,0,0,1,16.84,92.42Zm192,15.16a8,8,0,0,1,3.58-10.73l16-8a8,8,0,1,1,7.16,14.31l-16,8a8,8,0,0,1-10.74-3.58Zm-48-55.16,8-16a8,8,0,0,1,14.32,7.16l-8,16a8,8,0,1,1-14.32-7.16Z" />
         </svg>
-        <text x="0" y="3" fill="var(--fg-muted)" fontFamily="var(--font-sans)" fontSize="13" fontWeight="700" letterSpacing="0.06em">MORNING</text>
+        <text x="0" y="3" fill="rgba(255,255,255,0.7)" fontFamily="var(--font-sans)" fontSize="13" fontWeight="700" letterSpacing="0.06em">MORNING</text>
       </g>
 
       {/* Planet bars with proportionally-sized images */}
