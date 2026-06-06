@@ -339,13 +339,10 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
   const isWaning =
     almanac.moon.phaseName?.includes('waning') ?? false;
   // Phase SVG for the moon-phase-row below the arc
-  const phaseViewBox = '0 0 36 36';
-  // Shadow circle x-center — offset from moon center to create crescent
-  // illumFrac=1 → shadow x = 18 (fully hidden, full moon) — actually no shadow
-  // illumFrac=0.5 → shadow x = 18 (quarter moon, half shadow)
-  // illumFrac=0.88 → shadow x shifts so 88% is lit
-  // Simplified: darkened circle offset = radius * (1 - illumFrac * 2) for waxing
-  const PHASE_R = 17;
+  // viewBox 40×40, center 20,20, r=16 — 4px padding avoids anti-alias clipping
+  const phaseViewBox = '0 0 40 40';
+  const PHASE_CX = 20;
+  const PHASE_R = 16;
   const shadowOffsetX = isWaning
     ? PHASE_R * (2 * illumFrac - 1)
     : PHASE_R * (1 - 2 * illumFrac);
@@ -647,8 +644,8 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
       <div className="flex items-center gap-3" aria-label={`${phaseName}, ${illumText} illuminated`}>
         {/* Moon phase SVG circle */}
         <svg
-          width="36"
-          height="36"
+          width="40"
+          height="40"
           viewBox={phaseViewBox}
           role="img"
           aria-label={`${phaseName} ${illumText} illuminated`}
@@ -658,8 +655,8 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
           {isNewMoon ? (
             /* New moon: outlined ring only */
             <circle
-              cx="18"
-              cy="18"
+              cx={PHASE_CX}
+              cy={PHASE_CX}
               r={PHASE_R}
               fill="var(--background, #1a1a2e)"
               stroke={MOON_COLOR}
@@ -668,11 +665,11 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
           ) : (
             <>
               {/* Full illuminated disc */}
-              <circle cx="18" cy="18" r={PHASE_R} fill={MOON_COLOR} />
+              <circle cx={PHASE_CX} cy={PHASE_CX} r={PHASE_R} fill={MOON_COLOR} />
               {/* Shadow crescent — offset circle covers the dark portion */}
               <circle
-                cx={18 + shadowOffsetX}
-                cy="18"
+                cx={PHASE_CX + shadowOffsetX}
+                cy={PHASE_CX}
                 r={PHASE_R}
                 fill="var(--background, #1a1a2e)"
               />
