@@ -21,6 +21,7 @@ import {
   CardContent,
 } from '../ui/card';
 import type { ClimatologyMonthly } from '../../api/types';
+import { useTheme } from '../../lib/theme-provider';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -149,6 +150,8 @@ export function MonthlyAveragesCard({
   error,
 }: MonthlyAveragesCardProps) {
   const { t } = useTranslation('almanac');
+  const { resolved: resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
 
   // Loading state — skeleton outside the card shell to match existing almanac pattern
   if (loading) {
@@ -271,7 +274,7 @@ export function MonthlyAveragesCard({
                 dataKey="avgRainfall"
                 name={t('climatology.series.avgRainfall')}
                 fill="#93c5fd"
-                fillOpacity={0.55}
+                fillOpacity={isDark ? 0.7 : 0.55}
                 radius={[2, 2, 0, 0]}
                 legendType="rect"
               />
@@ -280,7 +283,7 @@ export function MonthlyAveragesCard({
                 type="monotone"
                 dataKey="avgHigh"
                 name={t('climatology.series.avgHigh')}
-                stroke="#ef4444"
+                stroke="var(--temp-hi)"
                 strokeWidth={2.5}
                 dot={<CircleRingDot />}
                 activeDot={{ r: 5 }}
@@ -291,7 +294,7 @@ export function MonthlyAveragesCard({
                 type="monotone"
                 dataKey="avgLow"
                 name={t('climatology.series.avgLow')}
-                stroke="#1d4ed8"
+                stroke="var(--temp-lo)"
                 strokeWidth={2}
                 dot={<DiamondDot />}
                 activeDot={{ r: 5 }}
@@ -302,7 +305,7 @@ export function MonthlyAveragesCard({
                 type="monotone"
                 dataKey="avgDewpoint"
                 name={t('climatology.series.avgDewpoint')}
-                stroke="#a855f7"
+                stroke={isDark ? '#c084fc' : '#a855f7'}
                 strokeWidth={2}
                 dot={<SquareDot />}
                 activeDot={{ r: 5 }}

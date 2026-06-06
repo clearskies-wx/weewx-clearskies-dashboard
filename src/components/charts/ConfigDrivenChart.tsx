@@ -22,6 +22,8 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import type { ChartConfig, SeriesConfig } from '../../api/types';
+import { useTheme } from '../../lib/theme-provider';
+import { ensureChartContrast } from '../../utils/chart-contrast';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -280,6 +282,9 @@ export function ConfigDrivenChart({
   height = 300,
   reducedMotion = false,
 }: ConfigDrivenChartProps) {
+  const { resolved: resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
+
   // Filter to visible series only once; keep original index for color resolution
   const visibleSeries = config.series
     .map((s, i) => ({ series: s, originalIndex: i }))
@@ -439,7 +444,10 @@ export function ConfigDrivenChart({
 
             {visibleSeries.map(({ series, originalIndex }) => {
               const seriesType = resolveSeriesType(series, config, globalType);
-              const color = resolveColor(series, originalIndex, globalColors);
+              const color = ensureChartContrast(
+                resolveColor(series, originalIndex, globalColors),
+                isDark,
+              );
               return renderSeriesElement({ series, seriesType, color, reducedMotion });
             })}
           </ComposedChart>
