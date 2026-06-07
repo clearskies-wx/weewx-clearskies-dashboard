@@ -347,7 +347,8 @@ export function WeatherRangeChart({
   const safeField = field.replace(/[^a-zA-Z0-9]/g, '_');
   const gradientId = `tempGradient_${safeField}`;
 
-  const isTemp = unit.includes('°') || unit.toLowerCase().includes('c') || unit.toLowerCase().includes('f');
+  const TEMP_FIELDS = new Set(['outTemp', 'inTemp', 'dewpoint', 'windchill', 'heatindex', 'appTemp', 'extraTemp1', 'extraTemp2', 'extraTemp3', 'extraTemp4']);
+  const isTemp = TEMP_FIELDS.has(field) || unit.includes('°') || unit.toLowerCase().includes('c') || unit.toLowerCase().includes('f');
 
   return (
     <div className="flex flex-col gap-2">
