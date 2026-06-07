@@ -446,8 +446,8 @@ export function ConfigDrivenGroup({
   // -------------------------------------------------------------------------
 
   const archiveResult = useArchive(
-    isClimatology || hasRangeChart ? undefined : archiveParams ?? undefined,
-    { skip: isClimatology || hasRangeChart },
+    isClimatology ? undefined : archiveParams ?? undefined,
+    { skip: isClimatology },
   );
 
   // Separate raw fetch for wind rose — needs unaggregated data to preserve
