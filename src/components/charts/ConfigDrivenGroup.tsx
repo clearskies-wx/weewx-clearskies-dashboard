@@ -214,7 +214,7 @@ export function ConfigDrivenGroup({
     group.rollingRanges[0] ?? '1d',
   );
   const [internalSelectedYear, setInternalSelectedYear] = useState<number>(new Date().getFullYear());
-  const [internalSelectedMonth, setInternalSelectedMonth] = useState<number | null>(null);
+  const [internalSelectedMonth, setInternalSelectedMonth] = useState<number | null>(new Date().getMonth() + 1);
 
   // Effective values: use controlled prop when provided, fall back to internal state
   const selectedRange = controlledRange ?? internalSelectedRange;
@@ -786,9 +786,9 @@ export function ConfigDrivenGroup({
         </CardHeader>
       )}
 
-      {/* Mode B: Year / month dropdowns — inside the card, below group title */}
+      {/* Mode B: Year / month dropdowns + export icons — same row, dropdowns left, icons right */}
       {!hideControls && showYearMonthDropdowns && (
-        <div className="flex flex-wrap gap-4 mb-4">
+        <div className="flex flex-wrap items-end gap-4 mb-4">
           {/* Year selector */}
           <div className="flex flex-col gap-1">
             <label
@@ -829,7 +829,6 @@ export function ConfigDrivenGroup({
                 }}
                 className="min-h-[44px] md:min-h-0 rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
-                <option value="">{t('allMonths')}</option>
                 {Array.from({ length: 12 }, (_, i) => {
                   const label = new Intl.DateTimeFormat(i18n.language, { month: 'long' }).format(new Date(2000, i));
                   return (
@@ -1099,7 +1098,6 @@ export function ConfigDrivenGroup({
 
               if (isWindRoseChart) {
                 if (!windRoseData) {
-                  // Wind rose data still loading or unavailable — show skeleton
                   return (
                     <TileSkeleton key={chart.chartId} className="h-[300px]" />
                   );
@@ -1107,19 +1105,20 @@ export function ConfigDrivenGroup({
                 const windRoseSeries = chart.series.find(
                   (s) => s.seriesId === 'windRose',
                 );
-                // Merge operator-configured colors over the default palette.
                 const beaufortColors = Object.keys(windRoseSeries?.beaufortColors ?? {}).length > 0
                   ? windRoseSeries!.beaufortColors
                   : defaultBeaufortColors;
                 return (
-                  <WindRoseChart
-                    key={chart.chartId}
-                    data={windRoseData}
-                    beaufortColors={beaufortColors}
-                    height={300}
-                    reducedMotion={reducedMotion}
-                    title={chart.title}
-                  />
+                  <div key={chart.chartId}>
+                    {chart.title && <h3 className="text-sm font-semibold text-center mb-2">{chart.title}</h3>}
+                    <WindRoseChart
+                      data={windRoseData}
+                      beaufortColors={beaufortColors}
+                      height={300}
+                      reducedMotion={reducedMotion}
+                      title={chart.title}
+                    />
+                  </div>
                 );
               }
 
@@ -1137,16 +1136,18 @@ export function ConfigDrivenGroup({
                 // yAxisSoftMax is number | null | undefined; convert null → undefined for the prop
                 const haysSoftMax = haysSeries?.yAxisSoftMax ?? undefined;
                 return (
-                  <HaysChart
-                    key={chart.chartId}
-                    highData={rangeHighPoints}
-                    lowData={rangeLowPoints}
-                    field={haysField}
-                    unit={haysUnit}
-                    softMax={haysSoftMax}
-                    height={300}
-                    reducedMotion={reducedMotion}
-                  />
+                  <div key={chart.chartId}>
+                    {chart.title && <h3 className="text-sm font-semibold text-center mb-2">{chart.title}</h3>}
+                    <HaysChart
+                      highData={rangeHighPoints}
+                      lowData={rangeLowPoints}
+                      field={haysField}
+                      unit={haysUnit}
+                      softMax={haysSoftMax}
+                      height={300}
+                      reducedMotion={reducedMotion}
+                    />
+                  </div>
                 );
               }
 
@@ -1163,15 +1164,17 @@ export function ConfigDrivenGroup({
                 // Unit from yAxisLabel or empty string
                 const unitLabel = rangeSeries?.yAxisLabel ?? '';
                 return (
-                  <WeatherRangeChart
-                    key={chart.chartId}
-                    highData={rangeHighPoints}
-                    lowData={rangeLowPoints}
-                    field={fieldName}
-                    unit={unitLabel}
-                    height={300}
-                    reducedMotion={reducedMotion}
-                  />
+                  <div key={chart.chartId}>
+                    {chart.title && <h3 className="text-sm font-semibold text-center mb-2">{chart.title}</h3>}
+                    <WeatherRangeChart
+                      highData={rangeHighPoints}
+                      lowData={rangeLowPoints}
+                      field={fieldName}
+                      unit={unitLabel}
+                      height={300}
+                      reducedMotion={reducedMotion}
+                    />
+                  </div>
                 );
               }
 
