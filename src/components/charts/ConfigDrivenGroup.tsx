@@ -477,7 +477,11 @@ export function ConfigDrivenGroup({
   }, [archiveResult.data, group.charts, customQueryResults.data]);
 
   // Gap detection: insert null rows at data gaps > gapsize to break Recharts lines.
+  // Only applies to raw (non-aggregated) data — hourly/daily records have natural
+  // gaps that exceed the 5-minute gapsize and would break all line rendering.
+  const effectiveInterval = archiveParams?.interval;
   const gapProcessedArchiveData = useMemo(() => {
+    if (effectiveInterval === 'hour' || effectiveInterval === 'day') return archiveData;
     if (!group.gapsize || group.gapsize <= 0 || archiveData.length < 2) return archiveData;
     const gapMs = group.gapsize * 1000;
     const result: typeof archiveData = [archiveData[0]];
@@ -494,7 +498,7 @@ export function ConfigDrivenGroup({
       result.push(archiveData[i]);
     }
     return result;
-  }, [archiveData, group.gapsize]);
+  }, [archiveData, group.gapsize, effectiveInterval]);
 
   // Wind rose data: derived client-side from the same archive fetch (T3.2).
   // Uses raw archiveResult.data (ArchiveRecord[]) so the BFF-injected `beaufort`
