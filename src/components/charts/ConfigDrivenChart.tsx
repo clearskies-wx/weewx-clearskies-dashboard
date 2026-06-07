@@ -342,6 +342,11 @@ export function ConfigDrivenChart({
 
   return (
     <div style={{ minWidth: 0, minHeight: 0, width: '100%', height: '100%' }}>
+      {config.title && (
+        <h3 className="text-sm font-semibold text-foreground mb-2" style={{ fontFamily: 'var(--font-sans)' }}>
+          {config.title}
+        </h3>
+      )}
       {config.subtitle && (
         <p className="text-xs text-muted-foreground mb-1">{config.subtitle}</p>
       )}
@@ -350,8 +355,8 @@ export function ConfigDrivenChart({
         WCAG 1.1.1 / coding rules §5.5.
         "sr-only" is a Tailwind utility that visually hides but keeps accessible.
       */}
-      <table className="sr-only">
-        <caption>{chartTitle}</caption>
+      <table className="sr-only" aria-label={chartTitle}>
+        <caption className="sr-only">{chartTitle}</caption>
         <thead>
           <tr>
             <th scope="col">{xKey}</th>

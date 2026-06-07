@@ -38,7 +38,7 @@ import { ChartGauge } from './ChartGauge';
 import { HaysChart } from './HaysChart';
 import { lttbDownsample } from '../../utils/lttb';
 import { exportChartAsCsv, exportChartAsPng, buildExportFilename } from '../../utils/chart-export';
-import { Card } from '../ui/card';
+import { Card, CardHeader, CardTitle } from '../ui/card';
 import type { ChartGroupConfig } from '../../api/types';
 
 // ---------------------------------------------------------------------------
@@ -788,6 +788,11 @@ export function ConfigDrivenGroup({
       {/* ------------------------------------------------------------------ */}
 
       <Card footprint="full" className="p-4">
+      {group.title && (
+        <CardHeader>
+          <CardTitle as="h2">{group.title}</CardTitle>
+        </CardHeader>
+      )}
       <div aria-busy={isLoading || undefined}>
         {/* Toggle + export button row */}
         <div className="flex justify-end items-center gap-2 mb-2">
