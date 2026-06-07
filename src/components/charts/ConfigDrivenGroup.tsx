@@ -497,11 +497,21 @@ export function ConfigDrivenGroup({
   }, [archiveData, group.gapsize]);
 
   // Wind rose data: derived client-side from the same archive fetch (T3.2).
-  // Uses raw archiveResult.data (ArchiveRecord[]) so the BFF-injected `beaufort`
-  // ConvertedValue is accessible without the seriesId remapping done in archiveData.
+  // The BFF does not inject `beaufort` on archive responses, so we compute it
+  // client-side from windSpeed (same approach as Belchertown's kts_to_beaufort).
+  // Thresholds are mph-based, matching the Belchertown wind rose bins.
   const windRoseData = useMemo(() => {
     if (!hasWindRose || !archiveResult.data || archiveResult.data.length === 0) return null;
-    return buildWindRoseMatrix(archiveResult.data as unknown as Record<string, unknown>[]);
+    const records = (archiveResult.data as unknown as Record<string, unknown>[]).map(r => {
+      const ws = typeof r['windSpeed'] === 'number' ? r['windSpeed'] : null;
+      return {
+        ...r,
+        beaufort: ws != null
+          ? { value: ws < 1 ? 0 : ws <= 3 ? 1 : ws <= 7 ? 2 : ws <= 12 ? 3 : ws <= 18 ? 4 : ws <= 24 ? 5 : 6, label: '', formatted: '' }
+          : null,
+      };
+    });
+    return buildWindRoseMatrix(records);
   }, [hasWindRose, archiveResult.data]);
 
   // LTTB downsampling (archive only — climatology has exactly 12 points, never needs it)
