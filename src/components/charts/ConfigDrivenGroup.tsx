@@ -120,8 +120,12 @@ function buildYearList(stationFirstYear: number | undefined): number[] {
 const CLIMATOLOGY_FIELD_MAP: Record<string, string> = {
   'outTemp:avg_max': 'avgHighTemp',
   'outTemp:avg_min': 'avgLowTemp',
+  'outTemp:max': 'avgHighTemp',
+  'outTemp:min': 'avgLowTemp',
   'dewpoint:avg': 'avgDewpoint',
   'rain:avg_monthly_total': 'avgRainfall',
+  'rain:sum': 'avgRainfall',
+  'rainTotal:sum': 'avgRainfall',
 };
 
 /**
