@@ -359,17 +359,23 @@ export function ConfigDrivenGroup({
     }
 
     // Proportional aggregate interval — matches Belchertown's scaling.
-    // Base: 300s (5-min archive interval) for base_time_length 86400s (1 day).
-    // For longer ranges, scale proportionally so all charts have ~288 points.
-    // ratio = max(1, range_seconds / base_time_seconds)
-    // aggregate_interval = base_interval * ratio
+    // For rolling-range groups: ratio = range / base_time, interval = base_interval * ratio.
+    // For year/month groups: use aggregate_interval directly (operator set daily/hourly
+    // granularity; scaling would coarsen data when viewing a full year).
     const rangeSec = (new Date(to).getTime() - new Date(from).getTime()) / 1000;
-    const baseTimeSec = group.timeLength && typeof group.timeLength === 'number'
-      ? group.timeLength
-      : 86400;
     const baseAggInterval = group.aggregateInterval ?? 300;
-    const ratio = Math.max(1, rangeSec / baseTimeSec);
-    const aggInterval = Math.round(baseAggInterval * ratio);
+    const isYearMonthMode = selectedYear != null
+      && !(group.enableDateRanges && group.rollingRanges.length > 0);
+    let aggInterval: number;
+    if (isYearMonthMode) {
+      aggInterval = baseAggInterval;
+    } else {
+      const baseTimeSec = typeof group.timeLength === 'number'
+        ? group.timeLength
+        : 86400;
+      const ratio = Math.max(1, rangeSec / baseTimeSec);
+      aggInterval = Math.round(baseAggInterval * ratio);
+    }
 
     // Only use aggregate_interval when it exceeds the raw archive interval
     const useAggregation = aggInterval > 300;
@@ -766,9 +772,20 @@ export function ConfigDrivenGroup({
       {/* Date controls                                                        */}
       {/* ------------------------------------------------------------------ */}
 
-      {/* Mode B: Year / month dropdowns — hidden when parent owns date controls */}
+      {/* ------------------------------------------------------------------ */}
+      {/* Chart / table toggle button + chart container — all in one Card    */}
+      {/* ------------------------------------------------------------------ */}
+
+      <Card footprint="full" className="p-4 overflow-hidden">
+      {group.title && (
+        <CardHeader>
+          <CardTitle as="h2">{group.title}</CardTitle>
+        </CardHeader>
+      )}
+
+      {/* Mode B: Year / month dropdowns — inside the card, below group title */}
       {!hideControls && showYearMonthDropdowns && (
-        <div className="flex flex-wrap gap-4">
+        <div className="flex flex-wrap gap-4 mb-4">
           {/* Year selector */}
           <div className="flex flex-col gap-1">
             <label
@@ -822,17 +839,6 @@ export function ConfigDrivenGroup({
             </div>
           )}
         </div>
-      )}
-
-      {/* ------------------------------------------------------------------ */}
-      {/* Chart / table toggle button + chart container — all in one Card    */}
-      {/* ------------------------------------------------------------------ */}
-
-      <Card footprint="full" className="p-4 overflow-hidden">
-      {group.title && (
-        <CardHeader>
-          <CardTitle as="h2">{group.title}</CardTitle>
-        </CardHeader>
       )}
 
       {/* Mode A: Rolling range buttons — now inside the card, below the group title */}
