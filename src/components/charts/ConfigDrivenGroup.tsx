@@ -381,9 +381,10 @@ export function ConfigDrivenGroup({
     if (useAggregation) {
       group.charts.forEach((chart) => {
         chart.series.forEach((s) => {
-          if (s.aggregateType && s.aggregateType !== 'avg') {
+          if (s.aggregateType && s.aggregateType !== 'avg' && s.aggregateType.toLowerCase() !== 'none') {
             const obsType = s.observationType ?? s.seriesId;
-            aggPairs.push(`${obsType}:${s.aggregateType}`);
+            const aliasedField = FIELD_ALIASES[obsType] ?? obsType;
+            aggPairs.push(`${aliasedField}:${s.aggregateType}`);
           }
         });
       });
