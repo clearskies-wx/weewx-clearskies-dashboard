@@ -1,23 +1,37 @@
-// WeatherRangeChart.tsx — T4.1
+// WeatherRangeChart.tsx — T-B1 through T-B4
 //
-// Renders a custom SVG polar/radial chart showing high and low ranges for each
-// time period (day-of-month or month). Each position around the circle
-// represents a time period; each radial bar spans from the low value to the
-// high value for that period.
+// Renders a Cartesian arearange chart showing daily high/low temperature ranges.
+// Uses Recharts ComposedChart with stacked Areas:
+//   - Invisible "base" area (transparent fill, no stroke) pushes the visible
+//     band up to the correct Y position.
+//   - Visible "range" area (high - low) filled with an SVG linearGradient
+//     whose stops map temperature thresholds to Y pixel positions, producing
+//     Belchertown's 15-band cool→warm temperature color effect.
 //
-// Accessibility (same pattern as WindRoseChart — WCAG 2.1 AA):
-//   - SVG has role="img" + aria-labelledby pointing to a visually-hidden title
+// Per Belchertown wiki: weatherRange renders as arearange (area_display=1) or
+// columnrange (default), NOT as a polar/radial chart unless the operator
+// explicitly sets polar=true. This component handles the arearange variant.
+//
+// Accessibility (WCAG 2.1 AA):
+//   - Chart wrapper has role="img" + aria-label (WCAG 1.1.1)
 //   - sr-only <table> provides all values to screen readers (WCAG 1.1.1)
-//   - Tooltip on hover/focus — each bar is keyboard-accessible via tabIndex
-//   - Custom focus ring (SVG paths cannot use CSS :focus-visible with outline)
-//   - CSS variables for all colors (both themes, light and dark)
-//   - Reduced motion: no entry animations when reducedMotion prop is true
+//   - Custom tooltip with keyboard-accessible Recharts Tooltip
 //   - Color gradient paired with position (not color-only state signal)
-//
-// Both themes: gradient interpolation uses explicit hex values; gridlines use
-// var(--border); labels use var(--foreground) / var(--muted-foreground).
+//   - Both light and dark themes use CSS variables; temperature colors are
+//     Belchertown's documented zone colors (not theme-dependent — they are
+//     semantic, conveying temperature magnitude, not UI state)
 
-import { useState, useId, useCallback, useEffect, useRef } from 'react';
+import {
+  ComposedChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
+import type { TooltipProps } from 'recharts';
+import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -33,149 +47,142 @@ export interface WeatherRangeChartProps {
 }
 
 // ---------------------------------------------------------------------------
-// Color helpers — cool (blue) → warm (red/orange) gradient
-// Uses CSS variables --range-chart-cool/mid/warm for theme-awareness.
+// Temperature color zones — Belchertown's get_outTemp_color() zones
+// Same visual gradient for both °F and °C; different thresholds.
 // ---------------------------------------------------------------------------
 
-interface Rgb { r: number; g: number; b: number }
-
-function parseHex(hex: string): Rgb {
-  const h = hex.replace('#', '');
-  return {
-    r: parseInt(h.substring(0, 2), 16),
-    g: parseInt(h.substring(2, 4), 16),
-    b: parseInt(h.substring(4, 6), 16),
-  };
+interface TempZone {
+  value: number;
+  color: string;
 }
 
-const FALLBACK_COOL = parseHex('#4a90d9');
-const FALLBACK_MID  = parseHex('#f5a623');
-const FALLBACK_WARM = parseHex('#d0021b');
+const TEMP_ZONES_F: TempZone[] = [
+  { value: 0,   color: '#1278c8' },
+  { value: 25,  color: '#30bfef' },
+  { value: 32,  color: '#1fafdd' },
+  { value: 40,  color: 'rgba(0,172,223,1)' },
+  { value: 50,  color: '#71bc3c' },
+  { value: 55,  color: 'rgba(90,179,41,0.8)' },
+  { value: 65,  color: 'rgba(131,173,45,1)' },
+  { value: 70,  color: 'rgba(206,184,98,1)' },
+  { value: 75,  color: 'rgba(255,174,0,0.9)' },
+  { value: 80,  color: 'rgba(255,153,0,0.9)' },
+  { value: 85,  color: 'rgba(255,127,0,1)' },
+  { value: 90,  color: 'rgba(255,79,0,0.9)' },
+  { value: 95,  color: 'rgba(255,69,69,1)' },
+  { value: 110, color: 'rgba(255,104,104,1)' },
+];
 
-function readRangeColors(): { cool: Rgb; mid: Rgb; warm: Rgb } {
-  if (typeof document === 'undefined') return { cool: FALLBACK_COOL, mid: FALLBACK_MID, warm: FALLBACK_WARM };
-  const style = getComputedStyle(document.documentElement);
-  const coolStr = style.getPropertyValue('--range-chart-cool').trim();
-  const midStr  = style.getPropertyValue('--range-chart-mid').trim();
-  const warmStr = style.getPropertyValue('--range-chart-warm').trim();
-  return {
-    cool: coolStr ? parseHex(coolStr) : FALLBACK_COOL,
-    mid:  midStr  ? parseHex(midStr)  : FALLBACK_MID,
-    warm: warmStr ? parseHex(warmStr) : FALLBACK_WARM,
-  };
-}
-
-function tempGradientColor(t: number, cool: Rgb, mid: Rgb, warm: Rgb): string {
-  const c = Math.max(0, Math.min(1, t));
-  let r: number, g: number, b: number;
-  if (c < 0.5) {
-    const u = c / 0.5;
-    r = Math.round(cool.r + u * (mid.r - cool.r));
-    g = Math.round(cool.g + u * (mid.g - cool.g));
-    b = Math.round(cool.b + u * (mid.b - cool.b));
-  } else {
-    const u = (c - 0.5) / 0.5;
-    r = Math.round(mid.r + u * (warm.r - mid.r));
-    g = Math.round(mid.g + u * (warm.g - mid.g));
-    b = Math.round(mid.b + u * (warm.b - mid.b));
-  }
-  return `rgb(${r},${g},${b})`;
-}
-
-// ---------------------------------------------------------------------------
-// Arc / radial bar path helper
-// ---------------------------------------------------------------------------
+const TEMP_ZONES_C: TempZone[] = [
+  { value: -5,   color: '#1278c8' },
+  { value: -3.8, color: '#30bfef' },
+  { value: 0,    color: '#1fafdd' },
+  { value: 4.4,  color: 'rgba(0,172,223,1)' },
+  { value: 10,   color: '#71bc3c' },
+  { value: 12.7, color: 'rgba(90,179,41,0.8)' },
+  { value: 18.3, color: 'rgba(131,173,45,1)' },
+  { value: 21.1, color: 'rgba(206,184,98,1)' },
+  { value: 23.8, color: 'rgba(255,174,0,0.9)' },
+  { value: 26.6, color: 'rgba(255,153,0,0.9)' },
+  { value: 29.4, color: 'rgba(255,127,0,1)' },
+  { value: 32.2, color: 'rgba(255,79,0,0.9)' },
+  { value: 35,   color: 'rgba(255,69,69,1)' },
+  { value: 43.3, color: 'rgba(255,104,104,1)' },
+];
 
 /**
- * Returns an SVG path string for a radial bar (annular sector between two radii).
- * Angles are in degrees where 0 = top (12 o'clock), increasing clockwise.
+ * Returns the temperature zone color for a given temperature value and unit.
+ * Mirrors Belchertown's get_outTemp_color() JavaScript function.
  */
-function radialBarPath(
-  cx: number,
-  cy: number,
-  innerR: number,
-  outerR: number,
-  startDeg: number,
-  endDeg: number,
-): string {
-  if (outerR <= innerR || outerR <= 0 || innerR < 0) return '';
+function getOutTempColor(temp: number, unit: string): string {
+  const zones = unit.includes('C') ? TEMP_ZONES_C : TEMP_ZONES_F;
+  for (let i = zones.length - 1; i >= 0; i--) {
+    if (temp >= zones[i].value) return zones[i].color;
+  }
+  return zones[0].color;
+}
 
-  function toRad(deg: number): number {
-    return ((deg - 90) * Math.PI) / 180;
+// ---------------------------------------------------------------------------
+// Merged data row
+// ---------------------------------------------------------------------------
+
+interface RangeRow {
+  timestamp: number;   // epoch seconds
+  high: number | null;
+  low: number | null;
+  avg: number | null;
+  // Stacked area values: base = low (invisible, positions the band), range = high - low
+  base: number | null;
+  range: number | null;
+}
+
+function mergeData(
+  highData: Array<{ dateTime: number; value: number | null }>,
+  lowData: Array<{ dateTime: number; value: number | null }>,
+): RangeRow[] {
+  return highData.map((h, i) => {
+    const low = lowData[i]?.value ?? null;
+    const high = h.value;
+    const avg = high !== null && low !== null ? (high + low) / 2 : null;
+    const base = low;
+    const range = high !== null && low !== null ? high - low : null;
+    return {
+      timestamp: h.dateTime,
+      high,
+      low,
+      avg,
+      base,
+      range,
+    };
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Y-axis scaling — Belchertown's algorithm
+// tickInterval = Math.ceil(Math.round(max / 5) / 5) * 5
+// ---------------------------------------------------------------------------
+
+function computeYDomain(data: RangeRow[]): {
+  yMin: number;
+  yMax: number;
+  ticks: number[];
+} {
+  const highs = data.map((d) => d.high).filter((v): v is number => v !== null);
+  const lows  = data.map((d) => d.low).filter((v): v is number => v !== null);
+  if (highs.length === 0 || lows.length === 0) {
+    return { yMin: 0, yMax: 100, ticks: [0, 20, 40, 60, 80, 100] };
   }
 
-  const s = toRad(startDeg);
-  const e = toRad(endDeg);
+  const rawMax = Math.max(...highs);
+  const rawMin = Math.min(...lows);
 
-  const ox1 = cx + outerR * Math.cos(s);
-  const oy1 = cy + outerR * Math.sin(s);
-  const ox2 = cx + outerR * Math.cos(e);
-  const oy2 = cy + outerR * Math.sin(e);
+  // Belchertown tick interval calculation
+  const tickInterval = Math.max(5, Math.ceil(Math.round(rawMax / 5) / 5) * 5);
 
-  const ix1 = cx + innerR * Math.cos(e);
-  const iy1 = cy + innerR * Math.sin(e);
-  const ix2 = cx + innerR * Math.cos(s);
-  const iy2 = cy + innerR * Math.sin(s);
+  const yMin = Math.floor(rawMin / tickInterval) * tickInterval;
+  const yMax = Math.ceil(rawMax / tickInterval) * tickInterval;
 
-  const largeArc = endDeg - startDeg >= 180 ? 1 : 0;
-
-  return [
-    `M ${ox1.toFixed(2)} ${oy1.toFixed(2)}`,
-    `A ${outerR.toFixed(2)} ${outerR.toFixed(2)} 0 ${largeArc} 1 ${ox2.toFixed(2)} ${oy2.toFixed(2)}`,
-    `L ${ix1.toFixed(2)} ${iy1.toFixed(2)}`,
-    `A ${innerR.toFixed(2)} ${innerR.toFixed(2)} 0 ${largeArc} 0 ${ix2.toFixed(2)} ${iy2.toFixed(2)}`,
-    'Z',
-  ].join(' ');
-}
-
-// ---------------------------------------------------------------------------
-// Container width hook (ResizeObserver) — mirrors WindRoseChart pattern
-// ---------------------------------------------------------------------------
-
-function useContainerWidth(ref: React.RefObject<HTMLDivElement | null>): number {
-  const [width, setWidth] = useState(300);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const observer = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (entry) {
-        setWidth(entry.contentRect.width);
-      }
-    });
-
-    observer.observe(el);
-    setWidth(el.getBoundingClientRect().width || 300);
-
-    return () => observer.disconnect();
-  }, [ref]);
-
-  return width;
-}
-
-// ---------------------------------------------------------------------------
-// Period label helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Format a Unix timestamp (seconds) to a short period label.
- * For monthly data (12 points) returns month abbreviation; otherwise day number.
- */
-function periodLabel(dateTime: number, totalCount: number): string {
-  const d = new Date(dateTime * 1000);
-  if (totalCount <= 12) {
-    return d.toLocaleString('default', { month: 'short' });
+  const ticks: number[] = [];
+  for (let t = yMin; t <= yMax; t += tickInterval) {
+    ticks.push(t);
   }
-  return String(d.getDate());
+
+  return { yMin, yMax, ticks };
 }
 
-/**
- * Format a Unix timestamp (seconds) to a full readable date string for the tooltip.
- */
-function fullDateLabel(dateTime: number, totalCount: number): string {
-  const d = new Date(dateTime * 1000);
+// ---------------------------------------------------------------------------
+// Date formatter — "3 Nov", "10 Nov" style matching Belchertown
+// ---------------------------------------------------------------------------
+
+function formatXAxisTick(timestamp: number): string {
+  const d = new Date(timestamp * 1000);
+  const day = d.getDate();
+  const month = d.toLocaleString('default', { month: 'short' });
+  return `${day} ${month}`;
+}
+
+function formatFullDate(timestamp: number, totalCount: number): string {
+  const d = new Date(timestamp * 1000);
   if (totalCount <= 12) {
     return d.toLocaleString('default', { month: 'long', year: 'numeric' });
   }
@@ -183,333 +190,165 @@ function fullDateLabel(dateTime: number, totalCount: number): string {
 }
 
 // ---------------------------------------------------------------------------
-// Tooltip state
+// SVG gradient def builder
+// Produces a vertical linearGradient with stops mapped to temperature zones.
+// gradientUnits="userSpaceOnUse" so positions are in chart pixel coordinates.
 // ---------------------------------------------------------------------------
 
-interface TooltipState {
-  label: string;
-  high: number | null;
-  low: number | null;
-  x: number;
-  y: number;
-}
-
-// ---------------------------------------------------------------------------
-// Inner SVG component
-// ---------------------------------------------------------------------------
-
-interface WeatherRangeSvgProps {
-  highData: Array<{ dateTime: number; value: number | null }>;
-  lowData: Array<{ dateTime: number; value: number | null }>;
+interface GradientDefProps {
+  id: string;
+  yMin: number;
+  yMax: number;
   unit: string;
-  size: number;
-  reducedMotion: boolean;
-  titleId: string;
+  // Chart SVG coordinate space: top and bottom Y pixel values of the plot area
+  plotTop: number;
+  plotBottom: number;
 }
 
-function WeatherRangeSvg({
-  highData,
-  lowData,
-  unit,
-  size,
-  reducedMotion,
-  titleId,
-}: WeatherRangeSvgProps) {
-  const [tooltip, setTooltip] = useState<TooltipState | null>(null);
-  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
+function TempGradientDef({ id, yMin, yMax, unit, plotTop, plotBottom }: GradientDefProps) {
+  const zones = unit.includes('C') ? TEMP_ZONES_C : TEMP_ZONES_F;
+  const domainRange = yMax - yMin;
+  if (domainRange <= 0) return null;
 
-  const rangeColors = readRangeColors();
-
-  const cx = size / 2;
-  const cy = size / 2;
-
-  // Label margin — space for period labels around the outside
-  const labelMargin = Math.max(22, size * 0.09);
-  const maxRadius = cx - labelMargin;
-
-  // Compute global min/max across all data points (low min → center, high max → outer ring)
-  const allValues: number[] = [];
-  highData.forEach((d) => { if (d.value !== null) allValues.push(d.value); });
-  lowData.forEach((d) => { if (d.value !== null) allValues.push(d.value); });
-
-  const globalMin = allValues.length > 0 ? Math.min(...allValues) : 0;
-  const globalMax = allValues.length > 0 ? Math.max(...allValues) : 1;
-  const range = globalMax - globalMin || 1;
-
-  // Scale a value to a radius
-  function valueToRadius(v: number): number {
-    // Center = globalMin, outer ring = globalMax
-    // Small padding at center so bars don't collapse to a point
-    const minR = Math.max(4, size * 0.04);
-    return minR + ((v - globalMin) / range) * (maxRadius - minR);
+  // Map a temperature value to a Y SVG coordinate (inverted: high temp = low Y)
+  function tempToY(temp: number): number {
+    const fraction = (temp - yMin) / domainRange;
+    // fraction=0 → bottom (plotBottom), fraction=1 → top (plotTop)
+    return plotBottom - fraction * (plotBottom - plotTop);
   }
 
-  const totalCount = highData.length;
-  if (totalCount === 0) return null;
+  // Only include zones that are within the visible domain, plus the boundary stops
+  const stops: Array<{ offset: string; color: string }> = [];
 
-  // Angular step per period
-  const stepDeg = 360 / totalCount;
-  // Gap between bars in degrees (narrow gap at high count)
-  const gapDeg = totalCount > 20 ? 0.5 : 1.0;
+  // Work from top (hottest) to bottom (coldest) for SVG gradient direction y1→y2
+  // The gradient goes from y1=plotTop (hottest, high temp) to y2=plotBottom (coldest, low temp)
+  // So offset=0% is the top (high temp) and offset=100% is the bottom (low temp)
+  // We build stops from the perspective of temperature ascending (bottom→top)
+  // then convert to gradient offsets (top→bottom = 100%→0%)
 
-  // Dismiss tooltip on Escape
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setTooltip(null);
-        setFocusedIndex(null);
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, []);
-
-  const getTooltipCoords = useCallback(
-    (clientX: number, clientY: number) => {
-      const svgRect = svgRef.current?.getBoundingClientRect();
-      if (!svgRect) return null;
-      return { x: clientX - svgRect.left, y: clientY - svgRect.top };
-    },
-    [],
+  const visibleZones = zones.filter(
+    (z, i) => {
+      const nextVal = zones[i + 1]?.value ?? Infinity;
+      // Include zone if it overlaps [yMin, yMax]
+      return z.value <= yMax && nextVal >= yMin;
+    }
   );
 
-  // Build radial bar segments
-  const bars: React.ReactNode[] = [];
-  let focusedPathD: string | null = null;
-
-  for (let i = 0; i < totalCount; i++) {
-    const highPoint = highData[i];
-    const lowPoint = lowData[i] ?? highData[i]; // fall back to same point if no low data
-
-    if (!highPoint || highPoint.value === null) continue;
-
-    const highVal = highPoint.value;
-    const lowVal = lowPoint.value ?? highVal;
-
-    const innerR = valueToRadius(Math.min(highVal, lowVal));
-    const outerR = valueToRadius(Math.max(highVal, lowVal));
-
-    // Avoid zero-height bars (high === low)
-    const actualOuter = Math.max(outerR, innerR + 1);
-
-    const centerAngle = i * stepDeg;
-    const startAngle = centerAngle - stepDeg / 2 + gapDeg / 2;
-    const endAngle = centerAngle + stepDeg / 2 - gapDeg / 2;
-
-    const pathD = radialBarPath(cx, cy, innerR, actualOuter, startAngle, endAngle);
-    if (!pathD) continue;
-
-    // Color: based on midpoint of high/low relative to global range
-    const midVal = (highVal + lowVal) / 2;
-    const colorT = (midVal - globalMin) / range;
-    const color = tempGradientColor(colorT, rangeColors.cool, rangeColors.mid, rangeColors.warm);
-
-    const label = fullDateLabel(highPoint.dateTime, totalCount);
-
-    if (focusedIndex === i) {
-      focusedPathD = pathD;
-    }
-
-    bars.push(
-      <path
-        key={i}
-        d={pathD}
-        fill={color}
-        stroke="var(--background)"
-        strokeWidth={0.5}
-        tabIndex={0}
-        aria-label={`${label}: high ${highVal.toFixed(1)}${unit}, low ${lowVal.toFixed(1)}${unit}`}
-        style={{
-          cursor: 'pointer',
-          outline: 'none',
-          transition: reducedMotion ? 'none' : 'opacity 0.12s ease',
-        }}
-        onPointerEnter={(e) => {
-          const coords = getTooltipCoords(e.clientX, e.clientY);
-          if (!coords) return;
-          setTooltip({ label, high: highVal, low: lowVal, ...coords });
-        }}
-        onPointerMove={(e) => {
-          const coords = getTooltipCoords(e.clientX, e.clientY);
-          if (!coords) return;
-          setTooltip((prev) => (prev ? { ...prev, ...coords } : prev));
-        }}
-        onPointerLeave={() => setTooltip(null)}
-        onFocus={(e) => {
-          setFocusedIndex(i);
-          const rect = e.currentTarget.getBoundingClientRect();
-          const svgRect = svgRef.current?.getBoundingClientRect();
-          if (!svgRect) return;
-          setTooltip({
-            label,
-            high: highVal,
-            low: lowVal,
-            x: rect.left + rect.width / 2 - svgRect.left,
-            y: rect.top + rect.height / 2 - svgRect.top,
-          });
-        }}
-        onBlur={() => {
-          setFocusedIndex(null);
-          setTooltip(null);
-        }}
-      />,
+  if (visibleZones.length === 0) {
+    // Fallback: single color for the whole area
+    const midTemp = (yMin + yMax) / 2;
+    const color = getOutTempColor(midTemp, unit);
+    return (
+      <defs>
+        <linearGradient id={id} x1="0" y1={plotTop} x2="0" y2={plotBottom} gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor={color} />
+          <stop offset="100%" stopColor={color} />
+        </linearGradient>
+      </defs>
     );
   }
 
-  // Concentric gridlines — 4 evenly-spaced temperature rings with labels
-  const GRID_COUNT = 4;
-  const gridLines = Array.from({ length: GRID_COUNT }, (_, i) => {
-    const fraction = (i + 1) / GRID_COUNT;
-    const tempVal = globalMin + fraction * range;
-    const minR = Math.max(4, size * 0.04);
-    const r = minR + fraction * (maxRadius - minR);
-    return (
-      <g key={`grid-${i}`}>
-        <circle
-          cx={cx}
-          cy={cy}
-          r={r}
-          fill="none"
-          stroke="var(--border)"
-          strokeWidth={0.75}
-          strokeDasharray="2 3"
-          aria-hidden="true"
-        />
-        <text
-          x={cx}
-          y={cy - r - 3}
-          textAnchor="middle"
-          fontSize={Math.max(7, size * 0.026)}
-          fill="var(--muted-foreground)"
-          aria-hidden="true"
-        >
-          {tempVal.toFixed(0)}{unit}
-        </text>
-      </g>
-    );
-  });
+  // Build stops: one per zone boundary that falls in range.
+  // The gradient y1=plotTop (hot/high) to y2=plotBottom (cold/low).
+  // A stop at a given temperature maps to offset = (yMax - temp) / domainRange * 100%
+  // because offset=0% is at y1=plotTop (= yMax) and offset=100% is at y2=plotBottom (= yMin).
+  for (let i = 0; i < zones.length; i++) {
+    const z = zones[i];
+    if (z.value > yMax + 5) break; // well above visible area
 
-  // Period labels around the perimeter
-  // Only render every Nth label to avoid overlap when many periods exist
-  const labelInterval = totalCount > 28 ? 7 : totalCount > 14 ? 2 : 1;
-  const labelFontSize = Math.max(8, size * 0.036);
-  const periodLabels = highData.map((d, i) => {
-    if (i % labelInterval !== 0) return null;
-    const angleDeg = i * stepDeg;
-    const rad = ((angleDeg - 90) * Math.PI) / 180;
-    const labelR = maxRadius + labelMargin * 0.58;
-    const lx = cx + labelR * Math.cos(rad);
-    const ly = cy + labelR * Math.sin(rad);
-    return (
-      <text
-        key={`label-${i}`}
-        x={lx}
-        y={ly}
-        textAnchor="middle"
-        dominantBaseline="central"
-        fontSize={labelFontSize}
-        fill="var(--foreground)"
-        aria-hidden="true"
+    const clampedTemp = Math.max(yMin, Math.min(yMax, z.value));
+    const offsetFraction = (yMax - clampedTemp) / domainRange;
+    const offsetPct = (offsetFraction * 100).toFixed(2) + '%';
+
+    stops.push({ offset: offsetPct, color: z.color });
+  }
+
+  // Ensure we have stops at 0% and 100% for a complete gradient
+  if (stops.length === 0 || stops[0].offset !== '0%') {
+    stops.unshift({ offset: '0%', color: getOutTempColor(yMax, unit) });
+  }
+  if (stops[stops.length - 1].offset !== '100.00%' && stops[stops.length - 1].offset !== '100%') {
+    stops.push({ offset: '100%', color: getOutTempColor(yMin, unit) });
+  }
+
+  return (
+    <defs>
+      <linearGradient
+        id={id}
+        x1="0"
+        y1={plotTop}
+        x2="0"
+        y2={plotBottom}
+        gradientUnits="userSpaceOnUse"
       >
-        {periodLabel(d.dateTime, totalCount)}
-      </text>
-    );
-  });
+        {stops.map((s, i) => (
+          <stop key={i} offset={s.offset} stopColor={s.color} />
+        ))}
+      </linearGradient>
+    </defs>
+  );
+}
 
-  // Center label: global min and max
-  const centerFontSize = Math.max(9, size * 0.036);
+// ---------------------------------------------------------------------------
+// Custom Tooltip
+// ---------------------------------------------------------------------------
+
+interface CustomTooltipPayload {
+  timestamp: number;
+  high: number | null;
+  low: number | null;
+  avg: number | null;
+}
+
+function CustomTooltip({
+  active,
+  payload,
+  unit,
+  totalCount,
+}: TooltipProps<ValueType, NameType> & { unit: string; totalCount: number }) {
+  if (!active || !payload || payload.length === 0) return null;
+
+  // The payload entries correspond to our two Area dataKeys.
+  // We recover the original row from the first entry's payload object.
+  const row = payload[0]?.payload as CustomTooltipPayload | undefined;
+  if (!row) return null;
+
+  const { timestamp, high, low, avg } = row;
 
   return (
     <div
-      className="relative"
-      style={{ width: size, height: size, margin: '0 auto' }}
+      role="tooltip"
+      className="rounded-md border border-border bg-popover px-2 py-1.5 text-xs text-popover-foreground shadow-md"
     >
-      <svg
-        ref={svgRef}
-        width={size}
-        height={size}
-        viewBox={`0 0 ${size} ${size}`}
-        role="img"
-        aria-labelledby={titleId}
-        style={{ display: 'block', overflow: 'visible' }}
-      >
-        {/* Outer boundary circle */}
-        <circle
-          cx={cx}
-          cy={cy}
-          r={maxRadius}
-          fill="transparent"
-          stroke="var(--border)"
-          strokeWidth={1}
-          aria-hidden="true"
-        />
-
-        {/* Gridlines */}
-        {gridLines}
-
-        {/* Radial bars */}
-        {bars}
-
-        {/* Focus ring — rendered on top; explicit SVG path focus indicator (WCAG 2.4.7) */}
-        {focusedPathD && (
-          <path
-            d={focusedPathD}
-            fill="none"
-            stroke="var(--ring)"
-            strokeWidth={2.5}
+      <div className="font-semibold mb-1">{formatFullDate(timestamp, totalCount)}</div>
+      {high !== null && (
+        <div className="flex items-center gap-1.5">
+          <span
             aria-hidden="true"
-            pointerEvents="none"
+            className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0"
+            style={{ backgroundColor: getOutTempColor(high, unit) }}
           />
-        )}
-
-        {/* Center summary */}
-        <text
-          x={cx}
-          y={cy - centerFontSize * 0.7}
-          textAnchor="middle"
-          fontSize={centerFontSize * 0.8}
-          fontWeight="bold"
-          fill="var(--foreground)"
-          aria-hidden="true"
-        >
-          {globalMax.toFixed(0)}{unit}
-        </text>
-        <text
-          x={cx}
-          y={cy + centerFontSize * 0.5}
-          textAnchor="middle"
-          fontSize={centerFontSize * 0.8}
-          fill="var(--muted-foreground)"
-          aria-hidden="true"
-        >
-          {globalMin.toFixed(0)}{unit}
-        </text>
-
-        {/* Period labels around perimeter */}
-        {periodLabels}
-      </svg>
-
-      {/* Floating tooltip */}
-      {tooltip && (
-        <div
-          role="tooltip"
-          style={{
-            position: 'absolute',
-            left: tooltip.x + 12,
-            top: tooltip.y - 8,
-            pointerEvents: 'none',
-            zIndex: 10,
-          }}
-          className="rounded-md border border-border bg-popover px-2 py-1.5 text-xs text-popover-foreground shadow-md"
-        >
-          <div className="font-semibold">{tooltip.label}</div>
-          {tooltip.high !== null && (
-            <div>High: {tooltip.high.toFixed(1)}{unit}</div>
-          )}
-          {tooltip.low !== null && (
-            <div>Low: {tooltip.low.toFixed(1)}{unit}</div>
-          )}
+          <span>High: {high.toFixed(1)}{unit}</span>
+        </div>
+      )}
+      {low !== null && (
+        <div className="flex items-center gap-1.5">
+          <span
+            aria-hidden="true"
+            className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0"
+            style={{ backgroundColor: getOutTempColor(low, unit) }}
+          />
+          <span>Low: {low.toFixed(1)}{unit}</span>
+        </div>
+      )}
+      {avg !== null && (
+        <div className="flex items-center gap-1.5">
+          <span
+            aria-hidden="true"
+            className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0"
+            style={{ backgroundColor: getOutTempColor(avg, unit) }}
+          />
+          <span>Avg: {avg.toFixed(1)}{unit}</span>
         </div>
       )}
     </div>
@@ -517,105 +356,196 @@ function WeatherRangeSvg({
 }
 
 // ---------------------------------------------------------------------------
+// Chart margins (fixed) — per Recharts rules:
+//   no negative margins; XAxis height provides label space.
+// ---------------------------------------------------------------------------
+
+const CHART_MARGIN = { top: 8, right: 16, bottom: 4, left: 8 };
+
+// Y-axis width: enough for labels like "-10" or "110"
+const YAXIS_WIDTH = 42;
+
+// Approximate plot area dimensions for the gradient def.
+// These are estimates used only to set gradient coordinates;
+// the actual pixel values depend on the container size.
+// We compute approximate plotTop/Bottom for a given container height.
+function computePlotBounds(containerHeight: number): { plotTop: number; plotBottom: number } {
+  // plotTop = margin.top (XAxis lives at the bottom, not top)
+  // plotBottom = containerHeight - margin.bottom - XAxis.height (default 30)
+  const xAxisHeight = 30;
+  const plotTop = CHART_MARGIN.top;
+  const plotBottom = containerHeight - CHART_MARGIN.bottom - xAxisHeight;
+  return { plotTop, plotBottom };
+}
+
+// ---------------------------------------------------------------------------
 // Main exported component
 // ---------------------------------------------------------------------------
 
+/**
+ * WeatherRangeChart — Cartesian arearange chart.
+ *
+ * Displays a filled area band between daily high and low temperature values,
+ * colored with Belchertown's 15-band temperature gradient (blue=cold → red=hot).
+ *
+ * Accessibility: role="img" + aria-label on the chart wrapper; sr-only data
+ * table provides all values to screen readers (WCAG 1.1.1).
+ */
 export function WeatherRangeChart({
   highData,
   lowData,
   field,
   unit = '',
   height = 300,
-  reducedMotion = false,
+  // reducedMotion accepted but Recharts areas have no entry animation to suppress
+  reducedMotion: _reducedMotion = false,
 }: WeatherRangeChartProps) {
-  const id = useId();
-  const titleId = `weather-range-title-${id}`;
-  const containerRef = useRef<HTMLDivElement>(null);
-  const containerWidth = useContainerWidth(containerRef);
+  // Guard: no data
+  if (highData.length === 0) return null;
 
-  // Use the smaller of container width and requested height for a square chart
-  const chartSize = Math.min(containerWidth, height);
+  const mergedData = mergeData(highData, lowData);
+  const totalCount = mergedData.length;
+  const { yMin, yMax, ticks } = computeYDomain(mergedData);
+  const { plotTop, plotBottom } = computePlotBounds(height);
 
-  // Guard: no data to show
-  if (highData.length === 0) {
-    return null;
-  }
+  // Stable gradient ID — use field name to avoid collisions when multiple
+  // WeatherRangeCharts exist on the same page (e.g., outTemp + windchill).
+  // We sanitize the field name to a valid SVG id fragment.
+  const safeField = field.replace(/[^a-zA-Z0-9]/g, '_');
+  const gradientId = `tempGradient_${safeField}`;
 
-  // Merge high and low data for the table — align by index
-  const tableRows = highData.map((h, i) => ({
-    dateTime: h.dateTime,
-    high: h.value,
-    low: lowData[i]?.value ?? null,
-  }));
-
-  const totalCount = highData.length;
+  const isTemp = unit.includes('°') || unit.toLowerCase().includes('c') || unit.toLowerCase().includes('f');
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Visually-hidden title consumed by SVG aria-labelledby (WCAG 1.1.1) */}
-      <span id={titleId} className="sr-only">
-        Radial range chart for {field}.
-        Each position around the circle represents a time period.
-        Each bar spans from the low value to the high value.
-        See the accessible data table below for full values.
-      </span>
-
-      {/* Responsive container — ResizeObserver reads its width */}
-      <div ref={containerRef} style={{ width: '100%', height }}>
-        {chartSize > 0 && (
-          <WeatherRangeSvg
-            highData={highData}
-            lowData={lowData}
-            unit={unit}
-            size={chartSize}
-            reducedMotion={reducedMotion}
-            titleId={titleId}
-          />
-        )}
-      </div>
-
-      {/* Color scale legend — pairs color with text, not color-only (WCAG 1.4.1) */}
-      <div
-        className="flex items-center gap-2 justify-center text-xs text-muted-foreground"
-        aria-label="Color scale: cool (blue) to warm (red)"
-      >
-        <span aria-hidden="true" className="inline-block w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: 'var(--range-chart-cool)' }} />
-        <span>Cool</span>
-        <span
-          aria-hidden="true"
-          className="inline-block h-2 w-16 rounded-sm flex-shrink-0"
-          style={{
-            background: 'linear-gradient(to right, var(--range-chart-cool), var(--range-chart-mid), var(--range-chart-warm))',
-          }}
-        />
-        <span>Warm</span>
-        <span aria-hidden="true" className="inline-block w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: 'var(--range-chart-warm)' }} />
-      </div>
-
-      {/* Screen-reader data table — wrapped in sr-only div because
-          sr-only directly on <table> fails (table display overrides clip) */}
+    <div className="flex flex-col gap-2">
+      {/*
+        Screen-reader data table — wrapped in sr-only div because sr-only
+        directly on <table> fails (table display overrides clip). WCAG 1.1.1.
+      */}
       <div className="sr-only">
-      <table aria-label={`${field} range data`}>
-        <caption>
-          {field} high and low values for each period.
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col">Period</th>
-            <th scope="col">High{unit ? ` (${unit})` : ''}</th>
-            <th scope="col">Low{unit ? ` (${unit})` : ''}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {tableRows.map((row, i) => (
-            <tr key={i}>
-              <th scope="row">{fullDateLabel(row.dateTime, totalCount)}</th>
-              <td>{row.high !== null ? row.high.toFixed(1) : '—'}</td>
-              <td>{row.low !== null ? row.low.toFixed(1) : '—'}</td>
+        <table aria-label={`${field} range data`}>
+          <caption>{field} high and low values for each period.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">High</th>
+              <th scope="col">Low</th>
+              <th scope="col">Average</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {mergedData.map((row, i) => (
+              <tr key={i}>
+                <th scope="row">{formatFullDate(row.timestamp, totalCount)}</th>
+                <td>{row.high?.toFixed(1) ?? '—'}</td>
+                <td>{row.low?.toFixed(1) ?? '—'}</td>
+                <td>{row.avg?.toFixed(1) ?? '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/*
+        Chart wrapper — role="img" + aria-label (WCAG 1.1.1).
+        minWidth:0, minHeight:0 prevent flex container from reporting 0 to
+        ResizeObserver (Recharts rule §6.1 item 8).
+      */}
+      <div
+        role="img"
+        aria-label={`${field} daily high and low range chart${unit ? ` in ${unit}` : ''}`}
+        style={{ minWidth: 0, minHeight: 0, width: '100%', height }}
+      >
+        {/*
+          ResponsiveContainer width="99%" per Recharts rules §6.1 item 9:
+          100% causes layout calculation failure; 99% forces recalculation.
+        */}
+        <ResponsiveContainer width="99%" height="100%">
+          <ComposedChart data={mergedData} margin={CHART_MARGIN}>
+            {/*
+              SVG defs: temperature gradient.
+              gradientUnits="userSpaceOnUse" with Y coordinates in chart pixel
+              space. plotTop/plotBottom are approximate — the gradient covers
+              the full plot area regardless of exact pixel position.
+            */}
+            {isTemp && (
+              <TempGradientDef
+                id={gradientId}
+                yMin={yMin}
+                yMax={yMax}
+                unit={unit}
+                plotTop={plotTop}
+                plotBottom={plotBottom}
+              />
+            )}
+
+            <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+
+            <XAxis
+              dataKey="timestamp"
+              type="number"
+              scale="time"
+              domain={['dataMin', 'dataMax']}
+              tickFormatter={formatXAxisTick}
+              minTickGap={50}
+              tick={{ fontSize: 11, fontFamily: 'var(--font-chart)' }}
+              className="fill-muted-foreground"
+            />
+
+            {/*
+              YAxis: do NOT use hide={true} — known Recharts bug (#428) causes
+              XAxis labels to vanish. width={YAXIS_WIDTH} carves space for labels.
+            */}
+            <YAxis
+              type="number"
+              domain={[yMin, yMax]}
+              ticks={ticks}
+              interval={0}
+              width={YAXIS_WIDTH}
+              tickFormatter={(v: number) => unit ? `${v}${unit}` : String(v)}
+              tick={{ fontSize: 10, fontFamily: 'var(--font-chart)' }}
+              className="fill-muted-foreground"
+            />
+
+            <Tooltip
+              content={(props) => (
+                <CustomTooltip {...props} unit={unit} totalCount={totalCount} />
+              )}
+            />
+
+            {/*
+              Stacked Area arearange technique:
+              1. "base" area (fill=transparent, no stroke) is invisible but its
+                 area pushes the stacked visual band up to the low-temp baseline.
+              2. "range" area (fill=gradient) renders only the high-low band.
+
+              Both use stackId="range" so they stack additively.
+              activeDot={false} prevents Recharts from drawing dot markers on
+              hover — the gradient fill is the primary visual; dots would obscure it.
+            */}
+            <Area
+              dataKey="base"
+              stackId="range"
+              stroke="none"
+              fill="transparent"
+              isAnimationActive={false}
+              activeDot={false}
+              dot={false}
+              legendType="none"
+            />
+            <Area
+              dataKey="range"
+              stackId="range"
+              stroke="none"
+              fill={isTemp ? `url(#${gradientId})` : 'var(--temp-hi, #f59e0b)'}
+              fillOpacity={0.85}
+              isAnimationActive={false}
+              activeDot={false}
+              dot={false}
+              legendType="none"
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );
