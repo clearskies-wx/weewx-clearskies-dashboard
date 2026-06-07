@@ -38,6 +38,7 @@ import { ChartGauge } from './ChartGauge';
 import { HaysChart } from './HaysChart';
 import { lttbDownsample } from '../../utils/lttb';
 import { exportChartAsCsv, exportChartAsPng, buildExportFilename } from '../../utils/chart-export';
+import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
 import type { ChartGroupConfig } from '../../api/types';
 
 // ---------------------------------------------------------------------------
@@ -996,13 +997,17 @@ export function ConfigDrivenGroup({
                   ? windRoseSeries!.beaufortColors
                   : defaultBeaufortColors;
                 return (
-                  <WindRoseChart
-                    key={chart.chartId}
-                    data={windRoseData}
-                    beaufortColors={beaufortColors}
-                    height={300}
-                    reducedMotion={reducedMotion}
-                  />
+                  <Card key={chart.chartId} footprint="full" className="p-4">
+                    {chart.title && <CardHeader><CardTitle as="h2">{chart.title}</CardTitle></CardHeader>}
+                    <CardContent>
+                      <WindRoseChart
+                        data={windRoseData}
+                        beaufortColors={beaufortColors}
+                        height={300}
+                        reducedMotion={reducedMotion}
+                      />
+                    </CardContent>
+                  </Card>
                 );
               }
 
@@ -1020,16 +1025,20 @@ export function ConfigDrivenGroup({
                 // yAxisSoftMax is number | null | undefined; convert null → undefined for the prop
                 const haysSoftMax = haysSeries?.yAxisSoftMax ?? undefined;
                 return (
-                  <HaysChart
-                    key={chart.chartId}
-                    highData={rangeHighPoints}
-                    lowData={rangeLowPoints}
-                    field={haysField}
-                    unit={haysUnit}
-                    softMax={haysSoftMax}
-                    height={300}
-                    reducedMotion={reducedMotion}
-                  />
+                  <Card key={chart.chartId} footprint="full" className="p-4">
+                    {chart.title && <CardHeader><CardTitle as="h2">{chart.title}</CardTitle></CardHeader>}
+                    <CardContent>
+                      <HaysChart
+                        highData={rangeHighPoints}
+                        lowData={rangeLowPoints}
+                        field={haysField}
+                        unit={haysUnit}
+                        softMax={haysSoftMax}
+                        height={300}
+                        reducedMotion={reducedMotion}
+                      />
+                    </CardContent>
+                  </Card>
                 );
               }
 
@@ -1046,15 +1055,19 @@ export function ConfigDrivenGroup({
                 // Unit from yAxisLabel or empty string
                 const unitLabel = rangeSeries?.yAxisLabel ?? '';
                 return (
-                  <WeatherRangeChart
-                    key={chart.chartId}
-                    highData={rangeHighPoints}
-                    lowData={rangeLowPoints}
-                    field={fieldName}
-                    unit={unitLabel}
-                    height={300}
-                    reducedMotion={reducedMotion}
-                  />
+                  <Card key={chart.chartId} footprint="full" className="p-4">
+                    {chart.title && <CardHeader><CardTitle as="h2">{chart.title}</CardTitle></CardHeader>}
+                    <CardContent>
+                      <WeatherRangeChart
+                        highData={rangeHighPoints}
+                        lowData={rangeLowPoints}
+                        field={fieldName}
+                        unit={unitLabel}
+                        height={300}
+                        reducedMotion={reducedMotion}
+                      />
+                    </CardContent>
+                  </Card>
                 );
               }
 
@@ -1095,32 +1108,44 @@ export function ConfigDrivenGroup({
                 const gaugeColorsEnabled = gaugeSeries?.colorsEnabled ?? false;
 
                 return (
-                  <ChartGauge
-                    key={chart.chartId}
-                    value={gaugeValue}
-                    min={gaugeMin}
-                    max={gaugeMax}
-                    unit={gaugeUnit}
-                    title={chart.title ?? gaugeSeries?.name ?? ''}
-                    colorZones={gaugeZones}
-                    colorsEnabled={gaugeColorsEnabled}
-                    reducedMotion={reducedMotion}
-                  />
+                  <Card key={chart.chartId} footprint="full" className="p-4">
+                    {chart.title && <CardHeader><CardTitle as="h2">{chart.title}</CardTitle></CardHeader>}
+                    <CardContent>
+                      <ChartGauge
+                        value={gaugeValue}
+                        min={gaugeMin}
+                        max={gaugeMax}
+                        unit={gaugeUnit}
+                        title={chart.title ?? gaugeSeries?.name ?? ''}
+                        colorZones={gaugeZones}
+                        colorsEnabled={gaugeColorsEnabled}
+                        reducedMotion={reducedMotion}
+                      />
+                    </CardContent>
+                  </Card>
                 );
               }
 
               return (
-                <ConfigDrivenChart
-                  key={chart.chartId}
-                  config={chart}
-                  data={chartRenderData}
-                  xKey={xKey}
-                  xFormatter={xFormatter}
-                  globalColors={globalColors}
-                  globalType={globalType}
-                  height={300}
-                  reducedMotion={reducedMotion}
-                />
+                <Card key={chart.chartId} footprint="full" className="p-4">
+                  {chart.title && (
+                    <CardHeader>
+                      <CardTitle as="h2">{chart.title}</CardTitle>
+                    </CardHeader>
+                  )}
+                  <CardContent>
+                    <ConfigDrivenChart
+                      config={chart}
+                      data={chartRenderData}
+                      xKey={xKey}
+                      xFormatter={xFormatter}
+                      globalColors={globalColors}
+                      globalType={globalType}
+                      height={300}
+                      reducedMotion={reducedMotion}
+                    />
+                  </CardContent>
+                </Card>
               );
             })}
           </div>
