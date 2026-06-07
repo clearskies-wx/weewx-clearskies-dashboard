@@ -343,7 +343,7 @@ export function ConfigDrivenChart({
   return (
     <div style={{ minWidth: 0, minHeight: 0, width: '100%', height: '100%' }}>
       {config.title && (
-        <h3 className="text-sm font-semibold text-foreground mb-2" style={{ fontFamily: 'var(--font-sans)' }}>
+        <h3 className="text-sm font-semibold text-foreground mb-2 text-center" style={{ fontFamily: 'var(--font-sans)' }}>
           {config.title}
         </h3>
       )}

@@ -269,8 +269,8 @@ export function ConfigDrivenGroup({
     for (const chart of group.charts) {
       for (const s of chart.series) {
         // Prefer an explicit rangeType series; fall back to haysChart series.
-        if ((s.rangeType != null || s.seriesId === 'haysChart') && s.observationType) {
-          return s.observationType;
+        if ((s.rangeType != null || s.seriesId === 'haysChart') && (s.observationType ?? s.rangeType)) {
+          return s.observationType ?? s.rangeType ?? s.seriesId;
         }
       }
     }
@@ -304,8 +304,9 @@ export function ConfigDrivenGroup({
     const fields = new Set<string>();
     group.charts.forEach((chart) => {
       chart.series.forEach((s) => {
-        if (s.observationType && s.visible !== false) {
-          fields.add(s.observationType);
+        if (s.useCustomSql) return;
+        if (s.visible !== false) {
+          fields.add(s.observationType ?? s.seriesId);
         }
       });
     });
