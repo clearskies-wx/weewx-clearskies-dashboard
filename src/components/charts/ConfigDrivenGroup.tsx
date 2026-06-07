@@ -647,15 +647,10 @@ export function ConfigDrivenGroup({
   // -------------------------------------------------------------------------
 
   // Full dataset — used by the data table view so users see every raw row.
-  // A group can have BOTH range charts and regular charts; regular charts
-  // always use archiveData regardless of whether the group also has ranges.
+  // Table view uses archive or climatology data depending on group mode.
   const chartData = allClimatology ? climatologyData : archiveData;
-  // Downsampled dataset — used by ConfigDrivenChart for efficient rendering.
-  const chartRenderData = allClimatology ? climatologyData : downsampledArchiveData;
   const xKey = allClimatology ? 'month' : 'timestamp';
-  // Compute the actual displayed range for X-axis formatting.
-  // For rolling ranges, selectedRange ("1d","7d") is used directly.
-  // For year/month mode, compute from the archive params' from/to.
+  // Actual displayed range for X-axis formatting (per-chart formatters use this).
   const displayedRange = useMemo(() => {
     if (archiveParams?.from && archiveParams?.to) {
       const sec = (new Date(archiveParams.to).getTime() - new Date(archiveParams.from).getTime()) / 1000;
@@ -664,9 +659,6 @@ export function ConfigDrivenGroup({
     }
     return selectedRange;
   }, [archiveParams?.from, archiveParams?.to, selectedRange]);
-  const xFormatter = allClimatology
-    ? undefined
-    : (v: string | number) => formatTimestamp(v, displayedRange);
 
   // Loading and error state: all active fetches must complete.
   const isLoading = archiveResult.loading
