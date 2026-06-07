@@ -358,27 +358,27 @@ export function ConfigDrivenGroup({
       from = d.toISOString();
     }
 
-    // Interval heuristic: match Belchertown's data density.
-    // Raw 5-min data for short ranges, hourly for medium, daily only for very long.
-    const rangeMs = new Date(to).getTime() - new Date(from).getTime();
-    const rangeDays = rangeMs / (1000 * 60 * 60 * 24);
-    let interval: string | undefined;
-    let limit: string | undefined;
-    if (rangeDays > 90) {
-      interval = 'day';
-    } else if (rangeDays > 3) {
-      interval = 'hour';
-      // 90d × 24h = 2160 records — need higher limit than API default (1000)
-      if (rangeDays > 14) limit = '3000';
-    }
-    // else: raw records (no interval param, default limit)
+    // Proportional aggregate interval — matches Belchertown's scaling.
+    // Base: 300s (5-min archive interval) for base_time_length 86400s (1 day).
+    // For longer ranges, scale proportionally so all charts have ~288 points.
+    // ratio = max(1, range_seconds / base_time_seconds)
+    // aggregate_interval = base_interval * ratio
+    const rangeSec = (new Date(to).getTime() - new Date(from).getTime()) / 1000;
+    const baseTimeSec = group.timeLength && typeof group.timeLength === 'number'
+      ? group.timeLength
+      : 86400;
+    const baseAggInterval = group.aggregateInterval ?? 300;
+    const ratio = Math.max(1, rangeSec / baseTimeSec);
+    const aggInterval = Math.round(baseAggInterval * ratio);
+
+    // Only use aggregate_interval when it exceeds the raw archive interval
+    const useAggregation = aggInterval > 300;
 
     return {
       from,
       to,
       fields: Array.from(fields).join(','),
-      interval,
-      limit,
+      aggregate_interval: useAggregation ? String(aggInterval) : undefined,
     };
   }, [
     isClimatology,
@@ -487,9 +487,9 @@ export function ConfigDrivenGroup({
   // Gap detection: insert null rows at data gaps > gapsize to break Recharts lines.
   // Only applies to raw (non-aggregated) data — hourly/daily records have natural
   // gaps that exceed the 5-minute gapsize and would break all line rendering.
-  const effectiveInterval = archiveParams?.interval;
+  const isAggregated = !!archiveParams?.aggregate_interval;
   const gapProcessedArchiveData = useMemo(() => {
-    if (effectiveInterval === 'hour' || effectiveInterval === 'day') return archiveData;
+    if (isAggregated) return archiveData;
     if (!group.gapsize || group.gapsize <= 0 || archiveData.length < 2) return archiveData;
     const gapMs = group.gapsize * 1000;
     const result: typeof archiveData = [archiveData[0]];
@@ -506,7 +506,7 @@ export function ConfigDrivenGroup({
       result.push(archiveData[i]);
     }
     return result;
-  }, [archiveData, group.gapsize, effectiveInterval]);
+  }, [archiveData, group.gapsize, isAggregated]);
 
   // Wind rose data: derived client-side from the same archive fetch (T3.2).
   // Uses raw archiveResult.data (ArchiveRecord[]) so the BFF-injected `beaufort`
