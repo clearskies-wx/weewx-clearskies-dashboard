@@ -662,9 +662,11 @@ export function ConfigDrivenGroup({
     <div className="flex flex-col gap-4">
       {/* pageContent — Markdown rendered via react-markdown (T4.5) */}
       {group.pageContent && (
-        <div className="prose prose-sm dark:prose-invert max-w-none mb-4 [&_h1]:text-xl [&_h2]:text-lg [&_h3]:text-base [&_a]:text-primary [&_a]:underline [&_ul]:list-disc [&_ol]:list-decimal [&_code]:bg-muted [&_code]:px-1 [&_code]:rounded">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{group.pageContent}</ReactMarkdown>
-        </div>
+        <Card footprint="full" className="p-4">
+          <div className="prose prose-sm dark:prose-invert max-w-none [&_h1]:text-xl [&_h2]:text-lg [&_h3]:text-base [&_a]:text-primary [&_a]:underline [&_ul]:list-disc [&_ol]:list-decimal [&_code]:bg-muted [&_code]:px-1 [&_code]:rounded">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{group.pageContent}</ReactMarkdown>
+          </div>
+        </Card>
       )}
 
       {/* ------------------------------------------------------------------ */}
@@ -782,9 +784,10 @@ export function ConfigDrivenGroup({
       )}
 
       {/* ------------------------------------------------------------------ */}
-      {/* Chart / table toggle button + chart container                        */}
+      {/* Chart / table toggle button + chart container — all in one Card    */}
       {/* ------------------------------------------------------------------ */}
 
+      <Card footprint="full" className="p-4">
       <div aria-busy={isLoading || undefined}>
         {/* Toggle + export button row */}
         <div className="flex justify-end items-center gap-2 mb-2">
@@ -1001,17 +1004,13 @@ export function ConfigDrivenGroup({
                   ? windRoseSeries!.beaufortColors
                   : defaultBeaufortColors;
                 return (
-                  <Card key={chart.chartId} footprint="full" className="p-4">
-                    {chart.title && <CardHeader><CardTitle as="h2">{chart.title}</CardTitle></CardHeader>}
-                    <CardContent>
-                      <WindRoseChart
-                        data={windRoseData}
-                        beaufortColors={beaufortColors}
-                        height={300}
-                        reducedMotion={reducedMotion}
-                      />
-                    </CardContent>
-                  </Card>
+                  <WindRoseChart
+                    key={chart.chartId}
+                    data={windRoseData}
+                    beaufortColors={beaufortColors}
+                    height={300}
+                    reducedMotion={reducedMotion}
+                  />
                 );
               }
 
@@ -1029,20 +1028,16 @@ export function ConfigDrivenGroup({
                 // yAxisSoftMax is number | null | undefined; convert null → undefined for the prop
                 const haysSoftMax = haysSeries?.yAxisSoftMax ?? undefined;
                 return (
-                  <Card key={chart.chartId} footprint="full" className="p-4">
-                    {chart.title && <CardHeader><CardTitle as="h2">{chart.title}</CardTitle></CardHeader>}
-                    <CardContent>
-                      <HaysChart
-                        highData={rangeHighPoints}
-                        lowData={rangeLowPoints}
-                        field={haysField}
-                        unit={haysUnit}
-                        softMax={haysSoftMax}
-                        height={300}
-                        reducedMotion={reducedMotion}
-                      />
-                    </CardContent>
-                  </Card>
+                  <HaysChart
+                    key={chart.chartId}
+                    highData={rangeHighPoints}
+                    lowData={rangeLowPoints}
+                    field={haysField}
+                    unit={haysUnit}
+                    softMax={haysSoftMax}
+                    height={300}
+                    reducedMotion={reducedMotion}
+                  />
                 );
               }
 
@@ -1059,19 +1054,15 @@ export function ConfigDrivenGroup({
                 // Unit from yAxisLabel or empty string
                 const unitLabel = rangeSeries?.yAxisLabel ?? '';
                 return (
-                  <Card key={chart.chartId} footprint="full" className="p-4">
-                    {chart.title && <CardHeader><CardTitle as="h2">{chart.title}</CardTitle></CardHeader>}
-                    <CardContent>
-                      <WeatherRangeChart
-                        highData={rangeHighPoints}
-                        lowData={rangeLowPoints}
-                        field={fieldName}
-                        unit={unitLabel}
-                        height={300}
-                        reducedMotion={reducedMotion}
-                      />
-                    </CardContent>
-                  </Card>
+                  <WeatherRangeChart
+                    key={chart.chartId}
+                    highData={rangeHighPoints}
+                    lowData={rangeLowPoints}
+                    field={fieldName}
+                    unit={unitLabel}
+                    height={300}
+                    reducedMotion={reducedMotion}
+                  />
                 );
               }
 
@@ -1112,49 +1103,38 @@ export function ConfigDrivenGroup({
                 const gaugeColorsEnabled = gaugeSeries?.colorsEnabled ?? false;
 
                 return (
-                  <Card key={chart.chartId} footprint="full" className="p-4">
-                    {chart.title && <CardHeader><CardTitle as="h2">{chart.title}</CardTitle></CardHeader>}
-                    <CardContent>
-                      <ChartGauge
-                        value={gaugeValue}
-                        min={gaugeMin}
-                        max={gaugeMax}
-                        unit={gaugeUnit}
-                        title={chart.title ?? gaugeSeries?.name ?? ''}
-                        colorZones={gaugeZones}
-                        colorsEnabled={gaugeColorsEnabled}
-                        reducedMotion={reducedMotion}
-                      />
-                    </CardContent>
-                  </Card>
+                  <ChartGauge
+                    key={chart.chartId}
+                    value={gaugeValue}
+                    min={gaugeMin}
+                    max={gaugeMax}
+                    unit={gaugeUnit}
+                    title={chart.title ?? gaugeSeries?.name ?? ''}
+                    colorZones={gaugeZones}
+                    colorsEnabled={gaugeColorsEnabled}
+                    reducedMotion={reducedMotion}
+                  />
                 );
               }
 
               return (
-                <Card key={chart.chartId} footprint="full" className="p-4">
-                  {chart.title && (
-                    <CardHeader>
-                      <CardTitle as="h2">{chart.title}</CardTitle>
-                    </CardHeader>
-                  )}
-                  <CardContent>
-                    <ConfigDrivenChart
-                      config={chart}
-                      data={chartRenderData}
-                      xKey={xKey}
-                      xFormatter={xFormatter}
-                      globalColors={globalColors}
-                      globalType={globalType}
-                      height={300}
-                      reducedMotion={reducedMotion}
-                    />
-                  </CardContent>
-                </Card>
+                <ConfigDrivenChart
+                  key={chart.chartId}
+                  config={chart}
+                  data={chartRenderData}
+                  xKey={xKey}
+                  xFormatter={xFormatter}
+                  globalColors={globalColors}
+                  globalType={globalType}
+                  height={300}
+                  reducedMotion={reducedMotion}
+                />
               );
             })}
           </div>
         )}
       </div>
+      </Card>
     </div>
   );
 }
