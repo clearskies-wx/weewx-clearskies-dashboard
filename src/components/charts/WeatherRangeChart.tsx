@@ -214,8 +214,6 @@ function TempGradientDef({ id, yMin, yMax, unit, chartHeight }: GradientDefProps
 
   // Each temperature zone threshold maps to a Y pixel position.
   // temp → pixelY = plotTop + (yMax - temp) / domainRange * (plotBottom - plotTop)
-  const plotHeight = plotBottom - plotTop;
-
   const stops: Array<{ offset: string; color: string }> = [];
   stops.push({ offset: '0%', color: getOutTempColor(yMax, unit) });
 
