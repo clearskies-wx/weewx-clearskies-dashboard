@@ -257,7 +257,7 @@ function renderSeriesElement({
           stroke={color}
           strokeWidth={0}
           strokeOpacity={0}
-          dot={{ r: series.markerRadius ?? 4, fill: color }}
+          dot={{ r: series.markerRadius ?? 2, fill: color }}
           connectNulls={false}
           isAnimationActive={animationActive}
         />
