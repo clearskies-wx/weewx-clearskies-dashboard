@@ -170,42 +170,35 @@ function formatFullDate(timestamp: number, totalCount: number): string {
 // gradientUnits="userSpaceOnUse" ties colors to Y-axis pixel positions.
 // ---------------------------------------------------------------------------
 
+// Build stepped gradient stops using objectBoundingBox (0-1 fractions).
+// The bounding box of the stacked "range" Area path spans from
+// max(all highs) at y=0 to min(all lows) at y=1 in data coordinates.
 function buildGradientStops(
-  yMin: number,
-  yMax: number,
+  dataMaxHigh: number,
+  dataMinLow: number,
   unit: string,
-  plotTop: number,
-  plotBottom: number,
-): Array<{ offset: number; color: string }> {
+): Array<{ offset: string; color: string }> {
   const zones = unit.includes('C') ? TEMP_ZONES_C : TEMP_ZONES_F;
-  const domainRange = yMax - yMin;
-  if (domainRange <= 0) return [];
-  const plotRange = plotBottom - plotTop;
+  const dataRange = dataMaxHigh - dataMinLow;
+  if (dataRange <= 0) return [];
 
-  const tempToPixel = (temp: number) =>
-    plotTop + ((yMax - temp) / domainRange) * plotRange;
+  const stops: Array<{ offset: string; color: string }> = [];
 
-  const stops: Array<{ offset: number; color: string }> = [];
+  // Top of bounding box (y=0) = max high temperature
+  stops.push({ offset: '0%', color: getOutTempColor(dataMaxHigh - 0.01, unit) });
 
-  // Collect zone boundaries within [yMin, yMax]
-  const visibleBoundaries = zones.filter((z) => z.value > yMin && z.value < yMax);
-
-  // Start: color at yMax (top of plot)
-  const topColor = getOutTempColor(yMax - 0.01, unit);
-  stops.push({ offset: plotTop, color: topColor });
-
-  // Stepped stops: two stops per boundary (end old color, start new color)
-  for (const z of visibleBoundaries) {
-    const px = tempToPixel(z.value);
+  // Stepped stops at each zone boundary within [dataMinLow, dataMaxHigh]
+  const visible = zones.filter((z) => z.value > dataMinLow && z.value < dataMaxHigh);
+  for (const z of visible) {
+    const pct = ((dataMaxHigh - z.value) / dataRange * 100);
     const colorAbove = getOutTempColor(z.value + 0.01, unit);
     const colorBelow = getOutTempColor(z.value - 0.01, unit);
-    stops.push({ offset: px - 0.5, color: colorAbove });
-    stops.push({ offset: px + 0.5, color: colorBelow });
+    stops.push({ offset: `${(pct - 0.1).toFixed(2)}%`, color: colorAbove });
+    stops.push({ offset: `${(pct + 0.1).toFixed(2)}%`, color: colorBelow });
   }
 
-  // End: color at yMin (bottom of plot)
-  const bottomColor = getOutTempColor(yMin, unit);
-  stops.push({ offset: plotBottom, color: bottomColor });
+  // Bottom of bounding box (y=1) = min low temperature
+  stops.push({ offset: '100%', color: getOutTempColor(dataMinLow, unit) });
 
   return stops;
 }
@@ -294,10 +287,10 @@ export function WeatherRangeChart({
   const gradientId = `tempGradient_${safeField}`;
   const isTemp = TEMP_FIELDS.has(field) || unit.includes('°') || unit.toLowerCase().includes('c') || unit.toLowerCase().includes('f');
 
-  // Compute gradient pixel coordinates from chart dimensions
-  const plotTop = CHART_MARGIN.top;
-  const plotBottom = height - CHART_MARGIN.bottom - XAXIS_HEIGHT;
-  const gradientStops = isTemp ? buildGradientStops(yMin, yMax, unit, plotTop, plotBottom) : [];
+  // Gradient stops based on actual data range (objectBoundingBox maps to path extent)
+  const dataMaxHigh = Math.max(...mergedData.map((d) => d.high).filter((v): v is number => v !== null));
+  const dataMinLow = Math.min(...mergedData.map((d) => d.low).filter((v): v is number => v !== null));
+  const gradientStops = isTemp ? buildGradientStops(dataMaxHigh, dataMinLow, unit) : [];
 
   // Y-axis label from field name
   const yAxisLabel = isTemp ? 'Outside Temperature' : field;
@@ -337,7 +330,7 @@ export function WeatherRangeChart({
           <ComposedChart data={mergedData} margin={CHART_MARGIN}>
             {isTemp && gradientStops.length > 0 && (
               <defs>
-                <linearGradient id={gradientId} x1="0" y1={plotTop} x2="0" y2={plotBottom} gradientUnits="userSpaceOnUse">
+                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
                   {gradientStops.map((s, i) => (
                     <stop key={i} offset={s.offset} stopColor={s.color} />
                   ))}
@@ -374,6 +367,18 @@ export function WeatherRangeChart({
                 style: { fontSize: 11, fontFamily: CHART_FONT, fill: 'var(--muted-foreground)' },
                 offset: -5,
               }}
+            />
+
+            {/* Phantom right YAxis — matches ConfigDrivenChart so all charts
+                have the same plot area width. tick/axisLine/tickLine hidden;
+                width=60 carves space. Do NOT use hide (Recharts bug #428). */}
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              tick={false}
+              axisLine={false}
+              tickLine={false}
+              width={60}
             />
 
             <Tooltip
