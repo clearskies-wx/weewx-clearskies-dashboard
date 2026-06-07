@@ -425,9 +425,10 @@ export function ConfigDrivenGroup({
       };
       group.charts.forEach((chart) => {
         chart.series.forEach((series) => {
-          if (series.visible !== false && series.observationType) {
+          if (series.visible !== false) {
+            const obsType = series.observationType ?? series.seriesId;
             row[series.seriesId] =
-              (record[series.observationType] as number | null) ?? null;
+              (record[obsType] as number | null) ?? null;
           }
         });
       });
@@ -486,10 +487,11 @@ export function ConfigDrivenGroup({
       const row: Record<string, number | string | null> = { month };
       group.charts.forEach((chart) => {
         chart.series.forEach((series) => {
-          if (series.visible !== false && series.observationType) {
+          const obsType = series.observationType ?? series.seriesId;
+          if (series.visible !== false && obsType) {
             const fieldKey =
               CLIMATOLOGY_FIELD_MAP[
-                `${series.observationType}:${series.averageType ?? 'avg'}`
+                `${obsType}:${series.averageType ?? 'avg'}`
               ];
             if (fieldKey && fieldKey in clim) {
               row[series.seriesId] =
