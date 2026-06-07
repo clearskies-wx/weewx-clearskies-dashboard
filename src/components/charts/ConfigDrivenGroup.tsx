@@ -38,7 +38,7 @@ import { ChartGauge } from './ChartGauge';
 import { HaysChart } from './HaysChart';
 import { lttbDownsample } from '../../utils/lttb';
 import { exportChartAsCsv, exportChartAsPng, buildExportFilename } from '../../utils/chart-export';
-import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
+import { Card } from '../ui/card';
 import type { ChartGroupConfig } from '../../api/types';
 
 // ---------------------------------------------------------------------------
