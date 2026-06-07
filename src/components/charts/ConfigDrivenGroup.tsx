@@ -652,9 +652,20 @@ export function ConfigDrivenGroup({
   // Downsampled dataset — used by ConfigDrivenChart for efficient rendering.
   const chartRenderData = isClimatology ? climatologyData : downsampledArchiveData;
   const xKey = isClimatology ? 'month' : 'timestamp';
+  // Compute the actual displayed range for X-axis formatting.
+  // For rolling ranges, selectedRange ("1d","7d") is used directly.
+  // For year/month mode, compute from the archive params' from/to.
+  const displayedRange = useMemo(() => {
+    if (archiveParams?.from && archiveParams?.to) {
+      const sec = (new Date(archiveParams.to).getTime() - new Date(archiveParams.from).getTime()) / 1000;
+      const days = Math.round(sec / 86400);
+      return `${days}d`;
+    }
+    return selectedRange;
+  }, [archiveParams?.from, archiveParams?.to, selectedRange]);
   const xFormatter = isClimatology
     ? undefined
-    : (v: string | number) => formatTimestamp(v, selectedRange);
+    : (v: string | number) => formatTimestamp(v, displayedRange);
 
   // Loading and error state: all active fetches must complete.
   const isLoading = isClimatology
