@@ -1052,7 +1052,7 @@ export function useCustomQueries(
       })
       .catch((err) => {
         if (controller.signal.aborted) return;
-        setError(err instanceof ApiError ? err : new ApiError('Custom query failed', 500));
+        setError(err instanceof ApiError ? err : new ApiError(500, 'Custom query failed'));
         setLoading(false);
       });
 
