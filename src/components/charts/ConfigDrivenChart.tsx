@@ -137,6 +137,16 @@ function renderSeriesElement({
   const strokeWidth = series.lineWidth ?? 2;
   const strokeOpacity = series.opacity ?? 1;
 
+  // dashStyle → SVG strokeDasharray
+  const DASH_MAP: Record<string, string> = {
+    Dash: '8 4', Dot: '2 4', DashDot: '8 4 2 4',
+    LongDash: '16 4', ShortDash: '4 4', LongDashDot: '16 4 2 4',
+    ShortDashDot: '4 4 2 4', ShortDot: '2 2',
+  };
+  const strokeDasharray = series.dashStyle
+    ? DASH_MAP[series.dashStyle] ?? undefined
+    : undefined;
+
   switch (seriesType) {
     case 'spline':
       return (
@@ -149,6 +159,7 @@ function renderSeriesElement({
           stroke={color}
           strokeWidth={strokeWidth}
           strokeOpacity={strokeOpacity}
+          strokeDasharray={strokeDasharray}
           connectNulls={connectNulls}
           dot={dotProp}
           isAnimationActive={animationActive}
@@ -164,10 +175,11 @@ function renderSeriesElement({
           dataKey={dataKey}
           name={name}
           stroke={color}
-          fill={color}
+          fill={series.fillColor ?? color}
           strokeWidth={strokeWidth}
           strokeOpacity={strokeOpacity}
-          fillOpacity={series.opacity ?? 0.3}
+          strokeDasharray={strokeDasharray}
+          fillOpacity={series.fillOpacity ?? series.opacity ?? 0.3}
           connectNulls={connectNulls}
           dot={dotProp}
           stackId={stackId}
@@ -183,8 +195,8 @@ function renderSeriesElement({
           yAxisId={yAxisId}
           dataKey={dataKey}
           name={name}
-          fill={color}
-          fillOpacity={series.opacity ?? 1}
+          fill={series.fillColor ?? color}
+          fillOpacity={series.fillOpacity ?? series.opacity ?? 1}
           stackId={stackId}
           isAnimationActive={animationActive}
         />
@@ -221,6 +233,7 @@ function renderSeriesElement({
           stroke={color}
           strokeWidth={strokeWidth}
           strokeOpacity={strokeOpacity}
+          strokeDasharray={strokeDasharray}
           connectNulls={connectNulls}
           dot={dotProp}
           isAnimationActive={animationActive}
@@ -236,7 +249,11 @@ function renderSeriesElement({
 interface AxisConfig {
   label: string | undefined;
   min: number | undefined;
+  max: number | undefined;
+  softMin: number | undefined;
+  softMax: number | undefined;
   tickInterval: number | undefined;
+  mirrored: boolean;
 }
 
 /**
@@ -246,14 +263,16 @@ interface AxisConfig {
 function collectAxisConfigs(
   series: SeriesConfig[],
 ): { left: AxisConfig; right: AxisConfig } {
-  const left: AxisConfig = { label: undefined, min: undefined, tickInterval: undefined };
-  const right: AxisConfig = { label: undefined, min: undefined, tickInterval: undefined };
+  const left: AxisConfig = { label: undefined, min: undefined, max: undefined, softMin: undefined, softMax: undefined, tickInterval: undefined, mirrored: false };
+  const right: AxisConfig = { label: undefined, min: undefined, max: undefined, softMin: undefined, softMax: undefined, tickInterval: undefined, mirrored: false };
 
   for (const s of series) {
     if (s.visible === false) continue;
     const side = (s.yAxis ?? 0) === 1 ? right : left;
     if (s.yAxisLabel != null && side.label == null) side.label = s.yAxisLabel;
     if (s.yAxisMin != null && side.min == null) side.min = s.yAxisMin;
+    if (s.yAxisMax != null && side.max == null) side.max = s.yAxisMax;
+    if (s.mirroredValue) side.mirrored = true;
     if (s.yAxisTickInterval != null && side.tickInterval == null) {
       side.tickInterval = s.yAxisTickInterval;
     }
@@ -295,16 +314,37 @@ export function ConfigDrivenChart({
 
   const chartTitle = config.title ?? 'Chart';
 
-  // Build domain for left axis
+  // Build domain for left axis (supports min, max, or both)
   const leftDomain: [number | string, number | string] | undefined =
-    leftAxisCfg.min != null ? [leftAxisCfg.min, 'auto'] : undefined;
+    leftAxisCfg.min != null || leftAxisCfg.max != null
+      ? [leftAxisCfg.min ?? 'auto', leftAxisCfg.max ?? 'auto']
+      : undefined;
 
   // Build domain for right axis
   const rightDomain: [number | string, number | string] | undefined =
-    rightAxisCfg.min != null ? [rightAxisCfg.min, 'auto'] : undefined;
+    rightAxisCfg.min != null || rightAxisCfg.max != null
+      ? [rightAxisCfg.min ?? 'auto', rightAxisCfg.max ?? 'auto']
+      : undefined;
+
+  // Compute explicit tick arrays when tickInterval is set (Recharts needs explicit values)
+  function buildTicks(cfg: AxisConfig): number[] | undefined {
+    if (cfg.tickInterval == null || cfg.tickInterval <= 0) return undefined;
+    const lo = cfg.min ?? 0;
+    const hi = cfg.max ?? (lo + cfg.tickInterval * 10);
+    const ticks: number[] = [];
+    for (let v = lo; v <= hi + cfg.tickInterval * 0.001; v += cfg.tickInterval) {
+      ticks.push(Math.round(v * 1e6) / 1e6);
+    }
+    return ticks.length > 0 && ticks.length <= 100 ? ticks : undefined;
+  }
+  const leftTicks = buildTicks(leftAxisCfg);
+  const rightTicks = buildTicks(rightAxisCfg);
 
   return (
     <div style={{ minWidth: 0, minHeight: 0, width: '100%', height: '100%' }}>
+      {config.subtitle && (
+        <p className="text-xs text-muted-foreground mb-1">{config.subtitle}</p>
+      )}
       {/*
         sr-only data table — provides chart data to screen readers.
         WCAG 1.1.1 / coding rules §5.5.
@@ -370,6 +410,9 @@ export function ConfigDrivenChart({
               tick={{ fontSize: 10, fontFamily: CHART_FONT }}
               className="fill-muted-foreground"
               domain={leftDomain}
+              ticks={leftTicks}
+              interval={leftTicks ? 0 : undefined}
+              tickFormatter={leftAxisCfg.mirrored ? (v: number) => String(Math.abs(v)) : undefined}
               label={
                 leftAxisCfg.label != null
                   ? {
@@ -402,6 +445,8 @@ export function ConfigDrivenChart({
                 tick={{ fontSize: 10, fontFamily: CHART_FONT }}
                 className="fill-muted-foreground"
                 domain={rightDomain}
+                ticks={rightTicks}
+                interval={rightTicks ? 0 : undefined}
                 label={
                   rightAxisCfg.label != null
                     ? {
@@ -442,7 +487,9 @@ export function ConfigDrivenChart({
               wrapperStyle={{ fontSize: '0.75rem', fontFamily: CHART_FONT }}
             />
 
-            {visibleSeries.map(({ series, originalIndex }) => {
+            {[...visibleSeries]
+              .sort((a, b) => (a.series.zIndex ?? 0) - (b.series.zIndex ?? 0))
+              .map(({ series, originalIndex }) => {
               const seriesType = resolveSeriesType(series, config, globalType);
               const color = ensureChartContrast(
                 resolveColor(series, originalIndex, globalColors),

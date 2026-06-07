@@ -607,6 +607,20 @@ export interface SeriesConfig {
   customSqlQuery: string | null;
   xColumn: string | null;
   yColumn: string | null;
+  yAxisSoftMin: number | null;
+  yAxisSoftMax: number | null;
+  yAxisMinorTicks: boolean | null;
+  dashStyle: string | null;
+  fillColor: string | null;
+  fillOpacity: number | null;
+  borderWidth: number | null;
+  mirroredValue: boolean | null;
+  states: Record<string, unknown> | null;
+  numberFormat: Record<string, unknown> | null;
+  polar: boolean | null;
+  connectEnds: boolean | null;
+  colorsEnabled: boolean;
+  colorZones: Array<{ color: string; position?: number; label?: string }> | null;
 }
 
 export interface ChartConfig {
@@ -620,6 +634,8 @@ export interface ChartConfig {
   xAxisGroupby: string | null;
   xAxisCategories: string[];
   forceFullYear: boolean | null;
+  subtitle: string | null;
+  polar: boolean | null;
   series: SeriesConfig[];
 }
 
@@ -644,6 +660,14 @@ export interface ChartGroupConfig {
   startAtBeginningOfMonth: boolean;
   pageContent: string | null;
   generate: string | null;
+  legend: boolean;
+  exporting: boolean;
+  credits: string | null;
+  creditsUrl: string | null;
+  creditsPosition: Record<string, unknown> | null;
+  cssClass: string | null;
+  cssHeight: string | null;
+  cssWidth: string | null;
   charts: ChartConfig[];
 }
 

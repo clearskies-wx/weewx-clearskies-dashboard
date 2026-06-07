@@ -34,25 +34,50 @@ export interface WeatherRangeChartProps {
 
 // ---------------------------------------------------------------------------
 // Color helpers — cool (blue) → warm (red/orange) gradient
+// Uses CSS variables --range-chart-cool/mid/warm for theme-awareness.
 // ---------------------------------------------------------------------------
 
-/** Map a normalised value in [0, 1] to an RGB hex color along a cool-to-warm gradient. */
-function tempGradientColor(t: number): string {
-  // Clamp to [0, 1]
-  const c = Math.max(0, Math.min(1, t));
+interface Rgb { r: number; g: number; b: number }
 
-  // Cool: #4a90d9 (blue)  →  mid: #f5a623 (amber)  →  Warm: #d0021b (red)
+function parseHex(hex: string): Rgb {
+  const h = hex.replace('#', '');
+  return {
+    r: parseInt(h.substring(0, 2), 16),
+    g: parseInt(h.substring(2, 4), 16),
+    b: parseInt(h.substring(4, 6), 16),
+  };
+}
+
+const FALLBACK_COOL = parseHex('#4a90d9');
+const FALLBACK_MID  = parseHex('#f5a623');
+const FALLBACK_WARM = parseHex('#d0021b');
+
+function readRangeColors(): { cool: Rgb; mid: Rgb; warm: Rgb } {
+  if (typeof document === 'undefined') return { cool: FALLBACK_COOL, mid: FALLBACK_MID, warm: FALLBACK_WARM };
+  const style = getComputedStyle(document.documentElement);
+  const coolStr = style.getPropertyValue('--range-chart-cool').trim();
+  const midStr  = style.getPropertyValue('--range-chart-mid').trim();
+  const warmStr = style.getPropertyValue('--range-chart-warm').trim();
+  return {
+    cool: coolStr ? parseHex(coolStr) : FALLBACK_COOL,
+    mid:  midStr  ? parseHex(midStr)  : FALLBACK_MID,
+    warm: warmStr ? parseHex(warmStr) : FALLBACK_WARM,
+  };
+}
+
+function tempGradientColor(t: number, cool: Rgb, mid: Rgb, warm: Rgb): string {
+  const c = Math.max(0, Math.min(1, t));
   let r: number, g: number, b: number;
   if (c < 0.5) {
     const u = c / 0.5;
-    r = Math.round(74 + u * (245 - 74));
-    g = Math.round(144 + u * (166 - 144));
-    b = Math.round(217 + u * (35 - 217));
+    r = Math.round(cool.r + u * (mid.r - cool.r));
+    g = Math.round(cool.g + u * (mid.g - cool.g));
+    b = Math.round(cool.b + u * (mid.b - cool.b));
   } else {
     const u = (c - 0.5) / 0.5;
-    r = Math.round(245 + u * (208 - 245));
-    g = Math.round(166 + u * (2 - 166));
-    b = Math.round(35 + u * (27 - 35));
+    r = Math.round(mid.r + u * (warm.r - mid.r));
+    g = Math.round(mid.g + u * (warm.g - mid.g));
+    b = Math.round(mid.b + u * (warm.b - mid.b));
   }
   return `rgb(${r},${g},${b})`;
 }
@@ -194,6 +219,8 @@ function WeatherRangeSvg({
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
+  const rangeColors = readRangeColors();
+
   const cx = size / 2;
   const cy = size / 2;
 
@@ -276,7 +303,7 @@ function WeatherRangeSvg({
     // Color: based on midpoint of high/low relative to global range
     const midVal = (highVal + lowVal) / 2;
     const colorT = (midVal - globalMin) / range;
-    const color = tempGradientColor(colorT);
+    const color = tempGradientColor(colorT, rangeColors.cool, rangeColors.mid, rangeColors.warm);
 
     const label = fullDateLabel(highPoint.dateTime, totalCount);
 
@@ -552,17 +579,17 @@ export function WeatherRangeChart({
         className="flex items-center gap-2 justify-center text-xs text-muted-foreground"
         aria-label="Color scale: cool (blue) to warm (red)"
       >
-        <span aria-hidden="true" className="inline-block w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: '#4a90d9' }} />
+        <span aria-hidden="true" className="inline-block w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: 'var(--range-chart-cool)' }} />
         <span>Cool</span>
         <span
           aria-hidden="true"
           className="inline-block h-2 w-16 rounded-sm flex-shrink-0"
           style={{
-            background: 'linear-gradient(to right, #4a90d9, #f5a623, #d0021b)',
+            background: 'linear-gradient(to right, var(--range-chart-cool), var(--range-chart-mid), var(--range-chart-warm))',
           }}
         />
         <span>Warm</span>
-        <span aria-hidden="true" className="inline-block w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: '#d0021b' }} />
+        <span aria-hidden="true" className="inline-block w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: 'var(--range-chart-warm)' }} />
       </div>
 
       {/* Screen-reader data table (sr-only — text alternative to the SVG, WCAG 1.1.1) */}

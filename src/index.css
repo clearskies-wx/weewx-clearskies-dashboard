@@ -172,6 +172,11 @@
     --temp-hi: #c81e1e;
     --temp-lo: #1d4ed8;
 
+    /* ── Weather range chart gradient (cool → mid → warm) ──────────────── */
+    --range-chart-cool: #4a90d9;
+    --range-chart-mid:  #f5a623;
+    --range-chart-warm: #d0021b;
+
     /* ── Semi-circular gauge (barometer, AQI) ────────────────────────────────
        --gauge-fill:      filled-arc tick color (uniform mode)
        --gauge-unfill:    unfilled-arc tick color
@@ -256,6 +261,11 @@
 
     --temp-hi: #f87171;
     --temp-lo: #93c5fd;
+
+    /* ── Weather range chart gradient (dark theme) ─────────────────────── */
+    --range-chart-cool: #6ba3e0;
+    --range-chart-mid:  #f5b84a;
+    --range-chart-warm: #e84040;
 
     /* ── Semi-circular gauge (dark theme) ───────────────────────────────── */
     --gauge-fill:      #60a5fa;

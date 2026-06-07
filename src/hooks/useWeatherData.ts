@@ -379,10 +379,11 @@ export function useArchive(params?: ArchiveParams, options?: { skip?: boolean })
   const limitStr = params?.limit ?? '';
   const fieldsStr = params?.fields ?? '';
   const intervalStr = params?.interval ?? '';
+  const aggStr = params?.agg ?? '';
 
   const { data, loading, error, refetch } = useApiQuery<{ data: ArchiveRecord[]; units?: UnitsBlock; source?: string }>(
     (signal) => getArchive(params, signal) as Promise<{ data: ArchiveRecord[]; units?: UnitsBlock; source?: string; generatedAt: string }>,
-    { skip: isMockMode() || options?.skip, deps: [fromStr, toStr, limitStr, fieldsStr, intervalStr] },
+    { skip: isMockMode() || options?.skip, deps: [fromStr, toStr, limitStr, fieldsStr, intervalStr, aggStr] },
   );
 
   if (isMockMode()) {
