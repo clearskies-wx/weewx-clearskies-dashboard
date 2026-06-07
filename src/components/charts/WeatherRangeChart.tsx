@@ -148,7 +148,15 @@ function computeYDomain(highs: number[], lows: number[]): {
   }
   const rawMax = Math.max(...highs);
   const rawMin = Math.min(...lows);
-  const tickInterval = Math.max(5, Math.ceil(Math.round(rawMax / 5) / 5) * 5);
+  const span = rawMax - rawMin;
+
+  // Pick a tick interval that keeps 4-6 ticks and fits the data tightly
+  let tickInterval = 5;
+  if (span > 40) tickInterval = 10;
+  else if (span > 20) tickInterval = 5;
+  else if (span > 10) tickInterval = 2;
+  else tickInterval = 1;
+
   const yMin = Math.floor(rawMin / tickInterval) * tickInterval;
   const yMax = Math.ceil(rawMax / tickInterval) * tickInterval;
   const ticks: number[] = [];
