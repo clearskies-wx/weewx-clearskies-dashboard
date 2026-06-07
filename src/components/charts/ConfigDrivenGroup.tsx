@@ -125,7 +125,9 @@ const CLIMATOLOGY_FIELD_MAP: Record<string, string> = {
   'dewpoint:avg': 'avgDewpoint',
   'rain:avg_monthly_total': 'avgRainfall',
   'rain:sum': 'avgRainfall',
+  'rain:sumcumulative': 'avgRainfall',
   'rainTotal:sum': 'avgRainfall',
+  'rainTotal:sumcumulative': 'avgRainfall',
 };
 
 /**
