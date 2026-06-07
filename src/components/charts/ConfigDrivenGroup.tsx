@@ -51,6 +51,21 @@ export interface ConfigDrivenGroupProps {
   reducedMotion?: boolean;
   /** From station.firstRecord, used to compute year dropdown range. */
   stationFirstYear?: number;
+  /**
+   * When true, the rolling-range radiogroup and year/month dropdowns are not
+   * rendered. The parent (ChartsPage TabNavCard) owns date controls instead.
+   * Data fetching is unaffected — only the UI controls are hidden.
+   */
+  hideControls?: boolean;
+  /** Controlled rolling-range value. Falls back to internal state when omitted. */
+  selectedRange?: string;
+  /** Controlled year value. Falls back to internal state when omitted. */
+  selectedYear?: number;
+  /** Controlled month value (1-indexed; null = all months). Falls back to internal state when omitted. */
+  selectedMonth?: number | null;
+  onRangeChange?: (range: string) => void;
+  onYearChange?: (year: number) => void;
+  onMonthChange?: (month: number | null) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -176,18 +191,44 @@ export function ConfigDrivenGroup({
   globalType,
   reducedMotion = false,
   stationFirstYear,
+  hideControls = false,
+  selectedRange: controlledRange,
+  selectedYear: controlledYear,
+  selectedMonth: controlledMonth,
+  onRangeChange,
+  onYearChange,
+  onMonthChange,
 }: ConfigDrivenGroupProps) {
   const { t, i18n } = useTranslation('charts');
 
   // -------------------------------------------------------------------------
-  // State
+  // State — internal fallbacks used when controlled props are not provided
   // -------------------------------------------------------------------------
 
-  const [selectedRange, setSelectedRange] = useState<string>(
+  const [internalSelectedRange, setInternalSelectedRange] = useState<string>(
     group.rollingRanges[0] ?? '1d',
   );
-  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
+  const [internalSelectedYear, setInternalSelectedYear] = useState<number>(new Date().getFullYear());
+  const [internalSelectedMonth, setInternalSelectedMonth] = useState<number | null>(null);
+
+  // Effective values: use controlled prop when provided, fall back to internal state
+  const selectedRange = controlledRange ?? internalSelectedRange;
+  const selectedYear = controlledYear ?? internalSelectedYear;
+  const selectedMonth = controlledMonth !== undefined ? controlledMonth : internalSelectedMonth;
+
+  // Setters: call prop callback when provided, always update internal state as fallback
+  function setSelectedRange(range: string) {
+    setInternalSelectedRange(range);
+    onRangeChange?.(range);
+  }
+  function setSelectedYear(year: number) {
+    setInternalSelectedYear(year);
+    onYearChange?.(year);
+  }
+  function setSelectedMonth(month: number | null) {
+    setInternalSelectedMonth(month);
+    onMonthChange?.(month);
+  }
   const [showTable, setShowTable] = useState(false);
 
   // Ref to the chart rendering container — used by PNG export to locate the SVG.
@@ -623,8 +664,8 @@ export function ConfigDrivenGroup({
       {/* Date controls                                                        */}
       {/* ------------------------------------------------------------------ */}
 
-      {/* Mode A: Rolling range buttons */}
-      {showRollingRanges && (
+      {/* Mode A: Rolling range buttons — hidden when parent owns date controls */}
+      {!hideControls && showRollingRanges && (
         <div
           role="radiogroup"
           aria-label={t('ariaRangeGroupLabel')}
@@ -675,8 +716,8 @@ export function ConfigDrivenGroup({
         </div>
       )}
 
-      {/* Mode B: Year / month dropdowns */}
-      {showYearMonthDropdowns && (
+      {/* Mode B: Year / month dropdowns — hidden when parent owns date controls */}
+      {!hideControls && showYearMonthDropdowns && (
         <div className="flex flex-wrap gap-4">
           {/* Year selector */}
           <div className="flex flex-col gap-1">
