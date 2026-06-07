@@ -548,8 +548,13 @@ export function ConfigDrivenChart({
         as a graphic rather than an anonymous div (WCAG 1.1.1).
         The sr-only table above is the text alternative.
       */}
-      <div role="img" aria-label={chartTitle} style={{ width: '100%', minWidth: 0, overflow: 'hidden' }}>
-        <ResponsiveContainer width="99%" height={height}>
+      <div
+        role="img"
+        aria-label={chartTitle}
+        style={{ position: 'relative', width: '100%', height }}
+      >
+        <div style={{ position: 'absolute', inset: 0 }}>
+        <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
             data={data}
             margin={{ top: 8, right: rightAxisNeeded ? 55 : 10, bottom: 8, left: 15 }}
@@ -698,6 +703,7 @@ export function ConfigDrivenChart({
             })}
           </ComposedChart>
         </ResponsiveContainer>
+        </div>
       </div>
     </div>
   );
