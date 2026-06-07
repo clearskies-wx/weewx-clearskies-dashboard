@@ -786,7 +786,7 @@ export function ConfigDrivenGroup({
       {/* Chart / table toggle button + chart container — all in one Card    */}
       {/* ------------------------------------------------------------------ */}
 
-      <Card footprint="full" className="p-4">
+      <Card footprint="full" className="p-4 overflow-hidden">
       {group.title && (
         <CardHeader>
           <CardTitle as="h2">{group.title}</CardTitle>
@@ -1034,7 +1034,7 @@ export function ConfigDrivenGroup({
           /* All others render as ConfigDrivenChart.                          */
           /* ref is used by PNG export to locate the chart SVG.              */
           /* ---------------------------------------------------------------- */
-          <div ref={chartContainerRef} className="flex flex-col gap-6" style={{ minWidth: 0, overflow: 'hidden' }}>
+          <div ref={chartContainerRef} className="space-y-6" style={{ overflow: 'hidden' }}>
             {group.charts.map((chart) => {
               const isWindRoseChart = chart.series.some(
                 (s) => s.seriesId === 'windRose',
