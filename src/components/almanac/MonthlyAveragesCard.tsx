@@ -22,6 +22,7 @@ import {
 } from '../ui/card';
 import type { ClimatologyMonthly } from '../../api/types';
 import { useTheme } from '../../lib/theme-provider';
+import { ensureChartContrast } from '../../utils/chart-contrast';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -305,7 +306,7 @@ export function MonthlyAveragesCard({
                 type="monotone"
                 dataKey="avgDewpoint"
                 name={t('climatology.series.avgDewpoint')}
-                stroke={isDark ? '#c084fc' : '#a855f7'}
+                stroke={ensureChartContrast('#a855f7', isDark)}
                 strokeWidth={2}
                 dot={<SquareDot />}
                 activeDot={{ r: 5 }}

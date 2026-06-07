@@ -621,6 +621,8 @@ export interface SeriesConfig {
   connectEnds: boolean | null;
   colorsEnabled: boolean;
   colorZones: Array<{ color: string; position?: number; label?: string }> | null;
+  /** Number of decimal places for Y-axis tick labels on this series' axis (Phase D). */
+  yAxisTickDecimals?: number | null;
 }
 
 export interface ChartConfig {

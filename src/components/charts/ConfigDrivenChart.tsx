@@ -34,12 +34,8 @@ import { ensureChartContrast } from '../../utils/chart-contrast';
 
 /** Fallback color palette when neither series.color nor globalColors provides a color. */
 const FALLBACK_PALETTE: string[] = [
-  '#7cb5ec',
-  '#434348',
-  '#90ed7d',
-  '#f7a35c',
-  '#8085e9',
-  '#f15c80',
+  '#7cb5ec', '#b2df8a', '#f7a35c', '#8c6bb1', '#dd3497',
+  '#e4d354', '#268bd2', '#f45b5b', '#6a3d9a', '#33a02c',
 ];
 
 /**
@@ -162,7 +158,7 @@ function renderSeriesElement({
     if (series.markerEnabled === true && series.markerRadius != null) {
       return { r: series.markerRadius };
     }
-    return undefined; // let Recharts decide
+    return false; // off by default — matches Belchertown plotOptions.line.marker.enabled=false
   })();
 
   // stackId for stacking support
@@ -369,9 +365,14 @@ export function ConfigDrivenChart({
     (s) => s.visible !== false && (s.yAxis ?? 0) === 1 && isWindDirSeries(s),
   );
 
+  // Rain observation types — rain axis must start at 0, not auto-min.
+  const RAIN_OBS_TYPES = ['rain', 'rainRate', 'rainTotal'];
+
   // Build domain for left axis (supports min, max, softMin, softMax, or both).
   // T4.1a: When softMin/softMax are present, use Recharts function-based domain so
   // the axis expands beyond the soft bounds only when data requires it.
+  // T-A2: Default is ['auto','auto'] (tight to data) instead of undefined (includes 0).
+  //       Exception: rain axes use [0,'auto'] — rain can't be negative.
   const leftDomain:
     | [number | string | ((v: number) => number), number | string | ((v: number) => number)]
     | undefined = (() => {
@@ -391,7 +392,16 @@ export function ConfigDrivenChart({
           : 'auto';
       return [lo, hi];
     }
-    return undefined;
+    // T-A2: auto-scale to data range; keep rain axis floor at 0
+    const leftHasRain = config.series.some(
+      (s) =>
+        s.visible !== false &&
+        (s.yAxis ?? 0) === 0 &&
+        RAIN_OBS_TYPES.includes(s.observationType ?? s.seriesId),
+    );
+    return leftHasRain
+      ? ([0, 'auto'] as [number, string])
+      : (['auto', 'auto'] as [string, string]);
   })();
 
   // Build domain for right axis (same logic as left, plus wind direction override).
@@ -417,7 +427,16 @@ export function ConfigDrivenChart({
           : 'auto';
       return [lo, hi];
     }
-    return undefined;
+    // T-A2: auto-scale to data range; keep rain axis floor at 0
+    const rightHasRain = config.series.some(
+      (s) =>
+        s.visible !== false &&
+        (s.yAxis ?? 0) === 1 &&
+        RAIN_OBS_TYPES.includes(s.observationType ?? s.seriesId),
+    );
+    return rightHasRain
+      ? ([0, 'auto'] as [number, string])
+      : (['auto', 'auto'] as [string, string]);
   })();
 
   // Compute explicit tick arrays when tickInterval is set (Recharts needs explicit values)
@@ -451,6 +470,29 @@ export function ConfigDrivenChart({
     return map;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config.series]);
+
+  // T-A5: Compute Y-axis tick decimal precision for each axis.
+  // Priority: explicit yAxisTickDecimals from series config → barometer/pressure auto-detect (2) → none.
+  const PRESSURE_OBS_TYPES = ['barometer', 'pressure', 'altimeter'];
+
+  function resolveTickDecimals(axisIndex: 0 | 1): number | undefined {
+    const axisSeries = config.series.filter(
+      (s) => s.visible !== false && (s.yAxis ?? 0) === axisIndex,
+    );
+    // 1. Explicit config value from any series on this axis
+    for (const s of axisSeries) {
+      if (s.yAxisTickDecimals != null) return s.yAxisTickDecimals;
+    }
+    // 2. Auto-detect pressure observations → 2 decimal places
+    const hasPressure = axisSeries.some((s) =>
+      PRESSURE_OBS_TYPES.includes(s.observationType ?? s.seriesId),
+    );
+    if (hasPressure) return 2;
+    return undefined;
+  }
+
+  const leftTickDecimals = resolveTickDecimals(0);
+  const rightTickDecimals = resolveTickDecimals(1);
 
   return (
     <div style={{ minWidth: 0, minHeight: 0, width: '100%', height: '100%' }}>
@@ -516,6 +558,7 @@ export function ConfigDrivenChart({
               dataKey={xKey}
               height={30}
               tickFormatter={xFormatter}
+              minTickGap={50}
               tick={{ fontSize: 11, fontFamily: CHART_FONT }}
               className="fill-muted-foreground"
             />
@@ -529,7 +572,11 @@ export function ConfigDrivenChart({
               domain={leftDomain}
               ticks={leftTicks}
               interval={leftTicks ? 0 : undefined}
-              tickFormatter={leftAxisCfg.mirrored ? (v: number) => String(Math.abs(v)) : undefined}
+              tickFormatter={
+                leftAxisCfg.mirrored ? (v: number) => String(Math.abs(v)) :
+                leftTickDecimals != null ? (v: number) => v.toFixed(leftTickDecimals) :
+                undefined
+              }
               label={
                 leftAxisCfg.label != null
                   ? {
@@ -570,7 +617,9 @@ export function ConfigDrivenChart({
                 tickFormatter={
                   rightAxisIsWindDir
                     ? (v: number) => COMPASS_TICKS[v] ?? String(v)
-                    : undefined
+                    : rightTickDecimals != null
+                      ? (v: number) => v.toFixed(rightTickDecimals)
+                      : undefined
                 }
                 label={
                   rightAxisCfg.label != null
