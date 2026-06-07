@@ -612,9 +612,10 @@ export function ConfigDrivenChart({
                 borderRadius: '0.5rem',
               }}
               labelFormatter={tooltipLabelFormatter ? (label: unknown) => tooltipLabelFormatter(label as string | number) : undefined}
-              formatter={(value: unknown, name: string) => {
+              formatter={(value: unknown, name: string | number | undefined) => {
                 const numVal = Number(value);
-                const fmt = seriesFormatMap.get(name);
+                const nameStr = typeof name === 'string' ? name : undefined;
+                const fmt = nameStr !== undefined ? seriesFormatMap.get(nameStr) : undefined;
                 if (fmt?.isWindDir) {
                   // Wind direction: show compass label with raw degrees in parens
                   const deg = Math.round(numVal);
