@@ -616,6 +616,7 @@ export function WeatherRangeChart({
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
