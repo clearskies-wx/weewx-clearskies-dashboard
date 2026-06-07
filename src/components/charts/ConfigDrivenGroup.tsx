@@ -301,12 +301,17 @@ export function ConfigDrivenGroup({
     // For wind rose groups, always include windSpeed and windDir so the
     // BFF can inject the beaufort field (ADR-042) and the binning utility
     // has the direction data it needs.
+    const SKIP_SERIES = new Set(['windRose', 'weatherRange', 'haysChart']);
+    const FIELD_ALIASES: Record<string, string> = { rainTotal: 'rain' };
     const fields = new Set<string>();
     group.charts.forEach((chart) => {
       chart.series.forEach((s) => {
         if (s.useCustomSql) return;
+        if (SKIP_SERIES.has(s.seriesId)) return;
+        if (s.rangeType != null) return;
         if (s.visible !== false) {
-          fields.add(s.observationType ?? s.seriesId);
+          const raw = s.observationType ?? s.seriesId;
+          fields.add(FIELD_ALIASES[raw] ?? raw);
         }
       });
     });
