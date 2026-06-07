@@ -139,15 +139,15 @@ function formatTimestamp(value: string | number, selectedRange: string): string 
   const rangeDays = rangeSec / 86400;
 
   if (rangeDays <= 3) {
-    // Sub-3-day: show hour
+    // Sub-3-day: show hour ("1 AM", "2 PM")
     return d.toLocaleTimeString([], { hour: 'numeric', hour12: true });
   }
-  if (rangeDays <= 14) {
-    // 3d–14d: show day + month
+  if (rangeDays <= 90) {
+    // 3d–90d: show day + month ("6 Jun", "15 May")
     return d.toLocaleDateString([], { day: 'numeric', month: 'short' });
   }
-  // >14 days: show month short
-  return d.toLocaleDateString([], { month: 'short' });
+  // >90d: show month + year ("Mar '26")
+  return d.toLocaleDateString([], { month: 'short', year: '2-digit' });
 }
 
 // ---------------------------------------------------------------------------
