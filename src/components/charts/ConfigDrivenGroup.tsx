@@ -646,33 +646,29 @@ export function ConfigDrivenGroup({
   // -------------------------------------------------------------------------
 
   // Full dataset — used by the data table view so users see every raw row.
-  const chartData = hasRangeChart
-    ? rangeTableData
-    : isClimatology ? climatologyData : archiveData;
+  // A group can have BOTH range charts and regular charts; regular charts
+  // always use archiveData regardless of whether the group also has ranges.
+  const chartData = isClimatology ? climatologyData : archiveData;
   // Downsampled dataset — used by ConfigDrivenChart for efficient rendering.
-  // For climatology (12 points) and small archive sets, this equals chartData.
   const chartRenderData = isClimatology ? climatologyData : downsampledArchiveData;
   const xKey = isClimatology ? 'month' : 'timestamp';
   const xFormatter = isClimatology
     ? undefined
     : (v: string | number) => formatTimestamp(v, selectedRange);
 
-  // Loading and error state: for range charts, both fetches must complete.
+  // Loading and error state: all active fetches must complete.
   const isLoading = isClimatology
     ? climatologyResult.loading
-    : hasRangeChart
-    ? rangeHighResult.loading || rangeLowResult.loading
-    : archiveResult.loading;
+    : (archiveResult.loading || (hasRangeChart && (rangeHighResult.loading || rangeLowResult.loading)));
   const fetchError = isClimatology
     ? climatologyResult.error
-    : hasRangeChart
-    ? rangeHighResult.error ?? rangeLowResult.error
-    : archiveResult.error;
+    : (archiveResult.error ?? (hasRangeChart ? (rangeHighResult.error ?? rangeLowResult.error) : null));
   const onRetry = isClimatology
     ? climatologyResult.refetch
-    : hasRangeChart
-    ? () => { rangeHighResult.refetch(); rangeLowResult.refetch(); }
-    : archiveResult.refetch;
+    : () => {
+        archiveResult.refetch();
+        if (hasRangeChart) { rangeHighResult.refetch(); rangeLowResult.refetch(); }
+      };
 
   // -------------------------------------------------------------------------
   // Date controls mode detection

@@ -592,8 +592,10 @@ export function WeatherRangeChart({
         <span aria-hidden="true" className="inline-block w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: 'var(--range-chart-warm)' }} />
       </div>
 
-      {/* Screen-reader data table (sr-only — text alternative to the SVG, WCAG 1.1.1) */}
-      <table className="sr-only" aria-label={`${field} range data`}>
+      {/* Screen-reader data table — wrapped in sr-only div because
+          sr-only directly on <table> fails (table display overrides clip) */}
+      <div className="sr-only">
+      <table aria-label={`${field} range data`}>
         <caption>
           {field} high and low values for each period.
         </caption>

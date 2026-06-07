@@ -558,8 +558,10 @@ export function HaysChart({
         <span>{field || 'Value'} range (low to high)</span>
       </div>
 
-      {/* Screen-reader data table (sr-only — text alternative to SVG, WCAG 1.1.1) */}
-      <table className="sr-only" aria-label={`${field} range data`}>
+      {/* Screen-reader data table — wrapped in sr-only div because
+          sr-only directly on <table> fails (table display overrides clip) */}
+      <div className="sr-only">
+      <table aria-label={`${field} range data`}>
         <caption>
           {field} high and low values for each period.
         </caption>
