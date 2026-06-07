@@ -882,7 +882,7 @@ export function ConfigDrivenGroup({
                 </tr>
               </thead>
               <tbody>
-                {chartData.map((row, rowIndex) => {
+                {(chartData as Record<string, string | number | null>[]).map((row, rowIndex) => {
                   const xVal = row[xKey];
                   const displayX =
                     xKey === 'timestamp' && xVal != null
