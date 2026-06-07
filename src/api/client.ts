@@ -203,6 +203,10 @@ export function getChartsConfig(signal?: AbortSignal): Promise<ApiResponse<Chart
   return fetchApi<ApiResponse<ChartsConfigData>>('/charts/config', undefined, signal);
 }
 
+export function getCustomQuery(seriesId: string, signal?: AbortSignal): Promise<ApiResponse<Array<{ x: number | string; y: number | null }>>> {
+  return fetchApi<ApiResponse<Array<{ x: number | string; y: number | null }>>>(`/charts/custom-query/${encodeURIComponent(seriesId)}`, undefined, signal);
+}
+
 export function getReports(signal?: AbortSignal): Promise<ApiResponse<{ reports: ReportEntry[] }>> {
   return fetchApi<ApiResponse<{ reports: ReportEntry[] }>>('/reports', undefined, signal);
 }

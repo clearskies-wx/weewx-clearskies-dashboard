@@ -33,6 +33,7 @@ import {
   getEarthquakeFaults,
   getAlmanacPositions,
   getChartsConfig,
+  getCustomQuery,
 } from '../api/client';
 import type { ArchiveParams, ApiBrandingConfig } from '../api/client';
 import { asConverted } from '../api/types';
@@ -1007,5 +1008,58 @@ export function useChartsConfig(): HookResult<ChartsConfigData> {
     error,
     refetch,
   };
+}
+
+// ---------------------------------------------------------------------------
+// useCustomQueries — /charts/custom-query/{seriesId} for multiple series
+// ---------------------------------------------------------------------------
+
+type CustomQueryResults = Record<string, Array<{ x: number | string; y: number | null }>>;
+
+export function useCustomQueries(
+  seriesIds: string[],
+): { data: CustomQueryResults | null; loading: boolean; error: ApiError | null } {
+  const [data, setData] = useState<CustomQueryResults | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<ApiError | null>(null);
+  const key = seriesIds.join(',');
+
+  useEffect(() => {
+    if (seriesIds.length === 0) {
+      setData(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    setLoading(true);
+    setError(null);
+
+    Promise.all(
+      seriesIds.map((id) =>
+        getCustomQuery(id, controller.signal)
+          .then((resp) => ({ id, points: resp.data ?? [] }))
+          .catch(() => ({ id, points: [] as Array<{ x: number | string; y: number | null }> })),
+      ),
+    )
+      .then((results) => {
+        if (controller.signal.aborted) return;
+        const merged: CustomQueryResults = {};
+        for (const r of results) {
+          merged[r.id] = r.points;
+        }
+        setData(merged);
+        setLoading(false);
+      })
+      .catch((err) => {
+        if (controller.signal.aborted) return;
+        setError(err instanceof ApiError ? err : new ApiError('Custom query failed', 500));
+        setLoading(false);
+      });
+
+    return () => controller.abort();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+
+  return { data, loading, error };
 }
 

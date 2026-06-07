@@ -29,7 +29,7 @@ import { useState, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useArchive, useClimatologyMonthly } from '../../hooks/useWeatherData';
+import { useArchive, useClimatologyMonthly, useCustomQueries } from '../../hooks/useWeatherData';
 import { buildWindRoseMatrix, defaultBeaufortColors } from '../../utils/wind-rose-binning';
 import { ConfigDrivenChart } from './ConfigDrivenChart';
 import { WindRoseChart } from './WindRoseChart';
@@ -277,6 +277,19 @@ export function ConfigDrivenGroup({
     return null;
   }, [hasRangeChart, group.charts]);
 
+  // Custom SQL series — collect ALL series IDs that use custom SQL.
+  const customSqlSeriesIds = useMemo(() => {
+    const ids: string[] = [];
+    for (const chart of group.charts) {
+      for (const s of chart.series) {
+        if (s.useCustomSql && s.seriesId) ids.push(s.seriesId);
+      }
+    }
+    return ids;
+  }, [group.charts]);
+
+  const customQueryResults = useCustomQueries(customSqlSeriesIds);
+
   // -------------------------------------------------------------------------
   // Archive fetch params (useMemo — prevents infinite re-render loops)
   // -------------------------------------------------------------------------
@@ -421,15 +434,17 @@ export function ConfigDrivenGroup({
   // Data transformation (useMemo to avoid re-computation on unrelated renders)
   // -------------------------------------------------------------------------
 
-  // Archive path: map each ArchiveRecord into a seriesId-keyed row
+  // Archive path: map each ArchiveRecord into a seriesId-keyed row,
+  // then merge any custom SQL series data by matching timestamp.
   const archiveData = useMemo(() => {
     if (!archiveResult.data) return [];
-    return archiveResult.data.map((record) => {
+    const rows = archiveResult.data.map((record) => {
       const row: Record<string, number | string | null> = {
         timestamp: record.timestamp,
       };
       group.charts.forEach((chart) => {
         chart.series.forEach((series) => {
+          if (series.useCustomSql) return;
           if (series.visible !== false) {
             const obsType = series.observationType ?? series.seriesId;
             row[series.seriesId] =
@@ -439,7 +454,21 @@ export function ConfigDrivenGroup({
       });
       return row;
     });
-  }, [archiveResult.data, group.charts]);
+
+    // Merge custom SQL data into archive rows by matching x value to timestamp.
+    if (customQueryResults.data) {
+      for (const [seriesId, points] of Object.entries(customQueryResults.data)) {
+        for (const pt of points) {
+          const matchIdx = rows.findIndex((r) => r.timestamp === pt.x || r.timestamp === String(pt.x));
+          if (matchIdx >= 0) {
+            rows[matchIdx][seriesId] = pt.y;
+          }
+        }
+      }
+    }
+
+    return rows;
+  }, [archiveResult.data, group.charts, customQueryResults.data]);
 
   // Gap detection: insert null rows at data gaps > gapsize to break Recharts lines.
   const gapProcessedArchiveData = useMemo(() => {
@@ -484,14 +513,16 @@ export function ConfigDrivenGroup({
     return lttbDownsample(gapProcessedArchiveData, LTTB_THRESHOLD, 'timestamp', firstVisibleSeries.seriesId);
   }, [isClimatology, gapProcessedArchiveData, group.charts]);
 
-  // Climatology path: map ClimatologyMonthly 12-element arrays into month rows
+  // Climatology path: map ClimatologyMonthly 12-element arrays into month rows,
+  // then merge any custom SQL series data by month index.
   const climatologyData = useMemo(() => {
     if (!climatologyResult.data) return [];
     const clim = climatologyResult.data;
-    return clim.months.map((month, i) => {
+    const rows = clim.months.map((month, i) => {
       const row: Record<string, number | string | null> = { month };
       group.charts.forEach((chart) => {
         chart.series.forEach((series) => {
+          if (series.useCustomSql) return;
           const obsType = series.observationType ?? series.seriesId;
           if (series.visible !== false && obsType) {
             const fieldKey =
@@ -508,7 +539,21 @@ export function ConfigDrivenGroup({
       });
       return row;
     });
-  }, [climatologyResult.data, group.charts]);
+
+    // Merge custom SQL data into climatology rows by x value (month number 1-12).
+    if (customQueryResults.data) {
+      for (const [seriesId, points] of Object.entries(customQueryResults.data)) {
+        for (const pt of points) {
+          const monthIdx = typeof pt.x === 'number' ? pt.x - 1 : parseInt(String(pt.x), 10) - 1;
+          if (monthIdx >= 0 && monthIdx < rows.length) {
+            rows[monthIdx][seriesId] = pt.y;
+          }
+        }
+      }
+    }
+
+    return rows;
+  }, [climatologyResult.data, group.charts, customQueryResults.data]);
 
   // Range chart data transformation (T4.1/T4.2):
   // Map archive records into { dateTime, value } pairs for WeatherRangeChart.
