@@ -318,6 +318,10 @@ export function ConfigDrivenGroup({
     if (hasWindRose) {
       fields.add('windSpeed');
       fields.add('windDir');
+      // beaufort is a BFF-injected ConvertedValue that wind-rose-binning.ts
+      // reads as record['beaufort']. It must be explicitly requested in the
+      // fields param so the BFF includes it in the archive response (ADR-042).
+      fields.add('beaufort');
     }
 
     let from: string;
@@ -724,58 +728,6 @@ export function ConfigDrivenGroup({
       {/* Date controls                                                        */}
       {/* ------------------------------------------------------------------ */}
 
-      {/* Mode A: Rolling range buttons — hidden when parent owns date controls */}
-      {!hideControls && showRollingRanges && (
-        <div
-          role="radiogroup"
-          aria-label={t('ariaRangeGroupLabel')}
-          className="flex flex-wrap gap-2"
-          onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
-            const ranges = group.rollingRanges;
-            const currentIdx = ranges.indexOf(selectedRange);
-            let nextIdx = currentIdx;
-
-            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-              e.preventDefault();
-              nextIdx = (currentIdx + 1) % ranges.length;
-            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-              e.preventDefault();
-              nextIdx = (currentIdx - 1 + ranges.length) % ranges.length;
-            } else {
-              return;
-            }
-
-            setSelectedRange(ranges[nextIdx]);
-            const buttons = e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="radio"]');
-            buttons[nextIdx]?.focus();
-          }}
-        >
-          {group.rollingRanges.map((range) => {
-            const isSelected = range === selectedRange;
-            return (
-              <button
-                key={range}
-                type="button"
-                role="radio"
-                aria-checked={isSelected}
-                tabIndex={isSelected ? 0 : -1}
-                onClick={() => setSelectedRange(range)}
-                className={[
-                  'min-h-[44px] md:min-h-0 px-3 py-1.5 rounded-md border text-sm',
-                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                  isSelected
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'bg-background text-foreground border-border hover:bg-muted/50',
-                ].join(' ')}
-              >
-                {/* Use i18n key if it exists, fall back to the raw range string */}
-                {t(`ranges.${range}`, { defaultValue: range })}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
       {/* Mode B: Year / month dropdowns — hidden when parent owns date controls */}
       {!hideControls && showYearMonthDropdowns && (
         <div className="flex flex-wrap gap-4">
@@ -844,6 +796,59 @@ export function ConfigDrivenGroup({
           <CardTitle as="h2">{group.title}</CardTitle>
         </CardHeader>
       )}
+
+      {/* Mode A: Rolling range buttons — now inside the card, below the group title */}
+      {!hideControls && showRollingRanges && (
+        <div
+          role="radiogroup"
+          aria-label={t('ariaRangeGroupLabel')}
+          className="flex flex-wrap gap-2 mb-4"
+          onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
+            const ranges = group.rollingRanges;
+            const currentIdx = ranges.indexOf(selectedRange);
+            let nextIdx = currentIdx;
+
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+              e.preventDefault();
+              nextIdx = (currentIdx + 1) % ranges.length;
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+              e.preventDefault();
+              nextIdx = (currentIdx - 1 + ranges.length) % ranges.length;
+            } else {
+              return;
+            }
+
+            setSelectedRange(ranges[nextIdx]);
+            const buttons = e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="radio"]');
+            buttons[nextIdx]?.focus();
+          }}
+        >
+          {group.rollingRanges.map((range) => {
+            const isSelected = range === selectedRange;
+            return (
+              <button
+                key={range}
+                type="button"
+                role="radio"
+                aria-checked={isSelected}
+                tabIndex={isSelected ? 0 : -1}
+                onClick={() => setSelectedRange(range)}
+                className={[
+                  'min-h-[44px] md:min-h-0 px-3 py-1.5 rounded-md border text-sm',
+                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                  isSelected
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-background text-foreground border-border hover:bg-muted/50',
+                ].join(' ')}
+              >
+                {/* Use i18n key if it exists, fall back to the raw range string */}
+                {t(`ranges.${range}`, { defaultValue: range })}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <div aria-busy={isLoading || undefined}>
         {/* Toggle + export button row */}
         <div className="flex justify-end items-center gap-2 mb-2">
@@ -1066,6 +1071,7 @@ export function ConfigDrivenGroup({
                     beaufortColors={beaufortColors}
                     height={300}
                     reducedMotion={reducedMotion}
+                    title={chart.title}
                   />
                 );
               }

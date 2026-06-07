@@ -45,6 +45,8 @@ export interface WindRoseChartProps {
   beaufortColors: Record<string, string>;
   height?: number;
   reducedMotion?: boolean;
+  /** Optional chart title. Rendered as an <h3> matching the ConfigDrivenChart title pattern. Defaults to "Wind Rose". */
+  title?: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -516,6 +518,7 @@ export function WindRoseChart({
   beaufortColors,
   height = 300,
   reducedMotion = false,
+  title,
 }: WindRoseChartProps) {
   const id = useId();
   const titleId = `wind-rose-title-${id}`;
@@ -535,9 +538,20 @@ export function WindRoseChart({
     return null;
   }
 
+  // Resolved display title — operator config.title if provided, else "Wind Rose".
+  const displayTitle = title ?? 'Wind Rose';
+
   return (
     <div className="flex flex-col gap-4">
-      {/* Visually-hidden title consumed by the SVG's aria-labelledby */}
+      {/* Visible chart title — matches ConfigDrivenChart h3 pattern */}
+      <h3
+        className="text-sm font-semibold text-foreground mb-2 text-center"
+        style={{ fontFamily: 'var(--font-sans)' }}
+      >
+        {displayTitle}
+      </h3>
+
+      {/* Visually-hidden extended title consumed by the SVG's aria-labelledby */}
       <span id={titleId} className="sr-only">
         Wind Rose chart showing wind direction frequency by Beaufort category.
         {' '}
