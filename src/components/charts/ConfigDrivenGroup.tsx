@@ -34,6 +34,8 @@ import { buildWindRoseMatrix, defaultBeaufortColors } from '../../utils/wind-ros
 import { ConfigDrivenChart } from './ConfigDrivenChart';
 import { WindRoseChart } from './WindRoseChart';
 import { WeatherRangeChart } from './WeatherRangeChart';
+import { ChartGauge } from './ChartGauge';
+import { HaysChart } from './HaysChart';
 import { lttbDownsample } from '../../utils/lttb';
 import { exportChartAsCsv, exportChartAsPng, buildExportFilename } from '../../utils/chart-export';
 import type { ChartGroupConfig } from '../../api/types';
@@ -207,18 +209,21 @@ export function ConfigDrivenGroup({
 
   // Range chart mode (T4.1/T4.2): any chart has a series with rangeType set.
   // Range charts require two separate archive fetches (agg=max and agg=min).
+  // Hays charts (polar arearange for pollen/allergen) also use the same dual-fetch,
+  // so they are included here to share the rangeHigh/rangeLow fetch infrastructure.
   const hasRangeChart =
     !isClimatology &&
     group.charts.some((chart) =>
-      chart.series.some((s) => s.rangeType != null),
+      chart.series.some((s) => s.rangeType != null || s.seriesId === 'haysChart'),
     );
 
-  // The observation field to fetch for range charts (e.g. 'outTemp')
+  // The observation field to fetch for range/hays charts (e.g. 'outTemp', pollen field)
   const rangeField = useMemo(() => {
     if (!hasRangeChart) return null;
     for (const chart of group.charts) {
       for (const s of chart.series) {
-        if (s.rangeType != null && s.observationType) {
+        // Prefer an explicit rangeType series; fall back to haysChart series.
+        if ((s.rangeType != null || s.seriesId === 'haysChart') && s.observationType) {
           return s.observationType;
         }
       }
@@ -264,13 +269,13 @@ export function ConfigDrivenGroup({
       from = new Date(Date.now() - rangeSeconds * 1000).toISOString();
     } else if (selectedYear) {
       // Year/month mode
-      if (selectedMonth != null) {
+      if (group.forceFullYear || selectedMonth == null) {
+        from = new Date(selectedYear, 0, 1).toISOString();
+        to = new Date(selectedYear + 1, 0, 1).toISOString();
+      } else {
         from = new Date(selectedYear, selectedMonth - 1, 1).toISOString();
         const nextMonth = new Date(selectedYear, selectedMonth, 1);
         to = nextMonth.toISOString();
-      } else {
-        from = new Date(selectedYear, 0, 1).toISOString();
-        to = new Date(selectedYear + 1, 0, 1).toISOString();
       }
     } else {
       // Default: use group's timeLength
@@ -278,6 +283,14 @@ export function ConfigDrivenGroup({
         typeof group.timeLength === 'number' ? group.timeLength : 86400;
       to = new Date().toISOString();
       from = new Date(Date.now() - seconds * 1000).toISOString();
+    }
+
+    // Anchor to month start if configured
+    if (group.startAtBeginningOfMonth) {
+      const d = new Date(from);
+      d.setDate(1);
+      d.setHours(0, 0, 0, 0);
+      from = d.toISOString();
     }
 
     // Interval heuristic based on time range
@@ -303,6 +316,8 @@ export function ConfigDrivenGroup({
     group.enableDateRanges,
     group.rollingRanges,
     group.timeLength,
+    group.forceFullYear,
+    group.startAtBeginningOfMonth,
     selectedRange,
     selectedYear,
     selectedMonth,
@@ -341,8 +356,8 @@ export function ConfigDrivenGroup({
   // -------------------------------------------------------------------------
 
   const archiveResult = useArchive(
-    isClimatology ? undefined : archiveParams ?? undefined,
-    { skip: isClimatology },
+    isClimatology || hasRangeChart ? undefined : archiveParams ?? undefined,
+    { skip: isClimatology || hasRangeChart },
   );
   const climatologyResult = useClimatologyMonthly();
 
@@ -379,6 +394,26 @@ export function ConfigDrivenGroup({
     });
   }, [archiveResult.data, group.charts]);
 
+  // Gap detection: insert null rows at data gaps > gapsize to break Recharts lines.
+  const gapProcessedArchiveData = useMemo(() => {
+    if (!group.gapsize || group.gapsize <= 0 || archiveData.length < 2) return archiveData;
+    const gapMs = group.gapsize * 1000;
+    const result: typeof archiveData = [archiveData[0]];
+    for (let i = 1; i < archiveData.length; i++) {
+      const prevTs = new Date(archiveData[i - 1].timestamp as string).getTime();
+      const currTs = new Date(archiveData[i].timestamp as string).getTime();
+      if (currTs - prevTs > gapMs) {
+        const nullRow: Record<string, number | string | null> = { timestamp: archiveData[i].timestamp };
+        for (const key of Object.keys(archiveData[i])) {
+          if (key !== 'timestamp') nullRow[key] = null;
+        }
+        result.push(nullRow);
+      }
+      result.push(archiveData[i]);
+    }
+    return result;
+  }, [archiveData, group.gapsize]);
+
   // Wind rose data: derived client-side from the same archive fetch (T3.2).
   // Uses raw archiveResult.data (ArchiveRecord[]) so the BFF-injected `beaufort`
   // ConvertedValue is accessible without the seriesId remapping done in archiveData.
@@ -389,17 +424,18 @@ export function ConfigDrivenGroup({
 
   // LTTB downsampling (archive only — climatology has exactly 12 points, never needs it)
   // Applied only for chart rendering; the raw archiveData is still used for the table view.
+  // Uses gap-processed data so line breaks at data gaps are preserved after downsampling.
   const downsampledArchiveData = useMemo(() => {
-    if (isClimatology || archiveData.length <= MAX_RAW_POINTS) return archiveData;
+    if (isClimatology || gapProcessedArchiveData.length <= MAX_RAW_POINTS) return gapProcessedArchiveData;
     // Use the first visible series' seriesId as the y-key for LTTB triangle selection.
     // LTTB selects points by maximising visual area; it needs a representative y-axis field.
     // If no visible series exists, fall back to returning the full data unsampled.
     const firstVisibleSeries = group.charts[0]?.series?.find(
       (s) => s.visible !== false,
     );
-    if (!firstVisibleSeries) return archiveData;
-    return lttbDownsample(archiveData, LTTB_THRESHOLD, 'timestamp', firstVisibleSeries.seriesId);
-  }, [isClimatology, archiveData, group.charts]);
+    if (!firstVisibleSeries) return gapProcessedArchiveData;
+    return lttbDownsample(gapProcessedArchiveData, LTTB_THRESHOLD, 'timestamp', firstVisibleSeries.seriesId);
+  }, [isClimatology, gapProcessedArchiveData, group.charts]);
 
   // Climatology path: map ClimatologyMonthly 12-element arrays into month rows
   const climatologyData = useMemo(() => {
@@ -449,12 +485,27 @@ export function ConfigDrivenGroup({
       }));
   }, [hasRangeChart, rangeField, rangeLowResult.data]);
 
+  // Range chart table data: merge high/low points into rows for table/CSV.
+  const rangeTableData = useMemo(() => {
+    if (!hasRangeChart || rangeHighPoints.length === 0) return [];
+    return rangeHighPoints.map((hp, i) => {
+      const lp = rangeLowPoints[i];
+      return {
+        timestamp: new Date(hp.dateTime * 1000).toISOString(),
+        high: hp.value,
+        low: lp?.value ?? null,
+      };
+    });
+  }, [hasRangeChart, rangeHighPoints, rangeLowPoints]);
+
   // -------------------------------------------------------------------------
   // Derived display values
   // -------------------------------------------------------------------------
 
   // Full dataset — used by the data table view so users see every raw row.
-  const chartData = isClimatology ? climatologyData : archiveData;
+  const chartData = hasRangeChart
+    ? rangeTableData
+    : isClimatology ? climatologyData : archiveData;
   // Downsampled dataset — used by ConfigDrivenChart for efficient rendering.
   // For climatology (12 points) and small archive sets, this equals chartData.
   const chartRenderData = isClimatology ? climatologyData : downsampledArchiveData;
@@ -518,15 +569,27 @@ export function ConfigDrivenGroup({
   // -------------------------------------------------------------------------
 
   function handleCsvExport(): void {
-    // Build column list: xKey first, then each visible series.
+    const title = group.title ?? 'Chart';
+    if (hasRangeChart) {
+      const fieldLabel = rangeField ?? 'Value';
+      const columns = [
+        { key: 'timestamp', label: t('tableColumnTime') },
+        { key: 'high', label: `${fieldLabel} High` },
+        { key: 'low', label: `${fieldLabel} Low` },
+      ];
+      exportChartAsCsv(
+        rangeTableData as Record<string, unknown>[],
+        columns,
+        buildExportFilename(title, 'csv'),
+      );
+      return;
+    }
     const xLabel =
       xKey === 'timestamp' ? t('tableColumnTime') : t('tableColumnMonth');
     const columns: { key: string; label: string }[] = [
       { key: xKey, label: xLabel },
       ...allVisibleSeries.map((s) => ({ key: s.seriesId, label: s.name ?? s.seriesId })),
     ];
-    const title = group.title ?? 'Chart';
-    // Use full (non-downsampled) chartData so the CSV includes every data point.
     exportChartAsCsv(
       chartData as Record<string, unknown>[],
       columns,
@@ -678,6 +741,7 @@ export function ConfigDrivenGroup({
         {/* Toggle + export button row */}
         <div className="flex justify-end items-center gap-2 mb-2">
           {/* PNG export — icon-only button; aria-label satisfies §5.4 */}
+          {group.exporting !== false && (
           <button
             type="button"
             onClick={handlePngExport}
@@ -703,8 +767,10 @@ export function ConfigDrivenGroup({
               <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
           </button>
+          )}
 
           {/* CSV export — icon-only button; aria-label satisfies §5.4 */}
+          {group.exporting !== false && (
           <button
             type="button"
             onClick={handleCsvExport}
@@ -731,6 +797,7 @@ export function ConfigDrivenGroup({
               <line x1="16" y1="17" x2="8" y2="17" />
             </svg>
           </button>
+          )}
 
           {/* Chart / table toggle */}
           <button
@@ -762,6 +829,39 @@ export function ConfigDrivenGroup({
               <caption className="sr-only">
                 {group.title ?? t('tableDataCaption')}
               </caption>
+              {hasRangeChart ? (
+                <>
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th scope="col" className="py-2 px-3 text-left font-medium text-muted-foreground">
+                        {t('tableColumnTime')}
+                      </th>
+                      <th scope="col" className="py-2 px-3 text-right font-medium text-muted-foreground">
+                        {(rangeField ?? 'Value') + ' High'}
+                      </th>
+                      <th scope="col" className="py-2 px-3 text-right font-medium text-muted-foreground">
+                        {(rangeField ?? 'Value') + ' Low'}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rangeTableData.map((row, rowIndex) => (
+                      <tr key={rowIndex} className="border-b border-border last:border-0">
+                        <td className="py-1.5 px-3 text-foreground">
+                          {formatTimestamp(row.timestamp, selectedRange)}
+                        </td>
+                        <td className="py-1.5 px-3 text-right text-foreground">
+                          {row.high != null ? String(row.high) : '—'}
+                        </td>
+                        <td className="py-1.5 px-3 text-right text-foreground">
+                          {row.low != null ? String(row.low) : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </>
+              ) : (
+              <>
               <thead>
                 <tr className="border-b border-border">
                   <th
@@ -813,12 +913,15 @@ export function ConfigDrivenGroup({
                   );
                 })}
               </tbody>
+              </>
+              )}
             </table>
           </div>
         ) : (
           /* ---------------------------------------------------------------- */
           /* Chart view: one chart per chart in the group.                    */
           /* Wind rose charts render as WindRoseChart.                        */
+          /* Hays charts render as HaysChart (polar arearange).              */
           /* Range charts render as WeatherRangeChart.                        */
           /* All others render as ConfigDrivenChart.                          */
           /* ref is used by PNG export to locate the chart SVG.              */
@@ -827,6 +930,9 @@ export function ConfigDrivenGroup({
             {group.charts.map((chart) => {
               const isWindRoseChart = chart.series.some(
                 (s) => s.seriesId === 'windRose',
+              );
+              const isHaysChartLocal = chart.series.some(
+                (s) => s.seriesId === 'haysChart',
               );
               const isRangeChart = chart.series.some(
                 (s) => s.rangeType != null,
@@ -857,6 +963,33 @@ export function ConfigDrivenGroup({
                 );
               }
 
+              if (isHaysChartLocal) {
+                // Show skeleton until both high and low data are available
+                if (rangeHighPoints.length === 0 || rangeLowPoints.length === 0) {
+                  return (
+                    <TileSkeleton key={chart.chartId} className="h-[300px]" />
+                  );
+                }
+                // Extract field, unit, and softMax from the haysChart series
+                const haysSeries = chart.series.find((s) => s.seriesId === 'haysChart');
+                const haysField = haysSeries?.observationType ?? rangeField ?? 'value';
+                const haysUnit = haysSeries?.yAxisLabel ?? '';
+                // yAxisSoftMax is number | null | undefined; convert null → undefined for the prop
+                const haysSoftMax = haysSeries?.yAxisSoftMax ?? undefined;
+                return (
+                  <HaysChart
+                    key={chart.chartId}
+                    highData={rangeHighPoints}
+                    lowData={rangeLowPoints}
+                    field={haysField}
+                    unit={haysUnit}
+                    softMax={haysSoftMax}
+                    height={300}
+                    reducedMotion={reducedMotion}
+                  />
+                );
+              }
+
               if (isRangeChart) {
                 // Show skeleton until both high and low data are available
                 if (rangeHighPoints.length === 0 || rangeLowPoints.length === 0) {
@@ -877,6 +1010,57 @@ export function ConfigDrivenGroup({
                     field={fieldName}
                     unit={unitLabel}
                     height={300}
+                    reducedMotion={reducedMotion}
+                  />
+                );
+              }
+
+              // Gauge chart detection (Belchertown type=gauge or type=solidgauge).
+              // Gauge charts display the LATEST value of the first series —
+              // they don't render a time-series line.
+              const isGaugeChart =
+                chart.type === 'gauge' ||
+                chart.type === 'solidgauge' ||
+                group.type === 'gauge' ||
+                group.type === 'solidgauge';
+
+              if (isGaugeChart) {
+                const gaugeSeries = chart.series[0];
+                const gaugeObsType = gaugeSeries?.observationType ?? null;
+
+                // Extract latest value from archive data for this observation type.
+                // archiveResult.data is ordered ascending by timestamp; last record = latest.
+                const latestRecord =
+                  archiveResult.data && archiveResult.data.length > 0
+                    ? archiveResult.data[archiveResult.data.length - 1]
+                    : null;
+                const rawValue =
+                  latestRecord && gaugeObsType
+                    ? (latestRecord[gaugeObsType] as number | null | undefined)
+                    : null;
+                const gaugeValue = typeof rawValue === 'number' ? rawValue : 0;
+
+                // Axis bounds: prefer chart-level yAxisMin, then series-level.
+                const gaugeMin = chart.yAxisMin ?? gaugeSeries?.yAxisMin ?? 0;
+                const gaugeMax = gaugeSeries?.yAxisMax ?? 100;
+
+                // Unit from series yAxisLabel
+                const gaugeUnit = gaugeSeries?.yAxisLabel ?? '';
+
+                // Color zones from the first series (Belchertown stores them per-series)
+                const gaugeZones = gaugeSeries?.colorZones ?? null;
+                const gaugeColorsEnabled = gaugeSeries?.colorsEnabled ?? false;
+
+                return (
+                  <ChartGauge
+                    key={chart.chartId}
+                    value={gaugeValue}
+                    min={gaugeMin}
+                    max={gaugeMax}
+                    unit={gaugeUnit}
+                    title={chart.title ?? gaugeSeries?.name ?? ''}
+                    colorZones={gaugeZones}
+                    colorsEnabled={gaugeColorsEnabled}
                     reducedMotion={reducedMotion}
                   />
                 );
