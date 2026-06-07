@@ -582,6 +582,7 @@ export function HaysChart({
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
