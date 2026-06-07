@@ -842,6 +842,49 @@ export function ConfigDrivenGroup({
               </select>
             </div>
           )}
+
+          {/* Export + table toggle — right-justified on same row as dropdowns */}
+          <div className="flex items-end gap-2 ml-auto">
+            {group.exporting !== false && (
+            <button
+              type="button"
+              onClick={handlePngExport}
+              className="p-1.5 rounded-md hover:bg-muted text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              aria-label={t('exportPng')}
+              title={t('exportPng')}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            </button>
+            )}
+            {group.exporting !== false && (
+            <button
+              type="button"
+              onClick={handleCsvExport}
+              className="p-1.5 rounded-md hover:bg-muted text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              aria-label={t('exportCsv')}
+              title={t('exportCsv')}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+              </svg>
+            </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowTable((prev) => !prev)}
+              aria-pressed={showTable}
+              className="inline-flex items-center min-h-[44px] md:min-h-0 px-3 py-2 text-sm text-muted-foreground rounded-md border border-border hover:text-foreground hover:bg-muted/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              {showTable ? t('showChart') : t('showDataTable')}
+            </button>
+          </div>
         </div>
       )}
 
@@ -898,9 +941,10 @@ export function ConfigDrivenGroup({
       )}
 
       <div aria-busy={isLoading || undefined} style={{ minWidth: 0, overflow: 'hidden' }}>
-        {/* Toggle + export button row */}
+        {/* Export/toggle row for groups WITHOUT year/month dropdowns (rolling range groups).
+            Year/month groups have the export buttons inline with their dropdowns above. */}
+        {!(showYearMonthDropdowns && !hideControls) && (
         <div className="flex justify-end items-center gap-2 mb-2">
-          {/* PNG export — icon-only button; aria-label satisfies §5.4 */}
           {group.exporting !== false && (
           <button
             type="button"
@@ -909,27 +953,13 @@ export function ConfigDrivenGroup({
             aria-label={t('exportPng')}
             title={t('exportPng')}
           >
-            {/* Download-arrow icon — decorative; aria-hidden per §5.5 */}
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-              focusable="false"
-            >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
               <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
               <polyline points="7 10 12 15 17 10" />
               <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
           </button>
           )}
-
-          {/* CSV export — icon-only button; aria-label satisfies §5.4 */}
           {group.exporting !== false && (
           <button
             type="button"
@@ -938,19 +968,7 @@ export function ConfigDrivenGroup({
             aria-label={t('exportCsv')}
             title={t('exportCsv')}
           >
-            {/* CSV / file-lines icon — decorative; aria-hidden per §5.5 */}
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-              focusable="false"
-            >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
               <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
               <polyline points="14 2 14 8 20 8" />
               <line x1="16" y1="13" x2="8" y2="13" />
@@ -958,8 +976,6 @@ export function ConfigDrivenGroup({
             </svg>
           </button>
           )}
-
-          {/* Chart / table toggle */}
           <button
             type="button"
             onClick={() => setShowTable((prev) => !prev)}
@@ -969,6 +985,7 @@ export function ConfigDrivenGroup({
             {showTable ? t('showChart') : t('showDataTable')}
           </button>
         </div>
+        )}
 
         {/* Loading state */}
         {isLoading ? (
