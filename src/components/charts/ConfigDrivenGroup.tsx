@@ -359,23 +359,19 @@ export function ConfigDrivenGroup({
     }
 
     // Proportional aggregate interval — matches Belchertown's scaling.
-    // For rolling-range groups: ratio = range / base_time, interval = base_interval * ratio.
-    // For year/month groups: use aggregate_interval directly (operator set daily/hourly
-    // granularity; scaling would coarsen data when viewing a full year).
+    // ratio = max(1, range_seconds / base_time_seconds)
+    // aggregate_interval = base_interval * ratio
+    // time_length can be a number (seconds) or a weewx string (day/week/month/year/all).
     const rangeSec = (new Date(to).getTime() - new Date(from).getTime()) / 1000;
     const baseAggInterval = group.aggregateInterval ?? 300;
-    const isYearMonthMode = selectedYear != null
-      && !(group.enableDateRanges && group.rollingRanges.length > 0);
-    let aggInterval: number;
-    if (isYearMonthMode) {
-      aggInterval = baseAggInterval;
-    } else {
-      const baseTimeSec = typeof group.timeLength === 'number'
-        ? group.timeLength
-        : 86400;
-      const ratio = Math.max(1, rangeSec / baseTimeSec);
-      aggInterval = Math.round(baseAggInterval * ratio);
-    }
+    const TIME_LENGTH_MAP: Record<string, number> = {
+      day: 86400, week: 604800, month: 2592000, year: 31536000,
+    };
+    const baseTimeSec = typeof group.timeLength === 'number'
+      ? group.timeLength
+      : TIME_LENGTH_MAP[String(group.timeLength).toLowerCase()] ?? 86400;
+    const ratio = Math.max(1, rangeSec / baseTimeSec);
+    const aggInterval = Math.round(baseAggInterval * ratio);
 
     // Only use aggregate_interval when it exceeds the raw archive interval
     const useAggregation = aggInterval > 300;
