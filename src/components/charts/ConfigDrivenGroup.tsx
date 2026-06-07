@@ -358,19 +358,27 @@ export function ConfigDrivenGroup({
       from = d.toISOString();
     }
 
-    // Interval heuristic based on time range
+    // Interval heuristic: match Belchertown's data density.
+    // Raw 5-min data for short ranges, hourly for medium, daily only for very long.
     const rangeMs = new Date(to).getTime() - new Date(from).getTime();
     const rangeDays = rangeMs / (1000 * 60 * 60 * 24);
     let interval: string | undefined;
-    if (rangeDays > 14) interval = 'day';
-    else if (rangeDays > 3) interval = 'hour';
-    // else: raw records (no interval param)
+    let limit: string | undefined;
+    if (rangeDays > 90) {
+      interval = 'day';
+    } else if (rangeDays > 3) {
+      interval = 'hour';
+      // 90d × 24h = 2160 records — need higher limit than API default (1000)
+      if (rangeDays > 14) limit = '3000';
+    }
+    // else: raw records (no interval param, default limit)
 
     return {
       from,
       to,
       fields: Array.from(fields).join(','),
       interval,
+      limit,
     };
   }, [
     isClimatology,
