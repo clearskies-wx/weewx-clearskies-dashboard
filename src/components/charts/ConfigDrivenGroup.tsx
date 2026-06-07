@@ -318,10 +318,6 @@ export function ConfigDrivenGroup({
     if (hasWindRose) {
       fields.add('windSpeed');
       fields.add('windDir');
-      // beaufort is a BFF-injected ConvertedValue that wind-rose-binning.ts
-      // reads as record['beaufort']. It must be explicitly requested in the
-      // fields param so the BFF includes it in the archive response (ADR-042).
-      fields.add('beaufort');
     }
 
     let from: string;
