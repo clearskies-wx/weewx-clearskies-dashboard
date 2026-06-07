@@ -557,7 +557,7 @@ export function ConfigDrivenChart({
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
             data={data}
-            margin={{ top: 8, right: rightAxisNeeded ? 55 : 10, bottom: 8, left: 15 }}
+            margin={{ top: 8, right: 55, bottom: 8, left: 15 }}
           >
             <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
 
@@ -652,7 +652,7 @@ export function ConfigDrivenChart({
                 tick={false}
                 axisLine={false}
                 tickLine={false}
-                width={1}
+                width={60}
               />
             )}
 
