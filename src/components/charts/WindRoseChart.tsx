@@ -596,8 +596,10 @@ export function WindRoseChart({
         })}
       </div>
 
-      {/* Screen-reader data table (sr-only — text alternative to the SVG) */}
-      <table className="sr-only" aria-label="Wind Rose Data">
+      {/* Screen-reader data table — wrapped in sr-only div because
+          sr-only directly on <table> fails (table display overrides clip) */}
+      <div className="sr-only">
+      <table aria-label="Wind Rose Data">
         <caption>
           Wind Rose Data — percentage of time wind came from each direction at
           each Beaufort level. Calm: {data.calmPercentage.toFixed(1)}% of{' '}
@@ -632,6 +634,7 @@ export function WindRoseChart({
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
