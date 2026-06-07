@@ -432,6 +432,20 @@ export function ConfigDrivenGroup({
     isClimatology || hasRangeChart ? undefined : archiveParams ?? undefined,
     { skip: isClimatology || hasRangeChart },
   );
+
+  // Separate raw fetch for wind rose — needs unaggregated data to preserve
+  // the wind speed distribution for correct Beaufort classification.
+  const windRoseParams = useMemo(() => {
+    if (!hasWindRose || !archiveParams) return undefined;
+    return {
+      from: archiveParams.from,
+      to: archiveParams.to,
+      fields: 'windSpeed,windDir',
+      limit: '50000',
+    };
+  }, [hasWindRose, archiveParams]);
+  const windRoseArchiveResult = useArchive(windRoseParams, { skip: !hasWindRose });
+
   const climatologyResult = useClimatologyMonthly();
 
   // Range chart dual-fetch — both hooks called unconditionally; skip when not a range chart.
@@ -508,13 +522,12 @@ export function ConfigDrivenGroup({
     return result;
   }, [archiveData, group.gapsize, isAggregated]);
 
-  // Wind rose data: derived client-side from the same archive fetch (T3.2).
-  // Uses raw archiveResult.data (ArchiveRecord[]) so the BFF-injected `beaufort`
-  // ConvertedValue is accessible without the seriesId remapping done in archiveData.
+  // Wind rose data: uses separate RAW archive fetch (not aggregated) to preserve
+  // the wind speed distribution for correct Beaufort classification.
   const windRoseData = useMemo(() => {
-    if (!hasWindRose || !archiveResult.data || archiveResult.data.length === 0) return null;
-    return buildWindRoseMatrix(archiveResult.data as unknown as Record<string, unknown>[]);
-  }, [hasWindRose, archiveResult.data]);
+    if (!hasWindRose || !windRoseArchiveResult.data || windRoseArchiveResult.data.length === 0) return null;
+    return buildWindRoseMatrix(windRoseArchiveResult.data as unknown as Record<string, unknown>[]);
+  }, [hasWindRose, windRoseArchiveResult.data]);
 
   // LTTB downsampling (archive only — climatology has exactly 12 points, never needs it)
   // Applied only for chart rendering; the raw archiveData is still used for the table view.
