@@ -198,19 +198,25 @@ interface GradientDefProps {
   yMin: number;
   yMax: number;
   unit: string;
+  chartHeight: number;
 }
 
-function TempGradientDef({ id, yMin, yMax, unit }: GradientDefProps) {
+function TempGradientDef({ id, yMin, yMax, unit, chartHeight }: GradientDefProps) {
   const zones = unit.includes('C') ? TEMP_ZONES_C : TEMP_ZONES_F;
   const domainRange = yMax - yMin;
   if (domainRange <= 0) return null;
 
-  // Build gradient stops mapped to temperature thresholds.
-  // Vertical gradient: offset 0% = top of area (yMax, hottest), 100% = bottom (yMin, coldest).
-  // Each zone threshold maps to: offset = (yMax - threshold) / domainRange
-  const stops: Array<{ offset: string; color: string }> = [];
+  // userSpaceOnUse gradient tied to the chart's SVG pixel coordinate system.
+  // plotTop = margin.top (where yMax renders), plotBottom = chartHeight - margin.bottom - xAxisHeight (where yMin renders).
+  const xAxisHeight = 30;
+  const plotTop = CHART_MARGIN.top;
+  const plotBottom = chartHeight - CHART_MARGIN.bottom - xAxisHeight;
 
-  // Start with the color at yMax (top)
+  // Each temperature zone threshold maps to a Y pixel position.
+  // temp → pixelY = plotTop + (yMax - temp) / domainRange * (plotBottom - plotTop)
+  const plotHeight = plotBottom - plotTop;
+
+  const stops: Array<{ offset: string; color: string }> = [];
   stops.push({ offset: '0%', color: getOutTempColor(yMax, unit) });
 
   for (const z of zones) {
@@ -219,12 +225,11 @@ function TempGradientDef({ id, yMin, yMax, unit }: GradientDefProps) {
     stops.push({ offset: offsetPct, color: z.color });
   }
 
-  // End with the color at yMin (bottom)
   stops.push({ offset: '100%', color: getOutTempColor(yMin, unit) });
 
   return (
     <defs>
-      <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+      <linearGradient id={id} x1="0" y1={plotTop} x2="0" y2={plotBottom} gradientUnits="userSpaceOnUse">
         {stops.map((s, i) => (
           <stop key={i} offset={s.offset} stopColor={s.color} />
         ))}
@@ -408,6 +413,7 @@ export function WeatherRangeChart({
                 yMin={yMin}
                 yMax={yMax}
                 unit={unit}
+                chartHeight={height}
               />
             )}
 
