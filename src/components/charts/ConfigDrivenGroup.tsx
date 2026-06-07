@@ -245,22 +245,21 @@ export function ConfigDrivenGroup({
   // Data mode detection
   // -------------------------------------------------------------------------
 
-  // Climatology mode: any chart in the group uses monthly x-axis grouping
-  const isClimatology = group.charts.some((c) => c.xAxisGroupby === 'month');
+  // Each CHART decides its own data source — the GROUP does not have a single mode.
+  // Archive data is ALWAYS fetched (for charts that need it).
+  // Climatology data is always fetched (unconditional hook).
+  // allClimatology = true only when EVERY chart is climatology (pure climatology group).
+  // In mixed groups (like ANNUAL), both data sources are available.
+  const allClimatology = group.charts.length > 0 && group.charts.every((c) => c.xAxisGroupby === 'month');
 
-  // Wind rose mode: any chart in the group has a series with seriesId === 'windRose'
+  // Wind rose mode: any chart in the group has a windRose series
   const hasWindRose =
-    !isClimatology &&
     group.charts.some((chart) =>
       chart.series.some((s) => s.seriesId === 'windRose'),
     );
 
-  // Range chart mode (T4.1/T4.2): any chart has a series with rangeType set.
-  // Range charts require two separate archive fetches (agg=max and agg=min).
-  // Hays charts (polar arearange for pollen/allergen) also use the same dual-fetch,
-  // so they are included here to share the rangeHigh/rangeLow fetch infrastructure.
+  // Range chart mode: any chart has a series with rangeType set
   const hasRangeChart =
-    !isClimatology &&
     group.charts.some((chart) =>
       chart.series.some((s) => s.rangeType != null || s.seriesId === 'haysChart'),
     );
@@ -297,7 +296,7 @@ export function ConfigDrivenGroup({
   // -------------------------------------------------------------------------
 
   const archiveParams = useMemo(() => {
-    if (isClimatology) return undefined;
+    if (allClimatology) return undefined;
 
     // Collect unique observation types across all visible series.
     // For wind rose groups, always include windSpeed and windDir so the
@@ -402,7 +401,7 @@ export function ConfigDrivenGroup({
       agg_map: aggPairs.length > 0 ? aggPairs.join(',') : undefined,
     };
   }, [
-    isClimatology,
+    allClimatology,
     hasWindRose,
     group.charts,
     group.timespanStart,
@@ -450,8 +449,8 @@ export function ConfigDrivenGroup({
   // -------------------------------------------------------------------------
 
   const archiveResult = useArchive(
-    isClimatology ? undefined : archiveParams ?? undefined,
-    { skip: isClimatology },
+    allClimatology ? undefined : archiveParams ?? undefined,
+    { skip: allClimatology },
   );
 
   // Separate raw fetch for wind rose — needs unaggregated data to preserve
@@ -554,7 +553,7 @@ export function ConfigDrivenGroup({
   // Applied only for chart rendering; the raw archiveData is still used for the table view.
   // Uses gap-processed data so line breaks at data gaps are preserved after downsampling.
   const downsampledArchiveData = useMemo(() => {
-    if (isClimatology || gapProcessedArchiveData.length <= MAX_RAW_POINTS) return gapProcessedArchiveData;
+    if (allClimatology || gapProcessedArchiveData.length <= MAX_RAW_POINTS) return gapProcessedArchiveData;
     // Use the first visible series' seriesId as the y-key for LTTB triangle selection.
     // LTTB selects points by maximising visual area; it needs a representative y-axis field.
     // If no visible series exists, fall back to returning the full data unsampled.
@@ -563,7 +562,7 @@ export function ConfigDrivenGroup({
     );
     if (!firstVisibleSeries) return gapProcessedArchiveData;
     return lttbDownsample(gapProcessedArchiveData, LTTB_THRESHOLD, 'timestamp', firstVisibleSeries.seriesId);
-  }, [isClimatology, gapProcessedArchiveData, group.charts]);
+  }, [allClimatology, gapProcessedArchiveData, group.charts]);
 
   // Climatology path: map ClimatologyMonthly 12-element arrays into month rows,
   // then merge any custom SQL series data by month index.
@@ -650,10 +649,10 @@ export function ConfigDrivenGroup({
   // Full dataset — used by the data table view so users see every raw row.
   // A group can have BOTH range charts and regular charts; regular charts
   // always use archiveData regardless of whether the group also has ranges.
-  const chartData = isClimatology ? climatologyData : archiveData;
+  const chartData = allClimatology ? climatologyData : archiveData;
   // Downsampled dataset — used by ConfigDrivenChart for efficient rendering.
-  const chartRenderData = isClimatology ? climatologyData : downsampledArchiveData;
-  const xKey = isClimatology ? 'month' : 'timestamp';
+  const chartRenderData = allClimatology ? climatologyData : downsampledArchiveData;
+  const xKey = allClimatology ? 'month' : 'timestamp';
   // Compute the actual displayed range for X-axis formatting.
   // For rolling ranges, selectedRange ("1d","7d") is used directly.
   // For year/month mode, compute from the archive params' from/to.
@@ -665,35 +664,34 @@ export function ConfigDrivenGroup({
     }
     return selectedRange;
   }, [archiveParams?.from, archiveParams?.to, selectedRange]);
-  const xFormatter = isClimatology
+  const xFormatter = allClimatology
     ? undefined
     : (v: string | number) => formatTimestamp(v, displayedRange);
 
   // Loading and error state: all active fetches must complete.
-  const isLoading = isClimatology
-    ? climatologyResult.loading
-    : (archiveResult.loading || (hasRangeChart && (rangeHighResult.loading || rangeLowResult.loading)));
-  const fetchError = isClimatology
-    ? climatologyResult.error
-    : (archiveResult.error ?? (hasRangeChart ? (rangeHighResult.error ?? rangeLowResult.error) : null));
-  const onRetry = isClimatology
-    ? climatologyResult.refetch
-    : () => {
-        archiveResult.refetch();
-        if (hasRangeChart) { rangeHighResult.refetch(); rangeLowResult.refetch(); }
-      };
+  const isLoading = archiveResult.loading
+    || climatologyResult.loading
+    || (hasRangeChart && (rangeHighResult.loading || rangeLowResult.loading));
+  const fetchError = archiveResult.error
+    ?? climatologyResult.error
+    ?? (hasRangeChart ? (rangeHighResult.error ?? rangeLowResult.error) : null);
+  const onRetry = () => {
+    archiveResult.refetch();
+    climatologyResult.refetch();
+    if (hasRangeChart) { rangeHighResult.refetch(); rangeLowResult.refetch(); }
+  };
 
   // -------------------------------------------------------------------------
   // Date controls mode detection
   // -------------------------------------------------------------------------
 
   const showRollingRanges =
-    !isClimatology &&
+    !allClimatology &&
     group.enableDateRanges &&
     group.rollingRanges.length > 0;
 
   const showYearMonthDropdowns =
-    !isClimatology &&
+    !allClimatology &&
     !showRollingRanges &&
     (group.availableYears.length > 0 || stationFirstYear != null);
 
@@ -1246,13 +1244,22 @@ export function ConfigDrivenGroup({
                 );
               }
 
+              // Per-chart data source: charts with xAxisGroupby use climatology,
+              // all others use archive data. Each chart is independent.
+              const isChartClimatology = chart.xAxisGroupby === 'month';
+              const thisChartData = isChartClimatology ? climatologyData : downsampledArchiveData;
+              const thisXKey = isChartClimatology ? 'month' : 'timestamp';
+              const thisXFormatter = isChartClimatology
+                ? undefined
+                : (v: string | number) => formatTimestamp(v, displayedRange);
+
               return (
                 <ConfigDrivenChart
                   key={chart.chartId}
                   config={chart}
-                  data={chartRenderData}
-                  xKey={xKey}
-                  xFormatter={xFormatter}
+                  data={thisChartData}
+                  xKey={thisXKey}
+                  xFormatter={thisXFormatter}
                   globalColors={globalColors}
                   globalType={globalType}
                   height={300}
