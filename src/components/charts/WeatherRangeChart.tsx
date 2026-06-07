@@ -198,80 +198,33 @@ interface GradientDefProps {
   yMin: number;
   yMax: number;
   unit: string;
-  // Chart SVG coordinate space: top and bottom Y pixel values of the plot area
-  plotTop: number;
-  plotBottom: number;
 }
 
-function TempGradientDef({ id, yMin, yMax, unit, plotTop, plotBottom }: GradientDefProps) {
+function TempGradientDef({ id, yMin, yMax, unit }: GradientDefProps) {
   const zones = unit.includes('C') ? TEMP_ZONES_C : TEMP_ZONES_F;
   const domainRange = yMax - yMin;
   if (domainRange <= 0) return null;
 
-  // Only include zones that are within the visible domain, plus the boundary stops
+  // Build gradient stops mapped to temperature thresholds.
+  // Vertical gradient: offset 0% = top of area (yMax, hottest), 100% = bottom (yMin, coldest).
+  // Each zone threshold maps to: offset = (yMax - threshold) / domainRange
   const stops: Array<{ offset: string; color: string }> = [];
 
-  // Work from top (hottest) to bottom (coldest) for SVG gradient direction y1→y2
-  // The gradient goes from y1=plotTop (hottest, high temp) to y2=plotBottom (coldest, low temp)
-  // So offset=0% is the top (high temp) and offset=100% is the bottom (low temp)
-  // We build stops from the perspective of temperature ascending (bottom→top)
-  // then convert to gradient offsets (top→bottom = 100%→0%)
+  // Start with the color at yMax (top)
+  stops.push({ offset: '0%', color: getOutTempColor(yMax, unit) });
 
-  const visibleZones = zones.filter(
-    (z, i) => {
-      const nextVal = zones[i + 1]?.value ?? Infinity;
-      // Include zone if it overlaps [yMin, yMax]
-      return z.value <= yMax && nextVal >= yMin;
-    }
-  );
-
-  if (visibleZones.length === 0) {
-    // Fallback: single color for the whole area
-    const midTemp = (yMin + yMax) / 2;
-    const color = getOutTempColor(midTemp, unit);
-    return (
-      <defs>
-        <linearGradient id={id} x1="0" y1={plotTop} x2="0" y2={plotBottom} gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor={color} />
-          <stop offset="100%" stopColor={color} />
-        </linearGradient>
-      </defs>
-    );
-  }
-
-  // Build stops: one per zone boundary that falls in range.
-  // The gradient y1=plotTop (hot/high) to y2=plotBottom (cold/low).
-  // A stop at a given temperature maps to offset = (yMax - temp) / domainRange * 100%
-  // because offset=0% is at y1=plotTop (= yMax) and offset=100% is at y2=plotBottom (= yMin).
-  for (let i = 0; i < zones.length; i++) {
-    const z = zones[i];
-    if (z.value > yMax + 5) break; // well above visible area
-
-    const clampedTemp = Math.max(yMin, Math.min(yMax, z.value));
-    const offsetFraction = (yMax - clampedTemp) / domainRange;
-    const offsetPct = (offsetFraction * 100).toFixed(2) + '%';
-
+  for (const z of zones) {
+    if (z.value <= yMin || z.value >= yMax) continue;
+    const offsetPct = ((yMax - z.value) / domainRange * 100).toFixed(1) + '%';
     stops.push({ offset: offsetPct, color: z.color });
   }
 
-  // Ensure we have stops at 0% and 100% for a complete gradient
-  if (stops.length === 0 || stops[0].offset !== '0%') {
-    stops.unshift({ offset: '0%', color: getOutTempColor(yMax, unit) });
-  }
-  if (stops[stops.length - 1].offset !== '100.00%' && stops[stops.length - 1].offset !== '100%') {
-    stops.push({ offset: '100%', color: getOutTempColor(yMin, unit) });
-  }
+  // End with the color at yMin (bottom)
+  stops.push({ offset: '100%', color: getOutTempColor(yMin, unit) });
 
   return (
     <defs>
-      <linearGradient
-        id={id}
-        x1="0"
-        y1={plotTop}
-        x2="0"
-        y2={plotBottom}
-        gradientUnits="userSpaceOnUse"
-      >
+      <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
         {stops.map((s, i) => (
           <stop key={i} offset={s.offset} stopColor={s.color} />
         ))}
@@ -357,18 +310,6 @@ const CHART_MARGIN = { top: 8, right: 16, bottom: 4, left: 8 };
 // Y-axis width: enough for labels like "-10" or "110"
 const YAXIS_WIDTH = 42;
 
-// Approximate plot area dimensions for the gradient def.
-// These are estimates used only to set gradient coordinates;
-// the actual pixel values depend on the container size.
-// We compute approximate plotTop/Bottom for a given container height.
-function computePlotBounds(containerHeight: number): { plotTop: number; plotBottom: number } {
-  // plotTop = margin.top (XAxis lives at the bottom, not top)
-  // plotBottom = containerHeight - margin.bottom - XAxis.height (default 30)
-  const xAxisHeight = 30;
-  const plotTop = CHART_MARGIN.top;
-  const plotBottom = containerHeight - CHART_MARGIN.bottom - xAxisHeight;
-  return { plotTop, plotBottom };
-}
 
 // ---------------------------------------------------------------------------
 // Main exported component
@@ -398,7 +339,7 @@ export function WeatherRangeChart({
   const mergedData = mergeData(highData, lowData);
   const totalCount = mergedData.length;
   const { yMin, yMax, ticks } = computeYDomain(mergedData);
-  const { plotTop, plotBottom } = computePlotBounds(height);
+
 
   // Stable gradient ID — use field name to avoid collisions when multiple
   // WeatherRangeCharts exist on the same page (e.g., outTemp + windchill).
@@ -466,8 +407,6 @@ export function WeatherRangeChart({
                 yMin={yMin}
                 yMax={yMax}
                 unit={unit}
-                plotTop={plotTop}
-                plotBottom={plotBottom}
               />
             )}
 
