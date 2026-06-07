@@ -845,7 +845,7 @@ export function ConfigDrivenGroup({
         </div>
       )}
 
-      <div aria-busy={isLoading || undefined}>
+      <div aria-busy={isLoading || undefined} style={{ minWidth: 0, overflow: 'hidden' }}>
         {/* Toggle + export button row */}
         <div className="flex justify-end items-center gap-2 mb-2">
           {/* PNG export — icon-only button; aria-label satisfies §5.4 */}
@@ -1034,7 +1034,7 @@ export function ConfigDrivenGroup({
           /* All others render as ConfigDrivenChart.                          */
           /* ref is used by PNG export to locate the chart SVG.              */
           /* ---------------------------------------------------------------- */
-          <div ref={chartContainerRef} className="flex flex-col gap-6">
+          <div ref={chartContainerRef} className="flex flex-col gap-6" style={{ minWidth: 0, overflow: 'hidden' }}>
             {group.charts.map((chart) => {
               const isWindRoseChart = chart.series.some(
                 (s) => s.seriesId === 'windRose',
