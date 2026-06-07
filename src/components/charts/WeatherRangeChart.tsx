@@ -30,8 +30,6 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import type { TooltipProps } from 'recharts';
-import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -293,13 +291,11 @@ interface CustomTooltipPayload {
   avg: number | null;
 }
 
-function CustomTooltip(props: TooltipProps<ValueType, NameType> & { unit: string; totalCount: number }) {
+function CustomTooltip(props: { active?: boolean; payload?: Array<{ payload?: CustomTooltipPayload }>; unit: string; totalCount: number }) {
   const { active, payload, unit, totalCount } = props;
   if (!active || !payload || payload.length === 0) return null;
 
-  // The payload entries correspond to our two Area dataKeys.
-  // We recover the original row from the first entry's payload object.
-  const row = payload[0]?.payload as CustomTooltipPayload | undefined;
+  const row = payload[0]?.payload ?? null;
   if (!row) return null;
 
   const { timestamp, high, low, avg } = row;
