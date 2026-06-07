@@ -366,7 +366,16 @@ export function ConfigDrivenGroup({
     // aggregate_interval = base_interval * ratio
     // time_length can be a number (seconds) or a weewx string (day/week/month/year/all).
     const rangeSec = (new Date(to).getTime() - new Date(from).getTime()) / 1000;
-    const baseAggInterval = group.aggregateInterval ?? 300;
+    // Use group aggregate_interval, or fall back to the most common chart-level value.
+    // graphs.conf allows per-chart aggregate_interval; when the group doesn't set one,
+    // pick the smallest chart-level value so all charts get sufficient granularity.
+    let baseAggInterval = group.aggregateInterval ?? 0;
+    if (!baseAggInterval) {
+      const chartIntervals = group.charts
+        .map((c) => c.aggregateInterval)
+        .filter((v): v is number => v != null && v > 0);
+      baseAggInterval = chartIntervals.length > 0 ? Math.min(...chartIntervals) : 300;
+    }
     const TIME_LENGTH_MAP: Record<string, number> = {
       day: 86400, week: 604800, month: 2592000, year: 31536000,
     };
