@@ -210,13 +210,6 @@ function TempGradientDef({ id, yMin, yMax, unit, plotTop, plotBottom }: Gradient
   const domainRange = yMax - yMin;
   if (domainRange <= 0) return null;
 
-  // Map a temperature value to a Y SVG coordinate (inverted: high temp = low Y)
-  function tempToY(temp: number): number {
-    const fraction = (temp - yMin) / domainRange;
-    // fraction=0 → bottom (plotBottom), fraction=1 → top (plotTop)
-    return plotBottom - fraction * (plotBottom - plotTop);
-  }
-
   // Only include zones that are within the visible domain, plus the boundary stops
   const stops: Array<{ offset: string; color: string }> = [];
 
@@ -300,12 +293,8 @@ interface CustomTooltipPayload {
   avg: number | null;
 }
 
-function CustomTooltip({
-  active,
-  payload,
-  unit,
-  totalCount,
-}: TooltipProps<ValueType, NameType> & { unit: string; totalCount: number }) {
+function CustomTooltip(props: TooltipProps<ValueType, NameType> & { unit: string; totalCount: number }) {
+  const { active, payload, unit, totalCount } = props;
   if (!active || !payload || payload.length === 0) return null;
 
   // The payload entries correspond to our two Area dataKeys.
