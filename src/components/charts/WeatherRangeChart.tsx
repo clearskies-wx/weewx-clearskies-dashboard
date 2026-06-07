@@ -291,8 +291,15 @@ interface CustomTooltipPayload {
   avg: number | null;
 }
 
-function CustomTooltip(props: { active?: boolean; payload?: Array<{ payload?: CustomTooltipPayload }>; unit: string; totalCount: number }) {
-  const { active, payload, unit, totalCount } = props;
+// Recharts Tooltip content prop types vary across v3 minor versions.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function CustomTooltip(props: any) {
+  const { active, payload, unit, totalCount } = props as {
+    active?: boolean;
+    payload?: Array<{ payload?: CustomTooltipPayload }>;
+    unit: string;
+    totalCount: number;
+  };
   if (!active || !payload || payload.length === 0) return null;
 
   const row = payload[0]?.payload ?? null;
