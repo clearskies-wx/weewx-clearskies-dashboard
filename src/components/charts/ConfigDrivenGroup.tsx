@@ -213,7 +213,9 @@ export function ConfigDrivenGroup({
   const [internalSelectedRange, setInternalSelectedRange] = useState<string>(
     group.rollingRanges[0] ?? '1d',
   );
-  const [internalSelectedYear, setInternalSelectedYear] = useState<number>(new Date().getFullYear());
+  const [internalSelectedYear, setInternalSelectedYear] = useState<number>(
+    group.availableYears[0] ?? new Date().getFullYear(),
+  );
   const [internalSelectedMonth, setInternalSelectedMonth] = useState<number | null>(new Date().getMonth() + 1);
 
   // Effective values: use controlled prop when provided, fall back to internal state
@@ -1109,16 +1111,14 @@ export function ConfigDrivenGroup({
                   ? windRoseSeries!.beaufortColors
                   : defaultBeaufortColors;
                 return (
-                  <div key={chart.chartId}>
-                    {chart.title && <h3 className="text-sm font-semibold text-center mb-2">{chart.title}</h3>}
-                    <WindRoseChart
-                      data={windRoseData}
-                      beaufortColors={beaufortColors}
-                      height={300}
-                      reducedMotion={reducedMotion}
-                      title={chart.title}
-                    />
-                  </div>
+                  <WindRoseChart
+                    key={chart.chartId}
+                    data={windRoseData}
+                    beaufortColors={beaufortColors}
+                    height={300}
+                    reducedMotion={reducedMotion}
+                    title={chart.title}
+                  />
                 );
               }
 
