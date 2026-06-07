@@ -1,4 +1,4 @@
-// ConfigDrivenChart.tsx — T2.2
+// ConfigDrivenChart.tsx — T2.2 / T2.3 / T2.4 / T4.1
 // Renders a Recharts ComposedChart driven entirely by ChartConfig + SeriesConfig.
 // Never conditionally switches between chart types — ComposedChart handles all
 // element types (Line, Area, Bar) in one chart, mirroring the MonthlyAveragesCard pattern.
@@ -8,7 +8,10 @@
 //   - visually-hidden sr-only data table provides values to screen readers
 //   - No color-only state signals; series distinguished by name in Legend
 //   - Reduced-motion: isAnimationActive={false} when reducedMotion prop is true
+//
+// Intentionally unwired: yAxisMinorTicks, states, connectEnds, polar (see CHARTS-REWRITE-PLAN.md §5)
 
+import { useMemo } from 'react';
 import {
   ComposedChart,
   Line,
@@ -44,6 +47,18 @@ const FALLBACK_PALETTE: string[] = [
  * --font-chart: 'Lexend', system-ui, sans-serif;
  */
 const CHART_FONT = 'var(--font-chart, Lexend, sans-serif)';
+
+/**
+ * 8-point compass label lookup for wind direction axis ticks.
+ * Used when the right axis displays wind direction (0–360°).
+ */
+const COMPASS_TICKS: Record<number, string> = {
+  0: 'N', 45: 'NE', 90: 'E', 135: 'SE',
+  180: 'S', 225: 'SW', 270: 'W', 315: 'NW', 360: 'N',
+};
+
+/** Explicit tick positions for a wind direction axis. */
+const WIND_DIR_TICKS = [0, 45, 90, 135, 180, 225, 270, 315, 360];
 
 // ---------------------------------------------------------------------------
 // Props
@@ -98,6 +113,27 @@ function resolveYAxisId(series: SeriesConfig): string {
   return (series.yAxis ?? 0) === 1 ? 'right' : 'left';
 }
 
+/**
+ * Returns true when a series represents wind direction observations.
+ * Checks both observationType and seriesId to cover all config patterns.
+ */
+function isWindDirSeries(series: SeriesConfig): boolean {
+  return (
+    series.observationType === 'windDir' || series.seriesId === 'windDir'
+  );
+}
+
+/**
+ * Extract the unit suffix from a yAxisLabel string.
+ * Parses the last parenthesised group: "Temperature (°F)" → "°F".
+ * Returns empty string when no parentheses group is present.
+ */
+function extractUnitFromLabel(label: string | null | undefined): string {
+  if (!label) return '';
+  const match = label.match(/\(([^)]+)\)$/);
+  return match ? match[1] : '';
+}
+
 // ---------------------------------------------------------------------------
 // Series element renderers
 // ---------------------------------------------------------------------------
@@ -134,7 +170,10 @@ function renderSeriesElement({
 
   // Shared line/area props
   const connectNulls = series.connectNulls ?? false;
-  const strokeWidth = series.lineWidth ?? 2;
+
+  // T4.1b: borderWidth wires to strokeWidth on Line/Area; also adds stroke+strokeWidth on Bar.
+  // Falls back to series.lineWidth ?? 2 when borderWidth is not set.
+  const strokeWidth = series.borderWidth ?? series.lineWidth ?? 2;
   const strokeOpacity = series.opacity ?? 1;
 
   // dashStyle → SVG strokeDasharray
@@ -188,7 +227,11 @@ function renderSeriesElement({
       );
 
     case 'bar':
-    case 'column':
+    case 'column': {
+      // T4.1b: borderWidth > 0 → add stroke outline on bars
+      const borderWidth = series.borderWidth;
+      const barStroke = borderWidth != null && borderWidth > 0 ? color : undefined;
+      const barStrokeWidth = borderWidth != null && borderWidth > 0 ? borderWidth : undefined;
       return (
         <Bar
           key={dataKey}
@@ -197,10 +240,13 @@ function renderSeriesElement({
           name={name}
           fill={series.fillColor ?? color}
           fillOpacity={series.fillOpacity ?? series.opacity ?? 1}
+          stroke={barStroke}
+          strokeWidth={barStrokeWidth}
           stackId={stackId}
           isAnimationActive={animationActive}
         />
       );
+    }
 
     case 'scatter':
       // Recharts has no ScatterChart within ComposedChart that takes dataKey in the
@@ -272,6 +318,9 @@ function collectAxisConfigs(
     if (s.yAxisLabel != null && side.label == null) side.label = s.yAxisLabel;
     if (s.yAxisMin != null && side.min == null) side.min = s.yAxisMin;
     if (s.yAxisMax != null && side.max == null) side.max = s.yAxisMax;
+    // T4.1a: wire softMin/softMax from series config to axis config
+    if (s.yAxisSoftMin != null && side.softMin == null) side.softMin = s.yAxisSoftMin;
+    if (s.yAxisSoftMax != null && side.softMax == null) side.softMax = s.yAxisSoftMax;
     if (s.mirroredValue) side.mirrored = true;
     if (s.yAxisTickInterval != null && side.tickInterval == null) {
       side.tickInterval = s.yAxisTickInterval;
@@ -314,17 +363,62 @@ export function ConfigDrivenChart({
 
   const chartTitle = config.title ?? 'Chart';
 
-  // Build domain for left axis (supports min, max, or both)
-  const leftDomain: [number | string, number | string] | undefined =
-    leftAxisCfg.min != null || leftAxisCfg.max != null
-      ? [leftAxisCfg.min ?? 'auto', leftAxisCfg.max ?? 'auto']
-      : undefined;
+  // Detect if the right axis is displaying wind direction.
+  // Used to apply compass tick labels instead of raw degree numbers (T2.3).
+  const rightAxisIsWindDir = config.series.some(
+    (s) => s.visible !== false && (s.yAxis ?? 0) === 1 && isWindDirSeries(s),
+  );
 
-  // Build domain for right axis
-  const rightDomain: [number | string, number | string] | undefined =
-    rightAxisCfg.min != null || rightAxisCfg.max != null
-      ? [rightAxisCfg.min ?? 'auto', rightAxisCfg.max ?? 'auto']
-      : undefined;
+  // Build domain for left axis (supports min, max, softMin, softMax, or both).
+  // T4.1a: When softMin/softMax are present, use Recharts function-based domain so
+  // the axis expands beyond the soft bounds only when data requires it.
+  const leftDomain:
+    | [number | string | ((v: number) => number), number | string | ((v: number) => number)]
+    | undefined = (() => {
+    const { min, max, softMin, softMax } = leftAxisCfg;
+    // Hard min/max take precedence over soft bounds
+    if (min != null || max != null) {
+      return [min ?? 'auto', max ?? 'auto'] as [number | string, number | string];
+    }
+    if (softMin != null || softMax != null) {
+      const lo: number | string | ((v: number) => number) =
+        softMin != null
+          ? (dataMin: number) => Math.min(softMin, dataMin)
+          : 'auto';
+      const hi: number | string | ((v: number) => number) =
+        softMax != null
+          ? (dataMax: number) => Math.max(softMax, dataMax)
+          : 'auto';
+      return [lo, hi];
+    }
+    return undefined;
+  })();
+
+  // Build domain for right axis (same logic as left, plus wind direction override).
+  const rightDomain:
+    | [number | string | ((v: number) => number), number | string | ((v: number) => number)]
+    | undefined = (() => {
+    if (rightAxisIsWindDir) {
+      // T2.3: force 0–360 domain for compass axis
+      return [0, 360] as [number, number];
+    }
+    const { min, max, softMin, softMax } = rightAxisCfg;
+    if (min != null || max != null) {
+      return [min ?? 'auto', max ?? 'auto'] as [number | string, number | string];
+    }
+    if (softMin != null || softMax != null) {
+      const lo: number | string | ((v: number) => number) =
+        softMin != null
+          ? (dataMin: number) => Math.min(softMin, dataMin)
+          : 'auto';
+      const hi: number | string | ((v: number) => number) =
+        softMax != null
+          ? (dataMax: number) => Math.max(softMax, dataMax)
+          : 'auto';
+      return [lo, hi];
+    }
+    return undefined;
+  })();
 
   // Compute explicit tick arrays when tickInterval is set (Recharts needs explicit values)
   function buildTicks(cfg: AxisConfig): number[] | undefined {
@@ -338,7 +432,25 @@ export function ConfigDrivenChart({
     return ticks.length > 0 && ticks.length <= 100 ? ticks : undefined;
   }
   const leftTicks = buildTicks(leftAxisCfg);
-  const rightTicks = buildTicks(rightAxisCfg);
+  // T2.3: right axis ticks are compass positions when wind dir; otherwise computed normally
+  const rightTicks = rightAxisIsWindDir ? WIND_DIR_TICKS : buildTicks(rightAxisCfg);
+
+  // T2.4: Build a per-series format map for tooltip number formatting.
+  // Maps seriesId → { decimals, unit, isWindDir }.
+  const seriesFormatMap = useMemo(() => {
+    const map = new Map<string, { decimals: number; unit: string; isWindDir: boolean }>();
+    for (const { series } of visibleSeries) {
+      const decimals =
+        series.numberFormat != null && typeof series.numberFormat['decimals'] === 'number'
+          ? (series.numberFormat['decimals'] as number)
+          : 1;
+      // Unit is extracted from the series yAxisLabel, e.g. "Temperature (°F)" → "°F"
+      const unit = extractUnitFromLabel(series.yAxisLabel);
+      map.set(series.seriesId, { decimals, unit, isWindDir: isWindDirSeries(series) });
+    }
+    return map;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [config.series]);
 
   return (
     <div style={{ minWidth: 0, minHeight: 0, width: '100%', height: '100%' }}>
@@ -442,6 +554,9 @@ export function ConfigDrivenChart({
               (recharts/recharts#428): hide breaks XAxis label rendering.
               Per recharts-axis-reference.md §Common mistakes #7:
               use tick={false} axisLine={false} tickLine={false} width={1} instead.
+
+              T2.3: When right axis is wind direction, compass labels replace degree numbers.
+              Explicit ticks at 8 compass points; interval={0} ensures all are shown.
             */}
             {rightAxisNeeded ? (
               <YAxis
@@ -451,7 +566,12 @@ export function ConfigDrivenChart({
                 className="fill-muted-foreground"
                 domain={rightDomain}
                 ticks={rightTicks}
-                interval={rightTicks ? 0 : undefined}
+                interval={rightAxisIsWindDir ? 0 : (rightTicks ? 0 : undefined)}
+                tickFormatter={
+                  rightAxisIsWindDir
+                    ? (v: number) => COMPASS_TICKS[v] ?? String(v)
+                    : undefined
+                }
                 label={
                   rightAxisCfg.label != null
                     ? {
@@ -480,12 +600,34 @@ export function ConfigDrivenChart({
               />
             )}
 
+            {/*
+              T2.4: Tooltip formatter applies per-series number formatting.
+              Uses decimals from series.numberFormat, defaulting to 1 decimal place.
+              Unit suffix extracted from series yAxisLabel (last parenthesised group).
+              Wind direction series show compass label + degrees: "NE (47°)".
+            */}
             <Tooltip
               contentStyle={{
                 fontSize: '0.75rem',
                 borderRadius: '0.5rem',
               }}
               labelFormatter={tooltipLabelFormatter ? (label: unknown) => tooltipLabelFormatter(label as string | number) : undefined}
+              formatter={(value: unknown, name: string) => {
+                const numVal = Number(value);
+                const fmt = seriesFormatMap.get(name);
+                if (fmt?.isWindDir) {
+                  // Wind direction: show compass label with raw degrees in parens
+                  const deg = Math.round(numVal);
+                  const compassIdx = Math.round(((deg % 360) + 360) % 360 / 45) * 45;
+                  const normalised = compassIdx === 360 ? 0 : compassIdx;
+                  const compass = COMPASS_TICKS[normalised] ?? COMPASS_TICKS[0];
+                  return [`${compass} (${deg}°)`, name];
+                }
+                const decimals = fmt?.decimals ?? 1;
+                const formatted = numVal.toFixed(decimals);
+                const unit = fmt?.unit ?? '';
+                return [unit ? `${formatted} ${unit}` : formatted, name];
+              }}
             />
 
             <Legend
