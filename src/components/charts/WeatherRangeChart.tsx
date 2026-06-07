@@ -1,11 +1,8 @@
 // WeatherRangeChart.tsx
 //
 // Renders a Cartesian arearange chart showing daily high/low ranges.
-// Per Belchertown wiki: weatherRange renders as arearange (area_display=1)
-// or columnrange (default), NOT polar unless operator sets polar=true.
-//
-// Accessibility (WCAG 2.1 AA):
-//   - sr-only <table> provides all values to screen readers (WCAG 1.1.1)
+// Temperature zones are FLAT COLOR BANDS (separate Area components per zone),
+// NOT gradients. Matches Highcharts zones behavior from Belchertown.
 
 import {
   ComposedChart,
@@ -31,47 +28,45 @@ export interface WeatherRangeChartProps {
 }
 
 // ---------------------------------------------------------------------------
-// Temperature color zones — Belchertown's get_outTemp_color()
-// Flat color bands (stepped, not blended) matching Highcharts zones behavior.
+// Temperature color zones — Belchertown's Highcharts zones (flat bands)
 // ---------------------------------------------------------------------------
 
-interface TempZone {
-  value: number;
-  color: string;
-}
+interface TempZone { min: number; max: number; color: string; }
 
 const TEMP_ZONES_F: TempZone[] = [
-  { value: 0,   color: '#1278c8' },
-  { value: 25,  color: '#30bfef' },
-  { value: 32,  color: '#1fafdd' },
-  { value: 40,  color: 'rgba(0,172,223,1)' },
-  { value: 50,  color: '#71bc3c' },
-  { value: 55,  color: 'rgba(90,179,41,0.8)' },
-  { value: 65,  color: 'rgba(131,173,45,1)' },
-  { value: 70,  color: 'rgba(206,184,98,1)' },
-  { value: 75,  color: 'rgba(255,174,0,0.9)' },
-  { value: 80,  color: 'rgba(255,153,0,0.9)' },
-  { value: 85,  color: 'rgba(255,127,0,1)' },
-  { value: 90,  color: 'rgba(255,79,0,0.9)' },
-  { value: 95,  color: 'rgba(255,69,69,1)' },
-  { value: 110, color: 'rgba(255,104,104,1)' },
+  { min: -Infinity, max: 0,   color: '#1278c8' },
+  { min: 0,         max: 25,  color: '#30bfef' },
+  { min: 25,        max: 32,  color: '#1fafdd' },
+  { min: 32,        max: 40,  color: 'rgba(0,172,223,1)' },
+  { min: 40,        max: 50,  color: '#71bc3c' },
+  { min: 50,        max: 55,  color: 'rgba(90,179,41,0.8)' },
+  { min: 55,        max: 65,  color: 'rgba(131,173,45,1)' },
+  { min: 65,        max: 70,  color: 'rgba(206,184,98,1)' },
+  { min: 70,        max: 75,  color: 'rgba(255,174,0,0.9)' },
+  { min: 75,        max: 80,  color: 'rgba(255,153,0,0.9)' },
+  { min: 80,        max: 85,  color: 'rgba(255,127,0,1)' },
+  { min: 85,        max: 90,  color: 'rgba(255,79,0,0.9)' },
+  { min: 90,        max: 95,  color: 'rgba(255,69,69,1)' },
+  { min: 95,        max: 110, color: 'rgba(255,104,104,1)' },
+  { min: 110,       max: Infinity, color: 'rgba(218,113,113,1)' },
 ];
 
 const TEMP_ZONES_C: TempZone[] = [
-  { value: -5,   color: '#1278c8' },
-  { value: -3.8, color: '#30bfef' },
-  { value: 0,    color: '#1fafdd' },
-  { value: 4.4,  color: 'rgba(0,172,223,1)' },
-  { value: 10,   color: '#71bc3c' },
-  { value: 12.7, color: 'rgba(90,179,41,0.8)' },
-  { value: 18.3, color: 'rgba(131,173,45,1)' },
-  { value: 21.1, color: 'rgba(206,184,98,1)' },
-  { value: 23.8, color: 'rgba(255,174,0,0.9)' },
-  { value: 26.6, color: 'rgba(255,153,0,0.9)' },
-  { value: 29.4, color: 'rgba(255,127,0,1)' },
-  { value: 32.2, color: 'rgba(255,79,0,0.9)' },
-  { value: 35,   color: 'rgba(255,69,69,1)' },
-  { value: 43.3, color: 'rgba(255,104,104,1)' },
+  { min: -Infinity, max: -5,   color: '#1278c8' },
+  { min: -5,        max: -3.8, color: '#30bfef' },
+  { min: -3.8,      max: 0,    color: '#1fafdd' },
+  { min: 0,         max: 4.4,  color: 'rgba(0,172,223,1)' },
+  { min: 4.4,       max: 10,   color: '#71bc3c' },
+  { min: 10,        max: 12.7, color: 'rgba(90,179,41,0.8)' },
+  { min: 12.7,      max: 18.3, color: 'rgba(131,173,45,1)' },
+  { min: 18.3,      max: 21.1, color: 'rgba(206,184,98,1)' },
+  { min: 21.1,      max: 23.8, color: 'rgba(255,174,0,0.9)' },
+  { min: 23.8,      max: 26.6, color: 'rgba(255,153,0,0.9)' },
+  { min: 26.6,      max: 29.4, color: 'rgba(255,127,0,1)' },
+  { min: 29.4,      max: 32.2, color: 'rgba(255,79,0,0.9)' },
+  { min: 32.2,      max: 35,   color: 'rgba(255,69,69,1)' },
+  { min: 35,        max: 43.3, color: 'rgba(255,104,104,1)' },
+  { min: 43.3,      max: Infinity, color: 'rgba(218,113,113,1)' },
 ];
 
 const TEMP_FIELDS = new Set([
@@ -82,73 +77,87 @@ const TEMP_FIELDS = new Set([
 function getOutTempColor(temp: number, unit: string): string {
   const zones = unit.includes('C') ? TEMP_ZONES_C : TEMP_ZONES_F;
   for (let i = zones.length - 1; i >= 0; i--) {
-    if (temp >= zones[i].value) return zones[i].color;
+    if (temp >= zones[i].min) return zones[i].color;
   }
   return zones[0].color;
 }
 
-// ---------------------------------------------------------------------------
-// Chart font — matches ConfigDrivenChart
-// ---------------------------------------------------------------------------
-
 const CHART_FONT = 'var(--font-chart, var(--font-sans))';
 
 // ---------------------------------------------------------------------------
-// Merged data row
+// Data merging + zone band computation
 // ---------------------------------------------------------------------------
 
-interface RangeRow {
+interface ZoneBandRow {
   timestamp: number;
   high: number | null;
   low: number | null;
   avg: number | null;
-  base: number | null;
-  range: number | null;
+  base: number;
+  [key: string]: number | null; // zone_0, zone_1, etc.
 }
 
-function mergeData(
+function buildZoneBandData(
   highData: Array<{ dateTime: number; value: number | null }>,
   lowData: Array<{ dateTime: number; value: number | null }>,
-): RangeRow[] {
+  zones: TempZone[],
+  visibleZoneIndices: number[],
+): ZoneBandRow[] {
   return highData.map((h, i) => {
     const low = lowData[i]?.value ?? null;
     const high = h.value;
     const avg = high !== null && low !== null ? (high + low) / 2 : null;
-    const base = low;
-    const range = high !== null && low !== null ? high - low : null;
-    return { timestamp: h.dateTime, high, low, avg, base, range };
+
+    const row: ZoneBandRow = {
+      timestamp: h.dateTime,
+      high,
+      low,
+      avg,
+      base: low ?? 0,
+    };
+
+    if (high === null || low === null) {
+      for (const zi of visibleZoneIndices) {
+        row[`zone_${zi}`] = null;
+      }
+      return row;
+    }
+
+    for (const zi of visibleZoneIndices) {
+      const z = zones[zi];
+      const clampedLow = Math.max(low, z.min);
+      const clampedHigh = Math.min(high, z.max);
+      row[`zone_${zi}`] = Math.max(0, clampedHigh - clampedLow);
+    }
+
+    return row;
   });
 }
 
 // ---------------------------------------------------------------------------
-// Y-axis auto-scaling — tight to data with clean tick intervals
+// Y-axis auto-scaling
 // ---------------------------------------------------------------------------
 
-function computeYDomain(data: RangeRow[]): {
+function computeYDomain(highs: number[], lows: number[]): {
   yMin: number;
   yMax: number;
   ticks: number[];
 } {
-  const highs = data.map((d) => d.high).filter((v): v is number => v !== null);
-  const lows  = data.map((d) => d.low).filter((v): v is number => v !== null);
   if (highs.length === 0 || lows.length === 0) {
     return { yMin: 0, yMax: 100, ticks: [0, 20, 40, 60, 80, 100] };
   }
-
   const rawMax = Math.max(...highs);
   const rawMin = Math.min(...lows);
   const tickInterval = Math.max(5, Math.ceil(Math.round(rawMax / 5) / 5) * 5);
   const yMin = Math.floor(rawMin / tickInterval) * tickInterval;
   const yMax = Math.ceil(rawMax / tickInterval) * tickInterval;
-
   const ticks: number[] = [];
   for (let t = yMin; t <= yMax; t += tickInterval) ticks.push(t);
-
   return { yMin, yMax, ticks };
 }
 
 // ---------------------------------------------------------------------------
-// Date formatter
+// Date formatters
 // ---------------------------------------------------------------------------
 
 function formatXAxisTick(timestamp: number): string {
@@ -158,82 +167,29 @@ function formatXAxisTick(timestamp: number): string {
 
 function formatFullDate(timestamp: number, totalCount: number): string {
   const d = new Date(timestamp * 1000);
-  if (totalCount <= 12) {
-    return d.toLocaleString('default', { month: 'long', year: 'numeric' });
-  }
+  if (totalCount <= 12) return d.toLocaleString('default', { month: 'long', year: 'numeric' });
   return d.toLocaleDateString('default', { year: 'numeric', month: 'short', day: 'numeric' });
-}
-
-// ---------------------------------------------------------------------------
-// Stepped temperature gradient — flat color bands matching Highcharts zones.
-// Two stops per boundary so colors change abruptly (no blending).
-// gradientUnits="userSpaceOnUse" ties colors to Y-axis pixel positions.
-// ---------------------------------------------------------------------------
-
-// Build stepped gradient stops using objectBoundingBox (0-1 fractions).
-// The bounding box of the stacked "range" Area path spans from
-// max(all highs) at y=0 to min(all lows) at y=1 in data coordinates.
-function buildGradientStops(
-  dataMaxHigh: number,
-  dataMinLow: number,
-  unit: string,
-): Array<{ offset: string; color: string }> {
-  const zones = unit.includes('C') ? TEMP_ZONES_C : TEMP_ZONES_F;
-  const dataRange = dataMaxHigh - dataMinLow;
-  if (dataRange <= 0) return [];
-
-  const stops: Array<{ offset: string; color: string }> = [];
-
-  // Top of bounding box (y=0) = max high temperature
-  stops.push({ offset: '0%', color: getOutTempColor(dataMaxHigh - 0.01, unit) });
-
-  // Stepped stops at each zone boundary within [dataMinLow, dataMaxHigh]
-  const visible = zones.filter((z) => z.value > dataMinLow && z.value < dataMaxHigh);
-  for (const z of visible) {
-    const pct = ((dataMaxHigh - z.value) / dataRange * 100);
-    const colorAbove = getOutTempColor(z.value + 0.01, unit);
-    const colorBelow = getOutTempColor(z.value - 0.01, unit);
-    stops.push({ offset: `${(pct - 0.1).toFixed(2)}%`, color: colorAbove });
-    stops.push({ offset: `${(pct + 0.1).toFixed(2)}%`, color: colorBelow });
-  }
-
-  // Bottom of bounding box (y=1) = min low temperature
-  stops.push({ offset: '100%', color: getOutTempColor(dataMinLow, unit) });
-
-  return stops;
 }
 
 // ---------------------------------------------------------------------------
 // Custom Tooltip
 // ---------------------------------------------------------------------------
 
-interface CustomTooltipPayload {
-  timestamp: number;
-  high: number | null;
-  low: number | null;
-  avg: number | null;
-}
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function CustomTooltip(props: any) {
   const { active, payload, unit, totalCount } = props as {
     active?: boolean;
-    payload?: Array<{ payload?: CustomTooltipPayload }>;
+    payload?: Array<{ payload?: ZoneBandRow }>;
     unit: string;
     totalCount: number;
   };
   if (!active || !payload || payload.length === 0) return null;
-
   const row = payload[0]?.payload ?? null;
   if (!row) return null;
-
   const { timestamp, high, low, avg } = row;
 
   return (
-    <div
-      role="tooltip"
-      className="rounded-md border border-border bg-popover px-2 py-1.5 text-xs text-popover-foreground shadow-md"
-    >
+    <div role="tooltip" className="rounded-md border border-border bg-popover px-2 py-1.5 text-xs text-popover-foreground shadow-md">
       <div className="font-semibold mb-1">{formatFullDate(timestamp, totalCount)}</div>
       {high !== null && (
         <div className="flex items-center gap-1.5">
@@ -258,7 +214,7 @@ function CustomTooltip(props: any) {
 }
 
 // ---------------------------------------------------------------------------
-// Chart margins — match ConfigDrivenChart so all charts are the same width
+// Chart layout — matches ConfigDrivenChart
 // ---------------------------------------------------------------------------
 
 const CHART_MARGIN = { top: 8, right: 55, bottom: 8, left: 15 };
@@ -279,20 +235,25 @@ export function WeatherRangeChart({
 }: WeatherRangeChartProps) {
   if (highData.length === 0) return null;
 
-  const mergedData = mergeData(highData, lowData);
-  const totalCount = mergedData.length;
-  const { yMin, yMax, ticks } = computeYDomain(mergedData);
-
-  const safeField = field.replace(/[^a-zA-Z0-9]/g, '_');
-  const gradientId = `tempGradient_${safeField}`;
   const isTemp = TEMP_FIELDS.has(field) || unit.includes('°') || unit.toLowerCase().includes('c') || unit.toLowerCase().includes('f');
+  const zones = isTemp ? (unit.includes('C') ? TEMP_ZONES_C : TEMP_ZONES_F) : [];
 
-  // Gradient stops based on actual data range (objectBoundingBox maps to path extent)
-  const dataMaxHigh = Math.max(...mergedData.map((d) => d.high).filter((v): v is number => v !== null));
-  const dataMinLow = Math.min(...mergedData.map((d) => d.low).filter((v): v is number => v !== null));
-  const gradientStops = isTemp ? buildGradientStops(dataMaxHigh, dataMinLow, unit) : [];
+  const allHighs = highData.map((d) => d.value).filter((v): v is number => v !== null);
+  const allLows = lowData.map((d) => d.value).filter((v): v is number => v !== null);
+  const { yMin, yMax, ticks } = computeYDomain(allHighs, allLows);
 
-  // Y-axis label from field name
+  const dataMaxHigh = allHighs.length > 0 ? Math.max(...allHighs) : yMax;
+  const dataMinLow = allLows.length > 0 ? Math.min(...allLows) : yMin;
+
+  // Only render zones that overlap with the data range
+  const visibleZoneIndices = zones
+    .map((z, i) => ({ z, i }))
+    .filter(({ z }) => z.max > dataMinLow && z.min < dataMaxHigh)
+    .map(({ i }) => i);
+
+  const mergedData = buildZoneBandData(highData, lowData, zones, visibleZoneIndices);
+  const totalCount = mergedData.length;
+
   const yAxisLabel = isTemp ? 'Outside Temperature' : field;
 
   return (
@@ -328,16 +289,6 @@ export function WeatherRangeChart({
       >
         <ResponsiveContainer width="99%" height="100%">
           <ComposedChart data={mergedData} margin={CHART_MARGIN}>
-            {isTemp && gradientStops.length > 0 && (
-              <defs>
-                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                  {gradientStops.map((s, i) => (
-                    <stop key={i} offset={s.offset} stopColor={s.color} />
-                  ))}
-                </linearGradient>
-              </defs>
-            )}
-
             <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
 
             <XAxis
@@ -369,9 +320,7 @@ export function WeatherRangeChart({
               }}
             />
 
-            {/* Phantom right YAxis — matches ConfigDrivenChart so all charts
-                have the same plot area width. tick/axisLine/tickLine hidden;
-                width=60 carves space. Do NOT use hide (Recharts bug #428). */}
+            {/* Phantom right YAxis — matches ConfigDrivenChart width */}
             <YAxis
               yAxisId="right"
               orientation="right"
@@ -387,9 +336,11 @@ export function WeatherRangeChart({
               )}
             />
 
+            {/* Invisible base area — positions the visible bands at the correct Y level.
+                Height = low temperature value, so the stacked zones start from the low. */}
             <Area
               dataKey="base"
-              stackId="range"
+              stackId="zones"
               stroke="none"
               fill="transparent"
               isAnimationActive={false}
@@ -397,17 +348,24 @@ export function WeatherRangeChart({
               dot={false}
               legendType="none"
             />
-            <Area
-              dataKey="range"
-              stackId="range"
-              stroke="none"
-              fill={isTemp ? `url(#${gradientId})` : 'var(--temp-hi, #f59e0b)'}
-              fillOpacity={0.85}
-              isAnimationActive={false}
-              activeDot={false}
-              dot={false}
-              legendType="none"
-            />
+
+            {/* One Area per visible temperature zone — FLAT SOLID COLOR per band.
+                Stacked bottom-to-top. Each zone's height = how much of the
+                high-low range falls within that zone's temperature bounds. */}
+            {visibleZoneIndices.map((zi) => (
+              <Area
+                key={`zone_${zi}`}
+                dataKey={`zone_${zi}`}
+                stackId="zones"
+                stroke="none"
+                fill={zones[zi].color}
+                fillOpacity={0.85}
+                isAnimationActive={false}
+                activeDot={false}
+                dot={false}
+                legendType="none"
+              />
+            ))}
           </ComposedChart>
         </ResponsiveContainer>
       </div>
