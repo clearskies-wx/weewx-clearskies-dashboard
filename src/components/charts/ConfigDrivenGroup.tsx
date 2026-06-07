@@ -374,11 +374,27 @@ export function ConfigDrivenGroup({
     // Only use aggregate_interval when it exceeds the raw archive interval
     const useAggregation = aggInterval > 300;
 
+    // Build per-field aggregation map from operator's charts.conf aggregate_type.
+    // Default is avg (Belchertown rolling-range default, line 3543).
+    // Operator overrides: e.g., rainRate→max, rainTotal→sum (graphs.conf lines 184/190).
+    const aggPairs: string[] = [];
+    if (useAggregation) {
+      group.charts.forEach((chart) => {
+        chart.series.forEach((s) => {
+          if (s.aggregateType && s.aggregateType !== 'avg') {
+            const obsType = s.observationType ?? s.seriesId;
+            aggPairs.push(`${obsType}:${s.aggregateType}`);
+          }
+        });
+      });
+    }
+
     return {
       from,
       to,
       fields: Array.from(fields).join(','),
       aggregate_interval: useAggregation ? String(aggInterval) : undefined,
+      agg_map: aggPairs.length > 0 ? aggPairs.join(',') : undefined,
     };
   }, [
     isClimatology,

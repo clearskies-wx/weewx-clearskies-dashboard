@@ -122,6 +122,7 @@ export interface ArchiveParams {
   fields?: string;
   interval?: string;
   aggregate_interval?: string;
+  agg_map?: string;
   /** Aggregate function to apply server-side: "max" | "min" | "avg" | "sum" */
   agg?: string;
 }
@@ -137,6 +138,7 @@ export function getArchive(
   if (params?.fields) p['fields'] = params.fields;
   if (params?.interval) p['interval'] = params.interval;
   if (params?.aggregate_interval) p['aggregate_interval'] = params.aggregate_interval;
+  if (params?.agg_map) p['agg_map'] = params.agg_map;
   if (params?.agg) p['agg'] = params.agg;
   return fetchApi<PaginatedResponse<ArchiveRecord[]>>('/archive', p, signal);
 }
