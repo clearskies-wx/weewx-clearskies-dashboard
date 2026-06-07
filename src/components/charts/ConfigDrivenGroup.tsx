@@ -579,9 +579,8 @@ export function ConfigDrivenGroup({
           const obsType = series.observationType ?? series.seriesId;
           if (series.visible !== false && obsType) {
             const fieldKey =
-              CLIMATOLOGY_FIELD_MAP[
-                `${obsType}:${series.averageType ?? 'avg'}`
-              ];
+              CLIMATOLOGY_FIELD_MAP[`${obsType}:${series.averageType ?? series.aggregateType ?? 'avg'}`]
+              ?? CLIMATOLOGY_FIELD_MAP[`${obsType}:${series.aggregateType ?? 'avg'}`];
             if (fieldKey && fieldKey in clim) {
               row[series.seriesId] =
                 (clim as unknown as Record<string, (number | null)[]>)[fieldKey]?.[i] ??
