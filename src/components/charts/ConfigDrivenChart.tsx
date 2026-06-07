@@ -495,7 +495,7 @@ export function ConfigDrivenChart({
   const rightTickDecimals = resolveTickDecimals(1);
 
   return (
-    <div style={{ minWidth: 0, minHeight: 0, width: '100%', height: '100%' }}>
+    <div style={{ minWidth: 0, minHeight: 0, width: '100%', height: '100%', overflow: 'hidden' }}>
       {config.title && (
         <h3 className="text-sm font-semibold text-foreground mb-2 text-center" style={{ fontFamily: 'var(--font-sans)' }}>
           {config.title}
@@ -507,9 +507,10 @@ export function ConfigDrivenChart({
       {/*
         sr-only data table — provides chart data to screen readers.
         WCAG 1.1.1 / coding rules §5.5.
-        "sr-only" is a Tailwind utility that visually hides but keeps accessible.
+        Wrapped in a div because sr-only on <table> fails (table display overrides clip).
       */}
-      <table className="sr-only" aria-label={chartTitle}>
+      <div className="sr-only">
+      <table aria-label={chartTitle}>
         <caption className="sr-only">{chartTitle}</caption>
         <thead>
           <tr>
@@ -540,6 +541,7 @@ export function ConfigDrivenChart({
           })}
         </tbody>
       </table>
+      </div>
 
       {/*
         Chart container: role="img" + aria-label so screen readers announce it
