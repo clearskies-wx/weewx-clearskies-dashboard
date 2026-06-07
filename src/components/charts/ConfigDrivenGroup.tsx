@@ -468,11 +468,19 @@ export function ConfigDrivenGroup({
   // the wind speed distribution for correct Beaufort classification.
   const windRoseParams = useMemo(() => {
     if (!hasWindRose || !archiveParams) return undefined;
+    // For short ranges (≤7 days), fetch raw data for accurate Beaufort classification.
+    // For longer ranges, use hourly aggregation to keep volume manageable
+    // (~8760 records/year instead of ~105K raw 5-min records).
+    const rangeSec = archiveParams.from && archiveParams.to
+      ? (new Date(archiveParams.to).getTime() - new Date(archiveParams.from).getTime()) / 1000
+      : 86400;
+    const useHourly = rangeSec > 86400;
     return {
       from: archiveParams.from,
       to: archiveParams.to,
       fields: 'windSpeed,windDir',
       limit: '50000',
+      ...(useHourly ? { interval: 'hour' } : {}),
     };
   }, [hasWindRose, archiveParams]);
   const windRoseArchiveResult = useArchive(windRoseParams, { skip: !hasWindRose });
