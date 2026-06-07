@@ -141,27 +141,13 @@ function buildZoneBandData(
 function computeYDomain(highs: number[], lows: number[]): {
   yMin: number;
   yMax: number;
-  ticks: number[];
 } {
   if (highs.length === 0 || lows.length === 0) {
-    return { yMin: 0, yMax: 100, ticks: [0, 20, 40, 60, 80, 100] };
+    return { yMin: 0, yMax: 100 };
   }
   const rawMax = Math.max(...highs);
   const rawMin = Math.min(...lows);
-  const span = rawMax - rawMin;
-
-  // Pick a tick interval that keeps 4-6 ticks and fits the data tightly
-  let tickInterval = 5;
-  if (span > 40) tickInterval = 10;
-  else if (span > 20) tickInterval = 5;
-  else if (span > 10) tickInterval = 2;
-  else tickInterval = 1;
-
-  const yMin = Math.floor(rawMin / tickInterval) * tickInterval;
-  const yMax = Math.ceil(rawMax / tickInterval) * tickInterval;
-  const ticks: number[] = [];
-  for (let t = yMin; t <= yMax; t += tickInterval) ticks.push(t);
-  return { yMin, yMax, ticks };
+  return { yMin: rawMin, yMax: rawMax };
 }
 
 // ---------------------------------------------------------------------------
@@ -248,7 +234,7 @@ export function WeatherRangeChart({
 
   const allHighs = highData.map((d) => d.value).filter((v): v is number => v !== null);
   const allLows = lowData.map((d) => d.value).filter((v): v is number => v !== null);
-  const { yMin, yMax, ticks } = computeYDomain(allHighs, allLows);
+  const { yMin, yMax } = computeYDomain(allHighs, allLows);
 
   const dataMaxHigh = allHighs.length > 0 ? Math.max(...allHighs) : yMax;
   const dataMinLow = allLows.length > 0 ? Math.min(...allLows) : yMin;
@@ -314,8 +300,8 @@ export function WeatherRangeChart({
             <YAxis
               type="number"
               domain={[yMin, yMax]}
-              ticks={ticks}
-              interval={0}
+              allowDataOverflow
+              tickCount={5}
               width={YAXIS_WIDTH}
               tick={{ fontSize: 10, fontFamily: CHART_FONT }}
               className="fill-muted-foreground"
