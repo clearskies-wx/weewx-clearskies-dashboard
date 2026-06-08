@@ -1,7 +1,7 @@
 // records.tsx — Records page (/records)
 // Semantic <table> with <thead>/<tbody>/<th scope> per coding §5.2.
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Card,
@@ -12,14 +12,10 @@ import {
 import { Grid } from '../components/layout/grid';
 import { PageHeaderCard } from '../components/layout/page-header-card';
 import { Trophy } from '@phosphor-icons/react';
-import { useRecords, useObservation, useStation } from '../hooks/useWeatherData';
+import { useRecords, useArchive, useStation } from '../hooks/useWeatherData';
 import { formatValue } from '../utils/format';
-import type { Observation } from '../api/types';
+import type { ArchiveRecord } from '../api/types';
 
-/**
- * Map a canonical field name to the appropriate formatValue type.
- * Canonical fields come from the OpenAPI contract; unknown fields fall back to 'default' (1dp).
- */
 function canonicalFieldToType(field: string): string {
   if (/[Tt]emp|dewpoint|windchill|heatindex|appTemp/.test(field)) return 'temperature';
   if (/[Bb]arometer|pressure|altimeter/.test(field)) return 'barometer';
@@ -33,19 +29,35 @@ function canonicalFieldToType(field: string): string {
   return 'default';
 }
 
-/**
- * Map a record's canonicalField to today's value from the current Observation.
- * The Observation fields use the same canonical names as record entries (outTemp,
- * windGust, barometer, etc.), so we can look them up directly as a keyed index.
- * Fields with no direct today equivalent (e.g., domWindDir, maxSolarRad) return null.
- */
-function getTodayValue(canonicalField: string, observation: Observation): number | null {
-  // Direct field lookup: the Observation interface uses the same canonical names.
-  // Cast to a record index to avoid an exhaustive if-chain; unknown fields return undefined.
-  const obs = observation as unknown as Record<string, unknown>;
-  const raw = obs[canonicalField];
-  if (typeof raw === 'number') return raw;
+type AggType = 'max' | 'min' | 'sum' | null;
+
+function getRecordAggType(label: string, canonicalField: string): AggType {
+  const lower = label.toLowerCase();
+  if (/consecutive|range|wind run|monthly|annual/.test(lower)) return null;
+  if (canonicalField === 'rain' && /high|most/.test(lower)) return 'sum';
+  if (/low|smallest|least/.test(lower)) return 'min';
+  if (/high|largest|most/.test(lower)) return 'max';
   return null;
+}
+
+function getTodayExtreme(
+  canonicalField: string,
+  aggType: AggType,
+  archiveRecords: ArchiveRecord[],
+): number | null {
+  if (!aggType) return null;
+  const values = archiveRecords
+    .map(r => {
+      const v = r[canonicalField];
+      return typeof v === 'number' ? v : null;
+    })
+    .filter((v): v is number => v !== null);
+  if (values.length === 0) return null;
+  switch (aggType) {
+    case 'max': return Math.max(...values);
+    case 'min': return Math.min(...values);
+    case 'sum': return values.reduce((a, b) => a + b, 0);
+  }
 }
 
 function formatDate(isoString: string | null, locale: string, tz = 'UTC'): string {
@@ -91,9 +103,21 @@ export function RecordsPage() {
   const locale = i18n.language;
   const [period, setPeriod] = useState<Period>('ytd');
   const { data: records, units, loading, error, refetch } = useRecords(period);
-  const { data: observation } = useObservation();
   const { data: station } = useStation();
   const tz = station?.timezone ?? 'UTC';
+
+  const todayFromEpoch = useMemo(() => {
+    const now = new Date();
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz,
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+    }).formatToParts(now);
+    const get = (type: string) => parseInt(parts.find(p => p.type === type)?.value ?? '0', 10);
+    const elapsed = get('hour') * 3600 + get('minute') * 60 + get('second');
+    return String(Math.floor(now.getTime() / 1000) - elapsed);
+  }, [tz]);
+
+  const { data: todayArchive } = useArchive({ from: todayFromEpoch });
 
   return (
     <div className="flex flex-col gap-4">
@@ -196,10 +220,11 @@ export function RecordsPage() {
                             </td>
                             <td className="py-2.5 pr-4 text-right text-muted-foreground">
                               {(() => {
-                                if (!observation) return '--';
-                                const todayVal = getTodayValue(entry.canonicalField, observation);
-                                if (todayVal === null) return '--';
-                                return `${formatValue(todayVal, canonicalFieldToType(entry.canonicalField))} ${units?.[entry.canonicalField] ?? ''}`;
+                                if (!todayArchive || todayArchive.length === 0) return '--';
+                                const aggType = getRecordAggType(entry.label, entry.canonicalField);
+                                const val = getTodayExtreme(entry.canonicalField, aggType, todayArchive);
+                                if (val === null) return '--';
+                                return `${formatValue(val, canonicalFieldToType(entry.canonicalField))} ${units?.[entry.canonicalField] ?? ''}`;
                               })()}
                             </td>
                             <td className="py-2.5 pr-4 text-right font-semibold text-foreground">
