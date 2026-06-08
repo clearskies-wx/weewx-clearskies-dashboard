@@ -2,7 +2,7 @@
 // Renamed from earthquakes.tsx. Route: /seismic (App.tsx).
 //
 // Layout:
-//   Desktop (lg+): CSS grid 2-column — map card left, list card right.
+//   Desktop (lg+): 4-col grid — map card 3 cols, earthquake list 1 col.
 //   Mobile (<lg): stacked — map card (fixed 300px), list card below.
 //
 // Bidirectional interaction via selectedId state:
@@ -29,6 +29,8 @@ import {
   CardTitle,
   CardContent,
 } from '../components/ui/card';
+import { PageHeaderCard } from '../components/layout/page-header-card';
+import { Earthquake } from '../components/icons/earthquake';
 import type { EarthquakeRecord } from '../api/types';
 import { useEarthquakes, useStation, useEarthquakeConfig, useEarthquakeFaults } from '../hooks/useWeatherData';
 import { formatValue } from '../utils/format';
@@ -209,26 +211,34 @@ export function SeismicPage() {
   return (
     // h-full + flex-col so the grid below can stretch to fill the available
     // main-element height rather than overflowing the viewport.
-    <div className="flex flex-col gap-4 p-2 md:p-4 h-full">
-      <h1 className="text-2xl font-bold text-foreground shrink-0">{t('title')}</h1>
-
-      {/* Config info bar — compact single-line display of operator settings */}
-      {config && (
-        <p className="text-sm text-muted-foreground shrink-0" aria-label={t('configAriaLabel')}>
-          {t('configSummary', {
-            provider: config.provider.toUpperCase(),
-            radiusKm: config.radiusKm,
-            minMagnitude: config.minMagnitude.toFixed(1),
-            days: config.defaultDays,
-          })}
-        </p>
-      )}
+    <div className="flex flex-col gap-4 h-full">
+      <PageHeaderCard
+        title={t('title')}
+        info={config ? t('configSummary', {
+          provider: config.provider.toUpperCase(),
+          radiusKm: config.radiusKm,
+          minMagnitude: config.minMagnitude.toFixed(1),
+          days: config.defaultDays,
+        }) : undefined}
+        icon={<Earthquake size={28} />}
+      >
+        <label className="flex items-center gap-1.5 text-sm text-muted-foreground cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={showFaults}
+            onChange={(e) => setShowFaults(e.target.checked)}
+            className="rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+            aria-label={t('showFaultsAriaLabel')}
+          />
+          {t('showFaults')}
+        </label>
+      </PageHeaderCard>
 
       {loading && (
         <>
           <span className="sr-only" role="status">{t('loadingData')}</span>
-          <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <TileSkeleton className="h-[300px] lg:h-full" />
+          <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-4 gap-[var(--gap-grid)]">
+            <TileSkeleton className="lg:col-span-3 h-[300px] lg:h-full" />
             <TileSkeleton className="h-[300px] lg:h-full" />
           </div>
         </>
@@ -241,29 +251,13 @@ export function SeismicPage() {
         // min-h-0 prevents flex children from ignoring the overflow boundary.
         // On desktop: grid-cols-2 side-by-side. On mobile: stacked (grid-cols-1).
         // Wrapper div so the GEM attribution can sit below the grid as a sibling.
-        <div className="flex-1 min-h-0 flex flex-col gap-2">
-          <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* ----------------------------------------------------------------
-              LEFT: Map card
+        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-4 gap-[var(--gap-grid)]">
+          {/* Map card: 3 of 4 grid columns.
               Desktop: h-full fills the grid row (bounded by flex-1 parent).
-              Mobile: fixed h-[300px] so the list is immediately visible below.
-          ---------------------------------------------------------------- */}
-          <Card className="overflow-hidden flex flex-col h-[300px] lg:h-full">
+              Mobile: fixed h-[300px] so the list is immediately visible below. */}
+          <Card className="lg:col-span-3 overflow-hidden flex flex-col h-[300px] lg:h-full">
             <CardHeader className="pb-2 shrink-0">
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <CardTitle as="h2">{t('mapCardTitle')}</CardTitle>
-                {/* Fault toggle — checkbox with visible label (§5.2 / §5.3) */}
-                <label className="flex items-center gap-1.5 text-sm text-muted-foreground cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={showFaults}
-                    onChange={(e) => setShowFaults(e.target.checked)}
-                    className="rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
-                    aria-label={t('showFaultsAriaLabel')}
-                  />
-                  {t('showFaults')}
-                </label>
-              </div>
+              <CardTitle as="h2">{t('mapCardTitle')}</CardTitle>
             </CardHeader>
             <CardContent className="p-0 flex-1 min-h-0">
               <div
@@ -351,12 +345,9 @@ export function SeismicPage() {
             </CardContent>
           </Card>
 
-          {/* ----------------------------------------------------------------
-              RIGHT: Scrollable earthquake list
-              Desktop: h-full matches the grid row height (set by the map card),
-                       overflow-y-auto makes it scroll within that fixed height.
-              Mobile: naturally tall (grid-cols-1 so each card sizes to content).
-          ---------------------------------------------------------------- */}
+          {/* Earthquake list: 1 of 4 grid columns.
+              Desktop: h-full matches the grid row, overflow-y-auto scrolls.
+              Mobile: naturally tall (grid-cols-1, content-driven). */}
           <Card className="flex flex-col lg:h-full">
             <CardHeader className="pb-2 shrink-0">
               <CardTitle as="h2">{t('listCardTitle')}</CardTitle>
@@ -455,14 +446,6 @@ export function SeismicPage() {
               )}
             </CardContent>
           </Card>
-          </div>{/* end grid */}
-
-          {/* GEM fault attribution — only shown when fault layer is visible */}
-          {showFaults && faults && faults.features.length > 0 && (
-            <p className="shrink-0 text-xs text-muted-foreground/70">
-              {faults.attribution}
-            </p>
-          )}
         </div>
       )}
     </div>
