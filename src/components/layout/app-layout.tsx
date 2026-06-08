@@ -12,13 +12,15 @@ import { Outlet } from 'react-router-dom';
 import { SkipLink } from './skip-link';
 import { NavRail } from './nav-rail';
 import { Footer } from './footer';
-import { useObservation } from '../../hooks/useWeatherData';
+import { useObservation, useAlerts } from '../../hooks/useWeatherData';
 import { useTheme } from '../../lib/theme-provider';
 import { SceneBackground } from '../background/scene-background';
+import { AlertBanner } from '../shared/alert-banner';
 import type { SceneDescriptor } from '../../api/types';
 
 export function AppLayout() {
   const { scene, sceneLoaded } = useObservation();
+  const { data: alerts, loading: alertLoading } = useAlerts();
   const { preference, setDaytime } = useTheme();
 
   useEffect(() => {
@@ -80,6 +82,11 @@ export function AppLayout() {
               ].join(' ')}
               tabIndex={-1}
             >
+              {!alertLoading && alerts && alerts.length > 0 && (
+                <div className="mb-4">
+                  <AlertBanner alerts={alerts} />
+                </div>
+              )}
               <Outlet />
             </main>
 

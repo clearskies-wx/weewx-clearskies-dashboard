@@ -12,13 +12,12 @@
 
 import { useTranslation } from 'react-i18next';
 import { CloudSun } from '@phosphor-icons/react';
-import { AlertBanner } from '../components/shared/alert-banner';
 import { Grid } from '../components/layout/grid';
 import { PageHeaderCard } from '../components/layout/page-header-card';
 import { ForecastHourlyCard } from '../components/forecast/ForecastHourlyCard';
 import { ForecastDailyCard } from '../components/forecast/ForecastDailyCard';
 import { ForecastDiscussionCard } from '../components/forecast/ForecastDiscussionCard';
-import { useForecast, useAlerts, useStation } from '../hooks/useWeatherData';
+import { useForecast, useStation } from '../hooks/useWeatherData';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -43,7 +42,6 @@ export function ForecastPage() {
   // Request 48h of hourly data so the Tomorrow tab is populated.
   const { data: forecast, units: fcUnits, loading: fcLoading, error: fcError } = useForecast({ hours: 48 });
   const { data: station } = useStation();
-  const { data: alerts, loading: alertLoading } = useAlerts();
 
   const tz = station?.timezone ?? 'UTC';
 
@@ -55,8 +53,6 @@ export function ForecastPage() {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="sr-only">{t('title')}</h1>
-
-      {!alertLoading && alerts && <AlertBanner alerts={alerts} />}
 
       <Grid className="md:auto-rows-[auto]">
         {/* ── Page header ──────────────────────────────────────────────── */}

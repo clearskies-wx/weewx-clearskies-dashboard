@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WebcamConfig } from '../api/types';
-import { AlertBanner } from '../components/shared/alert-banner';
 import { CurrentConditionsCard } from '../components/current-conditions-card';
 import { PrecipitationCard } from '../components/precipitation-card';
 import { BarometerCard } from '../components/barometer-card';
@@ -26,7 +25,6 @@ import {
 } from '../components/ui/card';
 import {
   useForecast,
-  useAlerts,
   useEarthquakes,
   useAqi,
   useStation,
@@ -56,7 +54,6 @@ export function NowPage() {
 
   const { data: observation, units, loading: obsLoading, error: obsError, refetch: obsRefetch, barometerTrendDirection, windSpeedAvg10m, windGustMax10m, scene } = useRealtimeObservation();
   const { data: forecast, loading: fcLoading, error: fcError } = useForecast();
-  const { data: alerts, loading: alertLoading } = useAlerts();
   const { data: almanac, loading: almLoading, error: almError, refetch: almRefetch } = useSmartAlmanac();
   const { data: earthquakes, loading: eqLoading, error: eqError, refetch: eqRefetch } = useEarthquakes();
   const { data: aqi, loading: aqiLoading, error: aqiError, refetch: aqiRefetch } = useAqi();
@@ -129,9 +126,6 @@ export function NowPage() {
     <div className="flex flex-col gap-4">
       {/* sr-only h1 for this page (the NowHeroCard renders an h1 that's visible) */}
       <h1 className="sr-only">Now</h1>
-
-      {/* ── Alert Banner — block-level, naturally full-width outside grid ── */}
-      {!alertLoading && alerts && <AlertBanner alerts={alerts} />}
 
       {/* ── Hero bar — block-level, naturally full-width outside grid ─────── */}
       <NowHeroCard
