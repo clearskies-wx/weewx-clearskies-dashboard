@@ -121,6 +121,7 @@ function buildYearList(stationFirstYear: number | undefined): number[] {
 function buildGroupedChartData(
   chart: ChartConfig,
   groupedData: GroupedArchiveData | null,
+  customQueryData?: Record<string, Array<{ x: number | string; y: number | null }>> | null,
 ): { data: Record<string, number | string | null>[]; xKey: string } {
   if (!groupedData) return { data: [], xKey: 'label' };
 
@@ -128,6 +129,12 @@ function buildGroupedChartData(
     data: groupedData.labels.map((label, i) => {
       const row: Record<string, number | string | null> = { label };
       for (const series of chart.series) {
+        if (series.useCustomSql && customQueryData?.[series.seriesId]) {
+          const points = customQueryData[series.seriesId];
+          const pt = points.find((p) => String(p.x) === label || p.x === i + 1);
+          row[series.seriesId] = pt?.y ?? null;
+          continue;
+        }
         const obsType = series.observationType ?? series.seriesId;
         const aggType = series.aggregateType ?? 'avg';
         const avgType = series.averageType;
@@ -1260,6 +1267,7 @@ export function ConfigDrivenGroup({
                 const { data: groupedChartData, xKey: groupedXKey } = buildGroupedChartData(
                   chart,
                   groupedArchive.data,
+                  customQueryResults.data,
                 );
                 return (
                   <ConfigDrivenChart
