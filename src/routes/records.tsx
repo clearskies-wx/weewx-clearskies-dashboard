@@ -9,6 +9,9 @@ import {
   CardTitle,
   CardContent,
 } from '../components/ui/card';
+import { Grid } from '../components/layout/grid';
+import { PageHeaderCard } from '../components/layout/page-header-card';
+import { Trophy } from '@phosphor-icons/react';
 import { useRecords, useObservation, useStation } from '../hooks/useWeatherData';
 import { formatValue } from '../utils/format';
 import type { Observation } from '../api/types';
@@ -93,134 +96,139 @@ export function RecordsPage() {
   const tz = station?.timezone ?? 'UTC';
 
   return (
-    <div className="flex flex-col gap-6 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
+    <div className="flex flex-col gap-4">
+      <h1 className="sr-only">{t('title')}</h1>
 
-      {/* Period selector */}
-      <div className="flex gap-2" role="group" aria-label={t('ariaPeriodGroup')}>
-        <button
-          type="button"
-          aria-pressed={period === 'all-time'}
-          onClick={() => setPeriod('all-time')}
-          className={[
-            'rounded-md px-4 py-2 text-sm font-medium min-h-[44px] md:min-h-0',
-            'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-            period === 'all-time'
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-muted text-foreground hover:bg-muted/70',
-          ].join(' ')}
-        >
-          {t('periodAllTime')}
-        </button>
-        <button
-          type="button"
-          aria-pressed={period === 'ytd'}
-          onClick={() => setPeriod('ytd')}
-          className={[
-            'rounded-md px-4 py-2 text-sm font-medium min-h-[44px] md:min-h-0',
-            'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-            period === 'ytd'
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-muted text-foreground hover:bg-muted/70',
-          ].join(' ')}
-        >
-          {t('periodYearToDate')}
-        </button>
-      </div>
+      <Grid className="md:auto-rows-[auto]">
+        <PageHeaderCard title={t('title')} icon={<Trophy weight="duotone" />} />
 
-      {loading && (
-        <>
-          <span className="sr-only" role="status">{t('loadingRecords')}</span>
-          <TileSkeleton className="h-48" />
-          <TileSkeleton className="h-48" />
-        </>
-      )}
+        {/* Period selector card */}
+        <Card footprint="full" className="py-2">
+          <div className="flex gap-2 px-4" role="group" aria-label={t('ariaPeriodGroup')}>
+            <button
+              type="button"
+              aria-pressed={period === 'all-time'}
+              onClick={() => setPeriod('all-time')}
+              className={[
+                'rounded-md px-4 py-2 text-sm font-medium min-h-[44px] md:min-h-0',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                period === 'all-time'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-foreground hover:bg-muted/70',
+              ].join(' ')}
+            >
+              {t('periodAllTime')}
+            </button>
+            <button
+              type="button"
+              aria-pressed={period === 'ytd'}
+              onClick={() => setPeriod('ytd')}
+              className={[
+                'rounded-md px-4 py-2 text-sm font-medium min-h-[44px] md:min-h-0',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                period === 'ytd'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-foreground hover:bg-muted/70',
+              ].join(' ')}
+            >
+              {t('periodYearToDate')}
+            </button>
+          </div>
+        </Card>
 
-      {error && <TileError message={t('unableToLoad')} onRetry={refetch} />}
+        {loading && (
+          <>
+            <span className="sr-only" role="status">{t('loadingRecords')}</span>
+            <TileSkeleton className="col-span-full h-48" />
+            <TileSkeleton className="col-span-full h-48" />
+          </>
+        )}
 
-      {!loading && !error && records && (
-        <>
-          {/* Populated sections from API data */}
-          {Object.entries(records.sections).map(([section, entries]) => (
-            <Card key={section}>
-              <CardHeader>
-                <CardTitle as="h2" className="capitalize">{t('sectionHeading', { section })}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm" aria-label={t('sectionHeading', { section })}>
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th scope="col" className="pb-2 text-left font-semibold text-foreground pr-4">
-                          {t('tableHeaderRecord')}
-                        </th>
-                        <th scope="col" className="pb-2 text-right font-semibold text-foreground pr-4">
-                          {t('tableHeaderToday')}
-                        </th>
-                        <th scope="col" className="pb-2 text-right font-semibold text-foreground pr-4">
-                          {t('tableHeaderValue')}
-                        </th>
-                        <th scope="col" className="pb-2 text-right font-semibold text-foreground">
-                          {t('tableHeaderDateObserved')}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {entries.map((entry) => (
-                        <tr
-                          key={entry.label}
-                          className="border-b border-border/50 last:border-0"
-                        >
-                          <td className="py-2.5 pr-4 text-left text-muted-foreground">
-                            {entry.label}
-                            {entry.brokenInLast30Days && (
-                              <span
-                                className="ml-2 inline-block rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
-                                title={t('badgeNewTitle')}
-                                aria-label={t('badgeNewAriaLabel')}
-                              >
-                                {t('badgeNew')}
-                              </span>
-                            )}
-                          </td>
-                          <td
-                            className="py-2.5 pr-4 text-right text-muted-foreground"
-                          >
-                            {(() => {
-                              if (!observation) return '--';
-                              const todayVal = getTodayValue(entry.canonicalField, observation);
-                              if (todayVal === null) return '--';
-                              return `${formatValue(todayVal, canonicalFieldToType(entry.canonicalField))} ${units?.[entry.canonicalField] ?? ''}`;
-                            })()}
-                          </td>
-                          <td
-                            className="py-2.5 pr-4 text-right font-semibold text-foreground"
-                          >
-                            {entry.value !== null
-                              ? `${formatValue(entry.value, canonicalFieldToType(entry.canonicalField))} ${units?.[entry.canonicalField] ?? ''}`
-                              : '—'}
-                          </td>
-                          <td className="py-2.5 text-right text-muted-foreground">
-                            {formatDate(entry.observedAt, locale, tz)}
-                          </td>
+        {error && (
+          <div className="col-span-full">
+            <TileError message={t('unableToLoad')} onRetry={refetch} />
+          </div>
+        )}
+
+        {!loading && !error && records && (
+          <>
+            {Object.entries(records.sections).map(([section, entries]) => (
+              <Card key={section} footprint="full">
+                <CardHeader>
+                  <CardTitle as="h2" className="capitalize">{t('sectionHeading', { section })}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm" aria-label={t('sectionHeading', { section })}>
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th scope="col" className="pb-2 text-left font-semibold text-foreground pr-4">
+                            {t('tableHeaderRecord')}
+                          </th>
+                          <th scope="col" className="pb-2 text-right font-semibold text-foreground pr-4">
+                            {t('tableHeaderToday')}
+                          </th>
+                          <th scope="col" className="pb-2 text-right font-semibold text-foreground pr-4">
+                            {t('tableHeaderValue')}
+                          </th>
+                          <th scope="col" className="pb-2 text-right font-semibold text-foreground">
+                            {t('tableHeaderDateObserved')}
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                      </thead>
+                      <tbody>
+                        {entries.map((entry) => (
+                          <tr
+                            key={entry.label}
+                            className="border-b border-border/50 last:border-0"
+                          >
+                            <td className="py-2.5 pr-4 text-left text-muted-foreground">
+                              {entry.label}
+                              {entry.brokenInLast30Days && (
+                                <span
+                                  className="ml-2 inline-block rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                                  title={t('badgeNewTitle')}
+                                  aria-label={t('badgeNewAriaLabel')}
+                                >
+                                  {t('badgeNew')}
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-2.5 pr-4 text-right text-muted-foreground">
+                              {(() => {
+                                if (!observation) return '--';
+                                const todayVal = getTodayValue(entry.canonicalField, observation);
+                                if (todayVal === null) return '--';
+                                return `${formatValue(todayVal, canonicalFieldToType(entry.canonicalField))} ${units?.[entry.canonicalField] ?? ''}`;
+                              })()}
+                            </td>
+                            <td className="py-2.5 pr-4 text-right font-semibold text-foreground">
+                              {entry.value !== null
+                                ? `${formatValue(entry.value, canonicalFieldToType(entry.canonicalField))} ${units?.[entry.canonicalField] ?? ''}`
+                                : '—'}
+                            </td>
+                            <td className="py-2.5 text-right text-muted-foreground">
+                              {formatDate(entry.observedAt, locale, tz)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
 
-          {Object.keys(records.sections).length === 0 && (
-            <Card>
-              <CardContent className="py-8 text-center text-muted-foreground">
-                {t('noData')}
-              </CardContent>
-            </Card>
-          )}
-        </>
-      )}
+            {Object.keys(records.sections).length === 0 && (
+              <Card footprint="full">
+                <CardContent className="py-8 text-center text-muted-foreground">
+                  {t('noData')}
+                </CardContent>
+              </Card>
+            )}
+          </>
+        )}
+      </Grid>
     </div>
   );
 }
