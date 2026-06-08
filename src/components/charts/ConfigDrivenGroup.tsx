@@ -707,7 +707,7 @@ export function ConfigDrivenGroup({
 
   const showYearMonthDropdowns =
     !showRollingRanges &&
-    (group.availableYears.length > 0 || stationFirstYear != null);
+    group.availableYears.length > 0;
 
   // Build the year list: prefer group.availableYears, fall back to computed range
   const yearList = useMemo(() => {
