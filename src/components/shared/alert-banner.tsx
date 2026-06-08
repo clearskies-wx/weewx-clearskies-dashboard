@@ -119,6 +119,19 @@ function formatExpiry(
   return t('alertBanner.until', { time: dateLabel });
 }
 
+/**
+ * reflowDescription — collapses hard line wraps within paragraphs while
+ * preserving paragraph breaks (blank lines). NWS descriptions hard-wrap
+ * at ~65 chars for legacy terminals; this lets the text flow to fill
+ * the available width.
+ */
+function reflowDescription(text: string): string[] {
+  return text
+    .split(/\n\s*\n/)
+    .map((para) => para.replace(/\n/g, ' ').replace(/\s{2,}/g, ' ').trim())
+    .filter(Boolean);
+}
+
 /** formatDateTime — formats a full ISO datetime for the metadata grid. */
 function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return '—';
@@ -399,12 +412,14 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
         <div style={{ minHeight: 0, overflow: 'hidden' }}>
           <div className="card-glass border-t border-foreground/10 px-4 py-3">
 
-            {/* Full description — preserve NWS paragraph formatting */}
+            {/* Full description — collapse hard line wraps, keep paragraph breaks */}
             {alert.description && (
-              <div className="mb-3">
-                <p className="font-heading text-[length:var(--text-body)] leading-relaxed text-card-foreground/90 [white-space:pre-wrap]">
-                  {alert.description}
-                </p>
+              <div className="mb-3 space-y-3">
+                {reflowDescription(alert.description).map((para, i) => (
+                  <p key={i} className="font-heading text-[length:var(--text-body)] leading-relaxed text-card-foreground/90">
+                    {para}
+                  </p>
+                ))}
               </div>
             )}
 
