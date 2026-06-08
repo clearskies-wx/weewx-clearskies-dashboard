@@ -39,7 +39,7 @@ const NWS_LEVELS: Record<number, Pick<AlertColorSet, 'iconBg' | 'border' | 'icon
   4: { iconBg: '#dc2626', border: '#dc2626', iconFg: 'white', iconFgColor: '#ffffff' }, // Warning — red
   3: { iconBg: '#ea580c', border: '#ea580c', iconFg: 'white', iconFgColor: '#ffffff' }, // Watch — orange
   2: { iconBg: '#ca8a04', border: '#ca8a04', iconFg: 'dark',  iconFgColor: '#3d2800' }, // Advisory — amber
-  1: { iconBg: '#475569', border: '#475569', iconFg: 'white', iconFgColor: '#ffffff' }, // Statement — slate
+  1: { iconBg: '#ca8a04', border: '#ca8a04', iconFg: 'dark',  iconFgColor: '#3d2800' }, // Statement — treated as advisory (amber)
 };
 
 /** MeteoAlarm (EU) — Red/Orange/Yellow/Green */
@@ -95,7 +95,7 @@ const ENVCA_LEVELS: Record<number, Pick<AlertColorSet, 'iconBg' | 'border' | 'ic
   4: { iconBg: '#dc2626', border: '#dc2626', iconFg: 'white', iconFgColor: '#ffffff' }, // Warning — red
   3: { iconBg: '#ea580c', border: '#ea580c', iconFg: 'white', iconFgColor: '#ffffff' }, // Watch — orange
   2: { iconBg: '#ca8a04', border: '#ca8a04', iconFg: 'dark',  iconFgColor: '#3d2800' }, // Advisory — amber
-  1: { iconBg: '#475569', border: '#475569', iconFg: 'white', iconFgColor: '#ffffff' }, // Statement — slate
+  1: { iconBg: '#ca8a04', border: '#ca8a04', iconFg: 'dark',  iconFgColor: '#3d2800' }, // Statement — treated as advisory (amber)
 };
 
 /** Generic fallback — level-based only (unknown system or null alertSystem). */
@@ -103,7 +103,7 @@ const GENERIC_LEVELS: Record<number, Pick<AlertColorSet, 'iconBg' | 'border' | '
   4: { iconBg: '#dc2626', border: '#dc2626', iconFg: 'white', iconFgColor: '#ffffff' }, // red
   3: { iconBg: '#ea580c', border: '#ea580c', iconFg: 'white', iconFgColor: '#ffffff' }, // orange
   2: { iconBg: '#ca8a04', border: '#ca8a04', iconFg: 'dark',  iconFgColor: '#3d2800' }, // yellow
-  1: { iconBg: '#475569', border: '#475569', iconFg: 'white', iconFgColor: '#ffffff' }, // blue-gray
+  1: { iconBg: '#ca8a04', border: '#ca8a04', iconFg: 'dark',  iconFgColor: '#3d2800' }, // advisory-level amber
 };
 
 /** Fallback used when both system and level are unknown. */
