@@ -8,14 +8,15 @@
 
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DownloadSimple } from '@phosphor-icons/react';
-// DownloadSimple: not enumerated in ADR-050; nearest Phosphor match for download action (Lucide Download → ph:download-simple).
+import { DownloadSimple, FileText } from '@phosphor-icons/react';
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
 } from '../components/ui/card';
+import { Grid } from '../components/layout/grid';
+import { PageHeaderCard } from '../components/layout/page-header-card';
 import { Button } from '../components/ui/button';
 import { useReports, useReport, useYearlyReport } from '../hooks/useWeatherData';
 import { parseMonthlyReport, parseYearlyReport } from '../lib/noaa-parser';
@@ -688,107 +689,108 @@ export function ReportsPage() {
   }, [selectedYear, selectedMonth, isAnnual, i18n.language]);
 
   return (
-    <div className="flex flex-col gap-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
+    <div className="flex flex-col gap-4">
+      <h1 className="sr-only">{t('title')}</h1>
 
-      <p className="text-sm text-muted-foreground leading-relaxed">
-        {t('intro')}
-      </p>
+      <Grid className="md:auto-rows-[auto]">
+        <PageHeaderCard title={t('title')} info={t('intro')} icon={<FileText weight="duotone" />} />
 
-      <Card>
-        <CardHeader>
-          <CardTitle as="h2">{t('card.title')}</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          {indexLoading && (
-            <>
-              <span className="sr-only" role="status">{t('loading.index')}</span>
-              <TileSkeleton className="h-12" />
-            </>
-          )}
+        {/* Selector card */}
+        <Card footprint="full">
+          <CardHeader>
+            <CardTitle as="h2">{t('card.title')}</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            {indexLoading && (
+              <>
+                <span className="sr-only" role="status">{t('loading.index')}</span>
+                <TileSkeleton className="h-12" />
+              </>
+            )}
 
-          {indexError && <TileError message={t('error.index')} onRetry={indexRefetch} />}
+            {indexError && <TileError message={t('error.index')} onRetry={indexRefetch} />}
 
-          {!indexLoading && !indexError && (
-            <>
-              {reports && reports.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  {t('empty')}
-                </p>
-              )}
+            {!indexLoading && !indexError && (
+              <>
+                {reports && reports.length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    {t('empty')}
+                  </p>
+                )}
 
-              {reports && reports.length > 0 && (
-                <div className="flex flex-wrap gap-4">
-                  {/* Year selector */}
-                  <div className="flex flex-col gap-1">
-                    <label
-                      htmlFor="report-year"
-                      className="text-sm font-medium text-foreground"
-                    >
-                      {t('year.label')}
-                    </label>
-                    <select
-                      id="report-year"
-                      value={selectedYear ?? ''}
-                      onChange={handleYearChange}
-                      className={[
-                        'rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground min-h-[44px] md:min-h-0',
-                        'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-                      ].join(' ')}
-                      aria-label={t('year.ariaLabel')}
-                    >
-                      <option value="">{t('year.placeholder')}</option>
-                      {availableYears.map((y) => (
-                        <option key={y} value={y}>{y}</option>
-                      ))}
-                    </select>
+                {reports && reports.length > 0 && (
+                  <div className="flex flex-wrap gap-4">
+                    {/* Year selector */}
+                    <div className="flex flex-col gap-1">
+                      <label
+                        htmlFor="report-year"
+                        className="text-sm font-medium text-foreground"
+                      >
+                        {t('year.label')}
+                      </label>
+                      <select
+                        id="report-year"
+                        value={selectedYear ?? ''}
+                        onChange={handleYearChange}
+                        className={[
+                          'rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground min-h-[44px] md:min-h-0',
+                          'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+                        ].join(' ')}
+                        aria-label={t('year.ariaLabel')}
+                      >
+                        <option value="">{t('year.placeholder')}</option>
+                        {availableYears.map((y) => (
+                          <option key={y} value={y}>{y}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Month / Annual selector */}
+                    <div className="flex flex-col gap-1">
+                      <label
+                        htmlFor="report-month"
+                        className="text-sm font-medium text-foreground"
+                      >
+                        {t('month.label')}
+                      </label>
+                      <select
+                        id="report-month"
+                        value={selectedMonth ?? ''}
+                        onChange={handleMonthChange}
+                        disabled={!selectedYear || (availableMonths.length === 0 && !hasYearlyReport)}
+                        className={[
+                          'rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground min-h-[44px] md:min-h-0',
+                          'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+                          (!selectedYear || (availableMonths.length === 0 && !hasYearlyReport))
+                            ? 'opacity-60 cursor-not-allowed'
+                            : '',
+                        ].join(' ')}
+                        aria-label={t('month.ariaLabel')}
+                      >
+                        <option value="">{t('month.placeholder')}</option>
+                        {hasYearlyReport && (
+                          <option value={0}>{t('annual')}</option>
+                        )}
+                        {availableMonths.map((m) => (
+                          <option key={m} value={m}>{getMonthName(m, i18n.language)}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
+                )}
+              </>
+            )}
 
-                  {/* Month / Annual selector */}
-                  <div className="flex flex-col gap-1">
-                    <label
-                      htmlFor="report-month"
-                      className="text-sm font-medium text-foreground"
-                    >
-                      {t('month.label')}
-                    </label>
-                    <select
-                      id="report-month"
-                      value={selectedMonth ?? ''}
-                      onChange={handleMonthChange}
-                      disabled={!selectedYear || (availableMonths.length === 0 && !hasYearlyReport)}
-                      className={[
-                        'rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground min-h-[44px] md:min-h-0',
-                        'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-                        (!selectedYear || (availableMonths.length === 0 && !hasYearlyReport))
-                          ? 'opacity-60 cursor-not-allowed'
-                          : '',
-                      ].join(' ')}
-                      aria-label={t('month.ariaLabel')}
-                    >
-                      <option value="">{t('month.placeholder')}</option>
-                      {/* Annual option — only shown when a yearly report exists for the year */}
-                      {hasYearlyReport && (
-                        <option value={0}>{t('annual')}</option>
-                      )}
-                      {availableMonths.map((m) => (
-                        <option key={m} value={m}>{getMonthName(m, i18n.language)}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
+            {!canFetch && !indexLoading && !indexError && reports && reports.length > 0 && (
+              <p className="text-sm text-muted-foreground">{t('noReportSelected')}</p>
+            )}
+          </CardContent>
+        </Card>
 
-          {/* Empty-selection prompt */}
-          {!canFetch && !indexLoading && !indexError && reports && reports.length > 0 && (
-            <p className="text-sm text-muted-foreground">{t('noReportSelected')}</p>
-          )}
-
-          {/* Report viewer */}
-          {canFetch && (
-            <div aria-live="polite" aria-busy={reportLoading}>
+        {/* Report content card */}
+        {canFetch && (
+          <Card footprint="full">
+            <CardContent className="flex flex-col gap-4" aria-live="polite" aria-busy={reportLoading}>
               {reportLoading && (
                 <>
                   <span className="sr-only" role="status">{t('loading.report')}</span>
@@ -801,13 +803,11 @@ export function ReportsPage() {
 
               {!reportLoading && !reportError && activeReport && (
                 <div className="flex flex-col gap-3">
-                  {/* Report header row */}
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <h2 className="text-sm font-semibold text-foreground">
                       {periodLabel}
                     </h2>
                     <div className="flex flex-wrap items-center gap-2">
-                      {/* Toggle table / raw text */}
                       <button
                         type="button"
                         onClick={() => setShowRawText((v) => !v)}
@@ -817,7 +817,6 @@ export function ReportsPage() {
                         {showRawText ? t('viewTable') : t('viewRawText')}
                       </button>
 
-                      {/* Download .txt */}
                       <Button
                         variant="outline"
                         size="sm"
@@ -834,7 +833,6 @@ export function ReportsPage() {
                         {t('download')}
                       </Button>
 
-                      {/* Download .csv */}
                       <Button
                         variant="outline"
                         size="sm"
@@ -860,7 +858,6 @@ export function ReportsPage() {
                     </div>
                   </div>
 
-                  {/* Table or raw text */}
                   {showRawText ? (
                     <pre className="overflow-x-auto rounded-md bg-muted/40 p-4 text-xs text-foreground font-mono leading-relaxed whitespace-pre-wrap">
                       {activeReport.rawText}
@@ -872,10 +869,10 @@ export function ReportsPage() {
                   )}
                 </div>
               )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        )}
+      </Grid>
     </div>
   );
 }
