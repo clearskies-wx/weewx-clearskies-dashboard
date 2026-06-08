@@ -23,7 +23,7 @@ import {
   getYearlyReport,
   getContent,
   getBranding,
-  getClimatologyMonthly,
+  getGroupedArchive,
   getAlmanacPlanets,
   getAlmanacMoonNames,
   getAlmanacEclipses,
@@ -52,7 +52,6 @@ import { mockStation } from '../mock/station';
 import { mockArchiveData } from '../mock/archive';
 import { mockLightning } from '../mock/lightning';
 import { mockScene } from '../mock/scene';
-import { mockClimatology } from '../mock/climatology';
 import { mockPlanets } from '../mock/planets';
 import { mockMoonNames } from '../mock/moonNames';
 import { mockEclipses } from '../mock/eclipses';
@@ -83,7 +82,7 @@ import type {
   UnitsBlock,
   TodayStats,
   LightningData,
-  ClimatologyMonthly,
+  GroupedArchiveData,
   PlanetsVisible,
   ApiMoonNamesCalendar,
   ApiSpecialMoonEntry,
@@ -745,17 +744,37 @@ export function useTodayStats(
 }
 
 // ---------------------------------------------------------------------------
-// useClimatologyMonthly — /climatology/monthly
+// useGroupedArchive — /archive/grouped
+//
+// params=null means "don't fetch" — for call sites that conditionally need
+// grouped data (e.g. charts without xAxisGroupby).
 // ---------------------------------------------------------------------------
 
-export function useClimatologyMonthly(): HookResult<ClimatologyMonthly> {
-  const { data, loading, error, refetch } = useApiQuery<{ data: ClimatologyMonthly }>(
-    (signal) => getClimatologyMonthly(undefined, signal),
-    { skip: isMockMode() },
+export function useGroupedArchive(params: {
+  group_by: string;
+  fields: string;
+  from?: number;
+  to?: number;
+  force_full_period?: boolean;
+} | null): HookResult<GroupedArchiveData> {
+  const groupBy = params?.group_by ?? '';
+  const fields = params?.fields ?? '';
+  const from = params?.from;
+  const to = params?.to;
+  const forceFullPeriod = params?.force_full_period;
+
+  const { data, loading, error, refetch } = useApiQuery<{ data: GroupedArchiveData }>(
+    (signal) => getGroupedArchive(params!, signal),
+    { skip: params === null || isMockMode(), deps: [groupBy, fields, from, to, forceFullPeriod] },
   );
 
+  if (params === null) {
+    return { data: null, loading: false, error: null, refetch: () => { /* no-op: params=null */ } };
+  }
+
   if (isMockMode()) {
-    return mockResult<ClimatologyMonthly>(mockClimatology);
+    // Return empty grouped data in mock mode — no mock fixture needed for this endpoint.
+    return { data: { labels: [], series: {} }, loading: false, error: null, refetch: () => { /* no-op: mock mode */ } };
   }
 
   return {

@@ -4,9 +4,8 @@
 //
 // Architecture:
 //   ConfigDrivenGroup receives ChartGroupConfig
-//     → Determines data mode (climatology vs archive)
 //     → Renders date controls (rolling ranges | year/month dropdowns | none)
-//     → Fetches via useArchive or useClimatologyMonthly
+//     → Fetches via useArchive (standard charts) or useGroupedArchive (xAxisGroupby charts)
 //     → Transforms records into seriesId-keyed rows
 //     → Renders ConfigDrivenChart for each chart in the group
 //     → Supports chart/table view toggle
@@ -29,7 +28,7 @@ import { useState, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useArchive, useClimatologyMonthly, useCustomQueries } from '../../hooks/useWeatherData';
+import { useArchive, useGroupedArchive, useCustomQueries } from '../../hooks/useWeatherData';
 import { buildWindRoseMatrix, defaultBeaufortColors } from '../../utils/wind-rose-binning';
 import { ConfigDrivenChart } from './ConfigDrivenChart';
 import { WindRoseChart } from './WindRoseChart';
@@ -39,7 +38,7 @@ import { HaysChart } from './HaysChart';
 import { lttbDownsample } from '../../utils/lttb';
 import { exportChartAsCsv, exportChartAsPng, buildExportFilename } from '../../utils/chart-export';
 import { Card, CardHeader, CardTitle } from '../ui/card';
-import type { ChartGroupConfig } from '../../api/types';
+import type { ChartGroupConfig, ChartConfig, GroupedArchiveData } from '../../api/types';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -114,21 +113,32 @@ function buildYearList(stationFirstYear: number | undefined): number[] {
 
 
 /**
- * Map from `${observationType}:${averageType}` → ClimatologyMonthly field key.
- * Used to map series config onto the four climatology arrays.
+ * Transform a GroupedArchiveData response into chart-row format for one chart.
+ *
+ * Each series spec key is "<field>:<aggregateType>[:<averageType>]".
+ * Rows are keyed by series.name (the seriesId used by ConfigDrivenChart).
  */
-const CLIMATOLOGY_FIELD_MAP: Record<string, string> = {
-  'outTemp:avg_max': 'avgHighTemp',
-  'outTemp:avg_min': 'avgLowTemp',
-  'outTemp:max': 'avgHighTemp',
-  'outTemp:min': 'avgLowTemp',
-  'dewpoint:avg': 'avgDewpoint',
-  'rain:avg_monthly_total': 'avgRainfall',
-  'rain:sum': 'avgRainfall',
-  'rain:sumcumulative': 'avgRainfall',
-  'rainTotal:sum': 'avgRainfall',
-  'rainTotal:sumcumulative': 'avgRainfall',
-};
+function buildGroupedChartData(
+  chart: ChartConfig,
+  groupedData: GroupedArchiveData | null,
+): { data: Record<string, number | string | null>[]; xKey: string } {
+  if (!groupedData) return { data: [], xKey: 'label' };
+
+  return {
+    data: groupedData.labels.map((label, i) => {
+      const row: Record<string, number | string | null> = { label };
+      for (const series of chart.series) {
+        const obsType = series.observationType ?? series.seriesId;
+        const aggType = series.aggregateType ?? 'avg';
+        const avgType = series.averageType;
+        const key = avgType ? `${obsType}:${aggType}:${avgType}` : `${obsType}:${aggType}`;
+        row[series.seriesId] = groupedData.series[key]?.[i] ?? null;
+      }
+      return row;
+    }),
+    xKey: 'label',
+  };
+}
 
 /**
  * Format a timestamp ISO string for the x-axis tick, choosing resolution
@@ -247,12 +257,9 @@ export function ConfigDrivenGroup({
   // Data mode detection
   // -------------------------------------------------------------------------
 
-  // Each CHART decides its own data source — the GROUP does not have a single mode.
-  // Archive data is ALWAYS fetched (for charts that need it).
-  // Climatology data is always fetched (unconditional hook).
-  // allClimatology = true only when EVERY chart is climatology (pure climatology group).
-  // In mixed groups (like ANNUAL), both data sources are available.
-  const allClimatology = group.charts.length > 0 && group.charts.every((c) => c.xAxisGroupby === 'month');
+  // Each CHART independently decides its data source.
+  // Charts with xAxisGroupby use the grouped archive endpoint.
+  // All others use the standard archive endpoint.
 
   // Wind rose mode: any chart in the group has a windRose series
   const hasWindRose =
@@ -298,9 +305,8 @@ export function ConfigDrivenGroup({
   // -------------------------------------------------------------------------
 
   const archiveParams = useMemo(() => {
-    if (allClimatology) return undefined;
-
     // Collect unique observation types across all visible series.
+    // Skip series that use xAxisGroupby — those use the grouped archive endpoint instead.
     // For wind rose groups, always include windSpeed and windDir so the
     // BFF can inject the beaufort field (ADR-042) and the binning utility
     // has the direction data it needs.
@@ -308,6 +314,8 @@ export function ConfigDrivenGroup({
     const FIELD_ALIASES: Record<string, string> = { rainTotal: 'rain' };
     const fields = new Set<string>();
     group.charts.forEach((chart) => {
+      // Charts using xAxisGroupby fetch from the grouped archive endpoint — skip here.
+      if (chart.xAxisGroupby) return;
       chart.series.forEach((s) => {
         if (s.useCustomSql) return;
         if (SKIP_SERIES.has(s.seriesId)) return;
@@ -404,6 +412,10 @@ export function ConfigDrivenGroup({
       });
     }
 
+    // Skip archive fetch when no non-grouped fields were collected (e.g. all charts
+    // use xAxisGroupby and there are no wind rose series).
+    if (fields.size === 0) return undefined;
+
     return {
       from,
       to,
@@ -412,7 +424,6 @@ export function ConfigDrivenGroup({
       agg_map: aggPairs.length > 0 ? aggPairs.join(',') : undefined,
     };
   }, [
-    allClimatology,
     hasWindRose,
     group.charts,
     group.timespanStart,
@@ -452,16 +463,58 @@ export function ConfigDrivenGroup({
   }, [hasRangeChart, rangeField, archiveParams]);
 
   // -------------------------------------------------------------------------
+  // Grouped archive params — one fetch per group covering all xAxisGroupby charts.
+  // Rules of Hooks: this useMemo is always called; it returns null when no
+  // xAxisGroupby charts exist, which causes useGroupedArchive to skip.
+  // -------------------------------------------------------------------------
+
+  // Compute epoch timestamps for the selected year (used as from/to for grouped fetch).
+  // When no year is selected (all-time), both are undefined.
+  const selectedYearFrom: number | undefined = selectedYear
+    ? Math.floor(new Date(selectedYear, 0, 1).getTime() / 1000)
+    : undefined;
+  const selectedYearTo: number | undefined = selectedYear
+    ? Math.floor(new Date(selectedYear + 1, 0, 1).getTime() / 1000)
+    : undefined;
+
+  const groupedParams = useMemo(() => {
+    const xAxisCharts = group.charts.filter((c) => c.xAxisGroupby);
+    if (xAxisCharts.length === 0) return null;
+
+    const fieldSpecs: string[] = [];
+    for (const chart of xAxisCharts) {
+      for (const series of chart.series) {
+        const obsType = series.observationType ?? series.seriesId;
+        const aggType = series.aggregateType ?? 'avg';
+        const avgType = series.averageType;
+        const spec = avgType ? `${obsType}:${aggType}:${avgType}` : `${obsType}:${aggType}`;
+        fieldSpecs.push(spec);
+      }
+    }
+
+    // All xAxisGroupby charts in a group share the same group_by value.
+    const groupBy = xAxisCharts[0].xAxisGroupby!;
+
+    return {
+      group_by: groupBy,
+      fields: [...new Set(fieldSpecs)].join(','),
+      from: selectedYearFrom,
+      to: selectedYearTo,
+      force_full_period: true,
+    };
+  }, [group.charts, selectedYearFrom, selectedYearTo]);
+
+  const groupedArchive = useGroupedArchive(groupedParams);
+
+  // -------------------------------------------------------------------------
   // Data fetching (all hooks called unconditionally — Rules of Hooks)
-  // Pass undefined to useArchive when in climatology mode to prevent a fetch.
-  // The hook treats undefined params as "skip" (returns empty/null gracefully).
   // Wind rose data is derived from the same archive fetch (T3.2: client-side binning).
   // Range chart data uses two separate fetches (agg=max and agg=min).
   // -------------------------------------------------------------------------
 
   const archiveResult = useArchive(
-    allClimatology ? undefined : archiveParams ?? undefined,
-    { skip: allClimatology },
+    archiveParams ?? undefined,
+    { skip: archiveParams === undefined },
   );
 
   // Separate raw fetch for wind rose — needs unaggregated data to preserve
@@ -479,8 +532,6 @@ export function ConfigDrivenGroup({
     };
   }, [hasWindRose, archiveParams]);
   const windRoseArchiveResult = useArchive(windRoseParams, { skip: !hasWindRose });
-
-  const climatologyResult = useClimatologyMonthly();
 
   // Range chart dual-fetch — both hooks called unconditionally; skip when not a range chart.
   const rangeHighResult = useArchive(
@@ -563,61 +614,21 @@ export function ConfigDrivenGroup({
     return buildWindRoseMatrix(windRoseArchiveResult.data as unknown as Record<string, unknown>[]);
   }, [hasWindRose, windRoseArchiveResult.data]);
 
-  // LTTB downsampling (archive only — climatology has exactly 12 points, never needs it)
+  // LTTB downsampling — archive data only.
   // Applied only for chart rendering; the raw archiveData is still used for the table view.
   // Uses gap-processed data so line breaks at data gaps are preserved after downsampling.
   const downsampledArchiveData = useMemo(() => {
-    if (allClimatology || gapProcessedArchiveData.length <= MAX_RAW_POINTS) return gapProcessedArchiveData;
-    // Use the first visible series' seriesId as the y-key for LTTB triangle selection.
+    if (gapProcessedArchiveData.length <= MAX_RAW_POINTS) return gapProcessedArchiveData;
+    // Use the first visible non-xAxisGroupby series as the y-key for LTTB triangle selection.
     // LTTB selects points by maximising visual area; it needs a representative y-axis field.
     // If no visible series exists, fall back to returning the full data unsampled.
-    const firstVisibleSeries = group.charts[0]?.series?.find(
-      (s) => s.visible !== false,
-    );
+    const firstVisibleSeries = group.charts
+      .filter((c) => !c.xAxisGroupby)
+      .flatMap((c) => c.series)
+      .find((s) => s.visible !== false);
     if (!firstVisibleSeries) return gapProcessedArchiveData;
     return lttbDownsample(gapProcessedArchiveData, LTTB_THRESHOLD, 'timestamp', firstVisibleSeries.seriesId);
-  }, [allClimatology, gapProcessedArchiveData, group.charts]);
-
-  // Climatology path: map ClimatologyMonthly 12-element arrays into month rows,
-  // then merge any custom SQL series data by month index.
-  const climatologyData = useMemo(() => {
-    if (!climatologyResult.data) return [];
-    const clim = climatologyResult.data;
-    const rows = clim.months.map((month, i) => {
-      const row: Record<string, number | string | null> = { month };
-      group.charts.forEach((chart) => {
-        chart.series.forEach((series) => {
-          if (series.useCustomSql) return;
-          const obsType = series.observationType ?? series.seriesId;
-          if (series.visible !== false && obsType) {
-            const fieldKey =
-              CLIMATOLOGY_FIELD_MAP[`${obsType}:${series.averageType ?? series.aggregateType ?? 'avg'}`]
-              ?? CLIMATOLOGY_FIELD_MAP[`${obsType}:${series.aggregateType ?? 'avg'}`];
-            if (fieldKey && fieldKey in clim) {
-              row[series.seriesId] =
-                (clim as unknown as Record<string, (number | null)[]>)[fieldKey]?.[i] ??
-                null;
-            }
-          }
-        });
-      });
-      return row;
-    });
-
-    // Merge custom SQL data into climatology rows by x value (month number 1-12).
-    if (customQueryResults.data) {
-      for (const [seriesId, points] of Object.entries(customQueryResults.data)) {
-        for (const pt of points) {
-          const monthIdx = typeof pt.x === 'number' ? pt.x - 1 : parseInt(String(pt.x), 10) - 1;
-          if (monthIdx >= 0 && monthIdx < rows.length) {
-            rows[monthIdx][seriesId] = pt.y;
-          }
-        }
-      }
-    }
-
-    return rows;
-  }, [climatologyResult.data, group.charts, customQueryResults.data]);
+  }, [gapProcessedArchiveData, group.charts]);
 
   // Range chart data transformation (T4.1/T4.2):
   // Map archive records into { dateTime, value } pairs for WeatherRangeChart.
@@ -660,9 +671,9 @@ export function ConfigDrivenGroup({
   // -------------------------------------------------------------------------
 
   // Full dataset — used by the data table view so users see every raw row.
-  // Table view uses archive or climatology data depending on group mode.
-  const chartData = allClimatology ? climatologyData : archiveData;
-  const xKey = allClimatology ? 'month' : 'timestamp';
+  // Table view uses archive data (xAxisGroupby charts have their own rendering path).
+  const chartData = archiveData;
+  const xKey = 'timestamp';
   // Actual displayed range for X-axis formatting (per-chart formatters use this).
   const displayedRange = useMemo(() => {
     if (archiveParams?.from && archiveParams?.to) {
@@ -675,14 +686,14 @@ export function ConfigDrivenGroup({
 
   // Loading and error state: all active fetches must complete.
   const isLoading = archiveResult.loading
-    || climatologyResult.loading
+    || groupedArchive.loading
     || (hasRangeChart && (rangeHighResult.loading || rangeLowResult.loading));
   const fetchError = archiveResult.error
-    ?? climatologyResult.error
+    ?? groupedArchive.error
     ?? (hasRangeChart ? (rangeHighResult.error ?? rangeLowResult.error) : null);
   const onRetry = () => {
     archiveResult.refetch();
-    climatologyResult.refetch();
+    groupedArchive.refetch();
     if (hasRangeChart) { rangeHighResult.refetch(); rangeLowResult.refetch(); }
   };
 
@@ -691,12 +702,10 @@ export function ConfigDrivenGroup({
   // -------------------------------------------------------------------------
 
   const showRollingRanges =
-    !allClimatology &&
     group.enableDateRanges &&
     group.rollingRanges.length > 0;
 
   const showYearMonthDropdowns =
-    !allClimatology &&
     !showRollingRanges &&
     (group.availableYears.length > 0 || stationFirstYear != null);
 
@@ -739,10 +748,8 @@ export function ConfigDrivenGroup({
       );
       return;
     }
-    const xLabel =
-      xKey === 'timestamp' ? t('tableColumnTime') : t('tableColumnMonth');
     const columns: { key: string; label: string }[] = [
-      { key: xKey, label: xLabel },
+      { key: xKey, label: t('tableColumnTime') },
       ...allVisibleSeries.map((s) => ({ key: s.seriesId, label: s.name ?? s.seriesId })),
     ];
     exportChartAsCsv(
@@ -1048,7 +1055,7 @@ export function ConfigDrivenGroup({
                     scope="col"
                     className="py-2 px-3 text-left font-medium text-muted-foreground"
                   >
-                    {xKey === 'timestamp' ? t('tableColumnTime') : t('tableColumnMonth')}
+                    {t('tableColumnTime')}
                   </th>
                   {allVisibleSeries.map((s) => (
                     <th
@@ -1065,10 +1072,8 @@ export function ConfigDrivenGroup({
                 {(chartData as Record<string, string | number | null>[]).map((row, rowIndex) => {
                   const xVal = row[xKey];
                   const displayX =
-                    xKey === 'timestamp' && xVal != null
+                    xVal != null
                       ? formatTimestamp(xVal, selectedRange)
-                      : xVal != null
-                      ? String(xVal)
                       : '—';
                   return (
                     <tr
@@ -1249,22 +1254,35 @@ export function ConfigDrivenGroup({
                 );
               }
 
-              // Per-chart data source: charts with xAxisGroupby use climatology,
-              // all others use archive data. Each chart is independent.
-              const isChartClimatology = chart.xAxisGroupby === 'month';
-              const thisChartData = isChartClimatology ? climatologyData : downsampledArchiveData;
-              const thisXKey = isChartClimatology ? 'month' : 'timestamp';
-              const thisXFormatter = isChartClimatology
-                ? undefined
-                : (v: string | number) => formatTimestamp(v, displayedRange);
+              // Per-chart data source: charts with xAxisGroupby use the grouped
+              // archive endpoint (already fetched above); all others use archive data.
+              if (chart.xAxisGroupby) {
+                const { data: groupedChartData, xKey: groupedXKey } = buildGroupedChartData(
+                  chart,
+                  groupedArchive.data,
+                );
+                return (
+                  <ConfigDrivenChart
+                    key={chart.chartId}
+                    config={chart}
+                    data={groupedChartData}
+                    xKey={groupedXKey}
+                    xFormatter={undefined}
+                    globalColors={globalColors}
+                    globalType={globalType}
+                    height={300}
+                    reducedMotion={reducedMotion}
+                  />
+                );
+              }
 
               return (
                 <ConfigDrivenChart
                   key={chart.chartId}
                   config={chart}
-                  data={thisChartData}
-                  xKey={thisXKey}
-                  xFormatter={thisXFormatter}
+                  data={downsampledArchiveData}
+                  xKey="timestamp"
+                  xFormatter={(v: string | number) => formatTimestamp(v, displayedRange)}
                   globalColors={globalColors}
                   globalType={globalType}
                   height={300}

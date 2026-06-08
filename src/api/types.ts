@@ -742,16 +742,19 @@ export interface RadarFramesResponse {
 }
 
 // ---------------------------------------------------------------------------
-// /climatology/monthly
+// /archive/grouped
 // ---------------------------------------------------------------------------
 
-export interface ClimatologyMonthly {
-  /** 12-element arrays, one entry per month (index 0 = January). */
-  months: string[];
-  avgHighTemp: (number | null)[];
-  avgLowTemp: (number | null)[];
-  avgDewpoint: (number | null)[];
-  avgRainfall: (number | null)[];
+/**
+ * GroupedArchiveData — response shape for GET /archive/grouped.
+ *
+ * labels: one entry per group bucket (e.g. "01"–"12" for month grouping).
+ * series: keyed by "<field>:<aggregateType>[:<averageType>]" spec strings.
+ *         Each value array is parallel to labels.
+ */
+export interface GroupedArchiveData {
+  labels: string[];
+  series: Record<string, (number | null)[]>;
 }
 
 // ---------------------------------------------------------------------------

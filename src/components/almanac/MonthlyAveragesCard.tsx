@@ -20,7 +20,7 @@ import {
   CardTitle,
   CardContent,
 } from '../ui/card';
-import type { ClimatologyMonthly } from '../../api/types';
+import type { GroupedArchiveData } from '../../api/types';
 import { useTheme } from '../../lib/theme-provider';
 import { ensureChartContrast } from '../../utils/chart-contrast';
 
@@ -29,7 +29,7 @@ import { ensureChartContrast } from '../../utils/chart-contrast';
 // ---------------------------------------------------------------------------
 
 export interface MonthlyAveragesCardProps {
-  climatology: ClimatologyMonthly | null;
+  groupedData: GroupedArchiveData | null;
   loading: boolean;
   error: string | null;
 }
@@ -81,21 +81,36 @@ interface ChartRow {
   avgRainfall: number | null;
 }
 
-function buildChartData(climatology: ClimatologyMonthly): ChartRow[] {
-  return climatology.months.map((month, i) => ({
-    month,
-    avgHigh: climatology.avgHighTemp[i] ?? null,
-    avgLow: climatology.avgLowTemp[i] ?? null,
-    avgDewpoint: climatology.avgDewpoint[i] ?? null,
-    avgRainfall: climatology.avgRainfall[i] ?? null,
+/** Month number strings "01"–"12" mapped to short month names. */
+const MONTH_LABELS: Record<string, string> = {
+  '01': 'Jan', '02': 'Feb', '03': 'Mar', '04': 'Apr',
+  '05': 'May', '06': 'Jun', '07': 'Jul', '08': 'Aug',
+  '09': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Dec',
+};
+
+function buildChartData(groupedData: GroupedArchiveData): ChartRow[] {
+  const avgHigh = groupedData.series['outTemp:avg:max'] ?? [];
+  const avgLow  = groupedData.series['outTemp:avg:min'] ?? [];
+  const avgDewp = groupedData.series['dewpoint:avg']    ?? [];
+  const avgRain = groupedData.series['rain:avg:sum']    ?? [];
+
+  return groupedData.labels.map((label, i) => ({
+    month: MONTH_LABELS[label] ?? label,
+    avgHigh:    avgHigh[i] ?? null,
+    avgLow:     avgLow[i]  ?? null,
+    avgDewpoint: avgDewp[i] ?? null,
+    avgRainfall: avgRain[i] ?? null,
   }));
 }
 
-function hasUsableData(climatology: ClimatologyMonthly): boolean {
+function hasUsableData(groupedData: GroupedArchiveData): boolean {
+  const avgHigh = groupedData.series['outTemp:avg:max'] ?? [];
+  const avgLow  = groupedData.series['outTemp:avg:min'] ?? [];
+  const avgRain = groupedData.series['rain:avg:sum']    ?? [];
   return (
-    climatology.avgHighTemp.some((v) => v !== null) ||
-    climatology.avgLowTemp.some((v) => v !== null) ||
-    climatology.avgRainfall.some((v) => v !== null)
+    avgHigh.some((v) => v !== null) ||
+    avgLow.some((v) => v !== null) ||
+    avgRain.some((v) => v !== null)
   );
 }
 
@@ -146,7 +161,7 @@ function SquareDot(props: any) {
  * - The retry button is a <button>, keyboard-reachable with visible focus ring
  */
 export function MonthlyAveragesCard({
-  climatology,
+  groupedData,
   loading,
   error,
 }: MonthlyAveragesCardProps) {
@@ -168,7 +183,7 @@ export function MonthlyAveragesCard({
   }
 
   // Null / no-data state
-  if (climatology === null || !hasUsableData(climatology)) {
+  if (groupedData === null || !hasUsableData(groupedData)) {
     return (
       <Card footprint="full">
         <CardContent className="py-8 text-center text-muted-foreground text-sm">
@@ -178,7 +193,7 @@ export function MonthlyAveragesCard({
     );
   }
 
-  const chartData = buildChartData(climatology);
+  const chartData = buildChartData(groupedData);
 
   return (
     <Card footprint="full">

@@ -25,7 +25,7 @@ import type {
   MarkdownContentResponse,
   ProblemDetail,
   RadarFramesResponse,
-  ClimatologyMonthly,
+  GroupedArchiveData,
   PlanetsVisible,
   ApiMoonNamesCalendar,
   LunarEclipseData,
@@ -292,17 +292,27 @@ export function getBranding(signal?: AbortSignal): Promise<ApiResponse<ApiBrandi
 }
 
 // ---------------------------------------------------------------------------
-// GET /climatology/monthly
+// GET /archive/grouped
 // ---------------------------------------------------------------------------
 
-export function getClimatologyMonthly(
-  params?: { fields?: string; agg?: string },
+export function getGroupedArchive(
+  params: {
+    group_by: string;
+    fields: string;
+    from?: number;
+    to?: number;
+    force_full_period?: boolean;
+  },
   signal?: AbortSignal,
-): Promise<ApiResponse<ClimatologyMonthly>> {
-  const p: Record<string, string> = {};
-  if (params?.fields) p['fields'] = params.fields;
-  if (params?.agg) p['agg'] = params.agg;
-  return fetchApi<ApiResponse<ClimatologyMonthly>>('/climatology/monthly', Object.keys(p).length ? p : undefined, signal);
+): Promise<ApiResponse<GroupedArchiveData>> {
+  const p: Record<string, string> = {
+    group_by: params.group_by,
+    fields: params.fields,
+  };
+  if (params.from !== undefined) p['from'] = String(params.from);
+  if (params.to !== undefined) p['to'] = String(params.to);
+  if (params.force_full_period !== undefined) p['force_full_period'] = String(params.force_full_period);
+  return fetchApi<ApiResponse<GroupedArchiveData>>('/archive/grouped', p, signal);
 }
 
 // ---------------------------------------------------------------------------

@@ -19,7 +19,7 @@ import {
   useAlmanac,
   useAlmanacMoonNames,
   useAlmanacPlanets,
-  useClimatologyMonthly,
+  useGroupedArchive,
   useSolarEclipses,
   useAlmanacEclipses,
   useAlmanacMeteorShowers,
@@ -53,7 +53,10 @@ export function AlmanacPage() {
   const almanacTomorrow = useAlmanac(tomorrowStr);
   const moonNames       = useAlmanacMoonNames();
   const planets       = useAlmanacPlanets();
-  const climatology   = useClimatologyMonthly();
+  const monthlyAverages = useGroupedArchive({
+    group_by: 'month',
+    fields: 'outTemp:avg:max,outTemp:avg:min,dewpoint:avg,rain:avg:sum',
+  });
   const solarEclipses = useSolarEclipses();
   const lunarEclipses = useAlmanacEclipses();
   const meteorShowers = useAlmanacMeteorShowers();
@@ -72,9 +75,9 @@ export function AlmanacPage() {
 
         {/* ── Surface D: Monthly Averages chart (first per approved mockup) ── */}
         <MonthlyAveragesCard
-          climatology={climatology.data}
-          loading={climatology.loading}
-          error={climatology.error?.message ?? null}
+          groupedData={monthlyAverages.data}
+          loading={monthlyAverages.loading}
+          error={monthlyAverages.error?.message ?? null}
         />
 
         {/* ── Surface B: Sun & Moon detail ──────────────────────────────── */}
