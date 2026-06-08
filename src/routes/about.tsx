@@ -13,6 +13,25 @@ import { PageHeaderCard } from '../components/layout/page-header-card';
 import { useStation, useContent, useCapabilities } from '../hooks/useWeatherData';
 import { SCENE_ASSET_MAP } from '../components/background/scene-background-types';
 
+const PROVIDER_INFO: Record<string, { name: string; url: string }> = {
+  nws:            { name: 'US National Weather Service / NOAA',       url: 'https://www.weather.gov' },
+  aeris:          { name: 'Aeris Weather (DTN)',                      url: 'https://www.aerisweather.com' },
+  openmeteo:      { name: 'Open-Meteo',                              url: 'https://open-meteo.com' },
+  openweathermap: { name: 'OpenWeatherMap',                          url: 'https://openweathermap.org' },
+  wunderground:   { name: 'Weather Underground (IBM)',                url: 'https://www.wunderground.com' },
+  iqair:          { name: 'IQAir',                                   url: 'https://www.iqair.com' },
+  usgs:           { name: 'US Geological Survey / US Dept. of the Interior', url: 'https://earthquake.usgs.gov' },
+  geonet:         { name: 'GeoNet (GNS Science, New Zealand)',       url: 'https://www.geonet.org.nz' },
+  emsc:           { name: 'European-Mediterranean Seismological Centre', url: 'https://www.emsc-csem.org' },
+  renass:         { name: 'Réseau National de Surveillance Sismique (France)', url: 'https://renass.unistra.fr' },
+  seven_timer:    { name: '7Timer! Astronomical Seeing Forecast',    url: 'https://www.7timer.info' },
+  rainviewer:     { name: 'RainViewer',                              url: 'https://www.rainviewer.com' },
+  iem_nexrad:     { name: 'Iowa Environmental Mesonet NEXRAD',       url: 'https://mesonet.agron.iastate.edu' },
+  noaa_mrms:      { name: 'NOAA Multi-Radar Multi-Sensor (MRMS)',    url: 'https://www.nssl.noaa.gov/projects/mrms/' },
+  msc_geomet:     { name: 'Meteorological Service of Canada GeoMet', url: 'https://eccc-msc.github.io/open-data/' },
+  dwd_radolan:    { name: 'Deutscher Wetterdienst RADOLAN',          url: 'https://www.dwd.de' },
+};
+
 function formatLongDate(isoString: string | null, locale: string): string {
   if (!isoString) return '—';
   return new Intl.DateTimeFormat(locale, {
@@ -211,18 +230,33 @@ export function AboutPage() {
               <dl className="grid grid-cols-1 gap-y-3 text-sm sm:grid-cols-2">
                 {Object.entries(
                   capabilities.providers.reduce<Record<string, string[]>>((acc, p) => {
-                    const domain = p.domain;
-                    if (!acc[domain]) acc[domain] = [];
-                    if (!acc[domain].includes(p.providerId)) acc[domain].push(p.providerId);
+                    if (!acc[p.domain]) acc[p.domain] = [];
+                    if (!acc[p.domain].includes(p.providerId)) acc[p.domain].push(p.providerId);
                     return acc;
                   }, {}),
-                ).map(([domain, providers]) => (
+                ).map(([domain, providerIds]) => (
                   <div key={domain}>
                     <dt className="text-muted-foreground">
                       {t(`dataProviders.domain.${domain}`, { defaultValue: domain })}
                     </dt>
-                    <dd className="mt-0.5 font-medium text-foreground capitalize">
-                      {providers.join(', ')}
+                    <dd className="mt-0.5 space-y-0.5">
+                      {providerIds.map(id => {
+                        const info = PROVIDER_INFO[id];
+                        return info ? (
+                          <div key={id}>
+                            <a
+                              href={info.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-medium text-foreground underline underline-offset-4 hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                            >
+                              {info.name}
+                            </a>
+                          </div>
+                        ) : (
+                          <div key={id} className="font-medium text-foreground capitalize">{id}</div>
+                        );
+                      })}
                     </dd>
                   </div>
                 ))}
@@ -239,7 +273,6 @@ export function AboutPage() {
             <CardTitle as="h2">{t('photoCredits.cardTitle')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground mb-3">{t('photoCredits.description')}</p>
             <dl className="grid grid-cols-1 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
               {Object.entries(SCENE_ASSET_MAP).map(([key, entry]) => (
                 <div key={key}>

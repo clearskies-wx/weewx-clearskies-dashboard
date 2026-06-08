@@ -46,7 +46,6 @@
   },
   "photoCredits": {
     "cardTitle": "Photo Credits",
-    "description": "Background scene photos used throughout the site. Operators may replace these with custom images via the configuration UI.",
     "scene": {
       "clear-day": "Clear sky, daytime",
       "clear-night": "Clear sky, nighttime",
