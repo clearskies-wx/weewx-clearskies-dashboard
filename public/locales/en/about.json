@@ -22,7 +22,7 @@
   "software": {
     "cardTitle": "Software",
     "weatherSoftware": "Weather Software",
-    "weatherSoftwareValue": "weewx 5.x",
+    "weatherSoftwareValue": "weewx",
     "dashboard": "Dashboard",
     "dashboardValue": "Clear Skies v0.1.0-dev",
     "dashboardEngine": "Dashboard Engine",
@@ -31,5 +31,30 @@
   "photo": {
     "cardTitle": "Station Photo",
     "placeholder": "Upload a station photo via the Clear Skies configuration UI."
+  },
+  "dataProviders": {
+    "cardTitle": "Data Providers",
+    "empty": "No data providers configured.",
+    "domain": {
+      "forecast": "Forecast",
+      "alerts": "Alerts",
+      "aqi": "Air Quality",
+      "earthquakes": "Earthquakes",
+      "radar": "Radar",
+      "seeing": "Astronomical Seeing"
+    }
+  },
+  "photoCredits": {
+    "cardTitle": "Photo Credits",
+    "description": "Background scene photos used throughout the site. Operators may replace these with custom images via the configuration UI.",
+    "scene": {
+      "clear-day": "Clear sky, daytime",
+      "clear-night": "Clear sky, nighttime",
+      "cloudy-day": "Cloudy, daytime",
+      "cloudy-night": "Cloudy, nighttime",
+      "storm-day": "Storm, daytime",
+      "storm-night": "Storm, nighttime"
+    },
+    "builtIn": "Built-in"
   }
 }

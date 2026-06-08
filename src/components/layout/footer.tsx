@@ -130,16 +130,7 @@ function ShareRow() {
 // Footer
 // ---------------------------------------------------------------------------
 
-interface FooterProps {
-  /**
-   * Photographer credit for the current background scene, or null when none
-   * is required (e.g. clear-day). Supplied by AppLayout via sceneAttribution().
-   * Rendered as aria-hidden decorative text (ADR-047 §Decision 7).
-   */
-  photoCredit?: string | null;
-}
-
-export function Footer({ photoCredit }: FooterProps) {
+export function Footer() {
   const { data: station } = useStation();
   const { t } = useTranslation('common');
   const branding = useBranding();
@@ -187,18 +178,6 @@ export function Footer({ photoCredit }: FooterProps) {
         <ShareRow />
       </div>
 
-      {/* Photo credit — shown only when the current background scene has attribution.
-          aria-hidden: decorative provenance text; not meaningful to AT users.
-          (Same treatment as the original fixed-position pill — ADR-047 §Decision 7) */}
-      {photoCredit != null && (
-        <p
-          aria-hidden="true"
-          className="hidden md:block mt-0.5 text-[0.65rem] leading-tight"
-          style={{ color: 'rgba(255, 255, 255, 0.55)' }}
-        >
-          Photo: {photoCredit}
-        </p>
-      )}
     </footer>
   );
 }

@@ -15,7 +15,6 @@ import { Footer } from './footer';
 import { useObservation } from '../../hooks/useWeatherData';
 import { useTheme } from '../../lib/theme-provider';
 import { SceneBackground } from '../background/scene-background';
-import { sceneAttribution } from '../background/scene-background-types';
 import type { SceneDescriptor } from '../../api/types';
 
 export function AppLayout() {
@@ -38,8 +37,6 @@ export function AppLayout() {
     daytime: bgDaytime,
     overlay: scene.overlay,
   };
-
-  const photoCredit = sceneAttribution(resolvedScene);
 
   return (
     <>
@@ -86,7 +83,7 @@ export function AppLayout() {
               <Outlet />
             </main>
 
-            <Footer photoCredit={photoCredit} />
+            <Footer />
           </div>
         </div>
       </div>
