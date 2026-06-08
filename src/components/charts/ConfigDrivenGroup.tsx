@@ -225,8 +225,8 @@ export function ConfigDrivenGroup({
   const [internalSelectedRange, setInternalSelectedRange] = useState<string>(
     group.rollingRanges[0] ?? '1d',
   );
-  const [internalSelectedYear, setInternalSelectedYear] = useState<number>(
-    group.availableYears[0] ?? new Date().getFullYear(),
+  const [internalSelectedYear, setInternalSelectedYear] = useState<number | null>(
+    group.availableYears.length > 0 ? group.availableYears[0] : null,
   );
   const [internalSelectedMonth, setInternalSelectedMonth] = useState<number | null>(new Date().getMonth() + 1);
 
