@@ -29,6 +29,7 @@ import {
   CardTitle,
   CardContent,
 } from '../components/ui/card';
+import { Grid } from '../components/layout/grid';
 import { PageHeaderCard } from '../components/layout/page-header-card';
 import { Earthquake } from '../components/icons/earthquake';
 import type { EarthquakeRecord } from '../api/types';
@@ -209,56 +210,54 @@ export function SeismicPage() {
     : '';
 
   return (
-    // h-full + flex-col so the grid below can stretch to fill the available
-    // main-element height rather than overflowing the viewport.
     <div className="flex flex-col gap-4 h-full">
-      <PageHeaderCard
-        title={t('title')}
-        info={config ? t('configSummary', {
-          provider: config.provider.toUpperCase(),
-          radiusKm: config.radiusKm,
-          minMagnitude: config.minMagnitude.toFixed(1),
-          days: config.defaultDays,
-        }) : undefined}
-        icon={<Earthquake size={28} />}
-      >
-        <label className="flex items-center gap-1.5 text-sm text-muted-foreground cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={showFaults}
-            onChange={(e) => setShowFaults(e.target.checked)}
-            className="rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
-            aria-label={t('showFaultsAriaLabel')}
-          />
-          {t('showFaults')}
-        </label>
-      </PageHeaderCard>
+      <h1 className="sr-only">{t('title')}</h1>
 
-      {loading && (
-        <>
-          <span className="sr-only" role="status">{t('loadingData')}</span>
-          <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-4 gap-[var(--gap-grid)]">
-            <TileSkeleton className="lg:col-span-3 h-[300px] lg:h-full" />
-            <TileSkeleton className="h-[300px] lg:h-full" />
+      <Grid className="flex-1 min-h-0 grid-rows-[auto_1fr]">
+        <PageHeaderCard
+          title={t('title')}
+          info={config ? t('configSummary', {
+            provider: config.provider.toUpperCase(),
+            radiusKm: config.radiusKm,
+            minMagnitude: config.minMagnitude.toFixed(1),
+            days: config.defaultDays,
+          }) : undefined}
+          icon={<Earthquake size={28} />}
+        />
+
+        {loading && (
+          <>
+            <span className="sr-only" role="status">{t('loadingData')}</span>
+            <TileSkeleton className="col-span-1 md:col-span-2 lg:col-span-3 h-[300px] lg:h-full" />
+            <TileSkeleton className="col-span-1 md:col-span-2 lg:col-span-1 h-[300px] lg:h-full" />
+          </>
+        )}
+
+        {error && (
+          <div className="col-span-full">
+            <TileError message={t('unableToLoad')} onRetry={refetch} />
           </div>
-        </>
-      )}
+        )}
 
-      {error && <TileError message={t('unableToLoad')} onRetry={refetch} />}
-
-      {!loading && !error && earthquakes !== null && (
-        // flex-1 min-h-0: takes remaining height after the h1 + config bar,
-        // min-h-0 prevents flex children from ignoring the overflow boundary.
-        // On desktop: grid-cols-2 side-by-side. On mobile: stacked (grid-cols-1).
-        // Wrapper div so the GEM attribution can sit below the grid as a sibling.
-        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-4 gap-[var(--gap-grid)]">
-          {/* Map card: 3 of 4 grid columns.
-              Desktop: h-full fills the grid row (bounded by flex-1 parent).
-              Mobile: fixed h-[300px] so the list is immediately visible below. */}
-          <Card className="lg:col-span-3 overflow-hidden flex flex-col h-[300px] lg:h-full">
-            <CardHeader className="pb-2 shrink-0">
-              <CardTitle as="h2">{t('mapCardTitle')}</CardTitle>
-            </CardHeader>
+        {!loading && !error && earthquakes !== null && (
+          <>
+            {/* Map card: 3 of 4 grid columns (panel footprint). */}
+            <Card className="col-span-1 md:col-span-2 lg:col-span-3 overflow-hidden flex flex-col h-[300px] lg:h-full">
+              <CardHeader className="pb-2 shrink-0">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <CardTitle as="h2">{t('mapCardTitle')}</CardTitle>
+                  <label className="flex items-center gap-1.5 text-sm text-muted-foreground cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={showFaults}
+                      onChange={(e) => setShowFaults(e.target.checked)}
+                      className="rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+                      aria-label={t('showFaultsAriaLabel')}
+                    />
+                    {t('showFaults')}
+                  </label>
+                </div>
+              </CardHeader>
             <CardContent className="p-0 flex-1 min-h-0">
               <div
                 className="h-full"
@@ -343,13 +342,11 @@ export function SeismicPage() {
                 </MapContainer>
               </div>
             </CardContent>
-          </Card>
+            </Card>
 
-          {/* Earthquake list: 1 of 4 grid columns.
-              Desktop: h-full matches the grid row, overflow-y-auto scrolls.
-              Mobile: naturally tall (grid-cols-1, content-driven). */}
-          <Card className="flex flex-col lg:h-full">
-            <CardHeader className="pb-2 shrink-0">
+            {/* Earthquake list: 1 of 4 grid columns. */}
+            <Card className="col-span-1 md:col-span-2 lg:col-span-1 flex flex-col lg:h-full">
+              <CardHeader className="pb-2 shrink-0">
               <CardTitle as="h2">{t('listCardTitle')}</CardTitle>
             </CardHeader>
             <CardContent className="p-0 lg:flex-1 lg:min-h-0 lg:overflow-hidden">
@@ -445,9 +442,10 @@ export function SeismicPage() {
                 </div>
               )}
             </CardContent>
-          </Card>
-        </div>
-      )}
+            </Card>
+          </>
+        )}
+      </Grid>
     </div>
   );
 }
