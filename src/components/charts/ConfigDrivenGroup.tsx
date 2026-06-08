@@ -811,7 +811,7 @@ export function ConfigDrivenGroup({
             </label>
             <select
               id={`cdg-year-select-${group.groupId}`}
-              value={selectedYear}
+              value={selectedYear ?? undefined}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
               className="min-h-[44px] md:min-h-0 rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
