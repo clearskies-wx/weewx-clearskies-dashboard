@@ -504,7 +504,7 @@ export interface StationMetadata {
 
 export interface CapabilityDeclaration {
   providerId: string;
-  domain: 'forecast' | 'alerts' | 'aqi' | 'earthquakes' | 'radar';
+  domain: 'forecast' | 'alerts' | 'aqi' | 'earthquakes' | 'radar' | 'seeing' | 'almanac';
   suppliedCanonicalFields: string[];
   geographicCoverage: string;
   defaultPollIntervalSeconds?: number;

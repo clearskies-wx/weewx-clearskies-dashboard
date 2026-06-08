@@ -30,6 +30,7 @@ const PROVIDER_INFO: Record<string, { name: string; url: string }> = {
   noaa_mrms:      { name: 'NOAA Multi-Radar Multi-Sensor (MRMS)',    url: 'https://www.nssl.noaa.gov/projects/mrms/' },
   msc_geomet:     { name: 'Meteorological Service of Canada GeoMet', url: 'https://eccc-msc.github.io/open-data/' },
   dwd_radolan:    { name: 'Deutscher Wetterdienst RADOLAN',          url: 'https://www.dwd.de' },
+  astronomyapi:   { name: 'Astronomy API',                          url: 'https://astronomyapi.com' },
 };
 
 function formatLongDate(isoString: string | null, locale: string): string {

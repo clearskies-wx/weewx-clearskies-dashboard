@@ -41,7 +41,8 @@
       "aqi": "Air Quality",
       "earthquakes": "Earthquakes",
       "radar": "Radar",
-      "seeing": "Astronomical Seeing"
+      "seeing": "Astronomical Seeing",
+      "almanac": "Astronomy"
     }
   },
   "photoCredits": {
