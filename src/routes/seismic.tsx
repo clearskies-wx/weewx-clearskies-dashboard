@@ -400,13 +400,8 @@ export function SeismicPage() {
                               </div>
 
                               <div className="flex flex-col gap-0.5 min-w-0">
-                                <p className="font-semibold text-foreground leading-snug text-sm truncate">
+                                <p className="font-semibold text-foreground leading-snug text-sm line-clamp-2">
                                   {quake.place ?? t('unknownLocation')}
-                                  {quake.magnitudeType && (
-                                    <span className="ml-1 text-xs font-normal text-muted-foreground">
-                                      ({quake.magnitudeType.toLowerCase()})
-                                    </span>
-                                  )}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
                                   {formatTime(quake.time, station?.timezone ?? 'UTC', locale)}
@@ -414,10 +409,6 @@ export function SeismicPage() {
                                 <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground mt-0.5">
                                   {quake.depth !== null && (
                                     <span>{t('depth', { depth: formatValue(quake.depth, 'earthquakeDepth') })}</span>
-                                  )}
-                                  <span>{t('source', { source: quake.source.toUpperCase() })}</span>
-                                  {quake.felt !== null && (
-                                    <span>{t('feltBy', { count: quake.felt })}</span>
                                   )}
                                   {quake.tsunami && (
                                     <span className="font-medium text-amber-700 dark:text-amber-400">
