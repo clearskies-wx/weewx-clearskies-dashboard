@@ -136,7 +136,8 @@ function buildGroupedChartData(
           continue;
         }
         const obsType = series.observationType ?? series.seriesId;
-        const aggType = series.aggregateType ?? 'avg';
+        const rawAgg = series.aggregateType ?? 'avg';
+        const aggType = rawAgg === 'sumcumulative' ? 'sum' : rawAgg;
         const avgType = series.averageType;
         const key = avgType ? `${obsType}:${aggType}:${avgType}` : `${obsType}:${aggType}`;
         row[series.seriesId] = groupedData.series[key]?.[i] ?? null;
@@ -491,8 +492,10 @@ export function ConfigDrivenGroup({
     const fieldSpecs: string[] = [];
     for (const chart of xAxisCharts) {
       for (const series of chart.series) {
+        if (series.useCustomSql) continue;
         const obsType = series.observationType ?? series.seriesId;
-        const aggType = series.aggregateType ?? 'avg';
+        const rawAgg = series.aggregateType ?? 'avg';
+        const aggType = rawAgg === 'sumcumulative' ? 'sum' : rawAgg;
         const avgType = series.averageType;
         const spec = avgType ? `${obsType}:${aggType}:${avgType}` : `${obsType}:${aggType}`;
         fieldSpecs.push(spec);
