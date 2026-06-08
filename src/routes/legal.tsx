@@ -8,6 +8,9 @@ import {
   CardTitle,
   CardContent,
 } from '../components/ui/card';
+import { Grid } from '../components/layout/grid';
+import { PageHeaderCard } from '../components/layout/page-header-card';
+import { Scales } from '@phosphor-icons/react';
 import { useContent } from '../hooks/useWeatherData';
 
 function TileSkeleton({ className }: { className?: string }) {
@@ -109,30 +112,31 @@ export function LegalPage() {
   const quebecRights = t('jurisdictions.quebec.rights', { returnObjects: true }) as string[];
 
   return (
-    <div className="flex flex-col gap-6 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
+    <div className="flex flex-col gap-4">
+      <h1 className="sr-only">{t('title')}</h1>
 
-      {/* Operator-authored legal content — shown if configured, else show default text */}
-      {loading ? (
-        <>
-          <span className="sr-only" role="status">{t('loadingAria')}</span>
-          <TileSkeleton className="h-32" />
-        </>
-      ) : content ? (
-        <Card>
-          <CardHeader>
-            <CardTitle as="h2">{t('operatorCard.title')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
-              {content.markdown}
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          {/* 1. Privacy Policy */}
-          <Card>
+      <Grid className="md:auto-rows-[auto]">
+        <PageHeaderCard title={t('title')} icon={<Scales weight="duotone" />} />
+
+        {loading ? (
+          <>
+            <span className="sr-only" role="status">{t('loadingAria')}</span>
+            <TileSkeleton className="col-span-full h-32" />
+          </>
+        ) : content ? (
+          <Card footprint="full">
+            <CardHeader>
+              <CardTitle as="h2">{t('operatorCard.title')}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                {content.markdown}
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            <Card footprint="full">
             <CardHeader>
               <CardTitle as="h2">{t('privacy.title')}</CardTitle>
             </CardHeader>
@@ -143,10 +147,7 @@ export function LegalPage() {
             </CardContent>
           </Card>
 
-          {/* 2. Jurisdiction-specific toggleable sections (ADR-024 Gap #14)
-              Placement: below Privacy Policy, above Data Attribution.
-              Pattern: WAI-ARIA disclosure (§5.2 + §5.3 of coding rules). */}
-          <Card>
+          <Card footprint="full">
             <CardHeader>
               <CardTitle as="h2">{t('jurisdictions.sectionLabel')}</CardTitle>
             </CardHeader>
@@ -218,8 +219,7 @@ export function LegalPage() {
             </CardContent>
           </Card>
 
-          {/* 3. Data Attribution */}
-          <Card>
+          <Card footprint="full">
             <CardHeader>
               <CardTitle as="h2">{t('attribution.title')}</CardTitle>
             </CardHeader>
@@ -237,8 +237,7 @@ export function LegalPage() {
             </CardContent>
           </Card>
 
-          {/* 4. Open-Source Licenses */}
-          <Card>
+          <Card footprint="full">
             <CardHeader>
               <CardTitle as="h2">{t('openSource.title')}</CardTitle>
             </CardHeader>
@@ -250,6 +249,7 @@ export function LegalPage() {
           </Card>
         </>
       )}
+      </Grid>
     </div>
   );
 }
