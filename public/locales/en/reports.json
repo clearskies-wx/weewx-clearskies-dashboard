@@ -1,6 +1,6 @@
 {
   "title": "Reports",
-  "intro": "NOAA-style monthly and annual climate reports summarize temperature, precipitation, and other observations. Reports are generated from your station's archive data.",
+  "intro": "NOAA-style monthly and annual climate reports summarize temperature, precipitation, and other observations. Reports are generated from the station's archive data.",
   "card": {
     "title": "NOAA Climate Reports"
   },
