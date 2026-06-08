@@ -636,6 +636,7 @@ export interface ChartConfig {
   xAxisGroupby: string | null;
   xAxisCategories: string[];
   forceFullYear: boolean | null;
+  timeLength: number | string | null;
   subtitle: string | null;
   polar: boolean | null;
   series: SeriesConfig[];

@@ -362,11 +362,16 @@ export function ConfigDrivenGroup({
         to = nextMonth.toISOString();
       }
     } else {
-      // Default: use group's timeLength
-      const seconds =
-        typeof group.timeLength === 'number' ? group.timeLength : 86400;
+      // Default: use the widest timeLength across group and all charts.
+      // Chart-level timeLength overrides group-level per Belchertown semantics.
+      let maxSeconds = typeof group.timeLength === 'number' ? group.timeLength : 86400;
+      for (const chart of group.charts) {
+        if (typeof chart.timeLength === 'number' && chart.timeLength > maxSeconds) {
+          maxSeconds = chart.timeLength;
+        }
+      }
       to = new Date().toISOString();
-      from = new Date(Date.now() - seconds * 1000).toISOString();
+      from = new Date(Date.now() - maxSeconds * 1000).toISOString();
     }
 
     // Anchor to month start if configured
@@ -1287,11 +1292,21 @@ export function ConfigDrivenGroup({
                 );
               }
 
+              // Per-chart time filtering: if the chart has its own timeLength,
+              // clip data to that window (Belchertown chart-level override).
+              let chartData = downsampledArchiveData;
+              if (typeof chart.timeLength === 'number') {
+                const cutoff = new Date(Date.now() - chart.timeLength * 1000).toISOString();
+                chartData = downsampledArchiveData.filter(
+                  (r) => r.timestamp != null && String(r.timestamp) >= cutoff,
+                );
+              }
+
               return (
                 <ConfigDrivenChart
                   key={chart.chartId}
                   config={chart}
-                  data={downsampledArchiveData}
+                  data={chartData}
                   xKey="timestamp"
                   xFormatter={(v: string | number) => formatTimestamp(v, displayedRange)}
                   globalColors={globalColors}
