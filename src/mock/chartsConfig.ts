@@ -50,6 +50,7 @@ export const mockChartsConfig: ChartsConfigData = {
           xAxisGroupby: null,
           xAxisCategories: [],
           forceFullYear: null,
+          timeLength: null,
           subtitle: null,
           polar: null,
           series: [
@@ -152,6 +153,7 @@ export const mockChartsConfig: ChartsConfigData = {
           xAxisGroupby: null,
           xAxisCategories: [],
           forceFullYear: null,
+          timeLength: null,
           subtitle: null,
           polar: null,
           series: [
@@ -286,6 +288,7 @@ export const mockChartsConfig: ChartsConfigData = {
           xAxisGroupby: 'month',
           xAxisCategories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
           forceFullYear: null,
+          timeLength: null,
           subtitle: null,
           polar: null,
           series: [

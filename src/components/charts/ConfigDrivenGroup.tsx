@@ -27,6 +27,7 @@
 import { useState, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import { useArchive, useGroupedArchive, useCustomQueries } from '../../hooks/useWeatherData';
 import { buildWindRoseMatrix, defaultBeaufortColors } from '../../utils/wind-rose-binning';
@@ -793,7 +794,7 @@ export function ConfigDrivenGroup({
       {group.pageContent && (
         <Card footprint="full" className="p-4">
           <div className="prose prose-sm dark:prose-invert max-w-none [&_h1]:text-xl [&_h2]:text-lg [&_h3]:text-base [&_a]:text-primary [&_a]:underline [&_ul]:list-disc [&_ol]:list-decimal [&_code]:bg-muted [&_code]:px-1 [&_code]:rounded">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{group.pageContent}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>{group.pageContent}</ReactMarkdown>
           </div>
         </Card>
       )}
