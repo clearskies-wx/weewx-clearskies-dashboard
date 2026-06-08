@@ -159,19 +159,19 @@ export function RecordsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm" aria-label={t('sectionHeading', { section })}>
+                    <table className="w-full table-fixed text-sm" aria-label={t('sectionHeading', { section })}>
                       <thead>
                         <tr className="border-b border-border">
-                          <th scope="col" className="pb-2 text-left font-semibold text-foreground pr-4">
+                          <th scope="col" className="w-[40%] pb-2 text-left font-semibold text-foreground pr-4">
                             {t('tableHeaderRecord')}
                           </th>
-                          <th scope="col" className="pb-2 text-right font-semibold text-foreground pr-4">
+                          <th scope="col" className="w-[20%] pb-2 text-right font-semibold text-foreground pr-4">
                             {t('tableHeaderToday')}
                           </th>
-                          <th scope="col" className="pb-2 text-right font-semibold text-foreground pr-4">
+                          <th scope="col" className="w-[20%] pb-2 text-right font-semibold text-foreground pr-4">
                             {t('tableHeaderValue')}
                           </th>
-                          <th scope="col" className="pb-2 text-right font-semibold text-foreground">
+                          <th scope="col" className="w-[20%] pb-2 text-right font-semibold text-foreground">
                             {t('tableHeaderDateObserved')}
                           </th>
                         </tr>
