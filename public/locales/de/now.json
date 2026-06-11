@@ -141,6 +141,9 @@
       "uvIndex": "UV-Index"
     }
   },
+  "aqiCard": {
+    "title": "Luftqualität"
+  },
   "webcam": "Webcam",
   "webcamAlt": "Live-Webcam-Ansicht"
 }

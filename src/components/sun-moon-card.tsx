@@ -223,10 +223,7 @@ function ArcVisualization({ almanac, tz }: ArcVisualizationProps) {
     `Phase: ${phaseName}, ${illumText} illuminated`,
   ].join('. ');
 
-  // Moon phase label: positioned next to moon marker per C4 mockup
-  const moonLabelX = moonMarker ? moonMarker.x + 12 : CX;
-  const moonLabelY = moonMarker ? moonMarker.y + 1 : CY - 10;
-  const moonLabelAnchor = moonMarker ? 'start' as const : 'middle' as const;
+  // Moon phase label: centered inside the arc above the horizon line
 
   return (
     <svg
@@ -328,12 +325,11 @@ function ArcVisualization({ almanac, tz }: ArcVisualizationProps) {
         </g>
       )}
 
-      {/* ── Moon phase label (next to moon marker) ─────────────────────── */}
-      {/* Phase name */}
+      {/* ── Moon phase label (centered inside arc) ─────────────────────── */}
       <text
-        x={moonLabelX}
-        y={moonLabelY}
-        textAnchor={moonLabelAnchor}
+        x={CX}
+        y={CY - 22}
+        textAnchor="middle"
         fontSize={9}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
         fontWeight={600}
@@ -342,11 +338,10 @@ function ArcVisualization({ almanac, tz }: ArcVisualizationProps) {
       >
         ☽ {phaseName}
       </text>
-      {/* Illumination percent — one line below phase name */}
       <text
-        x={moonLabelX}
-        y={moonLabelY + 9}
-        textAnchor={moonLabelAnchor}
+        x={CX}
+        y={CY - 12}
+        textAnchor="middle"
         fontSize={8}
         fontFamily="var(--font-sans, system-ui, sans-serif)"
         fill="var(--muted-foreground, #64748b)"

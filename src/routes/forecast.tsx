@@ -19,25 +19,10 @@ import { ForecastDailyCard } from '../components/forecast/ForecastDailyCard';
 import { ForecastDiscussionCard } from '../components/forecast/ForecastDiscussionCard';
 import { useForecast, useStation } from '../hooks/useWeatherData';
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-function formatRelativeTime(isoString: string, locale: string): string {
-  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
-  const diffMs = new Date(isoString).getTime() - Date.now();
-  if (!Number.isFinite(diffMs)) return '—';
-  const diffMin = Math.round(diffMs / 60000);
-  const diffHr = Math.round(diffMin / 60);
-  const diffDay = Math.round(diffHr / 24);
-  if (Math.abs(diffMin) < 60) return rtf.format(diffMin, 'minute');
-  if (Math.abs(diffHr) < 24) return rtf.format(diffHr, 'hour');
-  return rtf.format(diffDay, 'day');
-}
-
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export function ForecastPage() {
-  const { t, i18n } = useTranslation('forecast');
-  const locale = i18n.language;
+  const { t } = useTranslation('forecast');
 
   // Request 48h of hourly data so the Tomorrow tab is populated.
   const { data: forecast, units: fcUnits, loading: fcLoading, error: fcError } = useForecast({ hours: 48 });
@@ -45,18 +30,13 @@ export function ForecastPage() {
 
   const tz = station?.timezone ?? 'UTC';
 
-  // Freshness text: "Updated N minutes ago · Source"
-  const freshnessText = forecast?.generatedAt
-    ? `${t('updated', { time: formatRelativeTime(forecast.generatedAt, locale) })}${forecast.source ? ` · ${forecast.source}` : ''}`
-    : undefined;
-
   return (
     <div className="flex flex-col gap-4">
       <h1 className="sr-only">{t('title')}</h1>
 
       <Grid className="md:auto-rows-[auto]">
         {/* ── Page header ──────────────────────────────────────────────── */}
-        <PageHeaderCard title={t('title')} info={freshnessText} icon={<CloudSun weight="duotone" />} />
+        <PageHeaderCard title={t('title')} icon={<CloudSun weight="duotone" />} />
 
         {/* ── Surface B: Hourly ─────────────────────────────────────────── */}
         <ForecastHourlyCard

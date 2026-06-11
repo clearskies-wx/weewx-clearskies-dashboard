@@ -141,6 +141,9 @@
       "uvIndex": "紫外线指数"
     }
   },
+  "aqiCard": {
+    "title": "空气质量"
+  },
   "webcam": "网络摄像头",
   "webcamAlt": "实时网络摄像头画面"
 }

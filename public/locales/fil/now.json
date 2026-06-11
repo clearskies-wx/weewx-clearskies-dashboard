@@ -141,6 +141,9 @@
       "uvIndex": "UV Index"
     }
   },
+  "aqiCard": {
+    "title": "Kalidad ng Hangin"
+  },
   "webcam": "Webcam",
   "webcamAlt": "Tanawin ng live na webcam"
 }

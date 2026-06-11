@@ -249,7 +249,7 @@ export function AboutPage() {
                               href={info.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="font-medium text-foreground underline underline-offset-4 hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                              className="font-medium text-foreground hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
                             >
                               {info.name}
                             </a>

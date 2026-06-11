@@ -141,6 +141,9 @@
       "uvIndex": "紫外線指數"
     }
   },
+  "aqiCard": {
+    "title": "空氣品質"
+  },
   "webcam": "網路攝影機",
   "webcamAlt": "即時網路攝影機畫面"
 }

@@ -141,6 +141,9 @@
       "uvIndex": "UV指数"
     }
   },
+  "aqiCard": {
+    "title": "大気質"
+  },
   "webcam": "ウェブカメラ",
   "webcamAlt": "ライブウェブカメラ映像"
 }

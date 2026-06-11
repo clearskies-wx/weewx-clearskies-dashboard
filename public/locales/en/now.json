@@ -209,7 +209,7 @@
     "peakLabel": "Peak"
   },
   "aqiCard": {
-    "title": "AQI"
+    "title": "Air Quality"
   },
   "alertBanner": {
     "andMore": "+{{count}} more",

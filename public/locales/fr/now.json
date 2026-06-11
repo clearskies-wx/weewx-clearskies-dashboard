@@ -141,6 +141,9 @@
       "uvIndex": "Indice UV"
     }
   },
+  "aqiCard": {
+    "title": "Qualité de l'air"
+  },
   "webcam": "Webcam",
   "webcamAlt": "Vue webcam en direct"
 }

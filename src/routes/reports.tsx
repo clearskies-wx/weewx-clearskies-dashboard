@@ -693,7 +693,7 @@ export function ReportsPage() {
       <h1 className="sr-only">{t('title')}</h1>
 
       <Grid className="md:auto-rows-[auto]">
-        <PageHeaderCard title={t('title')} info={t('intro')} icon={<FileText weight="duotone" />} />
+        <PageHeaderCard title={t('title')} icon={<FileText weight="duotone" />} />
 
         {/* Selector card */}
         <Card footprint="full">
