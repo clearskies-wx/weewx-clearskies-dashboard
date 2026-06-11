@@ -4,16 +4,73 @@
   "operatorCard": {
     "title": "Legal & Privacy Policy"
   },
+  "termsOfUse": {
+    "title": "Terms of Use",
+    "lastUpdated": "June 2026",
+    "sections": {
+      "acceptance": {
+        "title": "Acceptance of Terms",
+        "body": "By accessing or using this weather station website, you agree to be bound by these Terms of Use. If you do not agree to these terms, please do not use this site. Your continued use of the site following any changes to these terms constitutes acceptance of those changes."
+      },
+      "serviceDescription": {
+        "title": "Service Description",
+        "body": "This website provides weather data collected from a personal weather station operated by an individual or small organization. The data is provided for informational and recreational purposes only. This is not a professional meteorological service, and this site is not affiliated with any official government weather service such as the National Weather Service (NWS) or NOAA."
+      },
+      "dataAccuracy": {
+        "title": "Data Accuracy Disclaimer",
+        "body": "Weather data is provided AS-IS without warranty of any kind. Sensor readings may be inaccurate, delayed, or temporarily unavailable due to equipment limitations, maintenance, or technical issues. This data is NOT suitable for safety-critical applications including but not limited to aviation, marine navigation, emergency management, or any decision where inaccurate weather information could result in injury, death, or property damage. Always consult official government weather services for safety-critical decisions. Per the GNU General Public License v3 §15–16, this software and its outputs are provided without any warranty, express or implied."
+      },
+      "intellectualProperty": {
+        "title": "Intellectual Property",
+        "body": "The Clear Skies dashboard software is free software licensed under the GNU General Public License v3.0. Factual weather observation data (temperature, humidity, wind speed, etc.) consists of scientific measurements and is not subject to copyright protection. Third-party forecast data, map tiles, and other content from external providers remain the property of their respective owners and are subject to those providers' own terms of service and licenses."
+      },
+      "thirdPartyServices": {
+        "title": "Third-Party Services",
+        "body": "This site may display data from third-party sources including but not limited to: Aeris Weather, the National Weather Service (NWS), OpenWeatherMap, the U.S. Geological Survey (USGS), and various map tile providers. This data is provided subject to each provider's own terms of service and accuracy standards. The site operator does not control and is not responsible for the accuracy or availability of third-party data."
+      },
+      "prohibitedConduct": {
+        "title": "Prohibited Conduct",
+        "body": "You may not use this site for: automated scraping or bulk data collection without the operator's written consent; any use that violates applicable local, national, or international law; transmitting malware or attempting to interfere with the site's operation; misrepresenting data from this site as originating from an official government or professional meteorological source."
+      },
+      "limitationOfLiability": {
+        "title": "Limitation of Liability",
+        "body": "Per the GNU General Public License v3 §16, and to the maximum extent permitted by applicable law, the site operator shall not be liable for any damages arising from the use of or inability to use this site, including without limitation damages resulting from data inaccuracy, service interruptions, or decisions made based on weather data displayed here. As this service is provided free of charge, the maximum liability of the site operator is $0.00."
+      },
+      "modifications": {
+        "title": "Modifications",
+        "body": "The site operator reserves the right to modify these Terms of Use at any time without prior notice. Changes take effect upon posting. Your continued use of the site following the posting of revised terms constitutes your acceptance of those terms."
+      },
+      "governingLaw": {
+        "title": "Governing Law",
+        "body": "These Terms of Use are governed by the laws of [Operator's Jurisdiction]. Any disputes arising from the use of this site shall be resolved in the courts of [Operator's Jurisdiction]. Note: This is a default template — the site operator is responsible for updating this section to reflect their applicable jurisdiction."
+      },
+      "contact": {
+        "title": "Contact",
+        "body": "For questions about these Terms of Use, please contact the site operator using the contact information provided on the About page."
+      }
+    }
+  },
   "privacy": {
     "title": "Privacy Policy",
     "body": "This weather station collects meteorological data from local sensors and may use third-party services for forecasts, air quality, and earthquake data. No personal visitor data is collected beyond standard web server logs. Station operators should customize this section to reflect their specific data practices and applicable privacy regulations."
+  },
+  "privacyIntro": {
+    "dataCollectedTitle": "What Data Is Collected",
+    "dataCollectedBody": "This weather station collects meteorological observations from local sensors (temperature, humidity, wind speed, pressure, rainfall, etc.). The station hardware itself does not collect any personal data from visitors.",
+    "visitorDataTitle": "Visitor Data",
+    "visitorDataBody": "Standard web server access logs may record your IP address, browser type and version, operating system, the page you were referred from, pages viewed, and the date and time of your visit. If Google Analytics or a similar service is enabled on this site, cookies may be set with your consent. Your browser's localStorage may be used to store your display preferences (such as theme selection or unit preferences) — this data remains on your device and is not transmitted to any server.",
+    "contactTitle": "Contact",
+    "contactBody": "To ask questions about this privacy policy or to exercise your privacy rights, please contact the site operator using the information on the About page.",
+    "disclaimerTitle": "Operator Responsibility",
+    "disclaimerBody": "This privacy policy is a default template provided by the Clear Skies software. The station operator is responsible for reviewing and customizing this policy to comply with all applicable privacy laws in their jurisdiction, and for accurately describing their specific data collection and processing practices."
   },
   "jurisdictions": {
     "sectionLabel": "Jurisdiction-Specific Privacy Notices",
     "expandLabel": "Expand",
     "collapseLabel": "Collapse",
     "ccpa": {
-      "heading": "California Consumer Privacy Act (CCPA)",
+      "continent": "north-america",
+      "heading": "California Consumer Privacy Act (CCPA/CPRA)",
       "p1": "This notice applies to California residents under the California Consumer Privacy Act (CCPA) and the California Privacy Rights Act (CPRA).",
       "p2": "We collect the following categories of personal information when you visit this site: Internet Protocol (IP) address, browser type and version, operating system, referring URL, pages viewed, and timestamps of your visit. This information is collected automatically through standard web server logs.",
       "p3": "We use this information solely to operate and maintain this weather station website. We do not sell, share for cross-context behavioral advertising, or disclose your personal information to third parties for their own commercial purposes.",
@@ -27,9 +84,19 @@
       "p5": "To submit a rights request, contact the site operator using the contact information provided on the About page. We will respond to verifiable consumer requests within 45 days.",
       "p6": "This privacy notice was last reviewed on May 22, 2026."
     },
+    "caloppa": {
+      "continent": "north-america",
+      "heading": "California Online Privacy Protection Act (CalOPPA)",
+      "p1": "This notice applies to California residents under the California Online Privacy Protection Act (CalOPPA), which requires operators of commercial websites and online services that collect personally identifiable information from California residents to conspicuously post a privacy policy.",
+      "p2": "This privacy policy identifies: (1) the categories of personally identifiable information collected; (2) the categories of third parties with whom that information may be shared; (3) how you may review and request changes to your personally identifiable information; (4) the process by which we notify you of material changes to this policy; and (5) the effective date of this policy.",
+      "p3": "We honor Do Not Track (DNT) signals. If you enable DNT in your browser, we will not set analytics cookies or engage in behavioral tracking.",
+      "p4": "To review, correct, or delete personally identifiable information we hold about you, contact the site operator using the information on the About page.",
+      "p5": "This privacy notice was last reviewed on June 2026."
+    },
     "gdpr": {
+      "continent": "europe",
       "heading": "General Data Protection Regulation (GDPR) — EU/EEA Residents",
-      "p1": "This notice applies to residents of the European Union and European Economic Area under the General Data Protection Regulation (EU) 2016/679.",
+      "p1": "This notice applies to residents of the European Union and European Economic Area under the General Data Protection Regulation (EU) 2016/679, and references the ePrivacy Directive (2002/58/EC, as amended by 2009/136/EC) regarding cookies and electronic communications.",
       "p2": "Data controller: The site operator (contact information available on the About page). If you have questions about data processing, contact the site operator directly.",
       "p3": "We process the following personal data: IP address, browser user-agent string, HTTP referrer, and page request timestamps. This data is recorded in standard web server access logs.",
       "p4": "Legal bases for processing:",
@@ -51,7 +118,31 @@
       "p8": "Right to lodge a complaint: You have the right to lodge a complaint with your national supervisory authority. A list of EU supervisory authorities is available at https://edpb.europa.eu/about-edpb/about-edpb/members_en.",
       "p9": "This privacy notice was last reviewed on May 22, 2026."
     },
+    "ukgdpr": {
+      "continent": "europe",
+      "heading": "UK GDPR and PECR — UK Residents",
+      "p1": "This notice applies to residents of the United Kingdom under the UK General Data Protection Regulation (UK GDPR), the Data Protection Act 2018, and the Privacy and Electronic Communications Regulations 2003 (PECR).",
+      "p2": "Data controller: The site operator (contact information available on the About page). The UK GDPR applies independently of the EU GDPR following the UK's departure from the European Union.",
+      "p3": "We process the following personal data: IP address, browser user-agent string, HTTP referrer, and page request timestamps, recorded in standard web server access logs.",
+      "p4": "Legal bases for processing:",
+      "legalBases": [
+        "Legitimate interests (UK GDPR Article 6(1)(f)) — Server log data is processed to ensure the security and operation of this website.",
+        "Consent (UK GDPR Article 6(1)(a) and PECR) — Cookies for analytics purposes are only set with your prior, freely given consent."
+      ],
+      "p5": "Your rights under the UK GDPR:",
+      "rights": [
+        "Right of access — You may request a copy of the personal data we hold about you.",
+        "Right to rectification — You may request correction of inaccurate personal data.",
+        "Right to erasure — You may request deletion of your personal data.",
+        "Right to restrict processing — You may request that we limit how we use your data.",
+        "Right to data portability — You may request your data in a portable format.",
+        "Right to object — You may object to processing based on legitimate interests."
+      ],
+      "p6": "Right to lodge a complaint: You have the right to complain to the Information Commissioner's Office (ICO) at https://ico.org.uk. The ICO's helpline number is 0303 123 1113.",
+      "p7": "This privacy notice was last reviewed on June 2026."
+    },
     "quebec": {
+      "continent": "north-america",
       "heading": "Quebec Law 25 — Quebec Residents",
       "p1": "This notice applies to residents of Quebec, Canada under the Act Respecting the Protection of Personal Information in the Private Sector (Law 25 / Bill 64), as amended.",
       "p2": "We collect the following personal information when you visit this site: IP address, browser type and version, operating system, referring URL, pages visited, and timestamps. This information is recorded in standard web server logs for the purpose of operating and securing this weather station website.",
@@ -68,6 +159,126 @@
       "p7": "Incident notification: In the event of a confidentiality incident (unauthorized access, use, or disclosure) involving personal information that presents a risk of serious harm, we will notify the Commission d'accès à l'information du Québec and the affected individuals as required by law.",
       "p8": "Contact: To exercise your rights or for questions about our privacy practices, contact the site operator using the contact information on the About page.",
       "p9": "This privacy notice was last reviewed on May 22, 2026."
+    },
+    "lgpd": {
+      "continent": "south-america",
+      "heading": "Lei Geral de Proteção de Dados (LGPD) — Brazilian Residents",
+      "p1": "This notice applies to residents of Brazil under the Lei Geral de Proteção de Dados Pessoais (LGPD), Federal Law No. 13.709/2018, enforced by the Autoridade Nacional de Proteção de Dados (ANPD).",
+      "p2": "We collect the following personal data when you visit this site: IP address, browser type and version, operating system, referring URL, pages visited, and timestamps, recorded in standard web server logs.",
+      "p3": "Legal bases for processing (LGPD Article 7): We process your data on the basis of legitimate interest to ensure the security and proper operation of this website. Any optional analytics processing is performed only with your consent.",
+      "p4": "Your rights under the LGPD:",
+      "rights": [
+        "Confirmation of the existence of processing — You may confirm whether we process your personal data.",
+        "Access — You may request access to the personal data we hold about you.",
+        "Correction — You may request correction of incomplete, inaccurate, or outdated data.",
+        "Anonymization, blocking, or deletion — You may request anonymization, blocking, or deletion of unnecessary, excessive, or non-compliant data.",
+        "Portability — You may request the portability of your data to another service or product provider.",
+        "Deletion — You may request deletion of data processed with your consent.",
+        "Information about sharing — You may request information about public and private entities with which we share your data.",
+        "Revocation of consent — You may revoke consent at any time."
+      ],
+      "p5": "To exercise your LGPD rights, contact the site operator using the information on the About page.",
+      "p6": "This privacy notice was last reviewed on June 2026."
+    },
+    "appi": {
+      "continent": "asia",
+      "heading": "Act on the Protection of Personal Information (APPI) — Japanese Residents",
+      "p1": "This notice applies to residents of Japan under the Act on the Protection of Personal Information (APPI), as amended by the 2020 revision effective April 2022, enforced by the Personal Information Protection Commission (PPC).",
+      "p2": "We collect the following personal information when you visit this site: IP address, browser type and version, operating system, referring URL, pages visited, and timestamps, recorded in standard web server logs.",
+      "p3": "Purpose of use: Personal information is collected solely for the purpose of operating and securing this weather station website. We do not use your personal information beyond this stated purpose without your consent.",
+      "p4": "Third-party provision: We do not provide your personal information to third parties except as required by law or as necessary to operate this site.",
+      "p5": "Your rights under the APPI:",
+      "rights": [
+        "Disclosure — You may request disclosure of the personal information we hold about you.",
+        "Correction — You may request correction of personal information that is inaccurate.",
+        "Deletion — You may request deletion of personal information where there is no legal basis for retention.",
+        "Suspension of use — You may request suspension of use of your personal information where it is being processed in violation of the APPI."
+      ],
+      "p6": "To exercise your rights, contact the site operator using the information on the About page.",
+      "p7": "This privacy notice was last reviewed on June 2026."
+    },
+    "dpdp": {
+      "continent": "asia",
+      "heading": "Digital Personal Data Protection Act (DPDP) — Indian Residents",
+      "p1": "This notice applies to residents of India under the Digital Personal Data Protection Act 2023 (DPDP Act), enforced by the Data Protection Board of India.",
+      "p2": "We collect the following personal data when you visit this site: IP address, browser type and version, operating system, referring URL, pages visited, and timestamps, recorded in standard web server logs.",
+      "p3": "Purpose and consent: Personal data is processed for the legitimate purpose of operating and securing this weather station website. Analytics data, if collected, is processed only with your consent.",
+      "p4": "Your rights under the DPDP Act:",
+      "rights": [
+        "Right to access information — You may request a summary of the personal data we hold about you and the purposes for which it is processed.",
+        "Right to correction and erasure — You may request correction of inaccurate or misleading personal data, or erasure of personal data no longer required for the stated purpose.",
+        "Right to grievance redressal — You may raise a grievance with us regarding processing of your personal data.",
+        "Right to nominate — You may nominate another individual to exercise these rights on your behalf in the event of your death or incapacity."
+      ],
+      "p5": "To exercise your rights or raise a grievance, contact the site operator using the information on the About page.",
+      "p6": "This privacy notice was last reviewed on June 2026."
+    },
+    "australiaPrivacy": {
+      "continent": "oceania",
+      "heading": "Privacy Act 1988 — Australian Residents",
+      "p1": "This notice applies to residents of Australia under the Privacy Act 1988 (Cth), including the Australian Privacy Principles (APPs), regulated by the Office of the Australian Information Commissioner (OAIC).",
+      "p2": "We collect the following personal information when you visit this site: IP address, browser type and version, operating system, referring URL, pages visited, and timestamps, recorded in standard web server logs.",
+      "p3": "We use this personal information solely to operate and maintain this weather station website. We do not disclose your personal information to third parties for marketing purposes.",
+      "p4": "Your rights under the Privacy Act:",
+      "rights": [
+        "Access — You may request access to the personal information we hold about you (APP 12).",
+        "Correction — You may request correction of personal information that is inaccurate, out of date, incomplete, irrelevant, or misleading (APP 13).",
+        "Complaint — If you believe we have breached your privacy, you may lodge a complaint with the OAIC at https://www.oaic.gov.au."
+      ],
+      "p5": "To exercise your rights or for questions about our privacy practices, contact the site operator using the information on the About page.",
+      "p6": "This privacy notice was last reviewed on June 2026."
+    },
+    "popia": {
+      "continent": "africa",
+      "heading": "Protection of Personal Information Act (POPIA) — South African Residents",
+      "p1": "This notice applies to residents of South Africa under the Protection of Personal Information Act 4 of 2013 (POPIA), regulated by the Information Regulator of South Africa.",
+      "p2": "We collect the following personal information when you visit this site: IP address, browser type and version, operating system, referring URL, pages visited, and timestamps, recorded in standard web server logs.",
+      "p3": "We process your personal information for the legitimate purpose of operating and securing this weather station website, in accordance with POPIA's conditions for lawful processing.",
+      "p4": "Your rights under POPIA:",
+      "rights": [
+        "Right to access — You may request access to the personal information we hold about you.",
+        "Right to correction or deletion — You may request correction or deletion of personal information that is inaccurate, irrelevant, excessive, out of date, incomplete, misleading, or obtained unlawfully.",
+        "Right to object — You may object to the processing of your personal information on reasonable grounds.",
+        "Right to complain — You may lodge a complaint with the Information Regulator at https://inforegulator.org.za."
+      ],
+      "p5": "To exercise your rights, contact the site operator using the information on the About page.",
+      "p6": "This privacy notice was last reviewed on June 2026."
+    }
+  },
+  "accessibility": {
+    "title": "Accessibility Statement",
+    "lastUpdated": "June 2026",
+    "commitment": "We are committed to making this weather dashboard accessible to all users, including those who rely on assistive technologies such as screen readers, keyboard navigation, or alternative input devices.",
+    "conformanceTarget": "This site aims to conform to the Web Content Accessibility Guidelines (WCAG) 2.1 at Level AA. We regularly review our content and design for accessibility and work to remediate issues as they are identified.",
+    "knownLimitations": "The following known limitations apply: (1) Third-party content including map tiles, forecast provider text, and embedded radar imagery may not fully meet accessibility standards, as it is provided by external services outside our direct control. (2) Real-time weather data visualizations (charts and graphs) provide text-based alternatives and data tables wherever possible to ensure the underlying data is available to all users.",
+    "feedback": "If you encounter an accessibility barrier on this site, please contact the site operator using the information on the About page. We welcome feedback and will make reasonable efforts to address identified barriers promptly.",
+    "operatorDisclaimer": "This accessibility statement is a default template provided by the Clear Skies software. The station operator is responsible for ensuring their specific deployment meets applicable accessibility standards, and for updating this statement to accurately reflect the accessibility status of their site.",
+    "lawsLabel": "Applicable Accessibility Laws",
+    "laws": {
+      "north-america": {
+        "title": "North America — ADA, Section 508, AODA, Accessible Canada Act",
+        "body": "United States: The Americans with Disabilities Act (ADA) and Section 508 of the Rehabilitation Act require that electronic and information technology be accessible to people with disabilities. While personal websites are not universally covered by Section 508, we apply its standards as best practice. Canada: The Accessibility for Ontarians with Disabilities Act (AODA) and the Accessible Canada Act (ACA) establish accessibility requirements for organizations operating in Ontario and at the federal level. We design this site to meet WCAG 2.1 Level AA as required by these laws."
+      },
+      "south-america": {
+        "title": "South America — Brazil Inclusion Law",
+        "body": "Brazil: The Lei Brasileira de Inclusão da Pessoa com Deficiência (Lei 13.146/2015, also known as the Estatuto da Pessoa com Deficiência) establishes the right of persons with disabilities to access digital content. This includes the right to access websites and digital applications in accessible formats. We design this site to meet WCAG 2.1 Level AA standards to support compliance with this law."
+      },
+      "europe": {
+        "title": "Europe — European Accessibility Act, EN 301 549, UK Equality Act",
+        "body": "European Union: The European Accessibility Act (EAA, Directive 2019/882/EU) requires that digital products and services meet accessibility requirements, harmonized with the EN 301 549 technical standard (which incorporates WCAG 2.1 Level AA). United Kingdom: The Equality Act 2010 requires service providers to make reasonable adjustments to ensure their services are accessible to disabled persons. The Public Sector Bodies Accessibility Regulations 2018 (as retained in UK law) also apply the WCAG 2.1 AA standard."
+      },
+      "asia": {
+        "title": "Asia — JIS X 8341-3 (Japan), RPWD Act (India), KWCAG (South Korea)",
+        "body": "Japan: JIS X 8341-3:2016 is the Japanese Industrial Standard for web accessibility, aligned with WCAG 2.1. India: The Rights of Persons with Disabilities Act 2016 (RPWD Act) requires that information and communication technology be accessible to persons with disabilities. South Korea: The Korean Web Content Accessibility Guidelines (KWCAG 2.1) establish accessibility standards for web content, based on WCAG 2.1."
+      },
+      "oceania": {
+        "title": "Oceania — Disability Discrimination Act 1992 (Australia)",
+        "body": "Australia: The Disability Discrimination Act 1992 (DDA) makes it unlawful to discriminate against persons with disabilities in the provision of goods, services, and facilities, which includes websites. The Australian Human Rights Commission's advisory notes indicate that WCAG 2.1 Level AA represents the current standard for web accessibility compliance under the DDA."
+      },
+      "africa": {
+        "title": "Africa — ICT Accessibility (South Africa)",
+        "body": "South Africa: The Constitution of South Africa guarantees equality and dignity for all persons. POPIA and the Electronic Communications and Transactions Act (ECTA) together with constitutional obligations create a framework encouraging accessible digital services. While there is no single prescriptive web accessibility statute, we apply WCAG 2.1 Level AA as international best practice and to support equitable access for all users."
+      }
     }
   },
   "attribution": {

@@ -285,6 +285,11 @@ export interface ApiBrandingConfig {
     instagram?: string;
     youtube?: string;
   };
+  /**
+   * Comma-separated continent slugs for privacy/accessibility jurisdiction filtering.
+   * E.g. "north-america,europe" or "global". Phase 4 will add this to the API contract.
+   */
+  privacyRegions?: string;
 }
 
 export function getBranding(signal?: AbortSignal): Promise<ApiResponse<ApiBrandingConfig>> {

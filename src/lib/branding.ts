@@ -19,6 +19,12 @@ export interface BrandingConfig {
   faviconUrl?: string;
   /** Copyright entity name shown in the footer. Falls back to station name if not set. */
   copyrightEntity?: string;
+  /**
+   * Comma-separated list of continent slugs for privacy/accessibility jurisdiction filtering.
+   * E.g. "north-america,europe". Use "global" or leave undefined to show all jurisdictions.
+   * Phase 4 will wire this to the API; until then it is always undefined → treated as "global".
+   */
+  privacyRegions?: string;
 }
 
 // Curated palette — all light values verified ≥4.5:1 on white (oklch(1 0 0));
