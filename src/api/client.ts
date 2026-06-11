@@ -259,10 +259,10 @@ export function getRadarFrames(
 }
 
 // ---------------------------------------------------------------------------
-// GET /branding — operator branding configuration (Gap #10)
-// Field names match the OpenAPI contract (lightUrl / darkUrl).
-// The internal BrandingConfig in branding.ts uses light/dark — mapping is
-// done at the provider boundary (branding-provider.tsx).
+// GET /branding.json — operator branding (static file served by Caddy).
+// Per ADR-022 amendment 2026-06-10: branding is a static JSON file, not an
+// API endpoint. Field names match the branding.json schema (lightUrl / darkUrl).
+// Mapping to internal BrandingConfig is done in branding-provider.tsx.
 // ---------------------------------------------------------------------------
 
 export interface ApiBrandingConfig {
@@ -299,7 +299,12 @@ export interface ApiBrandingConfig {
 }
 
 export function getBranding(signal?: AbortSignal): Promise<ApiResponse<ApiBrandingConfig>> {
-  return fetchApi<ApiResponse<ApiBrandingConfig>>('/branding', undefined, signal);
+  return fetch('/branding.json', { signal })
+    .then((r) => {
+      if (!r.ok) throw new Error(`branding.json: ${r.status}`);
+      return r.json() as Promise<ApiBrandingConfig>;
+    })
+    .then((data) => ({ data, generatedAt: new Date().toISOString() }));
 }
 
 // ---------------------------------------------------------------------------
