@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { useStation } from '../../hooks/useWeatherData';
 import { useBranding } from '../../lib/branding-provider';
 import { clearConsent } from '../shared/cookie-consent-banner';
-import { removeGoogleAnalytics } from '../../lib/analytics';
 import poweredLight from '../../assets/clearskies-powered-light.svg';
 
 // ---------------------------------------------------------------------------
