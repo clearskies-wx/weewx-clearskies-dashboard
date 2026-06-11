@@ -69,9 +69,10 @@ export function SceneBackground({ scene, visible = true }: SceneBackgroundProps)
     // aria-hidden="true" + role="presentation": purely decorative.
     // (WCAG 1.1.1 / coding.md §5.5 decorative image rule)
     //
-    // backgroundColor: dark navy (#0a0e1a) rather than black so the base
-    // colour visible before the first photo loads matches the night-sky palette
-    // and doesn't cause a jarring white flash on initial render.
+    // backgroundColor: uses the theme's --background token so the base colour
+    // matches whichever theme the index.html inline script set (light or dark).
+    // Before the first /current response, the photos are opacity 0 and this
+    // base colour is all the user sees — it must match the active theme.
     <div
       aria-hidden="true"
       role="presentation"
@@ -79,7 +80,7 @@ export function SceneBackground({ scene, visible = true }: SceneBackgroundProps)
         position: 'fixed',
         inset: 0,
         zIndex: -1,
-        backgroundColor: '#0a0e1a',
+        backgroundColor: 'var(--background)',
         overflow: 'hidden',
       }}
     >
