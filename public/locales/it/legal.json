@@ -2,23 +2,296 @@
   "title": "Note legali e privacy",
   "loadingAria": "Caricamento contenuto legale…",
   "operatorCard": {
-    "title": "Politica legale e sulla privacy"
+    "title": "Informativa legale e sulla privacy"
+  },
+  "termsOfUse": {
+    "title": "Termini di utilizzo",
+    "lastUpdated": "Giugno 2026",
+    "sections": {
+      "acceptance": {
+        "title": "Accettazione dei termini",
+        "body": "Accedendo o utilizzando questo sito web di stazione meteorologica, l'utente accetta di essere vincolato dai presenti Termini di utilizzo. Qualora non accetti tali termini, si prega di non utilizzare il sito. L'uso continuato del sito dopo eventuali modifiche a questi termini costituisce accettazione delle stesse."
+      },
+      "serviceDescription": {
+        "title": "Descrizione del servizio",
+        "body": "Questo sito web fornisce dati meteorologici raccolti da una stazione meteorologica personale gestita da un privato o da una piccola organizzazione. I dati sono forniti esclusivamente a scopo informativo e ricreativo. Non si tratta di un servizio meteorologico professionale e questo sito non è affiliato ad alcun servizio meteorologico governativo ufficiale, come il Servizio Meteorologico dell'Aeronautica Militare, il National Weather Service (NWS) o la NOAA."
+      },
+      "dataAccuracy": {
+        "title": "Esclusione di responsabilità per l'accuratezza dei dati",
+        "body": "I dati meteorologici sono forniti COSÌ COME SONO, senza alcuna garanzia di alcun tipo. Le letture dei sensori possono essere imprecise, ritardate o temporaneamente non disponibili a causa di limitazioni dell'attrezzatura, manutenzione o problemi tecnici. Questi dati NON sono adatti ad applicazioni critiche per la sicurezza, incluse, a titolo esemplificativo, aviazione, navigazione marittima, gestione delle emergenze o qualsiasi decisione in cui informazioni meteorologiche imprecise potrebbero causare lesioni, morte o danni materiali. Per decisioni critiche per la sicurezza consultare sempre i servizi meteorologici governativi ufficiali. Ai sensi degli articoli 15–16 della GNU General Public License v3, questo software e i suoi risultati sono forniti senza alcuna garanzia, espressa o implicita."
+      },
+      "intellectualProperty": {
+        "title": "Proprietà intellettuale",
+        "body": "Il software del dashboard Clear Skies è software libero distribuito con licenza GNU General Public License v3.0. I dati di osservazione meteorologica di natura fattuale (temperatura, umidità, velocità del vento, ecc.) costituiscono misurazioni scientifiche e non sono soggetti a protezione del diritto d'autore. I dati di previsione meteorologica, le tile di mappe e altri contenuti di terze parti rimangono di proprietà dei rispettivi titolari e sono soggetti alle proprie condizioni d'uso e licenze."
+      },
+      "thirdPartyServices": {
+        "title": "Servizi di terze parti",
+        "body": "Questo sito può visualizzare dati provenienti da fonti di terze parti, tra cui: Aeris Weather, il National Weather Service (NWS), OpenWeatherMap, l'U.S. Geological Survey (USGS) e vari fornitori di tile di mappe. Tali dati sono forniti in base alle condizioni d'uso e agli standard di accuratezza di ciascun fornitore. Il gestore del sito non controlla e non è responsabile dell'accuratezza o della disponibilità dei dati di terze parti."
+      },
+      "prohibitedConduct": {
+        "title": "Condotte vietate",
+        "body": "È vietato utilizzare questo sito per: raccolta automatizzata o massiva di dati senza il consenso scritto del gestore; qualsiasi utilizzo che violi le leggi locali, nazionali o internazionali applicabili; trasmissione di malware o tentativi di interferire con il funzionamento del sito; presentazione fraudolenta dei dati di questo sito come provenienti da una fonte governativa ufficiale o da un servizio meteorologico professionale."
+      },
+      "limitationOfLiability": {
+        "title": "Limitazione di responsabilità",
+        "body": "Ai sensi dell'articolo 16 della GNU General Public License v3, e nella misura massima consentita dalla legge applicabile, il gestore del sito non sarà responsabile per eventuali danni derivanti dall'utilizzo o dall'impossibilità di utilizzare questo sito, inclusi, senza limitazione, danni derivanti da imprecisioni dei dati, interruzioni del servizio o decisioni adottate sulla base dei dati meteorologici qui visualizzati. Poiché questo servizio è fornito gratuitamente, la responsabilità massima del gestore del sito è pari a € 0,00."
+      },
+      "modifications": {
+        "title": "Modifiche",
+        "body": "Il gestore del sito si riserva il diritto di modificare i presenti Termini di utilizzo in qualsiasi momento e senza preavviso. Le modifiche entrano in vigore al momento della pubblicazione. L'uso continuato del sito dopo la pubblicazione dei termini rivisti costituisce accettazione degli stessi."
+      },
+      "governingLaw": {
+        "title": "Legge applicabile",
+        "body": "I presenti Termini di utilizzo sono disciplinati dalle leggi di [Giurisdizione del gestore]. Qualsiasi controversia derivante dall'uso di questo sito sarà risolta dai tribunali di [Giurisdizione del gestore]. Nota: questo è un modello predefinito — il gestore del sito è responsabile dell'aggiornamento di questa sezione per riflettere la propria giurisdizione applicabile."
+      },
+      "contact": {
+        "title": "Contatto",
+        "body": "Per domande sui presenti Termini di utilizzo, si prega di contattare il gestore del sito utilizzando le informazioni di contatto fornite nella pagina Informazioni."
+      }
+    }
   },
   "privacy": {
     "title": "Informativa sulla privacy",
-    "body": "Questa stazione meteorologica raccoglie dati meteorologici da sensori locali e può utilizzare servizi di terze parti per previsioni, qualità dell’aria e dati sismici. Non vengono raccolti dati personali dei visitatori oltre ai normali log del server web. Gli operatori della stazione devono personalizzare questa sezione per riflettere le proprie pratiche specifiche sui dati e le normative sulla privacy applicabili."
+    "body": "Questa stazione meteorologica raccoglie dati meteorologici da sensori locali e può utilizzare servizi di terze parti per previsioni, qualità dell'aria e dati sismici. Non vengono raccolti dati personali dei visitatori al di là dei log standard del server web. I gestori della stazione devono personalizzare questa sezione per riflettere le proprie pratiche specifiche di gestione dei dati e la normativa sulla privacy applicabile."
+  },
+  "privacyIntro": {
+    "dataCollectedTitle": "Dati raccolti",
+    "dataCollectedBody": "Questa stazione meteorologica raccoglie osservazioni meteorologiche da sensori locali (temperatura, umidità, velocità del vento, pressione, precipitazioni, ecc.). L'hardware della stazione in sé non raccoglie alcun dato personale dei visitatori.",
+    "visitorDataTitle": "Dati dei visitatori",
+    "visitorDataBody": "I log di accesso standard del server web possono registrare il suo indirizzo IP, il tipo e la versione del browser, il sistema operativo, la pagina da cui è stato reindirizzato, le pagine visualizzate e la data e l'ora della sua visita. Se Google Analytics o un servizio simile è abilitato su questo sito, possono essere impostati cookie con il suo consenso. Il localStorage del browser può essere utilizzato per memorizzare le preferenze di visualizzazione (come la selezione del tema o le preferenze di unità di misura) — questi dati rimangono sul dispositivo dell'utente e non vengono trasmessi ad alcun server.",
+    "contactTitle": "Contatto",
+    "contactBody": "Per domande sulla presente informativa sulla privacy o per esercitare i propri diritti in materia di privacy, si prega di contattare il gestore del sito utilizzando le informazioni nella pagina Informazioni.",
+    "disclaimerTitle": "Responsabilità del gestore",
+    "disclaimerBody": "La presente informativa sulla privacy è un modello predefinito fornito dal software Clear Skies. Il gestore della stazione è responsabile della revisione e della personalizzazione di questa informativa per conformarsi a tutte le leggi sulla privacy applicabili nella propria giurisdizione e per descrivere accuratamente le proprie pratiche specifiche di raccolta e trattamento dei dati."
+  },
+  "jurisdictions": {
+    "sectionLabel": "Informative sulla privacy per giurisdizione",
+    "expandLabel": "Espandi",
+    "collapseLabel": "Comprimi",
+    "ccpa": {
+      "continent": "north-america",
+      "heading": "California Consumer Privacy Act (CCPA/CPRA) — Residenti in California",
+      "p1": "La presente informativa si applica ai residenti in California ai sensi del California Consumer Privacy Act (CCPA) e del California Privacy Rights Act (CPRA).",
+      "p2": "Raccogliamo le seguenti categorie di informazioni personali quando visita questo sito: indirizzo di Protocollo Internet (IP), tipo e versione del browser, sistema operativo, URL di riferimento, pagine visualizzate e timestamp della visita. Queste informazioni vengono raccolte automaticamente tramite i log standard del server web.",
+      "p3": "Utilizziamo queste informazioni esclusivamente per gestire e mantenere questo sito web di stazione meteorologica. Non vendiamo, condividiamo per pubblicità comportamentale contestuale incrociata o divulghiamo le informazioni personali dell'utente a terze parti per i loro scopi commerciali.",
+      "p4": "In qualità di residente in California, ha i seguenti diritti:",
+      "rights": [
+        "Diritto di sapere — Può richiedere che divulghiamo le categorie e i dati specifici delle informazioni personali che abbiamo raccolto sul suo conto.",
+        "Diritto alla cancellazione — Può richiedere la cancellazione delle informazioni personali che abbiamo raccolto, fermo restando alcune eccezioni.",
+        "Diritto di opposizione alla vendita o alla condivisione — Non vendiamo né condividiamo informazioni personali per pubblicità comportamentale contestuale incrociata. Non è richiesta alcuna procedura di opt-out.",
+        "Diritto alla non discriminazione — Non discrimineremo l'utente per l'esercizio dei propri diritti ai sensi della CCPA."
+      ],
+      "p5": "Per presentare una richiesta di esercizio dei diritti, contattare il gestore del sito utilizzando le informazioni di contatto fornite nella pagina Informazioni. Risponderemo alle richieste verificabili dei consumatori entro 45 giorni.",
+      "p6": "La presente informativa sulla privacy è stata rivista l'ultima volta il 22 maggio 2026."
+    },
+    "caloppa": {
+      "continent": "north-america",
+      "heading": "California Online Privacy Protection Act (CalOPPA)",
+      "p1": "La presente informativa si applica ai residenti in California ai sensi del California Online Privacy Protection Act (CalOPPA), che obbliga i gestori di siti web commerciali e servizi online che raccolgono informazioni di identificazione personale da residenti californiani a pubblicare in modo visibile un'informativa sulla privacy.",
+      "p2": "La presente informativa sulla privacy identifica: (1) le categorie di informazioni di identificazione personale raccolte; (2) le categorie di terze parti con cui tali informazioni possono essere condivise; (3) come l'utente può esaminare e richiedere modifiche alle proprie informazioni di identificazione personale; (4) il processo con cui notifichiamo le modifiche rilevanti a questa informativa; e (5) la data di entrata in vigore di questa informativa.",
+      "p3": "Rispettiamo i segnali Do Not Track (DNT). Se si abilita DNT nel proprio browser, non impostare cookie analitici né effettuare tracciamento comportamentale.",
+      "p4": "Per esaminare, correggere o cancellare le informazioni di identificazione personale che conserviamo, contattare il gestore del sito utilizzando le informazioni nella pagina Informazioni.",
+      "p5": "La presente informativa sulla privacy è stata rivista l'ultima volta nel giugno 2026."
+    },
+    "gdpr": {
+      "continent": "europe",
+      "heading": "Regolamento generale sulla protezione dei dati (GDPR) — Residenti UE/SEE",
+      "p1": "La presente informativa si applica ai residenti dell'Unione europea e dello Spazio economico europeo ai sensi del Regolamento generale sulla protezione dei dati (UE) 2016/679, e fa riferimento alla Direttiva e-Privacy (2002/58/CE, modificata dalla 2009/136/CE) in materia di cookie e comunicazioni elettroniche.",
+      "p2": "Titolare del trattamento: il gestore del sito (informazioni di contatto disponibili nella pagina Informazioni). Per domande sul trattamento dei dati, contattare direttamente il gestore.",
+      "p3": "Trattiamo i seguenti dati personali: indirizzo IP, stringa user-agent del browser, HTTP referer e timestamp delle richieste di pagina. Questi dati vengono registrati nei log di accesso standard del server web.",
+      "p4": "Basi giuridiche del trattamento:",
+      "legalBases": [
+        "Legittimo interesse (articolo 6, paragrafo 1, lettera f) — Trattiamo i dati del log del server per garantire la sicurezza e il corretto funzionamento di questo sito web. Il nostro interesse a prevenire abusi e diagnosticare problemi tecnici è bilanciato rispetto all'impatto minimo del trattamento dei dati di log di accesso standard.",
+        "Consenso (articolo 6, paragrafo 1, lettera a) — Se su questo sito è abilitato il tracciamento analitico, tale trattamento avviene solo con il consenso preventivo dell'utente, che può essere revocato in qualsiasi momento."
+      ],
+      "p5": "I diritti dell'utente ai sensi del GDPR:",
+      "rights": [
+        "Diritto di accesso (articolo 15) — Può richiedere una copia dei dati personali che conserviamo.",
+        "Diritto di rettifica (articolo 16) — Può richiedere la correzione di dati personali inesatti.",
+        "Diritto alla cancellazione (articolo 17) — Può richiedere la cancellazione dei propri dati personali in assenza di un motivo legittimo prevalente per la continuazione del trattamento.",
+        "Diritto alla limitazione del trattamento (articolo 18) — Può richiedere che limitiamo il trattamento dei propri dati personali in determinate circostanze.",
+        "Diritto alla portabilità dei dati (articolo 20) — Quando il trattamento si basa sul consenso o su un contratto, può richiedere i propri dati in un formato strutturato e leggibile da macchina.",
+        "Diritto di opposizione (articolo 21) — Può opporsi in qualsiasi momento al trattamento basato su legittimi interessi."
+      ],
+      "p6": "Conservazione: i log di accesso del server vengono conservati per un massimo di 90 giorni a fini di sicurezza e diagnostica, dopodiché vengono eliminati.",
+      "p7": "Trasferimenti internazionali: questo sito è gestito dagli Stati Uniti. Se accede a questo sito dall'UE/SEE, i suoi dati potrebbero essere trasferiti ed elaborati negli Stati Uniti. Ci basiamo sulla necessità del trattamento per l'esecuzione di un compito di interesse pubblico (diffusione di dati meteorologici) come meccanismo di trasferimento.",
+      "p8": "Diritto di presentare un reclamo: ha il diritto di presentare un reclamo presso l'autorità di controllo nazionale competente. L'elenco delle autorità di vigilanza dell'UE è disponibile all'indirizzo https://edpb.europa.eu/about-edpb/about-edpb/members_en.",
+      "p9": "La presente informativa sulla privacy è stata rivista l'ultima volta il 22 maggio 2026."
+    },
+    "ukgdpr": {
+      "continent": "europe",
+      "heading": "UK GDPR e PECR — Residenti nel Regno Unito",
+      "p1": "La presente informativa si applica ai residenti nel Regno Unito ai sensi del Regolamento generale sulla protezione dei dati del Regno Unito (UK GDPR), del Data Protection Act 2018 e delle Privacy and Electronic Communications Regulations 2003 (PECR).",
+      "p2": "Titolare del trattamento: il gestore del sito (informazioni di contatto disponibili nella pagina Informazioni). L'UK GDPR si applica indipendentemente dal GDPR dell'UE a seguito dell'uscita del Regno Unito dall'Unione europea.",
+      "p3": "Trattiamo i seguenti dati personali: indirizzo IP, stringa user-agent del browser, HTTP referer e timestamp delle richieste di pagina, registrati nei log di accesso standard del server web.",
+      "p4": "Basi giuridiche del trattamento:",
+      "legalBases": [
+        "Interessi legittimi (UK GDPR articolo 6, paragrafo 1, lettera f) — I dati del log del server vengono trattati per garantire la sicurezza e il funzionamento di questo sito web.",
+        "Consenso (UK GDPR articolo 6, paragrafo 1, lettera a e PECR) — I cookie per scopi analitici vengono impostati solo con il consenso preventivo e liberamente espresso dell'utente."
+      ],
+      "p5": "I diritti dell'utente ai sensi dell'UK GDPR:",
+      "rights": [
+        "Diritto di accesso — Può richiedere una copia dei dati personali che conserviamo.",
+        "Diritto di rettifica — Può richiedere la correzione di dati personali inesatti.",
+        "Diritto alla cancellazione — Può richiedere la cancellazione dei propri dati personali.",
+        "Diritto alla limitazione del trattamento — Può richiedere che limitiamo l'uso dei suoi dati.",
+        "Diritto alla portabilità dei dati — Può richiedere i propri dati in un formato portabile.",
+        "Diritto di opposizione — Può opporsi al trattamento basato su legittimi interessi."
+      ],
+      "p6": "Diritto di presentare un reclamo: ha il diritto di presentare un reclamo all'Information Commissioner's Office (ICO) all'indirizzo https://ico.org.uk. Il numero della helpline dell'ICO è 0303 123 1113.",
+      "p7": "La presente informativa sulla privacy è stata rivista l'ultima volta nel giugno 2026."
+    },
+    "quebec": {
+      "continent": "north-america",
+      "heading": "Legge 25 (Québec) — Residenti in Québec",
+      "p1": "La presente informativa si applica ai residenti in Québec, Canada, ai sensi della Legge sulla protezione delle informazioni personali nel settore privato (Legge 25 / Disegno di legge 64), come modificata.",
+      "p2": "Raccogliamo le seguenti informazioni personali quando visita questo sito: indirizzo IP, tipo e versione del browser, sistema operativo, URL di riferimento, pagine visitate e timestamp. Queste informazioni vengono registrate nei log standard del server web al fine di gestire e proteggere questo sito web di stazione meteorologica.",
+      "p3": "Valutazione dell'impatto sulla privacy: il gestore di questo sito web ha valutato l'impatto sulla privacy della raccolta dei dati del log del server. La valutazione ha determinato che la raccolta è limitata al minimo necessario per il funzionamento e la sicurezza del sito web e non presenta rischi gravi per la privacy.",
+      "p4": "Consenso: accedendo a questo sito web, l'utente riconosce la raccolta delle informazioni personali sopra descritte. Non vengono raccolte ulteriori informazioni personali senza il consenso esplicito dell'utente. Se i servizi di analisi sono abilitati, vengono attivati solo con il consenso preventivo dell'utente.",
+      "p5": "I diritti dell'utente ai sensi della Legge 25:",
+      "rights": [
+        "Diritto di accesso — Può richiedere l'accesso alle informazioni personali che conserviamo.",
+        "Diritto di rettifica — Può richiedere la correzione di qualsiasi informazione inesatta, incompleta o equivoca.",
+        "Diritto di revoca del consenso — Quando il trattamento si basa sul consenso, può revocarlo in qualsiasi momento.",
+        "Diritto alla cancellazione — Può richiedere la cancellazione di informazioni personali raccolte senza autorizzazione legale o conservate oltre il periodo necessario."
+      ],
+      "p6": "Trasferimenti transfrontalieri: questo sito web è ospitato su server situati al di fuori del Québec. Le informazioni personali (dati del log del server) potrebbero essere trasferite ed elaborate negli Stati Uniti. Prima di qualsiasi trasferimento, abbiamo valutato se le informazioni riceveranno una protezione adeguata equivalente a quella prevista dalla legge del Québec.",
+      "p7": "Notifica degli incidenti: in caso di incidente di riservatezza (accesso, uso o divulgazione non autorizzati) che coinvolge informazioni personali e presenta un rischio di danno grave, notificheremo la Commission d'accès à l'information du Québec e le persone interessate come richiesto dalla legge.",
+      "p8": "Contatto: per esercitare i propri diritti o per domande sulle nostre pratiche in materia di privacy, contattare il gestore del sito utilizzando le informazioni di contatto nella pagina Informazioni.",
+      "p9": "La presente informativa sulla privacy è stata rivista l'ultima volta il 22 maggio 2026."
+    },
+    "lgpd": {
+      "continent": "south-america",
+      "heading": "Lei Geral de Proteção de Dados (LGPD) — Residenti in Brasile",
+      "p1": "La presente informativa si applica ai residenti in Brasile ai sensi della Lei Geral de Proteção de Dados Pessoais (LGPD), Legge Federale n. 13.709/2018, applicata dall'Autoridade Nacional de Proteção de Dados (ANPD).",
+      "p2": "Raccogliamo i seguenti dati personali quando visita questo sito: indirizzo IP, tipo e versione del browser, sistema operativo, URL di riferimento, pagine visitate e timestamp, registrati nei log standard del server web.",
+      "p3": "Basi giuridiche del trattamento (articolo 7 della LGPD): trattiamo i dati dell'utente sulla base del legittimo interesse per garantire la sicurezza e il corretto funzionamento di questo sito web. Qualsiasi trattamento analitico opzionale avviene solo con il consenso dell'utente.",
+      "p4": "I diritti dell'utente ai sensi della LGPD:",
+      "rights": [
+        "Conferma dell'esistenza del trattamento — Può confermare se trattiamo i suoi dati personali.",
+        "Accesso — Può richiedere l'accesso ai dati personali che conserviamo.",
+        "Correzione — Può richiedere la correzione di dati incompleti, inesatti o obsoleti.",
+        "Anonimizzazione, blocco o cancellazione — Può richiedere l'anonimizzazione, il blocco o la cancellazione di dati non necessari, eccessivi o non conformi.",
+        "Portabilità — Può richiedere la portabilità dei propri dati verso un altro fornitore di servizi o prodotti.",
+        "Cancellazione — Può richiedere la cancellazione dei dati trattati con il proprio consenso.",
+        "Informazioni sulla condivisione — Può richiedere informazioni sulle entità pubbliche e private con cui condividiamo i suoi dati.",
+        "Revoca del consenso — Può revocare il consenso in qualsiasi momento."
+      ],
+      "p5": "Per esercitare i propri diritti ai sensi della LGPD, contattare il gestore del sito utilizzando le informazioni nella pagina Informazioni.",
+      "p6": "La presente informativa sulla privacy è stata rivista l'ultima volta nel giugno 2026."
+    },
+    "appi": {
+      "continent": "asia",
+      "heading": "Legge sulla protezione delle informazioni personali (APPI) — Residenti in Giappone",
+      "p1": "La presente informativa si applica ai residenti in Giappone ai sensi della Legge sulla protezione delle informazioni personali (APPI), come modificata dalla revisione del 2020 in vigore dall'aprile 2022, applicata dalla Commissione per la protezione delle informazioni personali (PPC).",
+      "p2": "Raccogliamo le seguenti informazioni personali quando visita questo sito: indirizzo IP, tipo e versione del browser, sistema operativo, URL di riferimento, pagine visitate e timestamp, registrati nei log standard del server web.",
+      "p3": "Finalità di utilizzo: le informazioni personali vengono raccolte esclusivamente allo scopo di gestire e proteggere questo sito web di stazione meteorologica. Non utilizziamo le informazioni personali dell'utente oltre la finalità dichiarata senza il suo consenso.",
+      "p4": "Fornitura a terze parti: non forniamo le informazioni personali dell'utente a terze parti, salvo nei casi previsti dalla legge o necessari per il funzionamento di questo sito.",
+      "p5": "I diritti dell'utente ai sensi dell'APPI:",
+      "rights": [
+        "Divulgazione — Può richiedere la divulgazione delle informazioni personali che conserviamo.",
+        "Correzione — Può richiedere la correzione di informazioni personali inesatte.",
+        "Cancellazione — Può richiedere la cancellazione di informazioni personali in assenza di base legale per la loro conservazione.",
+        "Sospensione dell'uso — Può richiedere la sospensione dell'uso delle proprie informazioni personali quando vengono trattate in violazione dell'APPI."
+      ],
+      "p6": "Per esercitare i propri diritti, contattare il gestore del sito utilizzando le informazioni nella pagina Informazioni.",
+      "p7": "La presente informativa sulla privacy è stata rivista l'ultima volta nel giugno 2026."
+    },
+    "dpdp": {
+      "continent": "asia",
+      "heading": "Digital Personal Data Protection Act (DPDP) — Residenti in India",
+      "p1": "La presente informativa si applica ai residenti in India ai sensi del Digital Personal Data Protection Act 2023 (DPDP Act), applicato dal Consiglio per la protezione dei dati dell'India.",
+      "p2": "Raccogliamo i seguenti dati personali quando visita questo sito: indirizzo IP, tipo e versione del browser, sistema operativo, URL di riferimento, pagine visitate e timestamp, registrati nei log standard del server web.",
+      "p3": "Finalità e consenso: i dati personali vengono trattati per la legittima finalità di gestire e proteggere questo sito web di stazione meteorologica. I dati analitici, se raccolti, vengono trattati solo con il consenso dell'utente.",
+      "p4": "I diritti dell'utente ai sensi del DPDP Act:",
+      "rights": [
+        "Diritto di accesso alle informazioni — Può richiedere un riepilogo dei dati personali che conserviamo e delle finalità per cui vengono trattati.",
+        "Diritto di correzione e cancellazione — Può richiedere la correzione di dati personali inesatti o fuorvianti, o la cancellazione di dati personali non più necessari per la finalità dichiarata.",
+        "Diritto di ricorso per riparazione — Può presentarci un reclamo riguardante il trattamento dei propri dati personali.",
+        "Diritto di nomina — Può nominare un'altra persona per esercitare questi diritti a proprio nome in caso di decesso o incapacità."
+      ],
+      "p5": "Per esercitare i propri diritti o presentare un reclamo, contattare il gestore del sito utilizzando le informazioni nella pagina Informazioni.",
+      "p6": "La presente informativa sulla privacy è stata rivista l'ultima volta nel giugno 2026."
+    },
+    "australiaPrivacy": {
+      "continent": "oceania",
+      "heading": "Privacy Act 1988 — Residenti in Australia",
+      "p1": "La presente informativa si applica ai residenti in Australia ai sensi del Privacy Act 1988 (Cth), inclusi i Principi australiani sulla privacy (APPs), regolato dall'Office of the Australian Information Commissioner (OAIC).",
+      "p2": "Raccogliamo le seguenti informazioni personali quando visita questo sito: indirizzo IP, tipo e versione del browser, sistema operativo, URL di riferimento, pagine visitate e timestamp, registrati nei log standard del server web.",
+      "p3": "Utilizziamo queste informazioni personali esclusivamente per gestire e mantenere questo sito web di stazione meteorologica. Non divulghiamo le informazioni personali dell'utente a terze parti per scopi di marketing.",
+      "p4": "I diritti dell'utente ai sensi del Privacy Act:",
+      "rights": [
+        "Accesso — Può richiedere l'accesso alle informazioni personali che conserviamo (APP 12).",
+        "Correzione — Può richiedere la correzione di informazioni personali inesatte, obsolete, incomplete, non pertinenti o fuorvianti (APP 13).",
+        "Reclamo — Se ritiene che abbiamo violato la sua privacy, può presentare un reclamo all'OAIC all'indirizzo https://www.oaic.gov.au."
+      ],
+      "p5": "Per esercitare i propri diritti o per domande sulle nostre pratiche in materia di privacy, contattare il gestore del sito utilizzando le informazioni nella pagina Informazioni.",
+      "p6": "La presente informativa sulla privacy è stata rivista l'ultima volta nel giugno 2026."
+    },
+    "popia": {
+      "continent": "africa",
+      "heading": "Protection of Personal Information Act (POPIA) — Residenti in Sudafrica",
+      "p1": "La presente informativa si applica ai residenti in Sudafrica ai sensi del Protection of Personal Information Act 4 del 2013 (POPIA), regolato dal Regolatore dell'informazione del Sudafrica.",
+      "p2": "Raccogliamo le seguenti informazioni personali quando visita questo sito: indirizzo IP, tipo e versione del browser, sistema operativo, URL di riferimento, pagine visitate e timestamp, registrati nei log standard del server web.",
+      "p3": "Trattiamo le informazioni personali dell'utente per la legittima finalità di gestire e proteggere questo sito web di stazione meteorologica, in conformità con le condizioni di trattamento lecito della POPIA.",
+      "p4": "I diritti dell'utente ai sensi della POPIA:",
+      "rights": [
+        "Diritto di accesso — Può richiedere l'accesso alle informazioni personali che conserviamo.",
+        "Diritto di correzione o cancellazione — Può richiedere la correzione o la cancellazione di informazioni personali inesatte, non pertinenti, eccessive, obsolete, incomplete, fuorvianti o ottenute illegalmente.",
+        "Diritto di opposizione — Può opporsi al trattamento delle proprie informazioni personali per motivi ragionevoli.",
+        "Diritto di presentare un reclamo — Può presentare un reclamo al Regolatore dell'informazione all'indirizzo https://inforegulator.org.za."
+      ],
+      "p5": "Per esercitare i propri diritti, contattare il gestore del sito utilizzando le informazioni nella pagina Informazioni.",
+      "p6": "La presente informativa sulla privacy è stata rivista l'ultima volta nel giugno 2026."
+    }
+  },
+  "accessibility": {
+    "title": "Dichiarazione di accessibilità",
+    "lastUpdated": "Giugno 2026",
+    "commitment": "Ci impegniamo a rendere questo dashboard meteorologico accessibile a tutti gli utenti, compresi coloro che si affidano a tecnologie assistive come lettori di schermo, navigazione da tastiera o dispositivi di input alternativi.",
+    "conformanceTarget": "Questo sito mira a conformarsi alle Linee guida per l'accessibilità dei contenuti web (WCAG) 2.1 al Livello AA. Esaminiamo regolarmente i nostri contenuti e il nostro design in termini di accessibilità e ci adoperiamo per correggere i problemi identificati.",
+    "knownLimitations": "Si applicano le seguenti limitazioni note: (1) I contenuti di terze parti, incluse le tile di mappe, il testo dei fornitori di previsioni e le immagini radar incorporate, potrebbero non soddisfare pienamente gli standard di accessibilità, in quanto forniti da servizi esterni al di fuori del nostro controllo diretto. (2) Le visualizzazioni di dati meteorologici in tempo reale (grafici e diagrammi) forniscono alternative testuali e tabelle di dati ove possibile, per garantire che i dati sottostanti siano accessibili a tutti gli utenti.",
+    "feedback": "Se incontra una barriera di accessibilità su questo sito, contatti il gestore del sito utilizzando le informazioni nella pagina Informazioni. Accogliamo con favore i feedback e faremo ogni ragionevole sforzo per affrontare prontamente le barriere identificate.",
+    "operatorDisclaimer": "La presente dichiarazione di accessibilità è un modello predefinito fornito dal software Clear Skies. Il gestore della stazione è responsabile di garantire che il proprio specifico deployment soddisfi gli standard di accessibilità applicabili e di aggiornare questa dichiarazione per riflettere accuratamente lo stato di accessibilità del proprio sito.",
+    "lawsLabel": "Normativa sull'accessibilità applicabile",
+    "laws": {
+      "north-america": {
+        "title": "Nord America — ADA, Section 508, AODA, Accessible Canada Act",
+        "body": "Stati Uniti: l'Americans with Disabilities Act (ADA) e la Section 508 del Rehabilitation Act richiedono che le tecnologie elettroniche e dell'informazione siano accessibili alle persone con disabilità. Sebbene i siti web personali non siano universalmente coperti dalla Section 508, applichiamo i suoi standard come buona pratica. Canada: l'Accessibility for Ontarians with Disabilities Act (AODA) e l'Accessible Canada Act (ACA) stabiliscono requisiti di accessibilità per le organizzazioni operanti in Ontario e a livello federale. Progettiamo questo sito per soddisfare WCAG 2.1 Livello AA come richiesto da queste leggi."
+      },
+      "south-america": {
+        "title": "Sud America — Legge brasiliana sull'inclusione",
+        "body": "Brasile: la Lei Brasileira de Inclusão da Pessoa com Deficiência (Lei 13.146/2015, nota anche come Estatuto da Pessoa com Deficiência) sancisce il diritto delle persone con disabilità di accedere ai contenuti digitali in formati accessibili. Progettiamo questo sito per soddisfare gli standard WCAG 2.1 Livello AA a supporto della conformità con questa legge."
+      },
+      "europe": {
+        "title": "Europa — European Accessibility Act, EN 301 549, UK Equality Act",
+        "body": "Unione europea: l'European Accessibility Act (EAA, Direttiva 2019/882/UE) richiede che i prodotti e servizi digitali soddisfino i requisiti di accessibilità, armonizzati con lo standard tecnico EN 301 549 (che incorpora WCAG 2.1 Livello AA). Regno Unito: l'Equality Act 2010 impone ai fornitori di servizi di apportare accomodamenti ragionevoli per garantire che i loro servizi siano accessibili alle persone con disabilità. Le Public Sector Bodies Accessibility Regulations 2018 (mantenute nel diritto britannico) applicano anch'esse lo standard WCAG 2.1 AA."
+      },
+      "asia": {
+        "title": "Asia — JIS X 8341-3 (Giappone), RPWD Act (India), KWCAG (Corea del Sud)",
+        "body": "Giappone: JIS X 8341-3:2016 è lo standard industriale giapponese per l'accessibilità web, allineato con WCAG 2.1. India: il Rights of Persons with Disabilities Act 2016 (RPWD Act) richiede che le tecnologie dell'informazione e della comunicazione siano accessibili alle persone con disabilità. Corea del Sud: le Korean Web Content Accessibility Guidelines (KWCAG 2.1) stabiliscono standard di accessibilità per i contenuti web, basate su WCAG 2.1."
+      },
+      "oceania": {
+        "title": "Oceania — Disability Discrimination Act 1992 (Australia)",
+        "body": "Australia: il Disability Discrimination Act 1992 (DDA) rende illegale discriminare le persone con disabilità nella fornitura di beni, servizi e strutture, inclusi i siti web. Le note orientative della Australian Human Rights Commission indicano che WCAG 2.1 Livello AA rappresenta lo standard attuale per la conformità all'accessibilità web ai sensi del DDA."
+      },
+      "africa": {
+        "title": "Africa — Accessibilità ICT (Sudafrica)",
+        "body": "Sudafrica: la Costituzione sudafricana garantisce uguaglianza e dignità per tutte le persone. La POPIA e l'Electronic Communications and Transactions Act (ECTA), unitamente agli obblighi costituzionali, creano un quadro che promuove i servizi digitali accessibili. In assenza di un unico statuto prescrittivo sull'accessibilità web, applichiamo WCAG 2.1 Livello AA come buona pratica internazionale e a supporto dell'accesso equo per tutti gli utenti."
+      }
+    }
   },
   "attribution": {
     "title": "Attribuzione dei dati",
     "observations": "Osservazioni meteorologiche: Hardware della stazione locale (configurato in Informazioni)",
-    "forecast": "Dati previsionali: National Weather Service (NWS)",
-    "airQuality": "Dati qualità dell’aria: AirNow / EPA",
+    "forecast": "Dati di previsione: National Weather Service (NWS)",
+    "airQuality": "Dati sulla qualità dell'aria: AirNow / EPA",
     "earthquake": "Dati sismici: USGS",
     "astronomical": "Dati astronomici: Calcoli di effemeridi Skyfield",
     "note": "Le fonti di dati effettive dipendono dai fornitori configurati."
   },
   "openSource": {
     "title": "Licenze open source",
-    "body": "Clear Skies è software libero concesso in licenza ai sensi della GNU General Public License v3.0. È sviluppato con tecnologie open source tra cui React, Vite, Tailwind CSS, Recharts e icone Lucide. Il testo completo della licenza e l’attribuzione di terze parti sono disponibili nel repository del progetto."
+    "body": "Clear Skies è software libero con licenza GNU General Public License v3.0. È sviluppato con tecnologie open source, tra cui React, Vite, Tailwind CSS, Recharts e icone Lucide. Il testo completo della licenza e le attribuzioni di terze parti sono disponibili nel repository del progetto."
   }
 }

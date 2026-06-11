@@ -4,21 +4,294 @@
   "operatorCard": {
     "title": "Legal at Patakaran sa Privacy"
   },
+  "termsOfUse": {
+    "title": "Mga Tuntunin ng Paggamit",
+    "lastUpdated": "Hunyo 2026",
+    "sections": {
+      "acceptance": {
+        "title": "Pagtanggap sa mga Tuntunin",
+        "body": "Sa pag-access o paggamit ng website ng weather station na ito, sumasang-ayon kayo na magiging bisa ang mga Tuntunin ng Paggamit na ito. Kung hindi kayo sumasang-ayon sa mga tuntuning ito, mangyaring huwag gamitin ang site na ito. Ang patuloy na paggamit ng site pagkatapos ng anumang pagbabago sa mga tuntuning ito ay nagpapahiwatig ng inyong pagtanggap sa mga pagbabagong iyon."
+      },
+      "serviceDescription": {
+        "title": "Paglalarawan ng Serbisyo",
+        "body": "Ang website na ito ay nagbibigay ng datos ng panahon na nakolekta mula sa isang personal na weather station na pinapatakbo ng isang indibidwal o maliit na organisasyon. Ang datos ay ibinibigay para sa layuning impormasyon at libangan lamang. Hindi ito isang propesyonal na serbisyo ng meteorolohiya, at ang site na ito ay hindi kaanib ng anumang opisyal na serbisyo ng panahon ng pamahalaan tulad ng National Weather Service (NWS) o NOAA."
+      },
+      "dataAccuracy": {
+        "title": "Disclaimer sa Katumpakan ng Datos",
+        "body": "Ang datos ng panahon ay ibinibigay NANG WALANG ANUMANG GARANTIYA. Ang mga pagbabasa ng sensor ay maaaring hindi tumpak, maantala, o pansamantalang hindi magagamit dahil sa mga limitasyon ng kagamitan, pagpapanatili, o mga teknikal na isyu. Ang datos na ito ay HINDI angkop para sa mga kritikal na aplikasyon sa kaligtasan kabilang ngunit hindi limitado sa: paglipad, nabigasyon sa dagat, pamamahala ng emergency, o anumang desisyon kung saan ang hindi tamang impormasyon ng panahon ay maaaring magresulta sa pinsala, kamatayan, o pinsala sa ari-arian. Palaging kumonsulta sa mga opisyal na serbisyo ng panahon ng pamahalaan para sa mga kritikal na desisyon sa kaligtasan. Ayon sa GNU General Public License v3 §15–16, ang software na ito at ang mga resulta nito ay ibinibigay nang walang anumang garantiya, hayagan man o ipinahiwatig."
+      },
+      "intellectualProperty": {
+        "title": "Intelektwal na Ari-arian",
+        "body": "Ang software ng Clear Skies dashboard ay libreng software na lisensyado sa ilalim ng GNU General Public License v3.0. Ang mga katotohanang datos ng pagmamasid sa panahon (temperatura, halumigmig, bilis ng hangin, atbp.) ay binubuo ng mga siyentipikong pagsukat at hindi protektado ng copyright. Ang datos ng pagtataya ng panahon, mga tile ng mapa, at iba pang nilalaman mula sa mga third-party provider ay nananatiling ari-arian ng kani-kanilang mga may-ari at napapailalim sa kanilang sariling mga tuntunin ng serbisyo at mga lisensya."
+      },
+      "thirdPartyServices": {
+        "title": "Mga Serbisyo ng Third Party",
+        "body": "Maaaring ipakita ng site na ito ang datos mula sa mga third-party na pinagkukunan kabilang ngunit hindi limitado sa: Aeris Weather, ang National Weather Service (NWS), OpenWeatherMap, ang U.S. Geological Survey (USGS), at iba't ibang provider ng tile ng mapa. Ang datos na ito ay ibinibigay alinsunod sa mga sariling tuntunin ng serbisyo at pamantayan ng katumpakan ng bawat provider. Hindi kontrolado ng operator ng site at hindi siya responsable sa katumpakan o pagkakaroon ng datos ng third party."
+      },
+      "prohibitedConduct": {
+        "title": "Ipinagbabawal na Kilos",
+        "body": "Hindi ninyo maaaring gamitin ang site na ito para sa: automated na pagkolekta o mass data collection nang walang nakasulat na pahintulot ng operator; anumang paggamit na lumalabag sa naaangkop na lokal, pambansa, o internasyonal na batas; pagpapadala ng malware o pagtatangkang makagambala sa operasyon ng site; maling pagpapakita ng datos mula sa site na ito bilang nagmumula sa opisyal na pamahalaan o propesyonal na pinagkukunan ng meteorolohiya."
+      },
+      "limitationOfLiability": {
+        "title": "Limitasyon ng Pananagutan",
+        "body": "Ayon sa GNU General Public License v3 §16, at sa pinakamalawak na lawak na pinahihintulutan ng naaangkop na batas, ang operator ng site ay hindi mananagot para sa anumang pinsala na nagmumula sa paggamit o kawalan ng kakayahang gamitin ang site na ito, kabilang ngunit hindi limitado sa pinsala na nagreresulta mula sa hindi katumpakan ng datos, mga pagkaantala ng serbisyo, o mga desisyon na ginawa batay sa datos ng panahon na ipinakita dito. Dahil ang serbisyong ito ay ibinibigay nang libre, ang pinakamataas na pananagutan ng operator ng site ay ₱0.00."
+      },
+      "modifications": {
+        "title": "Mga Pagbabago",
+        "body": "Inirereserbahan ng operator ng site ang karapatang baguhin ang mga Tuntunin ng Paggamit na ito anumang oras nang walang paunang abiso. Ang mga pagbabago ay magkakabisa sa pagpost. Ang patuloy na paggamit ng site pagkatapos ng pagpost ng mga binagong tuntunin ay nagbibigay-kahulugang pagtanggap ninyo sa mga tuntuning iyon."
+      },
+      "governingLaw": {
+        "title": "Namamahalang Batas",
+        "body": "Ang mga Tuntunin ng Paggamit na ito ay pinamamahalaan ng mga batas ng [Hurisdiksyon ng Operator]. Ang anumang mga di-pagkakaunawaan na nagmumula sa paggamit ng site na ito ay malulutas sa mga hukuman ng [Hurisdiksyon ng Operator]. Tandaan: Ito ay isang default na template — ang operator ng site ay responsable sa pag-update ng seksyong ito upang ipakita ang kanilang naaangkop na hurisdiksyon."
+      },
+      "contact": {
+        "title": "Makipag-ugnayan",
+        "body": "Para sa mga katanungan tungkol sa mga Tuntunin ng Paggamit na ito, mangyaring makipag-ugnayan sa operator ng site gamit ang impormasyon ng pakikipag-ugnayan na ibinibigay sa pahina ng Tungkol."
+      }
+    }
+  },
   "privacy": {
     "title": "Patakaran sa Privacy",
-    "body": "Ang weather station na ito ay nangongolekta ng meteorological na datos mula sa lokal na mga sensor at maaaring gumamit ng mga third-party na serbisyo para sa mga hula, kalidad ng hangin, at datos ng lindol. Walang personal na datos ng bisita ang nangongolekta maliban sa mga karaniwang log ng web server. Ang mga operator ng istasyon ay dapat mag-customize ng seksyong ito upang maipakita ang kanilang mga tiyak na gawi sa datos at naaangkop na mga regulasyon sa privacy."
+    "body": "Ang weather station na ito ay nangongolekta ng meteorolohikal na datos mula sa mga lokal na sensor at maaaring gumamit ng mga serbisyo ng third party para sa mga pagtataya, kalidad ng hangin, at datos ng lindol. Walang personal na datos ng bisita ang kinokolekta lampas sa mga karaniwang log ng web server. Dapat i-customize ng mga operator ng istasyon ang seksyong ito upang ipakita ang kanilang mga partikular na gawi sa datos at naaangkop na mga regulasyon sa privacy."
+  },
+  "privacyIntro": {
+    "dataCollectedTitle": "Anong Datos ang Kinokolekta",
+    "dataCollectedBody": "Ang weather station na ito ay nangongolekta ng mga meteorolohikal na obserbasyon mula sa mga lokal na sensor (temperatura, halumigmig, bilis ng hangin, presyon, pag-ulan, atbp.). Ang hardware ng istasyon mismo ay hindi nangongolekta ng anumang personal na datos mula sa mga bisita.",
+    "visitorDataTitle": "Datos ng Bisita",
+    "visitorDataBody": "Ang mga karaniwang log ng pag-access ng web server ay maaaring mag-record ng inyong IP address, uri at bersyon ng browser, operating system, ang pahinang pinagmulang-link ninyo, mga pahinang tiningnan, at petsa at oras ng inyong pagbisita. Kung ang Google Analytics o katulad na serbisyo ay pinaaktibo sa site na ito, maaaring magtakda ng mga cookie nang may pahintulot ninyo. Maaaring gamitin ang localStorage ng inyong browser upang iimbak ang inyong mga kagustuhan sa display (tulad ng pagpili ng tema o mga kagustuhan sa unit) — ang datos na ito ay nananatili sa inyong device at hindi ipinapadala sa anumang server.",
+    "contactTitle": "Makipag-ugnayan",
+    "contactBody": "Para sa mga katanungan tungkol sa patakaran sa privacy na ito o upang gamitin ang inyong mga karapatan sa privacy, mangyaring makipag-ugnayan sa operator ng site gamit ang impormasyon sa pahina ng Tungkol.",
+    "disclaimerTitle": "Responsibilidad ng Operator",
+    "disclaimerBody": "Ang patakaran sa privacy na ito ay isang default na template na ibinibigay ng software ng Clear Skies. Ang operator ng istasyon ay responsable sa pagsusuri at pag-customize ng patakarang ito upang sumunod sa lahat ng naaangkop na batas sa privacy sa kanilang hurisdiksyon, at upang tumpak na ilarawan ang kanilang mga partikular na gawi sa koleksyon at pagpoproseso ng datos."
+  },
+  "jurisdictions": {
+    "sectionLabel": "Mga Abiso sa Privacy ayon sa Hurisdiksyon",
+    "expandLabel": "Palawakin",
+    "collapseLabel": "Bawasan",
+    "ccpa": {
+      "continent": "north-america",
+      "heading": "California Consumer Privacy Act (CCPA/CPRA) — Mga Residente ng California",
+      "p1": "Naaangkop ang abisong ito sa mga residente ng California sa ilalim ng California Consumer Privacy Act (CCPA) at California Privacy Rights Act (CPRA).",
+      "p2": "Kinokolekta namin ang mga sumusunod na kategorya ng personal na impormasyon kapag binisita ninyo ang site na ito: Internet Protocol (IP) address, uri at bersyon ng browser, operating system, referral URL, mga pahinang tiningnan, at mga timestamp ng inyong pagbisita. Ang impormasyong ito ay awtomatikong kinokolekta sa pamamagitan ng mga karaniwang log ng web server.",
+      "p3": "Ginagamit namin ang impormasyong ito nang eksklusibo para sa pagpapatakbo at pagpapanatili ng website ng weather station na ito. Hindi namin ibinibenta, ibinabahagi para sa cross-context na behavioral advertising, o ibinubunyag ang inyong personal na impormasyon sa mga third party para sa kanilang sariling mga layuning komersyal.",
+      "p4": "Bilang isang residente ng California, mayroon kayong mga sumusunod na karapatan:",
+      "rights": [
+        "Karapatan na Malaman — Maaari kayong humiling na ibunyag namin ang mga kategorya at partikular na piraso ng personal na impormasyon na nakolekta namin tungkol sa inyo.",
+        "Karapatan sa Pagtanggal — Maaari kayong humiling ng pagtanggal ng personal na impormasyon na nakolekta namin, napapailalim sa ilang mga pagbubukod.",
+        "Karapatan na Mag-opt-out sa Pagbebenta o Pagbabahagi — Hindi namin ibinibenta o ibinabahagi ang personal na impormasyon para sa cross-context na behavioral advertising. Walang kinakailangang opt-out.",
+        "Karapatan sa Hindi Diskriminasyon — Hindi namin kayo dudiskrimenahin dahil sa paggamit ng inyong mga karapatan sa ilalim ng CCPA."
+      ],
+      "p5": "Upang magsumite ng kahilingan sa karapatan, makipag-ugnayan sa operator ng site gamit ang impormasyon ng pakikipag-ugnayan sa pahina ng Tungkol. Tutugon kami sa mga nabe-beripikang kahilingan ng consumer sa loob ng 45 araw.",
+      "p6": "Ang abisong ito sa privacy ay huling nasuri noong Mayo 22, 2026."
+    },
+    "caloppa": {
+      "continent": "north-america",
+      "heading": "California Online Privacy Protection Act (CalOPPA)",
+      "p1": "Naaangkop ang abisong ito sa mga residente ng California sa ilalim ng California Online Privacy Protection Act (CalOPPA), na nag-aatas sa mga operator ng mga komersyal na website at online na serbisyo na nangongolekta ng personally identifiable information mula sa mga residente ng California na mag-post ng nakikitang patakaran sa privacy.",
+      "p2": "Tinutukoy ng patakaran sa privacy na ito ang: (1) mga kategorya ng personally identifiable information na kinokolekta; (2) mga kategorya ng mga third party kung kanino maaaring ibahagi ang impormasyong iyon; (3) kung paano ninyo maaaring suriin at humiling ng mga pagbabago sa inyong personally identifiable information; (4) ang proseso kung saan kayo aming inaabisuhan ng mga materyal na pagbabago sa patakarang ito; at (5) ang petsa ng bisa ng patakarang ito.",
+      "p3": "Iginagalang namin ang mga signal ng Do Not Track (DNT). Kung pinaaktibo ninyo ang DNT sa inyong browser, hindi kami magtatakda ng mga analytics cookie o makikibahagi sa behavioral tracking.",
+      "p4": "Upang suriin, itama, o tanggalin ang personally identifiable information na mayroon kami tungkol sa inyo, makipag-ugnayan sa operator ng site gamit ang impormasyon sa pahina ng Tungkol.",
+      "p5": "Ang abisong ito sa privacy ay huling nasuri noong Hunyo 2026."
+    },
+    "gdpr": {
+      "continent": "europe",
+      "heading": "General Data Protection Regulation (GDPR) — Mga Residente ng EU/EEA",
+      "p1": "Naaangkop ang abisong ito sa mga residente ng European Union at European Economic Area sa ilalim ng General Data Protection Regulation (EU) 2016/679, at tinutukoy ang ePrivacy Directive (2002/58/EC, gaya ng binago ng 2009/136/EC) tungkol sa mga cookie at electronic na komunikasyon.",
+      "p2": "Data controller: ang operator ng site (impormasyon ng pakikipag-ugnayan ay makikita sa pahina ng Tungkol). Kung may mga katanungan kayo tungkol sa pagpoproseso ng datos, makipag-ugnayan nang direkta sa operator.",
+      "p3": "Pinoproseso namin ang mga sumusunod na personal na datos: IP address, browser user-agent string, HTTP referrer, at mga timestamp ng kahilingan sa pahina. Ang datos na ito ay naitala sa mga karaniwang log ng pag-access ng web server.",
+      "p4": "Mga legal na batayan para sa pagpoproseso:",
+      "legalBases": [
+        "Lehitimong interes (Artikulo 6(1)(f)) — Pinoproseso namin ang datos ng log ng server upang matiyak ang seguridad at wastong operasyon ng website na ito. Ang aming interes sa pag-iwas sa maling paggamit at pagsusuri ng mga teknikal na isyu ay naibabago laban sa minimal na epekto ng pagpoproseso ng karaniwang datos ng access log.",
+        "Pahintulot (Artikulo 6(1)(a)) — Kung ang analytics tracking ay pinaaktibo sa site na ito, ang naturang pagpoproseso ay nagaganap lamang nang may inyong naunang pahintulot, na maaari ninyong bawiin anumang oras."
+      ],
+      "p5": "Ang inyong mga karapatan sa ilalim ng GDPR:",
+      "rights": [
+        "Karapatan sa pag-access (Artikulo 15) — Maaari kayong humiling ng kopya ng personal na datos na mayroon kami tungkol sa inyo.",
+        "Karapatan sa pagwawasto (Artikulo 16) — Maaari kayong humiling ng pagwawasto ng hindi tamang personal na datos.",
+        "Karapatan sa pagbubura (Artikulo 17) — Maaari kayong humiling ng pagtanggal ng inyong personal na datos kung wala itong nangingibabaw na lehitimong batayan para sa patuloy na pagpoproseso.",
+        "Karapatan sa paghihigpit ng pagpoproseso (Artikulo 18) — Maaari kayong humiling na higpitan namin ang pagpoproseso ng inyong personal na datos sa ilang pagkakataon.",
+        "Karapatan sa portabilidad ng datos (Artikulo 20) — Kung ang pagpoproseso ay batay sa pahintulot o kontrata, maaari kayong humiling ng inyong datos sa isang structured, machine-readable na format.",
+        "Karapatan sa pagtutol (Artikulo 21) — Maaari kayong tumutol anumang oras sa pagpoproseso batay sa mga lehitimong interes."
+      ],
+      "p6": "Pagpapanatili: Ang mga log ng pag-access ng server ay pinapanatili nang hanggang 90 araw para sa seguridad at mga layuning diagnostic, pagkatapos ay tinatanggal.",
+      "p7": "Mga internasyonal na paglipat: Ang site na ito ay pinapatakbo mula sa Estados Unidos. Kung na-access ninyo ang site na ito mula sa EU/EEA, ang inyong datos ay maaaring ilipat at iproseso sa Estados Unidos. Umaasa kami sa pangangailangan ng pagpoproseso para sa pagganap ng isang gawain sa pampublikong interes (pagpapakalat ng meteorolohikal na datos) bilang mekanismo ng paglipat.",
+      "p8": "Karapatan na magsumite ng reklamo: Mayroon kayong karapatang magsumite ng reklamo sa inyong pambansang awtoridad sa pagmamasid. Ang isang listahan ng mga awtoridad ng EU ay makikita sa https://edpb.europa.eu/about-edpb/about-edpb/members_en.",
+      "p9": "Ang abisong ito sa privacy ay huling nasuri noong Mayo 22, 2026."
+    },
+    "ukgdpr": {
+      "continent": "europe",
+      "heading": "UK GDPR at PECR — Mga Residente ng United Kingdom",
+      "p1": "Naaangkop ang abisong ito sa mga residente ng United Kingdom sa ilalim ng UK General Data Protection Regulation (UK GDPR), ang Data Protection Act 2018, at ang Privacy and Electronic Communications Regulations 2003 (PECR).",
+      "p2": "Data controller: ang operator ng site (impormasyon ng pakikipag-ugnayan ay makikita sa pahina ng Tungkol). Ang UK GDPR ay naaangkop nang hiwalay sa EU GDPR kasunod ng pag-alis ng United Kingdom sa European Union.",
+      "p3": "Pinoproseso namin ang mga sumusunod na personal na datos: IP address, browser user-agent string, HTTP referrer, at mga timestamp ng kahilingan sa pahina, na naitala sa mga karaniwang log ng pag-access ng web server.",
+      "p4": "Mga legal na batayan para sa pagpoproseso:",
+      "legalBases": [
+        "Mga lehitimong interes (UK GDPR Artikulo 6(1)(f)) — Ang datos ng log ng server ay pinoproseso upang matiyak ang seguridad at operasyon ng website na ito.",
+        "Pahintulot (UK GDPR Artikulo 6(1)(a) at PECR) — Ang mga cookie para sa mga layuning analytics ay itinatakda lamang nang may inyong naunang, malayang ibinigay na pahintulot."
+      ],
+      "p5": "Ang inyong mga karapatan sa ilalim ng UK GDPR:",
+      "rights": [
+        "Karapatan sa pag-access — Maaari kayong humiling ng kopya ng personal na datos na mayroon kami tungkol sa inyo.",
+        "Karapatan sa pagwawasto — Maaari kayong humiling ng pagwawasto ng hindi tamang personal na datos.",
+        "Karapatan sa pagbubura — Maaari kayong humiling ng pagtanggal ng inyong personal na datos.",
+        "Karapatan sa paghihigpit ng pagpoproseso — Maaari kayong humiling na limitahan namin kung paano namin ginagamit ang inyong datos.",
+        "Karapatan sa portabilidad ng datos — Maaari kayong humiling ng inyong datos sa isang portable na format.",
+        "Karapatan sa pagtutol — Maaari kayong tumutol sa pagpoproseso batay sa mga lehitimong interes."
+      ],
+      "p6": "Karapatan na magsumite ng reklamo: Mayroon kayong karapatang magreklamo sa Information Commissioner's Office (ICO) sa https://ico.org.uk. Ang helpline number ng ICO ay 0303 123 1113.",
+      "p7": "Ang abisong ito sa privacy ay huling nasuri noong Hunyo 2026."
+    },
+    "quebec": {
+      "continent": "north-america",
+      "heading": "Batas 25 ng Quebec — Mga Residente ng Quebec",
+      "p1": "Naaangkop ang abisong ito sa mga residente ng Quebec, Canada sa ilalim ng Batas sa Proteksyon ng Personal na Impormasyon sa Pribadong Sektor (Batas 25 / Bill 64), gaya ng binago.",
+      "p2": "Kinokolekta namin ang sumusunod na personal na impormasyon kapag binisita ninyo ang site na ito: IP address, uri at bersyon ng browser, operating system, referral URL, mga pahinang binisita, at mga timestamp. Ang impormasyong ito ay naitala sa mga karaniwang log ng web server para sa layunin ng pagpapatakbo at pag-secure ng website ng weather station na ito.",
+      "p3": "Pagtatasa ng epekto sa privacy: Tinasa ng operator ng website na ito ang epekto sa privacy ng pagkolekta ng datos ng log ng server. Natukoy ng pagtatasa na ang pagkolekta ay limitado sa pinakamababang kinakailangan para sa operasyon at seguridad ng website, at hindi nagpapakita ng seryosong panganib sa privacy.",
+      "p4": "Pahintulot: Sa pag-access ng website na ito, kinikilala ninyo ang pagkolekta ng personal na impormasyong inilarawan sa itaas. Walang karagdagang personal na impormasyon ang kinokolekta nang walang inyong tahasang pahintulot. Kung ang mga serbisyo ng analytics ay pinagana, ang mga ito ay napaaktibo lamang nang may inyong naunang pahintulot.",
+      "p5": "Ang inyong mga karapatan sa ilalim ng Batas 25:",
+      "rights": [
+        "Karapatan sa pag-access — Maaari kayong humiling ng pag-access sa personal na impormasyong mayroon kami tungkol sa inyo.",
+        "Karapatan sa pagwawasto — Maaari kayong humiling ng pagwawasto ng anumang hindi tumpak, hindi kumpleto, o equivocal na impormasyon.",
+        "Karapatan na bawiin ang pahintulot — Kung ang pagpoproseso ay batay sa pahintulot, maaari ninyong bawiin ito anumang oras.",
+        "Karapatan sa pagtanggal — Maaari kayong humiling ng pagtanggal ng personal na impormasyong nakolekta nang walang legal na awtoridad o napanatili nang lampas sa kinakailangang panahon."
+      ],
+      "p6": "Mga cross-border na paglipat: Ang website na ito ay naka-host sa mga server na matatagpuan sa labas ng Quebec. Ang personal na impormasyon (datos ng log ng server) ay maaaring ilipat at iproseso sa Estados Unidos. Bago ang anumang naturang paglipat, tinasa namin kung ang impormasyon ay makakatanggap ng sapat na proteksyon na katumbas ng ibinibigay ng batas ng Quebec.",
+      "p7": "Abiso ng insidente: Sa kaganapan ng isang insidente ng kumpidensyalidad (hindi awtorisadong pag-access, paggamit, o pagsisiwalat) na kinasasangkutan ng personal na impormasyon na nagpapakita ng panganib ng seryosong pinsala, aabisuhan namin ang Commission d'accès à l'information du Québec at ang mga apektadong indibidwal gaya ng kinakailangan ng batas.",
+      "p8": "Makipag-ugnayan: Upang gamitin ang inyong mga karapatan o para sa mga katanungan tungkol sa aming mga gawi sa privacy, makipag-ugnayan sa operator ng site gamit ang impormasyon ng pakikipag-ugnayan sa pahina ng Tungkol.",
+      "p9": "Ang abisong ito sa privacy ay huling nasuri noong Mayo 22, 2026."
+    },
+    "lgpd": {
+      "continent": "south-america",
+      "heading": "Lei Geral de Proteção de Dados (LGPD) — Mga Residente ng Brazil",
+      "p1": "Naaangkop ang abisong ito sa mga residente ng Brazil sa ilalim ng Lei Geral de Proteção de Dados Pessoais (LGPD), Federal Law No. 13.709/2018, na ipinapatupad ng Autoridade Nacional de Proteção de Dados (ANPD).",
+      "p2": "Kinokolekta namin ang mga sumusunod na personal na datos kapag binisita ninyo ang site na ito: IP address, uri at bersyon ng browser, operating system, referral URL, mga pahinang binisita, at mga timestamp, na naitala sa mga karaniwang log ng web server.",
+      "p3": "Mga legal na batayan para sa pagpoproseso (LGPD Artikulo 7): Pinoproseso namin ang inyong datos batay sa lehitimong interes upang matiyak ang seguridad at wastong operasyon ng website na ito. Anumang opsyonal na pagpoproseso ng analytics ay isinasagawa lamang nang may inyong pahintulot.",
+      "p4": "Ang inyong mga karapatan sa ilalim ng LGPD:",
+      "rights": [
+        "Kumpirmasyon ng pagkakaroon ng pagpoproseso — Maaari kayong kumpirmahin kung pinoproseso namin ang inyong personal na datos.",
+        "Pag-access — Maaari kayong humiling ng pag-access sa personal na datos na mayroon kami tungkol sa inyo.",
+        "Pagwawasto — Maaari kayong humiling ng pagwawasto ng hindi kumpleto, hindi tumpak, o lumang datos.",
+        "Anonymization, pagharang, o pagtanggal — Maaari kayong humiling ng anonymization, pagharang, o pagtanggal ng hindi kinakailangan, labis, o hindi sumusunod na datos.",
+        "Portabilidad — Maaari kayong humiling ng portabilidad ng inyong datos sa isa pang service o product provider.",
+        "Pagtanggal — Maaari kayong humiling ng pagtanggal ng datos na pinoproseso nang may inyong pahintulot.",
+        "Impormasyon tungkol sa pagbabahagi — Maaari kayong humiling ng impormasyon tungkol sa mga pampubliko at pribadong entidad kung kanino namin ibinabahagi ang inyong datos.",
+        "Pagbawi ng pahintulot — Maaari ninyong bawiin ang pahintulot anumang oras."
+      ],
+      "p5": "Upang gamitin ang inyong mga karapatan sa ilalim ng LGPD, makipag-ugnayan sa operator ng site gamit ang impormasyon sa pahina ng Tungkol.",
+      "p6": "Ang abisong ito sa privacy ay huling nasuri noong Hunyo 2026."
+    },
+    "appi": {
+      "continent": "asia",
+      "heading": "Act on the Protection of Personal Information (APPI) — Mga Residente ng Japan",
+      "p1": "Naaangkop ang abisong ito sa mga residente ng Japan sa ilalim ng Act on the Protection of Personal Information (APPI), gaya ng binago ng rebisyon ng 2020 na epektibo noong Abril 2022, na ipinapatupad ng Personal Information Protection Commission (PPC).",
+      "p2": "Kinokolekta namin ang sumusunod na personal na impormasyon kapag binisita ninyo ang site na ito: IP address, uri at bersyon ng browser, operating system, referral URL, mga pahinang binisita, at mga timestamp, na naitala sa mga karaniwang log ng web server.",
+      "p3": "Layunin ng paggamit: Ang personal na impormasyon ay kinokolekta nang eksklusibo para sa layunin ng pagpapatakbo at pag-secure ng website ng weather station na ito. Hindi namin ginagamit ang inyong personal na impormasyon nang lampas sa layuning ito nang walang inyong pahintulot.",
+      "p4": "Pagbibigay sa third party: Hindi namin ibinibigay ang inyong personal na impormasyon sa mga third party maliban kung kinakailangan ng batas o kinakailangan upang patakbuhin ang site na ito.",
+      "p5": "Ang inyong mga karapatan sa ilalim ng APPI:",
+      "rights": [
+        "Pagsisiwalat — Maaari kayong humiling ng pagsisiwalat ng personal na impormasyong mayroon kami tungkol sa inyo.",
+        "Pagwawasto — Maaari kayong humiling ng pagwawasto ng hindi tamang personal na impormasyon.",
+        "Pagtanggal — Maaari kayong humiling ng pagtanggal ng personal na impormasyon kung wala itong legal na batayan para sa pagpapanatili.",
+        "Pagsuspindi ng paggamit — Maaari kayong humiling ng pagsuspindi ng paggamit ng inyong personal na impormasyon kung ito ay pinoproseso sa paglabag sa APPI."
+      ],
+      "p6": "Upang gamitin ang inyong mga karapatan, makipag-ugnayan sa operator ng site gamit ang impormasyon sa pahina ng Tungkol.",
+      "p7": "Ang abisong ito sa privacy ay huling nasuri noong Hunyo 2026."
+    },
+    "dpdp": {
+      "continent": "asia",
+      "heading": "Digital Personal Data Protection Act (DPDP) — Mga Residente ng India",
+      "p1": "Naaangkop ang abisong ito sa mga residente ng India sa ilalim ng Digital Personal Data Protection Act 2023 (DPDP Act), na ipinapatupad ng Data Protection Board of India.",
+      "p2": "Kinokolekta namin ang mga sumusunod na personal na datos kapag binisita ninyo ang site na ito: IP address, uri at bersyon ng browser, operating system, referral URL, mga pahinang binisita, at mga timestamp, na naitala sa mga karaniwang log ng web server.",
+      "p3": "Layunin at pahintulot: Ang personal na datos ay pinoproseso para sa lehitimong layunin ng pagpapatakbo at pag-secure ng website ng weather station na ito. Ang datos ng analytics, kung kinokolekta, ay pinoproseso lamang nang may inyong pahintulot.",
+      "p4": "Ang inyong mga karapatan sa ilalim ng DPDP Act:",
+      "rights": [
+        "Karapatan sa pag-access ng impormasyon — Maaari kayong humiling ng buod ng personal na datos na mayroon kami tungkol sa inyo at ang mga layunin kung saan ito pinoproseso.",
+        "Karapatan sa pagwawasto at pagbubura — Maaari kayong humiling ng pagwawasto ng hindi tumpak o mapanlinlang na personal na datos, o pagbubura ng personal na datos na hindi na kailangan para sa nakatuon na layunin.",
+        "Karapatan sa pagtutol ng pagrereklamo — Maaari kayong magsumite ng reklamo sa amin tungkol sa pagpoproseso ng inyong personal na datos.",
+        "Karapatan sa pagtalaga — Maaari kayong magtalagang ibang indibidwal na gagamit ng mga karapatang ito sa inyong ngalan sa kaganapan ng inyong kamatayan o kapansanan."
+      ],
+      "p5": "Upang gamitin ang inyong mga karapatan o magsumite ng reklamo, makipag-ugnayan sa operator ng site gamit ang impormasyon sa pahina ng Tungkol.",
+      "p6": "Ang abisong ito sa privacy ay huling nasuri noong Hunyo 2026."
+    },
+    "australiaPrivacy": {
+      "continent": "oceania",
+      "heading": "Privacy Act 1988 — Mga Residente ng Australia",
+      "p1": "Naaangkop ang abisong ito sa mga residente ng Australia sa ilalim ng Privacy Act 1988 (Cth), kabilang ang Australian Privacy Principles (APPs), na kinokontrol ng Office of the Australian Information Commissioner (OAIC).",
+      "p2": "Kinokolekta namin ang sumusunod na personal na impormasyon kapag binisita ninyo ang site na ito: IP address, uri at bersyon ng browser, operating system, referral URL, mga pahinang binisita, at mga timestamp, na naitala sa mga karaniwang log ng web server.",
+      "p3": "Ginagamit namin ang personal na impormasyong ito nang eksklusibo upang patakbuhin at panatilihin ang website ng weather station na ito. Hindi namin ibinubunyag ang inyong personal na impormasyon sa mga third party para sa mga layuning marketing.",
+      "p4": "Ang inyong mga karapatan sa ilalim ng Privacy Act:",
+      "rights": [
+        "Pag-access — Maaari kayong humiling ng pag-access sa personal na impormasyong mayroon kami tungkol sa inyo (APP 12).",
+        "Pagwawasto — Maaari kayong humiling ng pagwawasto ng personal na impormasyong hindi tumpak, luma na, hindi kumpleto, hindi relevant, o mapanlinlang (APP 13).",
+        "Reklamo — Kung naniniwala kayong nilabag namin ang inyong privacy, maaari kayong magsumite ng reklamo sa OAIC sa https://www.oaic.gov.au."
+      ],
+      "p5": "Upang gamitin ang inyong mga karapatan o para sa mga katanungan tungkol sa aming mga gawi sa privacy, makipag-ugnayan sa operator ng site gamit ang impormasyon sa pahina ng Tungkol.",
+      "p6": "Ang abisong ito sa privacy ay huling nasuri noong Hunyo 2026."
+    },
+    "popia": {
+      "continent": "africa",
+      "heading": "Protection of Personal Information Act (POPIA) — Mga Residente ng South Africa",
+      "p1": "Naaangkop ang abisong ito sa mga residente ng South Africa sa ilalim ng Protection of Personal Information Act 4 ng 2013 (POPIA), na kinokontrol ng Information Regulator ng South Africa.",
+      "p2": "Kinokolekta namin ang sumusunod na personal na impormasyon kapag binisita ninyo ang site na ito: IP address, uri at bersyon ng browser, operating system, referral URL, mga pahinang binisita, at mga timestamp, na naitala sa mga karaniwang log ng web server.",
+      "p3": "Pinoproseso namin ang inyong personal na impormasyon para sa lehitimong layunin ng pagpapatakbo at pag-secure ng website ng weather station na ito, alinsunod sa mga kondisyon ng POPIA para sa maayos na pagpoproseso.",
+      "p4": "Ang inyong mga karapatan sa ilalim ng POPIA:",
+      "rights": [
+        "Karapatan sa pag-access — Maaari kayong humiling ng pag-access sa personal na impormasyong mayroon kami tungkol sa inyo.",
+        "Karapatan sa pagwawasto o pagtanggal — Maaari kayong humiling ng pagwawasto o pagtanggal ng personal na impormasyong hindi tumpak, hindi relevant, labis, luma na, hindi kumpleto, mapanlinlang, o iligal na nakuha.",
+        "Karapatan sa pagtutol — Maaari kayong tumutol sa pagpoproseso ng inyong personal na impormasyon sa makatwirang batayan.",
+        "Karapatan sa reklamo — Maaari kayong magsumite ng reklamo sa Information Regulator sa https://inforegulator.org.za."
+      ],
+      "p5": "Upang gamitin ang inyong mga karapatan, makipag-ugnayan sa operator ng site gamit ang impormasyon sa pahina ng Tungkol.",
+      "p6": "Ang abisong ito sa privacy ay huling nasuri noong Hunyo 2026."
+    }
+  },
+  "accessibility": {
+    "title": "Pahayag ng Accessibility",
+    "lastUpdated": "Hunyo 2026",
+    "commitment": "Kami ay nakatuon sa paggawa ng weather dashboard na ito na ma-access ng lahat ng gumagamit, kabilang ang mga umaasa sa mga assistive technology tulad ng mga screen reader, keyboard navigation, o alternatibong input device.",
+    "conformanceTarget": "Ang site na ito ay naglalayong sumunod sa Web Content Accessibility Guidelines (WCAG) 2.1 sa Level AA. Regular naming sinusuri ang aming nilalaman at disenyo para sa accessibility at nagtatrabaho upang ayusin ang mga isyung natukoy.",
+    "knownLimitations": "Naaangkop ang mga sumusunod na kilalang limitasyon: (1) Ang nilalaman ng third party kabilang ang mga tile ng mapa, teksto ng forecast provider, at naka-embed na radar imagery ay maaaring hindi ganap na matugunan ang mga pamantayan ng accessibility, dahil ito ay ibinibigay ng mga external na serbisyo sa labas ng aming direktang kontrol. (2) Ang mga real-time na visualization ng datos ng panahon (mga tsart at graph) ay nagbibigay ng mga text-based na alternatibo at mga talahanayan ng datos kung saan posible upang matiyak na ang pinagbabatayang datos ay available sa lahat ng gumagamit.",
+    "feedback": "Kung nakatagpo kayo ng isang hadlang sa accessibility sa site na ito, mangyaring makipag-ugnayan sa operator ng site gamit ang impormasyon sa pahina ng Tungkol. Tinatanggap namin ang feedback at gagawa ng makatwirang pagsisikap upang tugunan ang mga natukoy na hadlang nang mabilis.",
+    "operatorDisclaimer": "Ang pahayag ng accessibility na ito ay isang default na template na ibinibigay ng software ng Clear Skies. Ang operator ng istasyon ay responsable sa pagtitiyak na ang kanilang partikular na deployment ay nakakatugon sa naaangkop na mga pamantayan ng accessibility, at para sa pag-update ng pahayag na ito upang tumpak na ipakita ang status ng accessibility ng kanilang site.",
+    "lawsLabel": "Naaangkop na Batas sa Accessibility",
+    "laws": {
+      "north-america": {
+        "title": "Hilagang Amerika — ADA, Section 508, AODA, Accessible Canada Act",
+        "body": "Estados Unidos: Ang Americans with Disabilities Act (ADA) at Section 508 ng Rehabilitation Act ay nag-aatas na ang electronic at information technology ay ma-access ng mga taong may kapansanan. Habang ang mga personal na website ay hindi unibersalmente saklaw ng Section 508, inilalapat namin ang mga pamantayan nito bilang pinakamahusay na gawi. Canada: Ang Accessibility for Ontarians with Disabilities Act (AODA) at ang Accessible Canada Act (ACA) ay nagtatag ng mga kinakailangan sa accessibility para sa mga organisasyong nagpapatakbo sa Ontario at sa pederal na antas. Idinisenyo namin ang site na ito upang matugunan ang WCAG 2.1 Level AA gaya ng kinakailangan ng mga batas na ito."
+      },
+      "south-america": {
+        "title": "Timog Amerika — Brazilian Inclusion Law",
+        "body": "Brazil: Ang Lei Brasileira de Inclusão da Pessoa com Deficiência (Lei 13.146/2015, kilala rin bilang Estatuto da Pessoa com Deficiência) ay nagtatatag ng karapatan ng mga taong may kapansanan na ma-access ang digital na nilalaman. Kabilang dito ang karapatang ma-access ang mga website at digital na application sa mga accessible na format. Idinisenyo namin ang site na ito upang matugunan ang mga pamantayan ng WCAG 2.1 Level AA upang suportahan ang pagsunod sa batas na ito."
+      },
+      "europe": {
+        "title": "Europa — European Accessibility Act, EN 301 549, UK Equality Act",
+        "body": "European Union: Ang European Accessibility Act (EAA, Directive 2019/882/EU) ay nag-aatas na ang mga digital na produkto at serbisyo ay matutugunan ang mga kinakailangan sa accessibility, na nakakahanay sa teknikal na pamantayan ng EN 301 549 (na nagsasama ng WCAG 2.1 Level AA). United Kingdom: Ang Equality Act 2010 ay nag-aatas sa mga service provider na gumawa ng makatwirang mga pagsasaayos upang matiyak na ang kanilang mga serbisyo ay ma-access ng mga taong may kapansanan. Ang Public Sector Bodies Accessibility Regulations 2018 (tulad ng napanatili sa batas ng UK) ay naglalapat din ng pamantayan ng WCAG 2.1 AA."
+      },
+      "asia": {
+        "title": "Asya — JIS X 8341-3 (Japan), RPWD Act (India), KWCAG (South Korea)",
+        "body": "Japan: Ang JIS X 8341-3:2016 ay ang Japanese Industrial Standard para sa web accessibility, na nakakahanay sa WCAG 2.1. India: Ang Rights of Persons with Disabilities Act 2016 (RPWD Act) ay nag-aatas na ang information at communication technology ay ma-access ng mga taong may kapansanan. South Korea: Ang Korean Web Content Accessibility Guidelines (KWCAG 2.1) ay nagtatag ng mga pamantayan ng accessibility para sa web content, batay sa WCAG 2.1."
+      },
+      "oceania": {
+        "title": "Oceania — Disability Discrimination Act 1992 (Australia)",
+        "body": "Australia: Ang Disability Discrimination Act 1992 (DDA) ay nagpapaayon na labag sa batas ang pag-discriminate sa mga taong may kapansanan sa pagbibigay ng mga kalakal, serbisyo, at pasilidad, na kinabibilangan ng mga website. Ang mga advisory notes ng Australian Human Rights Commission ay nagpapahiwatig na ang WCAG 2.1 Level AA ay kumakatawan sa kasalukuyang pamantayan para sa pagsunod sa web accessibility sa ilalim ng DDA."
+      },
+      "africa": {
+        "title": "Africa — ICT Accessibility (South Africa)",
+        "body": "South Africa: Ang Konstitusyon ng South Africa ay nagga-garantiya ng pagkakapantay-pantay at dignidad para sa lahat ng tao. Ang POPIA at ang Electronic Communications and Transactions Act (ECTA) kasama ang mga obligasyon sa konstitusyon ay lumilikha ng balangkas na naghihikayat sa mga accessible na digital na serbisyo. Habang walang isang prescriptive na web accessibility statute, inilalapat namin ang WCAG 2.1 Level AA bilang internasyonal na pinakamahusay na gawi at upang suportahan ang pantay na pag-access para sa lahat ng gumagamit."
+      }
+    }
   },
   "attribution": {
-    "title": "Attribution ng Datos",
-    "observations": "Mga obserbasyon ng panahon: Lokal na hardware ng istasyon (naka-configure sa Tungkol)",
-    "forecast": "Datos ng hula: National Weather Service (NWS)",
+    "title": "Pagkilala sa Datos",
+    "observations": "Mga obserbasyon ng panahon: Lokal na hardware ng istasyon (na-configure sa Tungkol)",
+    "forecast": "Datos ng pagtataya: National Weather Service (NWS)",
     "airQuality": "Datos ng kalidad ng hangin: AirNow / EPA",
     "earthquake": "Datos ng lindol: USGS",
-    "astronomical": "Astronomical na datos: Skyfield ephemeris calculations",
-    "note": "Ang aktwal na mga pinagkukunan ng datos ay depende sa mga naka-configure na provider."
+    "astronomical": "Datos ng astronomiya: Mga kalkulasyon ng ephemeris ng Skyfield",
+    "note": "Ang aktwal na mga pinagkukunan ng datos ay nakasalalay sa mga na-configure na provider."
   },
   "openSource": {
-    "title": "Mga Open-Source na Lisensya",
-    "body": "Ang Clear Skies ay libreng software na lisensyado sa ilalim ng GNU General Public License v3.0. Ito ay ginawa gamit ang mga open-source na teknolohiya kabilang ang React, Vite, Tailwind CSS, Recharts, at mga icon ng Lucide. Ang buong teksto ng lisensya at third-party attribution ay available sa repository ng proyekto."
+    "title": "Mga Lisensya ng Open-Source",
+    "body": "Ang Clear Skies ay libreng software na lisensyado sa ilalim ng GNU General Public License v3.0. Ito ay binuo gamit ang mga open-source na teknolohiya kabilang ang React, Vite, Tailwind CSS, Recharts, at mga icon ng Lucide. Ang buong teksto ng lisensya at third-party na pagkilala ay makikita sa repositoryo ng proyekto."
   }
 }

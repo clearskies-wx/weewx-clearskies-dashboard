@@ -4,21 +4,294 @@
   "operatorCard": {
     "title": "Juridisch & Privacybeleid"
   },
+  "termsOfUse": {
+    "title": "Gebruiksvoorwaarden",
+    "lastUpdated": "Juni 2026",
+    "sections": {
+      "acceptance": {
+        "title": "Aanvaarding van de voorwaarden",
+        "body": "Door deze weerstation-website te bezoeken of te gebruiken, stemt u in met deze Gebruiksvoorwaarden. Als u niet akkoord gaat met deze voorwaarden, verzoeken wij u geen gebruik te maken van deze website. Voortgezet gebruik van de website na eventuele wijzigingen in deze voorwaarden geldt als aanvaarding van die wijzigingen."
+      },
+      "serviceDescription": {
+        "title": "Beschrijving van de dienst",
+        "body": "Deze website biedt weergegevens die zijn verzameld door een persoonlijk weerstation, beheerd door een particulier of een kleine organisatie. De gegevens worden uitsluitend verstrekt voor informatieve en recreatieve doeleinden. Dit is geen professionele meteorologische dienst en deze website is niet gelieerd aan enige officiële overheidsweerkundige dienst, zoals het KNMI, de National Weather Service (NWS) of de NOAA."
+      },
+      "dataAccuracy": {
+        "title": "Disclaimer nauwkeurigheid gegevens",
+        "body": "Weergegevens worden verstrekt ZOALS ZE ZIJN, zonder enige garantie. Sensormetingen kunnen onnauwkeurig, vertraagd of tijdelijk niet beschikbaar zijn als gevolg van apparaatbeperkingen, onderhoud of technische problemen. Deze gegevens zijn NIET geschikt voor veiligheidskritische toepassingen, waaronder maar niet beperkt tot luchtvaart, zeevaartnavigatie, rampenbeheersing of beslissingen waarbij onjuiste weersinformatie kan leiden tot letsel, overlijden of materiële schade. Raadpleeg voor veiligheidskritische beslissingen altijd officiële overheidsweerkundige diensten. Ingevolge de GNU General Public License v3 §15–16 worden deze software en de resultaten ervan verstrekt zonder enige garantie, expliciet of impliciet."
+      },
+      "intellectualProperty": {
+        "title": "Intellectueel eigendom",
+        "body": "De Clear Skies dashboard-software is vrije software, gelicentieerd onder de GNU General Public License v3.0. Feitelijke weersinformatiegegevens (temperatuur, vochtigheid, windsnelheid enz.) vormen wetenschappelijke metingen en zijn niet onderworpen aan auteursrechtelijke bescherming. Weersvoorspellingsgegevens, kaarttegels en andere inhoud van derden blijven eigendom van hun respectievelijke rechthebbenden en zijn onderworpen aan hun eigen gebruiksvoorwaarden en licenties."
+      },
+      "thirdPartyServices": {
+        "title": "Diensten van derden",
+        "body": "Deze website kan gegevens weergeven van bronnen van derden, waaronder maar niet beperkt tot: Aeris Weather, de National Weather Service (NWS), OpenWeatherMap, de U.S. Geological Survey (USGS) en diverse aanbieders van kaarttegels. Deze gegevens worden verstrekt overeenkomstig de eigen gebruiksvoorwaarden en nauwkeurigheidsnormen van elke aanbieder. De beheerder van de website heeft geen controle over en is niet verantwoordelijk voor de nauwkeurigheid of beschikbaarheid van gegevens van derden."
+      },
+      "prohibitedConduct": {
+        "title": "Verboden gedrag",
+        "body": "Het is niet toegestaan deze website te gebruiken voor: geautomatiseerd scrapen of bulksgewijze dataverzameling zonder schriftelijke toestemming van de beheerder; gebruik dat in strijd is met toepasselijke lokale, nationale of internationale wetgeving; het verzenden van malware of pogingen om de werking van de website te verstoren; het frauduleus voorstellen van gegevens van deze website als afkomstig van een officiële overheids- of professionele meteorologische bron."
+      },
+      "limitationOfLiability": {
+        "title": "Beperking van aansprakelijkheid",
+        "body": "Ingevolge de GNU General Public License v3 §16 en voor zover maximaal toegestaan door toepasselijk recht, is de beheerder van de website niet aansprakelijk voor enige schade die voortvloeit uit het gebruik van of de onmogelijkheid tot gebruik van deze website, met inbegrip van maar niet beperkt tot schade als gevolg van gegevensonnauwkeurigheden, onderbrekingen van de dienstverlening of beslissingen genomen op basis van de hier weergegeven weergegevens. Aangezien deze dienst kosteloos wordt aangeboden, bedraagt de maximale aansprakelijkheid van de beheerder € 0,00."
+      },
+      "modifications": {
+        "title": "Wijzigingen",
+        "body": "De beheerder van de website behoudt zich het recht voor deze Gebruiksvoorwaarden op elk moment en zonder voorafgaande kennisgeving te wijzigen. Wijzigingen worden van kracht bij publicatie. Voortgezet gebruik van de website na publicatie van gewijzigde voorwaarden geldt als aanvaarding van die voorwaarden."
+      },
+      "governingLaw": {
+        "title": "Toepasselijk recht",
+        "body": "Deze Gebruiksvoorwaarden worden beheerst door het recht van [Rechtsgebied van de beheerder]. Geschillen die voortvloeien uit het gebruik van deze website worden beslecht door de rechterlijke instanties van [Rechtsgebied van de beheerder]. Noot: dit is een standaardsjabloon — de beheerder van de website is verantwoordelijk voor het bijwerken van dit onderdeel om zijn toepasselijke rechtsgebied te weerspiegelen."
+      },
+      "contact": {
+        "title": "Contact",
+        "body": "Voor vragen over deze Gebruiksvoorwaarden kunt u contact opnemen met de beheerder van de website via de contactgegevens op de pagina Over."
+      }
+    }
+  },
   "privacy": {
     "title": "Privacybeleid",
-    "body": "Dit weerstation verzamelt meteorologische gegevens van lokale sensoren en maakt mogelijk gebruik van diensten van derden voor verwachtingen, luchtkwaliteit en aardbevingsgegevens. Er worden geen persoonlijke bezoekersgegevens verzameld buiten standaard webserverlogboeken. Stationsbeheerders dienen dit gedeelte aan te passen aan hun specifieke gegevenspraktijken en toepasselijke privacyregelgeving."
+    "body": "Dit weerstation verzamelt meteorologische gegevens van lokale sensoren en kan diensten van derden gebruiken voor weersvoorspellingen, luchtkwaliteit en aardbevingsgegevens. Er worden geen persoonlijke bezoekersgegevens verzameld buiten de standaard webserverlogboeken. Stationsbeheerders dienen dit onderdeel aan te passen aan hun specifieke gegevenspraktijken en toepasselijke privacyregelgeving."
+  },
+  "privacyIntro": {
+    "dataCollectedTitle": "Welke gegevens worden verzameld",
+    "dataCollectedBody": "Dit weerstation verzamelt meteorologische waarnemingen van lokale sensoren (temperatuur, vochtigheid, windsnelheid, luchtdruk, neerslag enz.). De stationshardware zelf verzamelt geen persoonlijke gegevens van bezoekers.",
+    "visitorDataTitle": "Bezoekersgegevens",
+    "visitorDataBody": "Standaard webservertoegangslogboeken kunnen uw IP-adres, browsertype en -versie, besturingssysteem, de pagina waarvandaan u bent doorverwezen, bezochte pagina's en datum en tijd van uw bezoek vastleggen. Als Google Analytics of een vergelijkbare dienst op deze website is ingeschakeld, kunnen met uw toestemming cookies worden geplaatst. De localStorage van uw browser kan worden gebruikt om uw weergavevoorkeuren op te slaan (zoals thema-keuze of eenheidsvoorkeuren) — deze gegevens blijven op uw apparaat en worden niet naar een server verzonden.",
+    "contactTitle": "Contact",
+    "contactBody": "Voor vragen over dit privacybeleid of om uw privacyrechten uit te oefenen, kunt u contact opnemen met de beheerder van de website via de informatie op de pagina Over.",
+    "disclaimerTitle": "Verantwoordelijkheid van de beheerder",
+    "disclaimerBody": "Dit privacybeleid is een standaardsjabloon dat wordt geleverd door de Clear Skies-software. De stationsbeheerder is verantwoordelijk voor het beoordelen en aanpassen van dit beleid om te voldoen aan alle toepasselijke privacywetten in zijn rechtsgebied en zijn specifieke gegevensverzamelings- en verwerkingspraktijken nauwkeurig te beschrijven."
+  },
+  "jurisdictions": {
+    "sectionLabel": "Privacymededelingen per rechtsgebied",
+    "expandLabel": "Uitvouwen",
+    "collapseLabel": "Inklappen",
+    "ccpa": {
+      "continent": "north-america",
+      "heading": "California Consumer Privacy Act (CCPA/CPRA) — Inwoners van Californië",
+      "p1": "Deze mededeling is van toepassing op inwoners van Californië op grond van de California Consumer Privacy Act (CCPA) en de California Privacy Rights Act (CPRA).",
+      "p2": "Wij verzamelen de volgende categorieën persoonsgegevens wanneer u deze website bezoekt: Internet Protocol (IP)-adres, browsertype en -versie, besturingssysteem, verwijzende URL, bezochte pagina's en tijdstempels van uw bezoek. Deze informatie wordt automatisch verzameld via standaard webserverlogboeken.",
+      "p3": "Wij gebruiken deze informatie uitsluitend voor de exploitatie en het onderhoud van deze weerstation-website. Wij verkopen, delen voor cross-contextuele gedragsadvertenties of verstrekken uw persoonsgegevens niet aan derden voor hun eigen commerciële doeleinden.",
+      "p4": "Als inwoner van Californië heeft u de volgende rechten:",
+      "rights": [
+        "Recht om te weten — U kunt verzoeken dat wij de categorieën en specifieke persoonsgegevens die wij over u hebben verzameld, openbaar maken.",
+        "Recht op verwijdering — U kunt verzoeken om verwijdering van de door ons verzamelde persoonsgegevens, met inachtneming van bepaalde uitzonderingen.",
+        "Recht op opt-out van verkoop of delen — Wij verkopen of delen geen persoonsgegevens voor cross-contextuele gedragsadvertenties. Er is geen opt-out vereist.",
+        "Recht op non-discriminatie — Wij zullen u niet discrimineren vanwege het uitoefenen van uw rechten onder de CCPA."
+      ],
+      "p5": "Om een verzoek tot uitoefening van rechten in te dienen, kunt u contact opnemen met de beheerder van de website via de contactgegevens op de pagina Over. Wij reageren op verifieerbare consumentenverzoeken binnen 45 dagen.",
+      "p6": "Deze privacymededeling is voor het laatst herzien op 22 mei 2026."
+    },
+    "caloppa": {
+      "continent": "north-america",
+      "heading": "California Online Privacy Protection Act (CalOPPA)",
+      "p1": "Deze mededeling is van toepassing op inwoners van Californië op grond van de California Online Privacy Protection Act (CalOPPA), die exploitanten van commerciële websites en onlinediensten die persoonlijk identificeerbare informatie verzamelen van inwoners van Californië, verplicht om op een zichtbare manier een privacybeleid te publiceren.",
+      "p2": "Dit privacybeleid identificeert: (1) de categorieën verzamelde persoonlijk identificeerbare informatie; (2) de categorieën derden met wie die informatie kan worden gedeeld; (3) hoe u uw persoonlijk identificeerbare informatie kunt inzien en wijzigingen kunt verzoeken; (4) het proces waarmee wij u informeren over wezenlijke wijzigingen in dit beleid; en (5) de ingangsdatum van dit beleid.",
+      "p3": "Wij respecteren Do Not Track (DNT)-signalen. Als u DNT inschakelt in uw browser, zullen wij geen analytische cookies plaatsen of gedragsmatige tracking uitvoeren.",
+      "p4": "Om persoonlijk identificeerbare informatie die wij over u bewaren in te zien, te corrigeren of te verwijderen, kunt u contact opnemen met de beheerder van de website via de informatie op de pagina Over.",
+      "p5": "Deze privacymededeling is voor het laatst herzien in juni 2026."
+    },
+    "gdpr": {
+      "continent": "europe",
+      "heading": "Algemene Verordening Gegevensbescherming (AVG) — Inwoners van de EU/EER",
+      "p1": "Deze mededeling is van toepassing op inwoners van de Europese Unie en de Europese Economische Ruimte op grond van de Algemene Verordening Gegevensbescherming (EU) 2016/679, en verwijst naar de ePrivacy-richtlijn (2002/58/EG, gewijzigd bij 2009/136/EG) met betrekking tot cookies en elektronische communicatie.",
+      "p2": "Verwerkingsverantwoordelijke: de beheerder van de website (contactgegevens beschikbaar op de pagina Over). Neem voor vragen over gegevensverwerking rechtstreeks contact op met de beheerder.",
+      "p3": "Wij verwerken de volgende persoonsgegevens: IP-adres, user-agent-string van de browser, HTTP-referrer en tijdstempels van paginaverzoeken. Deze gegevens worden vastgelegd in standaard webservertoegangslogboeken.",
+      "p4": "Rechtsgrondslagen voor de verwerking:",
+      "legalBases": [
+        "Gerechtvaardigd belang (artikel 6, lid 1, onder f) — Wij verwerken serverloggegevens om de beveiliging en de goede werking van deze website te waarborgen. Ons belang bij het voorkomen van misbruik en het diagnosticeren van technische problemen is afgewogen tegen de minimale impact van de verwerking van standaard toegangsloggegevens.",
+        "Toestemming (artikel 6, lid 1, onder a) — Als analytische tracking op deze website is ingeschakeld, vindt een dergelijke verwerking alleen plaats met uw voorafgaande toestemming, die u op elk moment kunt intrekken."
+      ],
+      "p5": "Uw rechten op grond van de AVG:",
+      "rights": [
+        "Recht op inzage (artikel 15) — U kunt een kopie opvragen van de persoonsgegevens die wij over u bewaren.",
+        "Recht op rectificatie (artikel 16) — U kunt rectificatie verzoeken van onjuiste persoonsgegevens.",
+        "Recht op gegevenswissing (artikel 17) — U kunt verwijdering van uw persoonsgegevens verzoeken wanneer er geen overwegende legitieme grond bestaat voor voortgezette verwerking.",
+        "Recht op beperking van de verwerking (artikel 18) — U kunt in bepaalde omstandigheden verzoeken dat wij de verwerking van uw persoonsgegevens beperken.",
+        "Recht op gegevensoverdraagbaarheid (artikel 20) — Wanneer de verwerking is gebaseerd op toestemming of een overeenkomst, kunt u uw gegevens in een gestructureerd, machineleesbaar formaat opvragen.",
+        "Recht van bezwaar (artikel 21) — U kunt te allen tijde bezwaar maken tegen verwerking die is gebaseerd op gerechtvaardigde belangen."
+      ],
+      "p6": "Bewaring: servertoegangslogboeken worden maximaal 90 dagen bewaard voor beveiliging en diagnostische doeleinden en vervolgens verwijderd.",
+      "p7": "Internationale doorgiften: deze website wordt beheerd vanuit de Verenigde Staten. Als u deze website bezoekt vanuit de EU/EER, kunnen uw gegevens worden doorgegeven aan en verwerkt in de Verenigde Staten. Wij baseren ons op de noodzaak van verwerking voor de uitvoering van een taak van algemeen belang (verspreiding van meteorologische gegevens) als doorgiftemechanisme.",
+      "p8": "Recht om een klacht in te dienen: u heeft het recht een klacht in te dienen bij uw nationale toezichthoudende autoriteit. Een lijst van EU-toezichthoudende autoriteiten is beschikbaar op https://edpb.europa.eu/about-edpb/about-edpb/members_en.",
+      "p9": "Deze privacymededeling is voor het laatst herzien op 22 mei 2026."
+    },
+    "ukgdpr": {
+      "continent": "europe",
+      "heading": "UK AVG en PECR — Inwoners van het Verenigd Koninkrijk",
+      "p1": "Deze mededeling is van toepassing op inwoners van het Verenigd Koninkrijk op grond van de UK General Data Protection Regulation (UK AVG), de Data Protection Act 2018 en de Privacy and Electronic Communications Regulations 2003 (PECR).",
+      "p2": "Verwerkingsverantwoordelijke: de beheerder van de website (contactgegevens beschikbaar op de pagina Over). De UK AVG is van toepassing onafhankelijk van de EU AVG na het uittreden van het Verenigd Koninkrijk uit de Europese Unie.",
+      "p3": "Wij verwerken de volgende persoonsgegevens: IP-adres, user-agent-string van de browser, HTTP-referrer en tijdstempels van paginaverzoeken, vastgelegd in standaard webservertoegangslogboeken.",
+      "p4": "Rechtsgrondslagen voor de verwerking:",
+      "legalBases": [
+        "Gerechtvaardigde belangen (UK AVG artikel 6, lid 1, onder f) — Serverloggegevens worden verwerkt om de beveiliging en de werking van deze website te waarborgen.",
+        "Toestemming (UK AVG artikel 6, lid 1, onder a en PECR) — Cookies voor analytische doeleinden worden uitsluitend geplaatst met uw voorafgaande, vrijelijk gegeven toestemming."
+      ],
+      "p5": "Uw rechten op grond van de UK AVG:",
+      "rights": [
+        "Recht op inzage — U kunt een kopie opvragen van de persoonsgegevens die wij over u bewaren.",
+        "Recht op rectificatie — U kunt rectificatie verzoeken van onjuiste persoonsgegevens.",
+        "Recht op gegevenswissing — U kunt verwijdering van uw persoonsgegevens verzoeken.",
+        "Recht op beperking van de verwerking — U kunt verzoeken dat wij het gebruik van uw gegevens beperken.",
+        "Recht op gegevensoverdraagbaarheid — U kunt uw gegevens in een draagbaar formaat opvragen.",
+        "Recht van bezwaar — U kunt bezwaar maken tegen verwerking die is gebaseerd op gerechtvaardigde belangen."
+      ],
+      "p6": "Recht om een klacht in te dienen: u heeft het recht een klacht in te dienen bij de Information Commissioner's Office (ICO) via https://ico.org.uk. Het helpline-nummer van de ICO is 0303 123 1113.",
+      "p7": "Deze privacymededeling is voor het laatst herzien in juni 2026."
+    },
+    "quebec": {
+      "continent": "north-america",
+      "heading": "Wet 25 (Québec) — Inwoners van Québec",
+      "p1": "Deze mededeling is van toepassing op inwoners van Québec, Canada, op grond van de Wet bescherming persoonsgegevens in de privésector (Wet 25 / Wetsvoorstel 64), zoals gewijzigd.",
+      "p2": "Wij verzamelen de volgende persoonsgegevens wanneer u deze website bezoekt: IP-adres, browsertype en -versie, besturingssysteem, verwijzende URL, bezochte pagina's en tijdstempels. Deze informatie wordt vastgelegd in standaard webserverlogboeken ten behoeve van de exploitatie en beveiliging van deze weerstation-website.",
+      "p3": "Privacy-impactbeoordeling: de beheerder van deze website heeft de privacyeffecten van het verzamelen van serverloggegevens beoordeeld. De beoordeling heeft uitgewezen dat de verzameling beperkt is tot het minimum dat noodzakelijk is voor de werking en beveiliging van de website en geen ernstig privacyrisico inhoudt.",
+      "p4": "Toestemming: door toegang te krijgen tot deze website erkent u de verzameling van de hierboven beschreven persoonsgegevens. Er worden geen aanvullende persoonsgegevens verzameld zonder uw uitdrukkelijke toestemming. Als analytische diensten zijn ingeschakeld, worden zij uitsluitend geactiveerd met uw voorafgaande toestemming.",
+      "p5": "Uw rechten op grond van Wet 25:",
+      "rights": [
+        "Recht op inzage — U kunt toegang verzoeken tot de persoonsgegevens die wij over u bewaren.",
+        "Recht op rectificatie — U kunt rectificatie verzoeken van onjuiste, onvolledige of dubbelzinnige informatie.",
+        "Recht om toestemming in te trekken — Wanneer de verwerking is gebaseerd op toestemming, kunt u die toestemming op elk moment intrekken.",
+        "Recht op verwijdering — U kunt verwijdering verzoeken van persoonsgegevens die zonder wettelijke grondslag zijn verzameld of langer zijn bewaard dan noodzakelijk."
+      ],
+      "p6": "Grensoverschrijdende overdrachten: deze website wordt gehost op servers buiten Québec. Persoonsgegevens (serverloggegevens) kunnen worden overgedragen aan en verwerkt in de Verenigde Staten. Voorafgaand aan een dergelijke overdracht hebben wij beoordeeld of de gegevens een adequate bescherming genieten die gelijkwaardig is aan die welke door de wetgeving van Québec wordt geboden.",
+      "p7": "Melding van incidenten: in geval van een vertrouwelijkheidsincident (ongeoorloofde toegang, gebruik of openbaarmaking) waarbij persoonsgegevens betrokken zijn die een risico op ernstige schade inhouden, zullen wij de Commission d'accès à l'information du Québec en de betrokken personen op de wettelijk voorgeschreven wijze informeren.",
+      "p8": "Contact: voor het uitoefenen van uw rechten of voor vragen over onze privacypraktijken kunt u contact opnemen met de beheerder van de website via de contactgegevens op de pagina Over.",
+      "p9": "Deze privacymededeling is voor het laatst herzien op 22 mei 2026."
+    },
+    "lgpd": {
+      "continent": "south-america",
+      "heading": "Lei Geral de Proteção de Dados (LGPD) — Inwoners van Brazilië",
+      "p1": "Deze mededeling is van toepassing op inwoners van Brazilië op grond van de Lei Geral de Proteção de Dados Pessoais (LGPD), Federale Wet nr. 13.709/2018, gehandhaafd door de Autoridade Nacional de Proteção de Dados (ANPD).",
+      "p2": "Wij verzamelen de volgende persoonsgegevens wanneer u deze website bezoekt: IP-adres, browsertype en -versie, besturingssysteem, verwijzende URL, bezochte pagina's en tijdstempels, vastgelegd in standaard webserverlogboeken.",
+      "p3": "Rechtsgrondslagen voor de verwerking (artikel 7 LGPD): wij verwerken uw gegevens op basis van gerechtvaardigd belang om de beveiliging en de goede werking van deze website te waarborgen. Optionele analytische verwerking vindt uitsluitend plaats met uw toestemming.",
+      "p4": "Uw rechten op grond van de LGPD:",
+      "rights": [
+        "Bevestiging van het bestaan van verwerking — U kunt bevestiging verzoeken of wij uw persoonsgegevens verwerken.",
+        "Inzage — U kunt inzage verzoeken in de persoonsgegevens die wij over u bewaren.",
+        "Correctie — U kunt correctie verzoeken van onvolledige, onjuiste of verouderde gegevens.",
+        "Anonimisering, blokkering of verwijdering — U kunt anonimisering, blokkering of verwijdering verzoeken van onnodige, buitensporige of niet-conforme gegevens.",
+        "Overdraagbaarheid — U kunt overdraagbaarheid van uw gegevens naar een andere dienst- of productaanbieder verzoeken.",
+        "Verwijdering — U kunt verwijdering verzoeken van gegevens die met uw toestemming zijn verwerkt.",
+        "Informatie over deling — U kunt informatie opvragen over publieke en private entiteiten waarmee wij uw gegevens delen.",
+        "Intrekking van toestemming — U kunt uw toestemming op elk moment intrekken."
+      ],
+      "p5": "Om uw rechten op grond van de LGPD uit te oefenen, kunt u contact opnemen met de beheerder van de website via de informatie op de pagina Over.",
+      "p6": "Deze privacymededeling is voor het laatst herzien in juni 2026."
+    },
+    "appi": {
+      "continent": "asia",
+      "heading": "Wet bescherming persoonsgegevens (APPI) — Inwoners van Japan",
+      "p1": "Deze mededeling is van toepassing op inwoners van Japan op grond van de Act on the Protection of Personal Information (APPI), zoals gewijzigd bij de herziening van 2020, van kracht per april 2022, gehandhaafd door de Personal Information Protection Commission (PPC).",
+      "p2": "Wij verzamelen de volgende persoonsgegevens wanneer u deze website bezoekt: IP-adres, browsertype en -versie, besturingssysteem, verwijzende URL, bezochte pagina's en tijdstempels, vastgelegd in standaard webserverlogboeken.",
+      "p3": "Gebruiksdoel: persoonsgegevens worden uitsluitend verzameld ten behoeve van de exploitatie en beveiliging van deze weerstation-website. Wij gebruiken uw persoonsgegevens niet buiten het opgegeven doel zonder uw toestemming.",
+      "p4": "Verstrekking aan derden: wij verstrekken uw persoonsgegevens niet aan derden, behalve wanneer dit wettelijk vereist is of noodzakelijk is voor de exploitatie van deze website.",
+      "p5": "Uw rechten op grond van de APPI:",
+      "rights": [
+        "Openbaarmaking — U kunt openbaarmaking verzoeken van de persoonsgegevens die wij over u bewaren.",
+        "Correctie — U kunt correctie verzoeken van onjuiste persoonsgegevens.",
+        "Verwijdering — U kunt verwijdering verzoeken van persoonsgegevens waarvoor geen wettelijke grondslag voor bewaring bestaat.",
+        "Opschorting van gebruik — U kunt opschorting van het gebruik van uw persoonsgegevens verzoeken wanneer deze worden verwerkt in strijd met de APPI."
+      ],
+      "p6": "Om uw rechten uit te oefenen, kunt u contact opnemen met de beheerder van de website via de informatie op de pagina Over.",
+      "p7": "Deze privacymededeling is voor het laatst herzien in juni 2026."
+    },
+    "dpdp": {
+      "continent": "asia",
+      "heading": "Digital Personal Data Protection Act (DPDP) — Inwoners van India",
+      "p1": "Deze mededeling is van toepassing op inwoners van India op grond van de Digital Personal Data Protection Act 2023 (DPDP Act), gehandhaafd door de Data Protection Board of India.",
+      "p2": "Wij verzamelen de volgende persoonsgegevens wanneer u deze website bezoekt: IP-adres, browsertype en -versie, besturingssysteem, verwijzende URL, bezochte pagina's en tijdstempels, vastgelegd in standaard webserverlogboeken.",
+      "p3": "Doel en toestemming: persoonsgegevens worden verwerkt voor het legitieme doel van de exploitatie en beveiliging van deze weerstation-website. Analytische gegevens worden, indien verzameld, uitsluitend verwerkt met uw toestemming.",
+      "p4": "Uw rechten op grond van de DPDP Act:",
+      "rights": [
+        "Recht op toegang tot informatie — U kunt een samenvatting opvragen van de persoonsgegevens die wij over u bewaren en de doeleinden waarvoor zij worden verwerkt.",
+        "Recht op correctie en verwijdering — U kunt correctie verzoeken van onjuiste of misleidende persoonsgegevens, of verwijdering van persoonsgegevens die niet langer noodzakelijk zijn voor het opgegeven doel.",
+        "Recht op verhaal — U kunt bij ons een klacht indienen over de verwerking van uw persoonsgegevens.",
+        "Recht op aanwijzing — U kunt een andere persoon aanwijzen om deze rechten namens u uit te oefenen in geval van overlijden of handelingsonbekwaamheid."
+      ],
+      "p5": "Om uw rechten uit te oefenen of een klacht in te dienen, kunt u contact opnemen met de beheerder van de website via de informatie op de pagina Over.",
+      "p6": "Deze privacymededeling is voor het laatst herzien in juni 2026."
+    },
+    "australiaPrivacy": {
+      "continent": "oceania",
+      "heading": "Privacy Act 1988 — Inwoners van Australië",
+      "p1": "Deze mededeling is van toepassing op inwoners van Australië op grond van de Privacy Act 1988 (Cth), met inbegrip van de Australian Privacy Principles (APPs), gereguleerd door de Office of the Australian Information Commissioner (OAIC).",
+      "p2": "Wij verzamelen de volgende persoonsgegevens wanneer u deze website bezoekt: IP-adres, browsertype en -versie, besturingssysteem, verwijzende URL, bezochte pagina's en tijdstempels, vastgelegd in standaard webserverlogboeken.",
+      "p3": "Wij gebruiken deze persoonsgegevens uitsluitend voor de exploitatie en het onderhoud van deze weerstation-website. Wij verstrekken uw persoonsgegevens niet aan derden voor marketingdoeleinden.",
+      "p4": "Uw rechten op grond van de Privacy Act:",
+      "rights": [
+        "Inzage — U kunt toegang verzoeken tot de persoonsgegevens die wij over u bewaren (APP 12).",
+        "Correctie — U kunt correctie verzoeken van persoonsgegevens die onjuist, verouderd, onvolledig, niet relevant of misleidend zijn (APP 13).",
+        "Klacht — Als u meent dat wij uw privacy hebben geschonden, kunt u een klacht indienen bij de OAIC via https://www.oaic.gov.au."
+      ],
+      "p5": "Om uw rechten uit te oefenen of voor vragen over onze privacypraktijken kunt u contact opnemen met de beheerder van de website via de informatie op de pagina Over.",
+      "p6": "Deze privacymededeling is voor het laatst herzien in juni 2026."
+    },
+    "popia": {
+      "continent": "africa",
+      "heading": "Protection of Personal Information Act (POPIA) — Inwoners van Zuid-Afrika",
+      "p1": "Deze mededeling is van toepassing op inwoners van Zuid-Afrika op grond van de Protection of Personal Information Act 4 van 2013 (POPIA), gereguleerd door de Information Regulator of South Africa.",
+      "p2": "Wij verzamelen de volgende persoonsgegevens wanneer u deze website bezoekt: IP-adres, browsertype en -versie, besturingssysteem, verwijzende URL, bezochte pagina's en tijdstempels, vastgelegd in standaard webserverlogboeken.",
+      "p3": "Wij verwerken uw persoonsgegevens voor het legitieme doel van de exploitatie en beveiliging van deze weerstation-website, in overeenstemming met de voorwaarden voor rechtmatige verwerking op grond van de POPIA.",
+      "p4": "Uw rechten op grond van de POPIA:",
+      "rights": [
+        "Recht op inzage — U kunt toegang verzoeken tot de persoonsgegevens die wij over u bewaren.",
+        "Recht op correctie of verwijdering — U kunt correctie of verwijdering verzoeken van persoonsgegevens die onjuist, niet relevant, buitensporig, verouderd, onvolledig, misleidend of onrechtmatig verkregen zijn.",
+        "Recht van bezwaar — U kunt bezwaar maken tegen de verwerking van uw persoonsgegevens op redelijke gronden.",
+        "Recht om een klacht in te dienen — U kunt een klacht indienen bij de Information Regulator via https://inforegulator.org.za."
+      ],
+      "p5": "Om uw rechten uit te oefenen, kunt u contact opnemen met de beheerder van de website via de informatie op de pagina Over.",
+      "p6": "Deze privacymededeling is voor het laatst herzien in juni 2026."
+    }
+  },
+  "accessibility": {
+    "title": "Toegankelijkheidsverklaring",
+    "lastUpdated": "Juni 2026",
+    "commitment": "Wij streven ernaar dit weerdashboard toegankelijk te maken voor alle gebruikers, inclusief degenen die afhankelijk zijn van ondersteunende technologieën zoals schermlezers, toetsenbordnavigatie of alternatieve invoerapparaten.",
+    "conformanceTarget": "Deze website streeft naar conformiteit met de Web Content Accessibility Guidelines (WCAG) 2.1 op niveau AA. Wij beoordelen onze inhoud en ons ontwerp regelmatig op toegankelijkheid en werken eraan geïdentificeerde problemen te verhelpen.",
+    "knownLimitations": "De volgende bekende beperkingen zijn van toepassing: (1) Inhoud van derden, waaronder kaarttegels, tekst van weersvoorspelaanbieders en ingebedde radarafbeeldingen, voldoet mogelijk niet volledig aan toegankelijkheidsnormen, omdat deze wordt geleverd door externe diensten buiten onze directe controle. (2) Realtime weergegevensvisualisaties (grafieken en diagrammen) bieden waar mogelijk tekstgebaseerde alternatieven en gegevenstabellen om ervoor te zorgen dat de onderliggende gegevens voor alle gebruikers beschikbaar zijn.",
+    "feedback": "Als u op deze website een toegankelijkheidsbarrière tegenkomt, neem dan contact op met de beheerder van de website via de informatie op de pagina Over. Wij verwelkomen feedback en zullen redelijke inspanningen leveren om geïdentificeerde barrières snel aan te pakken.",
+    "operatorDisclaimer": "Deze toegankelijkheidsverklaring is een standaardsjabloon dat wordt geleverd door de Clear Skies-software. De stationsbeheerder is verantwoordelijk voor het waarborgen dat zijn specifieke implementatie voldoet aan de toepasselijke toegankelijkheidsnormen en voor het bijwerken van deze verklaring om de toegankelijkheidsstatus van zijn website nauwkeurig weer te geven.",
+    "lawsLabel": "Toepasselijke toegankelijkheidswetgeving",
+    "laws": {
+      "north-america": {
+        "title": "Noord-Amerika — ADA, Section 508, AODA, Accessible Canada Act",
+        "body": "Verenigde Staten: de Americans with Disabilities Act (ADA) en Section 508 van de Rehabilitation Act vereisen dat elektronische en informatietechnologie toegankelijk is voor mensen met een handicap. Hoewel persoonlijke websites niet universeel worden gedekt door Section 508, passen wij de normen ervan toe als best practice. Canada: de Accessibility for Ontarians with Disabilities Act (AODA) en de Accessible Canada Act (ACA) stellen toegankelijkheidsvereisten vast voor organisaties die actief zijn in Ontario en op federaal niveau. Wij ontwerpen deze website om te voldoen aan WCAG 2.1 niveau AA zoals vereist door deze wetten."
+      },
+      "south-america": {
+        "title": "Zuid-Amerika — Braziliaanse Inclusiewet",
+        "body": "Brazilië: de Lei Brasileira de Inclusão da Pessoa com Deficiência (Lei 13.146/2015, ook bekend als het Estatuto da Pessoa com Deficiência) stelt het recht van mensen met een handicap op toegang tot digitale inhoud in toegankelijke formaten vast. Wij ontwerpen deze website om te voldoen aan de WCAG 2.1 niveau AA-normen ter ondersteuning van naleving van deze wet."
+      },
+      "europe": {
+        "title": "Europa — European Accessibility Act, EN 301 549, UK Equality Act",
+        "body": "Europese Unie: de European Accessibility Act (EAA, Richtlijn 2019/882/EU) vereist dat digitale producten en diensten voldoen aan toegankelijkheidsvereisten, geharmoniseerd met de technische norm EN 301 549 (die WCAG 2.1 niveau AA incorporeert). Verenigd Koninkrijk: de Equality Act 2010 verplicht dienstverleners redelijke aanpassingen te doen om ervoor te zorgen dat hun diensten toegankelijk zijn voor mensen met een handicap. De Public Sector Bodies Accessibility Regulations 2018 (behouden in het Britse recht) passen ook de WCAG 2.1 AA-norm toe."
+      },
+      "asia": {
+        "title": "Azië — JIS X 8341-3 (Japan), RPWD Act (India), KWCAG (Zuid-Korea)",
+        "body": "Japan: JIS X 8341-3:2016 is de Japanse industrienorm voor webaccessibiliteit, afgestemd op WCAG 2.1. India: de Rights of Persons with Disabilities Act 2016 (RPWD Act) vereist dat informatie- en communicatietechnologie toegankelijk is voor mensen met een handicap. Zuid-Korea: de Korean Web Content Accessibility Guidelines (KWCAG 2.1) stellen toegankelijkheidsnormen voor webinhoud vast, gebaseerd op WCAG 2.1."
+      },
+      "oceania": {
+        "title": "Oceanië — Disability Discrimination Act 1992 (Australië)",
+        "body": "Australië: de Disability Discrimination Act 1992 (DDA) maakt het onwettig om mensen met een handicap te discrimineren bij het leveren van goederen, diensten en faciliteiten, inclusief websites. De adviesnotities van de Australian Human Rights Commission geven aan dat WCAG 2.1 niveau AA de huidige norm vertegenwoordigt voor webaccessibiliteitsconformiteit onder de DDA."
+      },
+      "africa": {
+        "title": "Afrika — ICT-toegankelijkheid (Zuid-Afrika)",
+        "body": "Zuid-Afrika: de Grondwet van Zuid-Afrika garandeert gelijkheid en waardigheid voor alle personen. De POPIA en de Electronic Communications and Transactions Act (ECTA) scheppen samen met grondwettelijke verplichtingen een kader dat toegankelijke digitale diensten bevordert. Hoewel er geen enkel voorschrijvend webaccessibiliteitsstatuut bestaat, passen wij WCAG 2.1 niveau AA toe als internationale best practice en ter ondersteuning van gelijke toegang voor alle gebruikers."
+      }
+    }
   },
   "attribution": {
     "title": "Gegevensattributie",
     "observations": "Weerwaarnemingen: Lokale stationshardware (geconfigureerd in Over)",
-    "forecast": "Verwachtingsgegevens: National Weather Service (NWS)",
+    "forecast": "Voorspellingsgegevens: National Weather Service (NWS)",
     "airQuality": "Luchtkwaliteitsgegevens: AirNow / EPA",
     "earthquake": "Aardbevingsgegevens: USGS",
-    "astronomical": "Astronomische gegevens: Skyfield efemerideberekeningen",
-    "note": "Werkelijke gegevensbronnen zijn afhankelijk van geconfigureerde providers."
+    "astronomical": "Astronomische gegevens: Skyfield-efemeridenberekeningen",
+    "note": "De feitelijke gegevensbronnen zijn afhankelijk van de geconfigureerde aanbieders."
   },
   "openSource": {
-    "title": "Open-source licenties",
-    "body": "Clear Skies is vrije software, gelicentieerd onder de GNU General Public License v3.0. Het is gebouwd met open-source technologieën waaronder React, Vite, Tailwind CSS, Recharts en Lucide-iconen. De volledige licentietekst en attributie van derden zijn beschikbaar in de projectrepository."
+    "title": "Open-source-licenties",
+    "body": "Clear Skies is vrije software met een licentie onder de GNU General Public License v3.0. Het is ontwikkeld met open-source-technologieën, waaronder React, Vite, Tailwind CSS, Recharts en Lucide-iconen. De volledige licentietekst en toeschrijvingen van derden zijn beschikbaar in de projectrepository."
   }
 }

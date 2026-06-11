@@ -1,24 +1,297 @@
 {
-  "title": "Legal y privacidad",
+  "title": "Aviso Legal y Privacidad",
   "loadingAria": "Cargando contenido legal…",
   "operatorCard": {
-    "title": "Política legal y de privacidad"
+    "title": "Aviso Legal y Política de Privacidad"
+  },
+  "termsOfUse": {
+    "title": "Condiciones de Uso",
+    "lastUpdated": "Junio de 2026",
+    "sections": {
+      "acceptance": {
+        "title": "Aceptación de las Condiciones",
+        "body": "Al acceder o utilizar este sitio web de estación meteorológica, usted acepta quedar vinculado por estas Condiciones de Uso. Si no está de acuerdo con estas condiciones, por favor no utilice este sitio. El uso continuado del sitio tras cualquier modificación de estas condiciones constituye la aceptación de dichos cambios."
+      },
+      "serviceDescription": {
+        "title": "Descripción del Servicio",
+        "body": "Este sitio web proporciona datos meteorológicos recopilados por una estación meteorológica personal operada por un particular o una pequeña organización. Los datos se ofrecen únicamente con fines informativos y recreativos. Este no es un servicio meteorológico profesional y el sitio no está afiliado a ningún servicio meteorológico gubernamental oficial, como el National Weather Service (NWS) o la NOAA."
+      },
+      "dataAccuracy": {
+        "title": "Exención de Responsabilidad sobre la Precisión de los Datos",
+        "body": "Los datos meteorológicos se proporcionan TAL CUAL, sin garantía de ningún tipo. Las lecturas de los sensores pueden ser inexactas, estar retrasadas o no estar disponibles temporalmente debido a limitaciones del equipo, mantenimiento o problemas técnicos. Estos datos NO son adecuados para aplicaciones de seguridad crítica, incluidas, entre otras, la aviación, la navegación marítima, la gestión de emergencias o cualquier decisión en la que una información meteorológica inexacta pueda provocar lesiones, muerte o daños materiales. Consulte siempre los servicios meteorológicos gubernamentales oficiales para decisiones de seguridad crítica. Con arreglo a los artículos 15 a 16 de la GNU General Public License v3, este software y sus resultados se proporcionan sin garantía alguna, expresa o implícita."
+      },
+      "intellectualProperty": {
+        "title": "Propiedad Intelectual",
+        "body": "El software del panel de control Clear Skies es software libre con licencia GNU General Public License v3.0. Los datos de observación meteorológica de carácter factual (temperatura, humedad, velocidad del viento, etc.) constituyen mediciones científicas y no están sujetos a protección por derechos de autor. Los datos de previsión meteorológica, los mosaicos de mapas y otros contenidos de terceros siguen siendo propiedad de sus respectivos titulares y están sujetos a sus propias condiciones de servicio y licencias."
+      },
+      "thirdPartyServices": {
+        "title": "Servicios de Terceros",
+        "body": "Este sitio puede mostrar datos de fuentes de terceros, incluidos, entre otros: Aeris Weather, el National Weather Service (NWS), OpenWeatherMap, el U.S. Geological Survey (USGS) y varios proveedores de mosaicos de mapas. Estos datos se proporcionan según las propias condiciones de servicio y los estándares de precisión de cada proveedor. El operador del sitio no controla ni se responsabiliza de la precisión o disponibilidad de los datos de terceros."
+      },
+      "prohibitedConduct": {
+        "title": "Conducta Prohibida",
+        "body": "Queda prohibido utilizar este sitio para: la recopilación automatizada o masiva de datos sin el consentimiento escrito del operador; cualquier uso que infrinja la legislación local, nacional o internacional aplicable; la transmisión de software malicioso o intentos de interferir con el funcionamiento del sitio; la presentación errónea de datos de este sitio como procedentes de una fuente gubernamental oficial o de un servicio meteorológico profesional."
+      },
+      "limitationOfLiability": {
+        "title": "Limitación de Responsabilidad",
+        "body": "Con arreglo al artículo 16 de la GNU General Public License v3, y en la máxima medida permitida por la legislación aplicable, el operador del sitio no será responsable de ningún daño derivado del uso o la imposibilidad de uso de este sitio, incluidos, sin limitación, los daños resultantes de la inexactitud de los datos, interrupciones del servicio o decisiones tomadas basándose en los datos meteorológicos aquí mostrados. Dado que este servicio se presta de forma gratuita, la responsabilidad máxima del operador del sitio es de 0,00 €."
+      },
+      "modifications": {
+        "title": "Modificaciones",
+        "body": "El operador del sitio se reserva el derecho de modificar estas Condiciones de Uso en cualquier momento y sin previo aviso. Los cambios entran en vigor en el momento de su publicación. El uso continuado del sitio tras la publicación de las condiciones revisadas constituye su aceptación de dichas condiciones."
+      },
+      "governingLaw": {
+        "title": "Legislación Aplicable",
+        "body": "Estas Condiciones de Uso se rigen por las leyes de [Jurisdicción del Operador]. Cualquier disputa derivada del uso de este sitio se resolverá en los tribunales de [Jurisdicción del Operador]. Nota: Esta es una plantilla predeterminada — el operador del sitio es responsable de actualizar esta sección para reflejar su jurisdicción aplicable."
+      },
+      "contact": {
+        "title": "Contacto",
+        "body": "Si tiene preguntas sobre estas Condiciones de Uso, póngase en contacto con el operador del sitio utilizando la información de contacto facilitada en la página Acerca de."
+      }
+    }
   },
   "privacy": {
-    "title": "Política de privacidad",
-    "body": "Esta estación meteorológica recopila datos meteorológicos de sensores locales y puede utilizar servicios de terceros para pronósticos, calidad del aire y datos sísmicos. No se recopilan datos personales de los visitantes más allá de los registros estándar del servidor web. Los operadores de la estación deben personalizar esta sección para reflejar sus prácticas de datos específicas y las regulaciones de privacidad aplicables."
+    "title": "Política de Privacidad",
+    "body": "Esta estación meteorológica recopila datos meteorológicos de sensores locales y puede utilizar servicios de terceros para previsiones, calidad del aire y datos sísmicos. No se recopilan datos personales de los visitantes más allá de los registros estándar del servidor web. Los operadores de la estación deben personalizar esta sección para reflejar sus prácticas específicas de gestión de datos y la normativa de privacidad aplicable."
+  },
+  "privacyIntro": {
+    "dataCollectedTitle": "Qué Datos se Recopilan",
+    "dataCollectedBody": "Esta estación meteorológica recopila observaciones meteorológicas de sensores locales (temperatura, humedad, velocidad del viento, presión, precipitaciones, etc.). El hardware de la estación en sí no recopila ningún dato personal de los visitantes.",
+    "visitorDataTitle": "Datos de los Visitantes",
+    "visitorDataBody": "Los registros de acceso estándar del servidor web pueden registrar su dirección IP, tipo y versión del navegador, sistema operativo, la página desde la que fue redirigido, las páginas visitadas y la fecha y hora de su visita. Si Google Analytics o un servicio similar está habilitado en este sitio, podrán establecerse cookies con su consentimiento. El almacenamiento local (localStorage) de su navegador puede utilizarse para guardar sus preferencias de visualización (como la selección de tema o preferencias de unidades) — estos datos permanecen en su dispositivo y no se transmiten a ningún servidor.",
+    "contactTitle": "Contacto",
+    "contactBody": "Para hacer preguntas sobre esta política de privacidad o ejercer sus derechos de privacidad, póngase en contacto con el operador del sitio utilizando la información de la página Acerca de.",
+    "disclaimerTitle": "Responsabilidad del Operador",
+    "disclaimerBody": "Esta política de privacidad es una plantilla predeterminada proporcionada por el software Clear Skies. El operador de la estación es responsable de revisar y personalizar esta política para cumplir con todas las leyes de privacidad aplicables en su jurisdicción, y de describir con precisión sus prácticas específicas de recopilación y tratamiento de datos."
+  },
+  "jurisdictions": {
+    "sectionLabel": "Avisos de Privacidad por Jurisdicción",
+    "expandLabel": "Ampliar",
+    "collapseLabel": "Contraer",
+    "ccpa": {
+      "continent": "north-america",
+      "heading": "California Consumer Privacy Act (CCPA/CPRA) — Residentes de California",
+      "p1": "Este aviso se aplica a los residentes de California en virtud de la California Consumer Privacy Act (CCPA) y la California Privacy Rights Act (CPRA).",
+      "p2": "Recopilamos las siguientes categorías de información personal cuando visita este sitio: dirección de Protocolo de Internet (IP), tipo y versión del navegador, sistema operativo, URL de referencia, páginas visitadas y marcas de tiempo de su visita. Esta información se recopila automáticamente a través de los registros estándar del servidor web.",
+      "p3": "Utilizamos esta información únicamente para operar y mantener este sitio web de estación meteorológica. No vendemos, compartimos para publicidad conductual contextual cruzada ni divulgamos su información personal a terceros para sus propios fines comerciales.",
+      "p4": "Como residente de California, usted tiene los siguientes derechos:",
+      "rights": [
+        "Derecho a saber — Puede solicitarnos que revelemos las categorías y los datos específicos de información personal que hemos recopilado sobre usted.",
+        "Derecho de supresión — Puede solicitar la eliminación de la información personal que hemos recopilado, con sujeción a determinadas excepciones.",
+        "Derecho a optar por no participar en la venta o el intercambio — No vendemos ni compartimos información personal para publicidad conductual contextual cruzada. No es necesario ningún proceso de exclusión.",
+        "Derecho a la no discriminación — No le discriminaremos por ejercer sus derechos en virtud de la CCPA."
+      ],
+      "p5": "Para presentar una solicitud de ejercicio de derechos, póngase en contacto con el operador del sitio utilizando la información de contacto facilitada en la página Acerca de. Responderemos a las solicitudes verificables de los consumidores en un plazo de 45 días.",
+      "p6": "Este aviso de privacidad fue revisado por última vez el 22 de mayo de 2026."
+    },
+    "caloppa": {
+      "continent": "north-america",
+      "heading": "California Online Privacy Protection Act (CalOPPA)",
+      "p1": "Este aviso se aplica a los residentes de California en virtud de la California Online Privacy Protection Act (CalOPPA), que exige a los operadores de sitios web comerciales y servicios en línea que recopilan información de identificación personal de residentes de California que publiquen de forma visible una política de privacidad.",
+      "p2": "Esta política de privacidad identifica: (1) las categorías de información de identificación personal recopilada; (2) las categorías de terceros con quienes puede compartirse dicha información; (3) cómo puede revisar y solicitar cambios en su información de identificación personal; (4) el proceso mediante el cual le notificamos cambios materiales en esta política; y (5) la fecha de vigencia de esta política.",
+      "p3": "Respetamos las señales de Do Not Track (DNT). Si habilita DNT en su navegador, no instalaremos cookies de análisis ni realizaremos seguimiento conductual.",
+      "p4": "Para revisar, corregir o eliminar información de identificación personal que conservamos sobre usted, póngase en contacto con el operador del sitio utilizando la información de la página Acerca de.",
+      "p5": "Este aviso de privacidad fue revisado por última vez en junio de 2026."
+    },
+    "gdpr": {
+      "continent": "europe",
+      "heading": "Reglamento General de Protección de Datos (RGPD) — Residentes de la UE/EEE",
+      "p1": "Este aviso se aplica a los residentes de la Unión Europea y del Espacio Económico Europeo en virtud del Reglamento General de Protección de Datos (UE) 2016/679, y hace referencia a la Directiva sobre privacidad electrónica (2002/58/CE, modificada por 2009/136/CE) en materia de cookies y comunicaciones electrónicas.",
+      "p2": "Responsable del tratamiento: El operador del sitio (información de contacto disponible en la página Acerca de). Si tiene preguntas sobre el tratamiento de datos, póngase en contacto directamente con el operador.",
+      "p3": "Tratamos los siguientes datos personales: dirección IP, cadena de agente de usuario del navegador, referente HTTP y marcas de tiempo de las solicitudes de página. Estos datos se registran en los registros de acceso estándar del servidor web.",
+      "p4": "Bases jurídicas del tratamiento:",
+      "legalBases": [
+        "Interés legítimo (artículo 6.1.f) — Tratamos los datos del registro del servidor para garantizar la seguridad y el correcto funcionamiento de este sitio web. Nuestro interés en prevenir abusos y diagnosticar problemas técnicos se pondera frente al impacto mínimo del tratamiento de datos de registros de acceso estándar.",
+        "Consentimiento (artículo 6.1.a) — Si en este sitio está habilitado el seguimiento analítico, dicho tratamiento solo se realiza con su consentimiento previo, que puede retirar en cualquier momento."
+      ],
+      "p5": "Sus derechos en virtud del RGPD:",
+      "rights": [
+        "Derecho de acceso (artículo 15) — Puede solicitar una copia de los datos personales que conservamos sobre usted.",
+        "Derecho de rectificación (artículo 16) — Puede solicitar la corrección de datos personales inexactos.",
+        "Derecho de supresión (artículo 17) — Puede solicitar la eliminación de sus datos personales cuando no exista un fundamento legítimo prevalente para continuar el tratamiento.",
+        "Derecho a la limitación del tratamiento (artículo 18) — Puede solicitar que limitemos el tratamiento de sus datos personales en determinadas circunstancias.",
+        "Derecho a la portabilidad de los datos (artículo 20) — Cuando el tratamiento se base en el consentimiento o en un contrato, puede solicitar sus datos en un formato estructurado y legible por máquina.",
+        "Derecho de oposición (artículo 21) — Puede oponerse en cualquier momento al tratamiento basado en intereses legítimos."
+      ],
+      "p6": "Conservación: Los registros de acceso del servidor se conservan hasta 90 días con fines de seguridad y diagnóstico, transcurridos los cuales se eliminan.",
+      "p7": "Transferencias internacionales: Este sitio se opera desde los Estados Unidos. Si accede a este sitio desde la UE/EEE, sus datos podrán transferirse y tratarse en los Estados Unidos. Nos basamos en la necesidad del tratamiento para el desempeño de una tarea de interés público (difusión de datos meteorológicos) como mecanismo de transferencia.",
+      "p8": "Derecho a presentar una reclamación: Tiene derecho a presentar una reclamación ante su autoridad de control nacional. Puede consultar la lista de autoridades de supervisión de la UE en https://edpb.europa.eu/about-edpb/about-edpb/members_en.",
+      "p9": "Este aviso de privacidad fue revisado por última vez el 22 de mayo de 2026."
+    },
+    "ukgdpr": {
+      "continent": "europe",
+      "heading": "UK GDPR y PECR — Residentes del Reino Unido",
+      "p1": "Este aviso se aplica a los residentes del Reino Unido en virtud del Reglamento General de Protección de Datos del Reino Unido (UK GDPR), la Ley de Protección de Datos de 2018 y las Privacy and Electronic Communications Regulations 2003 (PECR).",
+      "p2": "Responsable del tratamiento: El operador del sitio (información de contacto disponible en la página Acerca de). El UK GDPR se aplica de forma independiente al RGPD de la UE tras la salida del Reino Unido de la Unión Europea.",
+      "p3": "Tratamos los siguientes datos personales: dirección IP, cadena de agente de usuario del navegador, referente HTTP y marcas de tiempo de las solicitudes de página, registrados en los registros de acceso estándar del servidor web.",
+      "p4": "Bases jurídicas del tratamiento:",
+      "legalBases": [
+        "Intereses legítimos (UK GDPR artículo 6.1.f) — Los datos del registro del servidor se tratan para garantizar la seguridad y el funcionamiento de este sitio web.",
+        "Consentimiento (UK GDPR artículo 6.1.a y PECR) — Las cookies con fines analíticos solo se instalan con su consentimiento previo y libremente otorgado."
+      ],
+      "p5": "Sus derechos en virtud del UK GDPR:",
+      "rights": [
+        "Derecho de acceso — Puede solicitar una copia de los datos personales que conservamos sobre usted.",
+        "Derecho de rectificación — Puede solicitar la corrección de datos personales inexactos.",
+        "Derecho de supresión — Puede solicitar la eliminación de sus datos personales.",
+        "Derecho a la limitación del tratamiento — Puede solicitar que limitemos el uso de sus datos.",
+        "Derecho a la portabilidad de los datos — Puede solicitar sus datos en un formato portable.",
+        "Derecho de oposición — Puede oponerse al tratamiento basado en intereses legítimos."
+      ],
+      "p6": "Derecho a presentar una reclamación: Tiene derecho a presentar una reclamación ante la Oficina del Comisionado de Información (ICO) en https://ico.org.uk. El número de atención telefónica del ICO es el 0303 123 1113.",
+      "p7": "Este aviso de privacidad fue revisado por última vez en junio de 2026."
+    },
+    "quebec": {
+      "continent": "north-america",
+      "heading": "Ley 25 de Quebec — Residentes de Quebec",
+      "p1": "Este aviso se aplica a los residentes de Quebec, Canadá, en virtud de la Ley de Protección de la Información Personal en el Sector Privado (Ley 25 / Proyecto de Ley 64), en su versión modificada.",
+      "p2": "Recopilamos la siguiente información personal cuando visita este sitio: dirección IP, tipo y versión del navegador, sistema operativo, URL de referencia, páginas visitadas y marcas de tiempo. Esta información se registra en los registros estándar del servidor web con el fin de operar y proteger este sitio web de estación meteorológica.",
+      "p3": "Evaluación de impacto sobre la privacidad: El operador de este sitio web ha evaluado el impacto sobre la privacidad de la recopilación de datos de registros del servidor. La evaluación determinó que la recopilación se limita al mínimo necesario para el funcionamiento y la seguridad del sitio web, y no presenta un riesgo grave para la privacidad.",
+      "p4": "Consentimiento: Al acceder a este sitio web, usted reconoce la recopilación de la información personal descrita anteriormente. No se recopila información personal adicional sin su consentimiento explícito. Si los servicios de análisis están habilitados, solo se activan con su consentimiento previo.",
+      "p5": "Sus derechos en virtud de la Ley 25:",
+      "rights": [
+        "Derecho de acceso — Puede solicitar acceso a la información personal que conservamos sobre usted.",
+        "Derecho de rectificación — Puede solicitar la corrección de cualquier información inexacta, incompleta o equívoca.",
+        "Derecho a retirar el consentimiento — Cuando el tratamiento se base en el consentimiento, puede retirarlo en cualquier momento.",
+        "Derecho de supresión — Puede solicitar la eliminación de información personal recopilada sin autorización legal o conservada más allá del período necesario."
+      ],
+      "p6": "Transferencias transfronterizas: Este sitio web está alojado en servidores ubicados fuera de Quebec. La información personal (datos de registros del servidor) puede transferirse y tratarse en los Estados Unidos. Antes de cualquier transferencia de este tipo, hemos evaluado si la información recibirá una protección adecuada equivalente a la prevista por la legislación de Quebec.",
+      "p7": "Notificación de incidentes: En caso de incidente de confidencialidad (acceso, uso o divulgación no autorizados) que implique información personal y presente riesgo de daño grave, notificaremos a la Commission d'accès à l'information du Québec y a las personas afectadas según lo exige la ley.",
+      "p8": "Contacto: Para ejercer sus derechos o hacer preguntas sobre nuestras prácticas de privacidad, póngase en contacto con el operador del sitio utilizando la información de contacto de la página Acerca de.",
+      "p9": "Este aviso de privacidad fue revisado por última vez el 22 de mayo de 2026."
+    },
+    "lgpd": {
+      "continent": "south-america",
+      "heading": "Lei Geral de Proteção de Dados (LGPD) — Residentes de Brasil",
+      "p1": "Este aviso se aplica a los residentes de Brasil en virtud de la Lei Geral de Proteção de Dados Pessoais (LGPD), Ley Federal N.º 13.709/2018, aplicada por la Autoridade Nacional de Proteção de Dados (ANPD).",
+      "p2": "Recopilamos los siguientes datos personales cuando visita este sitio: dirección IP, tipo y versión del navegador, sistema operativo, URL de referencia, páginas visitadas y marcas de tiempo, registrados en los registros estándar del servidor web.",
+      "p3": "Bases jurídicas del tratamiento (artículo 7 de la LGPD): Tratamos sus datos sobre la base del interés legítimo para garantizar la seguridad y el correcto funcionamiento de este sitio web. El tratamiento analítico opcional solo se realiza con su consentimiento.",
+      "p4": "Sus derechos en virtud de la LGPD:",
+      "rights": [
+        "Confirmación de la existencia del tratamiento — Puede confirmar si tratamos sus datos personales.",
+        "Acceso — Puede solicitar acceso a los datos personales que conservamos sobre usted.",
+        "Corrección — Puede solicitar la corrección de datos incompletos, inexactos u obsoletos.",
+        "Anonimización, bloqueo o eliminación — Puede solicitar la anonimización, el bloqueo o la eliminación de datos innecesarios, excesivos o no conformes.",
+        "Portabilidad — Puede solicitar la portabilidad de sus datos a otro proveedor de servicios o productos.",
+        "Eliminación — Puede solicitar la eliminación de datos tratados con su consentimiento.",
+        "Información sobre el intercambio — Puede solicitar información sobre las entidades públicas y privadas con las que compartimos sus datos.",
+        "Revocación del consentimiento — Puede revocar el consentimiento en cualquier momento."
+      ],
+      "p5": "Para ejercer sus derechos en virtud de la LGPD, póngase en contacto con el operador del sitio utilizando la información de la página Acerca de.",
+      "p6": "Este aviso de privacidad fue revisado por última vez en junio de 2026."
+    },
+    "appi": {
+      "continent": "asia",
+      "heading": "Ley de Protección de la Información Personal (APPI) — Residentes de Japón",
+      "p1": "Este aviso se aplica a los residentes de Japón en virtud de la Ley de Protección de la Información Personal (APPI), en su versión modificada por la revisión de 2020 con vigencia desde abril de 2022, aplicada por la Comisión de Protección de la Información Personal (PPC).",
+      "p2": "Recopilamos la siguiente información personal cuando visita este sitio: dirección IP, tipo y versión del navegador, sistema operativo, URL de referencia, páginas visitadas y marcas de tiempo, registrados en los registros estándar del servidor web.",
+      "p3": "Finalidad del uso: La información personal se recopila exclusivamente con el fin de operar y proteger este sitio web de estación meteorológica. No utilizamos su información personal más allá de la finalidad declarada sin su consentimiento.",
+      "p4": "Cesión a terceros: No cedemos su información personal a terceros, salvo cuando así lo exija la ley o sea necesario para el funcionamiento de este sitio.",
+      "p5": "Sus derechos en virtud de la APPI:",
+      "rights": [
+        "Divulgación — Puede solicitar la divulgación de la información personal que conservamos sobre usted.",
+        "Corrección — Puede solicitar la corrección de información personal inexacta.",
+        "Eliminación — Puede solicitar la eliminación de información personal cuando no exista base legal para su conservación.",
+        "Suspensión del uso — Puede solicitar la suspensión del uso de su información personal cuando se esté tratando en violación de la APPI."
+      ],
+      "p6": "Para ejercer sus derechos, póngase en contacto con el operador del sitio utilizando la información de la página Acerca de.",
+      "p7": "Este aviso de privacidad fue revisado por última vez en junio de 2026."
+    },
+    "dpdp": {
+      "continent": "asia",
+      "heading": "Ley de Protección de Datos Personales Digitales (DPDP) — Residentes de India",
+      "p1": "Este aviso se aplica a los residentes de India en virtud de la Ley de Protección de Datos Personales Digitales de 2023 (DPDP Act), aplicada por la Junta de Protección de Datos de India.",
+      "p2": "Recopilamos los siguientes datos personales cuando visita este sitio: dirección IP, tipo y versión del navegador, sistema operativo, URL de referencia, páginas visitadas y marcas de tiempo, registrados en los registros estándar del servidor web.",
+      "p3": "Finalidad y consentimiento: Los datos personales se tratan con el fin legítimo de operar y proteger este sitio web de estación meteorológica. Los datos analíticos, si se recopilan, se tratan únicamente con su consentimiento.",
+      "p4": "Sus derechos en virtud de la DPDP Act:",
+      "rights": [
+        "Derecho de acceso a la información — Puede solicitar un resumen de los datos personales que conservamos sobre usted y los fines para los que se tratan.",
+        "Derecho de corrección y supresión — Puede solicitar la corrección de datos personales inexactos o engañosos, o la eliminación de datos personales que ya no sean necesarios para la finalidad declarada.",
+        "Derecho a la reparación de agravios — Puede presentarnos una queja sobre el tratamiento de sus datos personales.",
+        "Derecho de nominación — Puede nominar a otra persona para que ejerza estos derechos en su nombre en caso de fallecimiento o incapacidad."
+      ],
+      "p5": "Para ejercer sus derechos o presentar una queja, póngase en contacto con el operador del sitio utilizando la información de la página Acerca de.",
+      "p6": "Este aviso de privacidad fue revisado por última vez en junio de 2026."
+    },
+    "australiaPrivacy": {
+      "continent": "oceania",
+      "heading": "Ley de Privacidad de 1988 — Residentes de Australia",
+      "p1": "Este aviso se aplica a los residentes de Australia en virtud de la Privacy Act 1988 (Cth), incluidos los Principios de Privacidad Australianos (APPs), regulada por la Oficina del Comisionado Australiano de Información (OAIC).",
+      "p2": "Recopilamos la siguiente información personal cuando visita este sitio: dirección IP, tipo y versión del navegador, sistema operativo, URL de referencia, páginas visitadas y marcas de tiempo, registrados en los registros estándar del servidor web.",
+      "p3": "Utilizamos esta información personal únicamente para operar y mantener este sitio web de estación meteorológica. No divulgamos su información personal a terceros con fines de marketing.",
+      "p4": "Sus derechos en virtud de la Ley de Privacidad:",
+      "rights": [
+        "Acceso — Puede solicitar acceso a la información personal que conservamos sobre usted (APP 12).",
+        "Corrección — Puede solicitar la corrección de información personal que sea inexacta, desactualizada, incompleta, irrelevante o engañosa (APP 13).",
+        "Reclamación — Si cree que hemos vulnerado su privacidad, puede presentar una reclamación ante la OAIC en https://www.oaic.gov.au."
+      ],
+      "p5": "Para ejercer sus derechos o hacer preguntas sobre nuestras prácticas de privacidad, póngase en contacto con el operador del sitio utilizando la información de la página Acerca de.",
+      "p6": "Este aviso de privacidad fue revisado por última vez en junio de 2026."
+    },
+    "popia": {
+      "continent": "africa",
+      "heading": "Ley de Protección de la Información Personal (POPIA) — Residentes de Sudáfrica",
+      "p1": "Este aviso se aplica a los residentes de Sudáfrica en virtud de la Ley de Protección de la Información Personal 4 de 2013 (POPIA), regulada por el Regulador de Información de Sudáfrica.",
+      "p2": "Recopilamos la siguiente información personal cuando visita este sitio: dirección IP, tipo y versión del navegador, sistema operativo, URL de referencia, páginas visitadas y marcas de tiempo, registrados en los registros estándar del servidor web.",
+      "p3": "Tratamos su información personal con el legítimo propósito de operar y proteger este sitio web de estación meteorológica, de conformidad con las condiciones de tratamiento lícito de la POPIA.",
+      "p4": "Sus derechos en virtud de la POPIA:",
+      "rights": [
+        "Derecho de acceso — Puede solicitar acceso a la información personal que conservamos sobre usted.",
+        "Derecho de corrección o supresión — Puede solicitar la corrección o eliminación de información personal que sea inexacta, irrelevante, excesiva, desactualizada, incompleta, engañosa u obtenida ilegalmente.",
+        "Derecho de oposición — Puede oponerse al tratamiento de su información personal por motivos razonables.",
+        "Derecho a presentar una reclamación — Puede presentar una reclamación ante el Regulador de Información en https://inforegulator.org.za."
+      ],
+      "p5": "Para ejercer sus derechos, póngase en contacto con el operador del sitio utilizando la información de la página Acerca de.",
+      "p6": "Este aviso de privacidad fue revisado por última vez en junio de 2026."
+    }
+  },
+  "accessibility": {
+    "title": "Declaración de Accesibilidad",
+    "lastUpdated": "Junio de 2026",
+    "commitment": "Estamos comprometidos a hacer que este panel meteorológico sea accesible para todos los usuarios, incluidos aquellos que dependen de tecnologías de apoyo como lectores de pantalla, navegación por teclado o dispositivos de entrada alternativos.",
+    "conformanceTarget": "Este sitio tiene como objetivo cumplir las Pautas de Accesibilidad para el Contenido Web (WCAG) 2.1 en el nivel AA. Revisamos periódicamente nuestros contenidos y diseño en materia de accesibilidad y trabajamos para corregir los problemas que se identifiquen.",
+    "knownLimitations": "Se aplican las siguientes limitaciones conocidas: (1) Los contenidos de terceros, incluidos los mosaicos de mapas, el texto de los proveedores de previsiones y las imágenes de radar incrustadas, pueden no cumplir plenamente las normas de accesibilidad, ya que son proporcionados por servicios externos fuera de nuestro control directo. (2) Las visualizaciones de datos meteorológicos en tiempo real (gráficos y diagramas) ofrecen alternativas textuales y tablas de datos siempre que sea posible para garantizar que los datos subyacentes estén disponibles para todos los usuarios.",
+    "feedback": "Si encuentra una barrera de accesibilidad en este sitio, póngase en contacto con el operador del sitio utilizando la información de la página Acerca de. Agradecemos los comentarios y haremos esfuerzos razonables para abordar las barreras identificadas con prontitud.",
+    "operatorDisclaimer": "Esta declaración de accesibilidad es una plantilla predeterminada proporcionada por el software Clear Skies. El operador de la estación es responsable de garantizar que su despliegue específico cumpla las normas de accesibilidad aplicables y de actualizar esta declaración para reflejar con precisión el estado de accesibilidad de su sitio.",
+    "lawsLabel": "Legislación de Accesibilidad Aplicable",
+    "laws": {
+      "north-america": {
+        "title": "Norteamérica — ADA, Section 508, AODA, Accessible Canada Act",
+        "body": "Estados Unidos: La Americans with Disabilities Act (ADA) y la Section 508 de la Rehabilitation Act exigen que la tecnología electrónica e informática sea accesible para las personas con discapacidad. Aunque los sitios web personales no están cubiertos universalmente por la Section 508, aplicamos sus estándares como buena práctica. Canadá: La Accessibility for Ontarians with Disabilities Act (AODA) y la Accessible Canada Act (ACA) establecen requisitos de accesibilidad para organizaciones que operan en Ontario y a nivel federal. Diseñamos este sitio para cumplir WCAG 2.1 Nivel AA según lo exigen estas leyes."
+      },
+      "south-america": {
+        "title": "Sudamérica — Ley Brasileña de Inclusión",
+        "body": "Brasil: La Lei Brasileira de Inclusão da Pessoa com Deficiência (Lei 13.146/2015, también conocida como Estatuto da Pessoa com Deficiência) establece el derecho de las personas con discapacidad a acceder a los contenidos digitales en formatos accesibles. Diseñamos este sitio para cumplir los estándares WCAG 2.1 Nivel AA con el fin de apoyar el cumplimiento de esta ley."
+      },
+      "europe": {
+        "title": "Europa — Acta Europea de Accesibilidad, EN 301 549, UK Equality Act",
+        "body": "Unión Europea: La Acta Europea de Accesibilidad (EAA, Directiva 2019/882/UE) exige que los productos y servicios digitales cumplan los requisitos de accesibilidad, armonizados con la norma técnica EN 301 549 (que incorpora WCAG 2.1 Nivel AA). Reino Unido: La Ley de Igualdad de 2010 exige a los proveedores de servicios que realicen ajustes razonables para garantizar que sus servicios sean accesibles para las personas con discapacidad. La normativa de accesibilidad para organismos del sector público de 2018 (mantenida en la legislación del Reino Unido) también aplica el estándar WCAG 2.1 AA."
+      },
+      "asia": {
+        "title": "Asia — JIS X 8341-3 (Japón), RPWD Act (India), KWCAG (Corea del Sur)",
+        "body": "Japón: JIS X 8341-3:2016 es la norma industrial japonesa para la accesibilidad web, alineada con WCAG 2.1. India: La Ley de Derechos de las Personas con Discapacidad de 2016 (RPWD Act) exige que las tecnologías de la información y la comunicación sean accesibles para las personas con discapacidad. Corea del Sur: Las Pautas Coreanas de Accesibilidad al Contenido Web (KWCAG 2.1) establecen estándares de accesibilidad para el contenido web, basadas en WCAG 2.1."
+      },
+      "oceania": {
+        "title": "Oceanía — Disability Discrimination Act 1992 (Australia)",
+        "body": "Australia: La Disability Discrimination Act 1992 (DDA) prohíbe la discriminación de personas con discapacidad en la provisión de bienes, servicios e instalaciones, lo que incluye los sitios web. Las notas orientativas de la Comisión Australiana de Derechos Humanos indican que WCAG 2.1 Nivel AA representa el estándar actual para el cumplimiento de la accesibilidad web en virtud de la DDA."
+      },
+      "africa": {
+        "title": "África — Accesibilidad TIC (Sudáfrica)",
+        "body": "Sudáfrica: La Constitución de Sudáfrica garantiza la igualdad y la dignidad de todas las personas. La POPIA y la Ley de Comunicaciones y Transacciones Electrónicas (ECTA), junto con las obligaciones constitucionales, crean un marco que fomenta los servicios digitales accesibles. Aunque no existe un único estatuto prescriptivo de accesibilidad web, aplicamos WCAG 2.1 Nivel AA como buena práctica internacional y para apoyar el acceso equitativo de todos los usuarios."
+      }
+    }
   },
   "attribution": {
-    "title": "Atribución de datos",
+    "title": "Atribución de Datos",
     "observations": "Observaciones meteorológicas: Hardware de la estación local (configurado en Acerca de)",
-    "forecast": "Datos de pronóstico: Servicio Meteorológico Nacional (NWS)",
+    "forecast": "Datos de previsión: National Weather Service (NWS)",
     "airQuality": "Datos de calidad del aire: AirNow / EPA",
     "earthquake": "Datos sísmicos: USGS",
     "astronomical": "Datos astronómicos: Cálculos de efemérides Skyfield",
     "note": "Las fuentes de datos reales dependen de los proveedores configurados."
   },
   "openSource": {
-    "title": "Licencias de código abierto",
-    "body": "Clear Skies es software libre con licencia GNU General Public License v3.0. Está desarrollado con tecnologías de código abierto como React, Vite, Tailwind CSS, Recharts e iconos Lucide. El texto completo de la licencia y la atribución de terceros están disponibles en el repositorio del proyecto."
+    "title": "Licencias de Código Abierto",
+    "body": "Clear Skies es software libre con licencia GNU General Public License v3.0. Está desarrollado con tecnologías de código abierto, incluidas React, Vite, Tailwind CSS, Recharts e iconos Lucide. El texto completo de la licencia y la atribución de terceros están disponibles en el repositorio del proyecto."
   }
 }
