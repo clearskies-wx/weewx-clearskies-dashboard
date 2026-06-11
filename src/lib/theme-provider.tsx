@@ -15,6 +15,7 @@ export type ResolvedTheme = 'light' | 'dark';
 export type OperatorDefault = 'light' | 'dark' | 'auto-os' | 'auto-sunrise-sunset';
 
 const STORAGE_KEY = 'clearskies.theme.user-override';
+const DAYTIME_CACHE_KEY = 'clearskies.scene.daytime';
 
 interface ThemeContextValue {
   preference: ThemePreference;
@@ -73,10 +74,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const operatorDefault: OperatorDefault = branding?.defaultThemeMode ?? 'auto-os';
 
   const [preference, setPreferenceState] = useState<ThemePreference>(readStoredPreference);
-  const [daytime, setDaytimeState] = useState<boolean | null>(null);
-  const [resolved, setResolved] = useState<ResolvedTheme>(() =>
-    resolveTheme(readStoredPreference(), operatorDefault, null),
-  );
+  const [daytime, setDaytimeState] = useState<boolean | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const cached = localStorage.getItem(DAYTIME_CACHE_KEY);
+    if (cached === 'true') return true;
+    if (cached === 'false') return false;
+    return null;
+  });
+  const [resolved, setResolved] = useState<ResolvedTheme>(() => {
+    const pref = readStoredPreference();
+    const cached = typeof window !== 'undefined' ? localStorage.getItem(DAYTIME_CACHE_KEY) : null;
+    const initDaytime = cached === 'true' ? true : cached === 'false' ? false : null;
+    return resolveTheme(pref, operatorDefault, initDaytime);
+  });
 
   // Apply resolved theme to DOM + keep it in sync when preference, operatorDefault, or daytime changes.
   useEffect(() => {
@@ -248,6 +258,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const setDaytime = useCallback((d: boolean | null) => {
     setDaytimeState(d);
+    if (d !== null) {
+      localStorage.setItem(DAYTIME_CACHE_KEY, String(d));
+    }
   }, []);
 
   const contextValue = useMemo(

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Clear Skies Dashboard</title>
     <script>
-      // Set data-theme before first paint to prevent flash of wrong theme (ADR-023).
+      // Set data-theme before first paint to prevent flash of wrong theme (ADR-023/055).
       // Must be a classic script (not type="module") so it runs synchronously during parse.
       (function() {
         var s = localStorage.getItem('clearskies.theme.user-override');
@@ -14,6 +14,14 @@
           document.documentElement.setAttribute('data-theme', s);
           return;
         }
+        // 'system' preference: use cached scene daytime from the last visit.
+        // ThemeProvider writes this cache whenever scene.daytime updates.
+        var cached = localStorage.getItem('clearskies.scene.daytime');
+        if (cached === 'true' || cached === 'false') {
+          document.documentElement.setAttribute('data-theme', cached === 'true' ? 'light' : 'dark');
+          return;
+        }
+        // First-ever visit: no cache, fall back to OS preference.
         var d = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         document.documentElement.setAttribute('data-theme', d);
       })();

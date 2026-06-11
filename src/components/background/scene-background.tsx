@@ -84,15 +84,13 @@ export function SceneBackground({ scene, visible = true }: SceneBackgroundProps)
         overflow: 'hidden',
       }}
     >
-      {/* Fade wrapper: opacity 0 → 1 over 0.6 s once real scene data arrives.
-          The dark navy base above is always visible; only the photos fade in.
-          This prevents a flash of the wrong default scene on first load. */}
+      {/* Photo wrapper: hidden until real scene data arrives, then shown
+          instantly.  The theme-aware base colour above covers the gap. */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
           opacity: visible ? 1 : 0,
-          transition: 'opacity 0.6s ease-in-out',
         }}
       >
         {/* Layer 1: scene photo base.
