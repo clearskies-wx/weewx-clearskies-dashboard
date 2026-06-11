@@ -6,9 +6,16 @@
 // the background does not need SSE sub-second reactivity; page-level
 // components use useRealtimeObservation().  Photo credit for the current
 // scene is passed to Footer via the photoCredit prop.
+//
+// Cookie consent banner (T3.4) and GA page view tracking (T3.5) are also
+// wired here:
+//   - CookieConsentBanner self-manages visibility based on branding config +
+//     localStorage; renders nothing when GA is not configured or consent is set.
+//   - GA page_view events fire on every React Router location change,
+//     gated on whether GA has been initialised (i.e. consent was given).
 
 import { useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { SkipLink } from './skip-link';
 import { NavRail } from './nav-rail';
 import { Footer } from './footer';
@@ -16,18 +23,28 @@ import { useObservation, useAlerts } from '../../hooks/useWeatherData';
 import { useTheme } from '../../lib/theme-provider';
 import { SceneBackground } from '../background/scene-background';
 import { AlertBanner } from '../shared/alert-banner';
+import { CookieConsentBanner } from '../shared/cookie-consent-banner';
+import { trackPageView } from '../../lib/analytics';
 import type { SceneDescriptor } from '../../api/types';
 
 export function AppLayout() {
   const { scene, sceneLoaded } = useObservation();
   const { data: alerts, loading: alertLoading } = useAlerts();
   const { preference, setDaytime } = useTheme();
+  const location = useLocation();
 
   useEffect(() => {
     if (sceneLoaded) {
       setDaytime(scene.daytime);
     }
   }, [scene.daytime, sceneLoaded, setDaytime]);
+
+  // GA page view tracking — fires on every route change.
+  // trackPageView() is a no-op when GA has not been initialised (consent not given),
+  // so this is safe to call unconditionally.
+  useEffect(() => {
+    trackPageView(location.pathname, document.title);
+  }, [location.pathname]);
 
   // When the user has forced a manual light/dark preference, honour it for the
   // background as well: light → always daytime photo, dark → always night photo,
@@ -49,6 +66,10 @@ export function AppLayout() {
           visible=false until the first /current response arrives to avoid a
           flash of the wrong (default) scene before real data loads. */}
       <SceneBackground scene={resolvedScene} visible={sceneLoaded} />
+
+      {/* Cookie consent banner (T3.4) — self-manages visibility.
+          Renders nothing when googleAnalyticsId is absent or consent is stored. */}
+      <CookieConsentBanner />
 
       {/* h-[100dvh]: dynamic viewport height adjusts when mobile browser
           URL bar hides/shows, preventing the bottom nav from clipping. */}

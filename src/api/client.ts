@@ -290,6 +290,12 @@ export interface ApiBrandingConfig {
    * E.g. "north-america,europe" or "global". Phase 4 will add this to the API contract.
    */
   privacyRegions?: string;
+  /**
+   * GA4 Measurement ID (e.g. "G-XXXXXXXXXX"). When present, the dashboard will
+   * offer a cookie consent banner and load GA only after explicit user acceptance.
+   * Empty string or undefined → no GA, no banner.
+   */
+  googleAnalyticsId?: string;
 }
 
 export function getBranding(signal?: AbortSignal): Promise<ApiResponse<ApiBrandingConfig>> {

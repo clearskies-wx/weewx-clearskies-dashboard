@@ -25,6 +25,12 @@ export interface BrandingConfig {
    * Phase 4 will wire this to the API; until then it is always undefined → treated as "global".
    */
   privacyRegions?: string;
+  /**
+   * GA4 Measurement ID (e.g. "G-XXXXXXXXXX"). When set to a non-empty string the dashboard
+   * shows the cookie consent banner and loads GA only after explicit acceptance.
+   * Absent or empty string → no GA, no banner shown.
+   */
+  googleAnalyticsId?: string;
 }
 
 // Curated palette — all light values verified ≥4.5:1 on white (oklch(1 0 0));

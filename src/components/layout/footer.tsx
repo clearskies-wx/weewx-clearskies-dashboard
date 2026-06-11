@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useStation } from '../../hooks/useWeatherData';
 import { useBranding } from '../../lib/branding-provider';
+import { clearConsent } from '../shared/cookie-consent-banner';
+import { removeGoogleAnalytics } from '../../lib/analytics';
 import poweredLight from '../../assets/clearskies-powered-light.svg';
 
 // ---------------------------------------------------------------------------
@@ -152,7 +154,7 @@ export function Footer() {
 
       {/* Single row on desktop, stacked on mobile: left = nav/copyright/logo · right = share icons */}
       <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-x-4 md:gap-y-2">
-        {/* Left side: legal link · copyright · powered-by logo */}
+        {/* Left side: legal link · cookie settings (when GA configured) · copyright · powered-by logo */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <Link
             to="/legal"
@@ -161,6 +163,24 @@ export function Footer() {
           >
             {t('footer.legal')}
           </Link>
+          {/* Cookie Settings — only shown when GA is configured. Clears stored consent
+              and dispatches an event so CookieConsentBanner re-evaluates and re-appears. */}
+          {branding.googleAnalyticsId && (
+            <>
+              <span aria-hidden="true" className="hidden md:inline">·</span>
+              <button
+                type="button"
+                onClick={() => {
+                  clearConsent();
+                  window.dispatchEvent(new Event('clearskies:cookie-settings'));
+                }}
+                className="hidden md:inline underline underline-offset-4 focus:outline-none focus:ring-2 focus:ring-white/60 focus:ring-offset-2 focus:ring-offset-black/50 rounded"
+                style={{ color: 'inherit', background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
+              >
+                {t('footer.cookieSettings')}
+              </button>
+            </>
+          )}
           <span aria-hidden="true" className="hidden md:inline">·</span>
           <span>© {new Date().getFullYear()} {copyrightName}</span>
           <span aria-hidden="true" className="hidden md:inline">·</span>
