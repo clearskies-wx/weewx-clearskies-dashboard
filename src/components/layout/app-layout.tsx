@@ -24,8 +24,10 @@ export function AppLayout() {
   const { preference, setDaytime } = useTheme();
 
   useEffect(() => {
-    setDaytime(scene.daytime);
-  }, [scene.daytime, setDaytime]);
+    if (sceneLoaded) {
+      setDaytime(scene.daytime);
+    }
+  }, [scene.daytime, sceneLoaded, setDaytime]);
 
   // When the user has forced a manual light/dark preference, honour it for the
   // background as well: light → always daytime photo, dark → always night photo,
