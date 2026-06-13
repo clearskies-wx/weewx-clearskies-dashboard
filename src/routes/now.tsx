@@ -123,7 +123,7 @@ export function NowPage() {
   const logoAlt = branding.logo?.alt;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col">
       {/* sr-only h1 for this page (the NowHeroCard renders an h1 that's visible) */}
       <h1 className="sr-only">Now</h1>
 

@@ -84,7 +84,7 @@ export function PageHeaderCard({
           {icon && (
             <div
               className="text-primary flex-shrink-0"
-              style={{ fontSize: '1.5rem', lineHeight: 1 }}
+              style={{ fontSize: '2rem', lineHeight: 1 }}
               aria-hidden="true"
             >
               {icon}
@@ -92,7 +92,7 @@ export function PageHeaderCard({
           )}
           <div className="min-w-0 flex-1">
             <Heading
-              className="font-heading truncate text-base font-semibold leading-snug"
+              className="font-heading truncate text-xl font-semibold leading-snug"
             >
               {title}
             </Heading>

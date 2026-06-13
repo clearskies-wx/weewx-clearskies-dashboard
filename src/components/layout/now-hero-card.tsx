@@ -108,13 +108,13 @@ export function NowHeroCard({
             ? `${displayName} — ${location}`
             : displayName
         }
-        className="flex flex-1 items-center justify-between gap-4 px-4"
+        className="flex flex-1 items-center justify-between gap-4 px-4 py-1"
       >
         {/* ── Logo (left) ─────────────────────────────────────────────────── */}
         <div
           className="shrink-0"
           aria-hidden="true"
-          style={{ width: '10rem', height: '2.5rem' }}
+          style={{ width: '12rem', height: '3.5rem' }}
         >
           {logoUrl ? (
             <img

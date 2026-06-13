@@ -772,14 +772,18 @@ export function ReportsPage() {
 
         {/* No reports available */}
         {!indexLoading && !indexError && reports && reports.length === 0 && (
-          <p className="col-span-full text-sm text-muted-foreground">
-            {t('empty')}
-          </p>
+          <Card footprint="full" rowSpan="quarter">
+            <p className="px-4 text-sm text-muted-foreground">
+              {t('empty')}
+            </p>
+          </Card>
         )}
 
         {/* Prompt user to select a period */}
         {!canFetch && !indexLoading && !indexError && reports && reports.length > 0 && (
-          <p className="col-span-full text-sm text-muted-foreground">{t('noReportSelected')}</p>
+          <Card footprint="full" rowSpan="quarter">
+            <p className="px-4 text-sm text-muted-foreground">{t('noReportSelected')}</p>
+          </Card>
         )}
 
         {/* Report content card */}
