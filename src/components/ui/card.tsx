@@ -86,7 +86,7 @@ function Card({
         // backdrop-filter is set inline since there is no Tailwind utility for
         // the exact blur+saturate combination.
         "card-glass",
-        "group/card flex flex-col gap-1.5 overflow-hidden rounded-xl py-4 text-sm text-card-foreground ring-1 ring-foreground/10 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-1 data-[size=sm]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+        "group/card flex flex-col gap-1 overflow-hidden rounded-xl py-2.5 text-sm text-card-foreground ring-1 ring-foreground/10 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-0.5 data-[size=sm]:py-2 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
         minHeightClass(rowSpan),
         "mb-[var(--gap-grid)]",
         footprint !== undefined ? footprintColSpan[footprint] : undefined,
@@ -124,7 +124,7 @@ function CardTitle({
     <Tag
       data-slot="card-title"
       className={cn(
-        "font-heading leading-snug font-semibold pb-1.5 border-b border-border group-data-[size=sm]/card:text-sm",
+        "font-heading leading-snug font-semibold pb-0.5 border-b border-border group-data-[size=sm]/card:text-sm",
         className
       )}
       style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}

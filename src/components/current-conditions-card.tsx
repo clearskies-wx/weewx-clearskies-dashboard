@@ -397,7 +397,7 @@ export function CurrentConditionsCard({
   const lowDisplay = todayLow != null ? `${Math.round(todayLow)}${tempUnitShort}` : null;
 
   return (
-    <Card footprint="wide" rowSpan={2} aria-busy={loading} className="!pb-0">
+    <Card footprint="wide" rowSpan={2} aria-busy={loading}>
       {/* Card title — Manrope 0.82rem semibold with bottom rule */}
       <CardHeader>
         <h2
