@@ -178,9 +178,9 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
     <div
       style={{
         flexShrink: 0,
-        paddingTop: '0.6rem',
+        paddingTop: '0.4rem',
         borderTop: '1px solid var(--border)',
-        marginTop: '0.5rem',
+        marginTop: '0.25rem',
       }}
     >
       {/* Section label */}
@@ -201,7 +201,7 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
 
       {/* Chart: role="img" with aria-label for screen readers */}
       <div role="img" aria-label={t('tempCurveAriaLabel')}>
-        <ResponsiveContainer width="100%" height={112}>
+        <ResponsiveContainer width="100%" height={96}>
           <ComposedChart data={data} margin={{ top: 6, right: 16, bottom: 16, left: 0 }}>
             {/* Past actual: solid blue filled area */}
             <Area
@@ -434,19 +434,19 @@ export function CurrentConditionsCard({
         ) : observation ? (
           <>
             {/* ── Top region: icon LEFT, text RIGHT ─────────────────────── */}
-            <div className="flex items-center gap-[1.1rem] mb-3">
+            <div className="flex items-center gap-[1.1rem] mb-2">
               {/* Weather icon 112px — flex-shrink:0 */}
               {weatherCode != null ? (
                 <WeatherIcon
                   code={weatherCode}
                   isNight={isNight}
-                  size={112}
+                  size={96}
                   className="shrink-0"
                 />
               ) : (
                 <span
                   className="shrink-0"
-                  style={{ display: 'inline-block', width: 112, height: 112 }}
+                  style={{ display: 'inline-block', width: 96, height: 96 }}
                   aria-hidden="true"
                 />
               )}
