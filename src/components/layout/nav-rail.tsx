@@ -5,6 +5,7 @@
 // Active page: bg shift + accent-colored border per ADR-009/ADR-024.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   House,
@@ -565,59 +566,63 @@ export function NavRail() {
         </div>
       </nav>
 
-      {/* Mobile: bottom nav bar — 4 primary slots + More button.
-          Uses aria-label="Primary navigation" (distinct from the desktop rail's
-          "Main navigation") so screen readers don't report two landmarks with
-          identical names. Both exist in the DOM simultaneously; only one is
-          visible at a time via responsive Tailwind classes. */}
-      <nav
-        aria-label={t('ariaPrimary')}
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background"
-      >
-        <ul
-          className="flex flex-row items-stretch"
-          role="list"
-        >
-          {MOBILE_VISIBLE_ITEMS.map((item) => {
-            const label = t(`pages.${item.pageKey}`);
-            return (
-              <li key={item.to} className="flex-1 min-w-0">
-                <NavLink
-                  to={item.to}
-                  end={item.to === '/'}
-                  className={({ isActive }) => mobileSlotClass(isActive)}
-                  title={label}
-                >
-                  {item.icon}
-                  <span className="truncate max-w-full leading-none">{label}</span>
-                </NavLink>
-              </li>
-            );
-          })}
-
-          {/* More slot — 5th and final mobile slot */}
-          <li className="flex-1 min-w-0">
-            <button
-              ref={moreButtonRef}
-              type="button"
-              aria-label={t('morePages')}
-              aria-expanded={sheetOpen}
-              onClick={openSheet}
-              className={mobileSlotClass(moreIsActive)}
+      {/* Mobile bottom nav + More sheet: rendered via portal directly on
+          document.body so they are completely outside the React component tree's
+          DOM hierarchy. This bypasses Firefox Android compositing bugs where
+          backdrop-filter + overflow:visible on forecast cards caused the fixed
+          nav to disappear despite z-index and DOM ordering fixes. */}
+      {createPortal(
+        <>
+          <nav
+            aria-label={t('ariaPrimary')}
+            className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background"
+          >
+            <ul
+              className="flex flex-row items-stretch"
+              role="list"
             >
-              <DotsThree aria-hidden="true" className="h-5 w-5" />
-              <span className="truncate max-w-full leading-none">{t('more')}</span>
-            </button>
-          </li>
-        </ul>
-      </nav>
+              {MOBILE_VISIBLE_ITEMS.map((item) => {
+                const label = t(`pages.${item.pageKey}`);
+                return (
+                  <li key={item.to} className="flex-1 min-w-0">
+                    <NavLink
+                      to={item.to}
+                      end={item.to === '/'}
+                      className={({ isActive }) => mobileSlotClass(isActive)}
+                      title={label}
+                    >
+                      {item.icon}
+                      <span className="truncate max-w-full leading-none">{label}</span>
+                    </NavLink>
+                  </li>
+                );
+              })}
 
-      {/* More sheet — rendered outside the nav so it can layer above it */}
-      <MoreSheet
-        isOpen={sheetOpen}
-        onClose={closeSheet}
-        triggerRef={moreButtonRef}
-      />
+              {/* More slot — 5th and final mobile slot */}
+              <li className="flex-1 min-w-0">
+                <button
+                  ref={moreButtonRef}
+                  type="button"
+                  aria-label={t('morePages')}
+                  aria-expanded={sheetOpen}
+                  onClick={openSheet}
+                  className={mobileSlotClass(moreIsActive)}
+                >
+                  <DotsThree aria-hidden="true" className="h-5 w-5" />
+                  <span className="truncate max-w-full leading-none">{t('more')}</span>
+                </button>
+              </li>
+            </ul>
+          </nav>
+
+          <MoreSheet
+            isOpen={sheetOpen}
+            onClose={closeSheet}
+            triggerRef={moreButtonRef}
+          />
+        </>,
+        document.body,
+      )}
     </>
   );
 }
