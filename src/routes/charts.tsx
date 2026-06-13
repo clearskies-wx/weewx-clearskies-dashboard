@@ -4,7 +4,6 @@ import { ChartLine } from '@phosphor-icons/react';
 import { useChartsConfig, useStation } from '../hooks/useWeatherData';
 import { ConfigDrivenGroup } from '../components/charts/ConfigDrivenGroup';
 import { PageLayout } from '../components/layout/page-layout';
-import { Card } from '../components/ui/card';
 
 // ---------------------------------------------------------------------------
 // usePrefersReducedMotion — local hook, passed down to ConfigDrivenGroup
@@ -134,11 +133,13 @@ export function ChartsPage() {
   }
 
   return (
-    <PageLayout title={t('title')} icon={<ChartLine weight="duotone" />}>
-      {/* ── Tab navigation card ───────────────────────────────────────── */}
-        <Card footprint="full" className="py-2 px-4 min-h-[var(--card-half-row)]">
+    <PageLayout
+      title={t('title')}
+      icon={<ChartLine weight="duotone" />}
+      controls={
+        <>
           {/* Mobile: dropdown selector — avoids truncated button labels */}
-          <div className="block md:hidden">
+          <div className="block w-full md:hidden">
             <label htmlFor="chart-group-select" className="sr-only">
               {t('ariaTabGroupLabel')}
             </label>
@@ -157,12 +158,12 @@ export function ChartsPage() {
           </div>
 
           {/* Desktop: tab button bar */}
-          <div className="relative hidden md:block">
+          <div className="relative hidden md:flex md:flex-1 md:min-w-0">
             <div
               ref={tabScrollRef}
               role="tablist"
               aria-label={t('ariaTabGroupLabel')}
-              className="flex gap-1 overflow-x-auto pb-1"
+              className="flex gap-1 overflow-x-auto pb-1 flex-1"
             >
               {groups.map((group, index) => (
                 <button
@@ -195,9 +196,10 @@ export function ChartsPage() {
               />
             )}
           </div>
-        </Card>
-
-        {/* ── Tab panels ───────────────────────────────────────────────────── */}
+        </>
+      }
+    >
+      {/* ── Tab panels ───────────────────────────────────────────────────── */}
         {groups.map((group) => (
           <div
             key={group.groupId}

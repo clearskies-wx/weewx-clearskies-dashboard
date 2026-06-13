@@ -141,41 +141,42 @@ export function RecordsPage() {
   const { data: todayArchive } = useArchive({ from: todayFromEpoch });
 
   return (
-    <PageLayout title={t('title')} icon={<Trophy weight="duotone" />}>
-        {/* Period selector card */}
-        <Card footprint="full" className="py-2 min-h-[var(--card-half-row)]">
-          <div className="flex gap-2 px-4" role="group" aria-label={t('ariaPeriodGroup')}>
-            <button
-              type="button"
-              aria-pressed={period === 'all-time'}
-              onClick={() => setPeriod('all-time')}
-              className={[
-                'rounded-md px-4 py-2 text-sm font-medium min-h-[44px] md:min-h-0',
-                'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                period === 'all-time'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-foreground hover:bg-muted/70',
-              ].join(' ')}
-            >
-              {t('periodAllTime')}
-            </button>
-            <button
-              type="button"
-              aria-pressed={period === 'ytd'}
-              onClick={() => setPeriod('ytd')}
-              className={[
-                'rounded-md px-4 py-2 text-sm font-medium min-h-[44px] md:min-h-0',
-                'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                period === 'ytd'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-foreground hover:bg-muted/70',
-              ].join(' ')}
-            >
-              {t('periodYearToDate')}
-            </button>
-          </div>
-        </Card>
-
+    <PageLayout
+      title={t('title')}
+      icon={<Trophy weight="duotone" />}
+      controls={
+        <div className="flex gap-2" role="group" aria-label={t('ariaPeriodGroup')}>
+          <button
+            type="button"
+            aria-pressed={period === 'all-time'}
+            onClick={() => setPeriod('all-time')}
+            className={[
+              'rounded-md px-4 py-2 text-sm font-medium min-h-[44px] md:min-h-0',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+              period === 'all-time'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-foreground hover:bg-muted/70',
+            ].join(' ')}
+          >
+            {t('periodAllTime')}
+          </button>
+          <button
+            type="button"
+            aria-pressed={period === 'ytd'}
+            onClick={() => setPeriod('ytd')}
+            className={[
+              'rounded-md px-4 py-2 text-sm font-medium min-h-[44px] md:min-h-0',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+              period === 'ytd'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-foreground hover:bg-muted/70',
+            ].join(' ')}
+          >
+            {t('periodYearToDate')}
+          </button>
+        </div>
+      }
+    >
         {loading && (
           <>
             <span className="sr-only" role="status">{t('loadingRecords')}</span>

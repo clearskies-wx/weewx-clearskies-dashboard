@@ -11,8 +11,6 @@ import { useTranslation } from 'react-i18next';
 import { DownloadSimple, FileText } from '@phosphor-icons/react';
 import {
   Card,
-  CardHeader,
-  CardTitle,
   CardContent,
 } from '../components/ui/card';
 import { PageLayout } from '../components/layout/page-layout';
@@ -689,98 +687,100 @@ export function ReportsPage() {
   }, [selectedYear, selectedMonth, isAnnual, i18n.language]);
 
   return (
-    <PageLayout title={t('title')} icon={<FileText weight="duotone" />}>
-        {/* Selector card */}
-        <Card footprint="full">
-          <CardHeader>
-            <CardTitle as="h2">{t('card.title')}</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            {indexLoading && (
-              <>
-                <span className="sr-only" role="status">{t('loading.index')}</span>
-                <TileSkeleton className="h-12" />
-              </>
-            )}
+    <PageLayout
+      title={t('title')}
+      icon={<FileText weight="duotone" />}
+      controls={
+        !indexLoading && !indexError && reports && reports.length > 0
+          ? (
+            <div className="flex flex-wrap gap-4">
+              {/* Year selector */}
+              <div className="flex flex-col gap-1">
+                <label
+                  htmlFor="report-year"
+                  className="text-sm font-medium text-foreground"
+                >
+                  {t('year.label')}
+                </label>
+                <select
+                  id="report-year"
+                  value={selectedYear ?? ''}
+                  onChange={handleYearChange}
+                  className={[
+                    'rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground min-h-[44px] md:min-h-0',
+                    'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+                  ].join(' ')}
+                  aria-label={t('year.ariaLabel')}
+                >
+                  <option value="">{t('year.placeholder')}</option>
+                  {availableYears.map((y) => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+              </div>
 
-            {indexError && <TileError message={t('error.index')} onRetry={indexRefetch} />}
+              {/* Month / Annual selector */}
+              <div className="flex flex-col gap-1">
+                <label
+                  htmlFor="report-month"
+                  className="text-sm font-medium text-foreground"
+                >
+                  {t('month.label')}
+                </label>
+                <select
+                  id="report-month"
+                  value={selectedMonth ?? ''}
+                  onChange={handleMonthChange}
+                  disabled={!selectedYear || (availableMonths.length === 0 && !hasYearlyReport)}
+                  className={[
+                    'rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground min-h-[44px] md:min-h-0',
+                    'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+                    (!selectedYear || (availableMonths.length === 0 && !hasYearlyReport))
+                      ? 'opacity-60 cursor-not-allowed'
+                      : '',
+                  ].join(' ')}
+                  aria-label={t('month.ariaLabel')}
+                >
+                  <option value="">{t('month.placeholder')}</option>
+                  {hasYearlyReport && (
+                    <option value={0}>{t('annual')}</option>
+                  )}
+                  {availableMonths.map((m) => (
+                    <option key={m} value={m}>{getMonthName(m, i18n.language)}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )
+          : undefined
+      }
+    >
+        {/* Index loading skeleton */}
+        {indexLoading && (
+          <>
+            <span className="sr-only" role="status">{t('loading.index')}</span>
+            <div className="col-span-full"><TileSkeleton className="h-12" /></div>
+          </>
+        )}
 
-            {!indexLoading && !indexError && (
-              <>
-                {reports && reports.length === 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    {t('empty')}
-                  </p>
-                )}
+        {/* Index error */}
+        {indexError && (
+          <div className="col-span-full">
+            <TileError message={t('error.index')} onRetry={indexRefetch} />
+          </div>
+        )}
 
-                {reports && reports.length > 0 && (
-                  <div className="flex flex-wrap gap-4">
-                    {/* Year selector */}
-                    <div className="flex flex-col gap-1">
-                      <label
-                        htmlFor="report-year"
-                        className="text-sm font-medium text-foreground"
-                      >
-                        {t('year.label')}
-                      </label>
-                      <select
-                        id="report-year"
-                        value={selectedYear ?? ''}
-                        onChange={handleYearChange}
-                        className={[
-                          'rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground min-h-[44px] md:min-h-0',
-                          'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-                        ].join(' ')}
-                        aria-label={t('year.ariaLabel')}
-                      >
-                        <option value="">{t('year.placeholder')}</option>
-                        {availableYears.map((y) => (
-                          <option key={y} value={y}>{y}</option>
-                        ))}
-                      </select>
-                    </div>
+        {/* No reports available */}
+        {!indexLoading && !indexError && reports && reports.length === 0 && (
+          <p className="col-span-full text-sm text-muted-foreground">
+            {t('empty')}
+          </p>
+        )}
 
-                    {/* Month / Annual selector */}
-                    <div className="flex flex-col gap-1">
-                      <label
-                        htmlFor="report-month"
-                        className="text-sm font-medium text-foreground"
-                      >
-                        {t('month.label')}
-                      </label>
-                      <select
-                        id="report-month"
-                        value={selectedMonth ?? ''}
-                        onChange={handleMonthChange}
-                        disabled={!selectedYear || (availableMonths.length === 0 && !hasYearlyReport)}
-                        className={[
-                          'rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground min-h-[44px] md:min-h-0',
-                          'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-                          (!selectedYear || (availableMonths.length === 0 && !hasYearlyReport))
-                            ? 'opacity-60 cursor-not-allowed'
-                            : '',
-                        ].join(' ')}
-                        aria-label={t('month.ariaLabel')}
-                      >
-                        <option value="">{t('month.placeholder')}</option>
-                        {hasYearlyReport && (
-                          <option value={0}>{t('annual')}</option>
-                        )}
-                        {availableMonths.map((m) => (
-                          <option key={m} value={m}>{getMonthName(m, i18n.language)}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-
-            {!canFetch && !indexLoading && !indexError && reports && reports.length > 0 && (
-              <p className="text-sm text-muted-foreground">{t('noReportSelected')}</p>
-            )}
-          </CardContent>
-        </Card>
+        {/* Prompt user to select a period */}
+        {!canFetch && !indexLoading && !indexError && reports && reports.length > 0 && (
+          <p className="col-span-full text-sm text-muted-foreground">{t('noReportSelected')}</p>
+        )}
 
         {/* Report content card */}
         {canFetch && (

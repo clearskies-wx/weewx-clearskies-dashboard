@@ -214,6 +214,20 @@ export function SeismicPage() {
         title={t('title')}
         icon={<Earthquake size={28} />}
         gridClassName="lg:flex-1 min-h-0 content-start lg:grid-rows-[auto_1fr]"
+        controls={
+          config
+            ? (
+              <p className="text-muted-foreground text-sm" aria-label={t('configAriaLabel')}>
+                {t('configSummary', {
+                  provider: config.provider,
+                  radiusKm: config.radiusKm,
+                  minMagnitude: config.minMagnitude,
+                  days: config.defaultDays,
+                })}
+              </p>
+            )
+            : undefined
+        }
       >
 
         {loading && (
