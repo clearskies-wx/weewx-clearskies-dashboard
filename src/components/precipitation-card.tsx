@@ -187,7 +187,7 @@ export function PrecipitationCard({
   const humidityFormatted = humidityCV?.formatted ?? '—';
 
   return (
-    <Card footprint="tile" className="h-full" aria-busy={loading}>
+    <Card footprint="tile" aria-busy={loading}>
       <CardHeader>
         <h2 className="font-heading leading-snug font-semibold pb-0.5 border-b border-border" style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}>
           {t('precipitationCard.title')}
