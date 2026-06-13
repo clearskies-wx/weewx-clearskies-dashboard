@@ -96,30 +96,27 @@ export function NowHeroCard({
   return (
     <Card
       rowSpan="half"
-      className={['mx-auto w-full max-w-[var(--container-max)]', className].filter(Boolean).join(' ')}
+      className={['mx-auto w-full max-w-[var(--container-max)] !py-1', className].filter(Boolean).join(' ')}
     >
-      {/*
-        aria-label on the <header> gives screen readers a landmark description
-        that includes both station name and location without duplicating DOM text.
-      */}
       <header
         aria-label={
           location
             ? `${displayName} — ${location}`
             : displayName
         }
-        className="flex flex-col items-start gap-1.5 px-4 py-2 md:flex-row md:items-center md:justify-between md:gap-4 md:py-1"
+        className="flex flex-col items-start gap-0.5 px-4 md:flex-row md:items-center md:justify-between md:gap-4"
       >
         {/* ── Logo ────────────────────────────────────────────────────────── */}
         <div
-          className="shrink-0 h-[2.5rem] w-[8rem] md:h-[4rem] md:w-[14rem]"
+          className="shrink-0"
           aria-hidden="true"
+          style={{ width: '14rem', height: '4rem' }}
         >
           {logoUrl ? (
             <img
               src={logoUrl}
               alt={logoAlt ?? ''}
-              className="h-full w-full object-contain object-left"
+              style={{ width: '100%', height: '100%', maxWidth: 'none', objectFit: 'contain', objectPosition: 'left' }}
             />
           ) : (
             <PlaceholderLogo size={40} />
@@ -141,7 +138,7 @@ export function NowHeroCard({
 
           {location && (
             <p
-              className="mt-0.5 text-muted-foreground"
+              className="text-muted-foreground"
               style={{
                 fontFamily: 'var(--font-sans)',
                 fontSize: 'var(--text-body)',
