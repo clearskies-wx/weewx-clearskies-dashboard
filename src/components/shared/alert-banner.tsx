@@ -255,15 +255,11 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
           ? t('alertBanner.alertN', { n: safeIndex + 1, total: sorted.length })
           : undefined
       }
-      className="mx-auto w-full max-w-[var(--container-max)] overflow-hidden rounded-xl ring-1 ring-foreground/10 min-h-[var(--card-half-row)] mb-[var(--gap-grid)]"
-      style={{
-        borderLeft:   `4px solid ${colors.border}`,
-        borderBottom: `4px solid ${colors.border}`,
-      }}
+      className="mx-auto w-full max-w-[var(--container-max)] overflow-hidden rounded-xl ring-1 ring-foreground/10 min-h-[var(--card-half-row)] mb-[var(--gap-grid)] flex flex-col"
     >
 
       {/* ── Collapsed header row ─────────────────────────────────────────── */}
-      <div className="flex flex-row items-stretch">
+      <div className="flex flex-row items-stretch flex-1">
 
         {/* Left icon panel — severity-colored background, fixed 64px wide */}
         {/*
@@ -442,6 +438,9 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
           </div>
         </div>
       </div>
+
+      {/* Bottom severity accent line — a simple div, not a CSS border (avoids miter join artifacts) */}
+      <div aria-hidden="true" style={{ height: 4, flexShrink: 0, backgroundColor: colors.border }} />
 
     </div>
   );
