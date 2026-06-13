@@ -9,8 +9,7 @@ import {
   CardTitle,
   CardContent,
 } from '../components/ui/card';
-import { Grid } from '../components/layout/grid';
-import { PageHeaderCard } from '../components/layout/page-header-card';
+import { PageLayout } from '../components/layout/page-layout';
 import {
   Trophy,
   Thermometer,
@@ -142,12 +141,7 @@ export function RecordsPage() {
   const { data: todayArchive } = useArchive({ from: todayFromEpoch });
 
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="sr-only">{t('title')}</h1>
-
-      <Grid className="md:auto-rows-[auto]">
-        <PageHeaderCard title={t('title')} icon={<Trophy weight="duotone" />} />
-
+    <PageLayout title={t('title')} icon={<Trophy weight="duotone" />}>
         {/* Period selector card */}
         <Card footprint="full" className="py-2 min-h-[var(--card-half-row)]">
           <div className="flex gap-2 px-4" role="group" aria-label={t('ariaPeriodGroup')}>
@@ -282,8 +276,7 @@ export function RecordsPage() {
             )}
           </>
         )}
-      </Grid>
-    </div>
+    </PageLayout>
   );
 }
 

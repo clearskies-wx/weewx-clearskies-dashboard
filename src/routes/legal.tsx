@@ -8,8 +8,7 @@ import {
   CardTitle,
   CardContent,
 } from '../components/ui/card';
-import { Grid } from '../components/layout/grid';
-import { PageHeaderCard } from '../components/layout/page-header-card';
+import { PageLayout } from '../components/layout/page-layout';
 import { Scales } from '@phosphor-icons/react';
 import { useContent } from '../hooks/useWeatherData';
 import { useBranding } from '../lib/branding-provider';
@@ -458,12 +457,7 @@ export function LegalPage() {
   ] as const;
 
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="sr-only">{t('title')}</h1>
-
-      <Grid className="md:auto-rows-[auto]">
-        <PageHeaderCard title={t('title')} icon={<Scales weight="duotone" />} />
-
+    <PageLayout title={t('title')} icon={<Scales weight="duotone" />}>
         {loading ? (
           <>
             <span className="sr-only" role="status">{t('loadingAria')}</span>
@@ -655,8 +649,7 @@ export function LegalPage() {
             </Card>
           </>
         )}
-      </Grid>
-    </div>
+    </PageLayout>
   );
 }
 

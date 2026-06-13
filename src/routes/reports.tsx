@@ -15,8 +15,7 @@ import {
   CardTitle,
   CardContent,
 } from '../components/ui/card';
-import { Grid } from '../components/layout/grid';
-import { PageHeaderCard } from '../components/layout/page-header-card';
+import { PageLayout } from '../components/layout/page-layout';
 import { Button } from '../components/ui/button';
 import { useReports, useReport, useYearlyReport } from '../hooks/useWeatherData';
 import { parseMonthlyReport, parseYearlyReport } from '../lib/noaa-parser';
@@ -690,12 +689,7 @@ export function ReportsPage() {
   }, [selectedYear, selectedMonth, isAnnual, i18n.language]);
 
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="sr-only">{t('title')}</h1>
-
-      <Grid className="md:auto-rows-[auto]">
-        <PageHeaderCard title={t('title')} icon={<FileText weight="duotone" />} />
-
+    <PageLayout title={t('title')} icon={<FileText weight="duotone" />}>
         {/* Selector card */}
         <Card footprint="full">
           <CardHeader>
@@ -873,8 +867,7 @@ export function ReportsPage() {
             </CardContent>
           </Card>
         )}
-      </Grid>
-    </div>
+    </PageLayout>
   );
 }
 

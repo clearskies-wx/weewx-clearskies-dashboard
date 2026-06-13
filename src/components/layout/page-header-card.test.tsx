@@ -4,9 +4,11 @@
 // - Title renders as a real heading element (not a div) — WCAG 1.3.1.
 // - Default heading level is h1; consumer can override via `as` prop.
 // - No heading level is skipped by the component itself.
-// - Optional info text is rendered.
 // - Children (controls slot) render right-aligned.
 // - full footprint is applied to the outer Card.
+//
+// Note: info prop was removed in T2.2 (Phase 2 grid normalisation). Tests for
+// info text have been removed accordingly.
 
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
@@ -48,23 +50,6 @@ describe('PageHeaderCard', () => {
   it('renders the title as h6 when as="h6"', () => {
     const { getByRole } = render(<PageHeaderCard title="Sub" as="h6" />);
     expect(getByRole('heading', { level: 6 }).textContent).toBe('Sub');
-  });
-
-  // -------------------------------------------------------------------------
-  // Info text
-  // -------------------------------------------------------------------------
-
-  it('renders info text when provided', () => {
-    const { getByText } = render(
-      <PageHeaderCard title="Records" info="Historical extremes" />,
-    );
-    expect(getByText('Historical extremes')).toBeDefined();
-  });
-
-  it('does not render an info element when info is omitted', () => {
-    const { queryByText } = render(<PageHeaderCard title="Now" />);
-    // No info text present — no <p> with info content
-    expect(queryByText('Historical extremes')).toBeNull();
   });
 
   // -------------------------------------------------------------------------

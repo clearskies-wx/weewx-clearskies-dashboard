@@ -12,8 +12,7 @@
 
 import { useTranslation } from 'react-i18next';
 import { CloudSun } from '@phosphor-icons/react';
-import { Grid } from '../components/layout/grid';
-import { PageHeaderCard } from '../components/layout/page-header-card';
+import { PageLayout } from '../components/layout/page-layout';
 import { ForecastHourlyCard } from '../components/forecast/ForecastHourlyCard';
 import { ForecastDailyCard } from '../components/forecast/ForecastDailyCard';
 import { ForecastDiscussionCard } from '../components/forecast/ForecastDiscussionCard';
@@ -31,37 +30,30 @@ export function ForecastPage() {
   const tz = station?.timezone ?? 'UTC';
 
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="sr-only">{t('title')}</h1>
+    <PageLayout title={t('title')} icon={<CloudSun weight="duotone" />}>
+      {/* ── Surface B: Hourly ─────────────────────────────────────────── */}
+      <ForecastHourlyCard
+        forecast={forecast}
+        loading={fcLoading}
+        error={fcError}
+        stationTz={tz}
+      />
 
-      <Grid className="md:auto-rows-[auto]">
-        {/* ── Page header ──────────────────────────────────────────────── */}
-        <PageHeaderCard title={t('title')} icon={<CloudSun weight="duotone" />} />
+      {/* ── Surface C: 7-Day ──────────────────────────────────────────── */}
+      <ForecastDailyCard
+        forecast={forecast}
+        loading={fcLoading}
+        error={fcError}
+        stationTz={tz}
+        units={fcUnits}
+      />
 
-        {/* ── Surface B: Hourly ─────────────────────────────────────────── */}
-        <ForecastHourlyCard
-          forecast={forecast}
-          loading={fcLoading}
-          error={fcError}
-          stationTz={tz}
-        />
-
-        {/* ── Surface C: 7-Day ──────────────────────────────────────────── */}
-        <ForecastDailyCard
-          forecast={forecast}
-          loading={fcLoading}
-          error={fcError}
-          stationTz={tz}
-          units={fcUnits}
-        />
-
-        {/* ── Surface D: Discussion (self-hides when empty) ─────────────── */}
-        <ForecastDiscussionCard
-          discussion={forecast?.discussion ?? null}
-          stationTz={tz}
-        />
-      </Grid>
-    </div>
+      {/* ── Surface D: Discussion (self-hides when empty) ─────────────── */}
+      <ForecastDiscussionCard
+        discussion={forecast?.discussion ?? null}
+        stationTz={tz}
+      />
+    </PageLayout>
   );
 }
 

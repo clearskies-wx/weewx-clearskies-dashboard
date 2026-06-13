@@ -8,8 +8,7 @@ import {
   CardTitle,
   CardContent,
 } from '../components/ui/card';
-import { Grid } from '../components/layout/grid';
-import { PageHeaderCard } from '../components/layout/page-header-card';
+import { PageLayout } from '../components/layout/page-layout';
 import { useStation, useContent, useCapabilities } from '../hooks/useWeatherData';
 import { SCENE_ASSET_MAP } from '../components/background/scene-background-types';
 
@@ -85,12 +84,7 @@ export function AboutPage() {
   const { data: capabilities } = useCapabilities();
 
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="sr-only">{t('title')}</h1>
-
-      <Grid className="md:auto-rows-[auto]">
-        <PageHeaderCard title={t('title')} icon={<Info weight="duotone" />} />
-
+    <PageLayout title={t('title')} icon={<Info weight="duotone" />}>
         {/* Station metadata */}
         <Card footprint="full" aria-busy={stationLoading}>
           <CardHeader>
@@ -288,8 +282,7 @@ export function AboutPage() {
             </dl>
           </CardContent>
         </Card>
-      </Grid>
-    </div>
+    </PageLayout>
   );
 }
 

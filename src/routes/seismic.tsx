@@ -29,8 +29,7 @@ import {
   CardTitle,
   CardContent,
 } from '../components/ui/card';
-import { Grid } from '../components/layout/grid';
-import { PageHeaderCard } from '../components/layout/page-header-card';
+import { PageLayout } from '../components/layout/page-layout';
 import { Earthquake } from '../components/icons/earthquake';
 import type { EarthquakeRecord } from '../api/types';
 import { useEarthquakes, useStation, useEarthquakeConfig, useEarthquakeFaults } from '../hooks/useWeatherData';
@@ -210,20 +209,12 @@ export function SeismicPage() {
     : '';
 
   return (
-    <div className="flex flex-col gap-4 lg:h-full">
-      <h1 className="sr-only">{t('title')}</h1>
-
-      <Grid className="lg:flex-1 min-h-0 content-start lg:grid-rows-[auto_1fr]">
-        <PageHeaderCard
-          title={t('title')}
-          info={config ? t('configSummary', {
-            provider: config.provider.toUpperCase(),
-            radiusKm: config.radiusKm,
-            minMagnitude: config.minMagnitude.toFixed(1),
-            days: config.defaultDays,
-          }) : undefined}
-          icon={<Earthquake size={28} />}
-        />
+    <div className="lg:h-full">
+      <PageLayout
+        title={t('title')}
+        icon={<Earthquake size={28} />}
+        gridClassName="lg:flex-1 min-h-0 content-start lg:grid-rows-[auto_1fr]"
+      >
 
         {loading && (
           <>
@@ -438,7 +429,7 @@ export function SeismicPage() {
             </Card>
           </>
         )}
-      </Grid>
+      </PageLayout>
     </div>
   );
 }

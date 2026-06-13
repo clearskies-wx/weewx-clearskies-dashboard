@@ -6,8 +6,7 @@
 
 import { useTranslation } from 'react-i18next';
 import { MoonStars } from '@phosphor-icons/react';
-import { Grid } from '../components/layout/grid';
-import { PageHeaderCard } from '../components/layout/page-header-card';
+import { PageLayout } from '../components/layout/page-layout';
 import { SunMoonDetailCard } from '../components/almanac/SunMoonDetailCard';
 import { PlanetTimelineCard } from '../components/almanac/PlanetTimelineCard';
 import { MonthlyAveragesCard } from '../components/almanac/MonthlyAveragesCard';
@@ -62,17 +61,7 @@ export function AlmanacPage() {
   const meteorShowers = useAlmanacMeteorShowers();
 
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="sr-only">{t('pageTitle')}</h1>
-
-      <Grid className="md:auto-rows-[auto]">
-        {/* ── Page header ──────────────────────────────────────────────── */}
-        <PageHeaderCard
-          title={t('pageTitle')}
-          icon={<MoonStars weight="duotone" />}
-          as="h1"
-        />
-
+    <PageLayout title={t('pageTitle')} icon={<MoonStars weight="duotone" />}>
         {/* ── Surface D: Monthly Averages chart (first per approved mockup) ── */}
         <MonthlyAveragesCard
           groupedData={monthlyAverages.data}
@@ -122,8 +111,7 @@ export function AlmanacPage() {
           loading={meteorShowers.loading}
           error={meteorShowers.error?.message ?? null}
         />
-      </Grid>
-    </div>
+    </PageLayout>
   );
 }
 

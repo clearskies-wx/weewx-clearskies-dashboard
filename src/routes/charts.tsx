@@ -3,9 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { ChartLine } from '@phosphor-icons/react';
 import { useChartsConfig, useStation } from '../hooks/useWeatherData';
 import { ConfigDrivenGroup } from '../components/charts/ConfigDrivenGroup';
-import { Grid } from '../components/layout/grid';
+import { PageLayout } from '../components/layout/page-layout';
 import { Card } from '../components/ui/card';
-import { PageHeaderCard } from '../components/layout/page-header-card';
 
 // ---------------------------------------------------------------------------
 // usePrefersReducedMotion — local hook, passed down to ConfigDrivenGroup
@@ -105,51 +104,38 @@ export function ChartsPage() {
   // Loading state
   if (configLoading) {
     return (
-      <div className="flex flex-col gap-4">
+      <PageLayout title={t('title')} icon={<ChartLine weight="duotone" />}>
         <span className="sr-only" role="status">
           {t('loadingChart')}
         </span>
-        <Grid className="md:auto-rows-[auto]">
-          <div className="col-span-1 md:col-span-2 lg:col-span-4 animate-pulse rounded-xl bg-muted h-14" aria-hidden="true" />
-          <div className="col-span-1 md:col-span-2 lg:col-span-4 animate-pulse rounded-xl bg-muted h-[400px]" aria-hidden="true" />
-        </Grid>
-      </div>
+        <div className="col-span-1 md:col-span-2 lg:col-span-4 animate-pulse rounded-xl bg-muted h-[400px]" aria-hidden="true" />
+      </PageLayout>
     );
   }
 
   if (configError) {
     return (
-      <div className="flex flex-col gap-4">
-        <Grid className="md:auto-rows-[auto]">
-          <PageHeaderCard title={t('title')} icon={<ChartLine weight="duotone" />} />
-          <div role="alert" className="col-span-1 md:col-span-2 lg:col-span-4 text-sm text-destructive py-8 text-center">
-            {t('unableToLoad')}
-          </div>
-        </Grid>
-      </div>
+      <PageLayout title={t('title')} icon={<ChartLine weight="duotone" />}>
+        <div role="alert" className="col-span-1 md:col-span-2 lg:col-span-4 text-sm text-destructive py-8 text-center">
+          {t('unableToLoad')}
+        </div>
+      </PageLayout>
     );
   }
 
   if (groups.length === 0) {
     return (
-      <div className="flex flex-col gap-4">
-        <Grid className="md:auto-rows-[auto]">
-          <PageHeaderCard title={t('title')} icon={<ChartLine weight="duotone" />} />
-          <p className="col-span-1 md:col-span-2 lg:col-span-4 text-muted-foreground text-sm py-8 text-center">
-            {t('noData')}
-          </p>
-        </Grid>
-      </div>
+      <PageLayout title={t('title')} icon={<ChartLine weight="duotone" />}>
+        <p className="col-span-1 md:col-span-2 lg:col-span-4 text-muted-foreground text-sm py-8 text-center">
+          {t('noData')}
+        </p>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <Grid className="md:auto-rows-[auto]">
-        {/* ── Page header ──────────────────────────────────────────────────── */}
-        <PageHeaderCard title={t('title')} icon={<ChartLine weight="duotone" />} />
-
-        {/* ── Tab navigation card ───────────────────────────────────────── */}
+    <PageLayout title={t('title')} icon={<ChartLine weight="duotone" />}>
+      {/* ── Tab navigation card ───────────────────────────────────────── */}
         <Card footprint="full" className="py-2 px-4 min-h-[var(--card-half-row)]">
           {/* Mobile: dropdown selector — avoids truncated button labels */}
           <div className="block md:hidden">
@@ -232,8 +218,7 @@ export function ChartsPage() {
             )}
           </div>
         ))}
-      </Grid>
-    </div>
+    </PageLayout>
   );
 }
 

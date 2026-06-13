@@ -2,7 +2,8 @@
 //
 // A full-footprint half-row card that opens every page.  On the Now page this
 // card becomes the hero (station logo + station name) — that content is Track C
-// (C1), NOT built here.  On other pages it holds a page title + one-line info.
+// (C1), NOT built here.  On other pages it holds a page title and optional
+// inline controls.
 //
 // A11y contract (rules/coding.md §5.2):
 // - Renders a real <h1>…<h6> element (consumer controls level via `as` prop).
@@ -21,11 +22,9 @@ type HeadingLevel = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 type PageHeaderCardProps = {
   /** Page or section title — rendered as a semantic heading element. */
   title: string;
-  /** Optional one-line descriptive text rendered beneath the title. */
-  info?: string;
   /**
-   * Optional page icon rendered to the left of the title/info block,
-   * sized to match the full height of the text block.
+   * Optional page icon rendered to the left of the title block,
+   * sized to match the height of the text block.
    */
   icon?: React.ReactNode;
   /**
@@ -56,7 +55,7 @@ type PageHeaderCardProps = {
  *
  * @example
  * // Page-header with inline controls
- * <PageHeaderCard title="Records" info="Historical extremes" as="h1">
+ * <PageHeaderCard title="Records" as="h1">
  *   <ThemeToggle />
  * </PageHeaderCard>
  *
@@ -66,7 +65,6 @@ type PageHeaderCardProps = {
  */
 export function PageHeaderCard({
   title,
-  info,
   icon,
   as: Heading = 'h1',
   children,
@@ -86,7 +84,7 @@ export function PageHeaderCard({
           {icon && (
             <div
               className="text-primary flex-shrink-0"
-              style={{ fontSize: info ? '2rem' : '1.5rem', lineHeight: 1 }}
+              style={{ fontSize: '1.5rem', lineHeight: 1 }}
               aria-hidden="true"
             >
               {icon}
@@ -94,18 +92,10 @@ export function PageHeaderCard({
           )}
           <div className="min-w-0 flex-1">
             <Heading
-              className={cn(
-                'font-heading truncate text-base font-semibold leading-snug',
-                info ? 'mb-0.5' : undefined,
-              )}
+              className="font-heading truncate text-base font-semibold leading-snug"
             >
               {title}
             </Heading>
-            {info && (
-              <p className="text-muted-foreground line-clamp-2 md:truncate text-sm leading-tight">
-                {info}
-              </p>
-            )}
           </div>
         </div>
 
