@@ -321,8 +321,8 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
 
         {/* Right panel: expand chevron + optional flip navigator */}
         <div
-          className="card-glass flex shrink-0 flex-col items-center justify-between border-l border-foreground/10 px-2 py-2"
-          style={{ minWidth: '56px' }}
+          className="card-glass flex shrink-0 flex-col items-center justify-between border-l border-foreground/10 px-1 py-1"
+          style={{ minWidth: '80px' }}
         >
 
           {/* Expand / collapse chevron — always present */}
@@ -331,7 +331,7 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
             onClick={() => setExpanded((e) => !e)}
             aria-expanded={expanded}
             aria-label={expanded ? t('alertBanner.collapse') : t('alertBanner.expand')}
-            className="flex h-7 w-7 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-foreground/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded text-muted-foreground transition-colors hover:bg-foreground/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
             <CaretDown
               aria-hidden="true"
@@ -369,7 +369,7 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
                   type="button"
                   onClick={goPrev}
                   aria-label={t('alertBanner.previousAlert')}
-                  className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-foreground/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  className="flex min-h-[44px] min-w-[36px] items-center justify-center rounded text-muted-foreground transition-colors hover:bg-foreground/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 >
                   <CaretLeft aria-hidden="true" className="h-3 w-3" />
                 </button>
@@ -377,7 +377,7 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
                   type="button"
                   onClick={goNext}
                   aria-label={t('alertBanner.nextAlert')}
-                  className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-foreground/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  className="flex min-h-[44px] min-w-[36px] items-center justify-center rounded text-muted-foreground transition-colors hover:bg-foreground/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 >
                   <CaretRight aria-hidden="true" className="h-3 w-3" />
                 </button>

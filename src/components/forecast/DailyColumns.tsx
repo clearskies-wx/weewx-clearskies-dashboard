@@ -610,15 +610,13 @@ export function DailyColumns({
 
   return (
     <div
-      // For the now-card (non-expandable): flex:1 + min-height:0 + overflow:hidden keeps
-      // the component within CardContent's flex constraints (11rem grid row). Wind tails
-      // use overflow:visible on their own row — card has overflow:hidden at the card level.
       style={{
         flex: 1,
         minHeight: 0,
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
+        justifyContent: expandable ? undefined : 'center',
       }}
     >
       {/* Column layout — always visible on all breakpoints.

@@ -559,29 +559,29 @@ export function CurrentConditionsCard({
                   </>
                 )}
 
-                {/* Dewpoint + Humidity — moved here from precipitation card */}
+                {/* Dewpoint + Humidity — each on its own line */}
                 {(() => {
                   const dewCV = asConverted(observation?.dewpoint ?? null);
                   const humCV = asConverted(observation?.outHumidity ?? null);
                   if ((dewCV === null || dewCV.value === null) && (humCV === null || humCV.value === null)) return null;
+                  const lineStyle: React.CSSProperties = {
+                    fontFamily: 'var(--font-sans)',
+                    fontSize: 'var(--text-secondary)',
+                    color: 'var(--muted-foreground)',
+                  };
                   return (
-                    <p
-                      style={{
-                        fontFamily: 'var(--font-sans)',
-                        fontSize: 'var(--text-secondary)',
-                        color: 'var(--muted-foreground)',
-                      }}
-                    >
+                    <div>
                       {dewCV !== null && dewCV.value !== null && (
-                        <span>{t('observations.dewpoint')} {dewCV.value.toFixed(1)}{dewCV.label || '°'}</span>
-                      )}
-                      {dewCV !== null && dewCV.value !== null && humCV !== null && humCV.value !== null && (
-                        <span> &nbsp;·&nbsp; </span>
+                        <p style={lineStyle}>
+                          {t('observations.dewpoint')} {dewCV.value.toFixed(1)}{dewCV.label || '°'}
+                        </p>
                       )}
                       {humCV !== null && humCV.value !== null && (
-                        <span>{t('observations.humidity')} {Math.round(humCV.value)}{humCV.label || '%'}</span>
+                        <p style={lineStyle}>
+                          {t('observations.humidity')} {Math.round(humCV.value)}{humCV.label || '%'}
+                        </p>
                       )}
-                    </p>
+                    </div>
                   );
                 })()}
               </div>

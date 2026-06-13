@@ -108,36 +108,30 @@ export function NowHeroCard({
             ? `${displayName} — ${location}`
             : displayName
         }
-        className="flex flex-1 items-center justify-between gap-4 px-4 py-1"
+        className="flex flex-col items-start gap-1.5 px-4 py-2 md:flex-row md:items-center md:justify-between md:gap-4 md:py-1"
       >
-        {/* ── Logo (left) ─────────────────────────────────────────────────── */}
+        {/* ── Logo ────────────────────────────────────────────────────────── */}
         <div
-          className="shrink-0"
+          className="shrink-0 h-[2.5rem] w-[8rem] md:h-[4rem] md:w-[14rem]"
           aria-hidden="true"
-          style={{ width: '14rem', height: '4rem' }}
         >
           {logoUrl ? (
             <img
               src={logoUrl}
               alt={logoAlt ?? ''}
-              style={{ width: '100%', height: '100%', maxWidth: 'none', objectFit: 'contain', objectPosition: 'left' }}
+              className="h-full w-full object-contain object-left"
             />
           ) : (
             <PlaceholderLogo size={40} />
           )}
         </div>
 
-        {/* ── Station name + location (right) ─────────────────────────────── */}
-        <div className="text-right">
-          {/*
-            h1 — this is the primary page heading on the Now page.
-            Visual: Manrope 1.35rem bold.
-          */}
+        {/* ── Station name + location ─────────────────────────────────────── */}
+        <div className="md:text-right">
           <h1
-            className="leading-tight text-foreground"
+            className="leading-tight text-foreground text-[length:var(--text-body)] md:text-[length:var(--text-hero-name)]"
             style={{
               fontFamily: 'var(--font-sans)',
-              fontSize: 'var(--text-hero-name)',
               fontWeight: 700,
               lineHeight: 1.15,
             }}
@@ -145,7 +139,6 @@ export function NowHeroCard({
             {displayName}
           </h1>
 
-          {/* Location line — shown only when the operator has configured a location. */}
           {location && (
             <p
               className="mt-0.5 text-muted-foreground"
