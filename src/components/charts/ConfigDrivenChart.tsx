@@ -352,12 +352,9 @@ export function ConfigDrivenChart({
   const isMobile = useIsMobile();
 
   const chartMargin = isMobile
-    ? { top: 4, right: 8, bottom: 4, left: 4 }
+    ? { top: 4, right: 4, bottom: 4, left: 0 }
     : { top: 8, right: 55, bottom: 8, left: 15 };
-  const tickFontSize = isMobile ? 9 : 11;
-  const yTickFontSize = isMobile ? 8 : 10;
-  const labelFontSize = isMobile ? 8 : 10;
-  const phantomAxisWidth = isMobile ? 10 : 60;
+  const phantomAxisWidth = isMobile ? 4 : 60;
 
   // Filter to visible series only once; keep original index for color resolution
   const visibleSeries = config.series
@@ -575,16 +572,17 @@ export function ConfigDrivenChart({
               dataKey={xKey}
               height={30}
               tickFormatter={xFormatter}
-              minTickGap={isMobile ? 30 : 50}
-              tick={{ fontSize: tickFontSize, fontFamily: CHART_FONT }}
+              minTickGap={isMobile ? 20 : 50}
+              tick={{ fontSize: 11, fontFamily: CHART_FONT }}
               className="fill-muted-foreground"
             />
 
-            {/* Left YAxis — always present */}
+            {/* Left YAxis — always present. Rotated labels hidden on mobile (unreadable). */}
             <YAxis
               yAxisId="left"
               orientation="left"
-              tick={{ fontSize: yTickFontSize, fontFamily: CHART_FONT }}
+              tick={{ fontSize: 10, fontFamily: CHART_FONT }}
+              width={isMobile ? 35 : undefined}
               className="fill-muted-foreground"
               domain={leftDomain}
               ticks={leftTicks}
@@ -595,16 +593,14 @@ export function ConfigDrivenChart({
                 undefined
               }
               label={
-                leftAxisCfg.label != null
+                !isMobile && leftAxisCfg.label != null
                   ? {
-                      value: isMobile && leftAxisCfg.label.length > 15
-                        ? leftAxisCfg.label.slice(0, 14) + '…'
-                        : leftAxisCfg.label,
+                      value: leftAxisCfg.label,
                       angle: -90,
                       position: 'insideLeft',
                       offset: -5,
                       style: {
-                        fontSize: labelFontSize,
+                        fontSize: 10,
                         fontFamily: CHART_FONT,
                         fill: 'var(--muted-foreground, #a1a1aa)',
                         textAnchor: 'middle',
@@ -628,7 +624,8 @@ export function ConfigDrivenChart({
               <YAxis
                 yAxisId="right"
                 orientation="right"
-                tick={{ fontSize: yTickFontSize, fontFamily: CHART_FONT }}
+                tick={{ fontSize: 10, fontFamily: CHART_FONT }}
+                width={isMobile ? 30 : undefined}
                 className="fill-muted-foreground"
                 domain={rightDomain}
                 ticks={rightTicks}
@@ -641,16 +638,14 @@ export function ConfigDrivenChart({
                       : undefined
                 }
                 label={
-                  rightAxisCfg.label != null
+                  !isMobile && rightAxisCfg.label != null
                     ? {
-                        value: isMobile && rightAxisCfg.label.length > 15
-                          ? rightAxisCfg.label.slice(0, 14) + '…'
-                          : rightAxisCfg.label,
+                        value: rightAxisCfg.label,
                         angle: 90,
                         position: 'insideRight',
                         offset: -5,
                         style: {
-                          fontSize: labelFontSize,
+                          fontSize: 10,
                           fontFamily: CHART_FONT,
                           fill: 'var(--muted-foreground, #a1a1aa)',
                           textAnchor: 'middle',

@@ -289,7 +289,7 @@ export function WeatherRangeChart({
         style={{ minWidth: 0, minHeight: 0, width: '100%', height }}
       >
         <ResponsiveContainer width="99%" height="100%">
-          <ComposedChart data={mergedData} margin={isMobile ? { top: 4, right: 8, bottom: 4, left: 4 } : CHART_MARGIN}>
+          <ComposedChart data={mergedData} margin={isMobile ? { top: 4, right: 4, bottom: 4, left: 0 } : CHART_MARGIN}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
 
             <XAxis
@@ -298,9 +298,9 @@ export function WeatherRangeChart({
               scale="time"
               domain={['dataMin', 'dataMax']}
               tickFormatter={formatXAxisTick}
-              minTickGap={isMobile ? 30 : 50}
+              minTickGap={isMobile ? 20 : 50}
               height={XAXIS_HEIGHT}
-              tick={{ fontSize: isMobile ? 9 : 11, fontFamily: CHART_FONT }}
+              tick={{ fontSize: 11, fontFamily: CHART_FONT }}
               className="fill-muted-foreground"
             />
 
@@ -310,16 +310,20 @@ export function WeatherRangeChart({
               allowDataOverflow
               ticks={ticks}
               interval={0}
-              width={isMobile ? 32 : YAXIS_WIDTH}
-              tick={{ fontSize: isMobile ? 8 : 10, fontFamily: CHART_FONT }}
+              width={isMobile ? 35 : YAXIS_WIDTH}
+              tick={{ fontSize: 10, fontFamily: CHART_FONT }}
               className="fill-muted-foreground"
-              label={{
-                value: yAxisLabel + (unit ? ` (${unit})` : ''),
-                angle: -90,
-                position: 'insideLeft',
-                style: { fontSize: isMobile ? 8 : 11, fontFamily: CHART_FONT, fill: 'var(--muted-foreground)' },
-                offset: -5,
-              }}
+              label={
+                !isMobile
+                  ? {
+                      value: yAxisLabel + (unit ? ` (${unit})` : ''),
+                      angle: -90,
+                      position: 'insideLeft',
+                      style: { fontSize: 11, fontFamily: CHART_FONT, fill: 'var(--muted-foreground)' },
+                      offset: -5,
+                    }
+                  : undefined
+              }
             />
 
             {/* Phantom right YAxis — matches ConfigDrivenChart width */}
@@ -329,7 +333,7 @@ export function WeatherRangeChart({
               tick={false}
               axisLine={false}
               tickLine={false}
-              width={isMobile ? 10 : 60}
+              width={isMobile ? 4 : 60}
             />
 
             <Tooltip
