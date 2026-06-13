@@ -13,12 +13,12 @@ type CardProps = React.ComponentProps<"div"> & {
   /**
    * Row span — controls how many quarter-row tracks the card occupies at md+ (≥768px).
    * Mobile rows are always auto-height.
-   *   “quarter” = md:row-span-1  (1 × --card-quarter-row  = 2.75rem)
-   *   “half”    = md:row-span-2  (2 × --card-quarter-row  = 5.5rem)
+   *   "quarter" = md:row-span-1  (1 × --card-quarter-row  = 2.75rem)
+   *   "half"    = md:row-span-2  (2 × --card-quarter-row  = 5.5rem)
    *   1         = md:row-span-4  (4 × --card-quarter-row  = 11rem, default data card)
    *   2         = md:row-span-8  (8 × --card-quarter-row  = 22rem, tall card)
    */
-  rowSpan?: “quarter” | “half” | 1 | 2;
+  rowSpan?: "quarter" | "half" | 1 | 2;
 };
 
 /** Column-span classes for each footprint value (ADR-051).
