@@ -817,9 +817,9 @@ export function ConfigDrivenGroup({
         </CardAction>
       </CardHeader>
 
-      {/* Mode B: Year / month dropdowns + export icons — same row, dropdowns left, icons right */}
+      {/* Mode B: Year / month dropdowns + export icons — single row on mobile, wraps on desktop */}
       {!hideControls && showYearMonthDropdowns && (
-        <div className="flex flex-wrap items-end gap-4 mb-4">
+        <div className="flex items-end gap-2 md:flex-wrap md:gap-4 mb-4">
           {/* Year selector */}
           <div className="flex flex-col gap-1">
             <label
