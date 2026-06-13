@@ -78,7 +78,7 @@ export function AppLayout() {
           or mobile browsers clip/hide them. */}
       <NavRail />
 
-      <div className="h-[100dvh] flex flex-col text-foreground overflow-hidden">
+      <div className="h-[100dvh] flex flex-col text-foreground overflow-hidden relative z-0">
         <SkipLink />
 
         <div className="flex flex-1 min-h-0">

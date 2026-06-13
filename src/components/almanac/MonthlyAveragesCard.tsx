@@ -23,6 +23,7 @@ import {
 import type { GroupedArchiveData } from '../../api/types';
 import { useTheme } from '../../lib/theme-provider';
 import { ensureChartContrast } from '../../utils/chart-contrast';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -168,6 +169,7 @@ export function MonthlyAveragesCard({
   const { t } = useTranslation('almanac');
   const { resolved: resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
+  const isMobile = useIsMobile();
 
   // Loading state — skeleton outside the card shell to match existing almanac pattern
   if (loading) {
@@ -244,39 +246,50 @@ export function MonthlyAveragesCard({
           <ResponsiveContainer width="100%" height={300}>
             <ComposedChart
               data={chartData}
-              margin={{ top: 8, right: 55, left: 15, bottom: 8 }}
+              margin={isMobile ? { top: 4, right: 4, bottom: 4, left: 0 } : { top: 8, right: 55, left: 15, bottom: 8 }}
             >
               <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
               <XAxis
                 dataKey="month"
                 tick={{ fontSize: 11, fontFamily: 'var(--font-chart)', fontWeight: 600 }}
+                minTickGap={isMobile ? 20 : 50}
                 className="fill-muted-foreground"
               />
               <YAxis
                 yAxisId="temp"
+                width={isMobile ? 35 : undefined}
                 tick={{ fontSize: 10, fontFamily: 'var(--font-chart)' }}
                 className="fill-muted-foreground"
                 tickFormatter={(v: number) => `${v}°`}
-                label={{
-                  value: t('climatology.yAxisTemp', 'Average Temperature (°F)'),
-                  angle: -90,
-                  position: 'insideLeft',
-                  offset: -5,
-                  style: { fontSize: 10, fontFamily: 'var(--font-chart)', fill: 'var(--muted-foreground, #a1a1aa)', textAnchor: 'middle' },
-                }}
+                label={
+                  !isMobile
+                    ? {
+                        value: t('climatology.yAxisTemp', 'Average Temperature (°F)'),
+                        angle: -90,
+                        position: 'insideLeft',
+                        offset: -5,
+                        style: { fontSize: 10, fontFamily: 'var(--font-chart)', fill: 'var(--muted-foreground, #a1a1aa)', textAnchor: 'middle' },
+                      }
+                    : undefined
+                }
               />
               <YAxis
                 yAxisId="rain"
                 orientation="right"
+                width={isMobile ? 30 : undefined}
                 tick={{ fontSize: 10, fontFamily: 'var(--font-chart)' }}
                 className="fill-muted-foreground"
-                label={{
-                  value: t('climatology.yAxisRain', 'Avg Monthly Rain (in)'),
-                  angle: 90,
-                  position: 'insideRight',
-                  offset: -5,
-                  style: { fontSize: 10, fontFamily: 'var(--font-chart)', fill: 'var(--muted-foreground, #a1a1aa)', textAnchor: 'middle' },
-                }}
+                label={
+                  !isMobile
+                    ? {
+                        value: t('climatology.yAxisRain', 'Avg Monthly Rain (in)'),
+                        angle: 90,
+                        position: 'insideRight',
+                        offset: -5,
+                        style: { fontSize: 10, fontFamily: 'var(--font-chart)', fill: 'var(--muted-foreground, #a1a1aa)', textAnchor: 'middle' },
+                      }
+                    : undefined
+                }
               />
               <Tooltip
                 contentStyle={{
