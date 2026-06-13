@@ -208,7 +208,7 @@ export function LightningCard({
                       }}
                       tick={{
                         fontFamily: 'var(--font-chart, system-ui, sans-serif)',
-                        fontSize: 14,
+                        fontSize: 11,
                         fill: 'var(--muted-foreground)',
                       }}
                       axisLine={false}
@@ -221,7 +221,7 @@ export function LightningCard({
                       tickCount={3}
                       tick={{
                         fontFamily: 'var(--font-chart, system-ui, sans-serif)',
-                        fontSize: 14,
+                        fontSize: 11,
                         fill: 'var(--muted-foreground)',
                       }}
                       axisLine={false}

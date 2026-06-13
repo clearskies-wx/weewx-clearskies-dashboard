@@ -211,7 +211,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
   // Coordinates match C2 mockup exactly: N(210,18) E(402,210) S(210,402) W(18,210).
   const CARD_LABEL_STYLE: React.CSSProperties = {
     fontFamily: "'Manrope', var(--font-sans, system-ui, sans-serif)",
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: 600,
   };
 
