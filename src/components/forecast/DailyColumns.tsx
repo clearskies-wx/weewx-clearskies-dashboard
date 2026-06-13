@@ -95,8 +95,8 @@ export function DailyColumns({
   units,
 }: DailyColumnsProps) {
   const { t } = useTranslation('forecast');
-  // Auto-select first column when expandable so users discover the detail panel.
-  const [expandedIdx, setExpandedIdx] = useState<number | null>(expandable ? 0 : null);
+  // Start with no column expanded — user taps to expand.
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
 
   if (!days || days.length === 0) return null;
 
