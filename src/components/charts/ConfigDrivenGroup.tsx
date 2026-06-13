@@ -909,7 +909,7 @@ export function ConfigDrivenGroup({
               type="button"
               onClick={() => setShowTable((prev) => !prev)}
               aria-pressed={showTable}
-              className="inline-flex items-center min-h-[44px] md:min-h-0 px-3 py-2 text-sm text-muted-foreground rounded-md border border-border hover:text-foreground hover:bg-muted/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="hidden md:inline-flex items-center px-3 py-2 text-sm text-muted-foreground rounded-md border border-border hover:text-foreground hover:bg-muted/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               {showTable ? t('showChart') : t('showDataTable')}
             </button>
@@ -1009,7 +1009,7 @@ export function ConfigDrivenGroup({
             type="button"
             onClick={() => setShowTable((prev) => !prev)}
             aria-pressed={showTable}
-            className="inline-flex items-center min-h-[44px] md:min-h-0 px-3 py-2 text-sm text-muted-foreground rounded-md border border-border hover:text-foreground hover:bg-muted/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="hidden md:inline-flex items-center px-3 py-2 text-sm text-muted-foreground rounded-md border border-border hover:text-foreground hover:bg-muted/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             {showTable ? t('showChart') : t('showDataTable')}
           </button>
