@@ -21,6 +21,7 @@ import {
   Card,
   CardHeader,
   CardContent,
+  CardTitle,
 } from '../ui/card';
 import type { LunarEclipseData, LunarEclipseEntry } from '../../api/types';
 
@@ -550,7 +551,6 @@ function CardSkeleton() {
  *
  * Header layout (matches SolarEclipseCard pattern):
  * - CardHeader contains an inner flex div: title left, "All times local" right.
- * - Does NOT use CardTitle (which adds a bottom border that would split the header).
  *
  * Typography (locked 2026-05-31):
  * - Card title: --font-sans (Manrope) via font-heading class, weight 600
@@ -595,15 +595,7 @@ export function LunarEclipseCard({
       */}
       <CardHeader>
         <div className="flex items-center justify-between w-full">
-          <span
-            className="font-heading font-semibold"
-            style={{
-              fontSize: 'var(--text-card-title, 0.82rem)',
-              fontFamily: 'var(--font-sans)',
-            }}
-          >
-            {t('lunarEclipses.title', 'Lunar Eclipses')}
-          </span>
+          <CardTitle as="h2">{t('lunarEclipses.title', 'Lunar Eclipses')}</CardTitle>
           <span className="text-[0.75rem] text-muted-foreground">
             {t('lunarEclipses.allTimesLocal', 'All times local')}
           </span>

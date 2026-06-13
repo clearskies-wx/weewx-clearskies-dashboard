@@ -4,26 +4,47 @@
 // All UI logic lives in src/components/almanac/*.tsx.
 // Pattern mirrors forecast.tsx (Grid + PageHeaderCard composition).
 
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MoonStars } from '@phosphor-icons/react';
 import { PageLayout } from '../components/layout/page-layout';
 import { SunMoonDetailCard } from '../components/almanac/SunMoonDetailCard';
 import { PlanetTimelineCard } from '../components/almanac/PlanetTimelineCard';
-import { MonthlyAveragesCard } from '../components/almanac/MonthlyAveragesCard';
 import { SolarEclipseCard } from '../components/almanac/SolarEclipseCard';
 import { LunarEclipseCard } from '../components/almanac/LunarEclipseCard';
 import { MeteorShowerCard } from '../components/almanac/MeteorShowerCard';
-import { useMemo } from 'react';
+import { ConfigDrivenGroup } from '../components/charts/ConfigDrivenGroup';
 import {
   useAlmanac,
   useAlmanacMoonNames,
   useAlmanacPlanets,
-  useGroupedArchive,
+  useChartsConfig,
   useSolarEclipses,
   useAlmanacEclipses,
   useAlmanacMeteorShowers,
   useStation,
 } from '../hooks/useWeatherData';
+
+// ---------------------------------------------------------------------------
+// usePrefersReducedMotion — local hook, passed down to ConfigDrivenGroup
+// ---------------------------------------------------------------------------
+
+function usePrefersReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(() =>
+    typeof window !== 'undefined'
+      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : false
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  return reduced;
+}
 
 /** Compute a YYYY-MM-DD date string in the station timezone. */
 function stationDate(tz: string, offsetDays: number): string {
@@ -38,36 +59,49 @@ function stationDate(tz: string, offsetDays: number): string {
 
 export function AlmanacPage() {
   const { t } = useTranslation('almanac');
+  const reducedMotion = usePrefersReducedMotion();
 
   // Station timezone — same pattern as forecast.tsx
   const { data: station } = useStation();
   const stationTz = station?.timezone ?? 'UTC';
+  const stationFirstYear = station?.firstRecord
+    ? new Date(station.firstRecord).getFullYear()
+    : undefined;
 
   // Compute today/tomorrow date strings in station timezone
   const todayStr = useMemo(() => stationDate(stationTz, 0), [stationTz]);
   const tomorrowStr = useMemo(() => stationDate(stationTz, 1), [stationTz]);
 
+  // Charts config — used to find the grouped chart group (xAxisGroupby)
+  const { data: chartsConfig } = useChartsConfig();
+  const groupedChartGroup = chartsConfig?.groups?.find(
+    (g) => g.charts.some((c) => c.xAxisGroupby)
+  ) ?? null;
+
   // Data hooks — fetch today and tomorrow for Sun & Moon two-column layout
   const almanac         = useAlmanac(todayStr);
   const almanacTomorrow = useAlmanac(tomorrowStr);
   const moonNames       = useAlmanacMoonNames();
-  const planets       = useAlmanacPlanets();
-  const monthlyAverages = useGroupedArchive({
-    group_by: 'month',
-    fields: 'outTemp:avg:max,outTemp:avg:min,dewpoint:avg,rain:avg:sum',
-  });
-  const solarEclipses = useSolarEclipses();
-  const lunarEclipses = useAlmanacEclipses();
-  const meteorShowers = useAlmanacMeteorShowers();
+  const planets         = useAlmanacPlanets();
+  const solarEclipses   = useSolarEclipses();
+  const lunarEclipses   = useAlmanacEclipses();
+  const meteorShowers   = useAlmanacMeteorShowers();
 
   return (
     <PageLayout title={t('pageTitle')} icon={<MoonStars weight="duotone" />}>
         {/* ── Surface D: Monthly Averages chart (first per approved mockup) ── */}
-        <MonthlyAveragesCard
-          groupedData={monthlyAverages.data}
-          loading={monthlyAverages.loading}
-          error={monthlyAverages.error?.message ?? null}
-        />
+        {groupedChartGroup && (
+          <div className="col-span-1 md:col-span-2 lg:col-span-4">
+            <ConfigDrivenGroup
+              group={groupedChartGroup}
+              globalColors={chartsConfig?.colors}
+              globalType={chartsConfig?.type}
+              reducedMotion={reducedMotion}
+              stationFirstYear={stationFirstYear}
+              hideControls
+            />
+          </div>
+        )}
 
         {/* ── Surface B: Sun & Moon detail ──────────────────────────────── */}
         <SunMoonDetailCard

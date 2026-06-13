@@ -38,6 +38,7 @@ import {
   CardHeader,
   CardContent,
   CardFooter,
+  CardTitle,
 } from '../ui/card';
 import type { SolarEclipseData, SolarEclipseEntry } from '../../api/types';
 import { formatLocalTime } from '../../utils/time';
@@ -523,15 +524,7 @@ export function SolarEclipseCard({
         {/* Header */}
         <CardHeader>
           <div className="flex items-center justify-between w-full">
-            <span
-              className="font-semibold"
-              style={{
-                fontSize: 'var(--text-card-title, 0.82rem)',
-                fontFamily: 'var(--font-sans)',
-              }}
-            >
-              {t('solarEclipses.title', 'Solar Eclipses')}
-            </span>
+            <CardTitle as="h2">{t('solarEclipses.title', 'Solar Eclipses')}</CardTitle>
             <span
               className="text-[0.75rem] text-muted-foreground flex items-center gap-1"
             >

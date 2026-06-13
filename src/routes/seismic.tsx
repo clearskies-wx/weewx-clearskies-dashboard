@@ -209,11 +209,11 @@ export function SeismicPage() {
     : '';
 
   return (
-    <div className="lg:h-full">
+    <div>
       <PageLayout
         title={t('title')}
         icon={<Earthquake size={28} />}
-        gridClassName="lg:flex-1 min-h-0 content-start lg:grid-rows-[auto_1fr]"
+        gridClassName="content-start"
         controls={
           config
             ? (
@@ -249,7 +249,7 @@ export function SeismicPage() {
             {/* Map card: 3 of 4 grid columns (panel footprint). */}
             {/* relative z-0: stacking context to contain Leaflet's internal z-indices (T1.3).
                 min-h-[var(--card-row)]: prevents map canvas collapsing on mobile auto-rows. */}
-            <Card className="relative z-0 min-h-[var(--card-row)] col-span-1 md:col-span-2 lg:col-span-3 overflow-hidden flex flex-col h-[300px] lg:h-full">
+            <Card className="relative z-0 min-h-[var(--card-row)] col-span-1 md:col-span-2 lg:col-span-3 overflow-hidden flex flex-col h-[300px] lg:h-auto lg:aspect-square">
               <CardHeader className="pb-2 shrink-0">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <CardTitle as="h2">{t('mapCardTitle')}</CardTitle>
@@ -352,7 +352,7 @@ export function SeismicPage() {
             </Card>
 
             {/* Earthquake list: 1 of 4 grid columns. */}
-            <Card className="col-span-1 md:col-span-2 lg:col-span-1 flex flex-col lg:h-full">
+            <Card className="col-span-1 md:col-span-2 lg:col-span-1 flex flex-col lg:self-stretch lg:overflow-hidden">
               <CardHeader className="pb-2 shrink-0">
               <CardTitle as="h2">{t('listCardTitle')}</CardTitle>
             </CardHeader>
