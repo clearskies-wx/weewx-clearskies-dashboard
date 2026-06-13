@@ -316,7 +316,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
             <div
               style={{
                 fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-                fontSize: '0.95rem',
+                fontSize: 'var(--text-section)',
                 color: 'var(--muted-foreground)',
                 letterSpacing: '0.04em',
               }}
@@ -348,7 +348,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
                 style={{
                   fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
                   fontWeight: 400,
-                  fontSize: '3rem',
+                  fontSize: 'var(--text-stat-unit)',
                   color: 'var(--foreground)',
                   letterSpacing: '-0.01em',
                 }}
@@ -360,7 +360,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
                   style={{
                     fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
                     fontWeight: 400,
-                    fontSize: '1.05rem',
+                    fontSize: 'var(--text-stat-label)',
                     color: 'var(--muted-foreground)',
                   }}
                 >
@@ -402,7 +402,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
                 <div
                   style={{
                     fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-                    fontSize: '0.95rem',
+                    fontSize: 'var(--text-section)',
                     color: 'var(--muted-foreground)',
                   }}
                 >
@@ -422,7 +422,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
                 <div
                   style={{
                     fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-                    fontSize: '0.95rem',
+                    fontSize: 'var(--text-section)',
                     color: 'var(--muted-foreground)',
                   }}
                 >

@@ -196,7 +196,7 @@ export function DailyColumns({
                 <span
                   style={{
                     fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                    fontSize: '0.85rem',
+                    fontSize: 'var(--text-secondary)',
                     fontWeight: 600,
                     color: isSelected ? 'var(--primary)' : 'var(--foreground)',
                     whiteSpace: 'nowrap',
@@ -212,7 +212,7 @@ export function DailyColumns({
                     className="md:hidden"
                     style={{
                       fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                      fontSize: '0.85rem',
+                      fontSize: 'var(--text-secondary)',
                       fontWeight: 600,
                       color: isSelected ? 'var(--primary)' : 'var(--foreground)',
                       whiteSpace: 'nowrap',
@@ -226,7 +226,7 @@ export function DailyColumns({
                     className="hidden md:inline"
                     style={{
                       fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                      fontSize: '0.85rem',
+                      fontSize: 'var(--text-secondary)',
                       fontWeight: 600,
                       color: isSelected ? 'var(--primary)' : 'var(--foreground)',
                       whiteSpace: 'nowrap',
@@ -242,7 +242,7 @@ export function DailyColumns({
               <span
                 style={{
                   fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                  fontSize: '0.75rem',
+                  fontSize: 'var(--text-label)',
                   fontWeight: 600,
                   color: isSelected ? 'var(--primary)' : 'var(--foreground)',
                   whiteSpace: 'nowrap',
@@ -256,7 +256,7 @@ export function DailyColumns({
               <span
                 style={{
                   fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                  fontSize: '0.7rem',
+                  fontSize: 'var(--text-micro)',
                   color: 'var(--muted-foreground)',
                   whiteSpace: 'nowrap',
                   textAlign: 'center',
@@ -330,7 +330,7 @@ export function DailyColumns({
             <span
               style={{
                 fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
-                fontSize: '0.85rem',
+                fontSize: 'var(--text-secondary)',
                 fontWeight: 600,
                 lineHeight: 1,
               }}
@@ -355,7 +355,7 @@ export function DailyColumns({
             <span
               style={{
                 fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
-                fontSize: '0.75rem',
+                fontSize: 'var(--text-label)',
                 fontWeight: 600,
                 lineHeight: 1,
               }}
@@ -390,7 +390,7 @@ export function DailyColumns({
                 alignItems: 'center',
                 gap: '0.08rem',
                 fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                fontSize: expandable ? 'var(--text-micro, 0.7rem)' : '0.75rem',
+                fontSize: expandable ? 'var(--text-micro)' : 'var(--text-label)',
                 color: 'var(--muted-foreground)',
               }}
             >
@@ -402,7 +402,7 @@ export function DailyColumns({
               <span
                 style={{
                   fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                  fontSize: expandable ? '0.6rem' : '0.65rem',
+                  fontSize: 'var(--text-micro)',
                   color: 'var(--muted-foreground)',
                   opacity: 0.8,
                 }}
@@ -418,7 +418,7 @@ export function DailyColumns({
                   alignItems: 'center',
                   gap: '0.05rem',
                   fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                  fontSize: expandable ? '0.6rem' : '0.65rem',
+                  fontSize: 'var(--text-micro)',
                   color: 'var(--muted-foreground)',
                   opacity: 0.8,
                 }}
@@ -482,10 +482,10 @@ export function DailyColumns({
           alignItems: 'baseline',
           gap: '0.3rem',
           fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-          fontSize: '0.82rem',
+          fontSize: 'var(--text-card-title)',
         }}
       >
-        <span style={{ fontSize: '0.72rem', color: 'var(--muted-foreground)', flexShrink: 0 }}>{label}</span>
+        <span style={{ fontSize: 'var(--text-micro)', color: 'var(--muted-foreground)', flexShrink: 0 }}>{label}</span>
         <span style={{ color: 'var(--foreground)', fontWeight: 600 }}>{value}</span>
       </div>
     );
@@ -545,7 +545,7 @@ export function DailyColumns({
         <div
           style={{
             fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-            fontSize: '0.82rem',
+            fontSize: 'var(--text-card-title)',
             fontWeight: 600,
             color: 'var(--primary)',
             marginBottom: '0.45rem',
@@ -560,7 +560,7 @@ export function DailyColumns({
           <p
             style={{
               fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-              fontSize: '0.82rem',
+              fontSize: 'var(--text-card-title)',
               color: 'var(--muted-foreground)',
               lineHeight: 1.55,
               fontStyle: 'italic',

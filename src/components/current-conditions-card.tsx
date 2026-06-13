@@ -240,7 +240,7 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
                 position: 'insideTopLeft',
                 style: {
                   fontFamily: 'var(--font-chart)',
-                  fontSize: '11px',
+                  fontSize: 'var(--text-micro)',
                   fontWeight: 700,
                   fill: 'var(--foreground)',
                 },
@@ -267,7 +267,7 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
               tickFormatter={fmtAxisTime}
               tickLine={false}
               axisLine={false}
-              tick={{ fontFamily: 'var(--font-chart)', fontSize: 12, fill: 'var(--foreground)' }}
+              tick={{ fontFamily: 'var(--font-chart)', fontSize: 14, fill: 'var(--foreground)' }}
               interval={0}
               scale="time"
             />
@@ -278,7 +278,7 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
               tickFormatter={(v: number) => `${v}°`}
               tickLine={false}
               axisLine={false}
-              tick={{ fontFamily: 'var(--font-chart)', fontSize: 12, fill: 'var(--foreground)' }}
+              tick={{ fontFamily: 'var(--font-chart)', fontSize: 14, fill: 'var(--foreground)' }}
               width={34}
             />
           </ComposedChart>
@@ -511,7 +511,7 @@ export function CurrentConditionsCard({
                     className="text-foreground"
                     style={{
                       fontFamily: 'var(--font-sans)',
-                      fontSize: '0.95rem',
+                      fontSize: 'var(--text-section)',
                       fontWeight: 500,
                       lineHeight: 1.35,
                     }}

@@ -105,7 +105,7 @@ export function NowForecastCard({
               onKeyDown={handleTabKey}
               style={{
                 fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                fontSize: '0.72rem',
+                fontSize: 'var(--text-micro)',
                 fontWeight: 600,
                 border: 'none',
                 borderRadius: '999px',
@@ -129,7 +129,7 @@ export function NowForecastCard({
               onKeyDown={handleTabKey}
               style={{
                 fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                fontSize: '0.72rem',
+                fontSize: 'var(--text-micro)',
                 fontWeight: 600,
                 border: 'none',
                 borderRadius: '999px',

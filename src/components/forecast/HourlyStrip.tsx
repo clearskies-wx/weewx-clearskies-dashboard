@@ -133,7 +133,7 @@ export function HourlyStrip({
       <span
         style={{
           fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-          fontSize: threeHourWindows ? '0.68rem' : 'var(--text-label, 0.75rem)',
+          fontSize: threeHourWindows ? 'var(--text-micro)' : 'var(--text-label)',
           fontWeight: 400,
           color: 'var(--muted-foreground)',
           whiteSpace: 'nowrap',
@@ -157,7 +157,7 @@ export function HourlyStrip({
       <span
         style={{
           fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
-          fontSize: threeHourWindows ? '0.8rem' : '0.85rem',
+          fontSize: 'var(--text-label)',
           fontWeight: 600,
           color: 'var(--foreground)',
           letterSpacing: '-0.01em',
@@ -182,7 +182,7 @@ export function HourlyStrip({
             alignItems: 'center',
             gap: 2,
             fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-            fontSize: threeHourWindows ? '0.75rem' : 'var(--text-micro, 0.7rem)',
+            fontSize: threeHourWindows ? 'var(--text-label)' : 'var(--text-micro)',
             color: 'var(--muted-foreground)',
           }}
         >

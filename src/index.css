@@ -46,6 +46,8 @@
     --text-body:         0.9rem;  /* body sentences — Manrope */
     --text-secondary:    0.85rem; /* feels-like, hi/lo — Manrope (hi/lo weight 600) */
     --text-card-title:   0.82rem; /* card title — Manrope 600 (semibold, NOT bold) */
+    --text-stat-tile:    1.25rem; /* primary stat value on 1×1 tile cards — Outfit 600 */
+    --text-stat-label:   1rem;   /* secondary stat value / large label on tiles — Outfit/Manrope */
     --text-label:        0.75rem; /* small labels — Manrope */
     --text-micro:        0.7rem;  /* uppercase micro-labels — Manrope */
     --text-chart-label:  0.875rem;/* chart axis/tick/data labels — Lexend */
