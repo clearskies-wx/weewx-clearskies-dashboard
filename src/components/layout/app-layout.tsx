@@ -71,12 +71,6 @@ export function AppLayout() {
           Renders nothing when googleAnalyticsId is absent or consent is stored. */}
       <CookieConsentBanner />
 
-      {/* NavRail: all elements are position:fixed (desktop rail z-20, mobile
-          bottom nav z-30, More sheet z-40).  Rendered OUTSIDE the overflow-hidden
-          wrapper so Android Chrome doesn't clip the fixed bottom nav when
-          will-change-transform is combined with an overflow-hidden ancestor. */}
-      <NavRail />
-
       {/* h-[100dvh]: dynamic viewport height adjusts when mobile browser
           URL bar hides/shows, preventing the bottom nav from clipping. */}
       <div className="h-[100dvh] flex flex-col text-foreground overflow-hidden">
@@ -121,6 +115,12 @@ export function AppLayout() {
           </div>
         </div>
       </div>
+
+      {/* NavRail: all elements are position:fixed (desktop rail z-20, mobile
+          bottom nav z-50, More sheet z-60).  Rendered AFTER the content div so
+          it paints last in DOM order — Firefox Android was painting later DOM
+          siblings (the content div) on top of the fixed nav despite z-index. */}
+      <NavRail />
     </>
   );
 }
