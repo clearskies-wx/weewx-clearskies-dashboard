@@ -176,6 +176,7 @@ export function NowForecastCard({
                 flex: 1,
                 minHeight: 0,
                 overflow: 'hidden',
+                justifyContent: 'center',
               }}
             >
               {next24hours.length > 0 ? (
@@ -203,6 +204,7 @@ export function NowForecastCard({
                 flex: 1,
                 minHeight: 0,
                 overflow: 'visible',
+                justifyContent: 'center',
               }}
             >
               {dailyDays.length > 0 ? (

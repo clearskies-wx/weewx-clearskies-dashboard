@@ -92,6 +92,25 @@ function SnowflakeIcon({ size = 36 }: { size?: number }) {
 }
 
 
+// Phosphor "drop-half" icon (regular weight) — inline SVG per ADR-050.
+function DropHalfIcon({ size = 36 }: { size?: number }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 256 256"
+      width={size}
+      height={size}
+      aria-hidden="true"
+      focusable="false"
+      style={{ color: 'currentColor', opacity: 0.7, flexShrink: 0 }}
+      fill="currentColor"
+    >
+      <path d="M174,47.75a254.19,254.19,0,0,0-41.45-38.3,8,8,0,0,0-9.18,0A254.19,254.19,0,0,0,82,47.75C54.51,79.32,40,112.6,40,144a88,88,0,0,0,176,0C216,112.6,201.49,79.32,174,47.75ZM56,144c0-57.23,55.47-105,72-118V216A72.08,72.08,0,0,1,56,144Z" />
+    </svg>
+  );
+}
+
+
 // ---------------------------------------------------------------------------
 // Shared text styles
 // ---------------------------------------------------------------------------
@@ -191,17 +210,16 @@ export function PrecipitationCard({
             aria-live="polite"
             style={{
               display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '0.5rem',
+              alignItems: 'flex-start',
+              justifyContent: 'center',
+              gap: '1.5rem',
             }}
           >
-            {/* Rain section — always shown */}
+            {/* Left column: Rain */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
                 gap: '6px',
               }}
             >
@@ -214,21 +232,19 @@ export function PrecipitationCard({
               </div>
             </div>
 
-            {/* Dewpoint + Humidity — primary moisture indicators */}
+            {/* Right column: Dewpoint + Humidity */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                gap: '1rem',
+                gap: '6px',
               }}
             >
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.1rem' }}>
+              <DropHalfIcon size={36} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
                 <span style={primaryValueStyle}>{dewpointFormatted}</span>
                 <span style={labelStyle}>{t('observations.dewpoint')}</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.1rem' }}>
-                <span style={primaryValueStyle}>{humidityFormatted}</span>
+                <span style={secondaryValueStyle}>{humidityFormatted}</span>
                 <span style={labelStyle}>{t('observations.humidity')}</span>
               </div>
             </div>
@@ -239,7 +255,6 @@ export function PrecipitationCard({
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
                   gap: '6px',
                 }}
               >

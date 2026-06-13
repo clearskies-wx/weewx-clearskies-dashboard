@@ -312,7 +312,7 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
 
           {/* Summary: first line of description (collapsed only) */}
           {summaryText && !expanded && (
-            <p className="mt-1 line-clamp-1 font-heading text-[length:var(--text-label)] leading-snug text-card-foreground/75">
+            <p className="mt-1 truncate font-heading text-[length:var(--text-label)] leading-snug text-card-foreground/75">
               {summaryText}
             </p>
           )}

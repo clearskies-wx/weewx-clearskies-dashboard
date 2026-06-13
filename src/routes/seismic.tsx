@@ -213,7 +213,7 @@ export function SeismicPage() {
       <PageLayout
         title={t('title')}
         icon={<Earthquake size={28} />}
-        gridClassName="content-start"
+        gridClassName="content-start lg:!auto-rows-[auto_1fr]"
         controls={
           config
             ? (
@@ -352,7 +352,7 @@ export function SeismicPage() {
             </Card>
 
             {/* Earthquake list: 1 of 4 grid columns. */}
-            <Card className="col-span-1 md:col-span-2 lg:col-span-1 flex flex-col lg:self-stretch lg:overflow-hidden">
+            <Card className="col-span-1 md:col-span-2 lg:col-span-1 flex flex-col lg:h-full lg:overflow-hidden">
               <CardHeader className="pb-2 shrink-0">
               <CardTitle as="h2">{t('listCardTitle')}</CardTitle>
             </CardHeader>

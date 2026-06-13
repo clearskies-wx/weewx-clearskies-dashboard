@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Card,
@@ -20,7 +20,12 @@ export function WebcamCard({ webcamConfig, refreshTs, videoRefreshTs }: WebcamCa
   const [imageAvailable, setImageAvailable] = useState(true);
   const [videoAvailable, setVideoAvailable] = useState(true);
 
-  if (!imageAvailable) return null;
+  // Reset imageAvailable on each refresh cycle so the card retries loading
+  // the webcam image even after a prior failure. The card always stays mounted
+  // when enabled in wizard config — never hidden due to a transient error.
+  useEffect(() => {
+    setImageAvailable(true);
+  }, [refreshTs]);
 
   return (
     <Card footprint="wide" rowSpan={2}>
@@ -77,12 +82,18 @@ export function WebcamCard({ webcamConfig, refreshTs, videoRefreshTs }: WebcamCa
             any residual pixel from the image's natural aspect ratio. */}
         <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', borderRadius: '0.375rem' }}>
           {webcamTab === 'live' ? (
-            <img
-              src={`${webcamConfig.imageUrl}?t=${refreshTs}`}
-              alt={t('webcamAlt')}
-              className="w-full h-full rounded object-contain"
-              onError={() => setImageAvailable(false)}
-            />
+            imageAvailable ? (
+              <img
+                src={`${webcamConfig.imageUrl}?t=${refreshTs}`}
+                alt={t('webcamAlt')}
+                className="w-full h-full rounded object-contain"
+                onError={() => setImageAvailable(false)}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+                {t('noData.webcam', 'Webcam image unavailable')}
+              </div>
+            )
           ) : videoAvailable ? (
             <video
               controls
