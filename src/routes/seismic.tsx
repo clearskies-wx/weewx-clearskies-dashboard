@@ -209,11 +209,11 @@ export function SeismicPage() {
     : '';
 
   return (
-    <div className="lg:h-full">
+    <div>
       <PageLayout
         title={t('title')}
         icon={<Earthquake size={28} />}
-        gridClassName="lg:flex-1 lg:min-h-0 lg:content-start lg:!grid-rows-[auto_auto_1fr]"
+        gridClassName="content-start"
         controls={
           config
             ? (
@@ -245,11 +245,9 @@ export function SeismicPage() {
         )}
 
         {!loading && !error && earthquakes !== null && (
-          <>
-            {/* Map card: 3 of 4 grid columns (panel footprint). */}
-            {/* relative z-0: stacking context to contain Leaflet's internal z-indices (T1.3).
-                min-h-[var(--card-row)]: prevents map canvas collapsing on mobile auto-rows. */}
-            <Card className="relative z-0 min-h-[var(--card-row)] col-span-1 md:col-span-2 lg:col-span-3 overflow-hidden flex flex-col h-[300px] lg:h-full lg:mb-0">
+          <div className="col-span-1 md:col-span-2 lg:col-span-4 flex flex-col lg:flex-row gap-[var(--gap-grid)]">
+            {/* Map card: 3/4 width at lg, 1:1 aspect ratio */}
+            <Card className="relative z-0 min-h-[var(--card-row)] overflow-hidden flex flex-col h-[300px] lg:h-auto lg:aspect-square lg:flex-[3] lg:mb-0">
               <CardHeader className="pb-2 shrink-0">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <CardTitle as="h2">{t('mapCardTitle')}</CardTitle>
@@ -351,8 +349,8 @@ export function SeismicPage() {
             </CardContent>
             </Card>
 
-            {/* Earthquake list: 1 of 4 grid columns. */}
-            <Card className="col-span-1 md:col-span-2 lg:col-span-1 flex flex-col lg:h-full lg:mb-0 lg:overflow-hidden">
+            {/* Earthquake list: 1/4 width at lg, matches map height */}
+            <Card className="flex flex-col lg:flex-1 lg:mb-0 lg:overflow-hidden">
               <CardHeader className="pb-2 shrink-0">
               <CardTitle as="h2">{t('listCardTitle')}</CardTitle>
             </CardHeader>
@@ -441,7 +439,7 @@ export function SeismicPage() {
               )}
             </CardContent>
             </Card>
-          </>
+          </div>
         )}
       </PageLayout>
     </div>
