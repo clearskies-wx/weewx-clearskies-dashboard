@@ -56,10 +56,15 @@ function rowSpanClass(rowSpan: "quarter" | "half" | 1 | 2 | undefined): string {
  * correctly on mobile (where row-span has no effect).
  */
 function minHeightClass(rowSpan: "quarter" | "half" | 1 | 2 | undefined): string {
+  // min-height applies on mobile only (< md) where grid rows are auto-height.
+  // At md+, rigid grid tracks enforce card height on the Now page, and non-Now
+  // pages use auto-rows where cards size to content. Applying min-height at md+
+  // conflicts with mb-[var(--gap-grid)] because the min-height fills the entire
+  // grid area, leaving no room for the margin to create visual spacing.
   switch (rowSpan) {
-    case "quarter": return "min-h-[var(--card-quarter-row)]";
-    case "half":    return "min-h-[var(--card-half-row)]";
-    default:        return "min-h-[var(--card-row)]";
+    case "quarter": return "min-h-[var(--card-quarter-row)] md:min-h-0";
+    case "half":    return "min-h-[var(--card-half-row)] md:min-h-0";
+    default:        return "min-h-[var(--card-row)] md:min-h-0";
   }
 }
 

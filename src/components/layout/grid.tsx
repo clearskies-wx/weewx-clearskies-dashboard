@@ -46,7 +46,10 @@ export function Grid({ className, children }: GridProps) {
         'mx-auto w-full',
         // Responsive grid: 1 col default, 2 at md (≥768px), 4 at lg (≥1024px)
         'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
-        // Column gap uses the --gap-grid token (1rem); row-gap is 0 (cards provide mb margin).
+        // Column gap uses the --gap-grid token (1rem); row-gap is 0.
+        // Vertical spacing between cards comes from each card's mb-[var(--gap-grid)].
+        // gap-y CANNOT be used here because it adds gaps between ALL tracks including
+        // tracks within a multi-track span (a row-span-4 card would get 3 internal gaps).
         'gap-x-[var(--gap-grid)] gap-y-0',
         // Content-driven rows on mobile; base quarter-row track (--card-quarter-row) at md+ (≥768px).
         'auto-rows-[auto] md:auto-rows-[var(--card-quarter-row)]',
