@@ -71,55 +71,35 @@ export function AppLayout() {
           Renders nothing when googleAnalyticsId is absent or consent is stored. */}
       <CookieConsentBanner />
 
-      {/* h-[100dvh]: dynamic viewport height adjusts when mobile browser
-          URL bar hides/shows, preventing the bottom nav from clipping. */}
-      <div className="h-[100dvh] flex flex-col text-foreground overflow-hidden">
-        {/* Skip link is the FIRST focusable element in the DOM per WCAG 2.4.1 */}
-        <SkipLink />
+      {/* Skip link is the FIRST focusable element in the DOM per WCAG 2.4.1 */}
+      <SkipLink />
 
-        <div className="flex flex-1 min-h-0">
-          {/* Content column — full width on desktop since rail is fixed overlay.
-              Mobile: this div scrolls so footer scrolls with page content
-              (the mobile nav bar is already fixed at the bottom).
-              Desktop: this div doesn't scroll; main scrolls independently and
-              footer stays at the viewport bottom.
-              overflow-x-hidden: prevents child tables with overflow-x-auto from
-              causing horizontal viewport scroll.
-              overscrollBehavior contain: stops scroll-chain propagation from
-              inner scrollable containers (hourly strip, tables) to the viewport
-              on both axes, and prevents rubber-band overscroll tearing. */}
-          <div
-            className="flex flex-col flex-1 min-w-0 min-h-0 overflow-y-auto overflow-x-hidden md:overflow-hidden isolate"
-            style={{ overscrollBehavior: 'contain' }}
-          >
-            <main
-              id="main-content"
-              className={[
-                'flex-1 px-4 py-6',
-                // Mobile: bottom padding clears the fixed bottom nav bar
-                'pb-24',
-                // Desktop: main scrolls independently; min-h-0 allows flex shrinking
-                'md:min-h-0 md:overflow-y-auto md:pb-6',
-              ].join(' ')}
-              tabIndex={-1}
-            >
-              {!alertLoading && alerts && alerts.length > 0 && (
-                <div className="mb-4">
-                  <AlertBanner alerts={alerts} />
-                </div>
-              )}
-              <Outlet />
-            </main>
+      {/* Flat layout — no h-[100dvh] overflow-hidden wrapper.
+          The body/html scroll naturally. The mobile nav uses position:sticky
+          at the bottom of this flow. Desktop uses its own scroll model via
+          md:h-dvh md:overflow-hidden on the content column. */}
+      <div
+        className="flex flex-col min-h-dvh text-foreground overflow-x-hidden"
+        style={{ overscrollBehavior: 'contain' }}
+      >
+        <main
+          id="main-content"
+          className="flex-1 px-4 py-6 pb-24"
+          tabIndex={-1}
+        >
+          {!alertLoading && alerts && alerts.length > 0 && (
+            <div className="mb-4">
+              <AlertBanner alerts={alerts} />
+            </div>
+          )}
+          <Outlet />
+        </main>
 
-            <Footer />
-          </div>
-        </div>
+        <Footer />
       </div>
 
-      {/* NavRail: all elements are position:fixed (desktop rail z-20, mobile
-          bottom nav z-50, More sheet z-60).  Rendered AFTER the content div so
-          it paints last in DOM order — Firefox Android was painting later DOM
-          siblings (the content div) on top of the fixed nav despite z-index. */}
+      {/* NavRail: desktop rail is position:fixed (overlays content).
+          Mobile bottom nav uses position:sticky at the viewport bottom. */}
       <NavRail />
     </>
   );
