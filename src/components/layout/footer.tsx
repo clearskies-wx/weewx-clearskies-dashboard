@@ -151,40 +151,46 @@ export function Footer() {
       }}
     >
 
-      {/* Single row on desktop, stacked on mobile: left = nav/copyright/logo · right = share icons */}
-      <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-x-4 md:gap-y-2">
+      {/*
+       * Mobile layout (below md):
+       *   Row 1: copyright left-justified, Clear Skies logo right-justified.
+       *   Row 2: share icons centered.
+       * Desktop layout (md+):
+       *   Single row: legal links + copyright + logo on the left, share icons on the right.
+       */}
+
+      {/* Desktop: single flex row (unchanged from before) */}
+      <div className="hidden md:flex md:flex-wrap md:items-center md:justify-between md:gap-x-4 md:gap-y-2">
         {/* Left side: legal link · cookie settings (when GA configured) · copyright · powered-by logo */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <Link
             to="/legal"
-            className="hidden md:inline underline underline-offset-4 focus:outline-none focus:ring-2 focus:ring-white/60 focus:ring-offset-2 focus:ring-offset-black/50 rounded"
+            className="underline underline-offset-4 focus:outline-none focus:ring-2 focus:ring-white/60 focus:ring-offset-2 focus:ring-offset-black/50 rounded"
             style={{ color: 'inherit' }}
           >
             {t('footer.legal')}
           </Link>
-          {/* Cookie Settings — only shown when GA is configured. Clears stored consent
-              and dispatches an event so CookieConsentBanner re-evaluates and re-appears. */}
+          {/* Cookie Settings — only shown when GA is configured. */}
           {branding.googleAnalyticsId && (
             <>
-              <span aria-hidden="true" className="hidden md:inline">·</span>
+              <span aria-hidden="true">·</span>
               <button
                 type="button"
                 onClick={() => {
                   clearConsent();
                   window.dispatchEvent(new Event('clearskies:cookie-settings'));
                 }}
-                className="hidden md:inline underline underline-offset-4 focus:outline-none focus:ring-2 focus:ring-white/60 focus:ring-offset-2 focus:ring-offset-black/50 rounded"
+                className="underline underline-offset-4 focus:outline-none focus:ring-2 focus:ring-white/60 focus:ring-offset-2 focus:ring-offset-black/50 rounded"
                 style={{ color: 'inherit', background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
               >
                 {t('footer.cookieSettings')}
               </button>
             </>
           )}
-          <span aria-hidden="true" className="hidden md:inline">·</span>
+          <span aria-hidden="true">·</span>
           <span>© {new Date().getFullYear()} {copyrightName}</span>
-          <span aria-hidden="true" className="hidden md:inline">·</span>
-          {/* Always use the light logo — the footer background is always dark glass
-              (rgba(0,0,0,0.65)), so the dark blue logo would be invisible in light mode. */}
+          <span aria-hidden="true">·</span>
+          {/* Always use the light logo — footer background is always dark glass */}
           <img
             src={poweredLight}
             alt="Powered by Clear Skies"
@@ -192,9 +198,27 @@ export function Footer() {
             className="h-[32px] w-auto"
           />
         </div>
-
         {/* Right side: share buttons */}
         <ShareRow />
+      </div>
+
+      {/* Mobile: two-row stacked layout (below md) */}
+      <div className="flex flex-col gap-2 md:hidden">
+        {/* Row 1: copyright left, logo right */}
+        <div className="flex flex-row items-center justify-between">
+          <span>© {new Date().getFullYear()} {copyrightName}</span>
+          {/* Always use the light logo — footer background is always dark glass */}
+          <img
+            src={poweredLight}
+            alt="Powered by Clear Skies"
+            height={32}
+            className="h-[32px] w-auto"
+          />
+        </div>
+        {/* Row 2: share icons centered */}
+        <div className="flex flex-row justify-center">
+          <ShareRow />
+        </div>
       </div>
 
     </footer>

@@ -157,9 +157,12 @@ export function DailyColumns({
     <div style={{ display: 'flex', flexDirection: 'row', position: 'relative', zIndex: 1 }}>
       {days.map((day, i) => {
         const isSelected = expandable && i === expandedIdx;
+        // expandable=false (now card): always short names (unchanged)
+        // expandable=true (forecast page): short on mobile, full on desktop
         const dayName = expandable
           ? getDayName(day.validDate, i)
           : getShortDayName(day.validDate, i);
+        const shortDayName = expandable ? getShortDayName(day.validDate, i) : null;
         const dateLabel = expandable ? getDateLabel(day.validDate) : null;
 
         return (
@@ -185,18 +188,70 @@ export function DailyColumns({
               justifyContent: 'flex-start',
             }}
           >
-            <span
-              style={{
-                fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                fontSize: expandable ? '0.85rem' : '0.75rem',
-                fontWeight: 600,
-                color: isSelected ? 'var(--primary)' : 'var(--foreground)',
-                whiteSpace: 'nowrap',
-                textAlign: 'center',
-              }}
-            >
-              {dayName}
-            </span>
+            {expandable && shortDayName !== null ? (
+              // Forecast page: short name on mobile, full name on desktop.
+              // "Today" is the same in both — only one element rendered for it.
+              shortDayName === dayName ? (
+                // Index 0 ("Today") — same string both sizes, render once
+                <span
+                  style={{
+                    fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    color: isSelected ? 'var(--primary)' : 'var(--foreground)',
+                    whiteSpace: 'nowrap',
+                    textAlign: 'center',
+                  }}
+                >
+                  {dayName}
+                </span>
+              ) : (
+                <>
+                  {/* Short name: visible on mobile only */}
+                  <span
+                    className="md:hidden"
+                    style={{
+                      fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                      color: isSelected ? 'var(--primary)' : 'var(--foreground)',
+                      whiteSpace: 'nowrap',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {shortDayName}
+                  </span>
+                  {/* Full name: visible on desktop only */}
+                  <span
+                    className="hidden md:inline"
+                    style={{
+                      fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                      color: isSelected ? 'var(--primary)' : 'var(--foreground)',
+                      whiteSpace: 'nowrap',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {dayName}
+                  </span>
+                </>
+              )
+            ) : (
+              // Now card (expandable=false): always short name, no dual rendering
+              <span
+                style={{
+                  fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: isSelected ? 'var(--primary)' : 'var(--foreground)',
+                  whiteSpace: 'nowrap',
+                  textAlign: 'center',
+                }}
+              >
+                {dayName}
+              </span>
+            )}
             {dateLabel && (
               <span
                 style={{

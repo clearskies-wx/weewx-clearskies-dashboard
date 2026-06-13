@@ -190,11 +190,12 @@ function ShowerColumn({ shower }: ShowerColumnProps) {
 
   return (
     /*
-     * Each column is a flex column, fixed 190px wide per the mockup.
+     * Mobile: full-width vertical block (width controlled by parent wrapper).
+     * Desktop (md+): fixed 190px wide per the mockup.
      * gap-[0.4rem] matches the mockup's .meteor-col gap.
      */
     <article
-      className="flex-none w-[190px] flex flex-col gap-[0.4rem]"
+      className="flex-none w-full md:w-[190px] flex flex-col gap-[0.4rem]"
       aria-label={shower.name}
     >
       {/* Date row: name + active range left, "Peak" badge right */}
@@ -418,12 +419,33 @@ export function MeteorShowerCard({
         </p>
 
         {/*
-         * Scroll container — position:relative so the gradient tabs can be
-         * positioned absolute against it.
-         * Negative horizontal margin + matching padding offsets let the gradient
-         * fade visually reach the card edge while the scroll content stays padded.
+         * Mobile: vertical stack — each shower column gets its own full-width block.
+         *   No scroll container, no arrow buttons, no negative margin trick.
+         * Desktop (md+): horizontal scroll row — original layout with scroll arrows
+         *   and gradient fade tabs.
+         *
+         * The relative/mx-[-1.5rem] wrapper is only needed on desktop for the
+         * absolute-positioned scroll buttons to reach the card edge.
          */}
-        <div className="relative mx-[-1.5rem] px-[1.5rem]">
+
+        {/* Mobile layout: vertical stack (below md) */}
+        <div
+          className="flex flex-col gap-[1.5rem] md:hidden"
+          role="list"
+          aria-label={t('meteorShowers.scrollRegionLabel')}
+        >
+          {showers.map((shower) => (
+            <div key={shower.name} role="listitem">
+              {/* On mobile each ShowerColumn is full-width; override the fixed 190px width */}
+              <div style={{ width: '100%' }}>
+                <ShowerColumn shower={shower} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop layout: horizontal scroll row with arrow buttons (md+) */}
+        <div className="hidden md:block relative mx-[-1.5rem] px-[1.5rem]">
           {/*
            * Scroll row — overflow-x:auto, hidden scrollbar (matches mockup).
            * gap-[1.5rem] between columns.

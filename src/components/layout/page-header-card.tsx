@@ -102,7 +102,7 @@ export function PageHeaderCard({
               {title}
             </Heading>
             {info && (
-              <p className="text-muted-foreground truncate text-sm leading-tight">
+              <p className="text-muted-foreground line-clamp-2 md:truncate text-sm leading-tight">
                 {info}
               </p>
             )}

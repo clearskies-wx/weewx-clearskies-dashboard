@@ -347,74 +347,79 @@ function PlanetColumn({ planet, stationTz, sunsetIso, sunriseIso, locale, t }: P
 
   return (
     /*
-     * Each column is a flex column, min 110px wide per the mockup.
+     * Mobile: horizontal row — image left (60px), data right (flex-1).
+     *   Each planet gets a full-width row in the stacked list.
+     * Desktop (md+): vertical column — image centered above data, min 110px wide.
+     *   Reverts to the original centered column layout.
      * aria-label = planet name so it is announced as a distinct region by SR.
      */
     <article
-      className="flex flex-col items-center gap-[0.1rem] min-w-[110px] flex-shrink-0"
+      className="flex flex-row items-center gap-3 w-full md:flex-col md:items-center md:gap-[0.1rem] md:min-w-[110px] md:flex-shrink-0 md:w-auto"
       aria-label={name}
     >
-      {/* Planet name */}
-      <span className="text-[0.75rem] uppercase tracking-wider font-semibold">
-        {name}
-      </span>
-
-      {/*
-       * Viewing quality: colored dot + text label.
-       * Color is NEVER the sole signal — text label always present (WCAG 1.4.1).
-       * Hidden entirely when quality is null (qLabel is empty string).
-       */}
-      {qLabel && (
-        <span
-          className={`flex items-center gap-[0.25rem] text-[0.75rem] font-semibold ${qClass}`}
-          aria-label={`${t('planets.viewingQuality')}: ${qLabel}`}
-        >
-          {quality === 'not_visible'
-            ? <EyeSlash size={14} weight="bold" aria-hidden="true" />
-            : <Eye size={14} weight="bold" aria-hidden="true" />
-          }
-          {qLabel}
-        </span>
-      )}
-
-      {/* Planet image — fixed-height wrapper centers image of any size */}
+      {/* Planet image — 60px on mobile (left), 90px-height centered on desktop */}
       <div
-        className="w-full flex items-center justify-center"
-        style={{ height: '90px' }}
+        className="flex-shrink-0 flex items-center justify-center md:w-full"
+        style={{ width: '60px', height: '60px' }}
       >
         <img
           src={imgSrc}
           alt={name}
           className="object-contain"
-          style={{ maxHeight: '80px', maxWidth: '80px' }}
+          style={{ maxHeight: '56px', maxWidth: '56px' }}
           loading="lazy"
           onError={(e) => {
-            // Hide broken image; parent wrapper preserves layout height
             (e.currentTarget as HTMLImageElement).style.display = 'none';
           }}
         />
       </div>
 
-      {/* Viewing window range */}
-      {windowText && (
-        <span className="text-[0.75rem] text-muted-foreground text-center">
-          {windowText}
+      {/* Text block — fills remaining width on mobile, centered on desktop */}
+      <div className="flex flex-col gap-[0.15rem] min-w-0 flex-1 md:flex-none md:items-center md:w-full">
+        {/* Planet name */}
+        <span className="text-[0.75rem] uppercase tracking-wider font-semibold">
+          {name}
         </span>
-      )}
 
-      {/* Sky position: direction + altitude */}
-      {posText && (
-        <span className="text-[0.7rem] text-muted-foreground italic text-center leading-tight">
-          {posText}
-        </span>
-      )}
+        {/*
+         * Viewing quality: colored dot + text label.
+         * Color is NEVER the sole signal — text label always present (WCAG 1.4.1).
+         * Hidden entirely when quality is null (qLabel is empty string).
+         */}
+        {qLabel && (
+          <span
+            className={`flex items-center gap-[0.25rem] text-[0.75rem] font-semibold ${qClass}`}
+            aria-label={`${t('planets.viewingQuality')}: ${qLabel}`}
+          >
+            {quality === 'not_visible'
+              ? <EyeSlash size={14} weight="bold" aria-hidden="true" />
+              : <Eye size={14} weight="bold" aria-hidden="true" />
+            }
+            {qLabel}
+          </span>
+        )}
 
-      {/* Viewing note (optional) */}
-      {planet.viewingNote && (
-        <span className="text-[0.7rem] text-muted-foreground/70 italic text-center leading-tight mt-0.5">
-          {planet.viewingNote}
-        </span>
-      )}
+        {/* Viewing window range */}
+        {windowText && (
+          <span className="text-[0.75rem] text-muted-foreground md:text-center">
+            {windowText}
+          </span>
+        )}
+
+        {/* Sky position: direction + altitude */}
+        {posText && (
+          <span className="text-[0.7rem] text-muted-foreground italic md:text-center leading-tight">
+            {posText}
+          </span>
+        )}
+
+        {/* Viewing note (optional) */}
+        {planet.viewingNote && (
+          <span className="text-[0.7rem] text-muted-foreground/70 italic md:text-center leading-tight mt-0.5">
+            {planet.viewingNote}
+          </span>
+        )}
+      </div>
     </article>
   );
 }
@@ -889,14 +894,14 @@ export function PlanetTimelineCard({
         </p>
 
         {/*
-         * Top section: horizontal scrollable planet row.
-         * overflow-x-auto + flex — scrollable on mobile, spread on wide screens.
-         * justify-around on wider viewports to fill space evenly.
-         * gap-[1.75rem] matches the mockup's .planets-top gap.
+         * Top section: planet list.
+         * Mobile: vertical stack (flex-col) — each planet gets its own full-width row.
+         * Desktop (md+): horizontal row with justify-around to spread evenly.
+         * No horizontal scroll on mobile (flex-col removes that need).
          * pb-4 gives breathing room before the divider.
          */}
         <div
-          className="flex gap-[1.75rem] overflow-x-auto pb-4 justify-around"
+          className="flex flex-col gap-[1.25rem] pb-4 md:flex-row md:gap-[1.75rem] md:overflow-x-auto md:justify-around"
           role="list"
           aria-label={t('planets.listLabel')}
         >
