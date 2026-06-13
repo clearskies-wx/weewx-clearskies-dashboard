@@ -13,6 +13,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -232,6 +233,7 @@ export function WeatherRangeChart({
   height = 300,
   reducedMotion: _reducedMotion = false,
 }: WeatherRangeChartProps) {
+  const isMobile = useIsMobile();
   if (highData.length === 0) return null;
 
   const isTemp = TEMP_FIELDS.has(field) || unit.includes('°') || unit.toLowerCase().includes('c') || unit.toLowerCase().includes('f');
@@ -287,7 +289,7 @@ export function WeatherRangeChart({
         style={{ minWidth: 0, minHeight: 0, width: '100%', height }}
       >
         <ResponsiveContainer width="99%" height="100%">
-          <ComposedChart data={mergedData} margin={CHART_MARGIN}>
+          <ComposedChart data={mergedData} margin={isMobile ? { top: 4, right: 8, bottom: 4, left: 4 } : CHART_MARGIN}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
 
             <XAxis
@@ -296,9 +298,9 @@ export function WeatherRangeChart({
               scale="time"
               domain={['dataMin', 'dataMax']}
               tickFormatter={formatXAxisTick}
-              minTickGap={50}
+              minTickGap={isMobile ? 30 : 50}
               height={XAXIS_HEIGHT}
-              tick={{ fontSize: 11, fontFamily: CHART_FONT }}
+              tick={{ fontSize: isMobile ? 9 : 11, fontFamily: CHART_FONT }}
               className="fill-muted-foreground"
             />
 
@@ -308,14 +310,14 @@ export function WeatherRangeChart({
               allowDataOverflow
               ticks={ticks}
               interval={0}
-              width={YAXIS_WIDTH}
-              tick={{ fontSize: 10, fontFamily: CHART_FONT }}
+              width={isMobile ? 32 : YAXIS_WIDTH}
+              tick={{ fontSize: isMobile ? 8 : 10, fontFamily: CHART_FONT }}
               className="fill-muted-foreground"
               label={{
                 value: yAxisLabel + (unit ? ` (${unit})` : ''),
                 angle: -90,
                 position: 'insideLeft',
-                style: { fontSize: 11, fontFamily: CHART_FONT, fill: 'var(--muted-foreground)' },
+                style: { fontSize: isMobile ? 8 : 11, fontFamily: CHART_FONT, fill: 'var(--muted-foreground)' },
                 offset: -5,
               }}
             />
@@ -327,7 +329,7 @@ export function WeatherRangeChart({
               tick={false}
               axisLine={false}
               tickLine={false}
-              width={60}
+              width={isMobile ? 10 : 60}
             />
 
             <Tooltip

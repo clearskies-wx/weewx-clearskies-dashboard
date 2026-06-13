@@ -151,7 +151,27 @@ export function ChartsPage() {
 
         {/* ── Tab navigation card ───────────────────────────────────────── */}
         <Card footprint="full" className="py-2 px-4">
-          <div className="relative">
+          {/* Mobile: dropdown selector — avoids truncated button labels */}
+          <div className="block md:hidden">
+            <label htmlFor="chart-group-select" className="sr-only">
+              {t('ariaTabGroupLabel')}
+            </label>
+            <select
+              id="chart-group-select"
+              value={activeTab}
+              onChange={(e) => setActiveTab(e.target.value)}
+              className="w-full min-h-[44px] rounded-md border border-border bg-background px-3 py-2 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              {groups.map((group) => (
+                <option key={group.groupId} value={group.groupId}>
+                  {group.buttonText ?? group.title ?? group.groupId}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Desktop: tab button bar */}
+          <div className="relative hidden md:block">
             <div
               ref={tabScrollRef}
               role="tablist"
@@ -173,7 +193,6 @@ export function ChartsPage() {
                   className={[
                     'shrink-0 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
                     'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                    'min-h-[44px] md:min-h-0',
                     activeTab === group.groupId
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-muted text-foreground hover:bg-muted/70',
