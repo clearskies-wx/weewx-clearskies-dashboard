@@ -20,8 +20,8 @@
     /* ── A4 layout / sizing tokens (ADR-051) ──────────────────────────────── */
     --gap-grid: 1rem;
     --container-max: 80rem;
-    --card-half-row: 5.5rem;
-    --card-row: 11rem;
+    --card-half-row: 6.5rem;
+    --card-row: 13rem;
     --card-content-max: calc(var(--card-row) - 4rem);
 
     /* ── Font families (LOCKED 2026-05-31 — typography token spec) ────────── */
@@ -126,6 +126,13 @@
     --radius-3xl: calc(var(--radius) * 2.2);
 
     --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+@media (min-width: 768px) {
+    :root {
+        --card-row: 11rem;
+        --card-half-row: 5.5rem;
+    }
 }
 
 :root {
