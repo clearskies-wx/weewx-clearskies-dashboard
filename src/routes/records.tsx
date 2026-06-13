@@ -149,7 +149,7 @@ export function RecordsPage() {
         <PageHeaderCard title={t('title')} icon={<Trophy weight="duotone" />} />
 
         {/* Period selector card */}
-        <Card footprint="full" className="py-2">
+        <Card footprint="full" className="py-2 min-h-[var(--card-half-row)]">
           <div className="flex gap-2 px-4" role="group" aria-label={t('ariaPeriodGroup')}>
             <button
               type="button"

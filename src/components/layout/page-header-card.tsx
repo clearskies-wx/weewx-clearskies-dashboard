@@ -76,7 +76,7 @@ export function PageHeaderCard({
     <Card
       footprint="full"
       className={cn(
-        'py-2',
+        'py-2 min-h-[var(--card-half-row)]',
         className,
       )}
     >

@@ -255,7 +255,7 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
           ? t('alertBanner.alertN', { n: safeIndex + 1, total: sorted.length })
           : undefined
       }
-      className="mx-auto w-full max-w-[var(--container-max)] overflow-hidden rounded-xl ring-1 ring-foreground/10"
+      className="mx-auto w-full max-w-[var(--container-max)] overflow-hidden rounded-xl ring-1 ring-foreground/10 min-h-[var(--card-half-row)]"
       style={{
         borderLeft:   `4px solid ${colors.border}`,
         borderBottom: `2px solid ${colors.border}`,

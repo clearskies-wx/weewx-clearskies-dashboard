@@ -95,7 +95,7 @@ export function NowHeroCard({
 
   return (
     <Card
-      className={['py-2 mx-auto w-full max-w-[var(--container-max)]', className].filter(Boolean).join(' ')}
+      className={['py-2 min-h-[var(--card-half-row)] mx-auto w-full max-w-[var(--container-max)]', className].filter(Boolean).join(' ')}
     >
       {/*
         aria-label on the <header> gives screen readers a landmark description

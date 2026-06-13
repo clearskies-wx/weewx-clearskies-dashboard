@@ -150,7 +150,7 @@ export function ChartsPage() {
         <PageHeaderCard title={t('title')} icon={<ChartLine weight="duotone" />} />
 
         {/* ── Tab navigation card ───────────────────────────────────────── */}
-        <Card footprint="full" className="py-2 px-4">
+        <Card footprint="full" className="py-2 px-4 min-h-[var(--card-half-row)]">
           {/* Mobile: dropdown selector — avoids truncated button labels */}
           <div className="block md:hidden">
             <label htmlFor="chart-group-select" className="sr-only">
