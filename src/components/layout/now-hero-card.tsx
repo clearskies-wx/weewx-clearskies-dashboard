@@ -114,7 +114,7 @@ export function NowHeroCard({
         <div
           className="shrink-0"
           aria-hidden="true"
-          style={{ width: '12rem', height: '3.5rem' }}
+          style={{ width: '14rem', height: '4rem' }}
         >
           {logoUrl ? (
             <img
