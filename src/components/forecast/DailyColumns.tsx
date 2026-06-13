@@ -180,7 +180,7 @@ export function DailyColumns({
             } : undefined}
             style={{
               ...cellBase,
-              height: expandable ? 28 : 20,
+              height: expandable ? 28 : 16,
               paddingTop: expandable ? 8 : 0,
               cursor: expandable ? 'pointer' : 'default',
               flexDirection: 'column',
@@ -280,8 +280,8 @@ export function DailyColumns({
           key={i}
           style={{
             ...cellBase,
-            height: expandable ? 40 : 30,
-            paddingTop: expandable ? 6 : 3,
+            height: expandable ? 40 : 24,
+            paddingTop: expandable ? 6 : 1,
             cursor: expandable ? 'pointer' : 'default',
           }}
           onClick={expandable ? () => handleColClick(i) : undefined}
@@ -311,7 +311,7 @@ export function DailyColumns({
           key={i}
           style={{
             ...cellBase,
-            height: expandable ? 22 : 20,
+            height: expandable ? 22 : 16,
             cursor: expandable ? 'pointer' : 'default',
           }}
           onClick={expandable ? () => handleColClick(i) : undefined}
@@ -435,12 +435,12 @@ export function DailyColumns({
 
   // Wind row
   const windRow = (
-    <div style={{ display: 'flex', flexDirection: 'row', overflow: 'visible', position: 'relative', zIndex: 1, marginTop: expandable ? 0 : 5 }}>
+    <div style={{ display: 'flex', flexDirection: 'row', overflow: 'visible', position: 'relative', zIndex: 1, marginTop: expandable ? 0 : 1 }}>
       {days.map((day, i) => {
         const bearing = typeof day.extras?.windDir === 'number' ? day.extras.windDir : null;
         const windSpeed = day.windSpeedMax !== null ? Math.round(day.windSpeedMax) : 0;
         return (
-          <div key={i} style={{ ...cellBase, height: expandable ? 44 : 22, overflow: 'visible' }}>
+          <div key={i} style={{ ...cellBase, height: expandable ? 44 : 18, overflow: 'visible' }}>
             <WindSymbol bearing={bearing} speed={windSpeed} size={expandable ? 20 : 18} />
           </div>
         );

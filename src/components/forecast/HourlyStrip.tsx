@@ -106,7 +106,7 @@ export function HourlyStrip({
   // C3 mockup compact budget (card-pad=0.75rem each side):
   //   time=13 + icon=26 + temp=15 + trendH=22 + trend-padding=5 + precip=13 + wind=26 = 120px → fits.
   const rowH = threeHourWindows
-    ? { time: 17, icon: 32, temp: 19, precip: 18, wind: 26 }
+    ? { time: 14, icon: 26, temp: 16, precip: 14, wind: 22 }
     : { time: 18, icon: 34, temp: 22, precip: 18, wind: 42 };
 
   // ── Trend SVG: 22px for compact, 40px for page ──────────────────────────
@@ -218,15 +218,15 @@ export function HourlyStrip({
       }}
     >
       {/* Time row */}
-      <div style={{ display: 'flex', flexDirection: 'row', width: '100%', marginBottom: threeHourWindows ? 4 : 0 }}>
+      <div style={{ display: 'flex', flexDirection: 'row', width: '100%', marginBottom: threeHourWindows ? 1 : 0 }}>
         {timeRow}
       </div>
       {/* Icon row */}
-      <div style={{ display: 'flex', flexDirection: 'row', width: '100%', marginBottom: threeHourWindows ? 4 : 0 }}>
+      <div style={{ display: 'flex', flexDirection: 'row', width: '100%', marginBottom: threeHourWindows ? 1 : 0 }}>
         {iconRow}
       </div>
       {/* Temp row */}
-      <div style={{ display: 'flex', flexDirection: 'row', width: '100%', marginBottom: threeHourWindows ? 5 : 0 }}>
+      <div style={{ display: 'flex', flexDirection: 'row', width: '100%', marginBottom: threeHourWindows ? 2 : 0 }}>
         {tempRow}
       </div>
       {/* Trend line row — full-width SVG (hidden when hideTrend is set) */}
@@ -245,7 +245,7 @@ export function HourlyStrip({
         {precipRow}
       </div>
       {/* Wind row */}
-      <div style={{ display: 'flex', flexDirection: 'row', width: '100%', overflow: 'visible', marginTop: 5 }}>
+      <div style={{ display: 'flex', flexDirection: 'row', width: '100%', overflow: 'visible', marginTop: threeHourWindows ? 1 : 5 }}>
         {windRow}
       </div>
     </div>
