@@ -12,8 +12,8 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer,
 } from 'recharts';
+import { ChartContainer } from '../charts/chart-container';
 import {
   Card,
   CardHeader,
@@ -235,15 +235,11 @@ export function MonthlyAveragesCard({
         </table>
 
         {/*
-          Visual chart — role="img" with aria-label so the chart container is
-          announced as a graphic rather than an anonymous div.
+          Visual chart — ChartContainer provides role="img" + aria-label so the
+          chart is announced as a graphic rather than an anonymous div (WCAG 1.1.1).
           Tick labels use fontFamily: 'var(--font-chart)' (Lexend) per typography tokens.
         */}
-        <div
-          role="img"
-          aria-label={t('climatology.chartAriaLabel')}
-        >
-          <ResponsiveContainer width="100%" height={300}>
+        <ChartContainer height={300} ariaLabel={t('climatology.chartAriaLabel')}>
             <ComposedChart
               data={chartData}
               margin={isMobile ? { top: 4, right: 4, bottom: 4, left: 0 } : { top: 8, right: 55, left: 15, bottom: 8 }}
@@ -341,8 +337,7 @@ export function MonthlyAveragesCard({
                 legendType="square"
               />
             </ComposedChart>
-          </ResponsiveContainer>
-        </div>
+        </ChartContainer>
       </CardContent>
     </Card>
   );

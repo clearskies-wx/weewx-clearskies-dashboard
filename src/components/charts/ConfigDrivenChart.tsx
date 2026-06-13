@@ -23,8 +23,8 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer,
 } from 'recharts';
+import { ChartContainer } from './chart-container';
 import type { ChartConfig, SeriesConfig } from '../../api/types';
 import { useTheme } from '../../lib/theme-provider';
 import { ensureChartContrast } from '../../utils/chart-contrast';
@@ -554,14 +554,9 @@ export function ConfigDrivenChart({
         Chart container: role="img" + aria-label so screen readers announce it
         as a graphic rather than an anonymous div (WCAG 1.1.1).
         The sr-only table above is the text alternative.
+        ChartContainer owns the ResponsiveContainer wrapper.
       */}
-      <div
-        role="img"
-        aria-label={chartTitle}
-        style={{ position: 'relative', width: '100%', height }}
-      >
-        <div style={{ position: 'absolute', inset: 0 }}>
-        <ResponsiveContainer width="100%" height="100%">
+      <ChartContainer height={height} ariaLabel={chartTitle}>
           <ComposedChart
             data={data}
             margin={chartMargin}
@@ -711,9 +706,7 @@ export function ConfigDrivenChart({
               return renderSeriesElement({ series, seriesType, color, reducedMotion });
             })}
           </ComposedChart>
-        </ResponsiveContainer>
-        </div>
-      </div>
+      </ChartContainer>
     </div>
   );
 }
