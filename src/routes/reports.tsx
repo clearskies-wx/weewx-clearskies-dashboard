@@ -23,6 +23,7 @@ import { parseMonthlyReport, parseYearlyReport } from '../lib/noaa-parser';
 import type { MonthlyRow, YearlyTable, ParsedMonthlyReport, ParsedYearlyReport } from '../lib/noaa-parser';
 import { cn } from '../lib/utils';
 import { formatValue } from '../utils/format';
+import { StickyTable } from '../components/ui/sticky-table';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -338,8 +339,8 @@ function MonthlyReportTable({
         {t('highlightLegend')}
       </p>
 
-      <div className="overflow-x-auto rounded-md border border-border">
-        <table className="w-full text-xs text-foreground border-collapse">
+      <div className="rounded-md border border-border overflow-hidden">
+        <StickyTable label={captionText} className="text-xs text-foreground">
           <caption className="sr-only">{captionText}</caption>
           <thead>
             <tr className="bg-muted/50 border-b border-border">
@@ -417,7 +418,7 @@ function MonthlyReportTable({
               </tr>
             )}
           </tbody>
-        </table>
+        </StickyTable>
       </div>
     </div>
   );
@@ -462,8 +463,8 @@ function YearlySubTable({
   const colCount = table.headers.length;
 
   return (
-    <div className="overflow-x-auto rounded-md border border-border">
-      <table className="w-full text-xs text-foreground border-collapse">
+    <div className="rounded-md border border-border overflow-hidden">
+      <StickyTable label={caption} className="text-xs text-foreground">
         <caption className="sr-only">{caption}</caption>
         <thead>
           <tr className="bg-muted/50 border-b border-border">
@@ -542,7 +543,7 @@ function YearlySubTable({
             </tr>
           )}
         </tbody>
-      </table>
+      </StickyTable>
     </div>
   );
 }

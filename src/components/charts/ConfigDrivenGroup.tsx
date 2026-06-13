@@ -38,7 +38,8 @@ import { ChartGauge } from './ChartGauge';
 import { HaysChart } from './HaysChart';
 import { lttbDownsample } from '../../utils/lttb';
 import { exportChartAsCsv, exportChartAsPng, buildExportFilename } from '../../utils/chart-export';
-import { Card, CardHeader, CardTitle } from '../ui/card';
+import { Card, CardHeader, CardTitle, CardAction } from '../ui/card';
+import { ChartFullscreenButton, ChartFullscreenOverlay } from '../ui/chart-fullscreen';
 import type { ChartGroupConfig, ChartConfig, GroupedArchiveData } from '../../api/types';
 
 // ---------------------------------------------------------------------------
@@ -258,6 +259,7 @@ export function ConfigDrivenGroup({
     onMonthChange?.(month);
   }
   const [showTable, setShowTable] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
 
   // Ref to the chart rendering container — used by PNG export to locate the SVG.
   const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -808,11 +810,12 @@ export function ConfigDrivenGroup({
       {/* ------------------------------------------------------------------ */}
 
       <Card footprint="full" className="p-4 overflow-hidden min-h-[var(--card-row)]">
-      {group.title && (
-        <CardHeader>
-          <CardTitle as="h2">{group.title}</CardTitle>
-        </CardHeader>
-      )}
+      <CardHeader>
+        {group.title && <CardTitle as="h2">{group.title}</CardTitle>}
+        <CardAction>
+          <ChartFullscreenButton onClick={() => setFullscreen(true)} />
+        </CardAction>
+      </CardHeader>
 
       {/* Mode B: Year / month dropdowns + export icons — same row, dropdowns left, icons right */}
       {!hideControls && showYearMonthDropdowns && (
@@ -1321,6 +1324,172 @@ export function ConfigDrivenGroup({
         )}
       </div>
       </Card>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Fullscreen overlay — renders the same chart content at full viewport */}
+      {/* ------------------------------------------------------------------ */}
+      <ChartFullscreenOverlay
+        isOpen={fullscreen}
+        onClose={() => setFullscreen(false)}
+        aria-label={group.title ? `${group.title} — fullscreen` : 'Chart fullscreen view'}
+      >
+        <div className="h-full overflow-y-auto py-2">
+          {isLoading ? (
+            <TileSkeleton className="h-full" />
+          ) : fetchError ? (
+            <TileError message={t('unableToLoad')} onRetry={onRetry} retryLabel={t('retry')} />
+          ) : (
+            <div className="space-y-6 h-full">
+              {group.charts.map((chart) => {
+                const isWindRoseChart = chart.series.some((s) => s.seriesId === 'windRose');
+                const isHaysChartLocal = chart.series.some((s) => s.seriesId === 'haysChart');
+                const isRangeChart = chart.series.some((s) => s.rangeType != null);
+
+                if (isWindRoseChart) {
+                  if (!windRoseData) return <TileSkeleton key={chart.chartId} className="h-full" />;
+                  const windRoseSeries = chart.series.find((s) => s.seriesId === 'windRose');
+                  const beaufortColors = Object.keys(windRoseSeries?.beaufortColors ?? {}).length > 0
+                    ? windRoseSeries!.beaufortColors
+                    : defaultBeaufortColors;
+                  return (
+                    <WindRoseChart
+                      key={chart.chartId}
+                      data={windRoseData}
+                      beaufortColors={beaufortColors}
+                      height={400}
+                      reducedMotion={reducedMotion}
+                      title={chart.title}
+                    />
+                  );
+                }
+
+                if (isHaysChartLocal) {
+                  if (rangeHighPoints.length === 0 || rangeLowPoints.length === 0) {
+                    return <TileSkeleton key={chart.chartId} className="h-full" />;
+                  }
+                  const haysSeries = chart.series.find((s) => s.seriesId === 'haysChart');
+                  const haysField = haysSeries?.observationType ?? rangeField ?? 'value';
+                  const haysUnit = haysSeries?.yAxisLabel ?? '';
+                  const haysSoftMax = haysSeries?.yAxisSoftMax ?? undefined;
+                  return (
+                    <div key={chart.chartId} className="h-full">
+                      {chart.title && <h3 className="text-sm font-semibold text-center mb-2">{chart.title}</h3>}
+                      <HaysChart
+                        highData={rangeHighPoints}
+                        lowData={rangeLowPoints}
+                        field={haysField}
+                        unit={haysUnit}
+                        softMax={haysSoftMax}
+                        height={400}
+                        reducedMotion={reducedMotion}
+                      />
+                    </div>
+                  );
+                }
+
+                if (isRangeChart) {
+                  if (rangeHighPoints.length === 0 || rangeLowPoints.length === 0) {
+                    return <TileSkeleton key={chart.chartId} className="h-full" />;
+                  }
+                  const rangeSeries = chart.series.find((s) => s.rangeType != null);
+                  const fieldName = rangeSeries?.observationType ?? rangeField ?? 'value';
+                  const unitLabel = rangeSeries?.yAxisLabel ?? '';
+                  return (
+                    <div key={chart.chartId} className="h-full">
+                      {chart.title && <h3 className="text-sm font-semibold text-center mb-2">{chart.title}</h3>}
+                      <WeatherRangeChart
+                        highData={rangeHighPoints}
+                        lowData={rangeLowPoints}
+                        field={fieldName}
+                        unit={unitLabel}
+                        height={400}
+                        reducedMotion={reducedMotion}
+                      />
+                    </div>
+                  );
+                }
+
+                const isGaugeChart =
+                  chart.type === 'gauge' || chart.type === 'solidgauge' ||
+                  group.type === 'gauge' || group.type === 'solidgauge';
+
+                if (isGaugeChart) {
+                  const gaugeSeries = chart.series[0];
+                  const gaugeObsType = gaugeSeries?.observationType ?? null;
+                  const latestRecord = archiveResult.data && archiveResult.data.length > 0
+                    ? archiveResult.data[archiveResult.data.length - 1]
+                    : null;
+                  const rawValue = latestRecord && gaugeObsType
+                    ? (latestRecord[gaugeObsType] as number | null | undefined)
+                    : null;
+                  const gaugeValue = typeof rawValue === 'number' ? rawValue : 0;
+                  const gaugeMin = chart.yAxisMin ?? gaugeSeries?.yAxisMin ?? 0;
+                  const gaugeMax = gaugeSeries?.yAxisMax ?? 100;
+                  const gaugeUnit = gaugeSeries?.yAxisLabel ?? '';
+                  const gaugeZones = gaugeSeries?.colorZones ?? null;
+                  const gaugeColorsEnabled = gaugeSeries?.colorsEnabled ?? false;
+                  return (
+                    <ChartGauge
+                      key={chart.chartId}
+                      value={gaugeValue}
+                      min={gaugeMin}
+                      max={gaugeMax}
+                      unit={gaugeUnit}
+                      title={chart.title ?? gaugeSeries?.name ?? ''}
+                      colorZones={gaugeZones}
+                      colorsEnabled={gaugeColorsEnabled}
+                      reducedMotion={reducedMotion}
+                    />
+                  );
+                }
+
+                if (chart.xAxisGroupby) {
+                  const { data: groupedChartData, xKey: groupedXKey } = buildGroupedChartData(
+                    chart,
+                    groupedArchive.data,
+                    customQueryResults.data,
+                  );
+                  return (
+                    <ConfigDrivenChart
+                      key={chart.chartId}
+                      config={chart}
+                      data={groupedChartData}
+                      xKey={groupedXKey}
+                      xFormatter={undefined}
+                      globalColors={globalColors}
+                      globalType={globalType}
+                      height={400}
+                      reducedMotion={reducedMotion}
+                    />
+                  );
+                }
+
+                let fsChartData = downsampledArchiveData;
+                if (typeof chart.timeLength === 'number') {
+                  const cutoff = new Date(Date.now() - chart.timeLength * 1000).toISOString();
+                  fsChartData = downsampledArchiveData.filter(
+                    (r) => r.timestamp != null && String(r.timestamp) >= cutoff,
+                  );
+                }
+
+                return (
+                  <ConfigDrivenChart
+                    key={chart.chartId}
+                    config={chart}
+                    data={fsChartData}
+                    xKey="timestamp"
+                    xFormatter={(v: string | number) => formatTimestamp(v, displayedRange)}
+                    globalColors={globalColors}
+                    globalType={globalType}
+                    height={400}
+                    reducedMotion={reducedMotion}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </ChartFullscreenOverlay>
     </div>
   );
 }
