@@ -315,12 +315,6 @@
        digits must not shift width on live updates. Applies to all text; harmless
        on non-numeric glyphs since only digit widths are affected. */
     font-variant-numeric: tabular-nums;
-    /* Mobile Safari ignores overflow-x:hidden on <html> alone — it must be on
-       both html AND body to prevent wide children from scrolling the viewport
-       horizontally.  overscroll-behavior-x blocks scroll-chain propagation from
-       inner overflow-x:auto containers (hourly strip, tables) to the viewport. */
-    overflow-x: hidden;
-    overscroll-behavior-x: none;
     }
   html {
     @apply font-sans;
@@ -328,12 +322,6 @@
        overscroll-behavior: none eliminates rubber-band overscroll tearing the background. */
     overflow-x: hidden;
     overscroll-behavior: none;
-    }
-  #root {
-    /* React mount point sits between body and the app shell. Without its own
-       overflow-x clip, wide children (maps, charts) can expand it beyond the
-       viewport even though body has overflow-x:hidden. */
-    overflow-x: hidden;
     }
   /* UA stylesheets hard-code font-family on form controls, breaking inheritance.
      Force them back onto the cascade so Manrope applies everywhere. */

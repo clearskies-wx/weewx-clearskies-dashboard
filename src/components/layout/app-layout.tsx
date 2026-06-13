@@ -89,10 +89,12 @@ export function AppLayout() {
               footer stays at the viewport bottom.
               overflow-x-hidden: prevents child tables with overflow-x-auto from
               causing horizontal viewport scroll.
-              overscrollBehaviorY contain: stops rubber-band overscroll tearing. */}
+              overscrollBehavior contain: stops scroll-chain propagation from
+              inner scrollable containers (hourly strip, tables) to the viewport
+              on both axes, and prevents rubber-band overscroll tearing. */}
           <div
             className="flex flex-col flex-1 min-w-0 min-h-0 overflow-y-auto overflow-x-hidden md:overflow-hidden"
-            style={{ overscrollBehaviorY: 'contain' }}
+            style={{ overscrollBehavior: 'contain' }}
           >
             <main
               id="main-content"
