@@ -213,7 +213,6 @@ export function HourlyStrip({
         display: 'flex',
         flexDirection: 'column',
         width: isScrollMode ? 'max-content' : '100%',
-        flex: isScrollMode ? undefined : 1,
         minHeight: 0,
       }}
     >
@@ -294,7 +293,7 @@ export function HourlyStrip({
     <div
       role="list"
       aria-label="Hourly forecast"
-      style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
+      style={{ overflow: 'hidden' }}
     >
       {tableContent}
     </div>
