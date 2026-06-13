@@ -72,7 +72,7 @@ export function NowForecastCard({
             display: 'flex',
             alignItems: 'center',
             borderBottom: '1px solid var(--border, rgba(0,0,0,0.12))',
-            paddingBottom: '0.35rem',
+            paddingBottom: '0.125rem',
           }}
         >
           {/* Title group (fills remaining space) */}

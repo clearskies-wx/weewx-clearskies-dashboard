@@ -164,7 +164,7 @@ export function PrecipitationCard({
   return (
     <Card footprint="tile" aria-busy={loading}>
       <CardHeader>
-        <h2 className="font-heading leading-snug font-semibold pb-1.5 border-b border-border" style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}>
+        <h2 className="font-heading leading-snug font-semibold pb-0.5 border-b border-border" style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}>
           {t('precipitationCard.title')}
         </h2>
       </CardHeader>

@@ -327,7 +327,7 @@ export function AqiCard({
     <Card footprint="tile" aria-busy={loading} className="min-h-[var(--card-row)]">
       <CardHeader>
         {/* Title: text-only per spec.  Manrope 600 via font-heading. */}
-        <h2 className="font-heading leading-snug font-semibold pb-1.5 border-b border-border" style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}>
+        <h2 className="font-heading leading-snug font-semibold pb-0.5 border-b border-border" style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}>
           {t('aqiCard.title')}
         </h2>
       </CardHeader>

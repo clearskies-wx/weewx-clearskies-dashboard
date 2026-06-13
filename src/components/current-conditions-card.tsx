@@ -406,7 +406,7 @@ export function CurrentConditionsCard({
             fontFamily: 'var(--font-sans)',
             fontSize: 'var(--text-card-title)',
             fontWeight: 600,
-            paddingBottom: '0.4rem',
+            paddingBottom: '0.125rem',
             borderBottom: '1px solid var(--border)',
           }}
         >
