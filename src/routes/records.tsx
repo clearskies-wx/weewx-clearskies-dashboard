@@ -81,6 +81,8 @@ function formatDate(isoString: string | null, locale: string, tz = 'UTC'): strin
   }).format(new Date(isoString));
 }
 
+const UNITLESS_FIELDS = /^(uv|UV|[Bb]eaufort)/;
+
 const SECTION_ICONS: Record<string, Icon> = {
   temperature: Thermometer,
   wind: Wind,
@@ -250,12 +252,13 @@ export function RecordsPage() {
                                 const aggType = getRecordAggType(entry.label, entry.canonicalField);
                                 const val = getTodayExtreme(entry.canonicalField, aggType, todayArchive);
                                 if (val === null) return '--';
-                                return `${formatValue(val, canonicalFieldToType(entry.canonicalField))} ${units?.[entry.canonicalField] ?? ''}`;
+                                const unit = UNITLESS_FIELDS.test(entry.canonicalField) ? '' : (units?.[entry.canonicalField] ?? '');
+                                return `${formatValue(val, canonicalFieldToType(entry.canonicalField))} ${unit}`.trim();
                               })()}
                             </td>
                             <td className="py-2.5 pr-4 text-right font-semibold text-foreground">
                               {entry.value !== null
-                                ? `${formatValue(entry.value, canonicalFieldToType(entry.canonicalField))} ${units?.[entry.canonicalField] ?? ''}`
+                                ? `${formatValue(entry.value, canonicalFieldToType(entry.canonicalField))} ${UNITLESS_FIELDS.test(entry.canonicalField) ? '' : (units?.[entry.canonicalField] ?? '')}`.trim()
                                 : '—'}
                             </td>
                             <td className="py-2.5 text-right text-muted-foreground">
