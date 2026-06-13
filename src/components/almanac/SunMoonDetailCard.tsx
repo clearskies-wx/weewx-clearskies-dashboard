@@ -30,6 +30,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AlmanacSnapshot, MoonNameData } from '../../api/types';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import {
   Card,
   CardHeader,
@@ -264,6 +265,7 @@ interface ArcPanelProps {
 }
 
 function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
+  const isMobile = useIsMobile();
   const [nowMs, setNowMs] = useState(Date.now());
   useEffect(() => {
     const id = setInterval(() => setNowMs(Date.now()), 60_000);
@@ -366,10 +368,10 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      {/* Arc SVG */}
+      {/* Arc SVG — taller viewBox on mobile to fit scaled-up labels below horizon */}
       <svg
         role="img"
-        viewBox={`0 0 ${SVG_W} ${SVG_H}`}
+        viewBox={`0 0 ${SVG_W} ${isMobile ? SVG_H + 30 : SVG_H}`}
         width="100%"
         style={{ display: 'block', maxWidth: '460px' }}
       >
@@ -399,7 +401,7 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
           d={ellipsePath(CX, CY, SUN_RX, SUN_RY)}
           fill="none"
           stroke={SUN_COLOR}
-          strokeWidth={2.5}
+          strokeWidth={isMobile ? 3.5 : 2.5}
           strokeDasharray={DASH}
           strokeLinecap="round"
           opacity={0.45}
@@ -413,7 +415,7 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
             d={ellipsePath(CX, CY, SUN_RX, SUN_RY)}
             fill="none"
             stroke={SUN_COLOR}
-            strokeWidth={2.5}
+            strokeWidth={isMobile ? 3.5 : 2.5}
             strokeLinecap="round"
             strokeDasharray={`${sunPct * sunArcLen} ${sunArcLen}`}
             clipPath="url(#smdc-above-horizon)"
@@ -426,7 +428,7 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
           d={ellipsePath(CX, CY, MOON_RX, MOON_RY)}
           fill="none"
           stroke={MOON_COLOR}
-          strokeWidth={1.8}
+          strokeWidth={isMobile ? 2.8 : 1.8}
           strokeDasharray={DASH}
           strokeLinecap="round"
           opacity={0.45}
@@ -440,7 +442,7 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
             d={ellipsePath(CX, CY, MOON_RX, MOON_RY)}
             fill="none"
             stroke={MOON_COLOR}
-            strokeWidth={1.8}
+            strokeWidth={isMobile ? 2.8 : 1.8}
             strokeLinecap="round"
             strokeDasharray={`${moonPct * moonArcLen} ${moonArcLen}`}
             clipPath="url(#smdc-above-horizon)"
@@ -453,7 +455,7 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
         <circle
           cx={CX - SUN_RX}
           cy={CY}
-          r={4}
+          r={isMobile ? 6 : 4}
           fill={SUN_COLOR}
           opacity={0.7}
           aria-hidden="true"
@@ -462,7 +464,7 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
         <circle
           cx={CX + SUN_RX}
           cy={CY}
-          r={4}
+          r={isMobile ? 6 : 4}
           fill={SUN_COLOR}
           opacity={0.4}
           aria-hidden="true"
@@ -475,7 +477,7 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
             <circle
               cx={sunMarker.x}
               cy={sunMarker.y}
-              r={14}
+              r={isMobile ? 22 : 14}
               fill={SUN_COLOR}
               fillOpacity={0.12}
             />
@@ -483,38 +485,41 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
             <circle
               cx={sunMarker.x}
               cy={sunMarker.y}
-              r={8}
+              r={isMobile ? 13 : 8}
               fill="none"
               stroke={SUN_COLOR}
-              strokeWidth={1.5}
+              strokeWidth={isMobile ? 2.5 : 1.5}
             />
             {/* Solid core */}
             <circle
               cx={sunMarker.x}
               cy={sunMarker.y}
-              r={4}
+              r={isMobile ? 7 : 4}
               fill={SUN_COLOR}
             />
             {/* Radiating rays */}
-            {sunRays.map((ray, i) => (
-              <line
-                key={i}
-                x1={sunMarker.x + ray.dx1}
-                y1={sunMarker.y + ray.dy1}
-                x2={sunMarker.x + ray.dx2}
-                y2={sunMarker.y + ray.dy2}
-                stroke={SUN_COLOR}
-                strokeWidth={1.5}
-                strokeLinecap="round"
-              />
-            ))}
+            {sunRays.map((ray, i) => {
+              const s = isMobile ? 1.6 : 1;
+              return (
+                <line
+                  key={i}
+                  x1={sunMarker.x + ray.dx1 * s}
+                  y1={sunMarker.y + ray.dy1 * s}
+                  x2={sunMarker.x + ray.dx2 * s}
+                  y2={sunMarker.y + ray.dy2 * s}
+                  stroke={SUN_COLOR}
+                  strokeWidth={isMobile ? 2.5 : 1.5}
+                  strokeLinecap="round"
+                />
+              );
+            })}
             {/* Altitude label above marker */}
             {sunAltText && (
               <text
                 x={sunMarker.x}
-                y={sunMarker.y - 22}
+                y={sunMarker.y - (isMobile ? 30 : 22)}
                 textAnchor="middle"
-                fontSize={11}
+                fontSize={isMobile ? 16 : 11}
                 fontFamily="var(--font-sans, system-ui, sans-serif)"
                 fontWeight={600}
                 fill="var(--muted-foreground)"
@@ -533,10 +538,10 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
               <circle
                 cx={moonMarker.x}
                 cy={moonMarker.y}
-                r={7}
+                r={isMobile ? 12 : 7}
                 fill="var(--background, #0f172a)"
                 stroke={MOON_COLOR}
-                strokeWidth={1.5}
+                strokeWidth={isMobile ? 2.5 : 1.5}
               />
             ) : (
               /* Illuminated moon with crescent shadow overlay */
@@ -544,14 +549,14 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
                 <circle
                   cx={moonMarker.x}
                   cy={moonMarker.y}
-                  r={7}
+                  r={isMobile ? 12 : 7}
                   fill={MOON_COLOR}
                 />
                 {/* Crescent shadow — offset circle to show illuminated fraction */}
                 <circle
-                  cx={moonMarker.x + (isWaning ? 3.5 : -3.5) * (1 - illumFrac) * 2}
-                  cy={moonMarker.y - 1.5}
-                  r={5.5}
+                  cx={moonMarker.x + (isWaning ? (isMobile ? 6 : 3.5) : (isMobile ? -6 : -3.5)) * (1 - illumFrac) * 2}
+                  cy={moonMarker.y - (isMobile ? 2.5 : 1.5)}
+                  r={isMobile ? 9.5 : 5.5}
                   fill="var(--card-background, #1e293b)"
                   fillOpacity={illumFrac < 0.9 ? 0.65 : 0.0}
                 />
@@ -561,9 +566,9 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
             {moonAltText && (
               <text
                 x={moonMarker.x}
-                y={moonMarker.y - 14}
+                y={moonMarker.y - (isMobile ? 20 : 14)}
                 textAnchor="middle"
-                fontSize={10}
+                fontSize={isMobile ? 14 : 10}
                 fontFamily="var(--font-sans, system-ui, sans-serif)"
                 fill="var(--muted-foreground)"
               >
@@ -576,11 +581,11 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
         {/* ── Sunrise/sunset time labels below horizon (amber) ────────────── */}
         <text
           x={CX - SUN_RX}
-          y={CY + 18}
+          y={CY + (isMobile ? 22 : 18)}
           textAnchor="middle"
           fontFamily="var(--font-display, system-ui, sans-serif)"
           fontWeight={600}
-          fontSize={13}
+          fontSize={isMobile ? 19 : 13}
           fill={SUN_COLOR}
           aria-hidden="true"
         >
@@ -588,11 +593,11 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
         </text>
         <text
           x={CX + SUN_RX}
-          y={CY + 18}
+          y={CY + (isMobile ? 22 : 18)}
           textAnchor="middle"
           fontFamily="var(--font-display, system-ui, sans-serif)"
           fontWeight={600}
-          fontSize={13}
+          fontSize={isMobile ? 19 : 13}
           fill={SUN_COLOR}
           aria-hidden="true"
         >
@@ -602,10 +607,10 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
         {/* ── Moonrise/moonset labels below sun labels (silver) ───────────── */}
         <text
           x={CX - MOON_RX}
-          y={CY + 36}
+          y={CY + (isMobile ? 46 : 36)}
           textAnchor="middle"
           fontFamily="var(--font-sans, system-ui, sans-serif)"
-          fontSize={10}
+          fontSize={isMobile ? 15 : 10}
           fill={MOON_COLOR}
           aria-hidden="true"
         >
@@ -613,10 +618,10 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
         </text>
         <text
           x={CX + MOON_RX}
-          y={CY + 36}
+          y={CY + (isMobile ? 46 : 36)}
           textAnchor="middle"
           fontFamily="var(--font-sans, system-ui, sans-serif)"
-          fontSize={10}
+          fontSize={isMobile ? 15 : 10}
           fill={MOON_COLOR}
           aria-hidden="true"
         >
@@ -628,8 +633,8 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
       <div className="flex items-center gap-3" aria-label={`${phaseName}, ${illumText} illuminated`}>
         {/* Moon phase SVG circle */}
         <svg
-          width="40"
-          height="40"
+          width={isMobile ? 48 : 40}
+          height={isMobile ? 48 : 40}
           viewBox={phaseViewBox}
           role="img"
           aria-label={`${phaseName} ${illumText} illuminated`}
@@ -1074,13 +1079,20 @@ export function SunMoonDetailCard({
             <div
               className="grid gap-4 items-start grid-cols-1 md:grid-cols-[1fr_2fr_1fr]"
             >
-              <SunPanel almanac={almanac} tomorrow={almanacTomorrow} tz={stationTz} locale={locale} />
-              <ArcPanel
-                almanac={almanac}
-                moonNames={moonNames}
-                tz={stationTz}
-              />
-              <MoonPanel almanac={almanac} tomorrow={almanacTomorrow} tz={stationTz} locale={locale} />
+              {/* Mobile: arc first (order-2 → center on desktop, order-first on mobile) */}
+              <div className="order-2 md:order-none">
+                <SunPanel almanac={almanac} tomorrow={almanacTomorrow} tz={stationTz} locale={locale} />
+              </div>
+              <div className="order-1 md:order-none">
+                <ArcPanel
+                  almanac={almanac}
+                  moonNames={moonNames}
+                  tz={stationTz}
+                />
+              </div>
+              <div className="order-3 md:order-none">
+                <MoonPanel almanac={almanac} tomorrow={almanacTomorrow} tz={stationTz} locale={locale} />
+              </div>
             </div>
 
             {/* Footer row: Next Solstice / Next Equinox */}
