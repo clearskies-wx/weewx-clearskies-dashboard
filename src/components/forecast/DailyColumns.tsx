@@ -627,7 +627,7 @@ export function DailyColumns({
         style={{ position: 'relative', width: '100%', overflow: 'visible' }}
       >
         {selectedColBg}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, position: 'relative', width: '100%', overflow: 'visible' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: expandable ? 6 : 2, position: 'relative', width: '100%', overflow: 'visible' }}>
           {accentBarRow}
           {dayRow}
           {iconRow}

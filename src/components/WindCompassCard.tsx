@@ -242,7 +242,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
             role="img"
             aria-labelledby="wind-compass-title"
             focusable={false as unknown as boolean}
-            style={{ width: '100%', maxWidth: '20rem', aspectRatio: '1 / 1', display: 'block' }}
+            style={{ width: '100%', height: '100%', maxWidth: '20rem', maxHeight: '100%', aspectRatio: '1 / 1', display: 'block' }}
           >
             <title id="wind-compass-title">{svgTitle}</title>
 
