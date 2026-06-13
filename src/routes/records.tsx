@@ -11,7 +11,17 @@ import {
 } from '../components/ui/card';
 import { Grid } from '../components/layout/grid';
 import { PageHeaderCard } from '../components/layout/page-header-card';
-import { Trophy } from '@phosphor-icons/react';
+import {
+  Trophy,
+  Thermometer,
+  Wind,
+  Drop,
+  DropHalfBottom,
+  Gauge,
+  Sun,
+  Leaf,
+} from '@phosphor-icons/react';
+import type { Icon } from '@phosphor-icons/react';
 import { useRecords, useArchive, useStation } from '../hooks/useWeatherData';
 import { formatValue } from '../utils/format';
 import type { ArchiveRecord } from '../api/types';
@@ -70,6 +80,16 @@ function formatDate(isoString: string | null, locale: string, tz = 'UTC'): strin
     timeZone: tz,
   }).format(new Date(isoString));
 }
+
+const SECTION_ICONS: Record<string, Icon> = {
+  temperature: Thermometer,
+  wind: Wind,
+  rain: Drop,
+  humidity: DropHalfBottom,
+  barometer: Gauge,
+  sun: Sun,
+  aqi: Leaf,
+};
 
 type Period = 'all-time' | 'ytd';
 
@@ -179,7 +199,13 @@ export function RecordsPage() {
             {Object.entries(records.sections).map(([section, entries]) => (
               <Card key={section} footprint="full">
                 <CardHeader>
-                  <CardTitle as="h2" className="capitalize">{t('sectionHeading', { section })}</CardTitle>
+                  <CardTitle as="h2" className="capitalize flex items-center gap-2">
+                    {SECTION_ICONS[section] && (() => {
+                      const SectionIcon = SECTION_ICONS[section];
+                      return <SectionIcon size={16} className="text-primary shrink-0" aria-hidden="true" />;
+                    })()}
+                    {t('sectionHeading', { section })}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="overflow-x-auto">
