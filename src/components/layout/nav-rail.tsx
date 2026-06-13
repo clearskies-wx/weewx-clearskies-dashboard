@@ -228,13 +228,13 @@ function MoreSheet({ isOpen, onClose, triggerRef }: MoreSheetProps) {
 
   return (
     <>
-      {/* Backdrop — z-[55] sits between nav bar (z-50) and sheet (z-[60]).
+      {/* Backdrop — z-[35] sits between nav bar (z-30) and sheet (z-40).
           md:hidden: MoreSheet is mobile-only; on desktop the backdrop must not appear. */}
       <div
         aria-hidden="true"
         className={[
           'md:hidden',
-          'fixed inset-0 z-[55] bg-black/40 transition-opacity duration-150',
+          'fixed inset-0 z-[35] bg-black/40 transition-opacity duration-150',
           isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
         ].join(' ')}
         onClick={onClose}
@@ -256,7 +256,7 @@ function MoreSheet({ isOpen, onClose, triggerRef }: MoreSheetProps) {
         inert={!isOpen}
         className={[
           'md:hidden',
-          'fixed bottom-0 left-0 right-0 z-[60]',
+          'fixed bottom-0 left-0 right-0 z-40',
           'bg-background border-t border-border rounded-t-2xl',
           'pb-[env(safe-area-inset-bottom,0px)]',
           'transition-transform duration-150 ease-out',
@@ -565,10 +565,14 @@ export function NavRail() {
         </div>
       </nav>
 
-      {/* Mobile: bottom nav bar — 4 primary slots + More button. */}
+      {/* Mobile: bottom nav bar — 4 primary slots + More button.
+          Uses aria-label="Primary navigation" (distinct from the desktop rail's
+          "Main navigation") so screen readers don't report two landmarks with
+          identical names. Both exist in the DOM simultaneously; only one is
+          visible at a time via responsive Tailwind classes. */}
       <nav
         aria-label={t('ariaPrimary')}
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-background will-change-transform"
       >
         <ul
           className="flex flex-row items-stretch"
@@ -608,6 +612,7 @@ export function NavRail() {
         </ul>
       </nav>
 
+      {/* More sheet — rendered outside the nav so it can layer above it */}
       <MoreSheet
         isOpen={sheetOpen}
         onClose={closeSheet}

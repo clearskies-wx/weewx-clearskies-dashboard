@@ -45,7 +45,8 @@ export function ForecastDailyCard({
   const days = forecast?.daily?.slice(0, 7) ?? [];
 
   return (
-    <Card footprint="full" aria-busy={loading} style={{ paddingBottom: 0 }}>
+    // overflow:visible so the detail panel background can reach card bottom edge
+    <Card footprint="full" aria-busy={loading} style={{ overflow: 'visible', paddingBottom: 0 }}>
       <CardHeader>
         <div
           style={{
@@ -70,7 +71,7 @@ export function ForecastDailyCard({
         </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="overflow-visible">
         {loading ? (
           <>
             <span className="sr-only" role="status">Loading 7-day forecast…</span>

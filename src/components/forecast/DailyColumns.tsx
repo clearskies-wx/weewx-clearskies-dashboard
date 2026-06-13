@@ -95,8 +95,8 @@ export function DailyColumns({
   units,
 }: DailyColumnsProps) {
   const { t } = useTranslation('forecast');
-  // Start with no column expanded — user taps to expand.
-  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+  // Auto-select first column when expandable so users discover the detail panel.
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(expandable ? 0 : null);
 
   if (!days || days.length === 0) return null;
 
@@ -383,7 +383,7 @@ export function DailyColumns({
       {days.map((day, i) => {
         const precip = day.precipProbabilityMax;
         return (
-          <div key={i} style={{ ...cellBase, minHeight: 22, flexDirection: 'column' }}>
+          <div key={i} style={{ ...cellBase, minHeight: 16, flexDirection: 'column' }}>
             <span
               style={{
                 display: 'flex',
@@ -470,8 +470,11 @@ export function DailyColumns({
     const sunrise = formatSunTime(day.sunrise, stationTz);
     const sunset = formatSunTime(day.sunset, stationTz);
 
-    const selLeft = `${(expandedIdx / N) * 100}%`;
-    const selRight = `${((expandedIdx + 1) / N) * 100}%`;
+    // Background gradient: transparent over the selected column, tinted everywhere else.
+    // The detail panel is wider than the column area by 2rem (1rem negative margin each side),
+    // so column positions must be offset by 1rem and scaled to (100% - 2rem).
+    const selLeft = `calc(1rem + ${expandedIdx} / ${N} * (100% - 2rem))`;
+    const selRight = `calc(1rem + ${expandedIdx + 1} / ${N} * (100% - 2rem))`;
 
     // Reusable label/value chip — matches the existing gust/sunrise/sunset chip style.
     const chip = (label: string, value: string) => (
@@ -524,7 +527,8 @@ export function DailyColumns({
     return (
       <div
         style={{
-          width: '100%',
+          width: 'calc(100% + 2rem)',
+          margin: '0 -1rem 0 -1rem',
           background: `linear-gradient(to right,
             var(--detail-panel-bg, rgba(80,100,255,0.08)) 0%,
             var(--detail-panel-bg, rgba(80,100,255,0.08)) ${selLeft},
@@ -572,7 +576,7 @@ export function DailyColumns({
         )}
 
         {/* Chip grid — wrapping flex row of label/value pairs */}
-        <div style={{ display: 'flex', flexDirection: 'row', columnGap: '1.5rem', rowGap: '0.35rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', flexDirection: 'row', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
           {dewpointChip}
           {humidityChip}
           {day.visibilityMax !== null && chip(t('visibility'), `${day.visibilityMax} ${visSuffix}`)}
@@ -619,7 +623,7 @@ export function DailyColumns({
         minHeight: 0,
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden',
+        overflow: expandable ? 'visible' : 'hidden',
       }}
     >
       {/* Column layout — always visible on all breakpoints.
@@ -628,7 +632,7 @@ export function DailyColumns({
         style={{ position: 'relative', width: '100%', overflow: 'visible' }}
       >
         {selectedColBg}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: expandable ? 6 : 0, position: 'relative', width: '100%', overflow: 'visible' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', position: 'relative', width: '100%', overflow: 'visible' }}>
           {accentBarRow}
           {dayRow}
           {iconRow}
