@@ -433,7 +433,7 @@ export function SunMoonCard({
              available CardContent height so the bottom rise/set labels don't
              clip — the SVG scales proportionally with width="100%" so at the
              tile card width (~270px) the rendered height stays within budget. */
-          <div aria-live="polite" style={{ flex: 1, minWidth: 0, minHeight: 0, width: '100%', height: '100%', overflow: 'hidden', display: 'flex', alignItems: 'stretch' }}>
+          <div aria-live="polite" style={{ flex: 1, minWidth: 0, minHeight: 0, maxHeight: 'var(--card-content-max)', width: '100%', height: '100%', overflow: 'hidden', display: 'flex', alignItems: 'stretch' }}>
             <ArcVisualization almanac={almanac} tz={stationTz} locale={locale} />
           </div>
         ) : (

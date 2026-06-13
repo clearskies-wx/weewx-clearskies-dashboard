@@ -228,7 +228,7 @@ export function BarometerCard({
              alignItems: stretch forces the wrapper to fill available height so
              the SVG's height:100% resolves to the container height (113px) rather
              than sizing from its intrinsic aspect ratio (143px) and being clipped. */
-          <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'stretch', overflow: 'hidden' }}>
+          <div style={{ flex: 1, minHeight: 0, maxHeight: 'var(--card-content-max)', display: 'flex', alignItems: 'stretch', overflow: 'hidden' }}>
           <SemiCircularGauge
             value={barometerValue ?? (gaugeMin + gaugeMax) / 2}
             min={gaugeMin}

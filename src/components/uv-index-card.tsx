@@ -419,7 +419,7 @@ function UvChart({ data, currentUv, gradientId, peakUv }: UvChartProps) {
       {/* margin.top on AreaChart adds space inside the SVG between the card title and the chart
           area. The Recharts margin is the correct mechanism here — it pushes content down within
           the SVG rather than creating a CSS gap between the title and the chart container. */}
-      <div role="img" aria-label={t('uvIndexCard.chartAriaLabel')} style={{ flex: 1, minWidth: 0, minHeight: 0, width: '100%', height: '100%' }}>
+      <div role="img" aria-label={t('uvIndexCard.chartAriaLabel')} style={{ flex: 1, minWidth: 0, minHeight: 0, maxHeight: 'var(--card-content-max)', width: '100%', height: '100%' }}>
         <ResponsiveContainer width="99%" height="100%">
           <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: 6 }}>
             <defs>

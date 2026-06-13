@@ -163,7 +163,7 @@ export function LightningCard({
         ) : error ? (
           <p className="text-sm text-muted-foreground">{error}</p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1, minHeight: 0 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1, minHeight: 0, maxHeight: 'var(--card-content-max)' }}>
 
             {/* ── Chart zone (upper ~70%) ────────────────────────────── */}
             <div
