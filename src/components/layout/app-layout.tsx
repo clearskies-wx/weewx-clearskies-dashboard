@@ -71,15 +71,17 @@ export function AppLayout() {
           Renders nothing when googleAnalyticsId is absent or consent is stored. */}
       <CookieConsentBanner />
 
+      {/* NavRail: all elements are position:fixed (desktop rail z-20, mobile
+          bottom nav z-30, More sheet z-40).  Rendered OUTSIDE the overflow-hidden
+          wrapper so Android Chrome doesn't clip the fixed bottom nav when
+          will-change-transform is combined with an overflow-hidden ancestor. */}
+      <NavRail />
+
       {/* h-[100dvh]: dynamic viewport height adjusts when mobile browser
           URL bar hides/shows, preventing the bottom nav from clipping. */}
       <div className="h-[100dvh] flex flex-col text-foreground overflow-hidden">
         {/* Skip link is the FIRST focusable element in the DOM per WCAG 2.4.1 */}
         <SkipLink />
-
-        {/* NavRail: desktop rail is position:fixed (overlays content).
-            Mobile bottom nav is also rendered inside NavRail. */}
-        <NavRail />
 
         <div className="flex flex-1 min-h-0">
           {/* Content column — full width on desktop since rail is fixed overlay.

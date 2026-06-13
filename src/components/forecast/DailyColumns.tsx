@@ -576,7 +576,7 @@ export function DailyColumns({
         )}
 
         {/* Chip grid — wrapping flex row of label/value pairs */}
-        <div style={{ display: 'flex', flexDirection: 'row', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', flexDirection: 'row', columnGap: '1.5rem', rowGap: '0.35rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
           {dewpointChip}
           {humidityChip}
           {day.visibilityMax !== null && chip(t('visibility'), `${day.visibilityMax} ${visSuffix}`)}
