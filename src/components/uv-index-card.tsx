@@ -324,7 +324,7 @@ function UvValueGroup({ uv, levelLabel, subLabel, categoryAbbr }: UvValueGroupPr
           style={{
             fontFamily: 'var(--font-display, system-ui, sans-serif)',
             fontWeight: 600,
-            fontSize: '0.9375rem', // 15px
+            fontSize: 'var(--text-secondary)',
             color: 'var(--foreground)',
             fontFeatureSettings: '"tnum"',
             lineHeight: 1,
@@ -338,7 +338,7 @@ function UvValueGroup({ uv, levelLabel, subLabel, categoryAbbr }: UvValueGroupPr
             style={{
               fontFamily: 'var(--font-sans, system-ui, sans-serif)',
               fontWeight: 400,
-              fontSize: '0.625rem', // 10px
+              fontSize: 'var(--text-micro)',
               color: 'var(--muted-foreground)',
               lineHeight: 1,
               textTransform: 'uppercase',
@@ -355,7 +355,7 @@ function UvValueGroup({ uv, levelLabel, subLabel, categoryAbbr }: UvValueGroupPr
         style={{
           fontFamily: 'var(--font-sans, system-ui, sans-serif)',
           fontWeight: 400,
-          fontSize: '0.5rem', // 8px
+          fontSize: 'var(--text-micro)',
           color: 'var(--muted-foreground)',
           textTransform: 'uppercase',
           letterSpacing: '0.06em',
@@ -466,7 +466,7 @@ function UvChart({ data, currentUv, gradientId, peakUv }: UvChartProps) {
               axisLine={false}
               tick={{
                 fontFamily: 'var(--font-chart)',
-                fontSize: 8,
+                fontSize: 14,
                 fill: 'var(--muted-foreground)',
               }}
               interval={0}
@@ -481,7 +481,7 @@ function UvChart({ data, currentUv, gradientId, peakUv }: UvChartProps) {
               axisLine={false}
               tick={{
                 fontFamily: 'var(--font-chart)',
-                fontSize: 7,
+                fontSize: 14,
                 fill: 'var(--muted-foreground)',
               }}
               width={18}
@@ -543,7 +543,7 @@ function GroupSeparator() {
       aria-hidden="true"
       style={{
         color: 'var(--muted-foreground)',
-        fontSize: '1rem',
+        fontSize: 'var(--text-stat-label)',
         lineHeight: 1,
         userSelect: 'none',
       }}

@@ -249,7 +249,7 @@ function SolarChart({ data }: SolarChartProps) {
               axisLine={false}
               tick={{
                 fontFamily: 'var(--font-chart)',
-                fontSize: 8,
+                fontSize: 14,
                 fill: 'var(--muted-foreground)',
               }}
               interval={0}
@@ -381,7 +381,7 @@ export function SolarRadiationCard({
                 style={{
                   fontFamily: 'var(--font-display, system-ui, sans-serif)',
                   fontWeight: 600,
-                  fontSize: '1.125rem', // 18px
+                  fontSize: 'var(--text-stat-tile)',
                   color: 'var(--foreground)',
                   letterSpacing: '-0.01em',
                   fontFeatureSettings: '"tnum"',
@@ -397,7 +397,7 @@ export function SolarRadiationCard({
                   style={{
                     fontFamily: 'var(--font-sans, system-ui, sans-serif)',
                     fontWeight: 400,
-                    fontSize: '0.72rem',
+                    fontSize: 'var(--text-label)',
                     color: 'var(--muted-foreground)',
                     lineHeight: 1,
                   }}

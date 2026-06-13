@@ -171,12 +171,12 @@ function GaugeContent({ aqiValue, category, mainPollutant }: GaugeContentProps) 
 
       {/* Text column: value + category + pollutant */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.1rem' }}>
-        {/* AQI numeric value — Outfit 600 20px */}
+        {/* AQI numeric value — Outfit 600 */}
         <span
           style={{
             fontFamily: 'var(--font-display, system-ui, sans-serif)',
             fontWeight: 600,
-            fontSize: '1.25rem',
+            fontSize: 'var(--text-stat-tile)',
             color: 'var(--foreground)',
             letterSpacing: '-0.01em',
             fontFeatureSettings: '"tnum"',
@@ -186,12 +186,12 @@ function GaugeContent({ aqiValue, category, mainPollutant }: GaugeContentProps) 
           {aqiValue}
         </span>
 
-        {/* AQI category — Manrope 600 12px */}
+        {/* AQI category — Manrope 600 */}
         <span
           style={{
             fontFamily: 'var(--font-sans, system-ui, sans-serif)',
             fontWeight: 600,
-            fontSize: '0.75rem',
+            fontSize: 'var(--text-label)',
             color: 'var(--foreground)',
             lineHeight: 1.2,
             textAlign: 'center',
@@ -200,13 +200,13 @@ function GaugeContent({ aqiValue, category, mainPollutant }: GaugeContentProps) 
           {category}
         </span>
 
-        {/* Main pollutant — Manrope 400 10px muted */}
+        {/* Main pollutant — Manrope 400 muted */}
         {mainPollutant && (
           <span
             style={{
               fontFamily: 'var(--font-sans, system-ui, sans-serif)',
               fontWeight: 400,
-              fontSize: '0.625rem',
+              fontSize: 'var(--text-micro)',
               color: 'var(--muted-foreground)',
               lineHeight: 1.2,
               textAlign: 'center',
@@ -256,24 +256,24 @@ function PollutantRow({ name, value }: PollutantRowProps) {
           flexShrink: 0,
         }}
       />
-      {/* Pollutant name — Manrope 400 10px muted */}
+      {/* Pollutant name — Manrope 400 muted */}
       <span
         style={{
           fontFamily: 'var(--font-sans, system-ui, sans-serif)',
           fontWeight: 400,
-          fontSize: '0.625rem',       // 10px
+          fontSize: 'var(--text-micro)',
           color: 'var(--muted-foreground)',
           flexShrink: 0,
         }}
       >
         {name}
       </span>
-      {/* Pollutant value — Outfit 600 10px */}
+      {/* Pollutant value — Outfit 600 */}
       <span
         style={{
           fontFamily: 'var(--font-display, system-ui, sans-serif)',
           fontWeight: 600,
-          fontSize: '0.625rem',       // 10px
+          fontSize: 'var(--text-micro)',
           color: 'var(--foreground)',
           marginLeft: 'auto',
           fontFeatureSettings: '"tnum"',

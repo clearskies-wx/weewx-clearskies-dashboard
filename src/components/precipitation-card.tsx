@@ -99,7 +99,7 @@ function SnowflakeIcon({ size = 36 }: { size?: number }) {
 const primaryValueStyle: React.CSSProperties = {
   fontFamily: 'var(--font-display, system-ui, sans-serif)',
   fontWeight: 600,
-  fontSize: '16px',
+  fontSize: 'var(--text-stat-tile)',
   color: 'var(--foreground)',
   letterSpacing: '-0.01em',
   fontFeatureSettings: '"tnum"',
@@ -109,7 +109,7 @@ const primaryValueStyle: React.CSSProperties = {
 const labelStyle: React.CSSProperties = {
   fontFamily: 'var(--font-sans, system-ui, sans-serif)',
   fontWeight: 400,
-  fontSize: '11px',
+  fontSize: 'var(--text-label)',
   color: 'var(--muted-foreground)',
   lineHeight: 1.2,
 };
@@ -117,7 +117,7 @@ const labelStyle: React.CSSProperties = {
 const secondaryValueStyle: React.CSSProperties = {
   fontFamily: 'var(--font-sans, system-ui, sans-serif)',
   fontWeight: 400,
-  fontSize: '13px',
+  fontSize: 'var(--text-secondary)',
   color: 'var(--foreground)',
   fontFeatureSettings: '"tnum"',
   lineHeight: 1.2,

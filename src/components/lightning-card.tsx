@@ -185,7 +185,7 @@ export function LightningCard({
                   <span
                     style={{
                       fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-                      fontSize: '0.8rem',
+                      fontSize: 'var(--text-body)',
                       color: 'var(--muted-foreground)',
                     }}
                   >
@@ -208,7 +208,7 @@ export function LightningCard({
                       }}
                       tick={{
                         fontFamily: 'var(--font-chart, system-ui, sans-serif)',
-                        fontSize: 8,
+                        fontSize: 14,
                         fill: 'var(--muted-foreground)',
                       }}
                       axisLine={false}
@@ -221,7 +221,7 @@ export function LightningCard({
                       tickCount={3}
                       tick={{
                         fontFamily: 'var(--font-chart, system-ui, sans-serif)',
-                        fontSize: 8,
+                        fontSize: 14,
                         fill: 'var(--muted-foreground)',
                       }}
                       axisLine={false}
@@ -233,7 +233,7 @@ export function LightningCard({
                       cursor={{ strokeDasharray: '3 3', stroke: 'var(--muted-foreground)', strokeOpacity: 0.4 }}
                       contentStyle={{
                         fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-                        fontSize: '0.75rem',
+                        fontSize: 'var(--text-label)',
                         background: 'var(--card)',
                         border: '1px solid var(--border)',
                         borderRadius: '6px',
@@ -304,7 +304,7 @@ export function LightningCard({
                 <span
                   style={{
                     fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-                    fontSize: '0.8125rem',
+                    fontSize: 'var(--text-secondary)',
                     color: 'var(--foreground)',
                   }}
                 >
@@ -336,7 +336,7 @@ export function LightningCard({
                 <span
                   style={{
                     fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-                    fontSize: '0.6875rem',
+                    fontSize: 'var(--text-label)',
                     color: 'var(--muted-foreground)',
                   }}
                 >

@@ -143,7 +143,7 @@ function EarthquakeRow({ quake }: { quake: EarthquakeRecord }) {
           <span
             className={text}
             style={{
-              fontSize: '0.5rem',
+              fontSize: 'var(--text-micro)',
               lineHeight: 1,
               fontFamily: 'var(--font-sans, system-ui, sans-serif)',
             }}
@@ -153,7 +153,7 @@ function EarthquakeRow({ quake }: { quake: EarthquakeRecord }) {
           <span
             className={text}
             style={{
-              fontSize: '0.875rem',
+              fontSize: 'var(--text-secondary)',
               fontFamily: 'var(--font-display, system-ui, sans-serif)',
               fontWeight: 700,
               lineHeight: 1.1,
@@ -173,12 +173,12 @@ function EarthquakeRow({ quake }: { quake: EarthquakeRecord }) {
             flex: 1,
           }}
         >
-          {/* Place — Manrope 600, 12px, truncated */}
+          {/* Place — Manrope 600, truncated */}
           <p
             style={{
               fontFamily: 'var(--font-heading, system-ui, sans-serif)',
               fontWeight: 600,
-              fontSize: '0.75rem',
+              fontSize: 'var(--text-label)',
               color: 'var(--foreground)',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -191,11 +191,11 @@ function EarthquakeRow({ quake }: { quake: EarthquakeRecord }) {
             {place}
           </p>
 
-          {/* Age — 11px muted */}
+          {/* Age — muted */}
           <p
             style={{
               fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-              fontSize: '0.6875rem',
+              fontSize: 'var(--text-label)',
               color: 'var(--muted-foreground)',
               margin: 0,
               lineHeight: 1.3,
@@ -204,11 +204,11 @@ function EarthquakeRow({ quake }: { quake: EarthquakeRecord }) {
             {ageDisplay}
           </p>
 
-          {/* Metadata: depth + source — 10px dim */}
+          {/* Metadata: depth + source — dim */}
           <p
             style={{
               fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-              fontSize: '0.625rem',
+              fontSize: 'var(--text-micro)',
               color: 'var(--muted-foreground)',
               opacity: 0.75,
               margin: 0,
@@ -271,7 +271,7 @@ export function EarthquakeCard({
           <p
             style={{
               fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-              fontSize: '0.8rem',
+              fontSize: 'var(--text-body)',
               color: 'var(--muted-foreground)',
               textAlign: 'center',
               margin: 0,
