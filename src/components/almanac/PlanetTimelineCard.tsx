@@ -25,6 +25,7 @@
 // Time: Intl.DateTimeFormat per ADR-020 (UTC on wire, station TZ for display).
 // Icons: inline SVG paths (Phosphor-style) — all aria-hidden.
 
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Eye, EyeSlash } from '@phosphor-icons/react';
 import { useIsMobile } from '../../hooks/useIsMobile';
@@ -34,6 +35,8 @@ import {
   CardTitle,
   CardContent,
 } from '../ui/card';
+import { ChartFullscreenButton } from '../ui/chart-fullscreen';
+import { ChartFullscreenOverlay } from '../ui/chart-fullscreen';
 import type { PlanetsVisible, PlanetEntry, AlmanacSnapshot } from '../../api/types';
 
 // ---------------------------------------------------------------------------
@@ -452,6 +455,9 @@ const LABEL_Y      = 264;  // Y of tick labels
 function GanttTimeline({ planets, almanac, stationTz }: GanttTimelineProps) {
   const isMobile = useIsMobile();
   const S = isMobile ? 2.5 : 1;
+  const barH = BAR_HEIGHT * S;
+  const barGap = BAR_GAP * S;
+  const firstBarY = FIRST_BAR_Y * S;
   const sunset  = parseISO(almanac.sun.set);
   const sunrise = parseISO(almanac.sun.rise);
 
@@ -571,8 +577,15 @@ function GanttTimeline({ planets, almanac, stationTz }: GanttTimelineProps) {
 
   const bars: BarData[] = candidates.map((c, idx) => ({
     ...c,
-    barY: FIRST_BAR_Y + idx * BAR_GAP,
+    barY: firstBarY + idx * barGap,
   }));
+
+  const lastBarBottom = bars.length > 0
+    ? bars[bars.length - 1].barY + barH + 20 * S
+    : firstBarY + 40;
+  const axisY = lastBarBottom + 10 * S;
+  const labelY = axisY + 25 * S;
+  const vbH = Math.max(isMobile ? 380 : VB_HEIGHT, labelY + 20 * S);
 
   // ---- Build accessible description ----
   const descParts = bars.map(
@@ -584,7 +597,7 @@ function GanttTimeline({ planets, almanac, stationTz }: GanttTimelineProps) {
   return (
     <svg
       style={{ width: '100%', display: 'block' }}
-      viewBox={`0 0 ${VB_WIDTH} ${isMobile ? 380 : VB_HEIGHT}`}
+      viewBox={`0 0 ${VB_WIDTH} ${vbH}`}
       role="img"
       aria-labelledby="planet-gantt-title"
       aria-describedby="planet-gantt-desc"
@@ -626,7 +639,7 @@ function GanttTimeline({ planets, almanac, stationTz }: GanttTimelineProps) {
         x="0"
         y="0"
         width={VB_WIDTH}
-        height={isMobile ? 380 : VB_HEIGHT}
+        height={vbH}
         rx="8"
         fill={`url(#${skyGradientId})`}
       />
@@ -655,17 +668,16 @@ function GanttTimeline({ planets, almanac, stationTz }: GanttTimelineProps) {
       {bars.map((b) => {
         const barWidth = Math.max(0, b.barX2 - b.barX1);
         const imgSize = getChartImgSize(b.planet.name) * S;
-        const bh = BAR_HEIGHT * S;
         const imgX = b.barX1 - imgSize / 2;
-        const imgY = b.barY + bh / 2 - imgSize / 2;
+        const imgY = b.barY + barH / 2 - imgSize / 2;
         return (
           <g key={b.planet.name}>
             <rect
               x={b.barX1}
               y={b.barY}
               width={barWidth}
-              height={bh}
-              rx={bh / 2}
+              height={barH}
+              rx={barH / 2}
               fill={`url(#${b.gradId})`}
             />
             <image
@@ -683,9 +695,9 @@ function GanttTimeline({ planets, almanac, stationTz }: GanttTimelineProps) {
       {/* Time axis line */}
       <line
         x1={LEFT_MARGIN}
-        y1={AXIS_Y}
+        y1={axisY}
         x2={RIGHT_MARGIN}
-        y2={AXIS_Y}
+        y2={axisY}
         stroke="rgba(255,255,255,0.12)"
         strokeWidth="1"
       />
@@ -693,15 +705,15 @@ function GanttTimeline({ planets, almanac, stationTz }: GanttTimelineProps) {
       {/* Sunset tick + actual time label */}
       <line
         x1={LEFT_MARGIN}
-        y1={AXIS_Y - 4}
+        y1={axisY - 4}
         x2={LEFT_MARGIN}
-        y2={AXIS_Y + 3}
+        y2={axisY + 3}
         stroke="rgba(255,255,255,0.2)"
         strokeWidth="1"
       />
       <text
         x={LEFT_MARGIN}
-        y={isMobile ? AXIS_Y + 40 : LABEL_Y}
+        y={labelY}
         textAnchor="start"
         fill="#f59e0b"
         fontFamily="var(--font-chart)"
@@ -719,15 +731,15 @@ function GanttTimeline({ planets, almanac, stationTz }: GanttTimelineProps) {
           <g key={i}>
             <line
               x1={tx}
-              y1={AXIS_Y - 3}
+              y1={axisY - 3}
               x2={tx}
-              y2={AXIS_Y + 3}
+              y2={axisY + 3}
               stroke="rgba(255,255,255,0.15)"
               strokeWidth="1"
             />
             <text
               x={tx}
-              y={isMobile ? AXIS_Y + 40 : LABEL_Y}
+              y={labelY}
               textAnchor="middle"
               fill="rgba(255,255,255,0.45)"
               fontFamily="var(--font-chart)"
@@ -742,15 +754,15 @@ function GanttTimeline({ planets, almanac, stationTz }: GanttTimelineProps) {
       {/* Sunrise tick + label */}
       <line
         x1={RIGHT_MARGIN}
-        y1={AXIS_Y - 4}
+        y1={axisY - 4}
         x2={RIGHT_MARGIN}
-        y2={AXIS_Y + 3}
+        y2={axisY + 3}
         stroke="rgba(255,255,255,0.2)"
         strokeWidth="1"
       />
       <text
         x={RIGHT_MARGIN}
-        y={isMobile ? AXIS_Y + 40 : LABEL_Y}
+        y={labelY}
         textAnchor="end"
         fill="#f59e0b"
         fontFamily="var(--font-chart)"
@@ -802,6 +814,7 @@ export function PlanetTimelineCard({
 }: PlanetTimelineCardProps) {
   const { t, i18n } = useTranslation('almanac');
   const locale = i18n.language || 'en-US';
+  const [timelineFullscreen, setTimelineFullscreen] = useState(false);
 
   // Loading state
   if (loading) {
@@ -934,11 +947,25 @@ export function PlanetTimelineCard({
             className="border-t border-border pt-4 overflow-x-auto"
             aria-label={t('planets.timelineLabel')}
           >
+            <div className="flex justify-end mb-1">
+              <ChartFullscreenButton onClick={() => setTimelineFullscreen(true)} />
+            </div>
             <GanttTimeline
               planets={planetList}
               almanac={almanac}
               stationTz={stationTz}
             />
+            <ChartFullscreenOverlay
+              isOpen={timelineFullscreen}
+              onClose={() => setTimelineFullscreen(false)}
+              aria-label="Planet visibility timeline fullscreen"
+            >
+              <GanttTimeline
+                planets={planetList}
+                almanac={almanac}
+                stationTz={stationTz}
+              />
+            </ChartFullscreenOverlay>
           </div>
         )}
 
