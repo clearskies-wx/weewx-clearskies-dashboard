@@ -164,6 +164,18 @@ export function SeismicPage() {
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showFaults, setShowFaults] = useState(true);
+  const [mapHeight, setMapHeight] = useState<number | undefined>(undefined);
+  const mapCardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = mapCardRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      setMapHeight(entry.contentRect.height);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [loading, error, earthquakes]);
 
   const oldestTime = earthquakes && earthquakes.length > 0
     ? earthquakes.reduce((a, b) => (a.time < b.time ? a : b)).time : '';
@@ -245,12 +257,13 @@ export function SeismicPage() {
         )}
 
         {!loading && !error && earthquakes !== null && (
-          <div className="col-span-1 md:col-span-2 lg:col-span-4 flex flex-col lg:flex-row gap-[var(--gap-grid)]">
-            {/* Map card: 3/4 width at lg, 1:1 aspect ratio */}
-            <Card className="relative z-0 min-h-[var(--card-row)] overflow-hidden flex flex-col h-[300px] lg:h-auto lg:aspect-square lg:flex-[3] lg:mb-0">
+          <div className="col-span-1 md:col-span-2 lg:col-span-4 flex flex-col lg:flex-row lg:items-start gap-[var(--gap-grid)]">
+            {/* Map card: 75% width at lg, 1:1 aspect ratio. ResizeObserver syncs height to list. */}
+            <div ref={mapCardRef} className="lg:w-3/4 lg:shrink-0">
+            <Card className="relative z-0 min-h-[var(--card-row)] overflow-hidden flex flex-col h-[300px] lg:h-auto lg:aspect-square lg:mb-0">
               <CardHeader className="pb-2 shrink-0">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <CardTitle as="h2">{t('mapCardTitle')}</CardTitle>
+                <div className="flex items-center justify-between gap-2 flex-wrap pb-0.5 border-b border-border">
+                  <CardTitle as="h2" className="border-b-0 pb-0">{t('mapCardTitle')}</CardTitle>
                   <label className="flex items-center gap-1.5 text-sm text-muted-foreground cursor-pointer select-none">
                     <input
                       type="checkbox"
@@ -348,9 +361,10 @@ export function SeismicPage() {
               </div>
             </CardContent>
             </Card>
+            </div>
 
-            {/* Earthquake list: 1/4 width at lg, matches map height */}
-            <Card className="flex flex-col lg:flex-1 lg:mb-0 lg:overflow-hidden">
+            {/* Earthquake list: fills remaining width, height synced to map via ResizeObserver */}
+            <Card className="flex flex-col lg:flex-1 lg:mb-0 lg:overflow-hidden" style={mapHeight ? { height: mapHeight } : undefined}>
               <CardHeader className="pb-2 shrink-0">
               <CardTitle as="h2">{t('listCardTitle')}</CardTitle>
             </CardHeader>
