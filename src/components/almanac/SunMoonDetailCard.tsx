@@ -519,7 +519,7 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
                 x={sunMarker.x}
                 y={sunMarker.y - (isMobile ? 30 : 22)}
                 textAnchor="middle"
-                fontSize={isMobile ? 16 : 11}
+                fontSize={isMobile ? 19 : 11}
                 fontFamily="var(--font-sans, system-ui, sans-serif)"
                 fontWeight={600}
                 fill="var(--muted-foreground)"
@@ -568,7 +568,7 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
                 x={moonMarker.x}
                 y={moonMarker.y - (isMobile ? 20 : 14)}
                 textAnchor="middle"
-                fontSize={isMobile ? 14 : 10}
+                fontSize={isMobile ? 17 : 10}
                 fontFamily="var(--font-sans, system-ui, sans-serif)"
                 fill="var(--muted-foreground)"
               >
@@ -585,7 +585,7 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
           textAnchor="middle"
           fontFamily="var(--font-display, system-ui, sans-serif)"
           fontWeight={600}
-          fontSize={isMobile ? 19 : 13}
+          fontSize={isMobile ? 22 : 13}
           fill={SUN_COLOR}
           aria-hidden="true"
         >
@@ -597,7 +597,7 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
           textAnchor="middle"
           fontFamily="var(--font-display, system-ui, sans-serif)"
           fontWeight={600}
-          fontSize={isMobile ? 19 : 13}
+          fontSize={isMobile ? 22 : 13}
           fill={SUN_COLOR}
           aria-hidden="true"
         >
@@ -610,7 +610,7 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
           y={CY + (isMobile ? 46 : 36)}
           textAnchor="middle"
           fontFamily="var(--font-sans, system-ui, sans-serif)"
-          fontSize={isMobile ? 15 : 10}
+          fontSize={isMobile ? 18 : 10}
           fill={MOON_COLOR}
           aria-hidden="true"
         >
@@ -621,7 +621,7 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
           y={CY + (isMobile ? 46 : 36)}
           textAnchor="middle"
           fontFamily="var(--font-sans, system-ui, sans-serif)"
-          fontSize={isMobile ? 15 : 10}
+          fontSize={isMobile ? 18 : 10}
           fill={MOON_COLOR}
           aria-hidden="true"
         >
