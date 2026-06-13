@@ -11,10 +11,14 @@ type CardProps = React.ComponentProps<"div"> & {
    *  tile=1col Â· wide=2col Â· panel=3col Â· full=4col */
   footprint?: CardFootprint;
   /**
-   * Row span â€” 1 (default, 11rem via md:row-span-1) or 2 (22rem via md:row-span-2).
-   * Row spans only apply at md+ (â‰¥768px); mobile rows are auto-height.
+   * Row span — controls how many quarter-row tracks the card occupies at md+ (≥768px).
+   * Mobile rows are always auto-height.
+   *   “quarter” = md:row-span-1  (1 × --card-quarter-row  = 2.75rem)
+   *   “half”    = md:row-span-2  (2 × --card-quarter-row  = 5.5rem)
+   *   1         = md:row-span-4  (4 × --card-quarter-row  = 11rem, default data card)
+   *   2         = md:row-span-8  (8 × --card-quarter-row  = 22rem, tall card)
    */
-  rowSpan?: 1 | 2;
+  rowSpan?: “quarter” | “half” | 1 | 2;
 };
 
 /** Column-span classes for each footprint value (ADR-051).
@@ -32,12 +36,31 @@ const footprintColSpan: Record<CardFootprint, string> = {
  * On mobile, grid-auto-rows is `auto` so row-span has no effect;
  * the md: prefix ensures these only take effect at >=768px.
  *
- * rowSpan=2 -> md:row-span-2 (2 x 11rem + 1rem gap = 23rem) -- tall cards
- * default   -> md:row-span-1 (1 x 11rem = 11rem)             -- standard tiles
+ * Base track is --card-quarter-row (2.75rem desktop / 3.25rem mobile).
+ *   "quarter" -> md:row-span-1  (1 track  = 2.75rem)   — controls strips, headers
+ *   "half"    -> md:row-span-2  (2 tracks = 5.5rem)    — hero, page-header
+ *   1         -> md:row-span-4  (4 tracks = 11rem)     — standard data card (default)
+ *   2         -> md:row-span-8  (8 tracks = 22rem)     — tall/chart cards
  */
-function rowSpanClass(rowSpan: 1 | 2 | undefined): string {
-  if (rowSpan === 2) return "md:row-span-2";
-  return "md:row-span-1";
+function rowSpanClass(rowSpan: "quarter" | "half" | 1 | 2 | undefined): string {
+  switch (rowSpan) {
+    case "quarter": return "md:row-span-1";
+    case "half":    return "md:row-span-2";
+    case 2:         return "md:row-span-8";
+    default:        return "md:row-span-4";
+  }
+}
+
+/**
+ * Min-height class derived from rowSpan, so each card fills its grid tracks
+ * correctly on mobile (where row-span has no effect).
+ */
+function minHeightClass(rowSpan: "quarter" | "half" | 1 | 2 | undefined): string {
+  switch (rowSpan) {
+    case "quarter": return "min-h-[var(--card-quarter-row)]";
+    case "half":    return "min-h-[var(--card-half-row)]";
+    default:        return "min-h-[var(--card-row)]";
+  }
 }
 
 function Card({
@@ -59,7 +82,8 @@ function Card({
         // the exact blur+saturate combination.
         "card-glass",
         "group/card flex flex-col gap-1.5 overflow-hidden rounded-xl py-4 text-sm text-card-foreground ring-1 ring-foreground/10 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-1 data-[size=sm]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
-        "min-h-[var(--card-row)]",
+        minHeightClass(rowSpan),
+        "mb-[var(--gap-grid)]",
         footprint !== undefined ? footprintColSpan[footprint] : undefined,
         rowSpanClass(rowSpan),
         className

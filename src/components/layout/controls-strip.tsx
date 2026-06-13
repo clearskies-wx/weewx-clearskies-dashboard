@@ -2,7 +2,7 @@
 //
 // The "many controls" pattern: when a page's controls (tabs, period selectors,
 // sort buttons, etc.) don't fit inline in the PageHeaderCard, they get their
-// own full-width half-row card directly below the header.
+// own full-width quarter-row card directly below the header.
 //
 // A11y contract (rules/coding.md §5.4):
 // - Renders as a <section> with an accessible label supplied via aria-label.
@@ -35,14 +35,14 @@ type ControlsStripProps = {
 };
 
 /**
- * ControlsStrip — full-width half-row card for page-level controls.
+ * ControlsStrip — full-width quarter-row card for page-level controls.
  *
  * Use when a page has too many controls to fit inline in the PageHeaderCard
  * (the "many controls" pattern from ADR-051).  Sits directly below the
  * PageHeaderCard on the grid.
  *
- * Controls are laid out in a flex row (wrapping allowed) at the same visual
- * density as the PageHeaderCard — both span one half-row track.
+ * Controls are laid out in a flex row (wrapping allowed).  Uses
+ * rowSpan="quarter" to occupy a single --card-quarter-row track at md+.
  *
  * @example
  * <ControlsStrip aria-label="Records controls">
@@ -58,9 +58,8 @@ export function ControlsStrip({
   return (
     <Card
       footprint="full"
+      rowSpan="quarter"
       className={cn(
-        // Half-row density: matches PageHeaderCard vertical padding.
-        'py-2',
         className,
       )}
     >

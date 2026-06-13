@@ -77,8 +77,8 @@ function PlaceholderLogo({ size }: { size: number }) {
  * NowHeroCard — C1 Now-page hero strip.
  *
  * Rendered OUTSIDE the grid — a block-level card that is naturally full-width.
- * No footprint or row-span props needed (col/row classes only apply inside a grid).
- * The compact visual is achieved via py-2.
+ * Uses rowSpan="half" for correct min-height (--card-half-row) on mobile.
+ * No footprint prop needed (col/row classes only apply inside a grid).
  *
  * Logo: rendered as <img> when a URL is provided; falls back to PlaceholderLogo.
  * Station name: always rendered (falls back to "My Weather Station" when unset).
@@ -95,7 +95,8 @@ export function NowHeroCard({
 
   return (
     <Card
-      className={['py-2 min-h-[var(--card-half-row)] mx-auto w-full max-w-[var(--container-max)]', className].filter(Boolean).join(' ')}
+      rowSpan="half"
+      className={['mx-auto w-full max-w-[var(--container-max)]', className].filter(Boolean).join(' ')}
     >
       {/*
         aria-label on the <header> gives screen readers a landmark description

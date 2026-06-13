@@ -21,6 +21,7 @@
     --gap-grid: 1rem;
     --container-max: 80rem;
     --card-half-row: 6.5rem;
+    --card-quarter-row: 3.25rem;
     --card-row: 13rem;
     --card-content-max: calc(var(--card-row) - 4rem);
 
@@ -132,6 +133,7 @@
     :root {
         --card-row: 11rem;
         --card-half-row: 5.5rem;
+        --card-quarter-row: 2.75rem;
     }
 }
 

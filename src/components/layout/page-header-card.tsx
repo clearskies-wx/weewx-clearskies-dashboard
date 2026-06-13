@@ -49,8 +49,8 @@ type PageHeaderCardProps = {
  *
  * Every page opens with this card (ADR-051 universal card discipline).
  * - `full` footprint: spans all 4 columns on desktop, collapses with the grid.
- * - Tighter vertical padding (py-2) mirrors the half-row density from the
- *   A4 page-anatomy mockup — visually about half a normal data card's height.
+ * - `rowSpan="half"`: occupies 2 quarter-row tracks, matching the half-row
+ *   density from the A4 page-anatomy mockup. Min-height is derived automatically.
  * - Title renders as a real heading element (`as` prop, default h1).
  * - `children` renders right-aligned for "few controls inline" pattern.
  *
@@ -75,8 +75,8 @@ export function PageHeaderCard({
   return (
     <Card
       footprint="full"
+      rowSpan="half"
       className={cn(
-        'py-2 min-h-[var(--card-half-row)]',
         className,
       )}
     >
