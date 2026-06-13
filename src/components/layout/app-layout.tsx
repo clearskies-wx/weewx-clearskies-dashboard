@@ -73,13 +73,13 @@ export function AppLayout() {
 
       {/* h-[100dvh]: dynamic viewport height adjusts when mobile browser
           URL bar hides/shows, preventing the bottom nav from clipping. */}
-      <div className="h-[100dvh] flex flex-col text-foreground overflow-hidden">
-        {/* Skip link is the FIRST focusable element in the DOM per WCAG 2.4.1 */}
-        <SkipLink />
+      {/* NavRail OUTSIDE the overflow-hidden wrapper. All NavRail elements
+          are position:fixed — they must not be descendants of overflow:hidden
+          or mobile browsers clip/hide them. */}
+      <NavRail />
 
-        {/* NavRail: desktop rail is position:fixed (overlays content).
-            Mobile bottom nav is also rendered inside NavRail. */}
-        <NavRail />
+      <div className="h-[100dvh] flex flex-col text-foreground overflow-hidden">
+        <SkipLink />
 
         <div className="flex flex-1 min-h-0">
           {/* Content column — full width on desktop since rail is fixed overlay.

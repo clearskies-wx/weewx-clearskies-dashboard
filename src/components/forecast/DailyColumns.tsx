@@ -383,7 +383,7 @@ export function DailyColumns({
       {days.map((day, i) => {
         const precip = day.precipProbabilityMax;
         return (
-          <div key={i} style={{ ...cellBase, minHeight: 16, flexDirection: 'column' }}>
+          <div key={i} style={{ ...cellBase, minHeight: 22, flexDirection: 'column' }}>
             <span
               style={{
                 display: 'flex',
@@ -572,7 +572,7 @@ export function DailyColumns({
         )}
 
         {/* Chip grid — wrapping flex row of label/value pairs */}
-        <div style={{ display: 'flex', flexDirection: 'row', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', flexDirection: 'row', columnGap: '1.5rem', rowGap: '0.35rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
           {dewpointChip}
           {humidityChip}
           {day.visibilityMax !== null && chip(t('visibility'), `${day.visibilityMax} ${visSuffix}`)}
@@ -627,7 +627,7 @@ export function DailyColumns({
         style={{ position: 'relative', width: '100%', overflow: 'visible' }}
       >
         {selectedColBg}
-        <div style={{ display: 'flex', flexDirection: 'column', position: 'relative', width: '100%', overflow: 'visible' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, position: 'relative', width: '100%', overflow: 'visible' }}>
           {accentBarRow}
           {dayRow}
           {iconRow}
