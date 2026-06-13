@@ -213,7 +213,7 @@ export function SeismicPage() {
     <div className="flex flex-col gap-4 h-full">
       <h1 className="sr-only">{t('title')}</h1>
 
-      <Grid className="flex-1 min-h-0 grid-rows-[auto_1fr]">
+      <Grid className="flex-1 min-h-0 lg:grid-rows-[auto_1fr]">
         <PageHeaderCard
           title={t('title')}
           info={config ? t('configSummary', {
