@@ -383,7 +383,7 @@ export function DailyColumns({
       {days.map((day, i) => {
         const precip = day.precipProbabilityMax;
         return (
-          <div key={i} style={{ ...cellBase, minHeight: 16, flexDirection: 'column' }}>
+          <div key={i} style={{ ...cellBase, minHeight: 22, flexDirection: 'column' }}>
             <span
               style={{
                 display: 'flex',
@@ -632,7 +632,7 @@ export function DailyColumns({
         style={{ position: 'relative', width: '100%', overflow: 'visible' }}
       >
         {selectedColBg}
-        <div style={{ display: 'flex', flexDirection: 'column', position: 'relative', width: '100%', overflow: 'visible' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: expandable ? 6 : 0, position: 'relative', width: '100%', overflow: 'visible' }}>
           {accentBarRow}
           {dayRow}
           {iconRow}

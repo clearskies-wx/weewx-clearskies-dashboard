@@ -42,7 +42,7 @@ export function WindSymbol({ bearing, speed, size = 20 }: WindSymbolProps) {
 
   const svgW = cx * 2;
   const svgH = cy * 2;
-  const fontSize = r * 1.75;
+  const fontSize = r * 1.15;
 
   const speedStr = typeof speed === 'number' ? String(Math.round(speed)) : speed;
 
