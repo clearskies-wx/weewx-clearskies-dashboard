@@ -572,7 +572,7 @@ export function NavRail() {
           visible at a time via responsive Tailwind classes. */}
       <nav
         aria-label={t('ariaPrimary')}
-        className="md:hidden fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-background"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-background will-change-transform"
       >
         <ul
           className="flex flex-row items-stretch"

@@ -28,14 +28,16 @@ const footprintColSpan: Record<CardFootprint, string> = {
 };
 
 /**
- * Row-span class for the card’s grid placement (all breakpoints).
+ * Row-span class for the card’s grid placement (md+ only).
+ * On mobile, grid-auto-rows is `auto` so row-span has no effect;
+ * the md: prefix ensures these only take effect at >=768px.
  *
- * rowSpan=2 â†’ row-span-2 (2 Ã— 11rem + 1rem gap = 23rem) â€” tall cards
- * default   â†’ row-span-1 (1 Ã— 11rem = 11rem)             â€” standard tiles
+ * rowSpan=2 -> md:row-span-2 (2 x 11rem + 1rem gap = 23rem) -- tall cards
+ * default   -> md:row-span-1 (1 x 11rem = 11rem)             -- standard tiles
  */
 function rowSpanClass(rowSpan: 1 | 2 | undefined): string {
-  if (rowSpan === 2) return 'row-span-2';
-  return 'row-span-1';
+  if (rowSpan === 2) return "md:row-span-2";
+  return "md:row-span-1";
 }
 
 function Card({

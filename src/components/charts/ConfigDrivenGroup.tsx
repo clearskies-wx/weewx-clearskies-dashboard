@@ -807,7 +807,7 @@ export function ConfigDrivenGroup({
       {/* Chart / table toggle button + chart container — all in one Card    */}
       {/* ------------------------------------------------------------------ */}
 
-      <Card footprint="full" className="p-4 overflow-hidden">
+      <Card footprint="full" className="p-4 overflow-hidden min-h-[var(--card-row)]">
       {group.title && (
         <CardHeader>
           <CardTitle as="h2">{group.title}</CardTitle>

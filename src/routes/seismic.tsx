@@ -242,7 +242,9 @@ export function SeismicPage() {
         {!loading && !error && earthquakes !== null && (
           <>
             {/* Map card: 3 of 4 grid columns (panel footprint). */}
-            <Card className="col-span-1 md:col-span-2 lg:col-span-3 overflow-hidden flex flex-col h-[300px] lg:h-full">
+            {/* relative z-0: stacking context to contain Leaflet's internal z-indices (T1.3).
+                min-h-[var(--card-row)]: prevents map canvas collapsing on mobile auto-rows. */}
+            <Card className="relative z-0 min-h-[var(--card-row)] col-span-1 md:col-span-2 lg:col-span-3 overflow-hidden flex flex-col h-[300px] lg:h-full">
               <CardHeader className="pb-2 shrink-0">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <CardTitle as="h2">{t('mapCardTitle')}</CardTitle>

@@ -5,8 +5,8 @@
 // without touching individual cards — keeping the definition here (not on each
 // card or page) is the entire point.
 //
-// Row heights: mobile (<768px) rows are auto (stacked phone layout).
-// At md+ (≥768px) the track is fixed at --card-row (11rem).
+// Row heights: mobile (<768px) rows are auto (content-driven, stacked phone layout).
+// At md+ (≥768px) the track is fixed at --card-row (11rem) via grid-auto-rows.
 // Normal cards emit md:row-span-1 (11rem); tall cards emit md:row-span-2 (22rem).
 // Hero and alert banner live OUTSIDE the grid (full-width block elements).
 
@@ -45,8 +45,8 @@ export function Grid({ className, children }: GridProps) {
         'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
         // Gap uses the --gap-grid token (1rem) on both axes
         'gap-[var(--gap-grid)]',
-        // Fixed 11rem track (--card-row) on ALL breakpoints — same card height mobile and desktop.
-        'auto-rows-[var(--card-row)]',
+        // Content-driven rows on mobile; fixed 11rem track (--card-row) at md+ (≥768px).
+        'auto-rows-[auto] md:auto-rows-[var(--card-row)]',
         // max-width uses the --container-max token (80rem)
         'max-w-[var(--container-max)]',
         className,
