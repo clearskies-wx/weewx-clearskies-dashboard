@@ -470,11 +470,8 @@ export function DailyColumns({
     const sunrise = formatSunTime(day.sunrise, stationTz);
     const sunset = formatSunTime(day.sunset, stationTz);
 
-    // Background gradient: transparent over the selected column, tinted everywhere else.
-    // The detail panel is wider than the column area by 2rem (1rem negative margin each side),
-    // so column positions must be offset by 1rem and scaled to (100% - 2rem).
-    const selLeft = `calc(1rem + ${expandedIdx} / ${N} * (100% - 2rem))`;
-    const selRight = `calc(1rem + ${expandedIdx + 1} / ${N} * (100% - 2rem))`;
+    const selLeft = `${(expandedIdx / N) * 100}%`;
+    const selRight = `${((expandedIdx + 1) / N) * 100}%`;
 
     // Reusable label/value chip — matches the existing gust/sunrise/sunset chip style.
     const chip = (label: string, value: string) => (
@@ -527,8 +524,7 @@ export function DailyColumns({
     return (
       <div
         style={{
-          width: 'calc(100% + 2rem)',
-          margin: '0 -1rem 0 -1rem',
+          width: '100%',
           background: `linear-gradient(to right,
             var(--detail-panel-bg, rgba(80,100,255,0.08)) 0%,
             var(--detail-panel-bg, rgba(80,100,255,0.08)) ${selLeft},
@@ -617,13 +613,12 @@ export function DailyColumns({
       // For the now-card (non-expandable): flex:1 + min-height:0 + overflow:hidden keeps
       // the component within CardContent's flex constraints (11rem grid row). Wind tails
       // use overflow:visible on their own row — card has overflow:hidden at the card level.
-      // For the forecast page (expandable): overflow:visible so the detail panel can extend.
       style={{
         flex: 1,
         minHeight: 0,
         display: 'flex',
         flexDirection: 'column',
-        overflow: expandable ? 'visible' : 'hidden',
+        overflow: 'hidden',
       }}
     >
       {/* Column layout — always visible on all breakpoints.
