@@ -51,8 +51,8 @@ const CX = 110;
 const CY = 84;
 /** Total SVG width (matches C4 mockup) */
 const SVG_W = 220;
-/** Total SVG height (matches C4 mockup) */
-const SVG_H = 110;
+/** Total SVG height (extended to fit moon phase label below x-axis) */
+const SVG_H = 120;
 
 /** Sun color — gold/amber, WCAG AA on dark backgrounds */
 const SUN_COLOR = '#f59e0b';
@@ -325,30 +325,7 @@ function ArcVisualization({ almanac, tz }: ArcVisualizationProps) {
         </g>
       )}
 
-      {/* ── Moon phase label (centered inside arc) ─────────────────────── */}
-      <text
-        x={CX}
-        y={CY - 22}
-        textAnchor="middle"
-        fontSize={9}
-        fontFamily="var(--font-sans, system-ui, sans-serif)"
-        fontWeight={600}
-        fill="var(--muted-foreground)"
-        aria-hidden="true"
-      >
-        ☽ {phaseName}
-      </text>
-      <text
-        x={CX}
-        y={CY - 12}
-        textAnchor="middle"
-        fontSize={8}
-        fontFamily="var(--font-sans, system-ui, sans-serif)"
-        fill="var(--muted-foreground, #64748b)"
-        aria-hidden="true"
-      >
-        {illumText} illuminated
-      </text>
+      {/* ── Moon phase label (below x-axis labels) ─────────────────────── */}
 
       {/* ── Rise/set labels per C4 mockup: compact time centered on arc endpoint, label word below ── */}
       {/* Sun rise — left endpoint of sun arc */}
@@ -363,6 +340,20 @@ function ArcVisualization({ almanac, tz }: ArcVisualizationProps) {
       {/* Sun set — right endpoint of sun arc */}
       <text x={CX + SUN_RX} y={CY + 12} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize={10} fill="var(--foreground)" aria-hidden="true">{sunsetText}</text>
       <text x={CX + SUN_RX} y={CY + 22} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize={8} fill="var(--muted-foreground)" aria-hidden="true">Sunset</text>
+
+      {/* Moon phase label — below the rise/set x-axis labels */}
+      <text
+        x={CX}
+        y={CY + 34}
+        textAnchor="middle"
+        fontSize={9}
+        fontFamily="var(--font-sans, system-ui, sans-serif)"
+        fontWeight={600}
+        fill="var(--muted-foreground)"
+        aria-hidden="true"
+      >
+        ☽ {phaseName}
+      </text>
     </svg>
   );
 }
@@ -433,7 +424,7 @@ export function SunMoonCard({
              available CardContent height so the bottom rise/set labels don't
              clip — the SVG scales proportionally with width="100%" so at the
              tile card width (~270px) the rendered height stays within budget. */
-          <div aria-live="polite" style={{ flex: 1, minWidth: 0, minHeight: 0, maxHeight: 'var(--card-content-max)', width: '100%', height: '100%', overflow: 'hidden', display: 'flex', alignItems: 'stretch' }}>
+          <div aria-live="polite" style={{ flex: 1, minWidth: 0, minHeight: 0, width: '100%', height: '100%', overflow: 'hidden', display: 'flex', alignItems: 'flex-start' }}>
             <ArcVisualization almanac={almanac} tz={stationTz} locale={locale} />
           </div>
         ) : (

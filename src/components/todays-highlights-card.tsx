@@ -164,7 +164,7 @@ export function TodaysHighlightsCard({
             <HighlightSkeleton />
           </>
         ) : todayStats ? (
-          <dl className="flex items-center justify-around gap-2 flex-wrap">
+          <dl className="flex items-center justify-around gap-2 flex-wrap flex-1">
 
             {/* 1 — Today's High */}
             <StatItem

@@ -161,6 +161,12 @@ export function PrecipitationCard({
   const snowRateCV = asConverted(observation?.snowRate ?? null);
   const snowRateFormatted = snowRateCV?.formatted ?? '—';
 
+  const dewpointCV = asConverted(observation?.dewpoint ?? null);
+  const dewpointFormatted = dewpointCV?.formatted ?? '—';
+
+  const humidityCV = asConverted(observation?.outHumidity ?? null);
+  const humidityFormatted = humidityCV?.formatted ?? '—';
+
   return (
     <Card footprint="tile" aria-busy={loading}>
       <CardHeader>
@@ -205,6 +211,25 @@ export function PrecipitationCard({
                 <span style={labelStyle}>{t('precipitationCard.rainTodayLabel')}</span>
                 <span style={secondaryValueStyle}>{rainRateFormatted}</span>
                 <span style={labelStyle}>{t('precipitationCard.rainRateLabel')}</span>
+              </div>
+            </div>
+
+            {/* Dewpoint + Humidity — primary moisture indicators */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '1rem',
+              }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.1rem' }}>
+                <span style={primaryValueStyle}>{dewpointFormatted}</span>
+                <span style={labelStyle}>{t('observations.dewpoint')}</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.1rem' }}>
+                <span style={primaryValueStyle}>{humidityFormatted}</span>
+                <span style={labelStyle}>{t('observations.humidity')}</span>
               </div>
             </div>
 

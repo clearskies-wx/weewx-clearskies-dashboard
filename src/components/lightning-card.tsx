@@ -308,10 +308,10 @@ export function LightningCard({
                     color: 'var(--foreground)',
                   }}
                 >
-                  {/* Bold numbers, muted separators */}
                   <span
                     style={{
                       fontFamily: 'var(--font-display, system-ui, sans-serif)',
+                      fontSize: 'var(--text-stat-tile)',
                       fontWeight: 600,
                     }}
                   >
@@ -322,6 +322,7 @@ export function LightningCard({
                   <span
                     style={{
                       fontFamily: 'var(--font-display, system-ui, sans-serif)',
+                      fontSize: 'var(--text-stat-tile)',
                       fontWeight: 600,
                     }}
                   >
