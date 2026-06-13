@@ -309,6 +309,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
               textAlign: 'center',
               gap: '0.1rem',
               pointerEvents: 'none',
+              paddingBottom: '1.5rem',
             }}
           >
             {/* Bearing + cardinal: "305° NW" */}

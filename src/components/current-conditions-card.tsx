@@ -178,9 +178,9 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
     <div
       style={{
         flexShrink: 0,
-        paddingTop: '0.4rem',
+        paddingTop: '0.2rem',
         borderTop: '1px solid var(--border)',
-        marginTop: '0.25rem',
+        marginTop: '0.15rem',
       }}
     >
       {/* Section label */}
@@ -201,7 +201,7 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
 
       {/* Chart: role="img" with aria-label for screen readers */}
       <div role="img" aria-label={t('tempCurveAriaLabel')}>
-        <ResponsiveContainer width="100%" height={96}>
+        <ResponsiveContainer width="100%" height={120}>
           <ComposedChart data={data} margin={{ top: 6, right: 16, bottom: 16, left: 0 }}>
             {/* Past actual: solid blue filled area */}
             <Area
@@ -397,7 +397,7 @@ export function CurrentConditionsCard({
   const lowDisplay = todayLow != null ? `${Math.round(todayLow)}${tempUnitShort}` : null;
 
   return (
-    <Card footprint="wide" rowSpan={2} aria-busy={loading} className="pb-1">
+    <Card footprint="wide" rowSpan={2} aria-busy={loading} className="!pb-0">
       {/* Card title — Manrope 0.82rem semibold with bottom rule */}
       <CardHeader>
         <h2
