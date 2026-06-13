@@ -446,11 +446,9 @@ const VB_HEIGHT = 280;
 const LEFT_MARGIN  = 40;
 const RIGHT_MARGIN = 970;
 const CHART_WIDTH  = RIGHT_MARGIN - LEFT_MARGIN; // 960 SVG units
-const AXIS_Y       = 245;  // Y of the time axis line
 const BAR_HEIGHT   = 16;   // px height of each planet bar
 const BAR_GAP      = 40;   // px between bar rows (center-to-center)
 const FIRST_BAR_Y  = 58;   // Y of the first bar's top edge
-const LABEL_Y      = 264;  // Y of tick labels
 
 function GanttTimeline({ planets, almanac, stationTz }: GanttTimelineProps) {
   const isMobile = useIsMobile();
