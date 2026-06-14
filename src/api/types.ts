@@ -445,8 +445,40 @@ export interface FaultFeatureCollection {
 // /aqi/current
 // ---------------------------------------------------------------------------
 
+/**
+ * AQI scale identifier — the provider's native scale, passed through by the API
+ * (ADR-059: multi-jurisdiction AQI, pass-through architecture).
+ *
+ * Scale semantics:
+ *   epa / airnow: US EPA 0-500 index. Category names: Good / Moderate / USG / Unhealthy / Very Unhealthy / Hazardous.
+ *   eaqi:         EU Air Quality Index. Qualitative scale (0-100+). Category: Good / Fair / Moderate / Poor / Very Poor.
+ *   caqi:         Common Air Quality Index (EU). 0-100+ numeric range. Category: Very Low / Low / Medium / High / Very High.
+ *   india:        Indian National AQI (NAQI). 0-500 range. Category: Good / Satisfactory / Moderate / Poor / Very Poor / Severe.
+ *   china / mep:  China MEP (AQI). 0-500 range. Category names in Chinese or transliterated.
+ *   owm:          OpenWeatherMap 1-5 ordinal. Category: Good / Fair / Moderate / Poor / Very Poor.
+ *   uk:           UK DAQI 1-10 range. Category: Low / Moderate / High / Very High.
+ *   de:           German LQI qualitative scale. Category names from German provider.
+ *   cai:          Canadian Air Quality Index.
+ */
+export type AQIScale =
+  | 'epa'
+  | 'airnow'
+  | 'eaqi'
+  | 'caqi'
+  | 'india'
+  | 'china'
+  | 'mep'
+  | 'owm'
+  | 'uk'
+  | 'de'
+  | 'cai'
+  | string; // fallback for future/unknown scales
+
 export interface AQIReading {
   aqi: number | null;
+  /** Provider's actual scale identifier (ADR-059). Governs rendering range and color bands. */
+  aqiScale: AQIScale;
+  /** Provider's category name — passed through directly (e.g. "Good", "Moderate", "Fair"). */
   aqiCategory: string | null;
   aqiMainPollutant: string | null;
   aqiLocation: string | null;
@@ -456,6 +488,17 @@ export interface AQIReading {
   pollutantNO2: number | null;
   pollutantSO2: number | null;
   pollutantCO: number | null;
+  /** Nitric oxide (NO) concentration in µg/m³. Returned by OWM and some other providers (ADR-059). */
+  pollutantNO: number | null;
+  /** Ammonia (NH3) concentration in µg/m³. Returned by OWM; used in Indian NAQI NH3 bands (ADR-059). */
+  pollutantNH3: number | null;
+  /**
+   * Per-pollutant source indicator (ADR-059).
+   * Keys are canonical field names (e.g. "pollutantPM25", "aqi").
+   * Value "weewx" means the value came from the local weather station sensors.
+   * Absent (null) when all values come from the configured AQI provider.
+   */
+  pollutantSources: Record<string, string> | null;
   observedAt: string;
   source: string;
 }
