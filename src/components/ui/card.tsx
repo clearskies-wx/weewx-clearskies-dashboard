@@ -63,7 +63,7 @@ function minHeightClass(rowSpan: "quarter" | "half" | 1 | 2 | undefined): string
   // grid area, leaving no room for the margin to create visual spacing.
   switch (rowSpan) {
     case "quarter": return "min-h-[var(--card-quarter-row)] md:min-h-0";
-    case "half":    return "md:min-h-[var(--card-half-row)]";
+    case "half":    return "min-h-[5.5rem] md:min-h-0";
     default:        return "min-h-[var(--card-row)] md:min-h-0";
   }
 }

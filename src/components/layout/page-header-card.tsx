@@ -75,6 +75,7 @@ export function PageHeaderCard({
       footprint="full"
       rowSpan="half"
       className={cn(
+        '!py-1 md:!py-2.5',
         className,
       )}
     >
