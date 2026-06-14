@@ -287,23 +287,9 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
         <div className="card-glass min-w-0 flex-1 px-3 py-2.5">
 
           {/* Title row: event name + optional severity badge */}
-          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <p className="truncate font-heading text-[length:var(--text-card-title)] font-semibold leading-snug text-card-foreground">
-              {alert.event}
-            </p>
-            {alert.severityLabel && (
-              <span
-                className="shrink-0 rounded px-1.5 py-0.5 text-[length:var(--text-micro)] font-medium uppercase tracking-wide"
-                style={{
-                  backgroundColor: `${colors.iconBg}22`,
-                  color:           colors.border,
-                  border:          `1px solid ${colors.border}44`,
-                }}
-              >
-                {alert.severityLabel}
-              </span>
-            )}
-          </div>
+          <p className="truncate font-heading text-[length:var(--text-card-title)] font-semibold leading-snug text-card-foreground">
+            {alert.event}
+          </p>
 
           {/* Detail line: area + expiry */}
           <p className="mt-0.5 truncate font-heading text-[length:var(--text-label)] leading-snug text-muted-foreground">
