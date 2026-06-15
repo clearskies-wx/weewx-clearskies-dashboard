@@ -44,9 +44,9 @@ const SUN_RY = 80;
 const MOON_RX = 50;
 const MOON_RY = 52;
 const CX = 130;
-const CY = 104;
+const CY = 86;
 const SVG_W = 260;
-const SVG_H = 130;
+const SVG_H = 118;
 
 /** Sun color — gold/amber, WCAG AA on dark backgrounds */
 const SUN_COLOR = '#f59e0b';
@@ -210,8 +210,9 @@ function ArcVisualization({
       role="img"
       aria-label={svgTitle}
       viewBox={`0 0 ${SVG_W} ${SVG_H}`}
+      preserveAspectRatio="xMidYMax meet"
       width="100%"
-      style={{ display: 'block' }}
+      style={{ display: 'block', maxHeight: '100%' }}
     >
       <title>{svgTitle}</title>
 
@@ -376,7 +377,7 @@ function SunMoonContent({ almanac, stationTz }: SunMoonContentProps) {
   ].join('. ');
 
   return (
-    <div aria-live="polite" style={{ width: '100%', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+    <div aria-live="polite" style={{ width: '100%', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', minHeight: 0 }}>
       <ArcVisualization
         almanac={almanac}
         tz={stationTz}
