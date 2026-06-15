@@ -92,9 +92,25 @@ function buildUvBellCurve(
 ): UvChartPoint[] {
   const peak = uvIndexMax ?? 0;
 
-  // No forecast UV available — return empty so the chart renders its no-data state
-  // rather than a flat zero curve that looks broken.
-  if (peak <= 0) return [];
+  // When peak UV is unknown or zero (e.g. forecast not yet loaded after a page refresh,
+  // or genuinely zero overnight), return a flat-zero curve spanning the full day window
+  // rather than an empty array. This keeps the chart frame and axes visible so the
+  // ReferenceDot for the current observed UV reading can still render immediately.
+  // UvChart shows "No data" only when BOTH data is empty AND currentUv is null —
+  // so this flat baseline is the correct fallback when observation data may exist.
+  if (peak <= 0) {
+    const nowFlat = new Date();
+    const midnightFlat = new Date(nowFlat);
+    midnightFlat.setHours(0, 0, 0, 0);
+    const midnightFlatMs = midnightFlat.getTime();
+    const endFlatMs = midnightFlatMs + 24 * 60 * 60 * 1000;
+    const FLAT_INTERVAL_MS = 15 * 60 * 1000;
+    const flatPoints: UvChartPoint[] = [];
+    for (let ts = midnightFlatMs; ts <= endFlatMs; ts += FLAT_INTERVAL_MS) {
+      flatPoints.push({ ts, uv: 0 });
+    }
+    return flatPoints;
+  }
 
   const now = new Date();
   const midnight = new Date(now);
@@ -402,7 +418,12 @@ function UvChart({ data, currentUv, gradientId, peakUv }: UvChartProps) {
   // Memoised so it doesn't shift on every render within the same mount.
   const nowTs = useMemo(() => Date.now(), []);
 
-  if (data.length === 0) {
+  // Show "No data" only when there is genuinely nothing to display:
+  // no bell curve AND no current observation. When we have a currentUv but the
+  // forecast hasn't loaded yet, buildUvBellCurve returns a flat-zero baseline
+  // (never an empty array), so this branch is reserved for true no-data states
+  // (nighttime with no UV sensor, sensor offline, etc.).
+  if (data.length === 0 && currentUv === null) {
     return (
       <p
         className="text-muted-foreground text-sm text-center py-4"
