@@ -399,50 +399,34 @@ function SunMoonContent({ almanac, stationTz }: SunMoonContentProps) {
           moonsetText={moonsetText}
         />
       </div>
-      {/* Moon phase strip — flex-shrink:0 ensures the strip is always visible at the bottom
-          and is never compressed away. aria-label gives screen readers the full phase summary. */}
+      {/* Moon phase — icon + name on one line */}
       <div
         style={{
           flexShrink: 0,
           display: 'flex',
-          flexDirection: 'column',
+          flexDirection: 'row',
           alignItems: 'center',
-          gap: '0.2rem',
-          paddingBottom: '0.25rem',
+          justifyContent: 'center',
+          gap: '0.35rem',
         }}
-        aria-label={`Moon phase: ${phaseName}, ${illumText} illuminated`}
+        aria-label={`Moon phase: ${phaseName}`}
       >
-        {/* Phase glyph — 1.25rem (20px); decorative, info carried by aria-label above */}
         <span
           style={{ fontSize: '1.25rem', lineHeight: 1, color: MOON_COLOR }}
           aria-hidden="true"
         >
           ☽
         </span>
-        {/* Phase name — uses --text-label token (12px), design-system minimum */}
         <span
           style={{
             fontSize: 'var(--text-label)',
             fontFamily: 'var(--font-sans, system-ui, sans-serif)',
             fontWeight: 600,
             color: 'var(--muted-foreground)',
-            textAlign: 'center',
           }}
           aria-hidden="true"
         >
           {phaseName}
-        </span>
-        {/* Illumination percentage */}
-        <span
-          style={{
-            fontSize: 'var(--text-micro)',
-            fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-            color: 'var(--muted-foreground)',
-            textAlign: 'center',
-          }}
-          aria-hidden="true"
-        >
-          {illumText} illuminated
         </span>
       </div>
     </div>
