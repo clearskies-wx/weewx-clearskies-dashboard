@@ -183,22 +183,6 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
         marginTop: '0.15rem',
       }}
     >
-      {/* Section label */}
-      <p
-        aria-hidden="true"
-        style={{
-          fontFamily: 'var(--font-sans)',
-          fontSize: 'var(--text-micro)',
-          fontWeight: 700,
-          letterSpacing: '0.06em',
-          textTransform: 'uppercase',
-          color: 'var(--muted-foreground)',
-          marginBottom: '0.25rem',
-        }}
-      >
-        {t('todaysTemperature')}
-      </p>
-
       {/* Chart: role="img" with aria-label for screen readers */}
       <div role="img" aria-label={t('tempCurveAriaLabel')}>
         <ResponsiveContainer width="100%" height={120}>
