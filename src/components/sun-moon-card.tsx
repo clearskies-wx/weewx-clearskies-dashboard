@@ -46,7 +46,7 @@ const MOON_RY = 56;
 const CX = 130;
 const CY = 86;
 const SVG_W = 260;
-const SVG_H = 118;
+const SVG_H = 88;
 
 /** Sun color — gold/amber, WCAG AA on dark backgrounds */
 const SUN_COLOR = '#f59e0b';
@@ -166,24 +166,13 @@ function SunMoonError({
 
 interface ArcVisualizationProps {
   almanac: AlmanacSnapshot;
-  tz: string;
-  /** Accessible title string for the SVG (built by parent to include moon phase). */
   svgTitle: string;
-  sunriseText: string;
-  sunsetText: string;
-  moonriseText: string;
-  moonsetText: string;
 }
 
-/** Renders the nested-arc SVG (sun + moon arcs, position markers, rise/set labels). */
+/** Renders the nested-arc SVG (sun + moon arcs, position markers, horizon). */
 function ArcVisualization({
   almanac,
-  tz: _tz,
   svgTitle,
-  sunriseText,
-  sunsetText,
-  moonriseText,
-  moonsetText,
 }: ArcVisualizationProps) {
   const [nowMs, setNowMs] = useState(Date.now());
   useEffect(() => {
@@ -216,11 +205,11 @@ function ArcVisualization({
     >
       <title>{svgTitle}</title>
 
-      {/* ── Horizon line ───────────────────────────────────────────────── */}
+      {/* ── Horizon line (full viewBox width) ──────────────────────────── */}
       <line
-        x1={CX - SUN_RX}
+        x1={0}
         y1={CY}
-        x2={CX + SUN_RX}
+        x2={SVG_W}
         y2={CY}
         stroke="currentColor"
         strokeWidth={1}
@@ -306,21 +295,6 @@ function ArcVisualization({
         </g>
       )}
 
-      {/* ── Rise/set labels ─────────────────────────────────────────────── */}
-      {/* All use --text-micro for uniform size. Edge labels use start/end
-          anchor to prevent clipping at SVG boundaries. */}
-      {/* Sunrise — flush with left SVG edge (aligns to card padding) */}
-      <text x={0} y={CY + 12} textAnchor="start" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize="var(--text-micro)" fill="var(--foreground)" aria-hidden="true">{sunriseText}</text>
-      <text x={0} y={CY + 23} textAnchor="start" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize="var(--text-micro)" fill="var(--muted-foreground)" aria-hidden="true">Sunrise</text>
-      {/* Moonrise — inner left, centered */}
-      <text x={CX - MOON_RX} y={CY + 12} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize="var(--text-micro)" fill="var(--foreground)" aria-hidden="true">{moonriseText}</text>
-      <text x={CX - MOON_RX} y={CY + 23} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize="var(--text-micro)" fill="var(--muted-foreground)" aria-hidden="true">Moonrise</text>
-      {/* Moonset — inner right, centered */}
-      <text x={CX + MOON_RX} y={CY + 12} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize="var(--text-micro)" fill="var(--foreground)" aria-hidden="true">{moonsetText}</text>
-      <text x={CX + MOON_RX} y={CY + 23} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize="var(--text-micro)" fill="var(--muted-foreground)" aria-hidden="true">Moonset</text>
-      {/* Sunset — flush with right SVG edge (aligns to card padding) */}
-      <text x={SVG_W} y={CY + 12} textAnchor="end" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize="var(--text-micro)" fill="var(--foreground)" aria-hidden="true">{sunsetText}</text>
-      <text x={SVG_W} y={CY + 23} textAnchor="end" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize="var(--text-micro)" fill="var(--muted-foreground)" aria-hidden="true">Sunset</text>
     </svg>
   );
 }
@@ -346,6 +320,12 @@ interface SunMoonContentProps {
   almanac: AlmanacSnapshot;
   stationTz: string;
 }
+
+const LABEL_STYLE: React.CSSProperties = {
+  fontSize: 'var(--text-micro)',
+  fontFamily: 'var(--font-sans, system-ui, sans-serif)',
+  lineHeight: 1.3,
+};
 
 function SunMoonContent({ almanac, stationTz }: SunMoonContentProps) {
   const fmtCompact = (iso: string | null): string => {
@@ -377,16 +357,33 @@ function SunMoonContent({ almanac, stationTz }: SunMoonContentProps) {
   ].join('. ');
 
   return (
-    <div aria-live="polite" style={{ width: '100%', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', minHeight: 0 }}>
-      <ArcVisualization
-        almanac={almanac}
-        tz={stationTz}
-        svgTitle={svgTitle}
-        sunriseText={sunriseText}
-        sunsetText={sunsetText}
-        moonriseText={moonriseText}
-        moonsetText={moonsetText}
-      />
+    <div aria-live="polite" style={{ width: '100%', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      {/* Arc SVG — fills remaining space above labels */}
+      <div style={{ flex: 1, minHeight: 0 }}>
+        <ArcVisualization almanac={almanac} svgTitle={svgTitle} />
+      </div>
+      {/* Labels — HTML, flush with card padding edges */}
+      <div
+        style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.25rem' }}
+        aria-hidden="true"
+      >
+        <div style={{ textAlign: 'left' }}>
+          <div style={{ ...LABEL_STYLE, fontWeight: 600, color: 'var(--foreground)' }}>{sunriseText}</div>
+          <div style={{ ...LABEL_STYLE, fontWeight: 400, color: 'var(--muted-foreground)' }}>Sunrise</div>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ ...LABEL_STYLE, fontWeight: 600, color: 'var(--foreground)' }}>{moonriseText}</div>
+          <div style={{ ...LABEL_STYLE, fontWeight: 400, color: 'var(--muted-foreground)' }}>Moonrise</div>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ ...LABEL_STYLE, fontWeight: 600, color: 'var(--foreground)' }}>{moonsetText}</div>
+          <div style={{ ...LABEL_STYLE, fontWeight: 400, color: 'var(--muted-foreground)' }}>Moonset</div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ ...LABEL_STYLE, fontWeight: 600, color: 'var(--foreground)' }}>{sunsetText}</div>
+          <div style={{ ...LABEL_STYLE, fontWeight: 400, color: 'var(--muted-foreground)' }}>Sunset</div>
+        </div>
+      </div>
     </div>
   );
 }
