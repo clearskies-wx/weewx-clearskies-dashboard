@@ -40,9 +40,9 @@ import {
 // ---------------------------------------------------------------------------
 
 const SUN_RX = 120;
-const SUN_RY = 80;
+const SUN_RY = 72;
 const MOON_RX = 50;
-const MOON_RY = 52;
+const MOON_RY = 56;
 const CX = 130;
 const CY = 86;
 const SVG_W = 260;
@@ -257,7 +257,7 @@ function ArcVisualization({
           <circle
             cx={sunMarker.x}
             cy={sunMarker.y}
-            r={9}
+            r={12}
             fill={SUN_COLOR}
             fillOpacity={0.2}
           />
@@ -265,7 +265,7 @@ function ArcVisualization({
           <circle
             cx={sunMarker.x}
             cy={sunMarker.y}
-            r={6}
+            r={8}
             fill={SUN_COLOR}
           />
         </g>
@@ -279,7 +279,7 @@ function ArcVisualization({
             <circle
               cx={moonMarker.x}
               cy={moonMarker.y}
-              r={5}
+              r={6.5}
               fill="var(--background, #0f172a)"
               stroke={MOON_COLOR}
               strokeWidth={1.5}
@@ -290,14 +290,14 @@ function ArcVisualization({
               <circle
                 cx={moonMarker.x}
                 cy={moonMarker.y}
-                r={5.5}
+                r={7}
                 fill={MOON_COLOR}
               />
               {/* Crescent shadow — offset dark circle covering the "dark" side */}
               <circle
-                cx={moonMarker.x + 2}
-                cy={moonMarker.y - 1.5}
-                r={4}
+                cx={moonMarker.x + 2.6}
+                cy={moonMarker.y - 2}
+                r={5}
                 fill="var(--card-background, #1e293b)"
                 fillOpacity={0.55}
               />
@@ -309,18 +309,18 @@ function ArcVisualization({
       {/* ── Rise/set labels ─────────────────────────────────────────────── */}
       {/* All use --text-micro for uniform size. Edge labels use start/end
           anchor to prevent clipping at SVG boundaries. */}
-      {/* Sunrise — far left, anchor start so text extends rightward */}
-      <text x={CX - SUN_RX} y={CY + 12} textAnchor="start" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize="var(--text-micro)" fill="var(--foreground)" aria-hidden="true">{sunriseText}</text>
-      <text x={CX - SUN_RX} y={CY + 23} textAnchor="start" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize="var(--text-micro)" fill="var(--muted-foreground)" aria-hidden="true">Sunrise</text>
+      {/* Sunrise — flush with left SVG edge (aligns to card padding) */}
+      <text x={0} y={CY + 12} textAnchor="start" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize="var(--text-micro)" fill="var(--foreground)" aria-hidden="true">{sunriseText}</text>
+      <text x={0} y={CY + 23} textAnchor="start" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize="var(--text-micro)" fill="var(--muted-foreground)" aria-hidden="true">Sunrise</text>
       {/* Moonrise — inner left, centered */}
       <text x={CX - MOON_RX} y={CY + 12} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize="var(--text-micro)" fill="var(--foreground)" aria-hidden="true">{moonriseText}</text>
       <text x={CX - MOON_RX} y={CY + 23} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize="var(--text-micro)" fill="var(--muted-foreground)" aria-hidden="true">Moonrise</text>
       {/* Moonset — inner right, centered */}
       <text x={CX + MOON_RX} y={CY + 12} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize="var(--text-micro)" fill="var(--foreground)" aria-hidden="true">{moonsetText}</text>
       <text x={CX + MOON_RX} y={CY + 23} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize="var(--text-micro)" fill="var(--muted-foreground)" aria-hidden="true">Moonset</text>
-      {/* Sunset — far right, anchor end so text extends leftward */}
-      <text x={CX + SUN_RX} y={CY + 12} textAnchor="end" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize="var(--text-micro)" fill="var(--foreground)" aria-hidden="true">{sunsetText}</text>
-      <text x={CX + SUN_RX} y={CY + 23} textAnchor="end" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize="var(--text-micro)" fill="var(--muted-foreground)" aria-hidden="true">Sunset</text>
+      {/* Sunset — flush with right SVG edge (aligns to card padding) */}
+      <text x={SVG_W} y={CY + 12} textAnchor="end" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize="var(--text-micro)" fill="var(--foreground)" aria-hidden="true">{sunsetText}</text>
+      <text x={SVG_W} y={CY + 23} textAnchor="end" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize="var(--text-micro)" fill="var(--muted-foreground)" aria-hidden="true">Sunset</text>
     </svg>
   );
 }
