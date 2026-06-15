@@ -140,7 +140,7 @@ export function HourlyStrip({
         style={{
           fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
           fontSize: 'var(--text-label)',
-          fontWeight: 400,
+          fontWeight: 600,
           color: 'var(--muted-foreground)',
           whiteSpace: 'nowrap',
         }}
@@ -151,7 +151,7 @@ export function HourlyStrip({
   ));
 
   // Row: weather icons
-  const weatherIconSize = threeHourWindows ? 32 : 24;
+  const weatherIconSize = threeHourWindows ? 38 : 24;
   const iconRow = displayHours.map((hour, i) => (
     <div key={i} style={{ ...colStyle, ...CELL_BASE, height: rowH.icon }}>
       <WeatherIcon code={toWmoCode(hour.weatherCode)} size={weatherIconSize} />
@@ -193,7 +193,7 @@ export function HourlyStrip({
             color: 'var(--muted-foreground)',
           }}
         >
-          <PrecipIcon aria-hidden="true" size={threeHourWindows ? 11 : 9} />
+          <PrecipIcon aria-hidden="true" size={threeHourWindows ? 13 : 9} />
           {precip !== null ? `${precip}%` : '—'}
         </span>
       </div>

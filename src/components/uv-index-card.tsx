@@ -675,7 +675,7 @@ export function UvIndexCard({
               }}
             >
               {/* Custom UV icon — 36px tall, decorative, aria-hidden */}
-              <UvIcon size={36} />
+              <span className="text-muted-foreground"><UvIcon size={36} /></span>
 
               {/* Now / Peak value groups with dot separator — aria-live for SSE updates */}
               <div

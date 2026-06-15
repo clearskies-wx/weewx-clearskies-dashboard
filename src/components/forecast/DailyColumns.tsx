@@ -296,7 +296,7 @@ export function DailyColumns({
           tabIndex={expandable ? -1 : undefined}
           aria-hidden={expandable ? true : undefined}
         >
-          <WeatherIcon code={toWmoCode(day.weatherCode)} size={expandable ? 24 : 30} />
+          <WeatherIcon code={toWmoCode(day.weatherCode)} size={expandable ? 24 : 36} />
         </div>
       ))}
     </div>
@@ -395,7 +395,7 @@ export function DailyColumns({
                 color: 'var(--muted-foreground)',
               }}
             >
-              <Drop aria-hidden="true" size={expandable ? 8 : 10} />
+              <Drop aria-hidden="true" size={expandable ? 8 : 12} />
               {precip !== null ? `${precip}%` : '—'}
             </span>
             {/* Rain amount — only when > 0 */}

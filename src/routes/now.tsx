@@ -265,7 +265,7 @@ export function NowPage() {
           <CardHeader>
             <CardTitle as="h2">{tRadar('radarTitle')}</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-1">
             {station ? (
               <RadarMap
                 center={[station.latitude, station.longitude]}

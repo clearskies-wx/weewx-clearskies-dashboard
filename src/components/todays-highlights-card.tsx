@@ -72,21 +72,18 @@ function StatItem({ icon, value, microLabel }: StatItemProps) {
   // flexbox `order`. Icon: order-1, dd (value): order-2, dt (label): order-3.
   return (
     <div className="flex flex-col items-center gap-0.5 min-w-[4rem]">
-      {/* dt precedes dd in DOM for correct description-list semantics */}
       <dt
-        className="text-[0.7rem] uppercase tracking-wide text-muted-foreground leading-tight order-3"
+        className="text-[0.75rem] uppercase tracking-wide text-muted-foreground leading-tight order-3"
         style={{ fontFamily: 'var(--font-sans)' }}
       >
         {microLabel}
       </dt>
-      {/* Icon — decorative; aria-hidden since dt carries the label */}
       <span aria-hidden="true" className="text-muted-foreground order-1">
         {icon}
       </span>
-      {/* Value — rendered below icon, above label via order */}
       <dd
-        className="text-sm font-semibold text-foreground leading-tight order-2"
-        style={{ fontFamily: 'var(--font-display)', fontFeatureSettings: '"tnum"' }}
+        className="font-semibold text-foreground leading-tight order-2"
+        style={{ fontFamily: 'var(--font-display)', fontFeatureSettings: '"tnum"', fontSize: 'var(--text-body)' }}
       >
         {value}
       </dd>
@@ -164,39 +161,39 @@ export function TodaysHighlightsCard({
             <HighlightSkeleton />
           </>
         ) : todayStats ? (
-          <dl className="grid grid-cols-2 gap-x-2 gap-y-3 items-start justify-items-center flex-1 content-center">
+          <dl className="grid grid-cols-2 gap-x-2 gap-y-6 items-start justify-items-center flex-1 content-center">
 
             {/* 1 — Today's High */}
             <StatItem
-              icon={<ThermometerHot size={16} weight="regular" />}
+              icon={<ThermometerHot size={18} weight="regular" />}
               value={tempDisplay(todayStats.high)}
               microLabel={t('highlights.todaysHigh')}
             />
 
             {/* 2 — Today's Low */}
             <StatItem
-              icon={<ThermometerCold size={16} weight="regular" />}
+              icon={<ThermometerCold size={18} weight="regular" />}
               value={tempDisplay(todayStats.low)}
               microLabel={t('highlights.todaysLow')}
             />
 
             {/* 3 — Peak Gust */}
             <StatItem
-              icon={<Wind size={16} weight="regular" />}
+              icon={<Wind size={18} weight="regular" />}
               value={windGustDisplay()}
               microLabel={t('highlights.peakGust')}
             />
 
             {/* 4 — Daily Average Wind (avgWind from archive; falls back to observation.windSpeed) */}
             <StatItem
-              icon={<Wind size={16} weight="regular" />}
+              icon={<Wind size={18} weight="regular" />}
               value={windDisplay()}
               microLabel={t('highlights.wind')}
             />
 
             {/* 5 — Rain Today */}
             <StatItem
-              icon={<Drop size={16} weight="regular" />}
+              icon={<Drop size={18} weight="regular" />}
               value={rainDisplay()}
               microLabel={t('highlights.rainToday')}
             />
@@ -204,7 +201,7 @@ export function TodaysHighlightsCard({
             {/* 6 — Peak AQI — conditional; only shown when peakAQI > 0 */}
             {todayStats.peakAQI > 0 && (
               <StatItem
-                icon={<Leaf size={16} weight="regular" />}
+                icon={<Leaf size={18} weight="regular" />}
                 value={`${formatValue(todayStats.peakAQI, 'uv')} ${aqiCategoryLabel(todayStats.peakAQI)}`}
                 microLabel={t('highlights.peakAqi')}
               />
