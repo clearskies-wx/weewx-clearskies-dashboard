@@ -39,20 +39,14 @@ import {
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Sun arc — wide so sun labels (x=10,250) are far from moon labels (x=88,172) */
 const SUN_RX = 120;
-/** Sun arc vertical radius — flat (peak at CY-24=6, safe for sprites) */
-const SUN_RY = 24;
-/** Moon arc — narrow so there's 33px+ gap between sun and moon label text */
+const SUN_RY = 38;
 const MOON_RX = 42;
-/** Moon arc vertical radius */
-const MOON_RY = 16;
+const MOON_RY = 22;
 const CX = 130;
-/** Horizon line Y — leaves room above for arcs and below for labels within viewBox */
-const CY = 30;
+const CY = 46;
 const SVG_W = 260;
-/** ViewBox height — labels end at ~y=49; auto-sizes via aspect ratio (~53px at 250px card width) */
-const SVG_H = 55;
+const SVG_H = 78;
 
 /** Sun color — gold/amber, WCAG AA on dark backgrounds */
 const SUN_COLOR = '#f59e0b';
@@ -386,8 +380,8 @@ function SunMoonContent({ almanac, stationTz }: SunMoonContentProps) {
     /* aria-live so SSE-driven refreshes are announced (ADR-041).
        Layout: arc SVG on top, moon phase strip at bottom.
        The SVG scales with width="100%" so both mobile and desktop render correctly. */
-    <div aria-live="polite" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem' }}>
-      {/* Arc SVG — auto-sizes from viewBox aspect ratio (~53px at 250px card width) */}
+    <div aria-live="polite" style={{ width: '100%', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+      {/* Arc SVG — auto-sizes from viewBox aspect ratio */}
       <div style={{ width: '100%' }}>
         <ArcVisualization
           almanac={almanac}
@@ -402,12 +396,12 @@ function SunMoonContent({ almanac, stationTz }: SunMoonContentProps) {
       {/* Moon phase — icon + name on one line */}
       <div
         style={{
-          flexShrink: 0,
           display: 'flex',
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
           gap: '0.35rem',
+          paddingBottom: '0.25rem',
         }}
         aria-label={`Moon phase: ${phaseName}`}
       >
