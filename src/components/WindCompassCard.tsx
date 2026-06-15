@@ -402,7 +402,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
                 <div
                   style={{
                     fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-                    fontSize: 'var(--text-section)',
+                    fontSize: 'var(--text-body)',
                     color: 'var(--muted-foreground)',
                   }}
                 >
@@ -411,6 +411,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
                     style={{
                       color: 'var(--foreground)',
                       fontWeight: 600,
+                      fontSize: 'var(--text-section)',
                       marginLeft: '0.25rem',
                     }}
                   >
@@ -422,7 +423,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
                 <div
                   style={{
                     fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-                    fontSize: 'var(--text-section)',
+                    fontSize: 'var(--text-body)',
                     color: 'var(--muted-foreground)',
                   }}
                 >
@@ -431,6 +432,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
                     style={{
                       color: 'var(--foreground)',
                       fontWeight: 600,
+                      fontSize: 'var(--text-section)',
                       marginLeft: '0.25rem',
                     }}
                   >
