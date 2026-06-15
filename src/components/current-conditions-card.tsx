@@ -202,7 +202,7 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
       {/* Chart: role="img" with aria-label for screen readers */}
       <div role="img" aria-label={t('tempCurveAriaLabel')}>
         <ResponsiveContainer width="100%" height={120}>
-          <ComposedChart data={data} margin={{ top: 6, right: 16, bottom: 16, left: 0 }}>
+          <ComposedChart data={data} margin={{ top: 6, right: 16, bottom: 16, left: 4 }}>
             {/* Past actual: solid blue filled area */}
             <Area
               type="monotone"
@@ -229,7 +229,11 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
               connectNulls={false}
             />
 
-            {/* "Now" vertical reference line */}
+            {/* "Now" vertical reference line.
+                Label position shifts dynamically to stay within chart bounds:
+                - Before ~3:36 AM (< 15% of day): 'insideTopRight' — avoids left-edge clip
+                - After ~8:24 PM (> 85% of day):  'insideTopLeft'  — avoids right-edge clip
+                - Otherwise:                       'insideTopLeft'  (default) */}
             <ReferenceLine
               x={now}
               stroke="#dc2626"
@@ -237,7 +241,11 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
               strokeDasharray="2 2"
               label={{
                 value: 'Now',
-                position: 'insideTopLeft',
+                position: (() => {
+                  const fractionOfDay = (now - todayMidnight) / (24 * 3600 * 1000);
+                  if (fractionOfDay < 0.15) return 'insideTopRight';
+                  return 'insideTopLeft';
+                })(),
                 style: {
                   fontFamily: 'var(--font-chart)',
                   fontSize: 'var(--text-micro)',
