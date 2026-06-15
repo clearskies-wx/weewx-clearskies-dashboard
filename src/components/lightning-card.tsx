@@ -42,6 +42,7 @@ import {
   CardContent,
 } from './ui/card';
 import type { Observation, LightningData } from '../api/types';
+import { asConverted } from '../api/types';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -126,10 +127,14 @@ export function LightningCard({
     strikePoints.length > 0 ||
     (lightning !== null && (lightning.count1h > 0 || lightning.count24h > 0));
 
-  // Nearest distance display: BFF supplies km; render as-is.
+  // Extract distance unit from API's ConvertedValue (ADR-042: no hardcoded units)
+  const distanceCV = asConverted(observation?.lightning_distance ?? null);
+  const distanceUnit = distanceCV?.label?.trim() || 'km';
+
+  // Nearest distance display: unit comes from ConvertedValue label.
   const nearestDisplay =
     lightning?.nearestDistanceKm != null
-      ? `${lightning.nearestDistanceKm.toFixed(1)} km`
+      ? `${lightning.nearestDistanceKm.toFixed(1)} ${distanceUnit}`
       : null;
 
   // Accessible chart summary for aria-label.
@@ -240,7 +245,7 @@ export function LightningCard({
                         padding: '4px 8px',
                       }}
                       formatter={(value, name) =>
-                        name === 'd' ? [`${Number(value).toFixed(1)} km`, 'Distance'] : [value, name]
+                        name === 'd' ? [`${Number(value).toFixed(1)} ${distanceUnit}`, 'Distance'] : [value, name]
                       }
                       labelFormatter={(label) => new Date(Number(label)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     />
@@ -266,7 +271,7 @@ export function LightningCard({
                   <thead>
                     <tr>
                       <th scope="col">Time</th>
-                      <th scope="col">Distance (km)</th>
+                      <th scope="col">Distance ({distanceUnit})</th>
                     </tr>
                   </thead>
                   <tbody>

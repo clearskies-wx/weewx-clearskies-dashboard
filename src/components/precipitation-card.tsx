@@ -161,6 +161,7 @@ export interface PrecipitationCardProps {
 
 export function PrecipitationCard({
   observation,
+  units,
   loading = false,
   error = null,
   onRetry,
@@ -185,6 +186,13 @@ export function PrecipitationCard({
 
   const humidityCV = asConverted(observation?.outHumidity ?? null);
   const humidityFormatted = humidityCV?.formatted ?? '—';
+
+  const rainLabel = rainCV?.label ?? units?.rain ?? '';
+  const rainRateLabel = rainRateCV?.label ?? units?.rainRate ?? '';
+  const dewpointLabel = dewpointCV?.label ?? units?.dewpoint ?? '';
+  const humidityLabel = humidityCV?.label ?? units?.outHumidity ?? '%';
+  const snowLabel = snowCV?.label ?? units?.snow ?? '';
+  const snowRateLabel = snowRateCV?.label ?? units?.snowRate ?? '';
 
   return (
     <Card footprint="tile" aria-busy={loading}>
@@ -225,9 +233,9 @@ export function PrecipitationCard({
             >
               <DropIcon size={36} />
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                <span style={primaryValueStyle}>{rainFormatted}</span>
+                <span style={primaryValueStyle}>{rainFormatted}{rainLabel}</span>
                 <span style={labelStyle}>{t('precipitationCard.rainTodayLabel')}</span>
-                <span style={secondaryValueStyle}>{rainRateFormatted}</span>
+                <span style={secondaryValueStyle}>{rainRateFormatted}{rainRateLabel}</span>
                 <span style={labelStyle}>{t('precipitationCard.rainRateLabel')}</span>
               </div>
             </div>
@@ -242,9 +250,9 @@ export function PrecipitationCard({
             >
               <DropHalfIcon size={36} />
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                <span style={primaryValueStyle}>{dewpointFormatted}</span>
+                <span style={primaryValueStyle}>{dewpointFormatted}{dewpointLabel}</span>
                 <span style={labelStyle}>{t('observations.dewpoint')}</span>
-                <span style={secondaryValueStyle}>{humidityFormatted}</span>
+                <span style={secondaryValueStyle}>{humidityFormatted}{humidityLabel}</span>
                 <span style={labelStyle}>{t('observations.humidity')}</span>
               </div>
             </div>
@@ -260,11 +268,11 @@ export function PrecipitationCard({
               >
                 <SnowflakeIcon size={36} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                  <span style={primaryValueStyle}>{snowFormatted}</span>
+                  <span style={primaryValueStyle}>{snowFormatted}{snowLabel}</span>
                   <span style={labelStyle}>{t('precipitationCard.snowTodayLabel', 'Snow Today')}</span>
                   {snowRateCV !== null && (
                     <>
-                      <span style={secondaryValueStyle}>{snowRateFormatted}</span>
+                      <span style={secondaryValueStyle}>{snowRateFormatted}{snowRateLabel}</span>
                       <span style={labelStyle}>{t('precipitationCard.snowRateLabel', 'Snow Rate')}</span>
                     </>
                   )}

@@ -11,7 +11,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardHeader, CardContent } from '../ui/card';
 import { HourlyStrip } from './HourlyStrip';
-import type { ForecastBundle } from '../../api/types';
+import type { ForecastBundle, UnitsBlock } from '../../api/types';
 
 // ── Skeleton ─────────────────────────────────────────────────────────────────
 
@@ -32,6 +32,7 @@ export interface ForecastHourlyCardProps {
   loading: boolean;
   error: Error | null;
   stationTz?: string;
+  units?: UnitsBlock | null;
 }
 
 type HourTab = 'today' | 'tomorrow';
@@ -43,6 +44,7 @@ export function ForecastHourlyCard({
   loading,
   error,
   stationTz = 'UTC',
+  units,
 }: ForecastHourlyCardProps) {
   const { t } = useTranslation('forecast');
   const [activeTab, setActiveTab] = useState<HourTab>('today');
@@ -156,7 +158,7 @@ export function ForecastHourlyCard({
               style={{ display: activeTab === 'today' ? 'block' : 'none' }}
             >
               {todayHours.length > 0 ? (
-                <HourlyStrip hours={todayHours} stationTz={stationTz} />
+                <HourlyStrip hours={todayHours} stationTz={stationTz} units={units} />
               ) : (
                 <p style={{ color: 'var(--muted-foreground)', fontSize: 'var(--text-body, 0.9rem)' }}>
                   {t('noHourlyData')}
@@ -171,7 +173,7 @@ export function ForecastHourlyCard({
               style={{ display: activeTab === 'tomorrow' ? 'block' : 'none' }}
             >
               {tomorrowHours.length > 0 ? (
-                <HourlyStrip hours={tomorrowHours} stationTz={stationTz} />
+                <HourlyStrip hours={tomorrowHours} stationTz={stationTz} units={units} />
               ) : (
                 <p style={{ color: 'var(--muted-foreground)', fontSize: 'var(--text-body, 0.9rem)' }}>
                   {t('noHourlyData')}

@@ -21,7 +21,7 @@ import { WeatherIcon } from '../weather-icon';
 import { WindSymbol } from './WindSymbol';
 import { TempTrendLine } from './TempTrendLine';
 import { toWmoCode } from '../../utils/weather-code';
-import type { HourlyForecastPoint } from '../../api/types';
+import type { HourlyForecastPoint, UnitsBlock } from '../../api/types';
 
 // ── Time formatting ──────────────────────────────────────────────────────────
 
@@ -55,6 +55,8 @@ export interface HourlyStripProps {
   stationTz?: string;
   /** When true, hide the temperature trend line between temp and precip rows. */
   hideTrend?: boolean;
+  /** Units block from the API response — drives temp suffix. */
+  units?: UnitsBlock | null;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -64,7 +66,10 @@ export function HourlyStrip({
   threeHourWindows = false,
   stationTz = 'UTC',
   hideTrend = false,
+  units,
 }: HourlyStripProps) {
+  const tempSuffix = units?.outTemp ?? '°';
+
   // Select the data to display
   const displayHours = useMemo(() => {
     if (!threeHourWindows) return hours;
@@ -164,7 +169,7 @@ export function HourlyStrip({
           lineHeight: 1,
         }}
       >
-        {hour.outTemp !== null ? `${Math.round(hour.outTemp)}°` : '—'}
+        {hour.outTemp !== null ? `${Math.round(hour.outTemp)}${tempSuffix}` : '—'}
       </span>
     </div>
   ));

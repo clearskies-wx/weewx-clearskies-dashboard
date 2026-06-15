@@ -184,7 +184,7 @@ export interface Observation {
   /** Lightning fields — present only when lightning sensor configured. */
   lightning_strike_count?: number | null;
   lightning_strike_count_1h?: number | null;
-  lightning_distance?: number | null;
+  lightning_distance?: ConvertedValue | number | null;
   lightning_last_det_time?: string | null;
   /** Rolling 24h window of detected lightning strikes (time + distance pairs). Null when lightning detection is unavailable. Empty array when no strikes in the window. */
   lightningStrikeHistory?: Array<{ time: string; distance: number }> | null;

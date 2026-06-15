@@ -157,8 +157,9 @@ export function SeismicPage() {
   const { resolved: resolvedTheme } = useTheme();
   const baseTile = TILE_CONFIG[resolvedTheme];
 
-  const { data: earthquakes, loading, error, refetch } = useEarthquakes();
+  const { data: earthquakes, units: eqUnits, loading, error, refetch } = useEarthquakes();
   const { data: station } = useStation();
+  const depthUnit = eqUnits?.depth ?? 'km';
   const { data: config } = useEarthquakeConfig();
   const { data: faults } = useEarthquakeFaults();
 
@@ -325,7 +326,7 @@ export function SeismicPage() {
                           <div>
                             <strong>{eq.place ?? t('unknownLocation')}</strong><br />
                             {t('magnitude')}: {formatValue(eq.magnitude, 'earthquakeMag')}{eq.magnitudeType ? ` ${eq.magnitudeType}` : ''}<br />
-                            {eq.depth !== null ? <>{t('depthLabel')}: {formatValue(eq.depth, 'earthquakeDepth')} km<br /></> : null}
+                            {eq.depth !== null ? <>{t('depthLabel')}: {formatValue(eq.depth, 'earthquakeDepth')} {depthUnit}<br /></> : null}
                             {eq.alert !== null ? <>{t('pager', { level: eq.alert })}<br /></> : null}
                             {/* ADR-020: use station-local time, matching the list panel below */}
                             {formatTime(eq.time, station?.timezone ?? 'UTC', locale)}
@@ -427,7 +428,7 @@ export function SeismicPage() {
                                 </p>
                                 <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground mt-0.5">
                                   {quake.depth !== null && (
-                                    <span>{t('depth', { depth: formatValue(quake.depth, 'earthquakeDepth') })}</span>
+                                    <span>{t('depthLabel')}: {formatValue(quake.depth, 'earthquakeDepth')} {depthUnit}</span>
                                   )}
                                   {quake.tsunami && (
                                     <span className="font-medium text-amber-700 dark:text-amber-400">

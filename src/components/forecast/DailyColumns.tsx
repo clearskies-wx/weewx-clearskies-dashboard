@@ -337,7 +337,7 @@ export function DailyColumns({
               className="flex flex-col items-center gap-0 md:flex-row md:items-baseline"
             >
               <span style={{ color: 'var(--temp-hi)' }}>
-                {day.tempMax !== null ? `${Math.round(day.tempMax)}°` : '—'}
+                {day.tempMax !== null ? `${Math.round(day.tempMax)}${tempSuffix}` : '—'}
               </span>
               <span
                 style={{ color: 'var(--muted-foreground)', margin: '0 1px' }}
@@ -347,7 +347,7 @@ export function DailyColumns({
                 /
               </span>
               <span style={{ color: 'var(--temp-lo)' }}>
-                {day.tempMin !== null ? `${Math.round(day.tempMin)}°` : '—'}
+                {day.tempMin !== null ? `${Math.round(day.tempMin)}${tempSuffix}` : '—'}
               </span>
             </span>
           ) : (
@@ -362,11 +362,11 @@ export function DailyColumns({
               className="flex flex-col items-center gap-0 md:flex-row md:items-baseline"
             >
               <span style={{ color: 'var(--temp-hi)' }}>
-                {day.tempMax !== null ? `${Math.round(day.tempMax)}°` : '—'}
+                {day.tempMax !== null ? `${Math.round(day.tempMax)}${tempSuffix}` : '—'}
               </span>
               <span style={{ color: 'var(--muted-foreground)', margin: '0 1px' }} className="hidden md:inline" aria-hidden="true">/</span>
               <span style={{ color: 'var(--temp-lo)' }}>
-                {day.tempMin !== null ? `${Math.round(day.tempMin)}°` : '—'}
+                {day.tempMin !== null ? `${Math.round(day.tempMin)}${tempSuffix}` : '—'}
               </span>
             </span>
           )}

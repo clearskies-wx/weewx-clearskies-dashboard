@@ -280,8 +280,8 @@ export function useAlmanac(date?: string): HookResult<AlmanacSnapshot> {
 // ---------------------------------------------------------------------------
 
 export function useEarthquakes(): HookResult<EarthquakeRecord[]> {
-  const { data, loading, error, refetch } = useApiQuery<{ data: EarthquakeRecord[]; source?: string }>(
-    (signal) => getEarthquakes(signal) as Promise<{ data: EarthquakeRecord[]; source?: string; generatedAt: string }>,
+  const { data, loading, error, refetch } = useApiQuery<{ data: EarthquakeRecord[]; source?: string; units?: UnitsBlock }>(
+    (signal) => getEarthquakes(signal) as Promise<{ data: EarthquakeRecord[]; source?: string; units?: UnitsBlock; generatedAt: string }>,
     { skip: isMockMode() },
   );
 
@@ -291,6 +291,7 @@ export function useEarthquakes(): HookResult<EarthquakeRecord[]> {
 
   return {
     data: data?.data ?? null,
+    units: data?.units ?? undefined,
     source: data?.source,
     loading,
     error,

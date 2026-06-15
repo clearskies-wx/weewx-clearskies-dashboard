@@ -37,6 +37,7 @@ export function ForecastPage() {
         loading={fcLoading}
         error={fcError}
         stationTz={tz}
+        units={fcUnits}
       />
 
       {/* ── Surface C: 7-Day ──────────────────────────────────────────── */}
