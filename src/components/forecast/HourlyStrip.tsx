@@ -9,11 +9,11 @@
 // Layout mirrors C3-now-forecast-card.html and C3-forecast-page.html exactly:
 //   Row order (top→bottom): time → icon → temp → trend → precip → wind
 //
-// Typography tokens (LOCKED):
-//   Time:    Manrope 400, text-label (0.75rem), muted
-//   Temp:    Outfit 600, 0.85rem, foreground
-//   Precip:  Manrope 400, text-micro (0.7rem), muted
-//   Wind:    WindSymbol size=20
+// Typography tokens:
+//   Time:    Manrope 400, text-label (0.75rem), muted — both modes
+//   Temp:    Outfit 600, text-stat-label (1rem) in threeHourWindows, text-label in scroll
+//   Precip:  Manrope 400, text-label (0.75rem), muted — both modes
+//   Wind:    WindSymbol size=24 in threeHourWindows, size=20 in scroll
 
 import { useMemo } from 'react';
 import { Drop, Snowflake } from '@phosphor-icons/react';
@@ -105,17 +105,18 @@ export function HourlyStrip({
   // mode, it IS the scroller and needs the styled scrollbar.
   const isScrollMode = !threeHourWindows;
 
-  // ── Row heights match mockup ─────────────────────────────────────────────
-  // threeHourWindows: compact card heights (from C3-now-forecast-card.html)
-  // scroll mode:      forecast page heights (from C3-forecast-page.html)
-  // C3 mockup compact budget (card-pad=0.75rem each side):
-  //   time=13 + icon=26 + temp=15 + trendH=22 + trend-padding=5 + precip=13 + wind=26 = 120px → fits.
+  // ── Row heights ──────────────────────────────────────────────────────────
+  // threeHourWindows: sized for the 2×2 card (22rem tall).
+  //   Card content area ≈ 22rem – header(~2rem) – py padding(~1.5rem) ≈ 18.5rem ≈ 296px.
+  //   Fixed row budget: time=20 + icon=40 + temp=24 + trend(48)+8 + precip=20 + wind=36 = 196px.
+  //   Remaining ~100px is distributed as gaps via justifyContent:'space-between'.
+  // scroll mode: forecast page heights (unchanged).
   const rowH = threeHourWindows
-    ? { time: 14, icon: 26, temp: 16, precip: 14, wind: 22 }
+    ? { time: 20, icon: 40, temp: 24, precip: 20, wind: 36 }
     : { time: 18, icon: 34, temp: 22, precip: 18, wind: 42 };
 
-  // ── Trend SVG: 22px for compact, 40px for page ──────────────────────────
-  const trendH = threeHourWindows ? 22 : 40;
+  // ── Trend SVG: 48px for 2×2 card, 40px for page ─────────────────────────
+  const trendH = threeHourWindows ? 48 : 40;
 
   // The trend line SVG spans the full width of ALL columns.
   // We render this as an absolutely-positioned overlay between temp and precip.
@@ -138,7 +139,7 @@ export function HourlyStrip({
       <span
         style={{
           fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-          fontSize: threeHourWindows ? 'var(--text-micro)' : 'var(--text-label)',
+          fontSize: 'var(--text-label)',
           fontWeight: 400,
           color: 'var(--muted-foreground)',
           whiteSpace: 'nowrap',
@@ -150,9 +151,10 @@ export function HourlyStrip({
   ));
 
   // Row: weather icons
+  const weatherIconSize = threeHourWindows ? 32 : 24;
   const iconRow = displayHours.map((hour, i) => (
     <div key={i} style={{ ...colStyle, ...CELL_BASE, height: rowH.icon }}>
-      <WeatherIcon code={toWmoCode(hour.weatherCode)} size={24} />
+      <WeatherIcon code={toWmoCode(hour.weatherCode)} size={weatherIconSize} />
     </div>
   ));
 
@@ -162,7 +164,7 @@ export function HourlyStrip({
       <span
         style={{
           fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
-          fontSize: 'var(--text-label)',
+          fontSize: threeHourWindows ? 'var(--text-stat-label)' : 'var(--text-label)',
           fontWeight: 600,
           color: 'var(--foreground)',
           letterSpacing: '-0.01em',
@@ -191,7 +193,7 @@ export function HourlyStrip({
             color: 'var(--muted-foreground)',
           }}
         >
-          <PrecipIcon aria-hidden="true" size={9} />
+          <PrecipIcon aria-hidden="true" size={threeHourWindows ? 11 : 9} />
           {precip !== null ? `${precip}%` : '—'}
         </span>
       </div>
@@ -204,7 +206,7 @@ export function HourlyStrip({
     const windSpeed = hour.windSpeed !== null ? Math.round(hour.windSpeed) : 0;
     return (
       <div key={i} style={{ ...colStyle, ...CELL_BASE, height: rowH.wind, overflow: 'visible' }}>
-        <WindSymbol bearing={bearing} speed={windSpeed} size={threeHourWindows ? 18 : 20} />
+        <WindSymbol bearing={bearing} speed={windSpeed} size={threeHourWindows ? 24 : 20} />
       </div>
     );
   });
@@ -219,6 +221,9 @@ export function HourlyStrip({
         flexDirection: 'column',
         width: isScrollMode ? 'max-content' : '100%',
         minHeight: 0,
+        // In fill mode (threeHourWindows), stretch to full height and spread rows
+        // evenly so content occupies the full 22rem card height.
+        ...(threeHourWindows ? { flex: 1, justifyContent: 'space-between' } : {}),
       }}
     >
       {/* Time row */}
@@ -293,12 +298,13 @@ export function HourlyStrip({
     );
   }
 
-  // Fill mode (threeHourWindows): no scroll container, fills available space
+  // Fill mode (threeHourWindows): no scroll container; stretches to fill the
+  // parent flex column so rows distribute across the full 22rem card height.
   return (
     <div
       role="list"
       aria-label="Hourly forecast"
-      style={{ overflow: 'hidden' }}
+      style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}
     >
       {tableContent}
     </div>

@@ -102,8 +102,8 @@ export function DailyColumns({
 
   const N = days.length;
 
-  // Trend SVG sizes: 45px generous for forecast page, 35px for now card (C3 mockup)
-  const trendH = expandable ? 45 : 25;
+  // Trend SVG sizes: 45px for forecast page, 40px for now card 2×2 (expanded from 25px).
+  const trendH = expandable ? 45 : 40;
   // SVG viewbox width: 700 units for N=7, proportional otherwise
   const svgViewWidth = 100 * N;
 
@@ -180,7 +180,7 @@ export function DailyColumns({
             } : undefined}
             style={{
               ...cellBase,
-              height: expandable ? 28 : 16,
+              height: expandable ? 28 : 20,
               paddingTop: expandable ? 8 : 0,
               cursor: expandable ? 'pointer' : 'default',
               flexDirection: 'column',
@@ -280,8 +280,8 @@ export function DailyColumns({
           key={i}
           style={{
             ...cellBase,
-            height: expandable ? 40 : 24,
-            paddingTop: expandable ? 6 : 1,
+            height: expandable ? 40 : 38,
+            paddingTop: expandable ? 6 : 2,
             cursor: expandable ? 'pointer' : 'default',
           }}
           onClick={expandable ? () => handleColClick(i) : undefined}
@@ -295,7 +295,7 @@ export function DailyColumns({
           tabIndex={expandable ? -1 : undefined}
           aria-hidden={expandable ? true : undefined}
         >
-          <WeatherIcon code={toWmoCode(day.weatherCode)} size={24} />
+          <WeatherIcon code={toWmoCode(day.weatherCode)} size={expandable ? 24 : 30} />
         </div>
       ))}
     </div>
@@ -311,7 +311,7 @@ export function DailyColumns({
           key={i}
           style={{
             ...cellBase,
-            height: expandable ? 22 : 16,
+            height: expandable ? 22 : 22,
             cursor: expandable ? 'pointer' : 'default',
           }}
           onClick={expandable ? () => handleColClick(i) : undefined}
@@ -355,7 +355,7 @@ export function DailyColumns({
             <span
               style={{
                 fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
-                fontSize: 'var(--text-label)',
+                fontSize: 'var(--text-stat-label)',
                 fontWeight: 600,
                 lineHeight: 1,
               }}
@@ -394,7 +394,7 @@ export function DailyColumns({
                 color: 'var(--muted-foreground)',
               }}
             >
-              <Drop aria-hidden="true" size={expandable ? 8 : 7} />
+              <Drop aria-hidden="true" size={expandable ? 8 : 10} />
               {precip !== null ? `${precip}%` : '—'}
             </span>
             {/* Rain amount — only when > 0 */}
@@ -440,8 +440,8 @@ export function DailyColumns({
         const bearing = typeof day.extras?.windDir === 'number' ? day.extras.windDir : null;
         const windSpeed = day.windSpeedMax !== null ? Math.round(day.windSpeedMax) : 0;
         return (
-          <div key={i} style={{ ...cellBase, height: expandable ? 44 : 18, overflow: 'visible' }}>
-            <WindSymbol bearing={bearing} speed={windSpeed} size={expandable ? 20 : 18} />
+          <div key={i} style={{ ...cellBase, height: expandable ? 44 : 28, overflow: 'visible' }}>
+            <WindSymbol bearing={bearing} speed={windSpeed} size={expandable ? 20 : 24} />
           </div>
         );
       })}
@@ -616,21 +616,37 @@ export function DailyColumns({
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        justifyContent: expandable ? undefined : 'center',
       }}
     >
       {/* Column layout — always visible on all breakpoints.
-          Hi/lo temps stack vertically on mobile via responsive classes in hiloRow. */}
+          Hi/lo temps stack vertically on mobile via responsive classes in hiloRow.
+          In non-expandable mode: the middle divs stretch to fill full height so
+          trendRow (flex:1) can absorb the remaining vertical space. */}
       <div
-        style={{ position: 'relative', width: '100%', overflow: 'visible' }}
+        style={{
+          position: 'relative',
+          width: '100%',
+          overflow: 'visible',
+          ...(expandable ? {} : { flex: 1, display: 'flex', flexDirection: 'column' }),
+        }}
       >
         {selectedColBg}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: expandable ? 6 : 2, position: 'relative', width: '100%', overflow: 'visible' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: expandable ? 6 : 2,
+            position: 'relative',
+            width: '100%',
+            overflow: 'visible',
+            ...(expandable ? {} : { flex: 1 }),
+          }}
+        >
           {accentBarRow}
           {dayRow}
           {iconRow}
           {hiloRow}
-          {expandable && trendRow}
+          {trendRow}
           {precipRow}
           {windRow}
         </div>
