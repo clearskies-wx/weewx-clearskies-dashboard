@@ -300,11 +300,20 @@ export function HourlyStrip({
 
   // Fill mode (threeHourWindows): no scroll container; stretches to fill the
   // parent flex column so rows distribute across the full 22rem card height.
+  // Small top/bottom padding gives breathing room between the card title border
+  // and the first time-label row, and between the wind row and the card bottom.
   return (
     <div
       role="list"
       aria-label="Hourly forecast"
-      style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        flex: 1,
+        overflow: 'hidden',
+        paddingTop: '0.35rem',
+        paddingBottom: '0.35rem',
+      }}
     >
       {tableContent}
     </div>

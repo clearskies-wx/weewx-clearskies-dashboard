@@ -102,8 +102,9 @@ export function DailyColumns({
 
   const N = days.length;
 
-  // Trend SVG sizes: 45px for forecast page, 40px for now card 2×2 (expanded from 25px).
-  const trendH = expandable ? 45 : 40;
+  // Trend SVG sizes: 45px for forecast page, 65px for now card 2×2.
+  // 65px gives the chart visual weight without dominating the card.
+  const trendH = expandable ? 45 : 65;
   // SVG viewbox width: 700 units for N=7, proportional otherwise
   const svgViewWidth = 100 * N;
 
@@ -449,9 +450,12 @@ export function DailyColumns({
   );
 
   // Trend line row (full width).
-  // Uses flex:1 to fill remaining space per C3 mockup; padding 3px/2px matches mockup exactly.
+  // flex:1 was removed from the non-expandable path — it dumped all remaining
+  // card space into padding around a small chart while other rows were cramped.
+  // Space is now distributed by justifyContent:'space-between' on the parent
+  // flex column, so every inter-row gap is approximately equal.
   const trendRow = (
-    <div style={{ padding: '3px 0 2px', flex: expandable ? undefined : 1, display: 'flex', alignItems: 'center', position: 'relative', zIndex: 1 }}>
+    <div style={{ padding: '3px 0 2px', display: 'flex', alignItems: 'center', position: 'relative', zIndex: 1 }}>
       <TempTrendLine
         highs={highs}
         lows={lows}
@@ -616,12 +620,16 @@ export function DailyColumns({
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
+        // Small top/bottom padding gives breathing room between the card title
+        // border and the day-name row, and between the wind row and card bottom.
+        ...(expandable ? {} : { paddingTop: '0.35rem', paddingBottom: '0.35rem' }),
       }}
     >
       {/* Column layout — always visible on all breakpoints.
           Hi/lo temps stack vertically on mobile via responsive classes in hiloRow.
-          In non-expandable mode: the middle divs stretch to fill full height so
-          trendRow (flex:1) can absorb the remaining vertical space. */}
+          In non-expandable mode: the middle div stretches to fill full height and
+          justifyContent:'space-between' distributes space proportionally across ALL
+          rows — no single row absorbs all the extra space. */}
       <div
         style={{
           position: 'relative',
@@ -635,11 +643,12 @@ export function DailyColumns({
           style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: expandable ? 6 : 2,
             position: 'relative',
             width: '100%',
             overflow: 'visible',
-            ...(expandable ? {} : { flex: 1 }),
+            ...(expandable
+              ? { gap: 6 }
+              : { flex: 1, justifyContent: 'space-between' }),
           }}
         >
           {accentBarRow}
