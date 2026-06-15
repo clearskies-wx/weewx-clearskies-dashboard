@@ -39,20 +39,20 @@ import {
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Sun arc — outer semicircle geometry (matches C4 mockup: r=78) */
-const SUN_RX = 88;
+/** Sun arc — outer semicircle geometry (widened from r=88 to fill more horizontal space) */
+const SUN_RX = 105;
 const SUN_RY = 72;
-/** Moon arc — inner semicircle geometry (matches C4 mockup: r=44) */
-const MOON_RX = 52;
+/** Moon arc — inner semicircle geometry (widened from r=52 proportionally) */
+const MOON_RX = 68;
 const MOON_RY = 40;
-/** SVG viewBox half-width; center X = cx (matches C4 mockup viewBox 220×110) */
-const CX = 110;
-/** SVG viewBox baseline Y; arcs curve upward (negative Y direction) */
-const CY = 84;
-/** Total SVG width (matches C4 mockup) */
-const SVG_W = 220;
-/** Total SVG height (extended to fit moon phase label below x-axis) */
-const SVG_H = 120;
+/** SVG viewBox half-width; center X = cx (widened from 220 to 260 for wider arcs) */
+const CX = 130;
+/** SVG viewBox baseline Y; shifted up from 84 to 76 to give headroom for rise/set labels */
+const CY = 76;
+/** Total SVG width (widened from 220 to 260) */
+const SVG_W = 260;
+/** Total SVG height — fits arc peak + labels below horizon line (no moon phase here) */
+const SVG_H = 110;
 
 /** Sun color — gold/amber, WCAG AA on dark backgrounds */
 const SUN_COLOR = '#f59e0b';
@@ -173,10 +173,25 @@ function SunMoonError({
 interface ArcVisualizationProps {
   almanac: AlmanacSnapshot;
   tz: string;
-  locale: string;
+  /** Accessible title string for the SVG (built by parent to include moon phase). */
+  svgTitle: string;
+  sunriseText: string;
+  sunsetText: string;
+  moonriseText: string;
+  moonsetText: string;
 }
 
-function ArcVisualization({ almanac, tz }: ArcVisualizationProps) {
+/** Renders just the nested-arc SVG (sun + moon arcs, position markers, rise/set labels).
+ *  Moon phase display is rendered as a sibling div by the parent. */
+function ArcVisualization({
+  almanac,
+  tz: _tz,
+  svgTitle,
+  sunriseText,
+  sunsetText,
+  moonriseText,
+  moonsetText,
+}: ArcVisualizationProps) {
   const [nowMs, setNowMs] = useState(Date.now());
   useEffect(() => {
     const id = setInterval(() => setNowMs(Date.now()), 60_000);
@@ -193,37 +208,9 @@ function ArcVisualization({ almanac, tz }: ArcVisualizationProps) {
   const moonMarker =
     moonPct !== null ? arcPoint(moonPct, CX, CY, MOON_RX, MOON_RY) : null;
 
-  // Moon phase info
+  // Moon phase info (needed for new moon marker style only — display is handled by parent)
   const illumination = almanac.moon.illuminationPercent;
   const isNewMoon = illumination !== null && illumination === 0;
-  const phaseName = formatPhaseName(almanac.moon.phaseName);
-  const illumText =
-    illumination !== null ? `${Math.round(illumination)}%` : '—';
-
-  // Formatted times
-  const fmtCompact = (iso: string | null): string => {
-    if (!iso) return '—';
-    const d = new Date(iso);
-    const parts = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: tz }).formatToParts(d);
-    const h = parts.find(p => p.type === 'hour')?.value ?? '';
-    const m = parts.find(p => p.type === 'minute')?.value ?? '';
-    const ap = (parts.find(p => p.type === 'dayPeriod')?.value ?? '')[0]?.toLowerCase() ?? '';
-    return `${h}:${m}${ap}`;
-  };
-  const sunriseText = fmtCompact(almanac.sun.rise);
-  const sunsetText = fmtCompact(almanac.sun.set);
-  const moonriseText = fmtCompact(almanac.moon.rise);
-  const moonsetText = fmtCompact(almanac.moon.set);
-
-
-  // SVG accessible title — summarises state for screen readers
-  const svgTitle = [
-    `Sun: rises ${sunriseText}, sets ${sunsetText}`,
-    `Moon: rises ${moonriseText}, sets ${moonsetText}`,
-    `Phase: ${phaseName}, ${illumText} illuminated`,
-  ].join('. ');
-
-  // Moon phase label: centered inside the arc above the horizon line
 
   return (
     <svg
@@ -231,7 +218,7 @@ function ArcVisualization({ almanac, tz }: ArcVisualizationProps) {
       aria-label={svgTitle}
       viewBox={`0 0 ${SVG_W} ${SVG_H}`}
       width="100%"
-      style={{ display: 'block', height: '100%' }}
+      style={{ display: 'block' }}
     >
       <title>{svgTitle}</title>
 
@@ -325,35 +312,21 @@ function ArcVisualization({ almanac, tz }: ArcVisualizationProps) {
         </g>
       )}
 
-      {/* ── Moon phase label (below x-axis labels) ─────────────────────── */}
-
-      {/* ── Rise/set labels per C4 mockup: compact time centered on arc endpoint, label word below ── */}
+      {/* ── Rise/set labels: time value + label word at each arc endpoint ── */}
+      {/* Font sizes use design tokens: --text-label (12px) for times, --text-micro (11.2px) for words.
+          SVG <text> fontSize accepts CSS variable strings when rendered in the browser via React. */}
       {/* Sun rise — left endpoint of sun arc */}
-      <text x={CX - SUN_RX} y={CY + 12} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize={10} fill="var(--foreground)" aria-hidden="true">{sunriseText}</text>
-      <text x={CX - SUN_RX} y={CY + 22} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize={8} fill="var(--muted-foreground)" aria-hidden="true">Sunrise</text>
+      <text x={CX - SUN_RX} y={CY + 14} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize="var(--text-label)" fill="var(--foreground)" aria-hidden="true">{sunriseText}</text>
+      <text x={CX - SUN_RX} y={CY + 26} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize="var(--text-micro)" fill="var(--muted-foreground)" aria-hidden="true">Sunrise</text>
       {/* Moon rise — left endpoint of moon arc */}
-      <text x={CX - MOON_RX} y={CY + 12} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize={10} fill="var(--foreground)" aria-hidden="true">{moonriseText}</text>
-      <text x={CX - MOON_RX} y={CY + 22} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize={8} fill="var(--muted-foreground)" aria-hidden="true">Moonrise</text>
+      <text x={CX - MOON_RX} y={CY + 14} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize="var(--text-label)" fill="var(--foreground)" aria-hidden="true">{moonriseText}</text>
+      <text x={CX - MOON_RX} y={CY + 26} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize="var(--text-micro)" fill="var(--muted-foreground)" aria-hidden="true">Moonrise</text>
       {/* Moon set — right endpoint of moon arc */}
-      <text x={CX + MOON_RX} y={CY + 12} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize={10} fill="var(--foreground)" aria-hidden="true">{moonsetText}</text>
-      <text x={CX + MOON_RX} y={CY + 22} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize={8} fill="var(--muted-foreground)" aria-hidden="true">Moonset</text>
+      <text x={CX + MOON_RX} y={CY + 14} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize="var(--text-label)" fill="var(--foreground)" aria-hidden="true">{moonsetText}</text>
+      <text x={CX + MOON_RX} y={CY + 26} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize="var(--text-micro)" fill="var(--muted-foreground)" aria-hidden="true">Moonset</text>
       {/* Sun set — right endpoint of sun arc */}
-      <text x={CX + SUN_RX} y={CY + 12} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize={10} fill="var(--foreground)" aria-hidden="true">{sunsetText}</text>
-      <text x={CX + SUN_RX} y={CY + 22} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize={8} fill="var(--muted-foreground)" aria-hidden="true">Sunset</text>
-
-      {/* Moon phase label — below the rise/set x-axis labels */}
-      <text
-        x={CX}
-        y={CY + 34}
-        textAnchor="middle"
-        fontSize={9}
-        fontFamily="var(--font-sans, system-ui, sans-serif)"
-        fontWeight={600}
-        fill="var(--muted-foreground)"
-        aria-hidden="true"
-      >
-        ☽ {phaseName}
-      </text>
+      <text x={CX + SUN_RX} y={CY + 14} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize="var(--text-label)" fill="var(--foreground)" aria-hidden="true">{sunsetText}</text>
+      <text x={CX + SUN_RX} y={CY + 26} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize="var(--text-micro)" fill="var(--muted-foreground)" aria-hidden="true">Sunset</text>
     </svg>
   );
 }
@@ -369,6 +342,108 @@ export interface SunMoonCardProps {
   onRetry?: () => void;
   /** IANA time zone identifier from StationMetadata.timezone (ADR-020). */
   stationTz: string;
+}
+
+// ---------------------------------------------------------------------------
+// SunMoonContent — arc SVG + moon phase strip, rendered when almanac is ready
+// ---------------------------------------------------------------------------
+
+interface SunMoonContentProps {
+  almanac: AlmanacSnapshot;
+  stationTz: string;
+}
+
+function SunMoonContent({ almanac, stationTz }: SunMoonContentProps) {
+  const fmtCompact = (iso: string | null): string => {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    const parts = new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: stationTz,
+    }).formatToParts(d);
+    const h = parts.find((p) => p.type === 'hour')?.value ?? '';
+    const m = parts.find((p) => p.type === 'minute')?.value ?? '';
+    const ap = (parts.find((p) => p.type === 'dayPeriod')?.value ?? '')[0]?.toLowerCase() ?? '';
+    return `${h}:${m}${ap}`;
+  };
+
+  const sunriseText = fmtCompact(almanac.sun.rise);
+  const sunsetText = fmtCompact(almanac.sun.set);
+  const moonriseText = fmtCompact(almanac.moon.rise);
+  const moonsetText = fmtCompact(almanac.moon.set);
+  const phaseName = formatPhaseName(almanac.moon.phaseName);
+  const illumination = almanac.moon.illuminationPercent;
+  const illumText = illumination !== null ? `${Math.round(illumination)}%` : '—';
+  const svgTitle = [
+    `Sun: rises ${sunriseText}, sets ${sunsetText}`,
+    `Moon: rises ${moonriseText}, sets ${moonsetText}`,
+    `Phase: ${phaseName}, ${illumText} illuminated`,
+  ].join('. ');
+
+  return (
+    /* aria-live so SSE-driven refreshes are announced (ADR-041).
+       Layout: arc SVG on top, moon phase strip at bottom.
+       The SVG scales with width="100%" so both mobile and desktop render correctly. */
+    <div aria-live="polite" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      {/* Arc visualization SVG */}
+      <ArcVisualization
+        almanac={almanac}
+        tz={stationTz}
+        svgTitle={svgTitle}
+        sunriseText={sunriseText}
+        sunsetText={sunsetText}
+        moonriseText={moonriseText}
+        moonsetText={moonsetText}
+      />
+      {/* Moon phase strip — enlarged icon + phase name at bottom of card.
+          aria-label on the container gives screen readers the full phase summary. */}
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '0.2rem',
+          paddingBottom: '0.25rem',
+        }}
+        aria-label={`Moon phase: ${phaseName}, ${illumText} illuminated`}
+      >
+        {/* Phase glyph — enlarged (1.75rem ≈ 28px); decorative, info carried by aria-label above */}
+        <span
+          style={{ fontSize: '1.75rem', lineHeight: 1, color: MOON_COLOR }}
+          aria-hidden="true"
+        >
+          ☽
+        </span>
+        {/* Phase name — uses --text-label token (12px), design-system minimum */}
+        <span
+          style={{
+            fontSize: 'var(--text-label)',
+            fontFamily: 'var(--font-sans, system-ui, sans-serif)',
+            fontWeight: 600,
+            color: 'var(--muted-foreground)',
+            textAlign: 'center',
+          }}
+          aria-hidden="true"
+        >
+          {phaseName}
+        </span>
+        {/* Illumination percentage */}
+        <span
+          style={{
+            fontSize: 'var(--text-micro)',
+            fontFamily: 'var(--font-sans, system-ui, sans-serif)',
+            color: 'var(--muted-foreground)',
+            textAlign: 'center',
+          }}
+          aria-hidden="true"
+        >
+          {illumText} illuminated
+        </span>
+      </div>
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -393,8 +468,7 @@ export function SunMoonCard({
   onRetry,
   stationTz,
 }: SunMoonCardProps) {
-  const { t, i18n } = useTranslation('now');
-  const locale = i18n.language;
+  const { t } = useTranslation('now');
 
   return (
     <Card footprint="tile" aria-busy={loading}>
@@ -419,14 +493,7 @@ export function SunMoonCard({
             onRetry={onRetry ?? (() => undefined)}
           />
         ) : almanac ? (
-          /* aria-live so SSE-driven refreshes are announced (ADR-041).
-             The flex wrapper with overflow:hidden constrains the SVG to the
-             available CardContent height so the bottom rise/set labels don't
-             clip — the SVG scales proportionally with width="100%" so at the
-             tile card width (~270px) the rendered height stays within budget. */
-          <div aria-live="polite" style={{ flex: 1, minWidth: 0, minHeight: 0, width: '100%', height: '100%', overflow: 'hidden', display: 'flex', alignItems: 'flex-start' }}>
-            <ArcVisualization almanac={almanac} tz={stationTz} locale={locale} />
-          </div>
+          <SunMoonContent almanac={almanac} stationTz={stationTz} />
         ) : (
           <p className="text-muted-foreground text-sm">
             {t('noData.observation')}
