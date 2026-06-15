@@ -29,8 +29,8 @@ export function WebcamCard({ webcamConfig, refreshTs, videoRefreshTs }: WebcamCa
 
   return (
     <Card footprint="wide" rowSpan={2.5}>
-      <CardHeader className="flex flex-row items-center justify-between pb-0.5 border-b border-border">
-        <CardTitle as="h2" className="border-b-0 pb-0">{t('webcam')}</CardTitle>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle as="h2" className="flex-1">{t('webcam')}</CardTitle>
         <div className="flex gap-1" role="tablist" aria-label={t('webcam')}>
           <button
             type="button"
