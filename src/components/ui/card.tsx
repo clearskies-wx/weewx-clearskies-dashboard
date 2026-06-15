@@ -17,8 +17,9 @@ type CardProps = React.ComponentProps<"div"> & {
    *   "half"    = md:row-span-2  (2 × --card-quarter-row  = 5.5rem)
    *   1         = md:row-span-4  (4 × --card-quarter-row  = 11rem, default data card)
    *   2         = md:row-span-8  (8 × --card-quarter-row  = 22rem, tall card)
+   *   2.5       = md:row-span-10 (10 × --card-quarter-row = 27.5rem, extra-tall card)
    */
-  rowSpan?: "quarter" | "half" | 1 | 2;
+  rowSpan?: "quarter" | "half" | 1 | 2 | 2.5;
 };
 
 /** Column-span classes for each footprint value (ADR-051).
@@ -41,11 +42,13 @@ const footprintColSpan: Record<CardFootprint, string> = {
  *   "half"    -> md:row-span-2  (2 tracks = 5.5rem)    — hero, page-header
  *   1         -> md:row-span-4  (4 tracks = 11rem)     — standard data card (default)
  *   2         -> md:row-span-8  (8 tracks = 22rem)     — tall/chart cards
+ *   2.5       -> md:row-span-10 (10 tracks = 27.5rem)  — extra-tall cards (radar, webcam)
  */
-function rowSpanClass(rowSpan: "quarter" | "half" | 1 | 2 | undefined): string {
+function rowSpanClass(rowSpan: "quarter" | "half" | 1 | 2 | 2.5 | undefined): string {
   switch (rowSpan) {
     case "quarter": return "md:row-span-1";
     case "half":    return "md:row-span-2";
+    case 2.5:       return "md:row-span-10";
     case 2:         return "md:row-span-8";
     default:        return "md:row-span-4";
   }
@@ -55,7 +58,7 @@ function rowSpanClass(rowSpan: "quarter" | "half" | 1 | 2 | undefined): string {
  * Min-height class derived from rowSpan, so each card fills its grid tracks
  * correctly on mobile (where row-span has no effect).
  */
-function minHeightClass(rowSpan: "quarter" | "half" | 1 | 2 | undefined): string {
+function minHeightClass(rowSpan: "quarter" | "half" | 1 | 2 | 2.5 | undefined): string {
   // min-height applies on mobile only (< md) where grid rows are auto-height.
   // At md+, rigid grid tracks enforce card height on the Now page, and non-Now
   // pages use auto-rows where cards size to content. Applying min-height at md+

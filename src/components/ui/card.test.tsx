@@ -61,33 +61,34 @@ describe('Card footprint prop', () => {
 });
 
 // ---------------------------------------------------------------------------
-// rowSpan — data-attribute only, no row-span CSS class
+// rowSpan — data-attribute + md: row-span CSS class
 // ---------------------------------------------------------------------------
 
 describe('Card rowSpan prop', () => {
-  it('rowSpan=1 sets data-row-span="1"', () => {
+  it('rowSpan=1 sets data-row-span="1" and md:row-span-4', () => {
     const { container } = render(<Card rowSpan={1} />);
     const el = container.firstElementChild as HTMLElement;
     expect(el.dataset['rowSpan']).toBe('1');
+    expect(el.className).toContain('md:row-span-4');
   });
 
-  it('rowSpan=2 sets data-row-span="2"', () => {
+  it('rowSpan=2 sets data-row-span="2" and md:row-span-8', () => {
     const { container } = render(<Card rowSpan={2} />);
     const el = container.firstElementChild as HTMLElement;
     expect(el.dataset['rowSpan']).toBe('2');
+    expect(el.className).toContain('md:row-span-8');
   });
 
-  it('rowSpan does NOT emit a row-span CSS class', () => {
-    const { container } = render(<Card rowSpan={2} />);
+  it('rowSpan=2.5 sets data-row-span="2.5" and md:row-span-10', () => {
+    const { container } = render(<Card rowSpan={2.5} />);
     const el = container.firstElementChild as HTMLElement;
-    // Must not emit any CSS row-span utility (row-span-1, row-span-2, etc.)
-    expect(el.className).not.toMatch(/row-span/);
+    expect(el.dataset['rowSpan']).toBe('2.5');
+    expect(el.className).toContain('md:row-span-10');
   });
 
   it('without rowSpan, data-row-span attribute is absent', () => {
     const { container } = render(<Card />);
     const el = container.firstElementChild as HTMLElement;
-    // Attribute is not present when rowSpan is not passed
     expect(el.hasAttribute('data-row-span')).toBe(false);
   });
 });

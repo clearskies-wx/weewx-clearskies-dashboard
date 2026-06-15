@@ -149,7 +149,7 @@ export function TodaysHighlightsCard({
   }
 
   return (
-    <Card footprint="wide" aria-busy={loading}>
+    <Card footprint="tile" rowSpan={2} aria-busy={loading}>
       <CardHeader>
         <h2 className="font-heading leading-snug font-semibold pb-0.5 border-b border-border" style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}>
           {t('todaysHighlights')}
@@ -164,7 +164,7 @@ export function TodaysHighlightsCard({
             <HighlightSkeleton />
           </>
         ) : todayStats ? (
-          <dl className="flex items-center justify-around gap-2 flex-wrap flex-1">
+          <dl className="grid grid-cols-2 gap-x-2 gap-y-3 items-start justify-items-center flex-1 content-center">
 
             {/* 1 — Today's High */}
             <StatItem

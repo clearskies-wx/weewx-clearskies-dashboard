@@ -64,7 +64,7 @@ export function NowForecastCard({
   const dailyDays = forecast?.daily?.slice(0, 7) ?? [];
 
   return (
-    <Card footprint="wide" size="sm" aria-busy={loading}>
+    <Card footprint="wide" rowSpan={2} size="sm" aria-busy={loading}>
       {/* Card header: title + tab pills on the same line */}
       <CardHeader>
         <div
@@ -183,7 +183,6 @@ export function NowForecastCard({
                 <HourlyStrip
                   hours={next24hours}
                   threeHourWindows
-                  hideTrend
                   stationTz={stationTz}
                 />
               ) : (

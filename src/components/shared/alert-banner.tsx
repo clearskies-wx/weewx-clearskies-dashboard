@@ -287,7 +287,7 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
         <div className="card-glass min-w-0 flex-1 px-3 py-2.5">
 
           {/* Title row: event name + optional severity badge */}
-          <p className="truncate font-heading text-[length:var(--text-card-title)] font-semibold leading-snug text-card-foreground">
+          <p className="truncate uppercase font-heading text-[length:var(--text-card-title)] font-semibold leading-snug text-card-foreground">
             {alert.event}
           </p>
 
