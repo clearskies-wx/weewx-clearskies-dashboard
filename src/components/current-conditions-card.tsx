@@ -427,18 +427,18 @@ export function CurrentConditionsCard({
           <>
             {/* ── Top region: icon LEFT, text RIGHT ─────────────────────── */}
             <div className="flex items-center gap-[1.1rem] mb-2">
-              {/* Weather icon 112px — flex-shrink:0 */}
+              {/* Weather icon — 96px mobile, 115px desktop (+20%) */}
               {weatherCode != null ? (
                 <WeatherIcon
                   code={weatherCode}
                   isNight={isNight}
-                  size={96}
-                  className="shrink-0"
+                  size={115}
+                  className="shrink-0 size-[96px] md:size-[115px]"
                 />
               ) : (
                 <span
-                  className="shrink-0"
-                  style={{ display: 'inline-block', width: 96, height: 96 }}
+                  className="shrink-0 size-[96px] md:size-[115px]"
+                  style={{ display: 'inline-block' }}
                   aria-hidden="true"
                 />
               )}
