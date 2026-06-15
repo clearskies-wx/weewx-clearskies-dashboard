@@ -39,22 +39,20 @@ import {
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Sun arc — wide outer semicircle; endpoints pulled in from SVG edges to avoid label clipping */
-const SUN_RX = 110;
-/** Sun arc vertical radius — flat so sprites don't clip at apex (peak at CY-42=8) */
-const SUN_RY = 42;
-/** Moon arc — narrower inner semicircle, 60px horizontal gap to sun labels */
-const MOON_RX = 50;
-/** Moon arc vertical radius — flat inner arc */
-const MOON_RY = 25;
-/** SVG center X */
+/** Sun arc — wide so sun labels (x=10,250) are far from moon labels (x=88,172) */
+const SUN_RX = 120;
+/** Sun arc vertical radius — flat (peak at CY-24=6, safe for sprites) */
+const SUN_RY = 24;
+/** Moon arc — narrow so there's 33px+ gap between sun and moon label text */
+const MOON_RX = 42;
+/** Moon arc vertical radius */
+const MOON_RY = 16;
 const CX = 130;
-/** SVG baseline Y — positioned to leave room for labels below horizon */
-const CY = 50;
-/** Total SVG width */
+/** Horizon line Y — leaves room above for arcs and below for labels within viewBox */
+const CY = 30;
 const SVG_W = 260;
-/** Total SVG height — compact so moon phase strip fits below in the card */
-const SVG_H = 80;
+/** ViewBox height — labels end at ~y=49; auto-sizes via aspect ratio (~53px at 250px card width) */
+const SVG_H = 55;
 
 /** Sun color — gold/amber, WCAG AA on dark backgrounds */
 const SUN_COLOR = '#f59e0b';
@@ -140,7 +138,7 @@ function SunMoonSkeleton() {
   return (
     <div
       className="animate-pulse rounded-lg bg-muted"
-      style={{ height: SVG_H }}
+      style={{ height: 100 }}
       aria-hidden="true"
     />
   );
@@ -388,10 +386,9 @@ function SunMoonContent({ almanac, stationTz }: SunMoonContentProps) {
     /* aria-live so SSE-driven refreshes are announced (ADR-041).
        Layout: arc SVG on top, moon phase strip at bottom.
        The SVG scales with width="100%" so both mobile and desktop render correctly. */
-    <div aria-live="polite" style={{ width: '100%', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-      {/* Arc visualization SVG — flex:1 fills remaining space after the
-          moon phase strip (flex-shrink:0) takes its fixed height. */}
-      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+    <div aria-live="polite" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem' }}>
+      {/* Arc SVG — auto-sizes from viewBox aspect ratio (~53px at 250px card width) */}
+      <div style={{ width: '100%' }}>
         <ArcVisualization
           almanac={almanac}
           tz={stationTz}
@@ -415,9 +412,9 @@ function SunMoonContent({ almanac, stationTz }: SunMoonContentProps) {
         }}
         aria-label={`Moon phase: ${phaseName}, ${illumText} illuminated`}
       >
-        {/* Phase glyph — enlarged (1.75rem ≈ 28px); decorative, info carried by aria-label above */}
+        {/* Phase glyph — 1.25rem (20px); decorative, info carried by aria-label above */}
         <span
-          style={{ fontSize: '1.75rem', lineHeight: 1, color: MOON_COLOR }}
+          style={{ fontSize: '1.25rem', lineHeight: 1, color: MOON_COLOR }}
           aria-hidden="true"
         >
           ☽
