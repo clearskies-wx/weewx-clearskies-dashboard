@@ -190,9 +190,9 @@ function ArcVisualization({
   const moonMarker =
     moonPct !== null ? arcPoint(moonPct, CX, CY, MOON_RX, MOON_RY) : null;
 
-  // Moon phase info (needed for new moon marker style only — display is handled by parent)
   const illumination = almanac.moon.illuminationPercent;
   const isNewMoon = illumination !== null && illumination === 0;
+  const phaseWords = formatPhaseName(almanac.moon.phaseName).split(' ');
 
   return (
     <svg
@@ -294,6 +294,24 @@ function ArcVisualization({
           )}
         </g>
       )}
+
+      {/* ── Moon phase label — centered in moon arc, words stack upward ── */}
+      {phaseWords.map((word, i) => (
+        <text
+          key={i}
+          x={CX}
+          y={CY - 7 - (phaseWords.length - 1 - i) * 13}
+          textAnchor="middle"
+          fontFamily="var(--font-sans, system-ui, sans-serif)"
+          fontStyle="italic"
+          fontWeight={600}
+          fontSize="var(--text-micro)"
+          fill="var(--muted-foreground)"
+          aria-hidden="true"
+        >
+          {word}
+        </text>
+      ))}
 
     </svg>
   );
