@@ -41,18 +41,20 @@ import {
 
 /** Sun arc — outer semicircle geometry (widened from r=88 to fill more horizontal space) */
 const SUN_RX = 105;
-const SUN_RY = 72;
+/** Sun arc vertical radius — flattened from 72 to 52 so peak is at CY-52=24, safe from y=0 clip */
+const SUN_RY = 52;
 /** Moon arc — inner semicircle geometry (widened from r=52 proportionally) */
 const MOON_RX = 68;
-const MOON_RY = 40;
+/** Moon arc vertical radius — flattened from 40 to 30 so peak is at CY-30=46, well inside SVG */
+const MOON_RY = 30;
 /** SVG viewBox half-width; center X = cx (widened from 220 to 260 for wider arcs) */
 const CX = 130;
 /** SVG viewBox baseline Y; shifted up from 84 to 76 to give headroom for rise/set labels */
 const CY = 76;
 /** Total SVG width (widened from 220 to 260) */
 const SVG_W = 260;
-/** Total SVG height — fits arc peak + labels below horizon line (no moon phase here) */
-const SVG_H = 110;
+/** Total SVG height — increased from 110 to 130 to accommodate staggered moon labels below sun labels */
+const SVG_H = 130;
 
 /** Sun color — gold/amber, WCAG AA on dark backgrounds */
 const SUN_COLOR = '#f59e0b';
@@ -315,18 +317,21 @@ function ArcVisualization({
       {/* ── Rise/set labels: time value + label word at each arc endpoint ── */}
       {/* Font sizes use design tokens: --text-label (12px) for times, --text-micro (11.2px) for words.
           SVG <text> fontSize accepts CSS variable strings when rendered in the browser via React. */}
+      {/* Rise/set labels are staggered vertically to prevent horizontal collision:
+          Sun labels (outer arc): time at CY+14, word at CY+26.
+          Moon labels (inner arc): time at CY+38, word at CY+48 — below the sun row. */}
       {/* Sun rise — left endpoint of sun arc */}
       <text x={CX - SUN_RX} y={CY + 14} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize="var(--text-label)" fill="var(--foreground)" aria-hidden="true">{sunriseText}</text>
       <text x={CX - SUN_RX} y={CY + 26} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize="var(--text-micro)" fill="var(--muted-foreground)" aria-hidden="true">Sunrise</text>
-      {/* Moon rise — left endpoint of moon arc */}
-      <text x={CX - MOON_RX} y={CY + 14} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize="var(--text-label)" fill="var(--foreground)" aria-hidden="true">{moonriseText}</text>
-      <text x={CX - MOON_RX} y={CY + 26} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize="var(--text-micro)" fill="var(--muted-foreground)" aria-hidden="true">Moonrise</text>
-      {/* Moon set — right endpoint of moon arc */}
-      <text x={CX + MOON_RX} y={CY + 14} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize="var(--text-label)" fill="var(--foreground)" aria-hidden="true">{moonsetText}</text>
-      <text x={CX + MOON_RX} y={CY + 26} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize="var(--text-micro)" fill="var(--muted-foreground)" aria-hidden="true">Moonset</text>
       {/* Sun set — right endpoint of sun arc */}
       <text x={CX + SUN_RX} y={CY + 14} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize="var(--text-label)" fill="var(--foreground)" aria-hidden="true">{sunsetText}</text>
       <text x={CX + SUN_RX} y={CY + 26} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize="var(--text-micro)" fill="var(--muted-foreground)" aria-hidden="true">Sunset</text>
+      {/* Moon rise — left endpoint of moon arc; staggered below sun labels */}
+      <text x={CX - MOON_RX} y={CY + 38} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize="var(--text-label)" fill="var(--foreground)" aria-hidden="true">{moonriseText}</text>
+      <text x={CX - MOON_RX} y={CY + 48} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize="var(--text-micro)" fill="var(--muted-foreground)" aria-hidden="true">Moonrise</text>
+      {/* Moon set — right endpoint of moon arc; staggered below sun labels */}
+      <text x={CX + MOON_RX} y={CY + 38} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize="var(--text-label)" fill="var(--foreground)" aria-hidden="true">{moonsetText}</text>
+      <text x={CX + MOON_RX} y={CY + 48} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize="var(--text-micro)" fill="var(--muted-foreground)" aria-hidden="true">Moonset</text>
     </svg>
   );
 }
@@ -387,20 +392,25 @@ function SunMoonContent({ almanac, stationTz }: SunMoonContentProps) {
        Layout: arc SVG on top, moon phase strip at bottom.
        The SVG scales with width="100%" so both mobile and desktop render correctly. */
     <div aria-live="polite" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-      {/* Arc visualization SVG */}
-      <ArcVisualization
-        almanac={almanac}
-        tz={stationTz}
-        svgTitle={svgTitle}
-        sunriseText={sunriseText}
-        sunsetText={sunsetText}
-        moonriseText={moonriseText}
-        moonsetText={moonsetText}
-      />
-      {/* Moon phase strip — enlarged icon + phase name at bottom of card.
-          aria-label on the container gives screen readers the full phase summary. */}
+      {/* Arc visualization SVG — flex-shrink:1 lets it compress if needed; min-height:0 allows
+          shrinking below its intrinsic size inside a flex container. The SVG scales via viewBox
+          aspect ratio (SVG_W:SVG_H = 2:1) rather than an explicit height attribute. */}
+      <div style={{ flexShrink: 1, minHeight: 0 }}>
+        <ArcVisualization
+          almanac={almanac}
+          tz={stationTz}
+          svgTitle={svgTitle}
+          sunriseText={sunriseText}
+          sunsetText={sunsetText}
+          moonriseText={moonriseText}
+          moonsetText={moonsetText}
+        />
+      </div>
+      {/* Moon phase strip — flex-shrink:0 ensures the strip is always visible at the bottom
+          and is never compressed away. aria-label gives screen readers the full phase summary. */}
       <div
         style={{
+          flexShrink: 0,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
