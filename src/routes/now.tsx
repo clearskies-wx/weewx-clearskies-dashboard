@@ -142,7 +142,9 @@ export function NowPage() {
       */}
       <Grid>
 
-        {/* ── Current Conditions — 2×2 (wide + rowSpan 2) ──────────────── */}
+        {/* Row 1-2: Current Conditions (wide 2×2) + Today's Forecast (wide 2×2) ── */}
+
+        {/* ── Current Conditions — wide 2×2 (cols 1-2, rows 1-2) ───────── */}
         <CurrentConditionsCard
           observation={observation}
           loading={obsLoading}
@@ -158,10 +160,7 @@ export function NowPage() {
           onRetry={obsRefetch}
         />
 
-        {/* ── Wind Compass — 2×2 (wide + rowSpan 2), beside CC per A4 ──── */}
-        <WindCompassCard observation={observation} windSpeedAvg10m={windSpeedAvg10m} windGustMax10m={windGustMax10m} />
-
-        {/* ── Today's Forecast — wide (2×1) ─────────────────────────────── */}
+        {/* ── Today's Forecast — wide 2×2 (cols 3-4, rows 1-2) ─────────── */}
         <NowForecastCard
           forecast={forecast}
           loading={fcLoading}
@@ -169,16 +168,19 @@ export function NowPage() {
           stationTz={station?.timezone}
         />
 
-        {/* ── Today's Highlights — wide (2×1) ───────────────────────────── */}
+        {/* Row 3-4: Wind (tile 1×2) + Highlights (tile 1×2) + Precip/Baro/Solar/UV ── */}
+
+        {/* ── Wind Compass — tile 1×2 (col 1, rows 3-4) ───────────────── */}
+        <WindCompassCard observation={observation} windSpeedAvg10m={windSpeedAvg10m} windGustMax10m={windGustMax10m} />
+
+        {/* ── Today's Highlights — tile 1×2 (col 2, rows 3-4) ─────────── */}
         <TodaysHighlightsCard
           todayStats={todayStats}
           observation={observation}
           loading={obsLoading}
         />
 
-        {/* Row: Precipitation · Barometer · Solar Radiation · UV Index ──── */}
-
-        {/* ── Precipitation — tile ──────────────────────────────────────── */}
+        {/* ── Precipitation — tile 1×1 (col 3, row 3) ─────────────────── */}
         <PrecipitationCard
           observation={observation}
           units={units}
@@ -187,7 +189,7 @@ export function NowPage() {
           onRetry={obsRefetch}
         />
 
-        {/* ── Barometer — tile ──────────────────────────────────────────── */}
+        {/* ── Barometer — tile 1×1 (col 4, row 3) ─────────────────────── */}
         <BarometerCard
           observation={observation}
           barometerTrendDirection={barometerTrendDirection}
@@ -196,7 +198,7 @@ export function NowPage() {
           onRetry={obsRefetch}
         />
 
-        {/* ── Solar Radiation — tile ────────────────────────────────────── */}
+        {/* ── Solar Radiation — tile 1×1 (col 3, row 4) ───────────────── */}
         <SolarRadiationCard
           observation={observation}
           todayArchive={todayArchive ?? []}
@@ -205,7 +207,7 @@ export function NowPage() {
           onRetry={obsRefetch}
         />
 
-        {/* ── UV Index — tile ───────────────────────────────────────────── */}
+        {/* ── UV Index — tile 1×1 (col 4, row 4) ──────────────────────── */}
         <UvIndexCard
           observation={observation}
           todayArchive={todayArchive ?? []}
@@ -217,9 +219,9 @@ export function NowPage() {
           onRetry={obsRefetch}
         />
 
-        {/* Row: AQI · Sun & Moon · Lightning · Earthquake ───────────────── */}
+        {/* Row 5: AQI · Sun & Moon · Lightning · Earthquake (4 tiles) ──── */}
 
-        {/* ── AQI — tile ────────────────────────────────────────────────── */}
+        {/* ── AQI — tile 1×1 (col 1, row 5) ───────────────────────────── */}
         <AqiCard
           aqi={aqi}
           loading={aqiLoading}
@@ -227,7 +229,7 @@ export function NowPage() {
           onRetry={aqiRefetch}
         />
 
-        {/* ── Sun & Moon — tile ─────────────────────────────────────────── */}
+        {/* ── Sun & Moon — tile 1×1 (col 2, row 5) ────────────────────── */}
         <SunMoonCard
           almanac={almanac}
           loading={almLoading}
@@ -236,7 +238,7 @@ export function NowPage() {
           stationTz={tz}
         />
 
-        {/* ── Lightning — tile ──────────────────────────────────────────── */}
+        {/* ── Lightning — tile 1×1 (col 3, row 5) ─────────────────────── */}
         <LightningCard
           observation={observation}
           lightning={lightning}
@@ -244,7 +246,7 @@ export function NowPage() {
           error={obsError?.message ?? null}
         />
 
-        {/* ── Earthquake — tile ─────────────────────────────────────────── */}
+        {/* ── Earthquake — tile 1×1 (col 4, row 5) ────────────────────── */}
         <EarthquakeCard
           earthquakes={earthquakes}
           loading={eqLoading}
@@ -253,10 +255,13 @@ export function NowPage() {
           stationTz={tz}
         />
 
-        {/* ── Radar — 2×2 (wide + rowSpan 2) ────────────────────────────── */}
-        {/* relative z-0: creates a stacking context to contain Leaflet's internal z-indices (T1.3).
-            min-h-[var(--card-row)]: prevents map canvas collapsing when auto-rows is `auto` on mobile. */}
-        <Card footprint="wide" rowSpan={2} className="relative z-0 min-h-[var(--card-row)] h-[calc(var(--card-row)*2+var(--gap-grid))] md:h-auto">
+        {/* Row 6+: Radar (wide 2×2.5) + Webcam (wide 2×2.5) ─────────────── */}
+
+        {/* ── Radar — wide 2×2.5 (cols 1-2, rows 6+) ──────────────────── */}
+        {/* relative z-0: creates a stacking context to contain Leaflet's internal z-indices.
+            min-h-[var(--card-row)]: prevents map canvas collapsing when auto-rows is `auto` on mobile.
+            md:h-auto: on desktop md:row-span-10 (from rowSpan={2.5}) governs height. */}
+        <Card footprint="wide" rowSpan={2.5} className="relative z-0 min-h-[var(--card-row)] md:h-auto">
           <CardHeader>
             <CardTitle as="h2">{tRadar('radarTitle')}</CardTitle>
           </CardHeader>
@@ -272,7 +277,7 @@ export function NowPage() {
           </CardContent>
         </Card>
 
-        {/* ── Webcam — 2×2 (wide + rowSpan 2) ───────────────────────────── */}
+        {/* ── Webcam — wide 2×2.5 (cols 3-4, rows 6+) ─────────────────── */}
         {webcamEnabled && webcamConfig && (
           <WebcamCard
             webcamConfig={webcamConfig}
