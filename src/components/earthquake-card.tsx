@@ -285,7 +285,7 @@ export function EarthquakeCard({
             aria-label="Recent earthquake events"
             style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 0, flex: 1, justifyContent: 'center' }}
           >
-            {visibleQuakes.map((quake, idx) => (
+            {visibleQuakes.map((quake) => (
               <EarthquakeRow key={quake.id} quake={quake} />
             ))}
           </ul>
