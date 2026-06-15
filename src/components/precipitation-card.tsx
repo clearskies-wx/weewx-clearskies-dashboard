@@ -116,11 +116,10 @@ function DropHalfIcon({ size = 36 }: { size?: number }) {
 // ---------------------------------------------------------------------------
 
 const primaryValueStyle: React.CSSProperties = {
-  fontFamily: 'var(--font-display, system-ui, sans-serif)',
+  fontFamily: 'var(--font-sans, system-ui, sans-serif)',
   fontWeight: 600,
-  fontSize: 'var(--text-stat-tile)',
+  fontSize: 'var(--text-secondary)',
   color: 'var(--foreground)',
-  letterSpacing: '-0.01em',
   fontFeatureSettings: '"tnum"',
   lineHeight: 1.2,
 };
