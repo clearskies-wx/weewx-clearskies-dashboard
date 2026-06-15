@@ -39,22 +39,22 @@ import {
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Sun arc — outer semicircle geometry (widened from r=88 to fill more horizontal space) */
-const SUN_RX = 105;
-/** Sun arc vertical radius — flattened from 72 to 52 so peak is at CY-52=24, safe from y=0 clip */
-const SUN_RY = 52;
-/** Moon arc — inner semicircle geometry (widened from r=52 proportionally) */
-const MOON_RX = 68;
-/** Moon arc vertical radius — flattened from 40 to 30 so peak is at CY-30=46, well inside SVG */
-const MOON_RY = 30;
-/** SVG viewBox half-width; center X = cx (widened from 220 to 260 for wider arcs) */
+/** Sun arc — wide outer semicircle so sunrise/sunset labels have room away from moon labels */
+const SUN_RX = 118;
+/** Sun arc vertical radius — flat so sprites don't clip at apex (peak at CY-48=12) */
+const SUN_RY = 48;
+/** Moon arc — narrower inner semicircle, leaving horizontal gap between sun and moon labels */
+const MOON_RX = 50;
+/** Moon arc vertical radius — flat inner arc */
+const MOON_RY = 28;
+/** SVG center X */
 const CX = 130;
-/** SVG viewBox baseline Y; shifted up from 84 to 76 to give headroom for rise/set labels */
-const CY = 76;
-/** Total SVG width (widened from 220 to 260) */
+/** SVG baseline Y — high enough to leave room for labels below the horizon line */
+const CY = 60;
+/** Total SVG width */
 const SVG_W = 260;
-/** Total SVG height — increased from 110 to 130 to accommodate staggered moon labels below sun labels */
-const SVG_H = 130;
+/** Total SVG height — compact to leave room for moon phase strip below the SVG */
+const SVG_H = 95;
 
 /** Sun color — gold/amber, WCAG AA on dark backgrounds */
 const SUN_COLOR = '#f59e0b';
@@ -314,24 +314,22 @@ function ArcVisualization({
         </g>
       )}
 
-      {/* ── Rise/set labels: time value + label word at each arc endpoint ── */}
-      {/* Font sizes use design tokens: --text-label (12px) for times, --text-micro (11.2px) for words.
-          SVG <text> fontSize accepts CSS variable strings when rendered in the browser via React. */}
-      {/* Rise/set labels are staggered vertically to prevent horizontal collision:
-          Sun labels (outer arc): time at CY+14, word at CY+26.
-          Moon labels (inner arc): time at CY+38, word at CY+48 — below the sun row. */}
-      {/* Sun rise — left endpoint of sun arc */}
+      {/* ── Rise/set labels: time + word at each arc endpoint ──────────── */}
+      {/* Sun arc is wide (rx=118), moon is narrow (rx=50) → 68px horizontal
+          gap between their endpoint labels, so all four pairs sit on the same
+          two y-lines without overlapping. */}
+      {/* Sunrise — far left */}
       <text x={CX - SUN_RX} y={CY + 14} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize="var(--text-label)" fill="var(--foreground)" aria-hidden="true">{sunriseText}</text>
       <text x={CX - SUN_RX} y={CY + 26} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize="var(--text-micro)" fill="var(--muted-foreground)" aria-hidden="true">Sunrise</text>
-      {/* Sun set — right endpoint of sun arc */}
+      {/* Moonrise — inner left */}
+      <text x={CX - MOON_RX} y={CY + 14} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize="var(--text-label)" fill="var(--foreground)" aria-hidden="true">{moonriseText}</text>
+      <text x={CX - MOON_RX} y={CY + 26} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize="var(--text-micro)" fill="var(--muted-foreground)" aria-hidden="true">Moonrise</text>
+      {/* Moonset — inner right */}
+      <text x={CX + MOON_RX} y={CY + 14} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize="var(--text-label)" fill="var(--foreground)" aria-hidden="true">{moonsetText}</text>
+      <text x={CX + MOON_RX} y={CY + 26} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize="var(--text-micro)" fill="var(--muted-foreground)" aria-hidden="true">Moonset</text>
+      {/* Sunset — far right */}
       <text x={CX + SUN_RX} y={CY + 14} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize="var(--text-label)" fill="var(--foreground)" aria-hidden="true">{sunsetText}</text>
       <text x={CX + SUN_RX} y={CY + 26} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize="var(--text-micro)" fill="var(--muted-foreground)" aria-hidden="true">Sunset</text>
-      {/* Moon rise — left endpoint of moon arc; staggered below sun labels */}
-      <text x={CX - MOON_RX} y={CY + 38} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize="var(--text-label)" fill="var(--foreground)" aria-hidden="true">{moonriseText}</text>
-      <text x={CX - MOON_RX} y={CY + 48} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize="var(--text-micro)" fill="var(--muted-foreground)" aria-hidden="true">Moonrise</text>
-      {/* Moon set — right endpoint of moon arc; staggered below sun labels */}
-      <text x={CX + MOON_RX} y={CY + 38} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={600} fontSize="var(--text-label)" fill="var(--foreground)" aria-hidden="true">{moonsetText}</text>
-      <text x={CX + MOON_RX} y={CY + 48} textAnchor="middle" fontFamily="var(--font-sans, system-ui, sans-serif)" fontWeight={400} fontSize="var(--text-micro)" fill="var(--muted-foreground)" aria-hidden="true">Moonset</text>
     </svg>
   );
 }
