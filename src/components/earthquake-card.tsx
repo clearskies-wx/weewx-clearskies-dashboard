@@ -30,7 +30,6 @@
 //   1–24 h    → hours 1dp      ("2.3 hrs ago")
 //   > 24 h    → days 1dp       ("1.5 days ago")
 
-import { Fragment } from 'react';
 import {
   Card,
   CardHeader,
@@ -287,21 +286,7 @@ export function EarthquakeCard({
             style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 0, flex: 1, justifyContent: 'center' }}
           >
             {visibleQuakes.map((quake, idx) => (
-              <Fragment key={quake.id}>
-                <EarthquakeRow quake={quake} />
-                {/* Thin divider between the two events */}
-                {idx < visibleQuakes.length - 1 && (
-                  <li
-                    aria-hidden="true"
-                    style={{
-                      listStyle: 'none',
-                      height: 1,
-                      background: 'var(--border)',
-                      margin: '0.125rem 0',
-                    }}
-                  />
-                )}
-              </Fragment>
+              <EarthquakeRow key={quake.id} quake={quake} />
             ))}
           </ul>
         )}
