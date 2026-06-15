@@ -40,13 +40,13 @@ import {
 // ---------------------------------------------------------------------------
 
 const SUN_RX = 120;
-const SUN_RY = 38;
+const SUN_RY = 46;
 const MOON_RX = 42;
-const MOON_RY = 22;
+const MOON_RY = 28;
 const CX = 130;
-const CY = 46;
+const CY = 54;
 const SVG_W = 260;
-const SVG_H = 78;
+const SVG_H = 86;
 
 /** Sun color — gold/amber, WCAG AA on dark backgrounds */
 const SUN_COLOR = '#f59e0b';
@@ -380,7 +380,7 @@ function SunMoonContent({ almanac, stationTz }: SunMoonContentProps) {
     /* aria-live so SSE-driven refreshes are announced (ADR-041).
        Layout: arc SVG on top, moon phase strip at bottom.
        The SVG scales with width="100%" so both mobile and desktop render correctly. */
-    <div aria-live="polite" style={{ width: '100%', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+    <div aria-live="polite" style={{ width: '100%', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
       {/* Arc SVG — auto-sizes from viewBox aspect ratio */}
       <div style={{ width: '100%' }}>
         <ArcVisualization
