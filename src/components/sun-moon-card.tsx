@@ -10,7 +10,7 @@
 //   - Title: "Sun & Moon" — text-only, Manrope 600 per design token.
 //   - Sun arc: gold/amber (#f59e0b), dashed stroke, outer radius.
 //   - Moon arc: silver (#94a3b8), dashed stroke, inner radius.
-//   - Moon phase label positioned next to the moon marker.
+//   - Moon phase conveyed via screen-reader-only SVG title (no visual label).
 //   - Horizon line: very subtle (opacity 0.15).
 //   - New moon: outlined circle (thin ring, dark fill) when illumination = 0%.
 //
@@ -40,13 +40,13 @@ import {
 // ---------------------------------------------------------------------------
 
 const SUN_RX = 120;
-const SUN_RY = 46;
-const MOON_RX = 42;
-const MOON_RY = 28;
+const SUN_RY = 80;
+const MOON_RX = 50;
+const MOON_RY = 52;
 const CX = 130;
-const CY = 54;
+const CY = 104;
 const SVG_W = 260;
-const SVG_H = 86;
+const SVG_H = 130;
 
 /** Sun color — gold/amber, WCAG AA on dark backgrounds */
 const SUN_COLOR = '#f59e0b';
@@ -175,8 +175,7 @@ interface ArcVisualizationProps {
   moonsetText: string;
 }
 
-/** Renders just the nested-arc SVG (sun + moon arcs, position markers, rise/set labels).
- *  Moon phase display is rendered as a sibling div by the parent. */
+/** Renders the nested-arc SVG (sun + moon arcs, position markers, rise/set labels). */
 function ArcVisualization({
   almanac,
   tz: _tz,
@@ -339,7 +338,7 @@ export interface SunMoonCardProps {
 }
 
 // ---------------------------------------------------------------------------
-// SunMoonContent — arc SVG + moon phase strip, rendered when almanac is ready
+// SunMoonContent — arc SVG, rendered when almanac is ready
 // ---------------------------------------------------------------------------
 
 interface SunMoonContentProps {
@@ -377,52 +376,16 @@ function SunMoonContent({ almanac, stationTz }: SunMoonContentProps) {
   ].join('. ');
 
   return (
-    /* aria-live so SSE-driven refreshes are announced (ADR-041).
-       Layout: arc SVG on top, moon phase strip at bottom.
-       The SVG scales with width="100%" so both mobile and desktop render correctly. */
-    <div aria-live="polite" style={{ width: '100%', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-      {/* Arc SVG — auto-sizes from viewBox aspect ratio */}
-      <div style={{ width: '100%' }}>
-        <ArcVisualization
-          almanac={almanac}
-          tz={stationTz}
-          svgTitle={svgTitle}
-          sunriseText={sunriseText}
-          sunsetText={sunsetText}
-          moonriseText={moonriseText}
-          moonsetText={moonsetText}
-        />
-      </div>
-      {/* Moon phase — icon + name on one line */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '0.35rem',
-          paddingBottom: '0.25rem',
-        }}
-        aria-label={`Moon phase: ${phaseName}`}
-      >
-        <span
-          style={{ fontSize: '1.25rem', lineHeight: 1, color: MOON_COLOR }}
-          aria-hidden="true"
-        >
-          ☽
-        </span>
-        <span
-          style={{
-            fontSize: 'var(--text-label)',
-            fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-            fontWeight: 600,
-            color: 'var(--muted-foreground)',
-          }}
-          aria-hidden="true"
-        >
-          {phaseName}
-        </span>
-      </div>
+    <div aria-live="polite" style={{ width: '100%', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+      <ArcVisualization
+        almanac={almanac}
+        tz={stationTz}
+        svgTitle={svgTitle}
+        sunriseText={sunriseText}
+        sunsetText={sunsetText}
+        moonriseText={moonriseText}
+        moonsetText={moonsetText}
+      />
     </div>
   );
 }
