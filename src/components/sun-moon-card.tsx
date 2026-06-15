@@ -41,7 +41,7 @@ import {
 
 const SUN_RX = 120;
 const SUN_RY = 72;
-const MOON_RX = 50;
+const MOON_RX = 70;
 const MOON_RY = 56;
 const CX = 130;
 const CY = 86;
@@ -362,24 +362,28 @@ function SunMoonContent({ almanac, stationTz }: SunMoonContentProps) {
       <div style={{ flex: 1, minHeight: 0 }}>
         <ArcVisualization almanac={almanac} svgTitle={svgTitle} />
       </div>
-      {/* Labels — HTML, flush with card padding edges */}
+      {/* Labels — flex spacers track arc geometry so moon labels align
+           with the wider moon arc endpoints (MOON_RX-derived). */}
       <div
-        style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.25rem' }}
+        style={{ display: 'flex', alignItems: 'flex-start', paddingTop: '0.25rem' }}
         aria-hidden="true"
       >
-        <div style={{ textAlign: 'left' }}>
+        <div style={{ textAlign: 'left', flexShrink: 0 }}>
           <div style={{ ...LABEL_STYLE, fontWeight: 600, color: 'var(--foreground)' }}>{sunriseText}</div>
           <div style={{ ...LABEL_STYLE, fontWeight: 400, color: 'var(--muted-foreground)' }}>Sunrise</div>
         </div>
-        <div style={{ textAlign: 'center' }}>
+        <div style={{ flex: CX - MOON_RX }} />
+        <div style={{ textAlign: 'center', flexShrink: 0 }}>
           <div style={{ ...LABEL_STYLE, fontWeight: 600, color: 'var(--foreground)' }}>{moonriseText}</div>
           <div style={{ ...LABEL_STYLE, fontWeight: 400, color: 'var(--muted-foreground)' }}>Moonrise</div>
         </div>
-        <div style={{ textAlign: 'center' }}>
+        <div style={{ flex: MOON_RX * 2 }} />
+        <div style={{ textAlign: 'center', flexShrink: 0 }}>
           <div style={{ ...LABEL_STYLE, fontWeight: 600, color: 'var(--foreground)' }}>{moonsetText}</div>
           <div style={{ ...LABEL_STYLE, fontWeight: 400, color: 'var(--muted-foreground)' }}>Moonset</div>
         </div>
-        <div style={{ textAlign: 'right' }}>
+        <div style={{ flex: SVG_W - CX - MOON_RX }} />
+        <div style={{ textAlign: 'right', flexShrink: 0 }}>
           <div style={{ ...LABEL_STYLE, fontWeight: 600, color: 'var(--foreground)' }}>{sunsetText}</div>
           <div style={{ ...LABEL_STYLE, fontWeight: 400, color: 'var(--muted-foreground)' }}>Sunset</div>
         </div>
