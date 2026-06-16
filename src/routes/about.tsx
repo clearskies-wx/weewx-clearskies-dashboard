@@ -80,6 +80,7 @@ function TileSkeleton({ className }: { className?: string }) {
 
 export function AboutPage() {
   const { t, i18n } = useTranslation('about');
+  const { t: tLegal } = useTranslation('legal');
   const { data: station, loading: stationLoading } = useStation();
   const { data: content, loading: contentLoading } = useContent('about');
   const { data: capabilities } = useCapabilities();
@@ -291,6 +292,25 @@ export function AboutPage() {
                 </div>
               ))}
             </dl>
+          </CardContent>
+        </Card>
+
+        {/* Data Attribution */}
+        <Card footprint="full">
+          <CardHeader>
+            <CardTitle as="h2">{tLegal('attribution.title')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1.5">
+              <li>{tLegal('attribution.observations')}</li>
+              <li>{tLegal('attribution.forecast')}</li>
+              <li>{tLegal('attribution.airQuality')}</li>
+              <li>{tLegal('attribution.earthquake')}</li>
+              <li>{tLegal('attribution.astronomical')}</li>
+            </ul>
+            <p className="mt-3 text-xs text-muted-foreground">
+              {tLegal('attribution.note')}
+            </p>
           </CardContent>
         </Card>
     </PageLayout>

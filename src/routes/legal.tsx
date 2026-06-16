@@ -1,6 +1,6 @@
 // legal.tsx — Legal page (/legal)
 
-import { useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Card,
@@ -11,85 +11,6 @@ import {
 import { PageLayout } from '../components/layout/page-layout';
 import { Scales } from '@phosphor-icons/react';
 import { useBranding } from '../lib/branding-provider';
-
-// JurisdictionSection implements the WAI-ARIA disclosure pattern:
-// https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/
-//
-// Each section has:
-//   - A <button> with aria-expanded + aria-controls for the toggle trigger
-//   - A content panel with role="region" + aria-labelledby + a stable id
-//
-// Heading level: the card using JurisdictionSection uses h2; these jurisdiction
-// headings sit inside the disclosure button below that level. The visible heading
-// is rendered as an h3 inside the button so that the document outline is correct
-// (h1 page title → h2 card title → h3 jurisdiction/law heading).
-interface JurisdictionSectionProps {
-  id: string;
-  heading: string;
-  children: React.ReactNode;
-}
-
-function JurisdictionSection({ id, heading, children }: JurisdictionSectionProps) {
-  const [open, setOpen] = useState(false);
-  const { t } = useTranslation('legal');
-
-  const buttonId = `jurisdiction-btn-${id}`;
-  const panelId = `jurisdiction-panel-${id}`;
-
-  return (
-    <div className="border-b border-border last:border-b-0">
-      {/* Toggle button — full-width, left-aligned, with chevron indicator */}
-      <h3 className="m-0">
-        <button
-          id={buttonId}
-          type="button"
-          aria-expanded={open}
-          aria-controls={panelId}
-          onClick={() => setOpen((prev) => !prev)}
-          className={[
-            'flex w-full items-center justify-between gap-3 px-4 py-3',
-            'text-left text-sm font-medium text-foreground',
-            // Focus ring — uses the same ring tokens as the rest of the design system.
-            // Must NOT use outline:none without replacement (coding rules §5.3).
-            'rounded focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring',
-            'hover:bg-muted/50 transition-colors',
-          ].join(' ')}
-        >
-          <span>{heading}</span>
-          {/* Chevron — decorative, state conveyed by aria-expanded on the button */}
-          <svg
-            aria-hidden="true"
-            focusable="false"
-            viewBox="0 0 20 20"
-            className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-          >
-            <path
-              fillRule="evenodd"
-              clipRule="evenodd"
-              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-              fill="currentColor"
-            />
-          </svg>
-        </button>
-      </h3>
-
-      {/* Content panel — hidden when closed; visible region when open */}
-      <div
-        id={panelId}
-        role="region"
-        aria-labelledby={buttonId}
-        hidden={!open}
-        className="px-4 pb-4 pt-1 text-sm text-muted-foreground leading-relaxed space-y-3"
-      >
-        {children}
-        {/* Visual label for screen readers / low-vis users: re-state the section above the content */}
-        <p className="sr-only">
-          {t('jurisdictions.expandLabel')}
-        </p>
-      </div>
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Continent filtering helpers
@@ -142,127 +63,138 @@ interface AccessibilityLawEntry {
 }
 
 // ---------------------------------------------------------------------------
-// Sub-components
+// Section heading helper — visual break inside a card, NOT expandable
 // ---------------------------------------------------------------------------
 
-/** Renders the full CCPA jurisdiction block. */
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h3 className="text-sm font-semibold text-foreground mt-4 first:mt-0">
+      {children}
+    </h3>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Jurisdiction renderers — flowing paragraphs, no accordions
+// ---------------------------------------------------------------------------
+
 function CcpaSection({ jKey }: { jKey: string }) {
   const { t } = useTranslation('legal');
   const rights = t(`jurisdictions.${jKey}.rights`, { returnObjects: true }) as string[];
   return (
-    <JurisdictionSection id={jKey} heading={t(`jurisdictions.${jKey}.heading`)}>
-      <p>{t(`jurisdictions.${jKey}.p1`)}</p>
-      <p>{t(`jurisdictions.${jKey}.p2`)}</p>
-      <p>{t(`jurisdictions.${jKey}.p3`)}</p>
-      <p>{t(`jurisdictions.${jKey}.p4`)}</p>
-      <ul className="list-disc list-inside space-y-1 pl-2">
+    <div className="space-y-1">
+      <SectionHeading>{t(`jurisdictions.${jKey}.heading`)}</SectionHeading>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p1`)}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p2`)}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p3`)}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p4`)}</p>
+      <ul className="list-disc list-inside space-y-1 pl-2 text-sm text-muted-foreground mt-1">
         {rights.map((right) => (
           <li key={right}>{right}</li>
         ))}
       </ul>
-      <p>{t(`jurisdictions.${jKey}.p5`)}</p>
-      <p className="text-xs text-muted-foreground">{t(`jurisdictions.${jKey}.p6`)}</p>
-    </JurisdictionSection>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p5`)}</p>
+      <p className="text-xs text-muted-foreground mt-1">{t(`jurisdictions.${jKey}.p6`)}</p>
+    </div>
   );
 }
 
-/** Renders the CalOPPA jurisdiction block. */
 function CaloppaSection({ jKey }: { jKey: string }) {
   const { t } = useTranslation('legal');
   return (
-    <JurisdictionSection id={jKey} heading={t(`jurisdictions.${jKey}.heading`)}>
-      <p>{t(`jurisdictions.${jKey}.p1`)}</p>
-      <p>{t(`jurisdictions.${jKey}.p2`)}</p>
-      <p>{t(`jurisdictions.${jKey}.p3`)}</p>
-      <p>{t(`jurisdictions.${jKey}.p4`)}</p>
-      <p className="text-xs text-muted-foreground">{t(`jurisdictions.${jKey}.p5`)}</p>
-    </JurisdictionSection>
+    <div className="space-y-1">
+      <SectionHeading>{t(`jurisdictions.${jKey}.heading`)}</SectionHeading>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p1`)}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p2`)}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p3`)}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p4`)}</p>
+      <p className="text-xs text-muted-foreground mt-1">{t(`jurisdictions.${jKey}.p5`)}</p>
+    </div>
   );
 }
 
-/** Renders the GDPR jurisdiction block. */
 function GdprSection({ jKey }: { jKey: string }) {
   const { t } = useTranslation('legal');
   const legalBases = t(`jurisdictions.${jKey}.legalBases`, { returnObjects: true }) as string[];
   const rights = t(`jurisdictions.${jKey}.rights`, { returnObjects: true }) as string[];
   return (
-    <JurisdictionSection id={jKey} heading={t(`jurisdictions.${jKey}.heading`)}>
-      <p>{t(`jurisdictions.${jKey}.p1`)}</p>
-      <p>{t(`jurisdictions.${jKey}.p2`)}</p>
-      <p>{t(`jurisdictions.${jKey}.p3`)}</p>
-      <p>{t(`jurisdictions.${jKey}.p4`)}</p>
-      <ul className="list-disc list-inside space-y-1 pl-2">
+    <div className="space-y-1">
+      <SectionHeading>{t(`jurisdictions.${jKey}.heading`)}</SectionHeading>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p1`)}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p2`)}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p3`)}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p4`)}</p>
+      <ul className="list-disc list-inside space-y-1 pl-2 text-sm text-muted-foreground mt-1">
         {legalBases.map((basis) => (
           <li key={basis}>{basis}</li>
         ))}
       </ul>
-      <p>{t(`jurisdictions.${jKey}.p5`)}</p>
-      <ul className="list-disc list-inside space-y-1 pl-2">
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p5`)}</p>
+      <ul className="list-disc list-inside space-y-1 pl-2 text-sm text-muted-foreground mt-1">
         {rights.map((right) => (
           <li key={right}>{right}</li>
         ))}
       </ul>
-      <p>{t(`jurisdictions.${jKey}.p6`)}</p>
-      <p>{t(`jurisdictions.${jKey}.p7`)}</p>
-      <p>{t(`jurisdictions.${jKey}.p8`)}</p>
-      <p className="text-xs text-muted-foreground">{t(`jurisdictions.${jKey}.p9`)}</p>
-    </JurisdictionSection>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p6`)}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p7`)}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p8`)}</p>
+      <p className="text-xs text-muted-foreground mt-1">{t(`jurisdictions.${jKey}.p9`)}</p>
+    </div>
   );
 }
 
-/** Renders the UK GDPR/PECR jurisdiction block. */
 function UkGdprSection({ jKey }: { jKey: string }) {
   const { t } = useTranslation('legal');
   const legalBases = t(`jurisdictions.${jKey}.legalBases`, { returnObjects: true }) as string[];
   const rights = t(`jurisdictions.${jKey}.rights`, { returnObjects: true }) as string[];
   return (
-    <JurisdictionSection id={jKey} heading={t(`jurisdictions.${jKey}.heading`)}>
-      <p>{t(`jurisdictions.${jKey}.p1`)}</p>
-      <p>{t(`jurisdictions.${jKey}.p2`)}</p>
-      <p>{t(`jurisdictions.${jKey}.p3`)}</p>
-      <p>{t(`jurisdictions.${jKey}.p4`)}</p>
-      <ul className="list-disc list-inside space-y-1 pl-2">
+    <div className="space-y-1">
+      <SectionHeading>{t(`jurisdictions.${jKey}.heading`)}</SectionHeading>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p1`)}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p2`)}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p3`)}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p4`)}</p>
+      <ul className="list-disc list-inside space-y-1 pl-2 text-sm text-muted-foreground mt-1">
         {legalBases.map((basis) => (
           <li key={basis}>{basis}</li>
         ))}
       </ul>
-      <p>{t(`jurisdictions.${jKey}.p5`)}</p>
-      <ul className="list-disc list-inside space-y-1 pl-2">
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p5`)}</p>
+      <ul className="list-disc list-inside space-y-1 pl-2 text-sm text-muted-foreground mt-1">
         {rights.map((right) => (
           <li key={right}>{right}</li>
         ))}
       </ul>
-      <p>{t(`jurisdictions.${jKey}.p6`)}</p>
-      <p className="text-xs text-muted-foreground">{t(`jurisdictions.${jKey}.p7`)}</p>
-    </JurisdictionSection>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p6`)}</p>
+      <p className="text-xs text-muted-foreground mt-1">{t(`jurisdictions.${jKey}.p7`)}</p>
+    </div>
   );
 }
 
-/** Renders the Quebec Law 25 jurisdiction block. */
 function QuebecSection({ jKey }: { jKey: string }) {
   const { t } = useTranslation('legal');
   const rights = t(`jurisdictions.${jKey}.rights`, { returnObjects: true }) as string[];
   return (
-    <JurisdictionSection id={jKey} heading={t(`jurisdictions.${jKey}.heading`)}>
-      <p>{t(`jurisdictions.${jKey}.p1`)}</p>
-      <p>{t(`jurisdictions.${jKey}.p2`)}</p>
-      <p>{t(`jurisdictions.${jKey}.p3`)}</p>
-      <p>{t(`jurisdictions.${jKey}.p4`)}</p>
-      <p>{t(`jurisdictions.${jKey}.p5`)}</p>
-      <ul className="list-disc list-inside space-y-1 pl-2">
+    <div className="space-y-1">
+      <SectionHeading>{t(`jurisdictions.${jKey}.heading`)}</SectionHeading>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p1`)}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p2`)}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p3`)}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p4`)}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p5`)}</p>
+      <ul className="list-disc list-inside space-y-1 pl-2 text-sm text-muted-foreground mt-1">
         {rights.map((right) => (
           <li key={right}>{right}</li>
         ))}
       </ul>
-      <p>{t(`jurisdictions.${jKey}.p6`)}</p>
-      <p>{t(`jurisdictions.${jKey}.p7`)}</p>
-      <p>{t(`jurisdictions.${jKey}.p8`)}</p>
-      <p className="text-xs text-muted-foreground">{t(`jurisdictions.${jKey}.p9`)}</p>
-    </JurisdictionSection>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p6`)}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p7`)}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p8`)}</p>
+      <p className="text-xs text-muted-foreground mt-1">{t(`jurisdictions.${jKey}.p9`)}</p>
+    </div>
   );
 }
 
-/** Generic jurisdiction block for LGPD, APPI, DPDP, Australia Privacy Act, POPIA. */
 function GenericJurisdictionSection({ jKey, paragraphs, hasRights }: {
   jKey: string;
   paragraphs: string[];
@@ -274,32 +206,37 @@ function GenericJurisdictionSection({ jKey, paragraphs, hasRights }: {
     : [];
 
   return (
-    <JurisdictionSection id={jKey} heading={t(`jurisdictions.${jKey}.heading`)}>
+    <div className="space-y-1">
+      <SectionHeading>{t(`jurisdictions.${jKey}.heading`)}</SectionHeading>
       {paragraphs.map((pKey, idx) => {
-        // Insert rights list after the p that says "Your rights under..." (before last p)
         if (hasRights && idx === paragraphs.length - 2) {
           return (
-            <>
-              <p key={pKey}>{t(`jurisdictions.${jKey}.${pKey}`)}</p>
-              <ul key={`${pKey}-list`} className="list-disc list-inside space-y-1 pl-2">
+            <React.Fragment key={pKey}>
+              <p className="text-sm text-muted-foreground leading-relaxed mt-1">
+                {t(`jurisdictions.${jKey}.${pKey}`)}
+              </p>
+              <ul className="list-disc list-inside space-y-1 pl-2 text-sm text-muted-foreground mt-1">
                 {rights.map((right) => (
                   <li key={right}>{right}</li>
                 ))}
               </ul>
-            </>
+            </React.Fragment>
           );
         }
-        // Last paragraph gets muted styling
         if (idx === paragraphs.length - 1) {
           return (
-            <p key={pKey} className="text-xs text-muted-foreground">
+            <p key={pKey} className="text-xs text-muted-foreground mt-1">
               {t(`jurisdictions.${jKey}.${pKey}`)}
             </p>
           );
         }
-        return <p key={pKey}>{t(`jurisdictions.${jKey}.${pKey}`)}</p>;
+        return (
+          <p key={pKey} className="text-sm text-muted-foreground leading-relaxed mt-1">
+            {t(`jurisdictions.${jKey}.${pKey}`)}
+          </p>
+        );
       })}
-    </JurisdictionSection>
+    </div>
   );
 }
 
@@ -379,7 +316,6 @@ export function LegalPage() {
   const privacyRegions = branding.privacyRegions;
 
   // Build typed jurisdiction map for filtering.
-  // Each entry must have a `continent` field — verified in legal.json.
   const allJurisdictions: Record<string, JurisdictionEntry> = {
     ccpa: { continent: 'north-america', heading: t('jurisdictions.ccpa.heading') },
     caloppa: { continent: 'north-america', heading: t('jurisdictions.caloppa.heading') },
@@ -431,7 +367,6 @@ export function LegalPage() {
 
   const filteredAccessibilityLaws = filterByContinent(allAccessibilityLaws, privacyRegions);
 
-  // i18next returns arrays when returnObjects is true; type-cast for TSC.
   const termsOfUseSections = [
     'acceptance',
     'serviceDescription',
@@ -447,177 +382,164 @@ export function LegalPage() {
 
   return (
     <PageLayout title={t('title')} icon={<Scales weight="duotone" />}>
-            {/* ----------------------------------------------------------------
-                1. Terms of Use
-            ---------------------------------------------------------------- */}
-            <Card footprint="full">
-              <CardHeader>
-                <CardTitle as="h2">{t('termsOfUse.title')}</CardTitle>
-              </CardHeader>
-              <CardContent className="!p-0">
-                {termsOfUseSections.map((sectionKey) => (
-                  <JurisdictionSection
-                    key={sectionKey}
-                    id={`terms-${sectionKey}`}
-                    heading={t(`termsOfUse.sections.${sectionKey}.title`)}
-                  >
-                    <p>{t(`termsOfUse.sections.${sectionKey}.body`)}</p>
-                  </JurisdictionSection>
-                ))}
-              </CardContent>
-            </Card>
+      {/* ----------------------------------------------------------------
+          1. Terms of Use
+      ---------------------------------------------------------------- */}
+      <Card footprint="full">
+        <CardHeader>
+          <CardTitle as="h2">{t('termsOfUse.title')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-xs text-muted-foreground mb-3">{t('termsOfUse.lastUpdated')}</p>
+          <div className="space-y-4">
+            {termsOfUseSections.map((sectionKey) => (
+              <div key={sectionKey}>
+                <h3 className="text-sm font-semibold text-foreground mt-4 first:mt-0">
+                  {t(`termsOfUse.sections.${sectionKey}.title`)}
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed mt-1">
+                  {t(`termsOfUse.sections.${sectionKey}.body`)}
+                </p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
-            {/* ----------------------------------------------------------------
-                2. Privacy Policy — general intro + continent-filtered jurisdictions
-            ---------------------------------------------------------------- */}
-            <Card footprint="full">
-              <CardHeader>
-                <CardTitle as="h2">{t('privacy.title')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {/* General intro — always shown */}
-                <div className="space-y-4 mb-4">
-                  <div>
-                    <h3 className="text-sm font-medium text-foreground mb-1">
-                      {t('privacyIntro.dataCollectedTitle')}
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {t('privacyIntro.dataCollectedBody')}
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-foreground mb-1">
-                      {t('privacyIntro.visitorDataTitle')}
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {t('privacyIntro.visitorDataBody')}
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-foreground mb-1">
-                      {t('privacyIntro.contactTitle')}
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {t('privacyIntro.contactBody')}
-                    </p>
-                  </div>
-                  <p className="text-xs text-muted-foreground border-t border-border pt-3">
-                    {t('privacyIntro.disclaimerBody')}
+      {/* ----------------------------------------------------------------
+          2. Privacy Policy — general intro + continent-filtered jurisdictions
+      ---------------------------------------------------------------- */}
+      <Card footprint="full">
+        <CardHeader>
+          <CardTitle as="h2">{t('privacy.title')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">
+                {t('privacyIntro.dataCollectedTitle')}
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mt-1">
+                {t('privacyIntro.dataCollectedBody')}
+              </p>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">
+                {t('privacyIntro.visitorDataTitle')}
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mt-1">
+                {t('privacyIntro.visitorDataBody')}
+              </p>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">
+                {t('privacyIntro.contactTitle')}
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mt-1">
+                {t('privacyIntro.contactBody')}
+              </p>
+            </div>
+          </div>
+
+          {/* Jurisdiction-specific notices — continent filtered, flowing */}
+          {filteredJurisdictions.length > 0 && (
+            <div className="mt-6 pt-4 border-t border-border space-y-6">
+              <h3 className="text-sm font-semibold text-foreground">
+                {t('jurisdictions.sectionLabel')}
+              </h3>
+              {filteredJurisdictions.map(([key]) => renderJurisdiction(key))}
+            </div>
+          )}
+
+          <p className="text-xs text-muted-foreground mt-4 pt-3 border-t border-border">
+            {t('privacyIntro.disclaimerBody')}
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* ----------------------------------------------------------------
+          3. Accessibility Statement
+      ---------------------------------------------------------------- */}
+      <Card footprint="full">
+        <CardHeader>
+          <CardTitle as="h2">{t('accessibility.title')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Commitment</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mt-1">
+                {t('accessibility.commitment')}
+              </p>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Conformance Target</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mt-1">
+                {t('accessibility.conformanceTarget')}
+              </p>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Known Limitations</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mt-1">
+                {t('accessibility.knownLimitations')}
+              </p>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Feedback</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mt-1">
+                {t('accessibility.feedback')}
+              </p>
+            </div>
+          </div>
+
+          {/* Continent-filtered accessibility laws — flowing, not accordion */}
+          {filteredAccessibilityLaws.length > 0 && (
+            <div className="mt-6 pt-4 border-t border-border space-y-4">
+              <h3 className="text-sm font-semibold text-foreground">
+                {t('accessibility.lawsLabel')}
+              </h3>
+              {filteredAccessibilityLaws.map(([key, law]) => (
+                <div key={key}>
+                  <h3 className="text-sm font-semibold text-foreground mt-4 first:mt-0">
+                    {law.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed mt-1">
+                    {law.body}
                   </p>
                 </div>
-              </CardContent>
-            </Card>
+              ))}
+            </div>
+          )}
 
-            {/* Jurisdiction-specific notices — continent filtered */}
-            {filteredJurisdictions.length > 0 && (
-              <Card footprint="full">
-                <CardHeader>
-                  <CardTitle as="h2">{t('jurisdictions.sectionLabel')}</CardTitle>
-                </CardHeader>
-                <CardContent className="!p-0">
-                  {filteredJurisdictions.map(([key]) => renderJurisdiction(key))}
-                </CardContent>
-              </Card>
-            )}
+          <p className="text-xs text-muted-foreground mt-4 pt-3 border-t border-border">
+            {t('accessibility.operatorDisclaimer')}
+          </p>
+        </CardContent>
+      </Card>
 
-            {/* ----------------------------------------------------------------
-                3. Accessibility Statement
-            ---------------------------------------------------------------- */}
-            <Card footprint="full">
-              <CardHeader>
-                <CardTitle as="h2">{t('accessibility.title')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4 mb-4">
-                  <div>
-                    <h3 className="text-sm font-medium text-foreground mb-1">
-                      Commitment
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {t('accessibility.commitment')}
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-foreground mb-1">
-                      Conformance Target
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {t('accessibility.conformanceTarget')}
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-foreground mb-1">
-                      Known Limitations
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {t('accessibility.knownLimitations')}
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-foreground mb-1">
-                      Feedback
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {t('accessibility.feedback')}
-                    </p>
-                  </div>
-                  <p className="text-xs text-muted-foreground border-t border-border pt-3">
-                    {t('accessibility.operatorDisclaimer')}
-                  </p>
-                </div>
-
-                {/* Continent-filtered accessibility laws */}
-                {filteredAccessibilityLaws.length > 0 && (
-                  <div className="border-t border-border -mx-6 mt-2">
-                    <div className="px-6 pt-4 pb-1">
-                      <h3 className="text-sm font-semibold text-foreground">
-                        {t('accessibility.lawsLabel')}
-                      </h3>
-                    </div>
-                    {filteredAccessibilityLaws.map(([key, law]) => (
-                      <JurisdictionSection key={key} id={`a11y-${key}`} heading={law.title}>
-                        <p>{law.body}</p>
-                      </JurisdictionSection>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* ----------------------------------------------------------------
-                4. Attribution
-            ---------------------------------------------------------------- */}
-            <Card footprint="full">
-              <CardHeader>
-                <CardTitle as="h2">{t('attribution.title')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1.5">
-                  <li>{t('attribution.observations')}</li>
-                  <li>{t('attribution.forecast')}</li>
-                  <li>{t('attribution.airQuality')}</li>
-                  <li>{t('attribution.earthquake')}</li>
-                  <li>{t('attribution.astronomical')}</li>
-                </ul>
-                <p className="mt-3 text-xs text-muted-foreground">
-                  {t('attribution.note')}
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* ----------------------------------------------------------------
-                5. Open Source
-            ---------------------------------------------------------------- */}
-            <Card footprint="full">
-              <CardHeader>
-                <CardTitle as="h2">{t('openSource.title')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {t('openSource.body')}
-                </p>
-              </CardContent>
-            </Card>
+      {/* ----------------------------------------------------------------
+          4. Open Source
+      ---------------------------------------------------------------- */}
+      <Card footprint="full">
+        <CardHeader>
+          <CardTitle as="h2">Open Source</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            {t('openSource.body')}
+          </p>
+          <p className="mt-3">
+            <a
+              href="https://github.com/inguy24/weewx-clearskies-stack"
+              target="_blank"
+              rel="noopener"
+              className="text-sm font-medium text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+            >
+              View project repository on GitHub
+            </a>
+          </p>
+        </CardContent>
+      </Card>
     </PageLayout>
   );
 }
