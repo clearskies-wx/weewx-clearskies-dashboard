@@ -25,46 +25,46 @@ function CollapsibleCard({
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  const { t } = useTranslation('legal');
 
   return (
     <Card footprint="full">
-      <CardHeader>
-        <CardTitle as="h2">{title}</CardTitle>
+      <CardHeader
+        className="cursor-pointer select-none"
+        onClick={() => setOpen((o) => !o)}
+        role="button"
+        tabIndex={0}
+        aria-expanded={open}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setOpen((o) => !o);
+          }
+        }}
+      >
+        <div className="flex items-center justify-between w-full">
+          <CardTitle as="h2">{title}</CardTitle>
+          <CaretDown
+            aria-hidden="true"
+            className="size-4 shrink-0 text-muted-foreground transition-transform duration-200"
+            style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
+          />
+        </div>
       </CardHeader>
-      <CardContent className="px-6 pt-0 pb-0">
-        {/* Preview / full content area */}
+      <CardContent className="px-6 pt-0 pb-4">
         <div
           className="relative overflow-hidden transition-[max-height] duration-300 ease-in-out"
-          style={{ maxHeight: open ? '10000px' : '5rem' }}
+          style={{ maxHeight: open ? '10000px' : '4.5rem' }}
         >
-          <div className={open ? 'pb-4' : ''}>
-            {children}
-          </div>
-          {/* Gradient fade when collapsed */}
+          {children}
           {!open && (
             <div
-              className="absolute inset-x-0 bottom-0 h-12 pointer-events-none"
+              className="absolute inset-x-0 bottom-0 h-14 pointer-events-none"
               style={{
                 background: 'linear-gradient(to bottom, transparent, var(--card, hsl(var(--card))))',
               }}
             />
           )}
         </div>
-        {/* Expand / collapse toggle */}
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          aria-expanded={open}
-          className="flex items-center justify-center gap-1.5 w-full py-3 text-xs font-medium text-accent hover:text-accent/80 transition-colors cursor-pointer"
-        >
-          <span>{open ? 'Show less' : 'Read more'}</span>
-          <CaretDown
-            weight="bold"
-            className={`size-3 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-            aria-hidden="true"
-          />
-        </button>
       </CardContent>
     </Card>
   );
