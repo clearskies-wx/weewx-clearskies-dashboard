@@ -87,7 +87,7 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 
 function Body({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-xs text-muted-foreground/80 leading-relaxed mt-1.5">
+    <p className="text-xs text-muted-foreground/80 leading-loose mt-3 mb-4">
       {children}
     </p>
   );
