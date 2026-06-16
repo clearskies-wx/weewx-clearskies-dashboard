@@ -30,6 +30,7 @@
   },
   "photo": {
     "cardTitle": "Fotografia da Estação",
-    "placeholder": "Carregue uma fotografia da estação através da interface de configuração do Clear Skies."
+    "placeholder": "Carregue uma fotografia da estação através da interface de configuração do Clear Skies.",
+    "defaultAlt": "Estação meteorológica"
   }
 }

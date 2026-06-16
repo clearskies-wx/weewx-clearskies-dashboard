@@ -30,6 +30,7 @@
   },
   "photo": {
     "cardTitle": "測站照片",
-    "placeholder": "請透過 Clear Skies 設定介面上傳測站照片。"
+    "placeholder": "請透過 Clear Skies 設定介面上傳測站照片。",
+    "defaultAlt": "氣象測站"
   }
 }
