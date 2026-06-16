@@ -52,7 +52,7 @@ function CollapsibleCard({
           />
         </div>
       </CardHeader>
-      {open && <CardContent>{children}</CardContent>}
+      {open && <CardContent className="px-6 py-5">{children}</CardContent>}
     </Card>
   );
 }
