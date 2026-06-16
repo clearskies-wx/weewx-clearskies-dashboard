@@ -52,18 +52,16 @@ function CollapsibleCard({
       </CardHeader>
       <CardContent className="px-6 pt-0 pb-4">
         <div
-          className="relative overflow-hidden transition-[max-height] duration-300 ease-in-out"
-          style={{ maxHeight: open ? '10000px' : '4.5rem' }}
+          className="overflow-hidden transition-[max-height] duration-300 ease-in-out"
+          style={{
+            maxHeight: open ? '10000px' : '4.5rem',
+            ...(open ? {} : {
+              WebkitMaskImage: 'linear-gradient(to bottom, black 40%, transparent 100%)',
+              maskImage: 'linear-gradient(to bottom, black 40%, transparent 100%)',
+            }),
+          }}
         >
           {children}
-          {!open && (
-            <div
-              className="absolute inset-x-0 bottom-0 h-14 pointer-events-none"
-              style={{
-                background: 'linear-gradient(to bottom, transparent, var(--card, hsl(var(--card))))',
-              }}
-            />
-          )}
         </div>
       </CardContent>
     </Card>
