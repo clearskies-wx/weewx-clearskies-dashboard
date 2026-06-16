@@ -127,7 +127,7 @@ function CardTitle({
     <Tag
       data-slot="card-title"
       className={cn(
-        "font-heading leading-snug font-semibold pb-0.5 border-b border-border group-data-[size=sm]/card:text-sm",
+        "font-heading leading-snug font-semibold pb-1.5 mb-3 border-b border-border group-data-[size=sm]/card:text-sm group-data-[size=sm]/card:mb-2",
         className
       )}
       style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}
