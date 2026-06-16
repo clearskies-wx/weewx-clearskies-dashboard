@@ -10,6 +10,7 @@ import {
 } from '../components/ui/card';
 import { PageLayout } from '../components/layout/page-layout';
 import { useStation, useContent, useCapabilities } from '../hooks/useWeatherData';
+import { useBranding } from '../lib/branding-provider';
 import { SCENE_ASSET_MAP } from '../components/background/scene-background-types';
 
 const PROVIDER_INFO: Record<string, { name: string; url: string }> = {
@@ -82,6 +83,7 @@ export function AboutPage() {
   const { data: station, loading: stationLoading } = useStation();
   const { data: content, loading: contentLoading } = useContent('about');
   const { data: capabilities } = useCapabilities();
+  const branding = useBranding();
 
   return (
     <PageLayout title={t('title')} icon={<Info weight="duotone" />}>
@@ -161,11 +163,20 @@ export function AboutPage() {
             <CardTitle as="h2">{t('photo.cardTitle')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="border-dashed border-2 border-border rounded-lg h-48 flex items-center justify-center">
-              <p className="text-sm text-muted-foreground text-center px-4">
-                {t('photo.placeholder')}
-              </p>
-            </div>
+            {branding.stationPhotoUrl && branding.stationPhotoUrl.trim().length > 0 ? (
+              <img
+                src={branding.stationPhotoUrl}
+                alt={branding.stationPhotoAlt?.trim() || t('photo.defaultAlt')}
+                className="rounded-lg max-w-full"
+                style={{ maxHeight: '400px' }}
+              />
+            ) : (
+              <div className="border-dashed border-2 border-border rounded-lg h-48 flex items-center justify-center">
+                <p className="text-sm text-muted-foreground text-center px-4">
+                  {t('photo.placeholder')}
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 

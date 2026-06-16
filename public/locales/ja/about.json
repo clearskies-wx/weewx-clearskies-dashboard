@@ -30,6 +30,7 @@
   },
   "photo": {
     "cardTitle": "観測所の写真",
-    "placeholder": "Clear Skies設定UIから観測所の写真をアップロードしてください。"
+    "placeholder": "Clear Skies設定UIから観測所の写真をアップロードしてください。",
+    "defaultAlt": "気象観測所"
   }
 }

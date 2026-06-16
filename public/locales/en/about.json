@@ -30,7 +30,8 @@
   },
   "photo": {
     "cardTitle": "Station Photo",
-    "placeholder": "Upload a station photo via the Clear Skies configuration UI."
+    "placeholder": "Upload a station photo via the Clear Skies configuration UI.",
+    "defaultAlt": "Weather station"
   },
   "dataProviders": {
     "cardTitle": "Data Providers",

@@ -10,17 +10,7 @@ import {
 } from '../components/ui/card';
 import { PageLayout } from '../components/layout/page-layout';
 import { Scales } from '@phosphor-icons/react';
-import { useContent } from '../hooks/useWeatherData';
 import { useBranding } from '../lib/branding-provider';
-
-function TileSkeleton({ className }: { className?: string }) {
-  return (
-    <div
-      className={`animate-pulse rounded-lg bg-muted ${className ?? 'h-32'}`}
-      aria-hidden="true"
-    />
-  );
-}
 
 // JurisdictionSection implements the WAI-ARIA disclosure pattern:
 // https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/
@@ -385,7 +375,6 @@ function renderJurisdiction(key: string): React.ReactNode {
 
 export function LegalPage() {
   const { t } = useTranslation('legal');
-  const { data: content, loading } = useContent('legal');
   const branding = useBranding();
   const privacyRegions = branding.privacyRegions;
 
@@ -458,24 +447,6 @@ export function LegalPage() {
 
   return (
     <PageLayout title={t('title')} icon={<Scales weight="duotone" />}>
-        {loading ? (
-          <>
-            <span className="sr-only" role="status">{t('loadingAria')}</span>
-            <TileSkeleton className="col-span-full h-32" />
-          </>
-        ) : content ? (
-          <Card footprint="full">
-            <CardHeader>
-              <CardTitle as="h2">{t('operatorCard.title')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
-                {content.markdown}
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <>
             {/* ----------------------------------------------------------------
                 1. Terms of Use
             ---------------------------------------------------------------- */}
@@ -647,8 +618,6 @@ export function LegalPage() {
                 </p>
               </CardContent>
             </Card>
-          </>
-        )}
     </PageLayout>
   );
 }

@@ -30,6 +30,7 @@
   },
   "photo": {
     "cardTitle": "Stationfoto",
-    "placeholder": "Upload een stationfoto via de Clear Skies configuratie-UI."
+    "placeholder": "Upload een stationfoto via de Clear Skies configuratie-UI.",
+    "defaultAlt": "Weerstation"
   }
 }

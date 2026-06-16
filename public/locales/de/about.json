@@ -30,6 +30,7 @@
   },
   "photo": {
     "cardTitle": "Stationsfoto",
-    "placeholder": "Laden Sie ein Stationsfoto über die Clear-Skies-Konfigurationsoberfläche hoch."
+    "placeholder": "Laden Sie ein Stationsfoto über die Clear-Skies-Konfigurationsoberfläche hoch.",
+    "defaultAlt": "Wetterstation"
   }
 }

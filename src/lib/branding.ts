@@ -31,6 +31,10 @@ export interface BrandingConfig {
    * Absent or empty string → no GA, no banner shown.
    */
   googleAnalyticsId?: string;
+  /** URL of the operator's weather station photo (set via the setup wizard). */
+  stationPhotoUrl?: string;
+  /** Alt text for the station photo. Falls back to a generic description if not set. */
+  stationPhotoAlt?: string;
 }
 
 // Curated palette — all light values verified ≥4.5:1 on white (oklch(1 0 0));
