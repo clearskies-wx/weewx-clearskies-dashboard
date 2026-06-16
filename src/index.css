@@ -20,10 +20,13 @@
     /* ── A4 layout / sizing tokens (ADR-051) ──────────────────────────────── */
     --gap-grid: 1rem;
     --container-max: 80rem;
-    --card-half-row: 6.5rem;
-    --card-quarter-row: 3.25rem;
-    --card-row: 13rem;
+    --card-half-row: 7.5rem;
+    --card-quarter-row: 3.75rem;
+    --card-row: 15rem;
     --card-content-max: calc(var(--card-row) - 4rem);
+    --card-pad: 1rem;
+    --card-header-h: 2.5rem;
+    --card-content-h: 10.5rem;
 
     /* ── Font families (LOCKED 2026-05-31 — typography token spec) ────────── */
     /* --font-sans: Manrope — body, labels, card titles, station name (DEFAULT) */
@@ -45,7 +48,7 @@
     --text-section:      0.95rem; /* section heading — Manrope */
     --text-body:         0.9rem;  /* body sentences — Manrope */
     --text-secondary:    0.85rem; /* feels-like, hi/lo — Manrope (hi/lo weight 600) */
-    --text-card-title:   0.82rem; /* card title — Manrope 600 (semibold, NOT bold) */
+    --text-card-title:   1.1rem;  /* card title — Manrope 600 (semibold, NOT bold) */
     --text-stat-tile:    1.25rem; /* primary stat value on 1×1 tile cards — Outfit 600 */
     --text-stat-label:   1rem;   /* secondary stat value / large label on tiles — Outfit/Manrope */
     --text-label:        0.75rem; /* small labels — Manrope */
@@ -133,9 +136,10 @@
 
 @media (min-width: 768px) {
     :root {
-        --card-row: 11rem;
-        --card-half-row: 5.5rem;
-        --card-quarter-row: 2.75rem;
+        --card-row: 13rem;
+        --card-half-row: 6.5rem;
+        --card-quarter-row: 3.25rem;
+        --card-content-h: 8.5rem;
     }
 }
 
@@ -239,13 +243,13 @@
     /* ── Alert glass tokens (ADR-052) ───────────────────────────────────────── */
     --alert-glass:  rgba(120, 85, 10, 0.55);
     --alert-border: rgba(255, 200, 60, 0.25);
-    --alert-fg:     #fbbf24;
+    --alert-fg:     #fef3c7;
 
     --background: oklch(0.145 0 0);
 
     --foreground: oklch(0.985 0 0);
 
-    --card: oklch(0.205 0 0);
+    --card: oklch(0.145 0 0);
 
     --card-foreground: oklch(0.985 0 0);
 

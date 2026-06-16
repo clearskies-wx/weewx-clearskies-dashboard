@@ -13,18 +13,18 @@ type CardProps = React.ComponentProps<"div"> & {
   /**
    * Row span — controls how many quarter-row tracks the card occupies at md+ (≥768px).
    * Mobile rows are always auto-height.
-   *   "quarter" = md:row-span-1  (1 × --card-quarter-row  = 2.75rem)
-   *   "half"    = md:row-span-2  (2 × --card-quarter-row  = 5.5rem)
-   *   1         = md:row-span-4  (4 × --card-quarter-row  = 11rem, default data card)
-   *   2         = md:row-span-8  (8 × --card-quarter-row  = 22rem, tall card)
-   *   2.5       = md:row-span-10 (10 × --card-quarter-row = 27.5rem, extra-tall card)
+   *   "quarter" = md:row-span-1  (1 × --card-quarter-row  = 3.25rem)
+   *   "half"    = md:row-span-2  (2 × --card-quarter-row  = 6.5rem)
+   *   1         = md:row-span-4  (4 × --card-quarter-row  = 13rem, default data card)
+   *   2         = md:row-span-8  (8 × --card-quarter-row  = 26rem, tall card)
+   *   2.5       = md:row-span-10 (10 × --card-quarter-row = 32.5rem, extra-tall card)
    */
   rowSpan?: "quarter" | "half" | 1 | 2 | 2.5;
 };
 
 /** Column-span classes for each footprint value (ADR-051).
  *  Grid is 1â†’2â†’4 columns (<768px / â‰¥768px / â‰¥1024px).
- *  Column spans are enforced now; row heights use --card-row (11rem) track at md+. */
+ *  Column spans are enforced now; row heights use --card-row (13rem) track at md+. */
 const footprintColSpan: Record<CardFootprint, string> = {
   tile:  "col-span-1",
   wide:  "col-span-1 md:col-span-2",
@@ -37,12 +37,12 @@ const footprintColSpan: Record<CardFootprint, string> = {
  * On mobile, grid-auto-rows is `auto` so row-span has no effect;
  * the md: prefix ensures these only take effect at >=768px.
  *
- * Base track is --card-quarter-row (2.75rem desktop / 3.25rem mobile).
- *   "quarter" -> md:row-span-1  (1 track  = 2.75rem)   — controls strips, headers
- *   "half"    -> md:row-span-2  (2 tracks = 5.5rem)    — hero, page-header
- *   1         -> md:row-span-4  (4 tracks = 11rem)     — standard data card (default)
- *   2         -> md:row-span-8  (8 tracks = 22rem)     — tall/chart cards
- *   2.5       -> md:row-span-10 (10 tracks = 27.5rem)  — extra-tall cards (radar, webcam)
+ * Base track is --card-quarter-row (3.25rem desktop / 3.75rem mobile).
+ *   "quarter" -> md:row-span-1  (1 track  = 3.25rem)   — controls strips, headers
+ *   "half"    -> md:row-span-2  (2 tracks = 6.5rem)    — hero, page-header
+ *   1         -> md:row-span-4  (4 tracks = 13rem)     — standard data card (default)
+ *   2         -> md:row-span-8  (8 tracks = 26rem)     — tall/chart cards
+ *   2.5       -> md:row-span-10 (10 tracks = 32.5rem)  — extra-tall cards (radar, webcam)
  */
 function rowSpanClass(rowSpan: "quarter" | "half" | 1 | 2 | 2.5 | undefined): string {
   switch (rowSpan) {
@@ -66,7 +66,7 @@ function minHeightClass(rowSpan: "quarter" | "half" | 1 | 2 | 2.5 | undefined): 
   // grid area, leaving no room for the margin to create visual spacing.
   switch (rowSpan) {
     case "quarter": return "min-h-[var(--card-quarter-row)] md:min-h-0";
-    case "half":    return "min-h-[5.5rem] md:min-h-0";
+    case "half":    return "min-h-[var(--card-half-row)] md:min-h-0";
     default:        return "min-h-[var(--card-row)] md:min-h-0";
   }
 }
@@ -89,7 +89,7 @@ function Card({
         // backdrop-filter is set inline since there is no Tailwind utility for
         // the exact blur+saturate combination.
         "card-glass",
-        "group/card flex flex-col gap-1 overflow-hidden rounded-xl py-2.5 text-sm text-card-foreground ring-1 ring-foreground/10 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-0.5 data-[size=sm]:py-2 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+        "group/card flex flex-col gap-1 overflow-hidden rounded-xl py-[var(--card-pad)] text-sm text-card-foreground ring-1 ring-foreground/10 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-0.5 data-[size=sm]:py-2 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
         minHeightClass(rowSpan),
         "mb-[var(--gap-grid)]",
         footprint !== undefined ? footprintColSpan[footprint] : undefined,
@@ -106,7 +106,7 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-header"
       className={cn(
-        "group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-4 group-data-[size=sm]/card:px-3 has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-4 group-data-[size=sm]/card:[.border-b]:pb-3",
+        "group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-[var(--card-pad)] group-data-[size=sm]/card:px-3 has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-4 group-data-[size=sm]/card:[.border-b]:pb-3",
         className
       )}
       {...props}
@@ -132,7 +132,7 @@ function CardTitle({
         compact ? "pb-0.5" : "pb-1.5 mb-3 group-data-[size=sm]/card:mb-2",
         className
       )}
-      style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}
+      style={{ fontSize: 'var(--text-card-title, 1.1rem)' }}
       {...props}
     />
   )
@@ -165,7 +165,7 @@ function CardContent({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-content"
-      className={cn("px-4 group-data-[size=sm]/card:px-3 overflow-hidden flex-1 min-h-0 flex flex-col", className)}
+      className={cn("px-[var(--card-pad)] group-data-[size=sm]/card:px-3 overflow-hidden flex-1 min-h-0 flex flex-col", className)}
       {...props}
     />
   )
@@ -176,7 +176,7 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-footer"
       className={cn(
-        "flex items-center rounded-b-xl border-t bg-muted/50 p-4 group-data-[size=sm]/card:p-3",
+        "flex items-center rounded-b-xl border-t bg-muted/50 p-[var(--card-pad)] group-data-[size=sm]/card:p-3",
         className
       )}
       {...props}
