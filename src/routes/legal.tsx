@@ -19,40 +19,53 @@ import { useBranding } from '../lib/branding-provider';
 
 function CollapsibleCard({
   title,
-  defaultOpen = false,
   children,
 }: {
   title: string;
-  defaultOpen?: boolean;
   children: React.ReactNode;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
+  const [open, setOpen] = useState(false);
+  const { t } = useTranslation('legal');
 
   return (
     <Card footprint="full">
-      <CardHeader
-        className="cursor-pointer select-none"
-        onClick={() => setOpen((o) => !o)}
-        role="button"
-        tabIndex={0}
-        aria-expanded={open}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            setOpen((o) => !o);
-          }
-        }}
-      >
-        <div className="flex items-center justify-between w-full">
-          <CardTitle as="h2">{title}</CardTitle>
+      <CardHeader>
+        <CardTitle as="h2">{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="px-6 pt-0 pb-0">
+        {/* Preview / full content area */}
+        <div
+          className="relative overflow-hidden transition-[max-height] duration-300 ease-in-out"
+          style={{ maxHeight: open ? '10000px' : '5rem' }}
+        >
+          <div className={open ? 'pb-4' : ''}>
+            {children}
+          </div>
+          {/* Gradient fade when collapsed */}
+          {!open && (
+            <div
+              className="absolute inset-x-0 bottom-0 h-12 pointer-events-none"
+              style={{
+                background: 'linear-gradient(to bottom, transparent, var(--card, hsl(var(--card))))',
+              }}
+            />
+          )}
+        </div>
+        {/* Expand / collapse toggle */}
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+          className="flex items-center justify-center gap-1.5 w-full py-3 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors border-t border-border mt-1 cursor-pointer"
+        >
+          <span>{open ? t('showLess', 'Show less') : t('readMore', 'Read more')}</span>
           <CaretDown
             weight="bold"
-            className={`size-4 text-muted-foreground shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+            className={`size-3 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
             aria-hidden="true"
           />
-        </div>
-      </CardHeader>
-      {open && <CardContent className="px-6 py-5">{children}</CardContent>}
+        </button>
+      </CardContent>
     </Card>
   );
 }
