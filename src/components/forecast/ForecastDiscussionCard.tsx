@@ -75,7 +75,8 @@ export function ForecastDiscussionCard({
             alignItems: 'center',
             gap: '0.35rem',
             borderBottom: '1px solid var(--border, rgba(0,0,0,0.12))',
-            paddingBottom: '0.4rem',
+            paddingBottom: '0.375rem',
+            marginBottom: '0.75rem',
           }}
         >
           <span
