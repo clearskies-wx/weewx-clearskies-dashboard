@@ -79,7 +79,7 @@ function filterByContinent<T extends { continent: string }>(
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide mt-5 first:mt-0">
+    <h3 className="text-xs font-semibold text-foreground mt-6 first:mt-0">
       {children}
     </h3>
   );
@@ -87,7 +87,7 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 
 function Body({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-xs text-muted-foreground leading-relaxed mt-1">
+    <p className="text-xs text-muted-foreground/80 leading-relaxed mt-1.5">
       {children}
     </p>
   );
