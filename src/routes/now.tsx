@@ -263,7 +263,7 @@ export function NowPage() {
             md:h-auto: on desktop md:row-span-10 (from rowSpan={2.5}) governs height. */}
         <Card footprint="wide" rowSpan={2.5} className="relative z-0 min-h-[var(--card-row)] md:h-auto">
           <CardHeader>
-            <CardTitle as="h2">{tRadar('radarTitle')}</CardTitle>
+            <CardTitle as="h2" compact>{tRadar('radarTitle')}</CardTitle>
           </CardHeader>
           <CardContent className="pt-1">
             {station ? (

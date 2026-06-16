@@ -121,13 +121,15 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
 function CardTitle({
   className,
   as: Tag = "div",
+  compact = false,
   ...props
-}: React.ComponentProps<"div"> & { as?: "div" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" }) {
+}: React.ComponentProps<"div"> & { as?: "div" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6"; compact?: boolean }) {
   return (
     <Tag
       data-slot="card-title"
       className={cn(
-        "font-heading leading-snug font-semibold pb-1.5 mb-3 border-b border-border group-data-[size=sm]/card:text-sm group-data-[size=sm]/card:mb-2",
+        "font-heading leading-snug font-semibold border-b border-border group-data-[size=sm]/card:text-sm",
+        compact ? "pb-0.5" : "pb-1.5 mb-3 group-data-[size=sm]/card:mb-2",
         className
       )}
       style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}
