@@ -1,5 +1,6 @@
 // legal.tsx — Legal page (/legal)
 
+import { useState } from 'react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -9,22 +10,57 @@ import {
   CardContent,
 } from '../components/ui/card';
 import { PageLayout } from '../components/layout/page-layout';
-import { Scales } from '@phosphor-icons/react';
+import { Scales, CaretDown } from '@phosphor-icons/react';
 import { useBranding } from '../lib/branding-provider';
 
 // ---------------------------------------------------------------------------
-// Continent filtering helpers
+// Collapsible card — click header to toggle content
 // ---------------------------------------------------------------------------
 
-/**
- * filterByContinent — given a record of items each with a `continent` string
- * and a comma-separated `regions` string (e.g. "north-america,europe"),
- * returns an array of [key, value] pairs whose continent matches any of the
- * requested regions.
- *
- * "global", empty string, or undefined → return all items (safe default for
- * operators who have not yet configured privacyRegions — Phase 4).
- */
+function CollapsibleCard({
+  title,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <Card footprint="full">
+      <CardHeader
+        className="cursor-pointer select-none"
+        onClick={() => setOpen((o) => !o)}
+        role="button"
+        tabIndex={0}
+        aria-expanded={open}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setOpen((o) => !o);
+          }
+        }}
+      >
+        <div className="flex items-center justify-between w-full">
+          <CardTitle as="h2">{title}</CardTitle>
+          <CaretDown
+            weight="bold"
+            className={`size-4 text-muted-foreground shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+            aria-hidden="true"
+          />
+        </div>
+      </CardHeader>
+      {open && <CardContent>{children}</CardContent>}
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Continent filtering
+// ---------------------------------------------------------------------------
+
 function filterByContinent<T extends { continent: string }>(
   items: Record<string, T>,
   regions: string | undefined,
@@ -38,23 +74,50 @@ function filterByContinent<T extends { continent: string }>(
 }
 
 // ---------------------------------------------------------------------------
-// Jurisdiction entry shapes (typed for safe array access in TSC)
+// Text hierarchy — section headings and body SMALLER than card title (0.82rem)
+// ---------------------------------------------------------------------------
+
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide mt-5 first:mt-0">
+      {children}
+    </h3>
+  );
+}
+
+function Body({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-xs text-muted-foreground leading-relaxed mt-1">
+      {children}
+    </p>
+  );
+}
+
+function BodySmall({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[0.65rem] text-muted-foreground/70 leading-relaxed mt-1">
+      {children}
+    </p>
+  );
+}
+
+function BulletList({ items }: { items: string[] }) {
+  return (
+    <ul className="list-disc list-inside space-y-0.5 pl-2 text-xs text-muted-foreground mt-1">
+      {items.map((item) => (
+        <li key={item}>{item}</li>
+      ))}
+    </ul>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Jurisdiction renderers
 // ---------------------------------------------------------------------------
 
 interface JurisdictionEntry {
   continent: string;
   heading: string;
-  p1?: string;
-  p2?: string;
-  p3?: string;
-  p4?: string;
-  p5?: string;
-  p6?: string;
-  p7?: string;
-  p8?: string;
-  p9?: string;
-  rights?: string[];
-  legalBases?: string[];
 }
 
 interface AccessibilityLawEntry {
@@ -62,39 +125,19 @@ interface AccessibilityLawEntry {
   body: string;
 }
 
-// ---------------------------------------------------------------------------
-// Section heading helper — visual break inside a card, NOT expandable
-// ---------------------------------------------------------------------------
-
-function SectionHeading({ children }: { children: React.ReactNode }) {
-  return (
-    <h3 className="text-sm font-semibold text-foreground mt-4 first:mt-0">
-      {children}
-    </h3>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Jurisdiction renderers — flowing paragraphs, no accordions
-// ---------------------------------------------------------------------------
-
 function CcpaSection({ jKey }: { jKey: string }) {
   const { t } = useTranslation('legal');
   const rights = t(`jurisdictions.${jKey}.rights`, { returnObjects: true }) as string[];
   return (
-    <div className="space-y-1">
+    <div>
       <SectionHeading>{t(`jurisdictions.${jKey}.heading`)}</SectionHeading>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p1`)}</p>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p2`)}</p>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p3`)}</p>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p4`)}</p>
-      <ul className="list-disc list-inside space-y-1 pl-2 text-sm text-muted-foreground mt-1">
-        {rights.map((right) => (
-          <li key={right}>{right}</li>
-        ))}
-      </ul>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p5`)}</p>
-      <p className="text-xs text-muted-foreground mt-1">{t(`jurisdictions.${jKey}.p6`)}</p>
+      <Body>{t(`jurisdictions.${jKey}.p1`)}</Body>
+      <Body>{t(`jurisdictions.${jKey}.p2`)}</Body>
+      <Body>{t(`jurisdictions.${jKey}.p3`)}</Body>
+      <Body>{t(`jurisdictions.${jKey}.p4`)}</Body>
+      <BulletList items={rights} />
+      <Body>{t(`jurisdictions.${jKey}.p5`)}</Body>
+      <BodySmall>{t(`jurisdictions.${jKey}.p6`)}</BodySmall>
     </div>
   );
 }
@@ -102,13 +145,13 @@ function CcpaSection({ jKey }: { jKey: string }) {
 function CaloppaSection({ jKey }: { jKey: string }) {
   const { t } = useTranslation('legal');
   return (
-    <div className="space-y-1">
+    <div>
       <SectionHeading>{t(`jurisdictions.${jKey}.heading`)}</SectionHeading>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p1`)}</p>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p2`)}</p>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p3`)}</p>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p4`)}</p>
-      <p className="text-xs text-muted-foreground mt-1">{t(`jurisdictions.${jKey}.p5`)}</p>
+      <Body>{t(`jurisdictions.${jKey}.p1`)}</Body>
+      <Body>{t(`jurisdictions.${jKey}.p2`)}</Body>
+      <Body>{t(`jurisdictions.${jKey}.p3`)}</Body>
+      <Body>{t(`jurisdictions.${jKey}.p4`)}</Body>
+      <BodySmall>{t(`jurisdictions.${jKey}.p5`)}</BodySmall>
     </div>
   );
 }
@@ -118,27 +161,19 @@ function GdprSection({ jKey }: { jKey: string }) {
   const legalBases = t(`jurisdictions.${jKey}.legalBases`, { returnObjects: true }) as string[];
   const rights = t(`jurisdictions.${jKey}.rights`, { returnObjects: true }) as string[];
   return (
-    <div className="space-y-1">
+    <div>
       <SectionHeading>{t(`jurisdictions.${jKey}.heading`)}</SectionHeading>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p1`)}</p>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p2`)}</p>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p3`)}</p>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p4`)}</p>
-      <ul className="list-disc list-inside space-y-1 pl-2 text-sm text-muted-foreground mt-1">
-        {legalBases.map((basis) => (
-          <li key={basis}>{basis}</li>
-        ))}
-      </ul>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p5`)}</p>
-      <ul className="list-disc list-inside space-y-1 pl-2 text-sm text-muted-foreground mt-1">
-        {rights.map((right) => (
-          <li key={right}>{right}</li>
-        ))}
-      </ul>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p6`)}</p>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p7`)}</p>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p8`)}</p>
-      <p className="text-xs text-muted-foreground mt-1">{t(`jurisdictions.${jKey}.p9`)}</p>
+      <Body>{t(`jurisdictions.${jKey}.p1`)}</Body>
+      <Body>{t(`jurisdictions.${jKey}.p2`)}</Body>
+      <Body>{t(`jurisdictions.${jKey}.p3`)}</Body>
+      <Body>{t(`jurisdictions.${jKey}.p4`)}</Body>
+      <BulletList items={legalBases} />
+      <Body>{t(`jurisdictions.${jKey}.p5`)}</Body>
+      <BulletList items={rights} />
+      <Body>{t(`jurisdictions.${jKey}.p6`)}</Body>
+      <Body>{t(`jurisdictions.${jKey}.p7`)}</Body>
+      <Body>{t(`jurisdictions.${jKey}.p8`)}</Body>
+      <BodySmall>{t(`jurisdictions.${jKey}.p9`)}</BodySmall>
     </div>
   );
 }
@@ -148,25 +183,17 @@ function UkGdprSection({ jKey }: { jKey: string }) {
   const legalBases = t(`jurisdictions.${jKey}.legalBases`, { returnObjects: true }) as string[];
   const rights = t(`jurisdictions.${jKey}.rights`, { returnObjects: true }) as string[];
   return (
-    <div className="space-y-1">
+    <div>
       <SectionHeading>{t(`jurisdictions.${jKey}.heading`)}</SectionHeading>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p1`)}</p>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p2`)}</p>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p3`)}</p>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p4`)}</p>
-      <ul className="list-disc list-inside space-y-1 pl-2 text-sm text-muted-foreground mt-1">
-        {legalBases.map((basis) => (
-          <li key={basis}>{basis}</li>
-        ))}
-      </ul>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p5`)}</p>
-      <ul className="list-disc list-inside space-y-1 pl-2 text-sm text-muted-foreground mt-1">
-        {rights.map((right) => (
-          <li key={right}>{right}</li>
-        ))}
-      </ul>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p6`)}</p>
-      <p className="text-xs text-muted-foreground mt-1">{t(`jurisdictions.${jKey}.p7`)}</p>
+      <Body>{t(`jurisdictions.${jKey}.p1`)}</Body>
+      <Body>{t(`jurisdictions.${jKey}.p2`)}</Body>
+      <Body>{t(`jurisdictions.${jKey}.p3`)}</Body>
+      <Body>{t(`jurisdictions.${jKey}.p4`)}</Body>
+      <BulletList items={legalBases} />
+      <Body>{t(`jurisdictions.${jKey}.p5`)}</Body>
+      <BulletList items={rights} />
+      <Body>{t(`jurisdictions.${jKey}.p6`)}</Body>
+      <BodySmall>{t(`jurisdictions.${jKey}.p7`)}</BodySmall>
     </div>
   );
 }
@@ -175,22 +202,18 @@ function QuebecSection({ jKey }: { jKey: string }) {
   const { t } = useTranslation('legal');
   const rights = t(`jurisdictions.${jKey}.rights`, { returnObjects: true }) as string[];
   return (
-    <div className="space-y-1">
+    <div>
       <SectionHeading>{t(`jurisdictions.${jKey}.heading`)}</SectionHeading>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p1`)}</p>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p2`)}</p>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p3`)}</p>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p4`)}</p>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p5`)}</p>
-      <ul className="list-disc list-inside space-y-1 pl-2 text-sm text-muted-foreground mt-1">
-        {rights.map((right) => (
-          <li key={right}>{right}</li>
-        ))}
-      </ul>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p6`)}</p>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p7`)}</p>
-      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{t(`jurisdictions.${jKey}.p8`)}</p>
-      <p className="text-xs text-muted-foreground mt-1">{t(`jurisdictions.${jKey}.p9`)}</p>
+      <Body>{t(`jurisdictions.${jKey}.p1`)}</Body>
+      <Body>{t(`jurisdictions.${jKey}.p2`)}</Body>
+      <Body>{t(`jurisdictions.${jKey}.p3`)}</Body>
+      <Body>{t(`jurisdictions.${jKey}.p4`)}</Body>
+      <Body>{t(`jurisdictions.${jKey}.p5`)}</Body>
+      <BulletList items={rights} />
+      <Body>{t(`jurisdictions.${jKey}.p6`)}</Body>
+      <Body>{t(`jurisdictions.${jKey}.p7`)}</Body>
+      <Body>{t(`jurisdictions.${jKey}.p8`)}</Body>
+      <BodySmall>{t(`jurisdictions.${jKey}.p9`)}</BodySmall>
     </div>
   );
 }
@@ -206,108 +229,44 @@ function GenericJurisdictionSection({ jKey, paragraphs, hasRights }: {
     : [];
 
   return (
-    <div className="space-y-1">
+    <div>
       <SectionHeading>{t(`jurisdictions.${jKey}.heading`)}</SectionHeading>
       {paragraphs.map((pKey, idx) => {
         if (hasRights && idx === paragraphs.length - 2) {
           return (
             <React.Fragment key={pKey}>
-              <p className="text-sm text-muted-foreground leading-relaxed mt-1">
-                {t(`jurisdictions.${jKey}.${pKey}`)}
-              </p>
-              <ul className="list-disc list-inside space-y-1 pl-2 text-sm text-muted-foreground mt-1">
-                {rights.map((right) => (
-                  <li key={right}>{right}</li>
-                ))}
-              </ul>
+              <Body>{t(`jurisdictions.${jKey}.${pKey}`)}</Body>
+              <BulletList items={rights} />
             </React.Fragment>
           );
         }
         if (idx === paragraphs.length - 1) {
-          return (
-            <p key={pKey} className="text-xs text-muted-foreground mt-1">
-              {t(`jurisdictions.${jKey}.${pKey}`)}
-            </p>
-          );
+          return <BodySmall key={pKey}>{t(`jurisdictions.${jKey}.${pKey}`)}</BodySmall>;
         }
-        return (
-          <p key={pKey} className="text-sm text-muted-foreground leading-relaxed mt-1">
-            {t(`jurisdictions.${jKey}.${pKey}`)}
-          </p>
-        );
+        return <Body key={pKey}>{t(`jurisdictions.${jKey}.${pKey}`)}</Body>;
       })}
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Jurisdiction renderer — dispatches to the right component per key
-// ---------------------------------------------------------------------------
-
 function renderJurisdiction(key: string): React.ReactNode {
   switch (key) {
-    case 'ccpa':
-      return <CcpaSection key={key} jKey={key} />;
-    case 'caloppa':
-      return <CaloppaSection key={key} jKey={key} />;
-    case 'gdpr':
-      return <GdprSection key={key} jKey={key} />;
-    case 'ukgdpr':
-      return <UkGdprSection key={key} jKey={key} />;
-    case 'quebec':
-      return <QuebecSection key={key} jKey={key} />;
-    case 'lgpd':
-      return (
-        <GenericJurisdictionSection
-          key={key}
-          jKey={key}
-          paragraphs={['p1', 'p2', 'p3', 'p4', 'p5', 'p6']}
-          hasRights
-        />
-      );
-    case 'appi':
-      return (
-        <GenericJurisdictionSection
-          key={key}
-          jKey={key}
-          paragraphs={['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7']}
-          hasRights
-        />
-      );
-    case 'dpdp':
-      return (
-        <GenericJurisdictionSection
-          key={key}
-          jKey={key}
-          paragraphs={['p1', 'p2', 'p3', 'p4', 'p5', 'p6']}
-          hasRights
-        />
-      );
-    case 'australiaPrivacy':
-      return (
-        <GenericJurisdictionSection
-          key={key}
-          jKey={key}
-          paragraphs={['p1', 'p2', 'p3', 'p4', 'p5', 'p6']}
-          hasRights
-        />
-      );
-    case 'popia':
-      return (
-        <GenericJurisdictionSection
-          key={key}
-          jKey={key}
-          paragraphs={['p1', 'p2', 'p3', 'p4', 'p5', 'p6']}
-          hasRights
-        />
-      );
-    default:
-      return null;
+    case 'ccpa': return <CcpaSection key={key} jKey={key} />;
+    case 'caloppa': return <CaloppaSection key={key} jKey={key} />;
+    case 'gdpr': return <GdprSection key={key} jKey={key} />;
+    case 'ukgdpr': return <UkGdprSection key={key} jKey={key} />;
+    case 'quebec': return <QuebecSection key={key} jKey={key} />;
+    case 'lgpd': return <GenericJurisdictionSection key={key} jKey={key} paragraphs={['p1','p2','p3','p4','p5','p6']} hasRights />;
+    case 'appi': return <GenericJurisdictionSection key={key} jKey={key} paragraphs={['p1','p2','p3','p4','p5','p6','p7']} hasRights />;
+    case 'dpdp': return <GenericJurisdictionSection key={key} jKey={key} paragraphs={['p1','p2','p3','p4','p5','p6']} hasRights />;
+    case 'australiaPrivacy': return <GenericJurisdictionSection key={key} jKey={key} paragraphs={['p1','p2','p3','p4','p5','p6']} hasRights />;
+    case 'popia': return <GenericJurisdictionSection key={key} jKey={key} paragraphs={['p1','p2','p3','p4','p5','p6']} hasRights />;
+    default: return null;
   }
 }
 
 // ---------------------------------------------------------------------------
-// Main page component
+// Main page
 // ---------------------------------------------------------------------------
 
 export function LegalPage() {
@@ -315,7 +274,6 @@ export function LegalPage() {
   const branding = useBranding();
   const privacyRegions = branding.privacyRegions;
 
-  // Build typed jurisdiction map for filtering.
   const allJurisdictions: Record<string, JurisdictionEntry> = {
     ccpa: { continent: 'north-america', heading: t('jurisdictions.ccpa.heading') },
     caloppa: { continent: 'north-america', heading: t('jurisdictions.caloppa.heading') },
@@ -328,218 +286,91 @@ export function LegalPage() {
     australiaPrivacy: { continent: 'oceania', heading: t('jurisdictions.australiaPrivacy.heading') },
     popia: { continent: 'africa', heading: t('jurisdictions.popia.heading') },
   };
-
   const filteredJurisdictions = filterByContinent(allJurisdictions, privacyRegions);
 
-  // Accessibility laws map for filtering
   const allAccessibilityLaws: Record<string, AccessibilityLawEntry & { continent: string }> = {
-    'north-america': {
-      continent: 'north-america',
-      title: t('accessibility.laws.north-america.title'),
-      body: t('accessibility.laws.north-america.body'),
-    },
-    'south-america': {
-      continent: 'south-america',
-      title: t('accessibility.laws.south-america.title'),
-      body: t('accessibility.laws.south-america.body'),
-    },
-    europe: {
-      continent: 'europe',
-      title: t('accessibility.laws.europe.title'),
-      body: t('accessibility.laws.europe.body'),
-    },
-    asia: {
-      continent: 'asia',
-      title: t('accessibility.laws.asia.title'),
-      body: t('accessibility.laws.asia.body'),
-    },
-    oceania: {
-      continent: 'oceania',
-      title: t('accessibility.laws.oceania.title'),
-      body: t('accessibility.laws.oceania.body'),
-    },
-    africa: {
-      continent: 'africa',
-      title: t('accessibility.laws.africa.title'),
-      body: t('accessibility.laws.africa.body'),
-    },
+    'north-america': { continent: 'north-america', title: t('accessibility.laws.north-america.title'), body: t('accessibility.laws.north-america.body') },
+    'south-america': { continent: 'south-america', title: t('accessibility.laws.south-america.title'), body: t('accessibility.laws.south-america.body') },
+    europe: { continent: 'europe', title: t('accessibility.laws.europe.title'), body: t('accessibility.laws.europe.body') },
+    asia: { continent: 'asia', title: t('accessibility.laws.asia.title'), body: t('accessibility.laws.asia.body') },
+    oceania: { continent: 'oceania', title: t('accessibility.laws.oceania.title'), body: t('accessibility.laws.oceania.body') },
+    africa: { continent: 'africa', title: t('accessibility.laws.africa.title'), body: t('accessibility.laws.africa.body') },
   };
-
   const filteredAccessibilityLaws = filterByContinent(allAccessibilityLaws, privacyRegions);
 
   const termsOfUseSections = [
-    'acceptance',
-    'serviceDescription',
-    'dataAccuracy',
-    'intellectualProperty',
-    'thirdPartyServices',
-    'prohibitedConduct',
-    'limitationOfLiability',
-    'modifications',
-    'governingLaw',
-    'contact',
+    'acceptance', 'serviceDescription', 'dataAccuracy', 'intellectualProperty',
+    'thirdPartyServices', 'prohibitedConduct', 'limitationOfLiability',
+    'modifications', 'governingLaw', 'contact',
   ] as const;
 
   return (
     <PageLayout title={t('title')} icon={<Scales weight="duotone" />}>
-      {/* ----------------------------------------------------------------
-          1. Terms of Use
-      ---------------------------------------------------------------- */}
-      <Card footprint="full">
-        <CardHeader>
-          <CardTitle as="h2">{t('termsOfUse.title')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-xs text-muted-foreground mb-3">{t('termsOfUse.lastUpdated')}</p>
-          <div className="space-y-4">
-            {termsOfUseSections.map((sectionKey) => (
-              <div key={sectionKey}>
-                <h3 className="text-sm font-semibold text-foreground mt-4 first:mt-0">
-                  {t(`termsOfUse.sections.${sectionKey}.title`)}
-                </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed mt-1">
-                  {t(`termsOfUse.sections.${sectionKey}.body`)}
-                </p>
-              </div>
-            ))}
+      <CollapsibleCard title={t('termsOfUse.title')}>
+        <p className="text-[0.65rem] text-muted-foreground/70 mb-2">{t('termsOfUse.lastUpdated')}</p>
+        {termsOfUseSections.map((sectionKey) => (
+          <div key={sectionKey}>
+            <SectionHeading>{t(`termsOfUse.sections.${sectionKey}.title`)}</SectionHeading>
+            <Body>{t(`termsOfUse.sections.${sectionKey}.body`)}</Body>
           </div>
-        </CardContent>
-      </Card>
+        ))}
+      </CollapsibleCard>
 
-      {/* ----------------------------------------------------------------
-          2. Privacy Policy — general intro + continent-filtered jurisdictions
-      ---------------------------------------------------------------- */}
-      <Card footprint="full">
-        <CardHeader>
-          <CardTitle as="h2">{t('privacy.title')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">
-                {t('privacyIntro.dataCollectedTitle')}
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed mt-1">
-                {t('privacyIntro.dataCollectedBody')}
-              </p>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">
-                {t('privacyIntro.visitorDataTitle')}
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed mt-1">
-                {t('privacyIntro.visitorDataBody')}
-              </p>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">
-                {t('privacyIntro.contactTitle')}
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed mt-1">
-                {t('privacyIntro.contactBody')}
-              </p>
-            </div>
+      <CollapsibleCard title={t('privacy.title')}>
+        <SectionHeading>{t('privacyIntro.dataCollectedTitle')}</SectionHeading>
+        <Body>{t('privacyIntro.dataCollectedBody')}</Body>
+
+        <SectionHeading>{t('privacyIntro.visitorDataTitle')}</SectionHeading>
+        <Body>{t('privacyIntro.visitorDataBody')}</Body>
+
+        <SectionHeading>{t('privacyIntro.contactTitle')}</SectionHeading>
+        <Body>{t('privacyIntro.contactBody')}</Body>
+
+        {filteredJurisdictions.length > 0 && (
+          <>
+            {filteredJurisdictions.map(([key]) => renderJurisdiction(key))}
+          </>
+        )}
+
+        <BodySmall>{t('privacyIntro.disclaimerBody')}</BodySmall>
+      </CollapsibleCard>
+
+      <CollapsibleCard title={t('accessibility.title')}>
+        <SectionHeading>Commitment</SectionHeading>
+        <Body>{t('accessibility.commitment')}</Body>
+
+        <SectionHeading>Conformance Target</SectionHeading>
+        <Body>{t('accessibility.conformanceTarget')}</Body>
+
+        <SectionHeading>Known Limitations</SectionHeading>
+        <Body>{t('accessibility.knownLimitations')}</Body>
+
+        <SectionHeading>Feedback</SectionHeading>
+        <Body>{t('accessibility.feedback')}</Body>
+
+        {filteredAccessibilityLaws.length > 0 && filteredAccessibilityLaws.map(([key, law]) => (
+          <div key={key}>
+            <SectionHeading>{law.title}</SectionHeading>
+            <Body>{law.body}</Body>
           </div>
+        ))}
 
-          {/* Jurisdiction-specific notices — continent filtered, flowing */}
-          {filteredJurisdictions.length > 0 && (
-            <div className="mt-6 pt-4 border-t border-border space-y-6">
-              <h3 className="text-sm font-semibold text-foreground">
-                {t('jurisdictions.sectionLabel')}
-              </h3>
-              {filteredJurisdictions.map(([key]) => renderJurisdiction(key))}
-            </div>
-          )}
+        <BodySmall>{t('accessibility.operatorDisclaimer')}</BodySmall>
+      </CollapsibleCard>
 
-          <p className="text-xs text-muted-foreground mt-4 pt-3 border-t border-border">
-            {t('privacyIntro.disclaimerBody')}
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* ----------------------------------------------------------------
-          3. Accessibility Statement
-      ---------------------------------------------------------------- */}
-      <Card footprint="full">
-        <CardHeader>
-          <CardTitle as="h2">{t('accessibility.title')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">Commitment</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed mt-1">
-                {t('accessibility.commitment')}
-              </p>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">Conformance Target</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed mt-1">
-                {t('accessibility.conformanceTarget')}
-              </p>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">Known Limitations</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed mt-1">
-                {t('accessibility.knownLimitations')}
-              </p>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">Feedback</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed mt-1">
-                {t('accessibility.feedback')}
-              </p>
-            </div>
-          </div>
-
-          {/* Continent-filtered accessibility laws — flowing, not accordion */}
-          {filteredAccessibilityLaws.length > 0 && (
-            <div className="mt-6 pt-4 border-t border-border space-y-4">
-              <h3 className="text-sm font-semibold text-foreground">
-                {t('accessibility.lawsLabel')}
-              </h3>
-              {filteredAccessibilityLaws.map(([key, law]) => (
-                <div key={key}>
-                  <h3 className="text-sm font-semibold text-foreground mt-4 first:mt-0">
-                    {law.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed mt-1">
-                    {law.body}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <p className="text-xs text-muted-foreground mt-4 pt-3 border-t border-border">
-            {t('accessibility.operatorDisclaimer')}
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* ----------------------------------------------------------------
-          4. Open Source
-      ---------------------------------------------------------------- */}
-      <Card footprint="full">
-        <CardHeader>
-          <CardTitle as="h2">Open Source</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            {t('openSource.body')}
-          </p>
-          <p className="mt-3">
-            <a
-              href="https://github.com/inguy24/weewx-clearskies-stack"
-              target="_blank"
-              rel="noopener"
-              className="text-sm font-medium text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
-            >
-              View project repository on GitHub
-            </a>
-          </p>
-        </CardContent>
-      </Card>
+      <CollapsibleCard title={t('openSource.title')}>
+        <Body>{t('openSource.body')}</Body>
+        <p className="mt-2">
+          <a
+            href="https://github.com/inguy24/weewx-clearskies-stack"
+            target="_blank"
+            rel="noopener"
+            className="text-xs font-medium text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+          >
+            View project on GitHub ↗
+          </a>
+        </p>
+      </CollapsibleCard>
     </PageLayout>
   );
 }
