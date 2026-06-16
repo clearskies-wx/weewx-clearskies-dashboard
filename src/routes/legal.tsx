@@ -56,9 +56,9 @@ function CollapsibleCard({
           type="button"
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
-          className="flex items-center justify-center gap-1.5 w-full py-3 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors border-t border-border mt-1 cursor-pointer"
+          className="flex items-center justify-center gap-1.5 w-full py-3 text-xs font-medium text-accent hover:text-accent/80 transition-colors cursor-pointer"
         >
-          <span>{open ? t('showLess', 'Show less') : t('readMore', 'Read more')}</span>
+          <span>{open ? 'Show less' : 'Read more'}</span>
           <CaretDown
             weight="bold"
             className={`size-3 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
@@ -92,7 +92,7 @@ function filterByContinent<T extends { continent: string }>(
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="text-xs font-semibold text-foreground mt-6 first:mt-0">
+    <h3 className="text-xs font-medium text-muted-foreground mt-5 first:mt-0">
       {children}
     </h3>
   );
