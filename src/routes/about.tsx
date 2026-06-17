@@ -159,7 +159,7 @@ export function AboutPage() {
 
         {/* Station photo — only rendered when operator has configured a photo URL */}
         {branding.stationPhotoUrl && branding.stationPhotoUrl.trim().length > 0 && (
-          <Card footprint="wide">
+          <Card footprint="wide" className="h-[var(--card-row)]">
             <CardHeader>
               <CardTitle as="h2">{t('photo.cardTitle')}</CardTitle>
             </CardHeader>
@@ -167,8 +167,7 @@ export function AboutPage() {
               <img
                 src={branding.stationPhotoUrl}
                 alt={branding.stationPhotoAlt?.trim() || t('photo.defaultAlt')}
-                className="rounded-lg w-full object-contain"
-                style={{ maxHeight: '16rem' }}
+                className="rounded-lg w-full h-full object-contain"
               />
             </CardContent>
           </Card>
