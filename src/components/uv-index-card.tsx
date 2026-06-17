@@ -495,7 +495,7 @@ function UvChart({ data, currentUv, gradientId, peakUv }: UvChartProps) {
               }}
               interval={0}
               scale="time"
-              height={12}
+              height={15}
             />
 
             <YAxis
