@@ -281,8 +281,8 @@ export function DailyColumns({
           key={i}
           style={{
             ...cellBase,
-            height: expandable ? 40 : 38,
-            paddingTop: expandable ? 6 : 2,
+            height: expandable ? 50 : 38,
+            paddingTop: expandable ? 8 : 2,
             cursor: expandable ? 'pointer' : 'default',
           }}
           onClick={expandable ? () => handleColClick(i) : undefined}
@@ -296,7 +296,7 @@ export function DailyColumns({
           tabIndex={expandable ? -1 : undefined}
           aria-hidden={expandable ? true : undefined}
         >
-          <WeatherIcon code={toWmoCode(day.weatherCode)} size={expandable ? 29 : 43} />
+          <WeatherIcon code={toWmoCode(day.weatherCode)} size={expandable ? 36 : 43} />
         </div>
       ))}
     </div>

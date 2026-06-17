@@ -104,7 +104,7 @@ export function HourlyStrip({
   // scroll mode: forecast page heights (unchanged).
   const rowH = threeHourWindows
     ? { time: 20, icon: 40, temp: 24, precip: 20, wind: 36 }
-    : { time: 18, icon: 34, temp: 22, precip: 18, wind: 42 };
+    : { time: 18, icon: 43, temp: 22, precip: 18, wind: 42 };
 
   // ── Trend SVG: 48px for 2×2 card, 40px for page ─────────────────────────
   const trendH = threeHourWindows ? 48 : 40;
@@ -142,7 +142,7 @@ export function HourlyStrip({
   ));
 
   // Row: weather icons
-  const weatherIconSize = threeHourWindows ? 46 : 29;
+  const weatherIconSize = threeHourWindows ? 46 : 36;
   const iconRow = displayHours.map((hour, i) => (
     <div key={i} style={{ ...colStyle, ...CELL_BASE, height: rowH.icon }}>
       <WeatherIcon code={toWmoCode(hour.weatherCode)} size={weatherIconSize} />
