@@ -298,6 +298,9 @@ export interface ApiBrandingConfig {
   googleAnalyticsId?: string;
   stationPhotoUrl?: string;
   stationPhotoAlt?: string;
+  aboutContent?: string;
+  customTermsMd?: string;
+  customPrivacyMd?: string;
 }
 
 export function getBranding(signal?: AbortSignal): Promise<ApiResponse<ApiBrandingConfig>> {
