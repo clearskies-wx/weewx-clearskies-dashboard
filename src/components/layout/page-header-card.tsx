@@ -81,7 +81,7 @@ export function PageHeaderCard({
           {icon && (
             <div
               className="text-primary flex-shrink-0"
-              style={{ fontSize: '2rem', lineHeight: 1 }}
+              style={{ fontSize: '2.5rem', lineHeight: 1 }}
               aria-hidden="true"
             >
               {icon}
