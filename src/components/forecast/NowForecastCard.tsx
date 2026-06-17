@@ -8,9 +8,10 @@
 // WAI-ARIA tabs pattern: role="tablist"/"tab"/"tabpanel", Arrow keys.
 // Card header: calendar icon + "Today's Forecast" + tab pills right-justified.
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardHeader, CardContent } from '../ui/card';
+import { Card, CardHeader, CardContent, CardTitle } from '../ui/card';
+import { HeaderTabs } from '../ui/header-controls';
 import { HourlyStrip } from './HourlyStrip';
 import { DailyColumns } from './DailyColumns';
 import type { ForecastBundle } from '../../api/types';
@@ -49,16 +50,6 @@ export function NowForecastCard({
   const { t } = useTranslation('forecast');
   const [activeTab, setActiveTab] = useState<Tab>('today');
 
-  const handleTabKey = useCallback((e: React.KeyboardEvent<HTMLButtonElement>) => {
-    if (e.key === 'ArrowRight') {
-      setActiveTab('7day');
-      (e.currentTarget.nextElementSibling as HTMLButtonElement | null)?.focus();
-    } else if (e.key === 'ArrowLeft') {
-      setActiveTab('today');
-      (e.currentTarget.previousElementSibling as HTMLButtonElement | null)?.focus();
-    }
-  }, []);
-
   // Take only the first 24 hours for the Today tab (3-hour windows = 8 data points)
   const next24hours = forecast?.hourly?.slice(0, 24) ?? [];
   const dailyDays = forecast?.daily?.slice(0, 7) ?? [];
@@ -67,83 +58,18 @@ export function NowForecastCard({
     <Card footprint="wide" rowSpan={2} aria-busy={loading}>
       {/* Card header: title + tab pills on the same line */}
       <CardHeader>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            borderBottom: '1px solid var(--border, rgba(0,0,0,0.12))',
-            paddingBottom: '0.125rem',
-          }}
-        >
-          {/* Title group (fills remaining space) */}
-          <span
-            style={{
-              flex: 1,
-              fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-              fontSize: 'var(--text-card-title, 0.82rem)',
-              fontWeight: 600,
-              color: 'var(--foreground)',
-            }}
-          >
-            {t('todaysForecast')}
-          </span>
-
-          {/* Tab pills — right-justified */}
-          <div
-            role="tablist"
-            aria-label={t('ariaTabList')}
-            style={{ display: 'flex', gap: '0.25rem', flexShrink: 0, marginLeft: 'auto' }}
-          >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'today'}
-              aria-controls="now-fc-panel-today"
-              id="now-fc-tab-today"
-              tabIndex={activeTab === 'today' ? 0 : -1}
-              onClick={() => setActiveTab('today')}
-              onKeyDown={handleTabKey}
-              style={{
-                fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                fontSize: 'var(--text-micro)',
-                fontWeight: 600,
-                border: 'none',
-                borderRadius: '999px',
-                padding: '0.16rem 0.55rem',
-                cursor: 'pointer',
-                lineHeight: 1.4,
-                background: activeTab === 'today' ? 'var(--primary)' : 'rgba(0,0,0,0.07)',
-                color: activeTab === 'today' ? 'var(--primary-foreground, #fff)' : 'var(--muted-foreground)',
-              }}
-            >
-              {t('tabToday')}
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === '7day'}
-              aria-controls="now-fc-panel-7day"
-              id="now-fc-tab-7day"
-              tabIndex={activeTab === '7day' ? 0 : -1}
-              onClick={() => setActiveTab('7day')}
-              onKeyDown={handleTabKey}
-              style={{
-                fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                fontSize: 'var(--text-micro)',
-                fontWeight: 600,
-                border: 'none',
-                borderRadius: '999px',
-                padding: '0.16rem 0.55rem',
-                cursor: 'pointer',
-                lineHeight: 1.4,
-                background: activeTab === '7day' ? 'var(--primary)' : 'rgba(0,0,0,0.07)',
-                color: activeTab === '7day' ? 'var(--primary-foreground, #fff)' : 'var(--muted-foreground)',
-              }}
-            >
-              {t('tab7Day')}
-            </button>
-          </div>
-        </div>
+        <CardTitle as="h2">{t('todaysForecast')}</CardTitle>
+        <HeaderTabs
+          tabs={[
+            { id: 'today', label: t('tabToday') },
+            { id: '7day', label: t('tab7Day') },
+          ]}
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id as Tab)}
+          ariaLabel={t('ariaTabList')}
+          idPrefix="now-fc-tab"
+          panelIdPrefix="now-fc-panel"
+        />
       </CardHeader>
 
       <CardContent>

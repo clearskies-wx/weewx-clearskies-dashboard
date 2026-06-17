@@ -7,9 +7,10 @@
 //
 // HourlyStrip is rendered in scrollable mode (all hours, visible scrollbar).
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardHeader, CardContent } from '../ui/card';
+import { Card, CardHeader, CardContent, CardTitle } from '../ui/card';
+import { HeaderTabs } from '../ui/header-controls';
 import { HourlyStrip } from './HourlyStrip';
 import type { ForecastBundle, UnitsBlock } from '../../api/types';
 
@@ -57,87 +58,21 @@ export function ForecastHourlyCard({
     };
   }, [forecast]);
 
-  const handleTabKey = useCallback((e: React.KeyboardEvent<HTMLButtonElement>) => {
-    if (e.key === 'ArrowRight') {
-      setActiveTab('tomorrow');
-      (e.currentTarget.nextElementSibling as HTMLButtonElement | null)?.focus();
-    } else if (e.key === 'ArrowLeft') {
-      setActiveTab('today');
-      (e.currentTarget.previousElementSibling as HTMLButtonElement | null)?.focus();
-    }
-  }, []);
-
-  const tabStyle = (isActive: boolean): React.CSSProperties => ({
-    fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-    fontSize: '0.72rem',
-    fontWeight: 600,
-    border: 'none',
-    borderRadius: '999px',
-    padding: '0.18rem 0.65rem',
-    cursor: 'pointer',
-    lineHeight: 1.5,
-    background: isActive ? 'var(--primary)' : 'rgba(0,0,0,0.07)',
-    color: isActive ? 'var(--primary-foreground, #fff)' : 'var(--muted-foreground)',
-  });
-
   return (
     <Card footprint="full" aria-busy={loading}>
       <CardHeader>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.35rem',
-            borderBottom: '1px solid var(--border, rgba(0,0,0,0.12))',
-            paddingBottom: '0.375rem',
-            marginBottom: '0.75rem',
-          }}
-        >
-          <span
-            style={{
-              flex: 1,
-              fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-              fontSize: 'var(--text-card-title, 0.82rem)',
-              fontWeight: 600,
-              color: 'var(--foreground)',
-            }}
-          >
-            {t('hourlyForecast')}
-          </span>
-
-          <div
-            role="tablist"
-            aria-label={t('ariaTabList')}
-            style={{ display: 'flex', gap: '0.25rem', flexShrink: 0, marginLeft: 'auto' }}
-          >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'today'}
-              aria-controls="fc-hourly-panel-today"
-              id="fc-hourly-tab-today"
-              tabIndex={activeTab === 'today' ? 0 : -1}
-              onClick={() => setActiveTab('today')}
-              onKeyDown={handleTabKey}
-              style={tabStyle(activeTab === 'today')}
-            >
-              {t('tabToday')}
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'tomorrow'}
-              aria-controls="fc-hourly-panel-tomorrow"
-              id="fc-hourly-tab-tomorrow"
-              tabIndex={activeTab === 'tomorrow' ? 0 : -1}
-              onClick={() => setActiveTab('tomorrow')}
-              onKeyDown={handleTabKey}
-              style={tabStyle(activeTab === 'tomorrow')}
-            >
-              {t('tabTomorrow')}
-            </button>
-          </div>
-        </div>
+        <CardTitle as="h2">{t('hourlyForecast')}</CardTitle>
+        <HeaderTabs
+          tabs={[
+            { id: 'today', label: t('tabToday') },
+            { id: 'tomorrow', label: t('tabTomorrow') },
+          ]}
+          activeTab={activeTab}
+          onTabChange={(id) => setActiveTab(id as HourTab)}
+          ariaLabel={t('ariaTabList')}
+          idPrefix="fc-hourly-tab"
+          panelIdPrefix="fc-hourly-panel"
+        />
       </CardHeader>
 
       <CardContent className="overflow-visible">

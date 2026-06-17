@@ -36,6 +36,7 @@ import {
   Card,
   CardHeader,
   CardContent,
+  CardTitle,
 } from './ui/card';
 import { WeatherIcon } from './weather-icon';
 import type { Observation, UnitsBlock, ArchiveRecord, HourlyForecastPoint } from '../api/types';
@@ -390,20 +391,9 @@ export function CurrentConditionsCard({
 
   return (
     <Card footprint="wide" rowSpan={2} aria-busy={loading}>
-      {/* Card title — Manrope 0.82rem semibold with bottom rule */}
+      {/* Card title */}
       <CardHeader>
-        <h2
-          className="text-foreground"
-          style={{
-            fontFamily: 'var(--font-sans)',
-            fontSize: 'var(--text-card-title)',
-            fontWeight: 600,
-            paddingBottom: '0.125rem',
-            borderBottom: '1px solid var(--border)',
-          }}
-        >
-          {t('currentConditions')}
-        </h2>
+        <CardTitle as="h2">{t('currentConditions')}</CardTitle>
       </CardHeader>
 
       <CardContent className="flex flex-col gap-0">

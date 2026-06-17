@@ -7,8 +7,7 @@
 // Card footprint: full (4×auto)
 
 import { useTranslation } from 'react-i18next';
-import { Newspaper } from '@phosphor-icons/react';
-import { Card, CardHeader, CardContent } from '../ui/card';
+import { Card, CardHeader, CardContent, CardTitle } from '../ui/card';
 import type { ForecastDiscussion } from '../../api/types';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -69,37 +68,7 @@ export function ForecastDiscussionCard({
   return (
     <Card footprint="full">
       <CardHeader>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.35rem',
-            borderBottom: '1px solid var(--border, rgba(0,0,0,0.12))',
-            paddingBottom: '0.375rem',
-            marginBottom: '0.75rem',
-          }}
-        >
-          <span
-            style={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.35rem',
-              fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-              fontSize: 'var(--text-card-title, 0.82rem)',
-              fontWeight: 600,
-              color: 'var(--foreground)',
-            }}
-          >
-            <Newspaper
-              aria-hidden="true"
-              focusable={false}
-              size={16}
-              style={{ opacity: 0.75, flexShrink: 0 }}
-            />
-            {t('discussion')}
-          </span>
-        </div>
+        <CardTitle as="h2">{t('discussion')}</CardTitle>
       </CardHeader>
 
       <CardContent>

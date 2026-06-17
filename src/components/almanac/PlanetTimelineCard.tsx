@@ -889,10 +889,10 @@ export function PlanetTimelineCard({
 
   return (
     <Card footprint="full">
-      <CardHeader className="flex items-center justify-between" style={{ flexWrap: 'wrap' }}>
+      <CardHeader>
         <CardTitle as="h2">{t('planets.title')}</CardTitle>
         {overallText && (
-          <span className={`flex items-center gap-[0.25rem] text-[0.75rem] font-semibold ${overallClass}`}>
+          <span className={`flex items-center gap-[0.25rem] shrink-0 font-semibold ${overallClass}`} style={{ fontSize: 'var(--text-label, 0.75rem)' }}>
             {bestQuality === 'not_visible'
               ? <EyeSlash size={14} weight="bold" aria-hidden="true" />
               : <Eye size={14} weight="bold" aria-hidden="true" />

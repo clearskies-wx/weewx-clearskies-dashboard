@@ -41,14 +41,12 @@ function CollapsibleCard({
           }
         }}
       >
-        <div className="flex items-center justify-between w-full">
-          <CardTitle as="h2">{title}</CardTitle>
-          <CaretDown
-            aria-hidden="true"
-            className="size-4 shrink-0 text-muted-foreground transition-transform duration-200"
-            style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
-          />
-        </div>
+        <CardTitle as="h2">{title}</CardTitle>
+        <CaretDown
+          aria-hidden="true"
+          className="size-4 shrink-0 text-muted-foreground transition-transform duration-200"
+          style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
+        />
       </CardHeader>
       <CardContent className="px-6 pt-0 pb-4">
         <div

@@ -73,14 +73,14 @@ function minHeightClass(rowSpan: "quarter" | "half" | 1 | 2 | 2.5 | undefined): 
 
 function Card({
   className,
-  size = "default",
+  size = “default”,
   footprint,
   rowSpan,
   ...props
 }: CardProps) {
   return (
     <div
-      data-slot="card"
+      data-slot=”card”
       data-size={size}
       data-row-span={rowSpan}
       className={cn(
@@ -88,10 +88,10 @@ function Card({
         // bg-[rgb(var(--card-glass))] applies the translucent glass background;
         // backdrop-filter is set inline since there is no Tailwind utility for
         // the exact blur+saturate combination.
-        "card-glass",
-        "group/card flex flex-col gap-1 overflow-hidden rounded-xl py-[var(--card-pad)] text-sm text-card-foreground ring-1 ring-foreground/10 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-0.5 data-[size=sm]:py-2 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+        “card-glass”,
+        “group/card flex flex-col overflow-hidden rounded-xl py-[var(--card-pad)] text-sm text-card-foreground ring-1 ring-foreground/10 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:py-2 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl”,
         minHeightClass(rowSpan),
-        "mb-[var(--gap-grid)]",
+        “mb-[var(--gap-grid)]”,
         footprint !== undefined ? footprintColSpan[footprint] : undefined,
         rowSpanClass(rowSpan),
         className
@@ -106,7 +106,7 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-header"
       className={cn(
-        "group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-[var(--card-pad)] group-data-[size=sm]/card:px-3 has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-4 group-data-[size=sm]/card:[.border-b]:pb-3",
+        "flex items-center h-[var(--card-header-h)] px-[var(--card-pad)] border-b border-border shrink-0",
         className
       )}
       {...props}
@@ -121,15 +121,13 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
 function CardTitle({
   className,
   as: Tag = "div",
-  compact = false,
   ...props
-}: React.ComponentProps<"div"> & { as?: "div" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6"; compact?: boolean }) {
+}: React.ComponentProps<"div"> & { as?: "div" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" }) {
   return (
     <Tag
       data-slot="card-title"
       className={cn(
-        "font-heading leading-snug font-semibold border-b border-border group-data-[size=sm]/card:text-sm",
-        compact ? "pb-0.5" : "pb-1.5 mb-3 group-data-[size=sm]/card:mb-2",
+        "font-heading leading-snug font-semibold flex-1 min-w-0 truncate",
         className
       )}
       style={{ fontSize: 'var(--text-card-title, 1.1rem)' }}

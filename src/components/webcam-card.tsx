@@ -6,6 +6,7 @@ import {
   CardContent,
   CardTitle,
 } from './ui/card';
+import { HeaderTabs } from './ui/header-controls';
 import type { WebcamConfig } from '../api/types';
 
 export interface WebcamCardProps {
@@ -29,52 +30,17 @@ export function WebcamCard({ webcamConfig, refreshTs, videoRefreshTs }: WebcamCa
 
   return (
     <Card footprint="wide" rowSpan={2.5}>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle as="h2" className="flex-1">{t('webcam')}</CardTitle>
-        <div className="flex gap-1" role="tablist" aria-label={t('webcam')}>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={webcamTab === 'live'}
-            onClick={() => setWebcamTab('live')}
-            className="focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            style={{
-              fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              border: 'none',
-              borderRadius: '999px',
-              padding: '0.16rem 0.55rem',
-              cursor: 'pointer',
-              lineHeight: 1.4,
-              background: webcamTab === 'live' ? 'var(--primary)' : 'rgba(0,0,0,0.07)',
-              color: webcamTab === 'live' ? 'var(--primary-foreground, #fff)' : 'var(--muted-foreground)',
-            }}
-          >
-            {t('webcamTabLive')}
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={webcamTab === 'timelapse'}
-            onClick={() => setWebcamTab('timelapse')}
-            className="focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            style={{
-              fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              border: 'none',
-              borderRadius: '999px',
-              padding: '0.16rem 0.55rem',
-              cursor: 'pointer',
-              lineHeight: 1.4,
-              background: webcamTab === 'timelapse' ? 'var(--primary)' : 'rgba(0,0,0,0.07)',
-              color: webcamTab === 'timelapse' ? 'var(--primary-foreground, #fff)' : 'var(--muted-foreground)',
-            }}
-          >
-            {t('webcamTabTimelapse')}
-          </button>
-        </div>
+      <CardHeader>
+        <CardTitle as="h2">{t('webcam')}</CardTitle>
+        <HeaderTabs
+          tabs={[
+            { id: 'live', label: t('webcamTabLive') },
+            { id: 'timelapse', label: t('webcamTabTimelapse') },
+          ]}
+          activeTab={webcamTab}
+          onTabChange={(id) => setWebcamTab(id as 'live' | 'timelapse')}
+          ariaLabel={t('webcam')}
+        />
       </CardHeader>
       {/* CardContent is always flex-col (card.tsx base class) — media fills available height. */}
       <CardContent>

@@ -5,7 +5,7 @@
 // No tabs.
 
 import { useTranslation } from 'react-i18next';
-import { Card, CardHeader, CardContent } from '../ui/card';
+import { Card, CardHeader, CardContent, CardTitle } from '../ui/card';
 import { DailyColumns } from './DailyColumns';
 import type { ForecastBundle, UnitsBlock } from '../../api/types';
 
@@ -47,28 +47,7 @@ export function ForecastDailyCard({
   return (
     <Card footprint="full" aria-busy={loading} style={{ paddingBottom: 0 }}>
       <CardHeader>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.35rem',
-            borderBottom: '1px solid var(--border, rgba(0,0,0,0.12))',
-            paddingBottom: '0.375rem',
-            marginBottom: '0.75rem',
-          }}
-        >
-          <span
-            style={{
-              flex: 1,
-              fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-              fontSize: 'var(--text-card-title, 0.82rem)',
-              fontWeight: 600,
-              color: 'var(--foreground)',
-            }}
-          >
-            {t('sevenDayForecast')}
-          </span>
-        </div>
+        <CardTitle as="h2">{t('sevenDayForecast')}</CardTitle>
       </CardHeader>
 
       <CardContent>
