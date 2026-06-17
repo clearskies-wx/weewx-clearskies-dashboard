@@ -80,7 +80,6 @@ function TileSkeleton({ className }: { className?: string }) {
 
 export function AboutPage() {
   const { t, i18n } = useTranslation('about');
-  const { t: tLegal } = useTranslation('legal');
   const { data: station, loading: stationLoading } = useStation();
   const { data: content, loading: contentLoading } = useContent('about');
   const { data: capabilities } = useCapabilities();
@@ -246,13 +245,13 @@ export function AboutPage() {
                               href={info.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="font-semibold text-foreground hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                              className="text-foreground hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
                             >
                               {info.name}
                             </a>
                           </div>
                         ) : (
-                          <div key={id} className="font-semibold text-foreground capitalize">{id}</div>
+                          <div key={id} className="text-foreground capitalize">{id}</div>
                         );
                       })}
                     </dd>
@@ -286,24 +285,6 @@ export function AboutPage() {
           </CardContent>
         </Card>
 
-        {/* Data Attribution */}
-        <Card footprint="full">
-          <CardHeader>
-            <CardTitle as="h2">{tLegal('attribution.title')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="list-disc list-inside text-muted-foreground space-y-1.5" style={{ fontSize: 'var(--text-body)' }}>
-              <li>{tLegal('attribution.observations')}</li>
-              <li>{tLegal('attribution.forecast')}</li>
-              <li>{tLegal('attribution.airQuality')}</li>
-              <li>{tLegal('attribution.earthquake')}</li>
-              <li>{tLegal('attribution.astronomical')}</li>
-            </ul>
-            <p className="mt-3 text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>
-              {tLegal('attribution.note')}
-            </p>
-          </CardContent>
-        </Card>
     </PageLayout>
   );
 }
