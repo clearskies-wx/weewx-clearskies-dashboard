@@ -70,7 +70,8 @@ export function SetupGuard({ children }: SetupGuardProps) {
           </p>
           <button
             type="button"
-            className="rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary hover:opacity-90 transition-opacity"
+            className="rounded-md bg-primary px-5 py-2.5 font-semibold text-primary-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary hover:opacity-90 transition-opacity"
+            style={{ fontSize: 'var(--text-label)' }}
             onClick={() => setState('checking')}
           >
             Retry

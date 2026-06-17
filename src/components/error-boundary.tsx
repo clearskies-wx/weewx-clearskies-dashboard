@@ -53,11 +53,12 @@ export class ErrorBoundary extends Component<Props, State> {
           className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center"
         >
           <h1 className="text-xl font-semibold text-destructive">Something went wrong</h1>
-          <p className="max-w-md text-sm text-muted-foreground">{this.state.message}</p>
+          <p className="max-w-md text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>{this.state.message}</p>
           <button
             type="button"
             onClick={this.handleReload}
-            className="rounded bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="rounded bg-primary px-4 py-2 font-semibold text-primary-foreground hover:bg-primary/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            style={{ fontSize: 'var(--text-label)' }}
           >
             Reload page
           </button>

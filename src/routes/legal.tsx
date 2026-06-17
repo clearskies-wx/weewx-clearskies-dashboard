@@ -83,7 +83,7 @@ function filterByContinent<T extends { continent: string }>(
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="text-xs font-semibold text-muted-foreground mt-5 first:mt-0">
+    <h3 className="font-semibold text-muted-foreground mt-5 first:mt-0" style={{ fontSize: 'var(--text-label)' }}>
       {children}
     </h3>
   );
@@ -91,7 +91,7 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 
 function Body({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-xs text-muted-foreground leading-loose mt-3 mb-4">
+    <p className="text-muted-foreground leading-loose mt-3 mb-4" style={{ fontSize: 'var(--text-body)' }}>
       {children}
     </p>
   );
@@ -99,7 +99,7 @@ function Body({ children }: { children: React.ReactNode }) {
 
 function BodySmall({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[0.65rem] text-muted-foreground leading-relaxed mt-1">
+    <p className="text-muted-foreground leading-relaxed mt-1" style={{ fontSize: 'var(--text-micro)' }}>
       {children}
     </p>
   );
@@ -107,7 +107,7 @@ function BodySmall({ children }: { children: React.ReactNode }) {
 
 function BulletList({ items }: { items: string[] }) {
   return (
-    <ul className="list-disc list-inside space-y-0.5 pl-2 text-xs text-muted-foreground mt-1">
+    <ul className="list-disc list-inside space-y-0.5 pl-2 text-muted-foreground mt-1" style={{ fontSize: 'var(--text-body)' }}>
       {items.map((item) => (
         <li key={item}>{item}</li>
       ))}
@@ -311,7 +311,7 @@ export function LegalPage() {
   return (
     <PageLayout title={t('title')} icon={<Scales weight="duotone" />}>
       <CollapsibleCard title={t('termsOfUse.title')}>
-        <p className="text-[0.65rem] text-muted-foreground mb-2">{t('termsOfUse.lastUpdated')}</p>
+        <p className="text-muted-foreground mb-2" style={{ fontSize: 'var(--text-micro)' }}>{t('termsOfUse.lastUpdated')}</p>
         {termsOfUseSections.map((sectionKey) => (
           <div key={sectionKey}>
             <SectionHeading>{t(`termsOfUse.sections.${sectionKey}.title`)}</SectionHeading>
@@ -369,7 +369,8 @@ export function LegalPage() {
             href="https://github.com/inguy24/weewx-clearskies-stack"
             target="_blank"
             rel="noopener"
-            className="text-xs font-semibold text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+            className="font-semibold text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+            style={{ fontSize: 'var(--text-label)' }}
           >
             View project on GitHub ↗
           </a>

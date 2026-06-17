@@ -115,7 +115,7 @@ export function ChartsPage() {
   if (configError) {
     return (
       <PageLayout title={t('title')} icon={<ChartLine weight="duotone" />}>
-        <div role="alert" className="col-span-1 md:col-span-2 lg:col-span-4 text-sm text-destructive py-8 text-center">
+        <div role="alert" className="col-span-1 md:col-span-2 lg:col-span-4 text-destructive py-8 text-center" style={{ fontSize: 'var(--text-body)' }}>
           {t('unableToLoad')}
         </div>
       </PageLayout>
@@ -125,7 +125,7 @@ export function ChartsPage() {
   if (groups.length === 0) {
     return (
       <PageLayout title={t('title')} icon={<ChartLine weight="duotone" />}>
-        <p className="col-span-1 md:col-span-2 lg:col-span-4 text-muted-foreground text-sm py-8 text-center">
+        <p className="col-span-1 md:col-span-2 lg:col-span-4 text-muted-foreground py-8 text-center" style={{ fontSize: 'var(--text-body)' }}>
           {t('noData')}
         </p>
       </PageLayout>
@@ -147,7 +147,8 @@ export function ChartsPage() {
               id="chart-group-select"
               value={activeTab}
               onChange={(e) => setActiveTab(e.target.value)}
-              className="w-full min-h-[44px] rounded-md border border-border bg-background px-3 py-2 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="w-full min-h-[44px] rounded-md border border-border bg-background px-3 py-2 font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              style={{ fontSize: 'var(--text-label)' }}
             >
               {groups.map((group) => (
                 <option key={group.groupId} value={group.groupId}>
@@ -177,8 +178,9 @@ export function ChartsPage() {
                   type="button"
                   onClick={() => setActiveTab(group.groupId)}
                   onKeyDown={(e) => handleTabKeyDown(e, index)}
+                  style={{ fontSize: 'var(--text-label)' }}
                   className={[
-                    'shrink-0 rounded-md px-3 py-1.5 text-sm font-semibold transition-colors',
+                    'shrink-0 rounded-md px-3 py-1.5 font-semibold transition-colors',
                     'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                     activeTab === group.groupId
                       ? 'bg-primary text-primary-foreground'

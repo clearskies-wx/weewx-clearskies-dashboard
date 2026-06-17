@@ -311,7 +311,7 @@ export function WeatherRangeChart({
               ticks={ticks}
               interval={0}
               width={isMobile ? 35 : YAXIS_WIDTH}
-              tick={{ fontSize: 10, fontFamily: CHART_FONT }}
+              tick={{ fontSize: 14, fontFamily: CHART_FONT }}
               className="fill-muted-foreground"
               label={
                 !isMobile

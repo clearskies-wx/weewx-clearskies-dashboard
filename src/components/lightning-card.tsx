@@ -165,7 +165,7 @@ export function LightningCard({
             <LightningSkeleton />
           </>
         ) : error ? (
-          <p className="text-sm text-muted-foreground">{error}</p>
+          <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>{error}</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1, minHeight: 0, maxHeight: 'var(--card-content-max)' }}>
 

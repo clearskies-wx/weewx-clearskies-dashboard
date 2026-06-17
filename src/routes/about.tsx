@@ -153,7 +153,7 @@ export function AboutPage() {
                 </div>
               </dl>
             ) : (
-              <p className="text-sm text-muted-foreground">{t('station.unavailable')}</p>
+              <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>{t('station.unavailable')}</p>
             )}
           </CardContent>
         </Card>
@@ -188,7 +188,7 @@ export function AboutPage() {
                   <TileSkeleton className="h-20" />
                 </>
               ) : (
-                <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                <p className="text-foreground leading-relaxed whitespace-pre-wrap" style={{ fontSize: 'var(--text-body)' }}>
                   {content!.markdown}
                 </p>
               )}
@@ -261,7 +261,7 @@ export function AboutPage() {
                 ))}
               </dl>
             ) : (
-              <p className="text-sm text-muted-foreground">{t('dataProviders.empty')}</p>
+              <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>{t('dataProviders.empty')}</p>
             )}
           </CardContent>
         </Card>
@@ -293,7 +293,7 @@ export function AboutPage() {
             <CardTitle as="h2">{tLegal('attribution.title')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1.5">
+            <ul className="list-disc list-inside text-muted-foreground space-y-1.5" style={{ fontSize: 'var(--text-body)' }}>
               <li>{tLegal('attribution.observations')}</li>
               <li>{tLegal('attribution.forecast')}</li>
               <li>{tLegal('attribution.airQuality')}</li>

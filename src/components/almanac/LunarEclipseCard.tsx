@@ -349,7 +349,7 @@ function EclipseTypeModal({ type, onClose }: EclipseTypeModalProps) {
         >
           {content.title}
         </h3>
-        <p className="text-sm text-muted-foreground leading-relaxed">
+        <p className="text-muted-foreground leading-relaxed" style={{ fontSize: 'var(--text-body)' }}>
           {content.description}
         </p>
       </div>
@@ -441,9 +441,10 @@ function EclipseColumn({ eclipse, stationTz, locale }: EclipseColumnProps) {
           onClick={() => setModalOpen(true)}
           aria-haspopup="dialog"
           aria-label={`${typeLabel} — learn more about this eclipse type`}
+          style={{ fontSize: 'var(--text-label)' }}
           className={`
             inline-flex items-center shrink-0 px-2.5 py-0.5 rounded-full
-            text-xs font-semibold cursor-pointer
+            font-semibold cursor-pointer
             focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
             ${badgeClass}
           `}
@@ -575,7 +576,7 @@ export function LunarEclipseCard({
     return (
       <Card footprint="full">
         <CardContent className="py-8">
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-destructive" style={{ fontSize: 'var(--text-body)' }}>
             {error}
           </p>
         </CardContent>
@@ -616,7 +617,7 @@ export function LunarEclipseCard({
 
         {/* Empty state */}
         {!hasEclipses && (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
             {t('lunarEclipses.noEclipses', 'No lunar eclipses in the next year.')}
           </p>
         )}

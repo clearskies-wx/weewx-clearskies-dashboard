@@ -282,8 +282,8 @@ export function CookieConsentBanner() {
         {/* Banner text */}
         <p
           id="cookie-consent-text"
-          className="text-sm leading-relaxed"
-          style={{ color: 'rgba(255, 255, 255, 0.9)' }}
+          className="leading-relaxed"
+          style={{ fontSize: 'var(--text-body)', color: 'rgba(255, 255, 255, 0.9)' }}
         >
           This website uses cookies to analyze traffic via Google Analytics. No personal
           data is collected.{' '}
@@ -313,12 +313,13 @@ export function CookieConsentBanner() {
             onClick={handleReject}
             className={[
               'flex-1 sm:flex-none',
-              'rounded-lg border px-4 py-2 text-sm font-semibold',
+              'rounded-lg border px-4 py-2 font-semibold',
               'transition-colors',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60',
               'focus-visible:ring-offset-2 focus-visible:ring-offset-black/80',
             ].join(' ')}
             style={{
+              fontSize: 'var(--text-label)',
               borderColor: 'rgba(255, 255, 255, 0.4)',
               color: 'rgba(255, 255, 255, 0.9)',
               background: 'rgba(255, 255, 255, 0.08)',
@@ -332,12 +333,13 @@ export function CookieConsentBanner() {
             onClick={handleAccept}
             className={[
               'flex-1 sm:flex-none',
-              'rounded-lg border px-4 py-2 text-sm font-semibold',
+              'rounded-lg border px-4 py-2 font-semibold',
               'transition-colors',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60',
               'focus-visible:ring-offset-2 focus-visible:ring-offset-black/80',
             ].join(' ')}
             style={{
+              fontSize: 'var(--text-label)',
               borderColor: 'rgba(255, 255, 255, 0.4)',
               color: 'rgba(255, 255, 255, 0.9)',
               background: 'rgba(255, 255, 255, 0.08)',

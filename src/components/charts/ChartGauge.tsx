@@ -263,7 +263,7 @@ export function ChartGauge({
     <div className="flex flex-col items-center gap-1 w-full">
       {/* Chart title */}
       {title && (
-        <p className="text-sm font-semibold text-foreground text-center leading-tight">
+        <p className="font-semibold text-foreground text-center leading-tight" style={{ fontSize: 'var(--text-secondary)' }}>
           {title}
         </p>
       )}
@@ -383,7 +383,7 @@ export function ChartGauge({
             <span
               style={{
                 fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-                fontSize: 'clamp(0.65rem, 2vw, 0.85rem)',
+                fontSize: 'clamp(0.7rem, 2vw, 0.85rem)',
                 fontWeight: 400,
                 color: 'var(--muted-foreground)',
                 marginTop: '0.15em',

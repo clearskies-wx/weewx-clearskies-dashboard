@@ -364,7 +364,7 @@ export function MeteorShowerCard({
     return (
       <Card footprint="full">
         <CardContent className="py-8">
-          <div role="alert" className="text-sm text-destructive">
+          <div role="alert" className="text-destructive" style={{ fontSize: 'var(--text-body)' }}>
             {error}
           </div>
         </CardContent>
@@ -379,7 +379,7 @@ export function MeteorShowerCard({
         <CardHeader>
           <CardTitle as="h2">{t('meteorShowers.title')}</CardTitle>
         </CardHeader>
-        <CardContent className="py-8 text-center text-muted-foreground text-sm">
+        <CardContent className="py-8 text-center text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
           {t('meteorShowers.empty')}
         </CardContent>
       </Card>

@@ -106,12 +106,13 @@ function TileSkeleton({ className }: { className?: string }) {
 function TileError({ message, onRetry }: { message: string; onRetry: () => void }) {
   const { t: tc } = useTranslation('common');
   return (
-    <div role="alert" className="flex flex-col gap-2 items-start text-sm">
+    <div role="alert" className="flex flex-col gap-2 items-start" style={{ fontSize: 'var(--text-body)' }}>
       <p className="text-destructive">{message}</p>
       <button
         type="button"
         onClick={onRetry}
-        className="text-xs text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+        className="text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+        style={{ fontSize: 'var(--text-label)' }}
       >
         {tc('retry')}
       </button>
@@ -150,8 +151,9 @@ export function RecordsPage() {
             type="button"
             aria-pressed={period === 'all-time'}
             onClick={() => setPeriod('all-time')}
+            style={{ fontSize: 'var(--text-label)' }}
             className={[
-              'rounded-md px-4 py-2 text-sm font-semibold min-h-[44px] md:min-h-0',
+              'rounded-md px-4 py-2 font-semibold min-h-[44px] md:min-h-0',
               'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
               period === 'all-time'
                 ? 'bg-primary text-primary-foreground'
@@ -164,8 +166,9 @@ export function RecordsPage() {
             type="button"
             aria-pressed={period === 'ytd'}
             onClick={() => setPeriod('ytd')}
+            style={{ fontSize: 'var(--text-label)' }}
             className={[
-              'rounded-md px-4 py-2 text-sm font-semibold min-h-[44px] md:min-h-0',
+              'rounded-md px-4 py-2 font-semibold min-h-[44px] md:min-h-0',
               'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
               period === 'ytd'
                 ? 'bg-primary text-primary-foreground'
@@ -206,7 +209,7 @@ export function RecordsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="overflow-x-auto">
-                    <table className="w-full table-fixed text-sm" aria-label={t('sectionHeading', { section })}>
+                    <table className="w-full table-fixed" style={{ fontSize: 'var(--text-body)' }} aria-label={t('sectionHeading', { section })}>
                       <thead>
                         <tr className="border-b border-border">
                           <th scope="col" className="w-[40%] pb-2 text-left font-semibold text-foreground pr-4">
@@ -233,7 +236,8 @@ export function RecordsPage() {
                               {entry.label}
                               {entry.brokenInLast30Days && (
                                 <span
-                                  className="ml-2 inline-block rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                                  className="ml-2 inline-block rounded-full bg-amber-100 px-1.5 py-0.5 font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                                style={{ fontSize: 'var(--text-label)' }}
                                   title={t('badgeNewTitle')}
                                   aria-label={t('badgeNewAriaLabel')}
                                 >

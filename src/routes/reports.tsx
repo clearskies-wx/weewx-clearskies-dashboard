@@ -934,14 +934,15 @@ export function ReportsPage() {
               {!reportLoading && !reportError && activeReport && (
                 <div className="flex flex-col gap-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h2 className="text-sm font-semibold text-foreground">
+                    <h2 className="font-semibold text-foreground" style={{ fontSize: 'var(--text-secondary)' }}>
                       {periodLabel}
                     </h2>
                     <div className="flex flex-wrap items-center gap-2">
                       <button
                         type="button"
                         onClick={() => setShowRawText((v) => !v)}
-                        className="inline-flex items-center min-h-[44px] md:min-h-0 px-2 text-sm text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+                        className="inline-flex items-center min-h-[44px] md:min-h-0 px-2 text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+                        style={{ fontSize: 'var(--text-label)' }}
                         aria-pressed={showRawText}
                       >
                         {showRawText ? t('viewTable') : t('viewRawText')}

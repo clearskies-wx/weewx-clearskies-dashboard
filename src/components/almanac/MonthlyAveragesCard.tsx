@@ -55,12 +55,13 @@ function CardError({ message, onRetry }: { message: string; onRetry: () => void 
   return (
     <Card footprint="full">
       <CardContent className="py-8">
-        <div role="alert" className="flex flex-col gap-2 items-start text-sm">
+        <div role="alert" className="flex flex-col gap-2 items-start" style={{ fontSize: 'var(--text-body)' }}>
           <p className="text-destructive">{message}</p>
           <button
             type="button"
             onClick={onRetry}
-            className="text-xs text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+            className="text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+            style={{ fontSize: 'var(--text-label)' }}
           >
             {t('retry')}
           </button>
@@ -188,7 +189,7 @@ export function MonthlyAveragesCard({
   if (groupedData === null || !hasUsableData(groupedData)) {
     return (
       <Card footprint="full">
-        <CardContent className="py-8 text-center text-muted-foreground text-sm">
+        <CardContent className="py-8 text-center text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
           {t('noData')}
         </CardContent>
       </Card>
@@ -254,7 +255,7 @@ export function MonthlyAveragesCard({
               <YAxis
                 yAxisId="temp"
                 width={isMobile ? 35 : undefined}
-                tick={{ fontSize: 10, fontFamily: 'var(--font-chart)' }}
+                tick={{ fontSize: 14, fontFamily: 'var(--font-chart)' }}
                 className="fill-muted-foreground"
                 tickFormatter={(v: number) => `${v}°`}
                 label={
@@ -264,7 +265,7 @@ export function MonthlyAveragesCard({
                         angle: -90,
                         position: 'insideLeft',
                         offset: -5,
-                        style: { fontSize: 10, fontFamily: 'var(--font-chart)', fill: 'var(--muted-foreground, #a1a1aa)', textAnchor: 'middle' },
+                        style: { fontSize: 14, fontFamily: 'var(--font-chart)', fill: 'var(--muted-foreground, #a1a1aa)', textAnchor: 'middle' },
                       }
                     : undefined
                 }
@@ -273,7 +274,7 @@ export function MonthlyAveragesCard({
                 yAxisId="rain"
                 orientation="right"
                 width={isMobile ? 30 : undefined}
-                tick={{ fontSize: 10, fontFamily: 'var(--font-chart)' }}
+                tick={{ fontSize: 14, fontFamily: 'var(--font-chart)' }}
                 className="fill-muted-foreground"
                 label={
                   !isMobile
@@ -282,7 +283,7 @@ export function MonthlyAveragesCard({
                         angle: 90,
                         position: 'insideRight',
                         offset: -5,
-                        style: { fontSize: 10, fontFamily: 'var(--font-chart)', fill: 'var(--muted-foreground, #a1a1aa)', textAnchor: 'middle' },
+                        style: { fontSize: 14, fontFamily: 'var(--font-chart)', fill: 'var(--muted-foreground, #a1a1aa)', textAnchor: 'middle' },
                       }
                     : undefined
                 }

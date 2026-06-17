@@ -824,7 +824,7 @@ export function PlanetTimelineCard({
     return (
       <Card footprint="full">
         <CardContent className="py-8">
-          <div role="alert" className="text-sm text-destructive">
+          <div role="alert" className="text-destructive" style={{ fontSize: 'var(--text-body)' }}>
             {error}
           </div>
         </CardContent>
@@ -845,7 +845,7 @@ export function PlanetTimelineCard({
         <CardHeader>
           <CardTitle as="h2">{t('planets.title')}</CardTitle>
         </CardHeader>
-        <CardContent className="py-8 text-center text-muted-foreground text-sm">
+        <CardContent className="py-8 text-center text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
           {t('planets.empty')}
         </CardContent>
       </Card>

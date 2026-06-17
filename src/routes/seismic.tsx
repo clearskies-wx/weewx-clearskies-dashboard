@@ -80,12 +80,13 @@ function TileSkeleton({ className }: { className?: string }) {
 function TileError({ message, onRetry }: { message: string; onRetry: () => void }) {
   const { t: tc } = useTranslation('common');
   return (
-    <div role="alert" className="flex flex-col gap-2 items-start text-sm">
+    <div role="alert" className="flex flex-col gap-2 items-start" style={{ fontSize: 'var(--text-body)' }}>
       <p className="text-destructive">{message}</p>
       <button
         type="button"
         onClick={onRetry}
-        className="text-xs text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+        className="text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+        style={{ fontSize: 'var(--text-label)' }}
       >
         {tc('retry')}
       </button>
@@ -230,7 +231,7 @@ export function SeismicPage() {
         controls={
           config
             ? (
-              <p className="text-muted-foreground text-sm" aria-label={t('configAriaLabel')}>
+              <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }} aria-label={t('configAriaLabel')}>
                 {t('configSummary', {
                   provider: config.provider,
                   radiusKm: config.radiusKm,
@@ -265,7 +266,7 @@ export function SeismicPage() {
               <CardHeader className="pb-2 shrink-0">
                 <div className="flex items-center justify-between gap-2 flex-wrap pb-0.5 border-b border-border">
                   <CardTitle as="h2" className="border-b-0 pb-0">{t('mapCardTitle')}</CardTitle>
-                  <label className="flex items-center gap-1.5 text-sm text-muted-foreground cursor-pointer select-none">
+                  <label className="flex items-center gap-1.5 text-muted-foreground cursor-pointer select-none" style={{ fontSize: 'var(--text-body)' }}>
                     <input
                       type="checkbox"
                       checked={showFaults}
@@ -371,7 +372,7 @@ export function SeismicPage() {
             </CardHeader>
             <CardContent className="p-0 lg:flex-1 lg:min-h-0 lg:overflow-hidden">
               {earthquakes.length === 0 ? (
-                <p className="px-4 py-8 text-center text-muted-foreground text-sm">
+                <p className="px-4 py-8 text-center text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
                   {t('noRecentQuakes')}
                 </p>
               ) : (
@@ -413,20 +414,20 @@ export function SeismicPage() {
                                 className={`flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-lg overflow-hidden ${bg}`}
                                 aria-hidden="true"
                               >
-                                <span className={`text-xs leading-none ${text}`}>M</span>
+                                <span className={`leading-none ${text}`} style={{ fontSize: 'var(--text-label)' }}>M</span>
                                 <span className={`text-xl font-bold leading-none mt-0.5 ${text}`}>
                                   {formatValue(quake.magnitude, 'earthquakeMag')}
                                 </span>
                               </div>
 
                               <div className="flex flex-col gap-0.5 min-w-0">
-                                <p className="font-semibold text-foreground leading-snug text-sm line-clamp-2">
+                                <p className="font-semibold text-foreground leading-snug line-clamp-2" style={{ fontSize: 'var(--text-body)' }}>
                                   {quake.place ?? t('unknownLocation')}
                                 </p>
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>
                                   {formatTime(quake.time, station?.timezone ?? 'UTC', locale)}
                                 </p>
-                                <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground mt-0.5">
+                                <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-muted-foreground mt-0.5" style={{ fontSize: 'var(--text-label)' }}>
                                   {quake.depth !== null && (
                                     <span>{t('depthLabel')}: {formatValue(quake.depth, 'earthquakeDepth')} {depthUnit}</span>
                                   )}

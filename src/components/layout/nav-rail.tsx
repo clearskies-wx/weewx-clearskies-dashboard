@@ -55,11 +55,11 @@ const OVERFLOW_ROUTES = new Set(MOBILE_OVERFLOW_ITEMS.map((item) => item.to));
 // NavLink className helper — active state: bg shift + left border (desktop) / top border (mobile).
 function navLinkClass({ isActive }: { isActive: boolean }): string {
   const base = [
-    'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold',
+    'flex items-center gap-2 rounded-md px-3 py-2 font-semibold',
     'transition-colors duration-150',
     'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
     // Desktop: flex-col to stack icon above label, tight padding
-    'md:flex-col md:gap-0.5 md:px-1 md:py-2 md:text-[0.6rem] md:rounded-lg',
+    'md:flex-col md:gap-0.5 md:px-1 md:py-2 md:rounded-lg',
     // Touch target min 44×44px per WCAG 2.5.5
     'min-h-[44px] min-w-[44px] justify-center',
   ].join(' ');
@@ -83,7 +83,7 @@ function navLinkClass({ isActive }: { isActive: boolean }): string {
 function mobileSlotClass(isActive: boolean): string {
   return [
     'flex flex-col items-center justify-center gap-0.5 py-2 px-1',
-    'text-xs font-semibold transition-colors duration-150',
+    'font-semibold transition-colors duration-150',
     'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
     'min-h-[56px] w-full border-t-2',
     isActive
@@ -114,11 +114,12 @@ function ThemeRowButton() {
       onClick={() => setTheme(NEXT_PREFERENCE[preference])}
       className={[
         'flex items-center gap-3 px-4 rounded-lg w-full',
-        'text-sm font-semibold transition-colors duration-150',
+        'font-semibold transition-colors duration-150',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         'min-h-[56px]',
         'text-foreground hover:bg-accent/50',
       ].join(' ')}
+      style={{ fontSize: 'var(--text-label)' }}
     >
       <ThemeIcon preference={preference} />
       <span>{modeLabel}</span>
@@ -139,11 +140,12 @@ function DesktopThemeButton() {
       onClick={() => setTheme(NEXT_PREFERENCE[preference])}
       className={[
         'flex flex-col items-center justify-center gap-1 rounded-lg px-2 py-3 w-full',
-        'text-xs font-semibold transition-colors duration-150',
+        'font-semibold transition-colors duration-150',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         'min-h-[44px]',
         'text-muted-foreground hover:bg-accent/50 hover:text-foreground',
       ].join(' ')}
+      style={{ fontSize: 'var(--text-label)' }}
     >
       <ThemeIcon preference={preference} />
       <span>{t('theme.label')}</span>
@@ -282,7 +284,7 @@ function MoreSheet({ isOpen, onClose, triggerRef }: MoreSheetProps) {
                     end={item.to === '/'}
                     className={[
                       'flex items-center gap-3 px-4 rounded-lg',
-                      'text-sm font-semibold transition-colors duration-150',
+                      'font-semibold transition-colors duration-150',
                       'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                       // Touch target: min 44px height per WCAG 2.5.5
                       'min-h-[56px]',
@@ -290,6 +292,7 @@ function MoreSheet({ isOpen, onClose, triggerRef }: MoreSheetProps) {
                         ? 'text-primary font-semibold bg-accent/40'
                         : 'text-foreground hover:bg-accent/50',
                     ].join(' ')}
+                    style={{ fontSize: 'var(--text-label)' }}
                     onClick={onClose}
                   >
                     {item.icon}
@@ -524,13 +527,14 @@ export function NavRail() {
             onClick={togglePin}
             className={[
               'flex flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-2 w-full',
-              'text-xs font-semibold transition-colors duration-150',
+              'font-semibold transition-colors duration-150',
               'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
               'min-h-[44px]',
               pinned
                 ? 'text-primary hover:bg-accent/50'
                 : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground',
             ].join(' ')}
+            style={{ fontSize: 'var(--text-label)' }}
           >
             {pinned
               ? <PushPin aria-hidden="true" className="h-5 w-5" weight="fill" />
@@ -550,6 +554,7 @@ export function NavRail() {
                   end={item.to === '/'}
                   className={navLinkClass}
                   title={label}
+                  style={{ fontSize: 'var(--text-label)' }}
                 >
                   {item.icon}
                   <span className="truncate">{label}</span>
@@ -587,6 +592,7 @@ export function NavRail() {
                   end={item.to === '/'}
                   className={({ isActive }) => mobileSlotClass(isActive)}
                   title={label}
+                  style={{ fontSize: 'var(--text-label)' }}
                 >
                   {item.icon}
                   <span className="truncate max-w-full leading-none">{label}</span>
@@ -604,6 +610,7 @@ export function NavRail() {
               aria-expanded={sheetOpen}
               onClick={openSheet}
               className={mobileSlotClass(moreIsActive)}
+              style={{ fontSize: 'var(--text-label)' }}
             >
               <DotsThree aria-hidden="true" className="h-5 w-5" />
               <span className="truncate max-w-full leading-none">{t('more')}</span>

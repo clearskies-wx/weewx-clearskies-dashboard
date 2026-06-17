@@ -504,12 +504,12 @@ export function ConfigDrivenChart({
   return (
     <div style={{ minWidth: 0, minHeight: 0, width: '100%', height: '100%', overflow: 'hidden' }}>
       {config.title && (
-        <h3 className="text-sm font-semibold text-foreground mb-2 text-center" style={{ fontFamily: 'var(--font-sans)' }}>
+        <h3 className="font-semibold text-foreground mb-2 text-center" style={{ fontSize: 'var(--text-secondary)', fontFamily: 'var(--font-sans)' }}>
           {config.title}
         </h3>
       )}
       {config.subtitle && (
-        <p className="text-xs text-muted-foreground mb-1">{config.subtitle}</p>
+        <p className="text-muted-foreground mb-1" style={{ fontSize: 'var(--text-label)' }}>{config.subtitle}</p>
       )}
       {/*
         sr-only data table — provides chart data to screen readers.
@@ -576,7 +576,7 @@ export function ConfigDrivenChart({
             <YAxis
               yAxisId="left"
               orientation="left"
-              tick={{ fontSize: 10, fontFamily: CHART_FONT }}
+              tick={{ fontSize: 14, fontFamily: CHART_FONT }}
               width={isMobile ? 35 : undefined}
               className="fill-muted-foreground"
               domain={leftDomain}
@@ -595,7 +595,7 @@ export function ConfigDrivenChart({
                       position: 'insideLeft',
                       offset: -5,
                       style: {
-                        fontSize: 10,
+                        fontSize: 14,
                         fontFamily: CHART_FONT,
                         fill: 'var(--muted-foreground, #a1a1aa)',
                         textAnchor: 'middle',
@@ -619,7 +619,7 @@ export function ConfigDrivenChart({
               <YAxis
                 yAxisId="right"
                 orientation="right"
-                tick={{ fontSize: 10, fontFamily: CHART_FONT }}
+                tick={{ fontSize: 14, fontFamily: CHART_FONT }}
                 width={isMobile ? 30 : undefined}
                 className="fill-muted-foreground"
                 domain={rightDomain}
@@ -640,7 +640,7 @@ export function ConfigDrivenChart({
                         position: 'insideRight',
                         offset: -5,
                         style: {
-                          fontSize: 10,
+                          fontSize: 14,
                           fontFamily: CHART_FONT,
                           fill: 'var(--muted-foreground, #a1a1aa)',
                           textAnchor: 'middle',

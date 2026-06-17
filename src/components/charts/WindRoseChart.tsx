@@ -545,8 +545,8 @@ export function WindRoseChart({
     <div className="flex flex-col gap-4">
       {/* Visible chart title — matches ConfigDrivenChart h3 pattern */}
       <h3
-        className="text-sm font-semibold text-foreground mb-2 text-center"
-        style={{ fontFamily: 'var(--font-sans)' }}
+        className="font-semibold text-foreground mb-2 text-center"
+        style={{ fontSize: 'var(--text-secondary)', fontFamily: 'var(--font-sans)' }}
       >
         {displayTitle}
       </h3>
@@ -583,7 +583,8 @@ export function WindRoseChart({
           return (
             <div
               key={category.beaufort}
-              className="flex items-center gap-1.5 text-xs text-foreground"
+              className="flex items-center gap-1.5 text-foreground"
+              style={{ fontSize: 'var(--text-label)' }}
             >
               <span
                 aria-hidden="true"

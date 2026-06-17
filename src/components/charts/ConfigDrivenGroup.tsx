@@ -195,12 +195,13 @@ function TileError({
   retryLabel: string;
 }) {
   return (
-    <div role="alert" className="flex flex-col gap-2 items-start text-sm">
+    <div role="alert" className="flex flex-col gap-2 items-start" style={{ fontSize: 'var(--text-body)' }}>
       <p className="text-destructive">{message}</p>
       <button
         type="button"
         onClick={onRetry}
-        className="text-xs text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+        className="text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+        style={{ fontSize: 'var(--text-label)' }}
       >
         {retryLabel}
       </button>
@@ -824,7 +825,8 @@ export function ConfigDrivenGroup({
           <div className="flex flex-col gap-1">
             <label
               htmlFor={`cdg-year-select-${group.groupId}`}
-              className="text-xs font-semibold text-muted-foreground"
+              className="font-semibold text-muted-foreground"
+              style={{ fontSize: 'var(--text-label)' }}
             >
               {t('monthlyYearLabel')}
             </label>
@@ -832,7 +834,7 @@ export function ConfigDrivenGroup({
               id={`cdg-year-select-${group.groupId}`}
               value={selectedYear ?? undefined}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="min-h-[44px] md:min-h-0 rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="min-h-[44px] md:min-h-0 rounded-md border border-border bg-background px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               {yearList.map((y) => (
                 <option key={y} value={y}>
@@ -847,7 +849,8 @@ export function ConfigDrivenGroup({
             <div className="flex flex-col gap-1">
               <label
                 htmlFor={`cdg-month-select-${group.groupId}`}
-                className="text-xs font-semibold text-muted-foreground"
+                className="font-semibold text-muted-foreground"
+                style={{ fontSize: 'var(--text-label)' }}
               >
                 {t('monthlyMonthLabel')}
               </label>
@@ -858,7 +861,7 @@ export function ConfigDrivenGroup({
                   const val = e.target.value;
                   setSelectedMonth(val === '' ? null : Number(val));
                 }}
-                className="min-h-[44px] md:min-h-0 rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="min-h-[44px] md:min-h-0 rounded-md border border-border bg-background px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 {Array.from({ length: 12 }, (_, i) => {
                   const label = new Intl.DateTimeFormat(i18n.language, { month: 'long' }).format(new Date(2000, i));
@@ -909,7 +912,8 @@ export function ConfigDrivenGroup({
               type="button"
               onClick={() => setShowTable((prev) => !prev)}
               aria-pressed={showTable}
-              className="hidden md:inline-flex items-center px-3 py-2 text-sm text-muted-foreground rounded-md border border-border hover:text-foreground hover:bg-muted/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="hidden md:inline-flex items-center px-3 py-2 text-muted-foreground rounded-md border border-border hover:text-foreground hover:bg-muted/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              style={{ fontSize: 'var(--text-label)' }}
             >
               {showTable ? t('showChart') : t('showDataTable')}
             </button>
@@ -953,8 +957,9 @@ export function ConfigDrivenGroup({
                 aria-checked={isSelected}
                 tabIndex={isSelected ? 0 : -1}
                 onClick={() => setSelectedRange(range)}
+                style={{ fontSize: 'var(--text-label)' }}
                 className={[
-                  'min-h-[44px] md:min-h-0 px-3 py-1.5 rounded-md border text-sm',
+                  'min-h-[44px] md:min-h-0 px-3 py-1.5 rounded-md border',
                   'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                   isSelected
                     ? 'bg-primary text-primary-foreground border-primary'
@@ -1009,7 +1014,8 @@ export function ConfigDrivenGroup({
             type="button"
             onClick={() => setShowTable((prev) => !prev)}
             aria-pressed={showTable}
-            className="hidden md:inline-flex items-center px-3 py-2 text-sm text-muted-foreground rounded-md border border-border hover:text-foreground hover:bg-muted/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="hidden md:inline-flex items-center px-3 py-2 text-muted-foreground rounded-md border border-border hover:text-foreground hover:bg-muted/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            style={{ fontSize: 'var(--text-label)' }}
           >
             {showTable ? t('showChart') : t('showDataTable')}
           </button>
@@ -1031,7 +1037,7 @@ export function ConfigDrivenGroup({
           /* Visible data table (not sr-only — this is the explicit table view) */
           /* ---------------------------------------------------------------- */
           <div className="overflow-x-auto">
-            <table className="w-full text-sm border-collapse">
+            <table className="w-full border-collapse" style={{ fontSize: 'var(--text-body)' }}>
               <caption className="sr-only">
                 {group.title ?? t('tableDataCaption')}
               </caption>
@@ -1181,7 +1187,7 @@ export function ConfigDrivenGroup({
                 const haysSoftMax = haysSeries?.yAxisSoftMax ?? undefined;
                 return (
                   <div key={chart.chartId}>
-                    {chart.title && <h3 className="text-sm font-semibold text-center mb-2">{chart.title}</h3>}
+                    {chart.title && <h3 className="font-semibold text-center mb-2" style={{ fontSize: 'var(--text-secondary)' }}>{chart.title}</h3>}
                     <HaysChart
                       highData={rangeHighPoints}
                       lowData={rangeLowPoints}
@@ -1209,7 +1215,7 @@ export function ConfigDrivenGroup({
                 const unitLabel = rangeSeries?.yAxisLabel ?? '';
                 return (
                   <div key={chart.chartId}>
-                    {chart.title && <h3 className="text-sm font-semibold text-center mb-2">{chart.title}</h3>}
+                    {chart.title && <h3 className="font-semibold text-center mb-2" style={{ fontSize: 'var(--text-secondary)' }}>{chart.title}</h3>}
                     <WeatherRangeChart
                       highData={rangeHighPoints}
                       lowData={rangeLowPoints}
@@ -1373,7 +1379,7 @@ export function ConfigDrivenGroup({
                   const haysSoftMax = haysSeries?.yAxisSoftMax ?? undefined;
                   return (
                     <div key={chart.chartId} className="h-full">
-                      {chart.title && <h3 className="text-sm font-semibold text-center mb-2">{chart.title}</h3>}
+                      {chart.title && <h3 className="font-semibold text-center mb-2" style={{ fontSize: 'var(--text-secondary)' }}>{chart.title}</h3>}
                       <HaysChart
                         highData={rangeHighPoints}
                         lowData={rangeLowPoints}
@@ -1396,7 +1402,7 @@ export function ConfigDrivenGroup({
                   const unitLabel = rangeSeries?.yAxisLabel ?? '';
                   return (
                     <div key={chart.chartId} className="h-full">
-                      {chart.title && <h3 className="text-sm font-semibold text-center mb-2">{chart.title}</h3>}
+                      {chart.title && <h3 className="font-semibold text-center mb-2" style={{ fontSize: 'var(--text-secondary)' }}>{chart.title}</h3>}
                       <WeatherRangeChart
                         highData={rangeHighPoints}
                         lowData={rangeLowPoints}

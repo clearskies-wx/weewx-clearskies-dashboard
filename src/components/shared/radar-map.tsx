@@ -284,7 +284,7 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
           />
         </div>
         {radarCapability.operatorNotes && (
-          <p className="text-xs text-muted-foreground flex-shrink-0">{radarCapability.operatorNotes}</p>
+          <p className="text-muted-foreground flex-shrink-0" style={{ fontSize: 'var(--text-label)' }}>{radarCapability.operatorNotes}</p>
         )}
       </div>
     );
@@ -306,7 +306,7 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
             aria-live="polite"
             aria-atomic="true"
           >
-            <p className="text-sm text-muted-foreground">{t('loading')}</p>
+            <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>{t('loading')}</p>
           </div>
         )}
 
@@ -315,7 +315,7 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
             className="absolute inset-0 z-10 flex items-center justify-center bg-muted rounded-lg"
             role="alert"
           >
-            <p className="text-sm text-destructive">{t('noFrames')}</p>
+            <p className="text-destructive" style={{ fontSize: 'var(--text-body)' }}>{t('noFrames')}</p>
           </div>
         )}
 
@@ -324,7 +324,7 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
             className="absolute inset-0 z-10 flex items-center justify-center bg-muted rounded-lg"
             role="status"
           >
-            <p className="text-sm text-muted-foreground">{t('noProvider')}</p>
+            <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>{t('noProvider')}</p>
           </div>
         )}
 
@@ -333,7 +333,7 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
             className="absolute inset-0 z-10 flex items-center justify-center bg-muted rounded-lg"
             role="status"
           >
-            <p className="text-sm text-muted-foreground">{t('noFrames')}</p>
+            <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>{t('noFrames')}</p>
           </div>
         )}
 
@@ -436,12 +436,12 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
             <CaretRight className="h-5 w-5" aria-hidden="true" />
           </button>
 
-          <span className="text-xs text-muted-foreground tabular-nums ml-1">
+          <span className="text-muted-foreground tabular-nums ml-1" style={{ fontSize: 'var(--text-label)' }}>
             {t('frameOf', { current: displayFrameIndex + 1, total: frameCount })}
           </span>
 
           {currentFrame && (
-            <span className="text-xs text-muted-foreground tabular-nums ml-auto">
+            <span className="text-muted-foreground tabular-nums ml-auto" style={{ fontSize: 'var(--text-label)' }}>
               {formatFrameTime(currentFrame.time)}
             </span>
           )}

@@ -547,7 +547,8 @@ export function HaysChart({
 
       {/* Color legend — pairs color with label text (WCAG 1.4.1, no color-only signal) */}
       <div
-        className="flex items-center gap-2 justify-center text-xs text-muted-foreground"
+        className="flex items-center gap-2 justify-center text-muted-foreground"
+        style={{ fontSize: 'var(--text-label)' }}
         aria-label={`Color legend for ${field} chart`}
       >
         <span

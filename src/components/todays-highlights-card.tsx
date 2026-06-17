@@ -208,7 +208,7 @@ export function TodaysHighlightsCard({
 
           </dl>
         ) : (
-          <p className="text-muted-foreground text-sm">{t('noData.highlights')}</p>
+          <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>{t('noData.highlights')}</p>
         )}
       </CardContent>
     </Card>

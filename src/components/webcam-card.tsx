@@ -56,7 +56,7 @@ export function WebcamCard({ webcamConfig, refreshTs, videoRefreshTs }: WebcamCa
                 onError={() => setImageAvailable(false)}
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+              <div className="w-full h-full flex items-center justify-center text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
                 {t('noData.webcam', 'Webcam image unavailable')}
               </div>
             )
@@ -70,7 +70,7 @@ export function WebcamCard({ webcamConfig, refreshTs, videoRefreshTs }: WebcamCa
               <source src={`${webcamConfig.videoUrl}?t=${videoRefreshTs}`} type="video/mp4" />
             </video>
           ) : (
-            <p className="text-muted-foreground text-sm">{t('noData.timelapse')}</p>
+            <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>{t('noData.timelapse')}</p>
           )}
         </div>
       </CardContent>

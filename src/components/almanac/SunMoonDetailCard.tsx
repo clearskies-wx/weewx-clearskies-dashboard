@@ -248,7 +248,7 @@ function SunMoonDetailSkeleton() {
 
 function SunMoonDetailError({ message }: { message: string }) {
   return (
-    <div role="alert" className="text-sm text-destructive">
+    <div role="alert" className="text-destructive" style={{ fontSize: 'var(--text-body)' }}>
       {message}
     </div>
   );
@@ -1137,7 +1137,7 @@ export function SunMoonDetailCard({
             )}
           </div>
         ) : (
-          <p className="text-muted-foreground text-sm">
+          <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
             No almanac data available.
           </p>
         )}

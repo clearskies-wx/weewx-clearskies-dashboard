@@ -148,12 +148,13 @@ function SunMoonError({
 }) {
   const { t } = useTranslation('common');
   return (
-    <div role="alert" className="flex flex-col gap-2 items-start text-sm">
+    <div role="alert" className="flex flex-col gap-2 items-start" style={{ fontSize: 'var(--text-body)' }}>
       <p className="text-destructive">{message}</p>
       <button
         type="button"
         onClick={onRetry}
-        className="text-xs text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+        className="text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+        style={{ fontSize: 'var(--text-label)' }}
       >
         {t('retry')}
       </button>
@@ -458,7 +459,7 @@ export function SunMoonCard({
         ) : almanac ? (
           <SunMoonContent almanac={almanac} stationTz={stationTz} />
         ) : (
-          <p className="text-muted-foreground text-sm">
+          <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
             {t('noData.observation')}
           </p>
         )}
