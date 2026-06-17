@@ -47,10 +47,10 @@ function CollapsibleCard({
         <div
           className="overflow-hidden transition-[max-height] duration-300 ease-in-out"
           style={{
-            maxHeight: open ? '10000px' : '4.5rem',
+            maxHeight: open ? '10000px' : '6rem',
             ...(open ? {} : {
-              WebkitMaskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)',
-              maskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)',
+              WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)',
+              maskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)',
             }),
           }}
         >
