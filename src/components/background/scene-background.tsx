@@ -64,22 +64,39 @@ export function SceneBackground({ scene, visible = true }: SceneBackgroundProps)
     ? 'blur(3px) brightness(0.93) saturate(1.05)'
     : 'brightness(1) saturate(1.05)';
 
-  // Cross-fade: keep previous scene URL and fade between layers.
+  // Cross-fade: old scene on top fading out reveals new scene underneath.
+  // Bottom layer: current scene at full opacity (always visible).
+  // Top layer: outgoing (old) scene, starts at opacity 1, fades to 0, then removed.
+  // The new scene is hidden behind the old until the fade reveals it — no flash.
   const prevKeyRef = useRef(key);
-  const [prevUrl, setPrevUrl] = useState(asset.url);
-  const [fading, setFading] = useState(false);
+  const [outgoingUrl, setOutgoingUrl] = useState<string | null>(null);
+  const [fadeOut, setFadeOut] = useState(false);
 
   useEffect(() => {
     if (key !== prevKeyRef.current) {
-      setFading(true);
+      const oldKey = prevKeyRef.current;
+      const oldAsset = SCENE_ASSET_MAP[oldKey] ?? SCENE_ASSET_MAP['clear-day'];
+      setOutgoingUrl(oldAsset.url);
+      setFadeOut(false);
+      prevKeyRef.current = key;
+
+      // Start fade on next frame so the outgoing layer renders at opacity 1 first.
+      const rAF = requestAnimationFrame(() => {
+        setFadeOut(true);
+      });
+
+      // Remove outgoing layer after transition completes.
       const timer = setTimeout(() => {
-        setPrevUrl(asset.url);
-        setFading(false);
-        prevKeyRef.current = key;
-      }, 1200);
-      return () => clearTimeout(timer);
+        setOutgoingUrl(null);
+        setFadeOut(false);
+      }, 1400);
+
+      return () => {
+        cancelAnimationFrame(rAF);
+        clearTimeout(timer);
+      };
     }
-  }, [key, asset.url]);
+  }, [key]);
 
   const photoStyle: CSSProperties = {
     position: 'absolute',
@@ -110,25 +127,25 @@ export function SceneBackground({ scene, visible = true }: SceneBackgroundProps)
           opacity: visible ? 1 : 0,
         }}
       >
-        {/* Layer 1a: previous scene (fades out) */}
-        <div
-          style={{
-            ...photoStyle,
-            backgroundImage: `url(${prevUrl})`,
-            opacity: fading ? 1 : 0,
-            transition: 'opacity 1.2s ease-in-out',
-          }}
-        />
-
-        {/* Layer 1b: current scene (fades in) */}
+        {/* Bottom layer: current scene, always full opacity */}
         <div
           style={{
             ...photoStyle,
             backgroundImage: `url(${asset.url})`,
-            opacity: fading ? 0 : 1,
-            transition: 'opacity 1.2s ease-in-out',
           }}
         />
+
+        {/* Top layer: outgoing scene, fades from opacity 1 → 0 then unmounted */}
+        {outgoingUrl !== null && (
+          <div
+            style={{
+              ...photoStyle,
+              backgroundImage: `url(${outgoingUrl})`,
+              opacity: fadeOut ? 0 : 1,
+              transition: fadeOut ? 'opacity 1.2s ease-in-out' : 'none',
+            }}
+          />
+        )}
 
         {hasOverlay && overlayConfig !== null && (
           <div
