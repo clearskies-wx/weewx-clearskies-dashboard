@@ -283,8 +283,8 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
           />
         </div>
 
-        {/* Text body — alert-glass surface (Design Manual §3 Alert Glass Surface), grows to fill */}
-        <div className="alert-glass min-w-0 flex-1 px-3 py-2.5">
+        {/* Text body — card-glass neutral surface, grows to fill */}
+        <div className="card-glass min-w-0 flex-1 px-3 py-2.5">
 
           {/* Title row: event name + optional severity badge */}
           <p className="truncate uppercase font-heading text-[length:var(--text-card-title)] font-semibold leading-snug text-card-foreground">
@@ -305,10 +305,29 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
 
         </div>
 
+        {/* Severity badge — desktop only, vertically centered */}
+        {alert.severityLabel && (
+          <div
+            className="hidden md:flex items-center shrink-0 px-3"
+            aria-hidden="true"
+          >
+            <span
+              className="inline-block rounded-full px-2.5 py-0.5 font-semibold uppercase whitespace-nowrap"
+              style={{
+                fontSize: 'var(--text-micro)',
+                backgroundColor: colors.iconBg,
+                color: colors.iconFgColor,
+              }}
+            >
+              {alert.severityLabel}
+            </span>
+          </div>
+        )}
+
         {/* Right panel: expand chevron + optional flip navigator */}
         {/* min-w-14 (56px) on mobile, min-w-20 (80px) sm+ — tighter on small screens while preserving 44px tap targets */}
         <div
-          className="alert-glass flex shrink-0 flex-col items-center justify-between border-l border-foreground/10 px-1 py-1 min-w-14 sm:min-w-20"
+          className="card-glass flex shrink-0 flex-col items-center justify-between border-l border-foreground/10 px-1 py-1 min-w-14 sm:min-w-20"
         >
 
           {/* Expand / collapse chevron — always present */}
@@ -392,7 +411,7 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
         }}
       >
         <div style={{ minHeight: 0, overflow: 'hidden' }}>
-          <div className="alert-glass border-t border-foreground/10 px-4 py-3">
+          <div className="card-glass border-t border-foreground/10 px-4 py-3">
 
             {/* Full description — collapse hard line wraps, keep paragraph breaks */}
             {alert.description && (
