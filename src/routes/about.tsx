@@ -160,7 +160,7 @@ export function AboutPage() {
 
         {/* Station photo — only rendered when operator has configured a photo URL */}
         {branding.stationPhotoUrl && branding.stationPhotoUrl.trim().length > 0 && (
-          <Card footprint="full">
+          <Card footprint="wide">
             <CardHeader>
               <CardTitle as="h2">{t('photo.cardTitle')}</CardTitle>
             </CardHeader>
@@ -168,8 +168,7 @@ export function AboutPage() {
               <img
                 src={branding.stationPhotoUrl}
                 alt={branding.stationPhotoAlt?.trim() || t('photo.defaultAlt')}
-                className="rounded-lg max-w-full"
-                style={{ maxHeight: '400px' }}
+                className="rounded-lg w-full h-full object-contain"
               />
             </CardContent>
           </Card>
@@ -177,7 +176,7 @@ export function AboutPage() {
 
         {/* Operator-authored content — only rendered when content exists */}
         {(contentLoading || content) && (
-          <Card footprint="full" aria-busy={contentLoading}>
+          <Card footprint="wide" aria-busy={contentLoading}>
             <CardHeader>
               <CardTitle as="h2">{t('aboutStation.cardTitle')}</CardTitle>
             </CardHeader>
