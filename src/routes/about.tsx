@@ -159,7 +159,7 @@ export function AboutPage() {
 
         {/* Station photo — only rendered when operator has configured a photo URL */}
         {branding.stationPhotoUrl && branding.stationPhotoUrl.trim().length > 0 && (
-          <Card footprint="wide" className="h-[var(--card-row)]">
+          <Card footprint="wide" className="h-[calc(var(--card-row)*2)]">
             <CardHeader>
               <CardTitle as="h2">{t('photo.cardTitle')}</CardTitle>
             </CardHeader>
@@ -175,7 +175,7 @@ export function AboutPage() {
 
         {/* Operator-authored content — only rendered when content exists */}
         {(contentLoading || content) && (
-          <Card footprint="wide" aria-busy={contentLoading}>
+          <Card footprint="wide" className="h-[calc(var(--card-row)*2)]" aria-busy={contentLoading}>
             <CardHeader>
               <CardTitle as="h2">{t('aboutStation.cardTitle')}</CardTitle>
             </CardHeader>
