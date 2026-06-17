@@ -30,6 +30,7 @@ import { aqiCategoryLabel } from './aqi-card';
 import {
   Card,
   CardHeader,
+  CardTitle,
   CardContent,
 } from './ui/card';
 
@@ -148,9 +149,7 @@ export function TodaysHighlightsCard({
   return (
     <Card footprint="tile" rowSpan={2} aria-busy={loading}>
       <CardHeader>
-        <h2 className="font-heading leading-snug font-semibold pb-0.5 border-b border-border" style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}>
-          {t('todaysHighlights')}
-        </h2>
+        <CardTitle as="h2">{t('todaysHighlights')}</CardTitle>
       </CardHeader>
       <CardContent>
         {loading ? (

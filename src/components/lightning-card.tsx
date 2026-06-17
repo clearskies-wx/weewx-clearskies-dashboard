@@ -39,6 +39,7 @@ import {
 import {
   Card,
   CardHeader,
+  CardTitle,
   CardContent,
 } from './ui/card';
 import type { Observation, LightningData } from '../api/types';
@@ -154,9 +155,7 @@ export function LightningCard({
     <Card footprint="tile" aria-busy={loading}>
       <CardHeader>
         {/* Title: text-only per spec. Manrope 600 via font-heading. */}
-        <h2 className="font-heading leading-snug font-semibold pb-0.5 border-b border-border" style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}>
-          Lightning
-        </h2>
+        <CardTitle as="h2">Lightning</CardTitle>
       </CardHeader>
 
       <CardContent>

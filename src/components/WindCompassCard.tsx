@@ -26,6 +26,7 @@ import { cardinalFromDegrees } from '../utils/wind';
 import {
   Card,
   CardHeader,
+  CardTitle,
   CardContent,
 } from './ui/card';
 import type { Observation } from '../api/types';
@@ -219,9 +220,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
     <Card footprint="tile" rowSpan={2} aria-busy={observation === null}>
       <CardHeader>
         {/* Title: i18n title text (no decorative icon per operator preference) */}
-        <h2 className="font-heading leading-snug font-semibold pb-0.5 border-b border-border" style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}>
-          {t('windCard.title')}
-        </h2>
+        <CardTitle as="h2">{t('windCard.title')}</CardTitle>
       </CardHeader>
 
       <CardContent>

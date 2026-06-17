@@ -40,6 +40,7 @@ import { asConverted } from '../api/types';
 import {
   Card,
   CardHeader,
+  CardTitle,
   CardContent,
 } from './ui/card';
 import type { Observation, ArchiveRecord } from '../api/types';
@@ -337,9 +338,7 @@ export function SolarRadiationCard({
     <Card footprint="tile" aria-busy={loading} className="min-h-[var(--card-row)]">
       <CardHeader>
         {/* Title: text-only per ADR-050 (no title icon on C4 tiles). Manrope 600 via font-heading. */}
-        <h2 className="font-heading leading-snug font-semibold pb-0.5 border-b border-border" style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}>
-          {t('solarRadiationCard.title')}
-        </h2>
+        <CardTitle as="h2">{t('solarRadiationCard.title')}</CardTitle>
       </CardHeader>
 
       <CardContent className="gap-1">

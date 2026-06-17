@@ -47,6 +47,7 @@ import type { ColorBand } from './ui/semi-circular-gauge';
 import {
   Card,
   CardHeader,
+  CardTitle,
   CardContent,
 } from './ui/card';
 import type { AQIReading, AQIScale } from '../api/types';
@@ -699,7 +700,7 @@ export function AqiCard({
       <CardHeader>
         {/* Title: text-only per spec.  Manrope 600 via font-heading.
             Scale label (e.g. "DAQI", "NAQI") appended in muted text for non-US scales. */}
-        <h2 className="font-heading leading-snug font-semibold pb-0.5 border-b border-border" style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}>
+        <CardTitle as="h2">
           {t('aqiCard.title')}
           {scaleLabel && (
             <span
@@ -713,7 +714,7 @@ export function AqiCard({
               {scaleLabel}
             </span>
           )}
-        </h2>
+        </CardTitle>
       </CardHeader>
 
       <CardContent>

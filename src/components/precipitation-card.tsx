@@ -12,6 +12,7 @@ import { asConverted } from '../api/types';
 import {
   Card,
   CardHeader,
+  CardTitle,
   CardContent,
 } from './ui/card';
 import type { Observation, UnitsBlock } from '../api/types';
@@ -196,9 +197,7 @@ export function PrecipitationCard({
   return (
     <Card footprint="tile" aria-busy={loading}>
       <CardHeader>
-        <h2 className="font-heading leading-snug font-semibold pb-0.5 border-b border-border" style={{ fontSize: 'var(--text-card-title, 0.82rem)' }}>
-          {t('precipitationCard.title')}
-        </h2>
+        <CardTitle as="h2">{t('precipitationCard.title')}</CardTitle>
       </CardHeader>
 
       <CardContent className="justify-center">
