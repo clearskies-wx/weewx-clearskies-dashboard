@@ -163,7 +163,7 @@ function CardContent({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-content"
-      className={cn("px-[var(--card-pad)] group-data-[size=sm]/card:px-3 overflow-hidden flex-1 min-h-0 flex flex-col", className)}
+      className={cn("px-[var(--card-pad)] pt-3 group-data-[size=sm]/card:px-3 group-data-[size=sm]/card:pt-2 overflow-hidden flex-1 min-h-0 flex flex-col", className)}
       {...props}
     />
   )
