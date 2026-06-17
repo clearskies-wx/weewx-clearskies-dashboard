@@ -15,6 +15,7 @@
 //   - Station name is the visible heading (h1) for screen readers
 //   - Color pairs (text on glass) pass WCAG AA in both light and dark themes
 
+import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 
 // ---------------------------------------------------------------------------
@@ -96,7 +97,7 @@ export function NowHeroCard({
   return (
     <Card
       rowSpan="half"
-      className={['mx-auto w-full max-w-[var(--container-max)] !py-1', className].filter(Boolean).join(' ')}
+      className={cn('mx-auto w-full max-w-[var(--container-max)] min-h-[var(--card-half-row)]', className)}
     >
       <header
         aria-label={
@@ -104,7 +105,7 @@ export function NowHeroCard({
             ? `${displayName} — ${location}`
             : displayName
         }
-        className="flex flex-col items-start gap-0.5 px-4 md:flex-row md:items-center md:justify-between md:gap-4"
+        className="flex flex-col items-start gap-0.5 px-[var(--card-pad)] md:flex-row md:items-center md:justify-between md:gap-4"
       >
         {/* ── Logo ────────────────────────────────────────────────────────── */}
         <div

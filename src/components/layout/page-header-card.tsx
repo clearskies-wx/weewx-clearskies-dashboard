@@ -14,7 +14,6 @@
 //   follows DOM order, which matches visual order here).
 
 import * as React from 'react';
-import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 
 type HeadingLevel = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
@@ -74,12 +73,9 @@ export function PageHeaderCard({
     <Card
       footprint="full"
       rowSpan="half"
-      className={cn(
-        '!py-1 md:!py-2.5',
-        className,
-      )}
+      className={className}
     >
-      <div className="flex flex-1 items-center justify-between gap-4 px-4">
+      <div className="flex flex-1 items-center justify-between gap-4 px-[var(--card-pad)]">
         {/* Icon + title group */}
         <div className="flex min-w-0 flex-1 items-center gap-3">
           {icon && (
@@ -93,7 +89,8 @@ export function PageHeaderCard({
           )}
           <div className="min-w-0 flex-1">
             <Heading
-              className="font-heading truncate text-xl font-semibold leading-snug"
+              className="font-heading truncate font-semibold leading-snug"
+              style={{ fontSize: 'var(--text-hero-name, 1.35rem)' }}
             >
               {title}
             </Heading>
