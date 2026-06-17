@@ -445,7 +445,7 @@ function UvChart({ data, currentUv, gradientId, peakUv }: UvChartProps) {
           the SVG rather than creating a CSS gap between the title and the chart container. */}
       <div role="img" aria-label={t('uvIndexCard.chartAriaLabel')} style={{ flex: 1, minWidth: 0, minHeight: 0, maxHeight: 'var(--card-content-max)', width: '100%', height: '100%' }}>
         <ResponsiveContainer width="99%" height="100%">
-          <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: 6 }}>
+          <AreaChart data={data} margin={{ top: 2, right: 8, bottom: 0, left: 8 }}>
             <defs>
               {/*
                 Vertical linearGradient: EPA UV severity colors.
@@ -490,12 +490,12 @@ function UvChart({ data, currentUv, gradientId, peakUv }: UvChartProps) {
               axisLine={false}
               tick={{
                 fontFamily: 'var(--font-chart)',
-                fontSize: 14,
+                fontSize: 11,
                 fill: 'var(--muted-foreground)',
               }}
               interval={0}
               scale="time"
-              height={15}
+              height={12}
             />
 
             <YAxis
@@ -505,10 +505,10 @@ function UvChart({ data, currentUv, gradientId, peakUv }: UvChartProps) {
               axisLine={false}
               tick={{
                 fontFamily: 'var(--font-chart)',
-                fontSize: 14,
+                fontSize: 11,
                 fill: 'var(--muted-foreground)',
               }}
-              width={18}
+              width={16}
             />
 
             {/* ReferenceDot: marks current observed UV on the chart at the current time */}

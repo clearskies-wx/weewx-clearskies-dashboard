@@ -215,7 +215,7 @@ function SolarChart({ data }: SolarChartProps) {
         style={{ flex: 1, minWidth: 0, minHeight: 0, maxHeight: 'var(--card-content-max)', width: '100%', height: '100%' }}
       >
         <ResponsiveContainer width="99%" height="100%">
-          <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: 6 }}>
+          <AreaChart data={data} margin={{ top: 2, right: 8, bottom: 0, left: 8 }}>
             {/* Clear-sky theoretical max — yellow fill area */}
             <Area
               type="monotone"
@@ -252,12 +252,12 @@ function SolarChart({ data }: SolarChartProps) {
               axisLine={false}
               tick={{
                 fontFamily: 'var(--font-chart)',
-                fontSize: 14,
+                fontSize: 11,
                 fill: 'var(--muted-foreground)',
               }}
               interval={0}
               scale="time"
-              height={15}
+              height={12}
             />
 
             <YAxis

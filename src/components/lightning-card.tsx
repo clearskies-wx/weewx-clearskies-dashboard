@@ -199,7 +199,7 @@ export function LightningCard({
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <ScatterChart
-                    margin={{ top: 4, right: 8, bottom: 0, left: -20 }}
+                    margin={{ top: 2, right: 8, bottom: 0, left: 8 }}
                   >
                     <XAxis
                       dataKey="t"
@@ -212,11 +212,12 @@ export function LightningCard({
                       }}
                       tick={{
                         fontFamily: 'var(--font-chart, system-ui, sans-serif)',
-                        fontSize: 14,
+                        fontSize: 11,
                         fill: 'var(--muted-foreground)',
                       }}
                       axisLine={false}
                       tickLine={false}
+                      height={12}
                     />
                     <YAxis
                       dataKey="d"
@@ -225,11 +226,12 @@ export function LightningCard({
                       tickCount={3}
                       tick={{
                         fontFamily: 'var(--font-chart, system-ui, sans-serif)',
-                        fontSize: 14,
+                        fontSize: 11,
                         fill: 'var(--muted-foreground)',
                       }}
                       axisLine={false}
                       tickLine={false}
+                      width={16}
                     />
                     {/* Minimal tooltip — time + distance. Not keyboard-navigable
                         in Recharts; the SR table below covers non-sighted users. */}
