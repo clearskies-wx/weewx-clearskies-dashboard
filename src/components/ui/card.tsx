@@ -106,7 +106,7 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-header"
       className={cn(
-        "flex items-center h-[var(--card-header-h)] px-[var(--card-pad)] border-b border-border shrink-0",
+        "flex items-center px-[var(--card-pad)] pb-2 border-b border-border shrink-0",
         className
       )}
       {...props}
