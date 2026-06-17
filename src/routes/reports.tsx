@@ -166,12 +166,13 @@ function TileSkeleton({ className }: { className?: string }) {
 function TileError({ message, onRetry }: { message: string; onRetry: () => void }) {
   const { t } = useTranslation('common');
   return (
-    <div role="alert" className="flex flex-col gap-2 items-start text-sm">
+    <div role="alert" className="flex flex-col gap-2 items-start" style={{ fontSize: 'var(--text-body)' }}>
       <p className="text-destructive">{message}</p>
       <button
         type="button"
         onClick={onRetry}
-        className="text-xs text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+        className="text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+        style={{ fontSize: 'var(--text-label)' }}
       >
         {t('retry')}
       </button>
@@ -220,6 +221,56 @@ const MONTHLY_COLUMNS: ColumnMeta[] = [
   { labelKey: 'domWindDir',    accessor: 'domWindDir',    numeric: true  },
 ];
 
+/**
+ * Per-column visual grouping metadata for the monthly NOAA table.
+ *
+ * 'group-start' — first column of a new measurement group; receives a subtle
+ *   left border to separate it from the previous group.
+ * 'paired' — a "Time" (or similar) column immediately following its parent
+ *   measurement; receives reduced left padding (pl-1) to pull it visually
+ *   closer to its sibling.
+ * 'normal' — no extra group styling.
+ *
+ * Column layout (index → role):
+ *   0  Day          standalone — no left border on the very first column
+ *   1  Mean         group-start
+ *   2  High Temp    group-start  ┐
+ *   3  High Time    paired       ┘
+ *   4  Low Temp     group-start  ┐
+ *   5  Low Time     paired       ┘
+ *   6  Heat DD      group-start
+ *   7  Cool DD      group-start
+ *   8  Rain         group-start
+ *   9  Avg Wind     group-start
+ *  10  Peak Gust    group-start  ┐
+ *  11  Gust Time    paired       │
+ *  12  Dom Dir      normal       ┘
+ */
+type ColGroupRole = 'normal' | 'group-start' | 'paired';
+
+const MONTHLY_COL_ROLES: ColGroupRole[] = [
+  'normal',       // 0  Day
+  'group-start',  // 1  Mean Temp
+  'group-start',  // 2  High Temp
+  'paired',       // 3  High Time
+  'group-start',  // 4  Low Temp
+  'paired',       // 5  Low Time
+  'group-start',  // 6  Heat Deg Days
+  'group-start',  // 7  Cool Deg Days
+  'group-start',  // 8  Rain
+  'group-start',  // 9  Avg Wind Speed
+  'group-start',  // 10 Peak Gust Speed
+  'paired',       // 11 Peak Gust Time
+  'normal',       // 12 Dom Wind Dir
+];
+
+/** Tailwind classes for each column group role applied to <th> / <td>. */
+function colGroupClass(role: ColGroupRole): string {
+  if (role === 'group-start') return 'border-l border-border/30';
+  if (role === 'paired') return 'pl-1';
+  return '';
+}
+
 
 // ---------------------------------------------------------------------------
 // SortableHeader — <th> with embedded <button> for sort
@@ -230,11 +281,14 @@ function SortableHeader({
   colIndex,
   sortState,
   onSort,
+  className,
 }: {
   label: string;
   colIndex: number;
   sortState: SortState;
   onSort: (colIndex: number) => void;
+  /** Extra classes applied to the <th> — used for group-boundary styling */
+  className?: string;
 }) {
   const { t } = useTranslation('reports');
   const isActive = sortState.column === colIndex;
@@ -250,7 +304,10 @@ function SortableHeader({
     <th
       scope="col"
       aria-sort={ariaSortValue}
-      className="px-2 py-2 text-left font-semibold text-muted-foreground whitespace-nowrap uppercase"
+      className={cn(
+        'px-2 py-2 text-left font-semibold text-muted-foreground whitespace-nowrap uppercase',
+        className,
+      )}
       style={{ fontSize: 'var(--text-label)' }}
     >
       <button
@@ -339,13 +396,24 @@ function MonthlyReportTable({
   return (
     <div className="flex flex-col gap-3">
       {/* Highlight legend */}
-      <p className="text-xs text-muted-foreground" aria-live="off">
+      <p className="text-muted-foreground" style={{ fontSize: 'var(--text-label)' }} aria-live="off">
         {t('highlightLegend')}
       </p>
 
       <div className="rounded-md border border-border overflow-hidden">
         <StickyTable label={captionText} className="text-xs text-foreground">
           <caption className="sr-only">{captionText}</caption>
+          {/* colgroup semantically pairs each measurement with its time column(s)
+              so assistive technologies understand the column relationships. */}
+          <colgroup><col /></colgroup>                   {/* Day */}
+          <colgroup><col /></colgroup>                   {/* Mean Temp */}
+          <colgroup><col /><col /></colgroup>            {/* High Temp + Time */}
+          <colgroup><col /><col /></colgroup>            {/* Low Temp + Time */}
+          <colgroup><col /></colgroup>                   {/* Heat Deg Days */}
+          <colgroup><col /></colgroup>                   {/* Cool Deg Days */}
+          <colgroup><col /></colgroup>                   {/* Rain */}
+          <colgroup><col /></colgroup>                   {/* Avg Wind Speed */}
+          <colgroup><col /><col /><col /></colgroup>    {/* Peak Gust + Time + Dir */}
           <thead>
             <tr className="bg-muted/50 border-b border-border">
               {MONTHLY_COLUMNS.map((col, idx) => (
@@ -355,6 +423,7 @@ function MonthlyReportTable({
                   colIndex={idx}
                   sortState={sortState}
                   onSort={handleSort}
+                  className={colGroupClass(MONTHLY_COL_ROLES[idx])}
                 />
               ))}
             </tr>
@@ -382,20 +451,33 @@ function MonthlyReportTable({
                   }
                 >
                   {/* Day cell — scope="row" so screen readers can identify the row */}
+                  {/* col 0: Day — normal (no group border on the first column) */}
                   <td scope="row" className="px-2 py-1.5 font-normal text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>
                     {row.day ?? '—'}
                   </td>
-                  <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{row.meanTemp !== null ? formatValue(row.meanTemp, 'temperature') + tempUnit : '—'}</td>
-                  <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{row.highTemp !== null ? formatValue(row.highTemp, 'temperature') + tempUnit : '—'}</td>
-                  <td className="px-2 py-1.5" style={{ fontSize: 'var(--text-secondary)' }}>{row.highTempTime || '—'}</td>
-                  <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{row.lowTemp !== null ? formatValue(row.lowTemp, 'temperature') + tempUnit : '—'}</td>
-                  <td className="px-2 py-1.5" style={{ fontSize: 'var(--text-secondary)' }}>{row.lowTempTime || '—'}</td>
-                  <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{row.heatDegDays !== null ? formatValue(row.heatDegDays, 'default') : '—'}</td>
-                  <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{row.coolDegDays !== null ? formatValue(row.coolDegDays, 'default') : '—'}</td>
-                  <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{row.rain !== null ? formatValue(row.rain, 'rain') + rainUnit : '—'}</td>
-                  <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{row.avgWindSpeed !== null ? formatValue(row.avgWindSpeed, 'wind') + windUnit : '—'}</td>
-                  <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{row.highWindSpeed !== null ? formatValue(row.highWindSpeed, 'wind') + windUnit : '—'}</td>
-                  <td className="px-2 py-1.5" style={{ fontSize: 'var(--text-secondary)' }}>{row.highWindTime || '—'}</td>
+                  {/* col 1: Mean Temp — group-start */}
+                  <td className={cn('px-2 py-1.5 text-right', colGroupClass('group-start'))} style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{row.meanTemp !== null ? formatValue(row.meanTemp, 'temperature') + tempUnit : '—'}</td>
+                  {/* col 2: High Temp — group-start */}
+                  <td className={cn('px-2 py-1.5 text-right', colGroupClass('group-start'))} style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{row.highTemp !== null ? formatValue(row.highTemp, 'temperature') + tempUnit : '—'}</td>
+                  {/* col 3: High Time — paired */}
+                  <td className={cn('px-2 py-1.5', colGroupClass('paired'))} style={{ fontSize: 'var(--text-secondary)' }}>{row.highTempTime || '—'}</td>
+                  {/* col 4: Low Temp — group-start */}
+                  <td className={cn('px-2 py-1.5 text-right', colGroupClass('group-start'))} style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{row.lowTemp !== null ? formatValue(row.lowTemp, 'temperature') + tempUnit : '—'}</td>
+                  {/* col 5: Low Time — paired */}
+                  <td className={cn('px-2 py-1.5', colGroupClass('paired'))} style={{ fontSize: 'var(--text-secondary)' }}>{row.lowTempTime || '—'}</td>
+                  {/* col 6: Heat Deg Days — group-start */}
+                  <td className={cn('px-2 py-1.5 text-right', colGroupClass('group-start'))} style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{row.heatDegDays !== null ? formatValue(row.heatDegDays, 'default') : '—'}</td>
+                  {/* col 7: Cool Deg Days — group-start */}
+                  <td className={cn('px-2 py-1.5 text-right', colGroupClass('group-start'))} style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{row.coolDegDays !== null ? formatValue(row.coolDegDays, 'default') : '—'}</td>
+                  {/* col 8: Rain — group-start */}
+                  <td className={cn('px-2 py-1.5 text-right', colGroupClass('group-start'))} style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{row.rain !== null ? formatValue(row.rain, 'rain') + rainUnit : '—'}</td>
+                  {/* col 9: Avg Wind Speed — group-start */}
+                  <td className={cn('px-2 py-1.5 text-right', colGroupClass('group-start'))} style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{row.avgWindSpeed !== null ? formatValue(row.avgWindSpeed, 'wind') + windUnit : '—'}</td>
+                  {/* col 10: Peak Gust Speed — group-start */}
+                  <td className={cn('px-2 py-1.5 text-right', colGroupClass('group-start'))} style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{row.highWindSpeed !== null ? formatValue(row.highWindSpeed, 'wind') + windUnit : '—'}</td>
+                  {/* col 11: Peak Gust Time — paired */}
+                  <td className={cn('px-2 py-1.5', colGroupClass('paired'))} style={{ fontSize: 'var(--text-secondary)' }}>{row.highWindTime || '—'}</td>
+                  {/* col 12: Dom Wind Dir — normal (continuation of gust group) */}
                   <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{row.domWindDir !== null ? formatValue(row.domWindDir, 'degrees') + '°' : '—'}</td>
                 </tr>
               );
@@ -404,20 +486,33 @@ function MonthlyReportTable({
             {/* Summary row */}
             {parsed.summary && (
               <tr className="border-t-2 border-border bg-muted/50 font-semibold">
+                {/* col 0: Day label — normal */}
                 <td scope="row" className="px-2 py-1.5" style={{ fontSize: 'var(--text-secondary)' }}>
                   {t('summary')}
                 </td>
-                <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{parsed.summary.meanTemp !== null ? formatValue(parsed.summary.meanTemp, 'temperature') + tempUnit : '—'}</td>
-                <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{parsed.summary.highTemp !== null ? formatValue(parsed.summary.highTemp, 'temperature') + tempUnit : '—'}</td>
-                <td className="px-2 py-1.5" style={{ fontSize: 'var(--text-secondary)' }}>{parsed.summary.highTempTime || '—'}</td>
-                <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{parsed.summary.lowTemp !== null ? formatValue(parsed.summary.lowTemp, 'temperature') + tempUnit : '—'}</td>
-                <td className="px-2 py-1.5" style={{ fontSize: 'var(--text-secondary)' }}>{parsed.summary.lowTempTime || '—'}</td>
-                <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{parsed.summary.heatDegDays !== null ? formatValue(parsed.summary.heatDegDays, 'default') : '—'}</td>
-                <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{parsed.summary.coolDegDays !== null ? formatValue(parsed.summary.coolDegDays, 'default') : '—'}</td>
-                <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{parsed.summary.rain !== null ? formatValue(parsed.summary.rain, 'rain') + rainUnit : '—'}</td>
-                <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{parsed.summary.avgWindSpeed !== null ? formatValue(parsed.summary.avgWindSpeed, 'wind') + windUnit : '—'}</td>
-                <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{parsed.summary.highWindSpeed !== null ? formatValue(parsed.summary.highWindSpeed, 'wind') + windUnit : '—'}</td>
-                <td className="px-2 py-1.5" style={{ fontSize: 'var(--text-secondary)' }}>{parsed.summary.highWindTime || '—'}</td>
+                {/* col 1: Mean Temp — group-start */}
+                <td className={cn('px-2 py-1.5 text-right', colGroupClass('group-start'))} style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{parsed.summary.meanTemp !== null ? formatValue(parsed.summary.meanTemp, 'temperature') + tempUnit : '—'}</td>
+                {/* col 2: High Temp — group-start */}
+                <td className={cn('px-2 py-1.5 text-right', colGroupClass('group-start'))} style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{parsed.summary.highTemp !== null ? formatValue(parsed.summary.highTemp, 'temperature') + tempUnit : '—'}</td>
+                {/* col 3: High Time — paired */}
+                <td className={cn('px-2 py-1.5', colGroupClass('paired'))} style={{ fontSize: 'var(--text-secondary)' }}>{parsed.summary.highTempTime || '—'}</td>
+                {/* col 4: Low Temp — group-start */}
+                <td className={cn('px-2 py-1.5 text-right', colGroupClass('group-start'))} style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{parsed.summary.lowTemp !== null ? formatValue(parsed.summary.lowTemp, 'temperature') + tempUnit : '—'}</td>
+                {/* col 5: Low Time — paired */}
+                <td className={cn('px-2 py-1.5', colGroupClass('paired'))} style={{ fontSize: 'var(--text-secondary)' }}>{parsed.summary.lowTempTime || '—'}</td>
+                {/* col 6: Heat Deg Days — group-start */}
+                <td className={cn('px-2 py-1.5 text-right', colGroupClass('group-start'))} style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{parsed.summary.heatDegDays !== null ? formatValue(parsed.summary.heatDegDays, 'default') : '—'}</td>
+                {/* col 7: Cool Deg Days — group-start */}
+                <td className={cn('px-2 py-1.5 text-right', colGroupClass('group-start'))} style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{parsed.summary.coolDegDays !== null ? formatValue(parsed.summary.coolDegDays, 'default') : '—'}</td>
+                {/* col 8: Rain — group-start */}
+                <td className={cn('px-2 py-1.5 text-right', colGroupClass('group-start'))} style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{parsed.summary.rain !== null ? formatValue(parsed.summary.rain, 'rain') + rainUnit : '—'}</td>
+                {/* col 9: Avg Wind Speed — group-start */}
+                <td className={cn('px-2 py-1.5 text-right', colGroupClass('group-start'))} style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{parsed.summary.avgWindSpeed !== null ? formatValue(parsed.summary.avgWindSpeed, 'wind') + windUnit : '—'}</td>
+                {/* col 10: Peak Gust Speed — group-start */}
+                <td className={cn('px-2 py-1.5 text-right', colGroupClass('group-start'))} style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{parsed.summary.highWindSpeed !== null ? formatValue(parsed.summary.highWindSpeed, 'wind') + windUnit : '—'}</td>
+                {/* col 11: Peak Gust Time — paired */}
+                <td className={cn('px-2 py-1.5', colGroupClass('paired'))} style={{ fontSize: 'var(--text-secondary)' }}>{parsed.summary.highWindTime || '—'}</td>
+                {/* col 12: Dom Wind Dir — normal */}
                 <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{parsed.summary.domWindDir !== null ? formatValue(parsed.summary.domWindDir, 'degrees') + '°' : '—'}</td>
               </tr>
             )}
@@ -588,7 +683,7 @@ function YearlyReportTables({
   return (
     <div className="flex flex-col gap-6">
       <section aria-labelledby="yearly-temp-heading">
-        <h3 id="yearly-temp-heading" className="text-sm font-semibold text-foreground mb-2">
+        <h3 id="yearly-temp-heading" className="font-semibold text-foreground mb-2" style={{ fontSize: 'var(--text-secondary)' }}>
           {t('yearlyTemp')}
         </h3>
         <YearlySubTable
@@ -599,7 +694,7 @@ function YearlyReportTables({
       </section>
 
       <section aria-labelledby="yearly-precip-heading">
-        <h3 id="yearly-precip-heading" className="text-sm font-semibold text-foreground mb-2">
+        <h3 id="yearly-precip-heading" className="font-semibold text-foreground mb-2" style={{ fontSize: 'var(--text-secondary)' }}>
           {t('yearlyPrecip')}
         </h3>
         <YearlySubTable
@@ -610,7 +705,7 @@ function YearlyReportTables({
       </section>
 
       <section aria-labelledby="yearly-wind-heading">
-        <h3 id="yearly-wind-heading" className="text-sm font-semibold text-foreground mb-2">
+        <h3 id="yearly-wind-heading" className="font-semibold text-foreground mb-2" style={{ fontSize: 'var(--text-secondary)' }}>
           {t('yearlyWind')}
         </h3>
         <YearlySubTable
@@ -732,7 +827,8 @@ export function ReportsPage() {
               <div className="flex flex-col gap-1">
                 <label
                   htmlFor="report-year"
-                  className="text-sm font-semibold text-foreground"
+                  className="font-semibold text-foreground"
+                  style={{ fontSize: 'var(--text-secondary)' }}
                 >
                   {t('year.label')}
                 </label>
@@ -741,7 +837,7 @@ export function ReportsPage() {
                   value={selectedYear ?? ''}
                   onChange={handleYearChange}
                   className={[
-                    'rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground min-h-[44px] md:min-h-0',
+                    'rounded-md border border-input bg-background px-3 py-2 text-foreground min-h-[44px] md:min-h-0',
                     'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
                   ].join(' ')}
                   aria-label={t('year.ariaLabel')}
@@ -757,7 +853,8 @@ export function ReportsPage() {
               <div className="flex flex-col gap-1">
                 <label
                   htmlFor="report-month"
-                  className="text-sm font-semibold text-foreground"
+                  className="font-semibold text-foreground"
+                  style={{ fontSize: 'var(--text-secondary)' }}
                 >
                   {t('month.label')}
                 </label>
@@ -767,7 +864,7 @@ export function ReportsPage() {
                   onChange={handleMonthChange}
                   disabled={!selectedYear || (availableMonths.length === 0 && !hasYearlyReport)}
                   className={[
-                    'rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground min-h-[44px] md:min-h-0',
+                    'rounded-md border border-input bg-background px-3 py-2 text-foreground min-h-[44px] md:min-h-0',
                     'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
                     (!selectedYear || (availableMonths.length === 0 && !hasYearlyReport))
                       ? 'opacity-60 cursor-not-allowed'
@@ -807,7 +904,7 @@ export function ReportsPage() {
         {/* No reports available */}
         {!indexLoading && !indexError && reports && reports.length === 0 && (
           <Card footprint="full" rowSpan="quarter">
-            <p className="px-4 text-sm text-muted-foreground">
+            <p className="px-4 text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
               {t('empty')}
             </p>
           </Card>
@@ -816,7 +913,7 @@ export function ReportsPage() {
         {/* Prompt user to select a period */}
         {!canFetch && !indexLoading && !indexError && reports && reports.length > 0 && (
           <Card footprint="full" rowSpan="quarter">
-            <p className="px-4 text-sm text-muted-foreground">{t('noReportSelected')}</p>
+            <p className="px-4 text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>{t('noReportSelected')}</p>
           </Card>
         )}
 
