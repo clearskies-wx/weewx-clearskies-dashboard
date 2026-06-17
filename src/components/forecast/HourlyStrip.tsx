@@ -142,7 +142,7 @@ export function HourlyStrip({
   ));
 
   // Row: weather icons
-  const weatherIconSize = threeHourWindows ? 38 : 24;
+  const weatherIconSize = threeHourWindows ? 46 : 29;
   const iconRow = displayHours.map((hour, i) => (
     <div key={i} style={{ ...colStyle, ...CELL_BASE, height: rowH.icon }}>
       <WeatherIcon code={toWmoCode(hour.weatherCode)} size={weatherIconSize} />

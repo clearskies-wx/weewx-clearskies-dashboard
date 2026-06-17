@@ -296,7 +296,7 @@ export function DailyColumns({
           tabIndex={expandable ? -1 : undefined}
           aria-hidden={expandable ? true : undefined}
         >
-          <WeatherIcon code={toWmoCode(day.weatherCode)} size={expandable ? 24 : 36} />
+          <WeatherIcon code={toWmoCode(day.weatherCode)} size={expandable ? 29 : 43} />
         </div>
       ))}
     </div>
