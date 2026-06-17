@@ -257,7 +257,7 @@ function SolarChart({ data }: SolarChartProps) {
               }}
               interval={0}
               scale="time"
-              height={15}
+              height={24}
             />
 
             <YAxis

@@ -217,7 +217,7 @@ export function LightningCard({
                       }}
                       axisLine={false}
                       tickLine={false}
-                      height={15}
+                      height={24}
                     />
                     <YAxis
                       dataKey="d"
