@@ -87,9 +87,9 @@ export function AboutPage() {
   return (
     <PageLayout title={t('title')} icon={<Info weight="duotone" />}>
         {/* Station metadata */}
-        <Card footprint="full" aria-busy={stationLoading}>
+        <Card footprint="wide" aria-busy={stationLoading}>
           <CardHeader>
-            <CardTitle as="h2">{station?.name ?? t('station.defaultName')}</CardTitle>
+            <CardTitle as="h2">{branding.siteTitle || station?.name || t('station.defaultName')}</CardTitle>
           </CardHeader>
           <CardContent>
             {stationLoading ? (
@@ -102,7 +102,7 @@ export function AboutPage() {
                 <div>
                   <dt className="text-muted-foreground uppercase font-semibold" style={{ fontSize: 'var(--text-label)' }}>{t('station.location')}</dt>
                   <dd className="mt-0.5 text-foreground" style={{ fontSize: 'var(--text-body)' }}>
-                    {station.latitude}°N, {Math.abs(station.longitude)}°W
+                    {station.name ? `${station.name} — ` : ''}{station.latitude}°N, {Math.abs(station.longitude)}°W
                   </dd>
                 </div>
                 <div>
@@ -149,6 +149,14 @@ export function AboutPage() {
                       : '—'}
                   </dd>
                 </div>
+                {branding.aboutContent && branding.aboutContent.trim().length > 0 && (
+                  <div className="sm:col-span-2">
+                    <dt className="text-muted-foreground uppercase font-semibold" style={{ fontSize: 'var(--text-label)' }}>{t('aboutStation.cardTitle')}</dt>
+                    <dd className="mt-0.5 text-foreground leading-relaxed whitespace-pre-wrap" style={{ fontSize: 'var(--text-body)' }}>
+                      {branding.aboutContent}
+                    </dd>
+                  </div>
+                )}
               </dl>
             ) : (
               <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>{t('station.unavailable')}</p>
@@ -168,20 +176,6 @@ export function AboutPage() {
                 alt={branding.stationPhotoAlt?.trim() || t('photo.defaultAlt')}
                 className="rounded-lg w-full h-full object-contain"
               />
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Operator-authored content — only rendered when content exists in branding */}
-        {branding.aboutContent && branding.aboutContent.trim().length > 0 && (
-          <Card footprint="wide" className="h-[calc(var(--card-row)*2)]">
-            <CardHeader>
-              <CardTitle as="h2">{t('aboutStation.cardTitle')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-foreground leading-relaxed whitespace-pre-wrap" style={{ fontSize: 'var(--text-body)' }}>
-                {branding.aboutContent}
-              </p>
             </CardContent>
           </Card>
         )}
