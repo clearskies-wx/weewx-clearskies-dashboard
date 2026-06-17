@@ -199,7 +199,7 @@ export function LightningCard({
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <ScatterChart
-                    margin={{ top: 2, right: 8, bottom: 0, left: 8 }}
+                    margin={{ top: 2, right: 12, bottom: 0, left: 12 }}
                   >
                     <XAxis
                       dataKey="t"
