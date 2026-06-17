@@ -230,7 +230,7 @@ export function RecordsPage() {
                         {entries.map((entry) => (
                           <tr
                             key={entry.label}
-                            className="border-b border-border/50 last:border-0"
+                            className=""
                           >
                             <td className="py-2.5 pr-4 text-left text-muted-foreground">
                               {entry.label}
