@@ -6,17 +6,28 @@ import { SetupGuard } from './components/SetupGuard';
 import { useLocaleSync } from './i18n/use-locale-sync';
 import { useBranding } from './lib/branding-provider';
 
-const NowPage = React.lazy(() => import('./routes/now'));
-const ForecastPage = React.lazy(() => import('./routes/forecast'));
-const ChartsPage = React.lazy(() => import('./routes/charts'));
-const AlmanacPage = React.lazy(() => import('./routes/almanac'));
-const SeismicPage = React.lazy(() => import('./routes/seismic'));
-const RecordsPage = React.lazy(() => import('./routes/records'));
-const ReportsPage = React.lazy(() => import('./routes/reports'));
-const AboutPage = React.lazy(() => import('./routes/about'));
-const LegalPage = React.lazy(() => import('./routes/legal'));
-const CustomPage = React.lazy(() => import('./routes/custom-page'));
-const NotFoundPage = React.lazy(() => import('./routes/not-found'));
+// After a deploy, chunk hashes change. If the browser has a stale index.js
+// cached, lazy imports 404. Catch that and reload once to pick up new chunks.
+function lazyWithReload(factory: () => Promise<{ default: React.ComponentType }>) {
+  return React.lazy(() =>
+    factory().catch(() => {
+      window.location.reload();
+      return new Promise(() => {});
+    }),
+  );
+}
+
+const NowPage = lazyWithReload(() => import('./routes/now'));
+const ForecastPage = lazyWithReload(() => import('./routes/forecast'));
+const ChartsPage = lazyWithReload(() => import('./routes/charts'));
+const AlmanacPage = lazyWithReload(() => import('./routes/almanac'));
+const SeismicPage = lazyWithReload(() => import('./routes/seismic'));
+const RecordsPage = lazyWithReload(() => import('./routes/records'));
+const ReportsPage = lazyWithReload(() => import('./routes/reports'));
+const AboutPage = lazyWithReload(() => import('./routes/about'));
+const LegalPage = lazyWithReload(() => import('./routes/legal'));
+const CustomPage = lazyWithReload(() => import('./routes/custom-page'));
+const NotFoundPage = lazyWithReload(() => import('./routes/not-found'));
 
 // PageLoader — Suspense fallback used for every lazy route.
 // Includes a visually-hidden <h1> so axe-core's page-has-heading-one rule

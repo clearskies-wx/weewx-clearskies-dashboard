@@ -83,7 +83,7 @@ function filterByContinent<T extends { continent: string }>(
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="font-semibold text-muted-foreground mt-5 first:mt-0" style={{ fontSize: 'var(--text-label)' }}>
+    <h3 className="font-semibold text-foreground mt-6 first:mt-0" style={{ fontSize: 'var(--text-section)' }}>
       {children}
     </h3>
   );
