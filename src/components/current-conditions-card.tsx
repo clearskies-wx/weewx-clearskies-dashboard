@@ -182,7 +182,7 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
         flexShrink: 0,
         paddingTop: '0.2rem',
         borderTop: '1px solid var(--border)',
-        marginTop: '0.15rem',
+        marginTop: 'auto',
       }}
     >
       {/* Chart: role="img" with aria-label for screen readers */}

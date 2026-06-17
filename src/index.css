@@ -42,7 +42,7 @@
     --font-weight-bold:     700;
 
     /* ── Type size scale (role-named, rem) (LOCKED 2026-05-31) ─────────────── */
-    --text-stat-hero:    4.25rem; /* C1 temperature numeral — Outfit 700 */
+    --text-stat-hero:    5.1rem;  /* C1 temperature numeral — Outfit 700 */
     --text-stat-unit:    1.9rem;  /* unit beside it (°F) — Outfit */
     --text-hero-name:    1.35rem; /* station name — Manrope 700 */
     --text-section:      0.95rem; /* section heading — Manrope */
