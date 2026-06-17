@@ -308,7 +308,7 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
         {/* Severity badge — desktop only, vertically centered */}
         {alert.severityLabel && (
           <div
-            className="hidden md:flex items-center shrink-0 px-3"
+            className="hidden md:flex card-glass items-center shrink-0 px-3"
             aria-hidden="true"
           >
             <span
