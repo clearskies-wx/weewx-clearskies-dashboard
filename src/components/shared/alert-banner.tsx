@@ -3,7 +3,7 @@
  *
  * Features:
  *   - Severity-colored left icon panel (per-system national colors via getAlertColors)
- *   - Card-glass neutral body for readable text
+ *   - Alert-glass body surface (Design Manual §3 Alert Glass Surface) for readable text
  *   - Multi-alert flip-through: prev/next buttons + severity-colored pips
  *   - Expandable detail section: full description + metadata grid
  *   - ARIA roles keyed on severity level (assertive for level ≥ 4)
@@ -283,8 +283,8 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
           />
         </div>
 
-        {/* Text body — card-glass neutral surface, grows to fill */}
-        <div className="card-glass min-w-0 flex-1 px-3 py-2.5">
+        {/* Text body — alert-glass surface (Design Manual §3 Alert Glass Surface), grows to fill */}
+        <div className="alert-glass min-w-0 flex-1 px-3 py-2.5">
 
           {/* Title row: event name + optional severity badge */}
           <p className="truncate uppercase font-heading text-[length:var(--text-card-title)] font-semibold leading-snug text-card-foreground">
@@ -306,9 +306,9 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
         </div>
 
         {/* Right panel: expand chevron + optional flip navigator */}
+        {/* min-w-14 (56px) on mobile, min-w-20 (80px) sm+ — tighter on small screens while preserving 44px tap targets */}
         <div
-          className="card-glass flex shrink-0 flex-col items-center justify-between border-l border-foreground/10 px-1 py-1"
-          style={{ minWidth: '80px' }}
+          className="alert-glass flex shrink-0 flex-col items-center justify-between border-l border-foreground/10 px-1 py-1 min-w-14 sm:min-w-20"
         >
 
           {/* Expand / collapse chevron — always present */}
@@ -392,7 +392,7 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
         }}
       >
         <div style={{ minHeight: 0, overflow: 'hidden' }}>
-          <div className="card-glass border-t border-foreground/10 px-4 py-3">
+          <div className="alert-glass border-t border-foreground/10 px-4 py-3">
 
             {/* Full description — collapse hard line wraps, keep paragraph breaks */}
             {alert.description && (
