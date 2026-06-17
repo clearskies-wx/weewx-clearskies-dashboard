@@ -49,8 +49,8 @@ function CollapsibleCard({
           style={{
             maxHeight: open ? '10000px' : '4.5rem',
             ...(open ? {} : {
-              WebkitMaskImage: 'linear-gradient(to bottom, black 40%, transparent 100%)',
-              maskImage: 'linear-gradient(to bottom, black 40%, transparent 100%)',
+              WebkitMaskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)',
+              maskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)',
             }),
           }}
         >

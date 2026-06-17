@@ -158,51 +158,43 @@ export function AboutPage() {
           </CardContent>
         </Card>
 
-        {/* Station photo — before software per user request */}
-        <Card footprint="full">
-          <CardHeader>
-            <CardTitle as="h2">{t('photo.cardTitle')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {branding.stationPhotoUrl && branding.stationPhotoUrl.trim().length > 0 ? (
+        {/* Station photo — only rendered when operator has configured a photo URL */}
+        {branding.stationPhotoUrl && branding.stationPhotoUrl.trim().length > 0 && (
+          <Card footprint="full">
+            <CardHeader>
+              <CardTitle as="h2">{t('photo.cardTitle')}</CardTitle>
+            </CardHeader>
+            <CardContent>
               <img
                 src={branding.stationPhotoUrl}
                 alt={branding.stationPhotoAlt?.trim() || t('photo.defaultAlt')}
                 className="rounded-lg max-w-full"
                 style={{ maxHeight: '400px' }}
               />
-            ) : (
-              <div className="border-dashed border-2 border-border rounded-lg h-48 flex items-center justify-center">
-                <p className="text-sm text-muted-foreground text-center px-4">
-                  {t('photo.placeholder')}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
-        {/* Operator-authored content */}
-        <Card footprint="full" aria-busy={contentLoading}>
-          <CardHeader>
-            <CardTitle as="h2">{t('aboutStation.cardTitle')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {contentLoading ? (
-              <>
-                <span className="sr-only" role="status">{t('aboutStation.loadingAria')}</span>
-                <TileSkeleton className="h-20" />
-              </>
-            ) : content ? (
-              <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
-                {content.markdown}
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {t('aboutStation.placeholder')}
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        {/* Operator-authored content — only rendered when content exists */}
+        {(contentLoading || content) && (
+          <Card footprint="full" aria-busy={contentLoading}>
+            <CardHeader>
+              <CardTitle as="h2">{t('aboutStation.cardTitle')}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {contentLoading ? (
+                <>
+                  <span className="sr-only" role="status">{t('aboutStation.loadingAria')}</span>
+                  <TileSkeleton className="h-20" />
+                </>
+              ) : (
+                <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                  {content!.markdown}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Software */}
         <Card footprint="full">

@@ -55,6 +55,8 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
       copyrightEntity: apiData.copyrightEntity ?? apiData.copyright_entity,
       privacyRegions: apiData.privacyRegions,
       googleAnalyticsId: apiData.googleAnalyticsId,
+      stationPhotoUrl: apiData.stationPhotoUrl,
+      stationPhotoAlt: apiData.stationPhotoAlt,
     };
   }, [apiData]);
 
