@@ -2,9 +2,9 @@
 // Horizontally-scrollable shower columns with image, data blocks, and description.
 // Layout matches the approved C7-almanac-page.html mockup.
 
-import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Eye, EyeSlash } from '@phosphor-icons/react';
+import { HorizontalScrollNav } from '../ui/horizontal-scroll-nav';
 import {
   Card,
   CardHeader,
@@ -354,17 +354,6 @@ export function MeteorShowerCard({
 }: MeteorShowerCardProps) {
   const { t } = useTranslation('almanac');
 
-  // Ref for the scrollable row element
-  const rowRef = useRef<HTMLDivElement>(null);
-
-  function scrollLeft() {
-    rowRef.current?.scrollBy({ left: -200, behavior: 'smooth' });
-  }
-
-  function scrollRight() {
-    rowRef.current?.scrollBy({ left: 200, behavior: 'smooth' });
-  }
-
   // Loading state
   if (loading) {
     return <CardSkeleton />;
@@ -444,58 +433,20 @@ export function MeteorShowerCard({
           ))}
         </div>
 
-        {/* Desktop layout: horizontal scroll row with arrow buttons (md+) */}
-        <div className="hidden md:block relative mx-[-1.5rem] px-[1.5rem]">
-          {/*
-           * Scroll row — overflow-x:auto, hidden scrollbar (matches mockup).
-           * gap-[1.5rem] between columns.
-           */}
-          <div
-            ref={rowRef}
-            className="flex gap-[1.5rem] overflow-x-auto pb-1"
-            style={{ scrollbarWidth: 'none' }}
-            role="list"
-            aria-label={t('meteorShowers.scrollRegionLabel')}
-          >
-            {/* Hide webkit scrollbar via inline style; cannot use Tailwind for this */}
-            <style>{`.meteor-scroll-row::-webkit-scrollbar { display: none; }`}</style>
-
-            {showers.map((shower) => (
-              <div key={shower.name} role="listitem">
-                <ShowerColumn shower={shower} />
-              </div>
-            ))}
-          </div>
-
-          {/*
-           * Scroll tabs — full-height gradient fades at left/right edges.
-           * Each is a <button> so it is keyboard-reachable and announced as
-           * a button by screen readers (not a <div onClick>, per a11y rules).
-           * aria-label names the action for screen readers.
-           * The ‹ / › chevron characters are decorative; the label carries the meaning.
-           */}
-          <button
-            type="button"
-            onClick={scrollLeft}
-            aria-label={t('meteorShowers.scrollLeft')}
-            className="absolute top-0 bottom-0 left-0 w-7 flex items-center justify-center z-10 text-[18px] font-bold text-muted-foreground hover:text-foreground border-0 p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 transition-colors"
-            style={{
-              background: 'linear-gradient(to right, var(--card-glass-bg, rgb(30 35 55 / 0.55)) 50%, transparent)',
-            }}
-          >
-            ‹
-          </button>
-          <button
-            type="button"
-            onClick={scrollRight}
-            aria-label={t('meteorShowers.scrollRight')}
-            className="absolute top-0 bottom-0 right-0 w-7 flex items-center justify-center z-10 text-[18px] font-bold text-muted-foreground hover:text-foreground border-0 p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 transition-colors"
-            style={{
-              background: 'linear-gradient(to left, var(--card-glass-bg, rgb(30 35 55 / 0.55)) 50%, transparent)',
-            }}
-          >
-            ›
-          </button>
+        {/* Desktop layout: standardized horizontal scroll navigation (md+) */}
+        <div className="hidden md:block">
+          <HorizontalScrollNav ariaLabel={t('meteorShowers.scrollRegionLabel')}>
+            <div
+              className="flex gap-[1.5rem] pb-1"
+              role="list"
+            >
+              {showers.map((shower) => (
+                <div key={shower.name} role="listitem">
+                  <ShowerColumn shower={shower} />
+                </div>
+              ))}
+            </div>
+          </HorizontalScrollNav>
         </div>
 
         {/* Footer note */}

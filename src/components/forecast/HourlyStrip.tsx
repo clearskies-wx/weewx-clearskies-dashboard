@@ -21,6 +21,7 @@ import { WeatherIcon } from '../weather-icon';
 import { WindSymbol } from './WindSymbol';
 import { TempTrendLine } from './TempTrendLine';
 import { toWmoCode } from '../../utils/weather-code';
+import { HorizontalScrollNav } from '../ui/horizontal-scroll-nav';
 import type { HourlyForecastPoint, UnitsBlock } from '../../api/types';
 
 // ── Time formatting ──────────────────────────────────────────────────────────
@@ -89,20 +90,10 @@ export function HourlyStrip({
   //   scrolling        → fixed 72px per column
   const colStyle: React.CSSProperties = threeHourWindows
     ? { flex: 1, minWidth: 0 }
-    : { width: 72, flexShrink: 0, scrollSnapAlign: 'start' };
-
-  // ── Scrollbar styles (Surface B — always visible) ────────────────────────
-  const scrollerStyle: React.CSSProperties = threeHourWindows
-    ? { display: 'flex', flexDirection: 'column', overflow: 'hidden' }
-    : {
-        overflowX: 'scroll',
-        paddingBottom: 8,
-        scrollSnapType: 'x mandatory',
-        flex: 1,
-      };
+    : { width: 72, flexShrink: 0 };
 
   // For threeHourWindows, the outer container is not a scroller; for scrolling
-  // mode, it IS the scroller and needs the styled scrollbar.
+  // mode, HorizontalScrollNav owns the scroll container.
   const isScrollMode = !threeHourWindows;
 
   // ── Row heights ──────────────────────────────────────────────────────────
@@ -262,39 +253,9 @@ export function HourlyStrip({
 
   if (isScrollMode) {
     return (
-      <div
-        role="list"
-        tabIndex={0}
-        aria-label="Hourly forecast — scroll to see more"
-        style={{
-          ...scrollerStyle,
-          // Visible scrollbar styling via className below
-        }}
-        className="hourly-strip-scroller"
-      >
-        <style>{`
-          .hourly-strip-scroller::-webkit-scrollbar { height: 7px; }
-          .hourly-strip-scroller::-webkit-scrollbar-track {
-            background: rgba(0,0,0,0.08); border-radius: 4px; margin: 0 2px;
-          }
-          .hourly-strip-scroller::-webkit-scrollbar-thumb {
-            background: rgba(0,0,0,0.30); border-radius: 4px;
-          }
-          .hourly-strip-scroller::-webkit-scrollbar-thumb:hover {
-            background: rgba(0,0,0,0.48);
-          }
-          [data-theme="dark"] .hourly-strip-scroller::-webkit-scrollbar-track {
-            background: rgba(255,255,255,0.08);
-          }
-          [data-theme="dark"] .hourly-strip-scroller::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.30);
-          }
-          [data-theme="dark"] .hourly-strip-scroller::-webkit-scrollbar-thumb:hover {
-            background: rgba(255,255,255,0.50);
-          }
-        `}</style>
+      <HorizontalScrollNav ariaLabel="Hourly forecast — scroll to see more">
         {tableContent}
-      </div>
+      </HorizontalScrollNav>
     );
   }
 
