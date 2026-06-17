@@ -260,7 +260,7 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
               tickFormatter={fmtAxisTime}
               tickLine={false}
               axisLine={false}
-              tick={{ fontFamily: 'var(--font-chart)', fontSize: 11, fill: 'var(--foreground)' }}
+              tick={{ fontFamily: 'var(--font-chart)', fontSize: 14, fill: 'var(--foreground)' }}
               interval={0}
               scale="time"
             />
@@ -271,7 +271,7 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
               tickFormatter={(v: number) => `${v}°`}
               tickLine={false}
               axisLine={false}
-              tick={{ fontFamily: 'var(--font-chart)', fontSize: 11, fill: 'var(--foreground)' }}
+              tick={{ fontFamily: 'var(--font-chart)', fontSize: 14, fill: 'var(--foreground)' }}
               width={34}
             />
           </ComposedChart>

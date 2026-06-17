@@ -247,7 +247,7 @@ export function MonthlyAveragesCard({
               <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
               <XAxis
                 dataKey="month"
-                tick={{ fontSize: 11, fontFamily: 'var(--font-chart)', fontWeight: 600 }}
+                tick={{ fontSize: 14, fontFamily: 'var(--font-chart)', fontWeight: 600 }}
                 minTickGap={isMobile ? 20 : 50}
                 className="fill-muted-foreground"
               />

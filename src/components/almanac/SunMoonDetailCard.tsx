@@ -519,7 +519,7 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
                 x={sunMarker.x}
                 y={sunMarker.y - (isMobile ? 30 : 22)}
                 textAnchor="middle"
-                fontSize={isMobile ? 19 : 11}
+                fontSize={isMobile ? 19 : 14}
                 fontFamily="var(--font-sans, system-ui, sans-serif)"
                 fontWeight={600}
                 fill="var(--muted-foreground)"

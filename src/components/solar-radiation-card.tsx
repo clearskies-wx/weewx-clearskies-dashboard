@@ -250,7 +250,7 @@ function SolarChart({ data }: SolarChartProps) {
               axisLine={false}
               tick={{
                 fontFamily: 'var(--font-chart)',
-                fontSize: 11,
+                fontSize: 14,
                 fill: 'var(--muted-foreground)',
               }}
               interval={0}

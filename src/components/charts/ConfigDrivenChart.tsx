@@ -568,7 +568,7 @@ export function ConfigDrivenChart({
               height={30}
               tickFormatter={xFormatter}
               minTickGap={isMobile ? 20 : 50}
-              tick={{ fontSize: 11, fontFamily: CHART_FONT }}
+              tick={{ fontSize: 14, fontFamily: CHART_FONT }}
               className="fill-muted-foreground"
             />
 

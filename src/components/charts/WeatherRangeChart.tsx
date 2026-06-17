@@ -300,7 +300,7 @@ export function WeatherRangeChart({
               tickFormatter={formatXAxisTick}
               minTickGap={isMobile ? 20 : 50}
               height={XAXIS_HEIGHT}
-              tick={{ fontSize: 11, fontFamily: CHART_FONT }}
+              tick={{ fontSize: 14, fontFamily: CHART_FONT }}
               className="fill-muted-foreground"
             />
 
@@ -319,7 +319,7 @@ export function WeatherRangeChart({
                       value: yAxisLabel + (unit ? ` (${unit})` : ''),
                       angle: -90,
                       position: 'insideLeft',
-                      style: { fontSize: 11, fontFamily: CHART_FONT, fill: 'var(--muted-foreground)' },
+                      style: { fontSize: 14, fontFamily: CHART_FONT, fill: 'var(--muted-foreground)' },
                       offset: -5,
                     }
                   : undefined
