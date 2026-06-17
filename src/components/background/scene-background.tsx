@@ -16,7 +16,7 @@
 //   - Background layers are presentational (aria-hidden="true").
 //   - No interactive elements in this file.
 
-import type { CSSProperties } from 'react';
+import { type CSSProperties, useEffect, useRef, useState } from 'react';
 import type { SceneDescriptor } from '../../api/types';
 import {
   SCENE_ASSET_MAP,
@@ -64,15 +64,34 @@ export function SceneBackground({ scene, visible = true }: SceneBackgroundProps)
     ? 'blur(3px) brightness(0.93) saturate(1.05)'
     : 'brightness(1) saturate(1.05)';
 
+  // Cross-fade: keep previous scene URL and fade between layers.
+  const prevKeyRef = useRef(key);
+  const [prevUrl, setPrevUrl] = useState(asset.url);
+  const [fading, setFading] = useState(false);
+
+  useEffect(() => {
+    if (key !== prevKeyRef.current) {
+      setFading(true);
+      const timer = setTimeout(() => {
+        setPrevUrl(asset.url);
+        setFading(false);
+        prevKeyRef.current = key;
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [key, asset.url]);
+
+  const photoStyle: CSSProperties = {
+    position: 'absolute',
+    inset: '-40px',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    filter: baseFilter,
+    transform: 'scale(1.05)',
+    transformOrigin: 'center',
+  };
+
   return (
-    // Outer container: fixed, full-viewport, behind all content (z-index -1).
-    // aria-hidden="true" + role="presentation": purely decorative.
-    // (WCAG 1.1.1 / coding.md §5.5 decorative image rule)
-    //
-    // backgroundColor: uses the theme's --background token so the base colour
-    // matches whichever theme the index.html inline script set (light or dark).
-    // Before the first /current response, the photos are opacity 0 and this
-    // base colour is all the user sees — it must match the active theme.
     <div
       aria-hidden="true"
       role="presentation"
@@ -84,8 +103,6 @@ export function SceneBackground({ scene, visible = true }: SceneBackgroundProps)
         overflow: 'hidden',
       }}
     >
-      {/* Photo wrapper: hidden until real scene data arrives, then shown
-          instantly.  The theme-aware base colour above covers the gap. */}
       <div
         style={{
           position: 'absolute',
@@ -93,26 +110,26 @@ export function SceneBackground({ scene, visible = true }: SceneBackgroundProps)
           opacity: visible ? 1 : 0,
         }}
       >
-        {/* Layer 1: scene photo base.
-            Slightly over-scaled (inset: -40px + scale 1.05) so blur doesn't
-            leave dark edges.  background-size: cover + center for all ratios. */}
+        {/* Layer 1a: previous scene (fades out) */}
         <div
           style={{
-            position: 'absolute',
-            inset: '-40px',
-            backgroundImage: `url(${asset.url})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            filter: baseFilter,
-            transform: 'scale(1.05)',
-            transformOrigin: 'center',
-            willChange: 'filter',
+            ...photoStyle,
+            backgroundImage: `url(${prevUrl})`,
+            opacity: fading ? 1 : 0,
+            transition: 'opacity 1.2s ease-in-out',
           }}
         />
 
-        {/* Layer 2: precipitation overlay (real on-glass photo).
-            Rendered only when scene.overlay is non-null.
-            Opacity: 0.75 day / 0.25 night (ADR-047 §Decision 1 locked values). */}
+        {/* Layer 1b: current scene (fades in) */}
+        <div
+          style={{
+            ...photoStyle,
+            backgroundImage: `url(${asset.url})`,
+            opacity: fading ? 0 : 1,
+            transition: 'opacity 1.2s ease-in-out',
+          }}
+        />
+
         {hasOverlay && overlayConfig !== null && (
           <div
             style={{
@@ -122,18 +139,12 @@ export function SceneBackground({ scene, visible = true }: SceneBackgroundProps)
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               opacity: overlayOpacity(scene.daytime),
-              // Cast: CSSProperties['mixBlendMode'] is a broad string union; the
-              // ADR-047 locked values ("overlay" | "screen") are valid CSS spec values.
               mixBlendMode: overlayConfig.blendMode as CSSProperties['mixBlendMode'],
+              transition: 'opacity 1.2s ease-in-out',
             }}
           />
         )}
 
-        {/* Layer 3: bottom scrim — legibility gradient.
-            transparent 60% → rgba(0,0,0,0.32) 100%.
-            Always present; this is the WCAG AA contrast mechanism for text
-            near the bottom of the viewport over busy photos.
-            (ADR-026 / ADR-047 §Decision + implementation notes) */}
         <div
           style={{
             position: 'absolute',
