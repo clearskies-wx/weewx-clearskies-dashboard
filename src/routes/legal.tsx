@@ -28,25 +28,20 @@ function CollapsibleCard({
 
   return (
     <Card footprint="full">
-      <CardHeader
-        className="cursor-pointer select-none"
-        onClick={() => setOpen((o) => !o)}
-        role="button"
-        tabIndex={0}
-        aria-expanded={open}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            setOpen((o) => !o);
-          }
-        }}
-      >
-        <CardTitle as="h2">{title}</CardTitle>
-        <CaretDown
-          aria-hidden="true"
-          className="size-4 shrink-0 text-muted-foreground transition-transform duration-200"
-          style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
-        />
+      <CardHeader>
+        <button
+          type="button"
+          className="flex items-center justify-between w-full cursor-pointer select-none bg-transparent border-none p-0 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded"
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+        >
+          <CardTitle as="h2">{title}</CardTitle>
+          <CaretDown
+            aria-hidden="true"
+            className="size-4 shrink-0 text-muted-foreground transition-transform duration-200"
+            style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
+          />
+        </button>
       </CardHeader>
       <CardContent className="px-6 pt-0 pb-4">
         <div

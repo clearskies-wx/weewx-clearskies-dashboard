@@ -29,6 +29,7 @@ import {
   CardTitle,
   CardContent,
 } from './ui/card';
+import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
 import type { Observation } from '../api/types';
 
 // ---------------------------------------------------------------------------
@@ -83,6 +84,7 @@ export interface WindCompassCardProps {
 export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, windGustMax10m: gustMax10mProp }: WindCompassCardProps) {
   const { t } = useTranslation('now');
   const { t: tCommon } = useTranslation('common');
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   // Extract and normalise wind fields via asConverted (ADR-042).
   // We never do unit math here — all conversion is BFF-side.
@@ -94,6 +96,8 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
 
   // Animated bearing — interpolates from previous to target over 1 second,
   // lighting up intermediate ticks as it sweeps.
+  // When prefers-reduced-motion is active, skip the animation and snap directly
+  // to the target bearing (DESIGN-MANUAL §14, coding.md §5).
   const [animatedDeg, setAnimatedDeg] = useState(targetDeg);
   const animRef = useRef<number | null>(null);
   const prevTargetRef = useRef(targetDeg);
@@ -103,12 +107,20 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
     const startDeg = prevTargetRef.current;
     prevTargetRef.current = targetDeg;
 
+    // Cancel any in-progress animation before starting a new one.
+    if (animRef.current !== null) cancelAnimationFrame(animRef.current);
+
+    // Reduced motion: skip rAF interpolation; snap to target immediately
+    // (DESIGN-MANUAL §14, coding.md §5).
+    if (prefersReducedMotion) {
+      setAnimatedDeg(targetDeg);
+      return;
+    }
+
     // Shortest angular path (handles 350°→10° wrap-around)
-    let delta = ((targetDeg - startDeg + 540) % 360) - 180;
+    const delta = ((targetDeg - startDeg + 540) % 360) - 180;
     const startTime = performance.now();
     const duration = 1000; // 1 second
-
-    if (animRef.current !== null) cancelAnimationFrame(animRef.current);
 
     function step(now: number) {
       const elapsed = now - startTime;
@@ -124,7 +136,7 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
     }
     animRef.current = requestAnimationFrame(step);
     return () => { if (animRef.current !== null) cancelAnimationFrame(animRef.current); };
-  }, [targetDeg]);
+  }, [targetDeg, prefersReducedMotion]);
 
   const windDirDeg = animatedDeg;
 
@@ -203,7 +215,10 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
         strokeWidth={lit ? TICK_W_LIT : TICK_W_DIM}
         strokeLinecap="round"
         opacity={lit ? 1 : 0.38}
-        style={{ transition: 'stroke 0.4s ease, stroke-width 0.4s ease, opacity 0.4s ease' }}
+        style={{
+          // Disable tick transition when prefers-reduced-motion is active (DESIGN-MANUAL §14).
+          transition: prefersReducedMotion ? 'none' : 'stroke 0.4s ease, stroke-width 0.4s ease, opacity 0.4s ease',
+        }}
       />
     );
   });
