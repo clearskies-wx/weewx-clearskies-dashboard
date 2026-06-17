@@ -2,22 +2,22 @@
 
 import { cn } from "@/lib/utils"
 
-/** Footprint vocabulary â€” column span Ã— row declaration per ADR-051. */
+/** Footprint vocabulary â€" column span Ã— row declaration per ADR-051. */
 export type CardFootprint = "tile" | "wide" | "panel" | "full";
 
 type CardProps = React.ComponentProps<"div"> & {
   size?: "default" | "sm";
-  /** Footprint vocabulary (ADR-051) â€” controls column span in the Grid primitive.
-   *  tile=1col Â· wide=2col Â· panel=3col Â· full=4col */
+  /** Footprint vocabulary (ADR-051) â€" controls column span in the Grid primitive.
+   *  tile=1col Â, wide=2col Â, panel=3col Â, full=4col */
   footprint?: CardFootprint;
   /**
-   * Row span — controls how many quarter-row tracks the card occupies at md+ (≥768px).
+   * Row span — controls how many quarter-row tracks the card occupies at md+ (>=768px).
    * Mobile rows are always auto-height.
-   *   "quarter" = md:row-span-1  (1 × --card-quarter-row  = 3.25rem)
-   *   "half"    = md:row-span-2  (2 × --card-quarter-row  = 6.5rem)
-   *   1         = md:row-span-4  (4 × --card-quarter-row  = 13rem, default data card)
-   *   2         = md:row-span-8  (8 × --card-quarter-row  = 26rem, tall card)
-   *   2.5       = md:row-span-10 (10 × --card-quarter-row = 32.5rem, extra-tall card)
+   *   "quarter" = md:row-span-1  (1 x --card-quarter-row  = 3.25rem)
+   *   "half"    = md:row-span-2  (2 x --card-quarter-row  = 6.5rem)
+   *   1         = md:row-span-4  (4 x --card-quarter-row  = 13rem, default data card)
+   *   2         = md:row-span-8  (8 x --card-quarter-row  = 26rem, tall card)
+   *   2.5       = md:row-span-10 (10 x --card-quarter-row = 32.5rem, extra-tall card)
    */
   rowSpan?: "quarter" | "half" | 1 | 2 | 2.5;
 };
@@ -73,25 +73,25 @@ function minHeightClass(rowSpan: "quarter" | "half" | 1 | 2 | 2.5 | undefined): 
 
 function Card({
   className,
-  size = “default”,
+  size = "default",
   footprint,
   rowSpan,
   ...props
 }: CardProps) {
   return (
     <div
-      data-slot=”card”
+      data-slot="card"
       data-size={size}
       data-row-span={rowSpan}
       className={cn(
-        // Provisional glass surface (PROVISIONAL â€” B3 contrast gate sets final value).
+        // Provisional glass surface (PROVISIONAL â€" B3 contrast gate sets final value).
         // bg-[rgb(var(--card-glass))] applies the translucent glass background;
         // backdrop-filter is set inline since there is no Tailwind utility for
         // the exact blur+saturate combination.
-        “card-glass”,
-        “group/card flex flex-col overflow-hidden rounded-xl py-[var(--card-pad)] text-sm text-card-foreground ring-1 ring-foreground/10 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:py-2 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl”,
+        "card-glass",
+        "group/card flex flex-col overflow-hidden rounded-xl py-[var(--card-pad)] text-sm text-card-foreground ring-1 ring-foreground/10 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:py-2 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
         minHeightClass(rowSpan),
-        “mb-[var(--gap-grid)]”,
+        "mb-[var(--gap-grid)]",
         footprint !== undefined ? footprintColSpan[footprint] : undefined,
         rowSpanClass(rowSpan),
         className
