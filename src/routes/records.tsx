@@ -151,7 +151,7 @@ export function RecordsPage() {
             aria-pressed={period === 'all-time'}
             onClick={() => setPeriod('all-time')}
             className={[
-              'rounded-md px-4 py-2 text-sm font-medium min-h-[44px] md:min-h-0',
+              'rounded-md px-4 py-2 text-sm font-semibold min-h-[44px] md:min-h-0',
               'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
               period === 'all-time'
                 ? 'bg-primary text-primary-foreground'
@@ -165,7 +165,7 @@ export function RecordsPage() {
             aria-pressed={period === 'ytd'}
             onClick={() => setPeriod('ytd')}
             className={[
-              'rounded-md px-4 py-2 text-sm font-medium min-h-[44px] md:min-h-0',
+              'rounded-md px-4 py-2 text-sm font-semibold min-h-[44px] md:min-h-0',
               'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
               period === 'ytd'
                 ? 'bg-primary text-primary-foreground'
@@ -233,7 +233,7 @@ export function RecordsPage() {
                               {entry.label}
                               {entry.brokenInLast30Days && (
                                 <span
-                                  className="ml-2 inline-block rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                                  className="ml-2 inline-block rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
                                   title={t('badgeNewTitle')}
                                   aria-label={t('badgeNewAriaLabel')}
                                 >

@@ -241,7 +241,7 @@ function ShowerColumn({ shower }: ShowerColumnProps) {
           style={{ aspectRatio: '16/10' }}
           aria-hidden="true"
         >
-          <span className="text-[0.7rem] text-muted-foreground/60">—</span>
+          <span className="text-[0.7rem] text-muted-foreground">—</span>
         </div>
       )}
 
@@ -406,7 +406,7 @@ export function MeteorShowerCard({
          */}
         <div className="flex items-center justify-between w-full">
           <CardTitle as="h2">{t('meteorShowers.title')}</CardTitle>
-          <span className="text-[0.75rem] text-muted-foreground/70 flex items-center gap-[0.3rem]">
+          <span className="text-[0.75rem] text-muted-foreground flex items-center gap-[0.3rem]">
             {t('meteorShowers.timesLocal')}
           </span>
         </div>
@@ -414,7 +414,7 @@ export function MeteorShowerCard({
 
       <CardContent>
         {/* Subtitle */}
-        <p className="text-[0.75rem] text-muted-foreground/70 mb-4">
+        <p className="text-[0.75rem] text-muted-foreground mb-4">
           {t('meteorShowers.subtitle')}
         </p>
 
@@ -499,7 +499,7 @@ export function MeteorShowerCard({
         </div>
 
         {/* Footer note */}
-        <p className="text-[0.7rem] text-muted-foreground/60 mt-3 flex items-center">
+        <p className="text-[0.7rem] text-muted-foreground mt-3 flex items-center">
           <InfoIcon />
           {t('meteorShowers.footNote')}
         </p>

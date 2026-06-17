@@ -147,7 +147,7 @@ export function ChartsPage() {
               id="chart-group-select"
               value={activeTab}
               onChange={(e) => setActiveTab(e.target.value)}
-              className="w-full min-h-[44px] rounded-md border border-border bg-background px-3 py-2 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="w-full min-h-[44px] rounded-md border border-border bg-background px-3 py-2 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               {groups.map((group) => (
                 <option key={group.groupId} value={group.groupId}>
@@ -178,7 +178,7 @@ export function ChartsPage() {
                   onClick={() => setActiveTab(group.groupId)}
                   onKeyDown={(e) => handleTabKeyDown(e, index)}
                   className={[
-                    'shrink-0 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                    'shrink-0 rounded-md px-3 py-1.5 text-sm font-semibold transition-colors',
                     'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                     activeTab === group.groupId
                       ? 'bg-primary text-primary-foreground'

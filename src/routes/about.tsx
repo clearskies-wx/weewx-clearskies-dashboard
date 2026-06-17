@@ -103,49 +103,49 @@ export function AboutPage() {
               <dl className="grid grid-cols-1 gap-y-3 text-sm sm:grid-cols-2">
                 <div>
                   <dt className="text-muted-foreground">{t('station.location')}</dt>
-                  <dd className="mt-0.5 font-medium text-foreground">
+                  <dd className="mt-0.5 font-semibold text-foreground">
                     {station.latitude}°N, {Math.abs(station.longitude)}°W
                   </dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">{t('station.altitude')}</dt>
-                  <dd className="mt-0.5 font-medium text-foreground">
+                  <dd className="mt-0.5 font-semibold text-foreground">
                     {station.altitude} ft
                   </dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">{t('station.hardware')}</dt>
-                  <dd className="mt-0.5 font-medium text-foreground">
+                  <dd className="mt-0.5 font-semibold text-foreground">
                     {station.hardware ?? t('station.hardwareDefault')}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">{t('station.timezone')}</dt>
-                  <dd className="mt-0.5 font-medium text-foreground">
+                  <dd className="mt-0.5 font-semibold text-foreground">
                     {station.timezone}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">{t('station.unitSystem')}</dt>
-                  <dd className="mt-0.5 font-medium text-foreground">
+                  <dd className="mt-0.5 font-semibold text-foreground">
                     {station.unitSystem}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">{t('station.stationId')}</dt>
-                  <dd className="mt-0.5 font-medium text-foreground text-xs">
+                  <dd className="mt-0.5 font-semibold text-foreground text-xs">
                     {station.stationId}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">{t('station.recordingSince')}</dt>
-                  <dd className="mt-0.5 font-medium text-foreground">
+                  <dd className="mt-0.5 font-semibold text-foreground">
                     {formatLongDate(station.firstRecord, i18n.language)}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">{t('station.lastData')}</dt>
-                  <dd className="mt-0.5 font-medium text-foreground">
+                  <dd className="mt-0.5 font-semibold text-foreground">
                     {station.lastRecord
                       ? `${relativeTime(station.lastRecord, i18n.language)} · ${formatAbsoluteTime(station.lastRecord, station.timezone, i18n.language)}`
                       : '—'}
@@ -213,15 +213,15 @@ export function AboutPage() {
             <dl className="grid grid-cols-1 gap-y-3 text-sm sm:grid-cols-2">
               <div>
                 <dt className="text-muted-foreground">{t('software.weatherSoftware')}</dt>
-                <dd className="mt-0.5 font-medium text-foreground">{t('software.weatherSoftwareValue')}</dd>
+                <dd className="mt-0.5 font-semibold text-foreground">{t('software.weatherSoftwareValue')}</dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">{t('software.dashboard')}</dt>
-                <dd className="mt-0.5 font-medium text-foreground">{t('software.dashboardValue')}</dd>
+                <dd className="mt-0.5 font-semibold text-foreground">{t('software.dashboardValue')}</dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">{t('software.dashboardEngine')}</dt>
-                <dd className="mt-0.5 font-medium text-foreground">{t('software.dashboardEngineValue')}</dd>
+                <dd className="mt-0.5 font-semibold text-foreground">{t('software.dashboardEngineValue')}</dd>
               </div>
             </dl>
           </CardContent>
@@ -255,13 +255,13 @@ export function AboutPage() {
                               href={info.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="font-medium text-foreground hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                              className="font-semibold text-foreground hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
                             >
                               {info.name}
                             </a>
                           </div>
                         ) : (
-                          <div key={id} className="font-medium text-foreground capitalize">{id}</div>
+                          <div key={id} className="font-semibold text-foreground capitalize">{id}</div>
                         );
                       })}
                     </dd>
@@ -286,7 +286,7 @@ export function AboutPage() {
                   <dt className="text-muted-foreground">
                     {t(`photoCredits.scene.${key}`, { defaultValue: key })}
                   </dt>
-                  <dd className="mt-0.5 font-medium text-foreground">
+                  <dd className="mt-0.5 font-semibold text-foreground">
                     {entry.attribution ?? t('photoCredits.builtIn')}
                   </dd>
                 </div>

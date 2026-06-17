@@ -431,13 +431,13 @@ export function SeismicPage() {
                                     <span>{t('depthLabel')}: {formatValue(quake.depth, 'earthquakeDepth')} {depthUnit}</span>
                                   )}
                                   {quake.tsunami && (
-                                    <span className="font-medium text-amber-700 dark:text-amber-400">
+                                    <span className="font-semibold text-amber-700 dark:text-amber-400">
                                       {t('tsunamiWatch')}
                                     </span>
                                   )}
                                   {quake.alert !== null && (
                                     <span
-                                      className={`inline-block rounded px-1 py-0.5 font-medium capitalize ${alertClasses(quake.alert)}`}
+                                      className={`inline-block rounded px-1 py-0.5 font-semibold capitalize ${alertClasses(quake.alert)}`}
                                     >
                                       {t('pager', { level: quake.alert })}
                                     </span>

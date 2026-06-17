@@ -381,7 +381,7 @@ function MonthlyReportTable({
                   }
                 >
                   {/* Day cell — scope="row" so screen readers can identify the row */}
-                  <td scope="row" className="px-2 py-1.5 font-medium tabular-nums">
+                  <td scope="row" className="px-2 py-1.5 font-normal tabular-nums">
                     {row.day ?? '—'}
                   </td>
                   <td className="px-2 py-1.5 tabular-nums">{row.meanTemp !== null ? formatValue(row.meanTemp, 'temperature') + tempUnit : '—'}</td>
@@ -516,7 +516,7 @@ function YearlySubTable({
                   ? formatValue(cell, 'default') + (colIdx !== 0 && unitSuffix ? unitSuffix : '')
                   : (cell ?? '—');
                 return colIdx === 0 ? (
-                  <td key={colIdx} scope="row" className="px-2 py-1.5 font-medium tabular-nums">
+                  <td key={colIdx} scope="row" className="px-2 py-1.5 font-normal tabular-nums">
                     {display}
                   </td>
                 ) : (
@@ -728,7 +728,7 @@ export function ReportsPage() {
               <div className="flex flex-col gap-1">
                 <label
                   htmlFor="report-year"
-                  className="text-sm font-medium text-foreground"
+                  className="text-sm font-semibold text-foreground"
                 >
                   {t('year.label')}
                 </label>
@@ -753,7 +753,7 @@ export function ReportsPage() {
               <div className="flex flex-col gap-1">
                 <label
                   htmlFor="report-month"
-                  className="text-sm font-medium text-foreground"
+                  className="text-sm font-semibold text-foreground"
                 >
                   {t('month.label')}
                 </label>

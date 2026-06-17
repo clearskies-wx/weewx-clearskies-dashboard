@@ -263,7 +263,7 @@ export function ChartGauge({
     <div className="flex flex-col items-center gap-1 w-full">
       {/* Chart title */}
       {title && (
-        <p className="text-sm font-medium text-foreground text-center leading-tight">
+        <p className="text-sm font-semibold text-foreground text-center leading-tight">
           {title}
         </p>
       )}

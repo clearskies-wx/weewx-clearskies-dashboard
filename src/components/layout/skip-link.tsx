@@ -17,7 +17,7 @@ export function SkipLink() {
         'focus:px-4 focus:py-2 focus:rounded-md',
         'focus:bg-primary focus:text-primary-foreground',
         'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-        'font-medium text-sm',
+        'font-semibold text-sm',
       ].join(' ')}
     >
       {t('skipToContent')}

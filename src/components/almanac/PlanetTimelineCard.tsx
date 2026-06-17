@@ -419,7 +419,7 @@ function PlanetColumn({ planet, stationTz, sunsetIso, sunriseIso, locale, t }: P
 
         {/* Viewing note (optional) */}
         {planet.viewingNote && (
-          <span className="text-[0.7rem] text-muted-foreground/70 italic md:text-center leading-tight mt-0.5">
+          <span className="text-[0.7rem] text-muted-foreground italic md:text-center leading-tight mt-0.5">
             {planet.viewingNote}
           </span>
         )}
@@ -985,7 +985,7 @@ export function PlanetTimelineCard({
                 >
                   &#x25cf;
                 </span>
-                <strong className="font-semibold text-foreground/80">
+                <strong className="font-semibold text-foreground">
                   {p.name}:
                 </strong>{' '}
                 {p.conjunction}
@@ -995,7 +995,7 @@ export function PlanetTimelineCard({
         )}
 
         {/* Footer note */}
-        <p className="text-[0.7rem] text-muted-foreground/60 mt-3 flex items-center">
+        <p className="text-[0.7rem] text-muted-foreground mt-3 flex items-center">
           <InfoIcon />
           {t('planets.footNote')}
         </p>

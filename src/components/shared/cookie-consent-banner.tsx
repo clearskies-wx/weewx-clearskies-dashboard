@@ -313,7 +313,7 @@ export function CookieConsentBanner() {
             onClick={handleReject}
             className={[
               'flex-1 sm:flex-none',
-              'rounded-lg border px-4 py-2 text-sm font-medium',
+              'rounded-lg border px-4 py-2 text-sm font-semibold',
               'transition-colors',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60',
               'focus-visible:ring-offset-2 focus-visible:ring-offset-black/80',
@@ -332,7 +332,7 @@ export function CookieConsentBanner() {
             onClick={handleAccept}
             className={[
               'flex-1 sm:flex-none',
-              'rounded-lg border px-4 py-2 text-sm font-medium',
+              'rounded-lg border px-4 py-2 text-sm font-semibold',
               'transition-colors',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60',
               'focus-visible:ring-offset-2 focus-visible:ring-offset-black/80',

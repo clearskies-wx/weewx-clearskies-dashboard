@@ -55,7 +55,7 @@ const OVERFLOW_ROUTES = new Set(MOBILE_OVERFLOW_ITEMS.map((item) => item.to));
 // NavLink className helper — active state: bg shift + left border (desktop) / top border (mobile).
 function navLinkClass({ isActive }: { isActive: boolean }): string {
   const base = [
-    'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium',
+    'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold',
     'transition-colors duration-150',
     'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
     // Desktop: flex-col to stack icon above label, tight padding
@@ -83,7 +83,7 @@ function navLinkClass({ isActive }: { isActive: boolean }): string {
 function mobileSlotClass(isActive: boolean): string {
   return [
     'flex flex-col items-center justify-center gap-0.5 py-2 px-1',
-    'text-xs font-medium transition-colors duration-150',
+    'text-xs font-semibold transition-colors duration-150',
     'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
     'min-h-[56px] w-full border-t-2',
     isActive
@@ -114,7 +114,7 @@ function ThemeRowButton() {
       onClick={() => setTheme(NEXT_PREFERENCE[preference])}
       className={[
         'flex items-center gap-3 px-4 rounded-lg w-full',
-        'text-sm font-medium transition-colors duration-150',
+        'text-sm font-semibold transition-colors duration-150',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         'min-h-[56px]',
         'text-foreground hover:bg-accent/50',
@@ -139,7 +139,7 @@ function DesktopThemeButton() {
       onClick={() => setTheme(NEXT_PREFERENCE[preference])}
       className={[
         'flex flex-col items-center justify-center gap-1 rounded-lg px-2 py-3 w-full',
-        'text-xs font-medium transition-colors duration-150',
+        'text-xs font-semibold transition-colors duration-150',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         'min-h-[44px]',
         'text-muted-foreground hover:bg-accent/50 hover:text-foreground',
@@ -282,7 +282,7 @@ function MoreSheet({ isOpen, onClose, triggerRef }: MoreSheetProps) {
                     end={item.to === '/'}
                     className={[
                       'flex items-center gap-3 px-4 rounded-lg',
-                      'text-sm font-medium transition-colors duration-150',
+                      'text-sm font-semibold transition-colors duration-150',
                       'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                       // Touch target: min 44px height per WCAG 2.5.5
                       'min-h-[56px]',
@@ -524,7 +524,7 @@ export function NavRail() {
             onClick={togglePin}
             className={[
               'flex flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-2 w-full',
-              'text-xs font-medium transition-colors duration-150',
+              'text-xs font-semibold transition-colors duration-150',
               'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
               'min-h-[44px]',
               pinned

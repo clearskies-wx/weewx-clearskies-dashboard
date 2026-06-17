@@ -298,7 +298,7 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
 
           {/* Summary: first line of description, truncated with …CONT (collapsed only) */}
           {summaryText && !expanded && (
-            <p className="mt-1 truncate font-heading text-[length:var(--text-label)] leading-snug text-card-foreground/75">
+            <p className="mt-1 truncate font-heading text-[length:var(--text-label)] leading-snug text-muted-foreground">
               {summaryText}<span className="text-muted-foreground">{' '}…CONT</span>
             </p>
           )}
@@ -398,7 +398,7 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
             {alert.description && (
               <div className="mb-3 space-y-3">
                 {reflowDescription(alert.description).map((para, i) => (
-                  <p key={i} className="font-heading text-[length:var(--text-body)] leading-relaxed text-card-foreground/90">
+                  <p key={i} className="font-heading text-[length:var(--text-body)] leading-relaxed text-card-foreground">
                     {para}
                   </p>
                 ))}
@@ -410,7 +410,7 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
               <dl className="grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-3">
                 {metadata.map(({ label, value }) => (
                   <div key={label} className="flex flex-col">
-                    <dt className="font-heading text-[length:var(--text-micro)] font-medium uppercase tracking-wide text-muted-foreground">
+                    <dt className="font-heading text-[length:var(--text-micro)] font-semibold uppercase tracking-wide text-muted-foreground">
                       {label}
                     </dt>
                     <dd className="font-heading text-[length:var(--text-label)] text-card-foreground">

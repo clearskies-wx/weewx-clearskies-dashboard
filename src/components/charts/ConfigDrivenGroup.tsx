@@ -824,7 +824,7 @@ export function ConfigDrivenGroup({
           <div className="flex flex-col gap-1">
             <label
               htmlFor={`cdg-year-select-${group.groupId}`}
-              className="text-xs font-medium text-muted-foreground"
+              className="text-xs font-semibold text-muted-foreground"
             >
               {t('monthlyYearLabel')}
             </label>
@@ -847,7 +847,7 @@ export function ConfigDrivenGroup({
             <div className="flex flex-col gap-1">
               <label
                 htmlFor={`cdg-month-select-${group.groupId}`}
-                className="text-xs font-medium text-muted-foreground"
+                className="text-xs font-semibold text-muted-foreground"
               >
                 {t('monthlyMonthLabel')}
               </label>
@@ -1039,13 +1039,13 @@ export function ConfigDrivenGroup({
                 <>
                   <thead>
                     <tr className="border-b border-border">
-                      <th scope="col" className="py-2 px-3 text-left font-medium text-muted-foreground">
+                      <th scope="col" className="py-2 px-3 text-left font-semibold text-muted-foreground">
                         {t('tableColumnTime')}
                       </th>
-                      <th scope="col" className="py-2 px-3 text-right font-medium text-muted-foreground">
+                      <th scope="col" className="py-2 px-3 text-right font-semibold text-muted-foreground">
                         {(rangeField ?? 'Value') + ' High'}
                       </th>
-                      <th scope="col" className="py-2 px-3 text-right font-medium text-muted-foreground">
+                      <th scope="col" className="py-2 px-3 text-right font-semibold text-muted-foreground">
                         {(rangeField ?? 'Value') + ' Low'}
                       </th>
                     </tr>
@@ -1072,7 +1072,7 @@ export function ConfigDrivenGroup({
                 <tr className="border-b border-border">
                   <th
                     scope="col"
-                    className="py-2 px-3 text-left font-medium text-muted-foreground"
+                    className="py-2 px-3 text-left font-semibold text-muted-foreground"
                   >
                     {t('tableColumnTime')}
                   </th>
@@ -1080,7 +1080,7 @@ export function ConfigDrivenGroup({
                     <th
                       key={s.seriesId}
                       scope="col"
-                      className="py-2 px-3 text-right font-medium text-muted-foreground"
+                      className="py-2 px-3 text-right font-semibold text-muted-foreground"
                     >
                       {s.name ?? s.seriesId}
                     </th>

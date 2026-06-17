@@ -481,7 +481,7 @@ export function CurrentConditionsCard({
                     style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--text-secondary)' }}
                   >
                     {t('feelsLike')}{' '}
-                    <span style={{ fontWeight: 500 }}>
+                    <span style={{ fontWeight: 600 }}>
                       {feelsLikeCV.value.toFixed(1)}{feelsLikeCV.label || '°'}
                     </span>
                   </p>
@@ -494,7 +494,7 @@ export function CurrentConditionsCard({
                     style={{
                       fontFamily: 'var(--font-sans)',
                       fontSize: 'var(--text-section)',
-                      fontWeight: 500,
+                      fontWeight: 600,
                       lineHeight: 1.35,
                     }}
                   >
@@ -519,7 +519,7 @@ export function CurrentConditionsCard({
                       {highDisplay !== null && (
                         <span>
                           {t('hiLabel')}{' '}
-                          <span style={{ color: 'var(--temp-hi)', fontWeight: 500 }}>{highDisplay}</span>
+                          <span style={{ color: 'var(--temp-hi)', fontWeight: 600 }}>{highDisplay}</span>
                         </span>
                       )}
                       {highDisplay !== null && lowDisplay !== null && (
@@ -528,7 +528,7 @@ export function CurrentConditionsCard({
                       {lowDisplay !== null && (
                         <span>
                           {t('loLabel')}{' '}
-                          <span style={{ color: 'var(--temp-lo)', fontWeight: 500 }}>{lowDisplay}</span>
+                          <span style={{ color: 'var(--temp-lo)', fontWeight: 600 }}>{lowDisplay}</span>
                         </span>
                       )}
                     </p>
