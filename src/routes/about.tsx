@@ -102,50 +102,50 @@ export function AboutPage() {
             ) : station ? (
               <dl className="grid grid-cols-1 gap-y-3 text-sm sm:grid-cols-2">
                 <div>
-                  <dt className="text-muted-foreground">{t('station.location')}</dt>
-                  <dd className="mt-0.5 font-semibold text-foreground">
+                  <dt className="text-muted-foreground uppercase font-semibold" style={{ fontSize: 'var(--text-label)' }}>{t('station.location')}</dt>
+                  <dd className="mt-0.5 text-foreground" style={{ fontSize: 'var(--text-body)' }}>
                     {station.latitude}°N, {Math.abs(station.longitude)}°W
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">{t('station.altitude')}</dt>
-                  <dd className="mt-0.5 font-semibold text-foreground">
+                  <dt className="text-muted-foreground uppercase font-semibold" style={{ fontSize: 'var(--text-label)' }}>{t('station.altitude')}</dt>
+                  <dd className="mt-0.5 text-foreground" style={{ fontSize: 'var(--text-body)' }}>
                     {station.altitude} ft
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">{t('station.hardware')}</dt>
-                  <dd className="mt-0.5 font-semibold text-foreground">
+                  <dt className="text-muted-foreground uppercase font-semibold" style={{ fontSize: 'var(--text-label)' }}>{t('station.hardware')}</dt>
+                  <dd className="mt-0.5 text-foreground" style={{ fontSize: 'var(--text-body)' }}>
                     {station.hardware ?? t('station.hardwareDefault')}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">{t('station.timezone')}</dt>
-                  <dd className="mt-0.5 font-semibold text-foreground">
+                  <dt className="text-muted-foreground uppercase font-semibold" style={{ fontSize: 'var(--text-label)' }}>{t('station.timezone')}</dt>
+                  <dd className="mt-0.5 text-foreground" style={{ fontSize: 'var(--text-body)' }}>
                     {station.timezone}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">{t('station.unitSystem')}</dt>
-                  <dd className="mt-0.5 font-semibold text-foreground">
+                  <dt className="text-muted-foreground uppercase font-semibold" style={{ fontSize: 'var(--text-label)' }}>{t('station.unitSystem')}</dt>
+                  <dd className="mt-0.5 text-foreground" style={{ fontSize: 'var(--text-body)' }}>
                     {station.unitSystem}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">{t('station.stationId')}</dt>
-                  <dd className="mt-0.5 font-semibold text-foreground text-xs">
+                  <dt className="text-muted-foreground uppercase font-semibold" style={{ fontSize: 'var(--text-label)' }}>{t('station.stationId')}</dt>
+                  <dd className="mt-0.5 text-foreground" style={{ fontSize: 'var(--text-body)' }}>
                     {station.stationId}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">{t('station.recordingSince')}</dt>
-                  <dd className="mt-0.5 font-semibold text-foreground">
+                  <dt className="text-muted-foreground uppercase font-semibold" style={{ fontSize: 'var(--text-label)' }}>{t('station.recordingSince')}</dt>
+                  <dd className="mt-0.5 text-foreground" style={{ fontSize: 'var(--text-body)' }}>
                     {formatLongDate(station.firstRecord, i18n.language)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">{t('station.lastData')}</dt>
-                  <dd className="mt-0.5 font-semibold text-foreground">
+                  <dt className="text-muted-foreground uppercase font-semibold" style={{ fontSize: 'var(--text-label)' }}>{t('station.lastData')}</dt>
+                  <dd className="mt-0.5 text-foreground" style={{ fontSize: 'var(--text-body)' }}>
                     {station.lastRecord
                       ? `${relativeTime(station.lastRecord, i18n.language)} · ${formatAbsoluteTime(station.lastRecord, station.timezone, i18n.language)}`
                       : '—'}
@@ -204,16 +204,16 @@ export function AboutPage() {
           <CardContent>
             <dl className="grid grid-cols-1 gap-y-3 text-sm sm:grid-cols-2">
               <div>
-                <dt className="text-muted-foreground">{t('software.weatherSoftware')}</dt>
-                <dd className="mt-0.5 font-semibold text-foreground">{t('software.weatherSoftwareValue')}</dd>
+                <dt className="text-muted-foreground uppercase font-semibold" style={{ fontSize: 'var(--text-label)' }}>{t('software.weatherSoftware')}</dt>
+                <dd className="mt-0.5 text-foreground" style={{ fontSize: 'var(--text-body)' }}>{t('software.weatherSoftwareValue')}</dd>
               </div>
               <div>
-                <dt className="text-muted-foreground">{t('software.dashboard')}</dt>
-                <dd className="mt-0.5 font-semibold text-foreground">{t('software.dashboardValue')}</dd>
+                <dt className="text-muted-foreground uppercase font-semibold" style={{ fontSize: 'var(--text-label)' }}>{t('software.dashboard')}</dt>
+                <dd className="mt-0.5 text-foreground" style={{ fontSize: 'var(--text-body)' }}>{t('software.dashboardValue')}</dd>
               </div>
               <div>
-                <dt className="text-muted-foreground">{t('software.dashboardEngine')}</dt>
-                <dd className="mt-0.5 font-semibold text-foreground">{t('software.dashboardEngineValue')}</dd>
+                <dt className="text-muted-foreground uppercase font-semibold" style={{ fontSize: 'var(--text-label)' }}>{t('software.dashboardEngine')}</dt>
+                <dd className="mt-0.5 text-foreground" style={{ fontSize: 'var(--text-body)' }}>{t('software.dashboardEngineValue')}</dd>
               </div>
             </dl>
           </CardContent>
@@ -235,7 +235,7 @@ export function AboutPage() {
                   }, {}),
                 ).map(([domain, providerIds]) => (
                   <div key={domain}>
-                    <dt className="text-muted-foreground">
+                    <dt className="text-muted-foreground uppercase font-semibold" style={{ fontSize: 'var(--text-label)' }}>
                       {t(`dataProviders.domain.${domain}`, { defaultValue: domain })}
                     </dt>
                     <dd className="mt-0.5 space-y-0.5">
@@ -275,10 +275,10 @@ export function AboutPage() {
             <dl className="grid grid-cols-1 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
               {Object.entries(SCENE_ASSET_MAP).map(([key, entry]) => (
                 <div key={key}>
-                  <dt className="text-muted-foreground">
+                  <dt className="text-muted-foreground uppercase font-semibold" style={{ fontSize: 'var(--text-label)' }}>
                     {t(`photoCredits.scene.${key}`, { defaultValue: key })}
                   </dt>
-                  <dd className="mt-0.5 font-semibold text-foreground">
+                  <dd className="mt-0.5 text-foreground" style={{ fontSize: 'var(--text-body)' }}>
                     {entry.attribution ?? t('photoCredits.builtIn')}
                   </dd>
                 </div>
@@ -300,7 +300,7 @@ export function AboutPage() {
               <li>{tLegal('attribution.earthquake')}</li>
               <li>{tLegal('attribution.astronomical')}</li>
             </ul>
-            <p className="mt-3 text-xs text-muted-foreground">
+            <p className="mt-3 text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>
               {tLegal('attribution.note')}
             </p>
           </CardContent>
