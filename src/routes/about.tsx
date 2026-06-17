@@ -9,7 +9,7 @@ import {
   CardContent,
 } from '../components/ui/card';
 import { PageLayout } from '../components/layout/page-layout';
-import { useStation, useContent, useCapabilities } from '../hooks/useWeatherData';
+import { useStation, useCapabilities } from '../hooks/useWeatherData';
 import { useBranding } from '../lib/branding-provider';
 import { SCENE_ASSET_MAP } from '../components/background/scene-background-types';
 
@@ -81,7 +81,6 @@ function TileSkeleton({ className }: { className?: string }) {
 export function AboutPage() {
   const { t, i18n } = useTranslation('about');
   const { data: station, loading: stationLoading } = useStation();
-  const { data: content, loading: contentLoading } = useContent('about');
   const { data: capabilities } = useCapabilities();
   const branding = useBranding();
 
@@ -173,23 +172,16 @@ export function AboutPage() {
           </Card>
         )}
 
-        {/* Operator-authored content — only rendered when content exists */}
-        {(contentLoading || content) && (
-          <Card footprint="wide" className="h-[calc(var(--card-row)*2)]" aria-busy={contentLoading}>
+        {/* Operator-authored content — only rendered when content exists in branding */}
+        {branding.aboutContent && branding.aboutContent.trim().length > 0 && (
+          <Card footprint="wide" className="h-[calc(var(--card-row)*2)]">
             <CardHeader>
               <CardTitle as="h2">{t('aboutStation.cardTitle')}</CardTitle>
             </CardHeader>
             <CardContent>
-              {contentLoading ? (
-                <>
-                  <span className="sr-only" role="status">{t('aboutStation.loadingAria')}</span>
-                  <TileSkeleton className="h-20" />
-                </>
-              ) : (
-                <p className="text-foreground leading-relaxed whitespace-pre-wrap" style={{ fontSize: 'var(--text-body)' }}>
-                  {content!.markdown}
-                </p>
-              )}
+              <p className="text-foreground leading-relaxed whitespace-pre-wrap" style={{ fontSize: 'var(--text-body)' }}>
+                {branding.aboutContent}
+              </p>
             </CardContent>
           </Card>
         )}

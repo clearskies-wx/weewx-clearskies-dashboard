@@ -35,6 +35,12 @@ export interface BrandingConfig {
   stationPhotoUrl?: string;
   /** Alt text for the station photo. Falls back to a generic description if not set. */
   stationPhotoAlt?: string;
+  /** Operator-authored "About This Station" content (plain text / markdown). */
+  aboutContent?: string;
+  /** Custom Terms of Use markdown (replaces default if non-empty). */
+  customTermsMd?: string;
+  /** Custom Privacy Policy markdown (replaces default if non-empty). */
+  customPrivacyMd?: string;
 }
 
 // Curated palette — all light values verified ≥4.5:1 on white (oklch(1 0 0));

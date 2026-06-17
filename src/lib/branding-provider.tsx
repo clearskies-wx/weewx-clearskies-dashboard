@@ -57,6 +57,9 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
       googleAnalyticsId: apiData.googleAnalyticsId,
       stationPhotoUrl: apiData.stationPhotoUrl,
       stationPhotoAlt: apiData.stationPhotoAlt,
+      aboutContent: apiData.aboutContent,
+      customTermsMd: apiData.customTermsMd,
+      customPrivacyMd: apiData.customPrivacyMd,
     };
   }, [apiData]);
 
