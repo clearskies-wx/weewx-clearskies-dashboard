@@ -159,7 +159,7 @@ export function AboutPage() {
 
         {/* Station photo — only rendered when operator has configured a photo URL */}
         {branding.stationPhotoUrl && branding.stationPhotoUrl.trim().length > 0 && (
-          <Card footprint="wide" rowSpan="half">
+          <Card footprint="wide" className="max-h-48 md:max-h-56">
             <CardHeader>
               <CardTitle as="h2">{t('photo.cardTitle')}</CardTitle>
             </CardHeader>
