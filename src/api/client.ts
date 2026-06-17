@@ -296,6 +296,8 @@ export interface ApiBrandingConfig {
    * Empty string or undefined → no GA, no banner.
    */
   googleAnalyticsId?: string;
+  stationPhotoUrl?: string;
+  stationPhotoAlt?: string;
 }
 
 export function getBranding(signal?: AbortSignal): Promise<ApiResponse<ApiBrandingConfig>> {

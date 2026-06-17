@@ -250,7 +250,8 @@ function SortableHeader({
     <th
       scope="col"
       aria-sort={ariaSortValue}
-      className="px-2 py-2 text-left text-xs font-semibold text-foreground whitespace-nowrap"
+      className="px-2 py-2 text-left font-semibold text-muted-foreground whitespace-nowrap uppercase"
+      style={{ fontSize: 'var(--text-label)' }}
     >
       <button
         type="button"
@@ -381,21 +382,21 @@ function MonthlyReportTable({
                   }
                 >
                   {/* Day cell — scope="row" so screen readers can identify the row */}
-                  <td scope="row" className="px-2 py-1.5 font-normal tabular-nums">
+                  <td scope="row" className="px-2 py-1.5 font-normal text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>
                     {row.day ?? '—'}
                   </td>
-                  <td className="px-2 py-1.5 tabular-nums">{row.meanTemp !== null ? formatValue(row.meanTemp, 'temperature') + tempUnit : '—'}</td>
-                  <td className="px-2 py-1.5 tabular-nums">{row.highTemp !== null ? formatValue(row.highTemp, 'temperature') + tempUnit : '—'}</td>
-                  <td className="px-2 py-1.5">{row.highTempTime || '—'}</td>
-                  <td className="px-2 py-1.5 tabular-nums">{row.lowTemp !== null ? formatValue(row.lowTemp, 'temperature') + tempUnit : '—'}</td>
-                  <td className="px-2 py-1.5">{row.lowTempTime || '—'}</td>
-                  <td className="px-2 py-1.5 tabular-nums">{row.heatDegDays !== null ? formatValue(row.heatDegDays, 'default') : '—'}</td>
-                  <td className="px-2 py-1.5 tabular-nums">{row.coolDegDays !== null ? formatValue(row.coolDegDays, 'default') : '—'}</td>
-                  <td className="px-2 py-1.5 tabular-nums">{row.rain !== null ? formatValue(row.rain, 'rain') + rainUnit : '—'}</td>
-                  <td className="px-2 py-1.5 tabular-nums">{row.avgWindSpeed !== null ? formatValue(row.avgWindSpeed, 'wind') + windUnit : '—'}</td>
-                  <td className="px-2 py-1.5 tabular-nums">{row.highWindSpeed !== null ? formatValue(row.highWindSpeed, 'wind') + windUnit : '—'}</td>
-                  <td className="px-2 py-1.5">{row.highWindTime || '—'}</td>
-                  <td className="px-2 py-1.5 tabular-nums">{row.domWindDir !== null ? formatValue(row.domWindDir, 'degrees') + '°' : '—'}</td>
+                  <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{row.meanTemp !== null ? formatValue(row.meanTemp, 'temperature') + tempUnit : '—'}</td>
+                  <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{row.highTemp !== null ? formatValue(row.highTemp, 'temperature') + tempUnit : '—'}</td>
+                  <td className="px-2 py-1.5" style={{ fontSize: 'var(--text-secondary)' }}>{row.highTempTime || '—'}</td>
+                  <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{row.lowTemp !== null ? formatValue(row.lowTemp, 'temperature') + tempUnit : '—'}</td>
+                  <td className="px-2 py-1.5" style={{ fontSize: 'var(--text-secondary)' }}>{row.lowTempTime || '—'}</td>
+                  <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{row.heatDegDays !== null ? formatValue(row.heatDegDays, 'default') : '—'}</td>
+                  <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{row.coolDegDays !== null ? formatValue(row.coolDegDays, 'default') : '—'}</td>
+                  <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{row.rain !== null ? formatValue(row.rain, 'rain') + rainUnit : '—'}</td>
+                  <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{row.avgWindSpeed !== null ? formatValue(row.avgWindSpeed, 'wind') + windUnit : '—'}</td>
+                  <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{row.highWindSpeed !== null ? formatValue(row.highWindSpeed, 'wind') + windUnit : '—'}</td>
+                  <td className="px-2 py-1.5" style={{ fontSize: 'var(--text-secondary)' }}>{row.highWindTime || '—'}</td>
+                  <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{row.domWindDir !== null ? formatValue(row.domWindDir, 'degrees') + '°' : '—'}</td>
                 </tr>
               );
             })}
@@ -403,21 +404,21 @@ function MonthlyReportTable({
             {/* Summary row */}
             {parsed.summary && (
               <tr className="border-t-2 border-border bg-muted/50 font-semibold">
-                <td scope="row" className="px-2 py-1.5">
+                <td scope="row" className="px-2 py-1.5" style={{ fontSize: 'var(--text-secondary)' }}>
                   {t('summary')}
                 </td>
-                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.meanTemp !== null ? formatValue(parsed.summary.meanTemp, 'temperature') + tempUnit : '—'}</td>
-                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.highTemp !== null ? formatValue(parsed.summary.highTemp, 'temperature') + tempUnit : '—'}</td>
-                <td className="px-2 py-1.5">{parsed.summary.highTempTime || '—'}</td>
-                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.lowTemp !== null ? formatValue(parsed.summary.lowTemp, 'temperature') + tempUnit : '—'}</td>
-                <td className="px-2 py-1.5">{parsed.summary.lowTempTime || '—'}</td>
-                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.heatDegDays !== null ? formatValue(parsed.summary.heatDegDays, 'default') : '—'}</td>
-                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.coolDegDays !== null ? formatValue(parsed.summary.coolDegDays, 'default') : '—'}</td>
-                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.rain !== null ? formatValue(parsed.summary.rain, 'rain') + rainUnit : '—'}</td>
-                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.avgWindSpeed !== null ? formatValue(parsed.summary.avgWindSpeed, 'wind') + windUnit : '—'}</td>
-                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.highWindSpeed !== null ? formatValue(parsed.summary.highWindSpeed, 'wind') + windUnit : '—'}</td>
-                <td className="px-2 py-1.5">{parsed.summary.highWindTime || '—'}</td>
-                <td className="px-2 py-1.5 tabular-nums">{parsed.summary.domWindDir !== null ? formatValue(parsed.summary.domWindDir, 'degrees') + '°' : '—'}</td>
+                <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{parsed.summary.meanTemp !== null ? formatValue(parsed.summary.meanTemp, 'temperature') + tempUnit : '—'}</td>
+                <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{parsed.summary.highTemp !== null ? formatValue(parsed.summary.highTemp, 'temperature') + tempUnit : '—'}</td>
+                <td className="px-2 py-1.5" style={{ fontSize: 'var(--text-secondary)' }}>{parsed.summary.highTempTime || '—'}</td>
+                <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{parsed.summary.lowTemp !== null ? formatValue(parsed.summary.lowTemp, 'temperature') + tempUnit : '—'}</td>
+                <td className="px-2 py-1.5" style={{ fontSize: 'var(--text-secondary)' }}>{parsed.summary.lowTempTime || '—'}</td>
+                <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{parsed.summary.heatDegDays !== null ? formatValue(parsed.summary.heatDegDays, 'default') : '—'}</td>
+                <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{parsed.summary.coolDegDays !== null ? formatValue(parsed.summary.coolDegDays, 'default') : '—'}</td>
+                <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{parsed.summary.rain !== null ? formatValue(parsed.summary.rain, 'rain') + rainUnit : '—'}</td>
+                <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{parsed.summary.avgWindSpeed !== null ? formatValue(parsed.summary.avgWindSpeed, 'wind') + windUnit : '—'}</td>
+                <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{parsed.summary.highWindSpeed !== null ? formatValue(parsed.summary.highWindSpeed, 'wind') + windUnit : '—'}</td>
+                <td className="px-2 py-1.5" style={{ fontSize: 'var(--text-secondary)' }}>{parsed.summary.highWindTime || '—'}</td>
+                <td className="px-2 py-1.5 text-right" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>{parsed.summary.domWindDir !== null ? formatValue(parsed.summary.domWindDir, 'degrees') + '°' : '—'}</td>
               </tr>
             )}
           </tbody>
@@ -486,7 +487,8 @@ function YearlySubTable({
                   key={`${header}-${idx}`}
                   scope="col"
                   aria-sort={ariaSortValue}
-                  className="px-2 py-2 text-left text-xs font-semibold text-foreground whitespace-nowrap"
+                  className="px-2 py-2 text-left font-semibold text-muted-foreground whitespace-nowrap uppercase"
+                  style={{ fontSize: 'var(--text-label)' }}
                 >
                   <button
                     type="button"
@@ -512,15 +514,16 @@ function YearlySubTable({
             >
               {Array.from({ length: colCount }).map((_, colIdx) => {
                 const cell = row[colIdx] ?? null;
-                const display = typeof cell === 'number'
+                const isNumeric = typeof cell === 'number';
+                const display = isNumeric
                   ? formatValue(cell, 'default') + (colIdx !== 0 && unitSuffix ? unitSuffix : '')
                   : (cell ?? '—');
                 return colIdx === 0 ? (
-                  <td key={colIdx} scope="row" className="px-2 py-1.5 font-normal tabular-nums">
+                  <td key={colIdx} scope="row" className="px-2 py-1.5 font-normal" style={{ fontSize: 'var(--text-secondary)', fontFeatureSettings: '"tnum"' }}>
                     {display}
                   </td>
                 ) : (
-                  <td key={colIdx} className="px-2 py-1.5 tabular-nums">
+                  <td key={colIdx} className={cn('px-2 py-1.5', isNumeric && 'text-right')} style={{ fontSize: 'var(--text-secondary)', ...(isNumeric && { fontFeatureSettings: '"tnum"' }) }}>
                     {display}
                   </td>
                 );
@@ -531,16 +534,17 @@ function YearlySubTable({
           {/* Summary row */}
           {table.summary && (
             <tr className="border-t-2 border-border bg-muted/50 font-semibold">
-              <td scope="row" className="px-2 py-1.5">
+              <td scope="row" className="px-2 py-1.5" style={{ fontSize: 'var(--text-secondary)' }}>
                 {t('summary')}
               </td>
               {Array.from({ length: colCount - 1 }).map((_, colIdx) => {
                 const cell = table.summary![colIdx + 1] ?? null;
-                const display = typeof cell === 'number'
+                const isNumeric = typeof cell === 'number';
+                const display = isNumeric
                   ? formatValue(cell, 'default') + (unitSuffix ?? '')
                   : (cell ?? '—');
                 return (
-                  <td key={colIdx + 1} className="px-2 py-1.5 tabular-nums">
+                  <td key={colIdx + 1} className={cn('px-2 py-1.5', isNumeric && 'text-right')} style={{ fontSize: 'var(--text-secondary)', ...(isNumeric && { fontFeatureSettings: '"tnum"' }) }}>
                     {display}
                   </td>
                 );
