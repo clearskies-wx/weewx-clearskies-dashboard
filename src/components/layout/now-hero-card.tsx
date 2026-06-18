@@ -111,13 +111,13 @@ export function NowHeroCard({
         <div
           className="shrink-0"
           aria-hidden="true"
-          style={{ maxHeight: 'calc(var(--card-half-row) - 2 * var(--card-pad-compact))' }}
+          style={{ height: 'calc(var(--card-half-row) - 2 * var(--card-pad-compact))' }}
         >
           {logoUrl ? (
             <img
               src={logoUrl}
               alt={logoAlt ?? ''}
-              style={{ height: '100%', maxHeight: 'calc(var(--card-half-row) - 2 * var(--card-pad-compact))', objectFit: 'contain', objectPosition: 'left' }}
+              style={{ height: '100%', objectFit: 'contain', objectPosition: 'left' }}
             />
           ) : (
             <PlaceholderLogo size={40} />
