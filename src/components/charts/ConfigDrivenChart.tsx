@@ -11,7 +11,7 @@
 //
 // Intentionally unwired: yAxisMinorTicks, states, connectEnds, polar (see CHARTS-REWRITE-PLAN.md §5)
 
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import {
   ComposedChart,
@@ -461,6 +461,21 @@ export function ConfigDrivenChart({
   // T2.3: right axis ticks are compass positions when wind dir; otherwise computed normally
   const rightTicks = rightAxisIsWindDir ? WIND_DIR_TICKS : buildTicks(rightAxisCfg);
 
+  // Evenly-spaced X-axis ticks: pick ~8–12 data points at uniform index
+  // intervals so the axis labels are equally distributed. Recharts' auto
+  // minTickGap skips ticks unevenly depending on label width.
+  const xTicks = useMemo(() => {
+    if (data.length < 2) return undefined;
+    const targetCount = isMobile ? 5 : 8;
+    const step = Math.max(1, Math.floor(data.length / targetCount));
+    const ticks: (string | number)[] = [];
+    for (let i = 0; i < data.length; i += step) {
+      const val = data[i][xKey];
+      if (val != null) ticks.push(val as string | number);
+    }
+    return ticks.length > 1 ? ticks : undefined;
+  }, [data, xKey, isMobile]);
+
   // T2.4: Build a per-series format map for tooltip number formatting.
   // Maps seriesId → { decimals, unit, isWindDir }.
   const seriesFormatMap = useMemo(() => {
@@ -567,7 +582,9 @@ export function ConfigDrivenChart({
               dataKey={xKey}
               height={30}
               tickFormatter={xFormatter}
-              minTickGap={isMobile ? 20 : 50}
+              ticks={xTicks}
+              interval={xTicks ? 0 : undefined}
+              minTickGap={xTicks ? undefined : (isMobile ? 20 : 50)}
               tick={{ fontSize: 14, fontFamily: CHART_FONT }}
               className="fill-muted-foreground"
             />
