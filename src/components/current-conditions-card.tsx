@@ -217,9 +217,9 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
 
             {/* "Now" vertical reference line.
                 Label position shifts dynamically to stay within chart bounds:
-                - Before ~3:36 AM (< 15% of day): 'insideTopRight' — avoids left-edge clip
-                - After ~8:24 PM (> 85% of day):  'insideTopLeft'  — avoids right-edge clip
-                - Otherwise:                       'insideTopLeft'  (default) */}
+                - insideTopLeft:  text starts at the line, extends RIGHT (horizontalAnchor: start)
+                - insideTopRight: text ends at the line, extends LEFT  (horizontalAnchor: end)
+                Near either edge, flip so the text extends toward the chart interior. */}
             <ReferenceLine
               x={now}
               stroke="#dc2626"
@@ -229,7 +229,7 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
                 value: 'Now',
                 position: (() => {
                   const fractionOfDay = (now - todayMidnight) / (24 * 3600 * 1000);
-                  if (fractionOfDay < 0.15) return 'insideTopRight';
+                  if (fractionOfDay < 0.15 || fractionOfDay > 0.85) return 'insideTopRight';
                   return 'insideTopLeft';
                 })(),
                 style: {
