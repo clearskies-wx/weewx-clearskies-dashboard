@@ -38,7 +38,7 @@ import { ChartGauge } from './ChartGauge';
 import { HaysChart } from './HaysChart';
 import { lttbDownsample } from '../../utils/lttb';
 import { exportChartAsCsv, exportChartAsPng, buildExportFilename } from '../../utils/chart-export';
-import { Card, CardHeader, CardTitle, CardAction } from '../ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
 import { ChartFullscreenButton, ChartFullscreenOverlay } from '../ui/chart-fullscreen';
 import type { ChartGroupConfig, ChartConfig, GroupedArchiveData } from '../../api/types';
 
@@ -813,15 +813,54 @@ export function ConfigDrivenGroup({
       <Card footprint="full" className="overflow-hidden min-h-[var(--card-row)]">
       <CardHeader>
         {group.title && <CardTitle as="h2">{group.title}</CardTitle>}
-        <CardAction>
+        <div className="flex items-center gap-1 shrink-0">
+          {group.exporting !== false && (
+          <button
+            type="button"
+            onClick={handlePngExport}
+            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            aria-label={t('exportPng')}
+            title={t('exportPng')}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          </button>
+          )}
+          {group.exporting !== false && (
+          <button
+            type="button"
+            onClick={handleCsvExport}
+            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            aria-label={t('exportCsv')}
+            title={t('exportCsv')}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+            </svg>
+          </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setShowTable((prev) => !prev)}
+            aria-pressed={showTable}
+            className="hidden md:inline-flex items-center px-2 py-1 text-muted-foreground rounded-md hover:text-foreground hover:bg-muted/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            style={{ fontSize: 'var(--text-label)' }}
+          >
+            {showTable ? t('showChart') : t('showDataTable')}
+          </button>
           <ChartFullscreenButton onClick={() => setFullscreen(true)} />
-        </CardAction>
+        </div>
       </CardHeader>
 
-      {/* Mode B: Year / month dropdowns + export icons — single row on mobile, wraps on desktop */}
+      <CardContent>
       {!hideControls && showYearMonthDropdowns && (
         <div className="flex items-end gap-2 md:flex-wrap md:gap-4 mb-4">
-          {/* Year selector */}
           <div className="flex flex-col gap-1">
             <label
               htmlFor={`cdg-year-select-${group.groupId}`}
@@ -835,16 +874,14 @@ export function ConfigDrivenGroup({
               value={selectedYear ?? undefined}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
               className="min-h-[44px] md:min-h-0 rounded-md border border-border bg-background px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              style={{ fontSize: 'var(--text-label)' }}
             >
               {yearList.map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
+                <option key={y} value={y}>{y}</option>
               ))}
             </select>
           </div>
 
-          {/* Optional month selector */}
           {group.enableMonthlyBreakdown && (
             <div className="flex flex-col gap-1">
               <label
@@ -862,62 +899,15 @@ export function ConfigDrivenGroup({
                   setSelectedMonth(val === '' ? null : Number(val));
                 }}
                 className="min-h-[44px] md:min-h-0 rounded-md border border-border bg-background px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                style={{ fontSize: 'var(--text-label)' }}
               >
                 {Array.from({ length: 12 }, (_, i) => {
                   const label = new Intl.DateTimeFormat(i18n.language, { month: 'long' }).format(new Date(2000, i));
-                  return (
-                    <option key={i + 1} value={i + 1}>
-                      {label}
-                    </option>
-                  );
+                  return <option key={i + 1} value={i + 1}>{label}</option>;
                 })}
               </select>
             </div>
           )}
-
-          {/* Export + table toggle — right-justified on same row as dropdowns */}
-          <div className="flex items-end gap-2 ml-auto">
-            {group.exporting !== false && (
-            <button
-              type="button"
-              onClick={handlePngExport}
-              className="p-1.5 rounded-md hover:bg-muted text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              aria-label={t('exportPng')}
-              title={t('exportPng')}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-            </button>
-            )}
-            {group.exporting !== false && (
-            <button
-              type="button"
-              onClick={handleCsvExport}
-              className="p-1.5 rounded-md hover:bg-muted text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              aria-label={t('exportCsv')}
-              title={t('exportCsv')}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-                <line x1="16" y1="13" x2="8" y2="13" />
-                <line x1="16" y1="17" x2="8" y2="17" />
-              </svg>
-            </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setShowTable((prev) => !prev)}
-              aria-pressed={showTable}
-              className="hidden md:inline-flex items-center px-3 py-2 text-muted-foreground rounded-md border border-border hover:text-foreground hover:bg-muted/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              style={{ fontSize: 'var(--text-label)' }}
-            >
-              {showTable ? t('showChart') : t('showDataTable')}
-            </button>
-          </div>
         </div>
       )}
 
@@ -975,53 +965,6 @@ export function ConfigDrivenGroup({
       )}
 
       <div aria-busy={isLoading || undefined} style={{ minWidth: 0, overflow: 'hidden' }}>
-        {/* Export/toggle row for groups WITHOUT year/month dropdowns (rolling range groups).
-            Year/month groups have the export buttons inline with their dropdowns above. */}
-        {!(showYearMonthDropdowns && !hideControls) && (
-        <div className="flex justify-end items-center gap-2 mb-2">
-          {group.exporting !== false && (
-          <button
-            type="button"
-            onClick={handlePngExport}
-            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            aria-label={t('exportPng')}
-            title={t('exportPng')}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-          </button>
-          )}
-          {group.exporting !== false && (
-          <button
-            type="button"
-            onClick={handleCsvExport}
-            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            aria-label={t('exportCsv')}
-            title={t('exportCsv')}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <line x1="16" y1="13" x2="8" y2="13" />
-              <line x1="16" y1="17" x2="8" y2="17" />
-            </svg>
-          </button>
-          )}
-          <button
-            type="button"
-            onClick={() => setShowTable((prev) => !prev)}
-            aria-pressed={showTable}
-            className="hidden md:inline-flex items-center px-3 py-2 text-muted-foreground rounded-md border border-border hover:text-foreground hover:bg-muted/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            style={{ fontSize: 'var(--text-label)' }}
-          >
-            {showTable ? t('showChart') : t('showDataTable')}
-          </button>
-        </div>
-        )}
-
         {/* Loading state */}
         {isLoading ? (
           <>
@@ -1187,7 +1130,7 @@ export function ConfigDrivenGroup({
                 const haysSoftMax = haysSeries?.yAxisSoftMax ?? undefined;
                 return (
                   <div key={chart.chartId}>
-                    {chart.title && <h3 className="font-semibold text-center mb-2" style={{ fontSize: 'var(--text-secondary)' }}>{chart.title}</h3>}
+                    {chart.title && <h3 className="font-semibold text-center mb-2" style={{ fontSize: 'var(--text-section)' }}>{chart.title}</h3>}
                     <HaysChart
                       highData={rangeHighPoints}
                       lowData={rangeLowPoints}
@@ -1215,7 +1158,7 @@ export function ConfigDrivenGroup({
                 const unitLabel = rangeSeries?.yAxisLabel ?? '';
                 return (
                   <div key={chart.chartId}>
-                    {chart.title && <h3 className="font-semibold text-center mb-2" style={{ fontSize: 'var(--text-secondary)' }}>{chart.title}</h3>}
+                    {chart.title && <h3 className="font-semibold text-center mb-2" style={{ fontSize: 'var(--text-section)' }}>{chart.title}</h3>}
                     <WeatherRangeChart
                       highData={rangeHighPoints}
                       lowData={rangeLowPoints}
@@ -1329,6 +1272,7 @@ export function ConfigDrivenGroup({
           </div>
         )}
       </div>
+      </CardContent>
       </Card>
 
       {/* ------------------------------------------------------------------ */}
@@ -1379,7 +1323,7 @@ export function ConfigDrivenGroup({
                   const haysSoftMax = haysSeries?.yAxisSoftMax ?? undefined;
                   return (
                     <div key={chart.chartId} className="h-full">
-                      {chart.title && <h3 className="font-semibold text-center mb-2" style={{ fontSize: 'var(--text-secondary)' }}>{chart.title}</h3>}
+                      {chart.title && <h3 className="font-semibold text-center mb-2" style={{ fontSize: 'var(--text-section)' }}>{chart.title}</h3>}
                       <HaysChart
                         highData={rangeHighPoints}
                         lowData={rangeLowPoints}
@@ -1402,7 +1346,7 @@ export function ConfigDrivenGroup({
                   const unitLabel = rangeSeries?.yAxisLabel ?? '';
                   return (
                     <div key={chart.chartId} className="h-full">
-                      {chart.title && <h3 className="font-semibold text-center mb-2" style={{ fontSize: 'var(--text-secondary)' }}>{chart.title}</h3>}
+                      {chart.title && <h3 className="font-semibold text-center mb-2" style={{ fontSize: 'var(--text-section)' }}>{chart.title}</h3>}
                       <WeatherRangeChart
                         highData={rangeHighPoints}
                         lowData={rangeLowPoints}
