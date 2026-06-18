@@ -352,9 +352,9 @@ export function ConfigDrivenChart({
   const isMobile = useIsMobile();
 
   const chartMargin = isMobile
-    ? { top: 4, right: 4, bottom: 4, left: 0 }
-    : { top: 8, right: 55, bottom: 8, left: 15 };
-  const phantomAxisWidth = isMobile ? 4 : 60;
+    ? { top: 4, right: 4, bottom: 4, left: 4 }
+    : { top: 8, right: 15, bottom: 8, left: 15 };
+  const phantomAxisWidth = isMobile ? 30 : 60;
 
   // Filter to visible series only once; keep original index for color resolution
   const visibleSeries = config.series

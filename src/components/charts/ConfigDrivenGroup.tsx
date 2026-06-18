@@ -260,7 +260,7 @@ export function ConfigDrivenGroup({
     onMonthChange?.(month);
   }
   const [showTable, setShowTable] = useState(false);
-  const [fullscreen, setFullscreen] = useState(false);
+  const [fullscreenChart, setFullscreenChart] = useState<string | null>(null);
 
   // Ref to the chart rendering container — used by PNG export to locate the SVG.
   const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -854,7 +854,6 @@ export function ConfigDrivenGroup({
           >
             {showTable ? t('showChart') : t('showDataTable')}
           </button>
-          <ChartFullscreenButton onClick={() => setFullscreen(true)} />
         </div>
       </CardHeader>
 
@@ -1104,14 +1103,18 @@ export function ConfigDrivenGroup({
                   ? windRoseSeries!.beaufortColors
                   : defaultBeaufortColors;
                 return (
-                  <WindRoseChart
-                    key={chart.chartId}
-                    data={windRoseData}
-                    beaufortColors={beaufortColors}
-                    height={300}
-                    reducedMotion={reducedMotion}
-                    title={chart.title}
-                  />
+                  <div key={chart.chartId} className="relative">
+                    <div className="absolute top-1 right-1 z-10">
+                      <ChartFullscreenButton onClick={() => setFullscreenChart(chart.chartId)} />
+                    </div>
+                    <WindRoseChart
+                      data={windRoseData}
+                      beaufortColors={beaufortColors}
+                      height={300}
+                      reducedMotion={reducedMotion}
+                      title={chart.title}
+                    />
+                  </div>
                 );
               }
 
@@ -1129,7 +1132,10 @@ export function ConfigDrivenGroup({
                 // yAxisSoftMax is number | null | undefined; convert null → undefined for the prop
                 const haysSoftMax = haysSeries?.yAxisSoftMax ?? undefined;
                 return (
-                  <div key={chart.chartId}>
+                  <div key={chart.chartId} className="relative">
+                    <div className="absolute top-1 right-1 z-10">
+                      <ChartFullscreenButton onClick={() => setFullscreenChart(chart.chartId)} />
+                    </div>
                     {chart.title && <h3 className="font-semibold text-center mb-2" style={{ fontSize: 'var(--text-section)' }}>{chart.title}</h3>}
                     <HaysChart
                       highData={rangeHighPoints}
@@ -1157,7 +1163,10 @@ export function ConfigDrivenGroup({
                 // Unit from yAxisLabel or empty string
                 const unitLabel = rangeSeries?.yAxisLabel ?? '';
                 return (
-                  <div key={chart.chartId}>
+                  <div key={chart.chartId} className="relative">
+                    <div className="absolute top-1 right-1 z-10">
+                      <ChartFullscreenButton onClick={() => setFullscreenChart(chart.chartId)} />
+                    </div>
                     {chart.title && <h3 className="font-semibold text-center mb-2" style={{ fontSize: 'var(--text-section)' }}>{chart.title}</h3>}
                     <WeatherRangeChart
                       highData={rangeHighPoints}
@@ -1208,17 +1217,21 @@ export function ConfigDrivenGroup({
                 const gaugeColorsEnabled = gaugeSeries?.colorsEnabled ?? false;
 
                 return (
-                  <ChartGauge
-                    key={chart.chartId}
-                    value={gaugeValue}
-                    min={gaugeMin}
-                    max={gaugeMax}
-                    unit={gaugeUnit}
-                    title={chart.title ?? gaugeSeries?.name ?? ''}
-                    colorZones={gaugeZones}
-                    colorsEnabled={gaugeColorsEnabled}
-                    reducedMotion={reducedMotion}
-                  />
+                  <div key={chart.chartId} className="relative">
+                    <div className="absolute top-1 right-1 z-10">
+                      <ChartFullscreenButton onClick={() => setFullscreenChart(chart.chartId)} />
+                    </div>
+                    <ChartGauge
+                      value={gaugeValue}
+                      min={gaugeMin}
+                      max={gaugeMax}
+                      unit={gaugeUnit}
+                      title={chart.title ?? gaugeSeries?.name ?? ''}
+                      colorZones={gaugeZones}
+                      colorsEnabled={gaugeColorsEnabled}
+                      reducedMotion={reducedMotion}
+                    />
+                  </div>
                 );
               }
 
@@ -1231,17 +1244,21 @@ export function ConfigDrivenGroup({
                   customQueryResults.data,
                 );
                 return (
-                  <ConfigDrivenChart
-                    key={chart.chartId}
-                    config={chart}
-                    data={groupedChartData}
-                    xKey={groupedXKey}
-                    xFormatter={undefined}
-                    globalColors={globalColors}
-                    globalType={globalType}
-                    height={300}
-                    reducedMotion={reducedMotion}
-                  />
+                  <div key={chart.chartId} className="relative">
+                    <div className="absolute top-1 right-1 z-10">
+                      <ChartFullscreenButton onClick={() => setFullscreenChart(chart.chartId)} />
+                    </div>
+                    <ConfigDrivenChart
+                      config={chart}
+                      data={groupedChartData}
+                      xKey={groupedXKey}
+                      xFormatter={undefined}
+                      globalColors={globalColors}
+                      globalType={globalType}
+                      height={300}
+                      reducedMotion={reducedMotion}
+                    />
+                  </div>
                 );
               }
 
@@ -1256,17 +1273,21 @@ export function ConfigDrivenGroup({
               }
 
               return (
-                <ConfigDrivenChart
-                  key={chart.chartId}
-                  config={chart}
-                  data={chartData}
-                  xKey="timestamp"
-                  xFormatter={(v: string | number) => formatTimestamp(v, displayedRange)}
-                  globalColors={globalColors}
-                  globalType={globalType}
-                  height={300}
-                  reducedMotion={reducedMotion}
-                />
+                <div key={chart.chartId} className="relative">
+                  <div className="absolute top-1 right-1 z-10">
+                    <ChartFullscreenButton onClick={() => setFullscreenChart(chart.chartId)} />
+                  </div>
+                  <ConfigDrivenChart
+                    config={chart}
+                    data={chartData}
+                    xKey="timestamp"
+                    xFormatter={(v: string | number) => formatTimestamp(v, displayedRange)}
+                    globalColors={globalColors}
+                    globalType={globalType}
+                    height={300}
+                    reducedMotion={reducedMotion}
+                  />
+                </div>
               );
             })}
           </div>
@@ -1279,9 +1300,12 @@ export function ConfigDrivenGroup({
       {/* Fullscreen overlay — renders the same chart content at full viewport */}
       {/* ------------------------------------------------------------------ */}
       <ChartFullscreenOverlay
-        isOpen={fullscreen}
-        onClose={() => setFullscreen(false)}
-        aria-label={group.title ? `${group.title} — fullscreen` : 'Chart fullscreen view'}
+        isOpen={fullscreenChart !== null}
+        onClose={() => setFullscreenChart(null)}
+        aria-label={(() => {
+          const fc = group.charts.find(c => c.chartId === fullscreenChart);
+          return fc?.title ? `${fc.title} — fullscreen` : 'Chart fullscreen view';
+        })()}
       >
         <div className="h-full overflow-y-auto py-2">
           {isLoading ? (
@@ -1289,8 +1313,8 @@ export function ConfigDrivenGroup({
           ) : fetchError ? (
             <TileError message={t('unableToLoad')} onRetry={onRetry} retryLabel={t('retry')} />
           ) : (
-            <div className="space-y-6 h-full">
-              {group.charts.map((chart) => {
+            <div className="h-full">
+              {group.charts.filter(c => c.chartId === fullscreenChart).map((chart) => {
                 const isWindRoseChart = chart.series.some((s) => s.seriesId === 'windRose');
                 const isHaysChartLocal = chart.series.some((s) => s.seriesId === 'haysChart');
                 const isRangeChart = chart.series.some((s) => s.rangeType != null);
@@ -1306,7 +1330,7 @@ export function ConfigDrivenGroup({
                       key={chart.chartId}
                       data={windRoseData}
                       beaufortColors={beaufortColors}
-                      height={400}
+                      height={500}
                       reducedMotion={reducedMotion}
                       title={chart.title}
                     />
@@ -1324,15 +1348,7 @@ export function ConfigDrivenGroup({
                   return (
                     <div key={chart.chartId} className="h-full">
                       {chart.title && <h3 className="font-semibold text-center mb-2" style={{ fontSize: 'var(--text-section)' }}>{chart.title}</h3>}
-                      <HaysChart
-                        highData={rangeHighPoints}
-                        lowData={rangeLowPoints}
-                        field={haysField}
-                        unit={haysUnit}
-                        softMax={haysSoftMax}
-                        height={400}
-                        reducedMotion={reducedMotion}
-                      />
+                      <HaysChart highData={rangeHighPoints} lowData={rangeLowPoints} field={haysField} unit={haysUnit} softMax={haysSoftMax} height={500} reducedMotion={reducedMotion} />
                     </div>
                   );
                 }
@@ -1347,94 +1363,34 @@ export function ConfigDrivenGroup({
                   return (
                     <div key={chart.chartId} className="h-full">
                       {chart.title && <h3 className="font-semibold text-center mb-2" style={{ fontSize: 'var(--text-section)' }}>{chart.title}</h3>}
-                      <WeatherRangeChart
-                        highData={rangeHighPoints}
-                        lowData={rangeLowPoints}
-                        field={fieldName}
-                        unit={unitLabel}
-                        height={400}
-                        reducedMotion={reducedMotion}
-                      />
+                      <WeatherRangeChart highData={rangeHighPoints} lowData={rangeLowPoints} field={fieldName} unit={unitLabel} height={500} reducedMotion={reducedMotion} />
                     </div>
                   );
                 }
 
-                const isGaugeChart =
-                  chart.type === 'gauge' || chart.type === 'solidgauge' ||
-                  group.type === 'gauge' || group.type === 'solidgauge';
-
+                const isGaugeChart = chart.type === 'gauge' || chart.type === 'solidgauge' || group.type === 'gauge' || group.type === 'solidgauge';
                 if (isGaugeChart) {
                   const gaugeSeries = chart.series[0];
                   const gaugeObsType = gaugeSeries?.observationType ?? null;
-                  const latestRecord = archiveResult.data && archiveResult.data.length > 0
-                    ? archiveResult.data[archiveResult.data.length - 1]
-                    : null;
-                  const rawValue = latestRecord && gaugeObsType
-                    ? (latestRecord[gaugeObsType] as number | null | undefined)
-                    : null;
+                  const latestRecord = archiveResult.data && archiveResult.data.length > 0 ? archiveResult.data[archiveResult.data.length - 1] : null;
+                  const rawValue = latestRecord && gaugeObsType ? (latestRecord[gaugeObsType] as number | null | undefined) : null;
                   const gaugeValue = typeof rawValue === 'number' ? rawValue : 0;
-                  const gaugeMin = chart.yAxisMin ?? gaugeSeries?.yAxisMin ?? 0;
-                  const gaugeMax = gaugeSeries?.yAxisMax ?? 100;
-                  const gaugeUnit = gaugeSeries?.yAxisLabel ?? '';
-                  const gaugeZones = gaugeSeries?.colorZones ?? null;
-                  const gaugeColorsEnabled = gaugeSeries?.colorsEnabled ?? false;
                   return (
-                    <ChartGauge
-                      key={chart.chartId}
-                      value={gaugeValue}
-                      min={gaugeMin}
-                      max={gaugeMax}
-                      unit={gaugeUnit}
-                      title={chart.title ?? gaugeSeries?.name ?? ''}
-                      colorZones={gaugeZones}
-                      colorsEnabled={gaugeColorsEnabled}
-                      reducedMotion={reducedMotion}
-                    />
+                    <ChartGauge key={chart.chartId} value={gaugeValue} min={chart.yAxisMin ?? gaugeSeries?.yAxisMin ?? 0} max={gaugeSeries?.yAxisMax ?? 100} unit={gaugeSeries?.yAxisLabel ?? ''} title={chart.title ?? gaugeSeries?.name ?? ''} colorZones={gaugeSeries?.colorZones ?? null} colorsEnabled={gaugeSeries?.colorsEnabled ?? false} reducedMotion={reducedMotion} />
                   );
                 }
 
                 if (chart.xAxisGroupby) {
-                  const { data: groupedChartData, xKey: groupedXKey } = buildGroupedChartData(
-                    chart,
-                    groupedArchive.data,
-                    customQueryResults.data,
-                  );
-                  return (
-                    <ConfigDrivenChart
-                      key={chart.chartId}
-                      config={chart}
-                      data={groupedChartData}
-                      xKey={groupedXKey}
-                      xFormatter={undefined}
-                      globalColors={globalColors}
-                      globalType={globalType}
-                      height={400}
-                      reducedMotion={reducedMotion}
-                    />
-                  );
+                  const { data: groupedChartData, xKey: groupedXKey } = buildGroupedChartData(chart, groupedArchive.data, customQueryResults.data);
+                  return <ConfigDrivenChart key={chart.chartId} config={chart} data={groupedChartData} xKey={groupedXKey} xFormatter={undefined} globalColors={globalColors} globalType={globalType} height={500} reducedMotion={reducedMotion} />;
                 }
 
                 let fsChartData = downsampledArchiveData;
                 if (typeof chart.timeLength === 'number') {
                   const cutoff = new Date(Date.now() - chart.timeLength * 1000).toISOString();
-                  fsChartData = downsampledArchiveData.filter(
-                    (r) => r.timestamp != null && String(r.timestamp) >= cutoff,
-                  );
+                  fsChartData = downsampledArchiveData.filter((r) => r.timestamp != null && String(r.timestamp) >= cutoff);
                 }
-
-                return (
-                  <ConfigDrivenChart
-                    key={chart.chartId}
-                    config={chart}
-                    data={fsChartData}
-                    xKey="timestamp"
-                    xFormatter={(v: string | number) => formatTimestamp(v, displayedRange)}
-                    globalColors={globalColors}
-                    globalType={globalType}
-                    height={400}
-                    reducedMotion={reducedMotion}
-                  />
-                );
+                return <ConfigDrivenChart key={chart.chartId} config={chart} data={fsChartData} xKey="timestamp" xFormatter={(v: string | number) => formatTimestamp(v, displayedRange)} globalColors={globalColors} globalType={globalType} height={500} reducedMotion={reducedMotion} />;
               })}
             </div>
           )}
