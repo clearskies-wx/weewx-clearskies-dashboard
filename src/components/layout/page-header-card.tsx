@@ -89,7 +89,7 @@ export function PageHeaderCard({
           )}
           <div className="min-w-0 flex-1">
             <Heading
-              className="font-heading truncate font-bold leading-snug"
+              className="font-heading truncate font-normal leading-snug"
               style={{ fontSize: 'var(--text-page-title, 2rem)' }}
             >
               {title}
