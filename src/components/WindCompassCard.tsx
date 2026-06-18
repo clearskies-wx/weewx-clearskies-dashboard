@@ -91,8 +91,14 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
   const windDirCV = asConverted(observation?.windDir ?? null);
   const windSpeedCV = asConverted(observation?.windSpeed ?? null);
 
-  // Bearing in degrees — target value from BFF. Default 0 (N) when unavailable.
-  const targetDeg: number = windDirCV?.value ?? 0;
+  // Bearing in degrees — target value from BFF.
+  // When wind is calm (bearing null), keep the last known bearing so the
+  // indicator stays put instead of swinging to north.
+  const lastBearingRef = useRef<number>(0);
+  if (windDirCV?.value != null) {
+    lastBearingRef.current = windDirCV.value;
+  }
+  const targetDeg: number = windDirCV?.value ?? lastBearingRef.current;
 
   // Animated bearing — interpolates from previous to target over 1 second,
   // lighting up intermediate ticks as it sweeps.
@@ -141,12 +147,11 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
   const windDirDeg = animatedDeg;
 
   // BFF-supplied canonical cardinal code (ADR-041).
+  // During calm (null bearing), derive from the retained last-known bearing
+  // so the cardinal label stays consistent with the frozen indicator.
   const windDirCardinal = observation?.windDirCardinal ?? null;
-  const windDirDegrees = windDirCV?.value ?? null;
-  // When BFF nulls windDirCardinal (zero-speed calm), derive from bearing degrees
-  // so both the cardinal label and bearing display stay consistent (ADR-041).
   const effectiveCardinal = windDirCardinal
-    ?? (windDirDegrees != null ? cardinalFromDegrees(windDirDegrees) : null);
+    ?? cardinalFromDegrees(targetDeg);
   // Translate via i18n (ADR-021).  Falls back to '—' when null.
   const cardinalLabel = effectiveCardinal
     ? tCommon(`directions.${effectiveCardinal}`)
@@ -159,10 +164,8 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
     ? windSpeedCV.value.toFixed(1)
     : '—';
 
-  // Bearing label string: "305°"
-  const bearingLabel = windDirCV?.value !== null && windDirCV?.value !== undefined
-    ? `${Math.round(windDirCV.value)}°`
-    : '—';
+  // Bearing label string: "305°" — uses retained bearing during calm.
+  const bearingLabel = `${Math.round(targetDeg)}°`;
 
   // 10-min avg and max gust — from BFF envelope (wired via props, not observation).
   const avg10m = formatWindField(avg10mProp ?? null, speedUnit);
