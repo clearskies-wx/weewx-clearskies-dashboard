@@ -11,7 +11,7 @@
 //
 // Intentionally unwired: yAxisMinorTicks, states, connectEnds, polar (see CHARTS-REWRITE-PLAN.md §5)
 
-import { useMemo, useCallback } from 'react';
+import { useMemo } from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import {
   ComposedChart,
