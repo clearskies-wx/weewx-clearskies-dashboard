@@ -68,7 +68,7 @@ export function ControlsStrip({
           controls region for screen readers (WCAG 2.4.6). */}
       <section
         aria-label={ariaLabel}
-        className="flex flex-1 flex-wrap items-center gap-2 px-4"
+        className="flex flex-1 flex-wrap items-center gap-2 px-[var(--card-pad-compact)]"
       >
         {children}
       </section>

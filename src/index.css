@@ -25,6 +25,7 @@
     --card-row: 15rem;
     --card-content-max: calc(var(--card-row) - 4rem);
     --card-pad: 1rem;
+    --card-pad-compact: 0.5rem;
     --card-header-h: 2.5rem;
     --card-content-h: 10.5rem;
 
@@ -45,6 +46,7 @@
     --text-stat-hero:    5.1rem;  /* C1 temperature numeral — Outfit 700 */
     --text-stat-unit:    1.9rem;  /* unit beside it (°F) — Outfit */
     --text-hero-name:    1.35rem; /* station name — Manrope 700 */
+    --text-page-title:   2rem;   /* page title in page-header cards — Manrope 700 */
     --text-section:      0.95rem; /* section heading — Manrope */
     --text-body:         0.9rem;  /* body sentences — Manrope */
     --text-secondary:    0.85rem; /* feels-like, hi/lo — Manrope (hi/lo weight 600) */

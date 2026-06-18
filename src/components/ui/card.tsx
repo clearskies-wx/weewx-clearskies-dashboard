@@ -94,7 +94,7 @@ function Card({
         // the exact blur+saturate combination.
         "card-glass",
         "group/card flex flex-col overflow-hidden rounded-xl py-[var(--card-pad)] text-sm text-card-foreground ring-1 ring-foreground/10 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:py-2 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
-        rowSpan === "quarter" && "py-1.5",
+        (rowSpan === "quarter" || rowSpan === "half") && "py-[var(--card-pad-compact)]",
         minHeightClass(rowSpan),
         "mb-[var(--gap-grid)]",
         footprint !== undefined ? footprintColSpan[footprint] : undefined,

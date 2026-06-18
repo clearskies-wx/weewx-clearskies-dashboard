@@ -105,19 +105,19 @@ export function NowHeroCard({
             ? `${displayName} — ${location}`
             : displayName
         }
-        className="flex flex-col items-start gap-0.5 px-[var(--card-pad)] md:flex-row md:items-center md:justify-between md:gap-4"
+        className="flex flex-col items-start gap-0.5 px-[var(--card-pad-compact)] md:flex-row md:items-center md:justify-between md:gap-4"
       >
         {/* ── Logo ────────────────────────────────────────────────────────── */}
         <div
           className="shrink-0"
           aria-hidden="true"
-          style={{ width: '14rem', height: '4rem' }}
+          style={{ maxHeight: 'calc(var(--card-half-row) - 2 * var(--card-pad-compact))' }}
         >
           {logoUrl ? (
             <img
               src={logoUrl}
               alt={logoAlt ?? ''}
-              style={{ width: '100%', height: '100%', maxWidth: 'none', objectFit: 'contain', objectPosition: 'left' }}
+              style={{ height: '100%', maxHeight: 'calc(var(--card-half-row) - 2 * var(--card-pad-compact))', objectFit: 'contain', objectPosition: 'left' }}
             />
           ) : (
             <PlaceholderLogo size={40} />

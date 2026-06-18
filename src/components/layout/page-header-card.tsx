@@ -75,13 +75,13 @@ export function PageHeaderCard({
       rowSpan="half"
       className={className}
     >
-      <div className="flex flex-1 items-center justify-between gap-4 px-[var(--card-pad)]">
+      <div className="flex flex-1 items-center justify-between gap-4 px-[var(--card-pad-compact)]">
         {/* Icon + title group */}
         <div className="flex min-w-0 flex-1 items-center gap-3">
           {icon && (
             <div
               className="text-primary flex-shrink-0"
-              style={{ fontSize: '2.5rem', lineHeight: 1 }}
+              style={{ fontSize: '3.75rem', lineHeight: 1 }}
               aria-hidden="true"
             >
               {icon}
@@ -89,8 +89,8 @@ export function PageHeaderCard({
           )}
           <div className="min-w-0 flex-1">
             <Heading
-              className="font-heading truncate font-semibold leading-snug"
-              style={{ fontSize: 'var(--text-hero-name, 1.35rem)' }}
+              className="font-heading truncate font-bold leading-snug"
+              style={{ fontSize: 'var(--text-page-title, 2rem)' }}
             >
               {title}
             </Heading>
