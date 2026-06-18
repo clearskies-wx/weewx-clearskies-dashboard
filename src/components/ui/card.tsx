@@ -64,9 +64,13 @@ function minHeightClass(rowSpan: "quarter" | "half" | 1 | 2 | 2.5 | undefined): 
   // pages use auto-rows where cards size to content. Applying min-height at md+
   // conflicts with mb-[var(--gap-grid)] because the min-height fills the entire
   // grid area, leaving no room for the margin to create visual spacing.
+  //
+  // Quarter and half cards are structural (control strips, page headers) — they
+  // must be exactly their track height on fluid pages too, so they get an
+  // explicit md:h-[...] to prevent content expansion.
   switch (rowSpan) {
-    case "quarter": return "min-h-[var(--card-quarter-row)] md:min-h-0";
-    case "half":    return "min-h-[var(--card-half-row)] md:min-h-0";
+    case "quarter": return "min-h-[var(--card-quarter-row)] md:min-h-0 md:h-[var(--card-quarter-row)]";
+    case "half":    return "min-h-[var(--card-half-row)] md:min-h-0 md:h-[var(--card-half-row)]";
     default:        return "min-h-[var(--card-row)] md:min-h-0";
   }
 }
@@ -90,6 +94,7 @@ function Card({
         // the exact blur+saturate combination.
         "card-glass",
         "group/card flex flex-col overflow-hidden rounded-xl py-[var(--card-pad)] text-sm text-card-foreground ring-1 ring-foreground/10 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:py-2 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+        rowSpan === "quarter" && "py-1.5",
         minHeightClass(rowSpan),
         "mb-[var(--gap-grid)]",
         footprint !== undefined ? footprintColSpan[footprint] : undefined,
