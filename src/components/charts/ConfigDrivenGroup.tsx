@@ -963,7 +963,7 @@ export function ConfigDrivenGroup({
         </div>
       )}
 
-      <div aria-busy={isLoading || undefined} style={{ minWidth: 0, overflow: 'hidden' }}>
+      <div aria-busy={isLoading || undefined} style={{ minWidth: 0 }}>
         {/* Loading state */}
         {isLoading ? (
           <>
@@ -1078,7 +1078,7 @@ export function ConfigDrivenGroup({
           /* All others render as ConfigDrivenChart.                          */
           /* ref is used by PNG export to locate the chart SVG.              */
           /* ---------------------------------------------------------------- */
-          <div ref={chartContainerRef} className="space-y-6" style={{ overflow: 'hidden' }}>
+          <div ref={chartContainerRef} className="space-y-6">
             {group.charts.map((chart) => {
               const isWindRoseChart = chart.series.some(
                 (s) => s.seriesId === 'windRose',

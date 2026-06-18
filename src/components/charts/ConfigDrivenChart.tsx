@@ -502,7 +502,7 @@ export function ConfigDrivenChart({
   const rightTickDecimals = resolveTickDecimals(1);
 
   return (
-    <div style={{ minWidth: 0, minHeight: 0, width: '100%', height: '100%', overflow: 'hidden' }}>
+    <div style={{ minWidth: 0, minHeight: 0, width: '100%', height: '100%' }}>
       {config.title && (
         <h3 className="font-semibold text-foreground mb-2 text-center" style={{ fontSize: 'var(--text-section)', fontFamily: 'var(--font-sans)' }}>
           {config.title}
