@@ -543,6 +543,8 @@ export interface StationMetadata {
   firstRecord: string | null;
   lastRecord: string | null;
   hardware: string | null;
+  archiveIntervalSeconds: number;
+  weekStartDay: number;
 }
 
 export interface CapabilityDeclaration {

@@ -16,6 +16,8 @@ export const mockStation: StationMetadata = {
   firstRecord: '2020-01-01T00:00:00Z',
   lastRecord: '2026-05-18T14:30:00Z',
   hardware: 'Davis Vantage Pro2',
+  archiveIntervalSeconds: 300,
+  weekStartDay: 6,
 };
 
 export const mockCapabilities: CapabilityRegistry = {

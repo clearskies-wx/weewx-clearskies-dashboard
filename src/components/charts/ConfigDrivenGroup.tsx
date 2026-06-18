@@ -53,6 +53,10 @@ export interface ConfigDrivenGroupProps {
   reducedMotion?: boolean;
   /** From station.firstRecord, used to compute year dropdown range. */
   stationFirstYear?: number;
+  /** Archive interval in seconds from /station. Defaults to 300 (5 min). */
+  archiveIntervalSeconds?: number;
+  /** Week start day from /station: 0=Monday, 6=Sunday. Defaults to 6. */
+  weekStartDay?: number;
   /**
    * When true, the rolling-range radiogroup and year/month dropdowns are not
    * rendered. The parent (ChartsPage TabNavCard) owns date controls instead.
@@ -79,6 +83,11 @@ const MAX_RAW_POINTS = 1000;
 
 /** Target point count after LTTB downsampling (per ADR-009: >1000 → 500). */
 const LTTB_THRESHOLD = 500;
+
+/** Maps weewx string time_length values to seconds. */
+const TIME_LENGTH_MAP: Record<string, number> = {
+  day: 86400, week: 604800, month: 2592000, year: 31536000,
+};
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -219,6 +228,8 @@ export function ConfigDrivenGroup({
   globalType,
   reducedMotion = false,
   stationFirstYear,
+  archiveIntervalSeconds = 300,
+  weekStartDay = 6,
   hideControls = false,
   selectedRange: controlledRange,
   selectedYear: controlledYear,
@@ -368,14 +379,36 @@ export function ConfigDrivenGroup({
     } else {
       // Default: use the widest timeLength across group and all charts.
       // Chart-level timeLength overrides group-level per Belchertown semantics.
-      let maxSeconds = typeof group.timeLength === 'number' ? group.timeLength : 86400;
-      for (const chart of group.charts) {
-        if (typeof chart.timeLength === 'number' && chart.timeLength > maxSeconds) {
-          maxSeconds = chart.timeLength;
+      const groupTimeLengthStr = typeof group.timeLength === 'string'
+        ? group.timeLength.toLowerCase()
+        : null;
+
+      if (groupTimeLengthStr === 'week') {
+        // Calendar-week boundaries (Belchertown archiveWeekSpan pattern).
+        // weewx week_start: 0=Monday, 6=Sunday.
+        // JS getDay(): 0=Sunday, 1=Monday, ..., 6=Saturday.
+        // Convert: jsWeekStartDay = (weekStartDay + 1) % 7
+        const now = new Date();
+        const jsWeekStartDay = (weekStartDay + 1) % 7;
+        const jsToday = now.getDay();
+        const daysSinceWeekStart = (jsToday - jsWeekStartDay + 7) % 7;
+        const weekStart = new Date(now);
+        weekStart.setDate(weekStart.getDate() - daysSinceWeekStart);
+        weekStart.setHours(0, 0, 0, 0);
+        from = weekStart.toISOString();
+        to = now.toISOString();
+      } else {
+        let maxSeconds = typeof group.timeLength === 'number'
+          ? group.timeLength
+          : (TIME_LENGTH_MAP[groupTimeLengthStr ?? ''] ?? 86400);
+        for (const chart of group.charts) {
+          if (typeof chart.timeLength === 'number' && chart.timeLength > maxSeconds) {
+            maxSeconds = chart.timeLength;
+          }
         }
+        to = new Date().toISOString();
+        from = new Date(Date.now() - maxSeconds * 1000).toISOString();
       }
-      to = new Date().toISOString();
-      from = new Date(Date.now() - maxSeconds * 1000).toISOString();
     }
 
     // Anchor to month start if configured
@@ -399,11 +432,8 @@ export function ConfigDrivenGroup({
       const chartIntervals = group.charts
         .map((c) => c.aggregateInterval)
         .filter((v): v is number => v != null && v > 0);
-      baseAggInterval = chartIntervals.length > 0 ? Math.min(...chartIntervals) : 300;
+      baseAggInterval = chartIntervals.length > 0 ? Math.min(...chartIntervals) : archiveIntervalSeconds;
     }
-    const TIME_LENGTH_MAP: Record<string, number> = {
-      day: 86400, week: 604800, month: 2592000, year: 31536000,
-    };
     const baseTimeSec = typeof group.timeLength === 'number'
       ? group.timeLength
       : TIME_LENGTH_MAP[String(group.timeLength).toLowerCase()] ?? 86400;
@@ -411,7 +441,7 @@ export function ConfigDrivenGroup({
     const aggInterval = Math.round(baseAggInterval * ratio);
 
     // Only use aggregate_interval when it exceeds the raw archive interval
-    const useAggregation = aggInterval > 300;
+    const useAggregation = aggInterval > archiveIntervalSeconds;
 
     // Build per-field aggregation map from operator's charts.conf aggregate_type.
     // Default is avg (Belchertown rolling-range default, line 3543).
@@ -453,6 +483,8 @@ export function ConfigDrivenGroup({
     selectedRange,
     selectedYear,
     selectedMonth,
+    archiveIntervalSeconds,
+    weekStartDay,
   ]);
 
   // Build params for range chart dual-fetch (agg=max and agg=min).

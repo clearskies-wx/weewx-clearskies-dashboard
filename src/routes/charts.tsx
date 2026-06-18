@@ -218,6 +218,8 @@ export function ChartsPage() {
                 globalType={chartsConfig?.type}
                 reducedMotion={reducedMotion}
                 stationFirstYear={stationFirstYear}
+                archiveIntervalSeconds={station?.archiveIntervalSeconds}
+                weekStartDay={station?.weekStartDay}
               />
             )}
           </div>
