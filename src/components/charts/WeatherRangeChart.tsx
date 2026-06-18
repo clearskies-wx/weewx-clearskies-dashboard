@@ -11,9 +11,9 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
 } from 'recharts';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { ChartContainer } from './chart-container';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -217,8 +217,6 @@ function CustomTooltip(props: any) {
 // Chart layout — matches ConfigDrivenChart
 // ---------------------------------------------------------------------------
 
-const CHART_MARGIN = { top: 8, right: 55, bottom: 8, left: 15 };
-const YAXIS_WIDTH = 42;
 const XAXIS_HEIGHT = 30;
 
 // ---------------------------------------------------------------------------
@@ -257,6 +255,11 @@ export function WeatherRangeChart({
 
   const yAxisLabel = isTemp ? 'Outside Temperature' : field;
 
+  const chartMargin = isMobile
+    ? { top: 4, right: 4, bottom: 4, left: 4 }
+    : { top: 8, right: 15, bottom: 8, left: 15 };
+  const phantomAxisWidth = isMobile ? 30 : 60;
+
   return (
     <div className="flex flex-col gap-2">
       <div className="sr-only">
@@ -283,13 +286,8 @@ export function WeatherRangeChart({
         </table>
       </div>
 
-      <div
-        role="img"
-        aria-label={`${field} daily high and low range chart${unit ? ` in ${unit}` : ''}`}
-        style={{ minWidth: 0, minHeight: 0, width: '100%', height }}
-      >
-        <ResponsiveContainer width="99%" height="100%">
-          <ComposedChart data={mergedData} margin={isMobile ? { top: 4, right: 4, bottom: 4, left: 0 } : CHART_MARGIN}>
+      <ChartContainer height={height} ariaLabel={`${field} daily high and low range chart${unit ? ` in ${unit}` : ''}`}>
+          <ComposedChart data={mergedData} margin={chartMargin}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
 
             <XAxis
@@ -310,7 +308,7 @@ export function WeatherRangeChart({
               allowDataOverflow
               ticks={ticks}
               interval={0}
-              width={isMobile ? 35 : YAXIS_WIDTH}
+              width={isMobile ? 35 : undefined}
               tick={{ fontSize: 14, fontFamily: CHART_FONT }}
               className="fill-muted-foreground"
               label={
@@ -319,8 +317,13 @@ export function WeatherRangeChart({
                       value: yAxisLabel + (unit ? ` (${unit})` : ''),
                       angle: -90,
                       position: 'insideLeft',
-                      style: { fontSize: 14, fontFamily: CHART_FONT, fill: 'var(--muted-foreground)' },
                       offset: -5,
+                      style: {
+                        fontSize: 14,
+                        fontFamily: CHART_FONT,
+                        fill: 'var(--muted-foreground, #a1a1aa)',
+                        textAnchor: 'middle',
+                      },
                     }
                   : undefined
               }
@@ -333,7 +336,7 @@ export function WeatherRangeChart({
               tick={false}
               axisLine={false}
               tickLine={false}
-              width={isMobile ? 4 : 60}
+              width={phantomAxisWidth}
             />
 
             <Tooltip
@@ -373,8 +376,7 @@ export function WeatherRangeChart({
               />
             ))}
           </ComposedChart>
-        </ResponsiveContainer>
-      </div>
+      </ChartContainer>
     </div>
   );
 }
