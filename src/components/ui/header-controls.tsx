@@ -115,16 +115,19 @@ export interface HeaderSelectProps {
   options: { value: string; label: string }[];
   onChange: (value: string) => void;
   ariaLabel: string;
+  disabled?: boolean;
 }
 
-export function HeaderSelect({ value, options, onChange, ariaLabel }: HeaderSelectProps) {
+export function HeaderSelect({ value, options, onChange, ariaLabel, disabled }: HeaderSelectProps) {
   return (
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
       aria-label={ariaLabel}
+      disabled={disabled}
       className={cn(
         "rounded-full border-none cursor-pointer font-semibold leading-[1.4] min-h-[1.75rem] md:min-h-0 bg-[rgba(0,0,0,0.07)] text-[var(--muted-foreground)] dark:bg-[rgba(255,255,255,0.1)] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 px-[0.55rem] py-[0.16rem] pr-6",
+        disabled && "opacity-60 cursor-not-allowed",
       )}
       style={{ fontSize: 'var(--text-label, 0.75rem)' }}
     >

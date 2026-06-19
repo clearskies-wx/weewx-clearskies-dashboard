@@ -14,6 +14,7 @@ import {
   CardContent,
 } from '../components/ui/card';
 import { PageLayout } from '../components/layout/page-layout';
+import { HeaderSelect } from '../components/ui/header-controls';
 import { Button } from '../components/ui/button';
 import { useReports, useReport, useYearlyReport, useStation } from '../hooks/useWeatherData';
 import { parseMonthlyReport, parseYearlyReport } from '../lib/noaa-parser';
@@ -784,19 +785,18 @@ export function ReportsPage() {
         .sort((a, b) => b - a)
     : [];
 
-  function handleYearChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const y = e.target.value ? Number(e.target.value) : null;
+  function handleYearChange(value: string) {
+    const y = value ? Number(value) : null;
     setSelectedYear(y);
     setSelectedMonth(null);
     setShowRawText(false);
   }
 
-  function handleMonthChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const val = e.target.value;
-    if (val === '') {
+  function handleMonthChange(value: string) {
+    if (value === '') {
       setSelectedMonth(null);
     } else {
-      setSelectedMonth(Number(val));
+      setSelectedMonth(Number(value));
     }
     setShowRawText(false);
   }
@@ -822,66 +822,28 @@ export function ReportsPage() {
       controls={
         !indexLoading && !indexError && reports && reports.length > 0
           ? (
-            <div className="flex flex-wrap gap-4">
-              {/* Year selector */}
-              <div className="flex flex-col gap-1">
-                <label
-                  htmlFor="report-year"
-                  className="font-semibold text-foreground"
-                  style={{ fontSize: 'var(--text-secondary)' }}
-                >
-                  {t('year.label')}
-                </label>
-                <select
-                  id="report-year"
-                  value={selectedYear ?? ''}
-                  onChange={handleYearChange}
-                  className={[
-                    'rounded-md border border-input bg-background px-3 py-2 text-foreground min-h-[44px] md:min-h-0',
-                    'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-                  ].join(' ')}
-                  aria-label={t('year.ariaLabel')}
-                >
-                  <option value="">{t('year.placeholder')}</option>
-                  {availableYears.map((y) => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Month / Annual selector */}
-              <div className="flex flex-col gap-1">
-                <label
-                  htmlFor="report-month"
-                  className="font-semibold text-foreground"
-                  style={{ fontSize: 'var(--text-secondary)' }}
-                >
-                  {t('month.label')}
-                </label>
-                <select
-                  id="report-month"
-                  value={selectedMonth ?? ''}
-                  onChange={handleMonthChange}
-                  disabled={!selectedYear || (availableMonths.length === 0 && !hasYearlyReport)}
-                  className={[
-                    'rounded-md border border-input bg-background px-3 py-2 text-foreground min-h-[44px] md:min-h-0',
-                    'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-                    (!selectedYear || (availableMonths.length === 0 && !hasYearlyReport))
-                      ? 'opacity-60 cursor-not-allowed'
-                      : '',
-                  ].join(' ')}
-                  aria-label={t('month.ariaLabel')}
-                >
-                  <option value="">{t('month.placeholder')}</option>
-                  {hasYearlyReport && (
-                    <option value={0}>{t('annual')}</option>
-                  )}
-                  {availableMonths.map((m) => (
-                    <option key={m} value={m}>{getMonthName(m, i18n.language)}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
+            <>
+              <HeaderSelect
+                value={String(selectedYear ?? '')}
+                options={[
+                  { value: '', label: t('year.placeholder') },
+                  ...availableYears.map((y) => ({ value: String(y), label: String(y) })),
+                ]}
+                onChange={handleYearChange}
+                ariaLabel={t('year.ariaLabel')}
+              />
+              <HeaderSelect
+                value={String(selectedMonth ?? '')}
+                options={[
+                  { value: '', label: t('month.placeholder') },
+                  ...(hasYearlyReport ? [{ value: '0', label: t('annual') }] : []),
+                  ...availableMonths.map((m) => ({ value: String(m), label: getMonthName(m, i18n.language) })),
+                ]}
+                onChange={handleMonthChange}
+                ariaLabel={t('month.ariaLabel')}
+                disabled={!selectedYear || (availableMonths.length === 0 && !hasYearlyReport)}
+              />
+            </>
           )
           : undefined
       }
