@@ -204,9 +204,10 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
   detailParts.push(expiryText);
   const detailLine = detailParts.join(' · ');
 
-  // Summary: first non-empty line of description (collapsed view only).
-  const summaryText =
-    alert.description?.split('\n').find((l) => l.trim()) ?? null;
+  // Summary: first reflowed paragraph (hard wraps collapsed) for the preview.
+  const summaryText = alert.description
+    ? reflowDescription(alert.description)[0] ?? null
+    : null;
 
   // Metadata grid items for expanded state.
   const metadata: Array<{ label: string; value: string }> = [
@@ -294,15 +295,8 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
             {detailLine}
           </p>
 
-          {/* Summary: first line of description with text fade (collapsed only) */}
           {summaryText && !expanded && (
-            <p
-              className="mt-1 overflow-hidden whitespace-nowrap font-heading text-[length:var(--text-body)] leading-snug text-muted-foreground"
-              style={{
-                maskImage: 'linear-gradient(to right, black calc(100% - 4rem), transparent)',
-                WebkitMaskImage: 'linear-gradient(to right, black calc(100% - 4rem), transparent)',
-              }}
-            >
+            <p className="text-fade-right mt-1 overflow-hidden whitespace-nowrap font-heading text-[length:var(--text-body)] leading-snug text-muted-foreground">
               {summaryText}
             </p>
           )}

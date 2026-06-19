@@ -370,4 +370,9 @@
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
   }
+
+  .text-fade-right {
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 4rem), transparent);
+    mask-image: linear-gradient(to right, black calc(100% - 4rem), transparent);
+  }
 }
