@@ -161,19 +161,21 @@ export function Footer() {
 
       {/* Desktop: single flex row (unchanged from before) */}
       <div className="hidden md:flex md:flex-wrap md:items-center md:justify-between md:gap-x-4 md:gap-y-2">
-        {/* Left side: legal link · cookie settings (when GA configured) · copyright · powered-by logo */}
+        {/* Left side: powered-by logo · copyright · cookie settings (when GA configured) · legal link */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <Link
-            to="/legal"
-            className="underline underline-offset-4 focus:outline-none focus:ring-2 focus:ring-white/60 focus:ring-offset-2 focus:ring-offset-black/50 rounded"
-            style={{ color: 'inherit' }}
-          >
-            {t('footer.legal')}
-          </Link>
+          {/* Always use the light logo — footer background is always dark glass */}
+          <img
+            src={poweredLight}
+            alt="Powered by Clear Skies"
+            height={32}
+            className="h-[32px] w-auto"
+          />
+          <span aria-hidden="true">·</span>
+          <span>© {new Date().getFullYear()} {copyrightName}</span>
+          <span aria-hidden="true">·</span>
           {/* Cookie Settings — only shown when GA is configured. */}
           {branding.googleAnalyticsId && (
             <>
-              <span aria-hidden="true">·</span>
               <button
                 type="button"
                 onClick={() => {
@@ -185,18 +187,16 @@ export function Footer() {
               >
                 {t('footer.cookieSettings')}
               </button>
+              <span aria-hidden="true">·</span>
             </>
           )}
-          <span aria-hidden="true">·</span>
-          <span>© {new Date().getFullYear()} {copyrightName}</span>
-          <span aria-hidden="true">·</span>
-          {/* Always use the light logo — footer background is always dark glass */}
-          <img
-            src={poweredLight}
-            alt="Powered by Clear Skies"
-            height={32}
-            className="h-[32px] w-auto"
-          />
+          <Link
+            to="/legal"
+            className="underline underline-offset-4 focus:outline-none focus:ring-2 focus:ring-white/60 focus:ring-offset-2 focus:ring-offset-black/50 rounded"
+            style={{ color: 'inherit' }}
+          >
+            {t('footer.legal')}
+          </Link>
         </div>
         {/* Right side: share buttons */}
         <ShareRow />
