@@ -119,13 +119,20 @@ function buildUvBellCurve(
   const midnightMs = midnight.getTime();
   const endMs = midnightMs + 24 * 60 * 60 * 1000;
 
-  // Parse sunrise/sunset — fall back to 06:00/20:00 local when unavailable.
-  const sunriseMs = sunriseIso
-    ? new Date(sunriseIso).getTime()
-    : midnightMs + 6 * 3600 * 1000;
-  const sunsetMs = sunsetIso
-    ? new Date(sunsetIso).getTime()
-    : midnightMs + 20 * 3600 * 1000;
+  // Parse sunrise/sunset — fall back to 06:00/20:00 local when unavailable
+  // or when the timestamps fall outside today's window. useSmartAlmanac
+  // switches to tomorrow's sun data after sunset+2hr, which puts sunrise
+  // past the chart's midnight-to-midnight range and zeros the entire curve.
+  const defaultRise = midnightMs + 6 * 3600 * 1000;
+  const defaultSet  = midnightMs + 20 * 3600 * 1000;
+  let sunriseMs = sunriseIso ? new Date(sunriseIso).getTime() : defaultRise;
+  let sunsetMs  = sunsetIso  ? new Date(sunsetIso).getTime()  : defaultSet;
+  if (Number.isNaN(sunriseMs) || sunriseMs < midnightMs || sunriseMs > endMs) {
+    sunriseMs = defaultRise;
+  }
+  if (Number.isNaN(sunsetMs) || sunsetMs < midnightMs || sunsetMs > endMs) {
+    sunsetMs = defaultSet;
+  }
 
   const spanMs = sunsetMs - sunriseMs;
 
