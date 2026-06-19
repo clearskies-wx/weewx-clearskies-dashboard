@@ -24,7 +24,7 @@ import type { EarthquakeRecord } from '../api/types';
 // Returns separate `bg` and `text` Tailwind class strings so the caller can
 // apply them to the badge container and its text children independently.
 export function magnitudeClasses(mag: number): { bg: string; text: string } {
-  if (mag < 3)   return { bg: 'bg-sky-100 dark:bg-sky-900/40',        text: 'text-sky-800 dark:text-sky-200' };
+  if (mag < 3)   return { bg: 'bg-sky-800 dark:bg-sky-200',             text: 'text-sky-100 dark:text-sky-900' };
   if (mag < 4)   return { bg: 'bg-green-500 dark:bg-green-600',       text: 'text-white dark:text-white' };
   if (mag < 5)   return { bg: 'bg-yellow-400 dark:bg-yellow-500',     text: 'text-yellow-900 dark:text-yellow-950' };
   if (mag < 7)   return { bg: 'bg-orange-500 dark:bg-red-600',        text: 'text-white dark:text-white' };
