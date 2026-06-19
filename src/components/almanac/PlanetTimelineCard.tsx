@@ -908,16 +908,18 @@ export function PlanetTimelineCard({
   return (
     <Card footprint="full">
       <CardHeader>
-        <CardTitle as="h2">{t('planets.title')}</CardTitle>
-        {overallText && (
-          <span className={`flex items-center gap-[0.25rem] shrink-0 font-semibold ${overallClass}`} style={{ fontSize: 'var(--text-label, 0.75rem)' }}>
-            {bestQuality === 'not_visible'
-              ? <EyeSlash size={14} weight="bold" aria-hidden="true" />
-              : <Eye size={14} weight="bold" aria-hidden="true" />
-            }
-            {overallText}
-          </span>
-        )}
+        <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2 flex-1 min-w-0">
+          <CardTitle as="h2">{t('planets.title')}</CardTitle>
+          {overallText && (
+            <span className={`flex items-center gap-[0.25rem] font-semibold ${overallClass}`} style={{ fontSize: 'var(--text-label, 0.75rem)' }}>
+              {bestQuality === 'not_visible'
+                ? <EyeSlash size={14} weight="bold" aria-hidden="true" />
+                : <Eye size={14} weight="bold" aria-hidden="true" />
+              }
+              {overallText}
+            </span>
+          )}
+        </div>
       </CardHeader>
 
       <CardContent>

@@ -90,7 +90,7 @@ export function HourlyStrip({
   //   scrolling        → fixed 72px per column
   const colStyle: React.CSSProperties = threeHourWindows
     ? { flex: 1, minWidth: 0 }
-    : { width: 72, flexShrink: 0 };
+    : { width: 56, flexShrink: 0 };
 
   // For threeHourWindows, the outer container is not a scroller; for scrolling
   // mode, HorizontalScrollNav owns the scroll container.
@@ -142,7 +142,7 @@ export function HourlyStrip({
   ));
 
   // Row: weather icons
-  const weatherIconSize = threeHourWindows ? 46 : 36;
+  const weatherIconSize = 36;
   const iconRow = displayHours.map((hour, i) => (
     <div key={i} style={{ ...colStyle, ...CELL_BASE, height: rowH.icon }}>
       <WeatherIcon code={toWmoCode(hour.weatherCode)} size={weatherIconSize} />
@@ -202,8 +202,8 @@ export function HourlyStrip({
     );
   });
 
-  // The SVG width calculation: for scrolling mode, use N*72; for fill mode, use N*100 (arbitrary units, viewBox-based)
-  const svgViewWidth = isScrollMode ? N * 72 : N * 100;
+  // The SVG width calculation: for scrolling mode, use N*56; for fill mode, use N*100 (arbitrary units, viewBox-based)
+  const svgViewWidth = isScrollMode ? N * 56 : N * 100;
 
   const tableContent = (
     <div

@@ -259,9 +259,9 @@ export function NowPage() {
 
         {/* ── Radar — wide 2×2.5 (cols 1-2, rows 6+) ──────────────────── */}
         {/* relative z-0: creates a stacking context to contain Leaflet's internal z-indices.
-            min-h-[var(--card-row)]: prevents map canvas collapsing when auto-rows is `auto` on mobile.
-            md:h-auto: on desktop md:row-span-10 (from rowSpan={2.5}) governs height. */}
-        <Card footprint="wide" rowSpan={2.5} className="relative z-0 min-h-[var(--card-row)] md:h-auto">
+            min-h-[37.5rem]: 2.5-row height fallback on mobile where auto-rows:auto makes rowSpan inert.
+            md:min-h-0 md:h-auto: on desktop the grid row-span controls height; min-h is removed. */}
+        <Card footprint="wide" rowSpan={2.5} className="relative z-0 min-h-[37.5rem] md:min-h-0 md:h-auto">
           <CardHeader>
             <CardTitle as="h2">{tRadar('radarTitle')}</CardTitle>
           </CardHeader>
