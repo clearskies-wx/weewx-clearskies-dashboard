@@ -83,6 +83,23 @@ function getChartImgSize(name: string): number {
   return PLANET_CHART_IMG_SIZE[name.toLowerCase()] ?? 28;
 }
 
+// Proportional sizes for the top planet images in the info row.
+// Scaled up from PLANET_CHART_IMG_SIZE ratios so the largest planet (Saturn)
+// reads clearly at column-header size while smaller planets stay visually subordinate.
+const PLANET_TOP_IMG_SIZE: Record<string, number> = {
+  saturn:  100,
+  jupiter:  80,
+  mars:     56,
+  venus:    52,
+  uranus:   52,
+  neptune:  52,
+  mercury:  44,
+};
+
+function getTopImgSize(name: string): number {
+  return PLANET_TOP_IMG_SIZE[name.toLowerCase()] ?? 52;
+}
+
 // ---------------------------------------------------------------------------
 // Viewing quality — ADR-053 unified 5-tier color scale
 // PlanetEntry.viewingQuality uses lowercase snake_case values.
@@ -348,10 +365,11 @@ function PlanetColumn({ planet, stationTz, sunsetIso, sunriseIso, locale, t }: P
     sunsetIso, sunriseIso, stationTz, locale, t,
   );
   const posText = naturalPosition(planet.direction, planet.altitude);
+  const imgSize = getTopImgSize(name);
 
   return (
     /*
-     * Mobile: horizontal row — image left (60px), data right (flex-1).
+     * Mobile: horizontal row — image left, data right (flex-1).
      *   Each planet gets a full-width row in the stacked list.
      * Desktop (md+): vertical column — image centered above data, min 110px wide.
      *   Reverts to the original centered column layout.
@@ -361,16 +379,16 @@ function PlanetColumn({ planet, stationTz, sunsetIso, sunriseIso, locale, t }: P
       className="flex flex-row items-center gap-3 w-full md:flex-col md:items-center md:gap-[0.1rem] md:min-w-[110px] md:flex-shrink-0 md:w-auto"
       aria-label={name}
     >
-      {/* Planet image — 60px on mobile (left), 90px-height centered on desktop */}
+      {/* Planet image — proportional to planet size (Saturn largest, Mercury smallest) */}
       <div
         className="flex-shrink-0 flex items-center justify-center md:w-full"
-        style={{ width: '60px', height: '60px' }}
+        style={{ width: imgSize + 4, height: imgSize + 4 }}
       >
         <img
           src={imgSrc}
           alt={name}
           className="object-contain"
-          style={{ maxHeight: '56px', maxWidth: '56px' }}
+          style={{ maxHeight: imgSize, maxWidth: imgSize }}
           loading="lazy"
           onError={(e) => {
             (e.currentTarget as HTMLImageElement).style.display = 'none';

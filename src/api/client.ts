@@ -383,7 +383,7 @@ export function getSolarEclipses(
 export function getAlmanacMeteorShowers(
   signal?: AbortSignal,
 ): Promise<ApiResponse<MeteorShowerData>> {
-  return fetchApi<ApiResponse<MeteorShowerData>>('/almanac/meteor-showers', undefined, signal);
+  return fetchApi<ApiResponse<MeteorShowerData>>('/almanac/meteor-showers', { min_radiant_alt: '0' }, signal);
 }
 
 // ---------------------------------------------------------------------------

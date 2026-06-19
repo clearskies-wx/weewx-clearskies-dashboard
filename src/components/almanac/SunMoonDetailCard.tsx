@@ -555,8 +555,8 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
                 {/* Crescent shadow — offset circle to show illuminated fraction */}
                 <circle
                   cx={moonMarker.x + (isWaning ? (isMobile ? 6 : 3.5) : (isMobile ? -6 : -3.5)) * (1 - illumFrac) * 2}
-                  cy={moonMarker.y - (isMobile ? 2.5 : 1.5)}
-                  r={isMobile ? 9.5 : 5.5}
+                  cy={moonMarker.y}
+                  r={isMobile ? 12 : 7}
                   fill="var(--card-background, #1e293b)"
                   fillOpacity={illumFrac < 0.9 ? 0.65 : 0.0}
                 />

@@ -37,7 +37,6 @@ import {
   Card,
   CardHeader,
   CardContent,
-  CardFooter,
   CardTitle,
 } from '../ui/card';
 import type { SolarEclipseData, SolarEclipseEntry } from '../../api/types';
@@ -596,22 +595,22 @@ export function SolarEclipseCard({
               })()}
             </>
           )}
-        </CardContent>
-
-        {/* Footer note */}
-        <CardFooter className="gap-1.5">
-          <Info
-            size={14}
-            className="flex-shrink-0 text-muted-foreground"
-            aria-hidden="true"
-          />
-          <span className="text-[0.7rem] text-muted-foreground">
+          {/* Footer note */}
+          <p
+            className="text-muted-foreground mt-4 flex items-center gap-1"
+            style={{ fontSize: 'var(--text-micro, 0.7rem)' }}
+          >
+            <Info
+              size={14}
+              className="flex-shrink-0 text-muted-foreground"
+              aria-hidden="true"
+            />
             {t(
               'solarEclipses.footerNote',
               'Visibility can vary based on cloud cover and your exact location.',
             )}
-          </span>
-        </CardFooter>
+          </p>
+        </CardContent>
       </Card>
 
       {/* Modal — rendered outside the Card so it overlays the full viewport */}
