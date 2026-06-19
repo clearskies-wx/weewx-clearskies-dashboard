@@ -286,20 +286,24 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
         {/* Text body — card-glass neutral surface, grows to fill */}
         <div className="card-glass min-w-0 flex-1 px-3 py-2.5">
 
-          {/* Title row: event name + optional severity badge */}
           <p className="truncate uppercase font-heading text-[length:var(--text-card-title)] font-semibold leading-snug text-card-foreground">
             {alert.event}
           </p>
 
-          {/* Detail line: area + expiry */}
-          <p className="mt-0.5 truncate font-heading text-[length:var(--text-label)] leading-snug text-muted-foreground">
+          <p className="mt-0.5 truncate font-heading text-[length:var(--text-body)] leading-snug text-muted-foreground">
             {detailLine}
           </p>
 
-          {/* Summary: first line of description, truncated with …CONT (collapsed only) */}
+          {/* Summary: first line of description with text fade (collapsed only) */}
           {summaryText && !expanded && (
-            <p className="mt-1 truncate font-heading text-[length:var(--text-label)] leading-snug text-muted-foreground">
-              {summaryText}<span className="text-muted-foreground">{' '}…CONT</span>
+            <p
+              className="mt-1 overflow-hidden whitespace-nowrap font-heading text-[length:var(--text-body)] leading-snug text-muted-foreground"
+              style={{
+                maskImage: 'linear-gradient(to right, black calc(100% - 4rem), transparent)',
+                WebkitMaskImage: 'linear-gradient(to right, black calc(100% - 4rem), transparent)',
+              }}
+            >
+              {summaryText}
             </p>
           )}
 
