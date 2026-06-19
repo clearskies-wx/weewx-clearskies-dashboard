@@ -362,7 +362,12 @@ export function CurrentConditionsCard({
 }: CurrentConditionsCardProps) {
   const { t } = useTranslation('now');
 
-  const archiveStart24h = useMemo(() => new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), []);
+  const [archiveTick, setArchiveTick] = useState(0);
+  useEffect(() => {
+    const iv = setInterval(() => setArchiveTick(t => t + 1), 60_000);
+    return () => clearInterval(iv);
+  }, []);
+  const archiveStart24h = useMemo(() => new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), [archiveTick]);
   const { data: tempArchive } = useArchive({ from: archiveStart24h, aggregate_interval: '300', fields: 'outTemp' });
 
   // Temperature — via ConvertedValue; no client unit math
