@@ -379,10 +379,10 @@ function PlanetColumn({ planet, stationTz, sunsetIso, sunriseIso, locale, t }: P
       className="flex flex-row items-center gap-3 w-full md:flex-col md:items-center md:gap-[0.1rem] md:min-w-[110px] md:flex-shrink-0 md:w-auto"
       aria-label={name}
     >
-      {/* Planet image — proportional to planet size (Saturn largest, Mercury smallest) */}
+      {/* Planet image — fixed container, planet centered within */}
       <div
         className="flex-shrink-0 flex items-center justify-center md:w-full"
-        style={{ width: imgSize + 4, height: imgSize + 4 }}
+        style={{ width: 104, height: 104 }}
       >
         <img
           src={imgSrc}
