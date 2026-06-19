@@ -30,7 +30,7 @@
 //
 // UV utilities: src/utils/uv.ts — UV_SEGMENTS, getUvSegment(), getUvLabel().
 
-import { useMemo, useId } from 'react';
+import { useMemo, useEffect, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AreaChart,
@@ -41,6 +41,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { asConverted } from '../api/types';
+import { useArchive } from '../hooks/useWeatherData';
 import { getUvSegment } from '../utils/uv';
 import {
   Card,
@@ -590,7 +591,6 @@ function GroupSeparator() {
 
 export interface UvIndexCardProps {
   observation: Observation | null;
-  todayArchive: ArchiveRecord[];
   /** Today's daily forecast — used to show the forecast UV peak and for the predicted bell curve. */
   todayForecast: { uvIndexMax?: number | null } | null;
   /** Almanac sunrise time (ISO-8601 string) — shapes the bell curve left edge. Null = use 06:00 default. */
@@ -608,7 +608,6 @@ export interface UvIndexCardProps {
 
 export function UvIndexCard({
   observation,
-  todayArchive: _todayArchive,
   todayForecast,
   sunrise,
   sunset,
@@ -617,6 +616,12 @@ export function UvIndexCard({
   onRetry,
 }: UvIndexCardProps) {
   const { t } = useTranslation('now');
+
+  // Self-fetch 24h archive for UV data (5-min aggregation, auto-refresh every 5 min)
+  const archiveStart24h = useMemo(() => new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), []);
+  const { data: uvArchive, refetch: uvRefetch } = useArchive({ from: archiveStart24h, aggregate_interval: '300', fields: 'UV' });
+  useEffect(() => { const id = setInterval(() => uvRefetch(), 5 * 60 * 1000); return () => clearInterval(id); }, [uvRefetch]);
+  const _todayArchive = uvArchive ?? [];
 
   // Stable gradient ID — avoids SVG ID collisions if multiple instances on page.
   // useId() returns a stable server/client-consistent identifier (React 18+).

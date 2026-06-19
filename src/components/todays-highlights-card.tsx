@@ -15,6 +15,7 @@
 //   - No color-only signals: each stat has a text label and value (§5.1).
 //   - aria-busy on Card during loading.
 
+import { useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ThermometerHot,
@@ -23,8 +24,9 @@ import {
   Drop,
   Leaf,
 } from '@phosphor-icons/react';
-import type { TodayStats, Observation } from '../api/types';
+import type { Observation } from '../api/types';
 import { asConverted } from '../api/types';
+import { useArchive, useTodayStats } from '../hooks/useWeatherData';
 import { formatValue } from '../utils/format';
 import { aqiCategoryLabel } from './aqi-card';
 import {
@@ -39,7 +41,6 @@ import {
 // ---------------------------------------------------------------------------
 
 export interface TodaysHighlightsCardProps {
-  todayStats: TodayStats | null;
   observation: Observation | null;
   loading?: boolean;
 }
@@ -97,11 +98,16 @@ function StatItem({ icon, value, microLabel }: StatItemProps) {
 // ---------------------------------------------------------------------------
 
 export function TodaysHighlightsCard({
-  todayStats,
   observation,
   loading = false,
 }: TodaysHighlightsCardProps) {
   const { t } = useTranslation('now');
+
+  // Fetch archive data and compute today's stats internally.
+  const archiveStart24h = useMemo(() => new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), []);
+  const { data: highlightsArchive, refetch: highlightsRefetch } = useArchive({ from: archiveStart24h, fields: 'outTemp,windGust,windSpeed,rain' });
+  useEffect(() => { const id = setInterval(() => highlightsRefetch(), 5 * 60 * 1000); return () => clearInterval(id); }, [highlightsRefetch]);
+  const todayStats = useTodayStats(observation, highlightsArchive);
 
   // Unit labels come from the observation's ConvertedValue fields (ADR-042).
   const tempCV    = asConverted(observation?.outTemp ?? null);

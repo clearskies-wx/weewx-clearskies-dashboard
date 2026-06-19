@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WebcamConfig } from '../api/types';
 import { CurrentConditionsCard } from '../components/current-conditions-card';
@@ -29,8 +29,6 @@ import {
   useAqi,
   useStation,
   useLightning,
-  useArchive,
-  useTodayStats,
 } from '../hooks/useWeatherData';
 import { useSmartAlmanac } from '../hooks/useSmartAlmanac';
 import { useRealtimeObservation } from '../hooks/useRealtimeObservation';
@@ -59,23 +57,7 @@ export function NowPage() {
   const { data: aqi, loading: aqiLoading, error: aqiError, refetch: aqiRefetch } = useAqi();
   const { data: station } = useStation();
 
-  // Single 24h rolling archive — covers both SolarRadiationCard (needs full 24h)
-  // and useTodayStats (filters to midnight-onward internally).
-  // Memoized with [] deps so the ISO string is stable across renders and does
-  // not cause useArchive to re-fetch on every render cycle.
-  const archiveStart24h = useMemo(
-    () => new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    [],
-  );
-  const { data: todayArchive, refetch: archiveRefetch } = useArchive({ from: archiveStart24h });
-
-  useEffect(() => {
-    const id = setInterval(() => archiveRefetch(), 5 * 60 * 1000);
-    return () => clearInterval(id);
-  }, [archiveRefetch]);
-
   const lightning = useLightning(observation);
-  const todayStats = useTodayStats(observation, todayArchive);
 
   const [refreshTs, setRefreshTs] = useState(Date.now());
   const [videoRefreshTs, setVideoRefreshTs] = useState(Date.now());
@@ -153,9 +135,8 @@ export function NowPage() {
           weatherText={observation?.weatherText ?? todayForecast?.weatherText ?? null}
           weatherCode={derivedWeatherCode}
           isNight={scene ? !scene.daytime : false}
-          todayHigh={todayForecast?.tempMax ?? todayStats?.high ?? null}
-          todayLow={todayForecast?.tempMin ?? todayStats?.low ?? null}
-          todayArchive={todayArchive ?? null}
+          todayHigh={todayForecast?.tempMax ?? null}
+          todayLow={todayForecast?.tempMin ?? null}
           hourlyForecast={hourlyForecast ?? null}
           onRetry={obsRefetch}
         />
@@ -175,7 +156,6 @@ export function NowPage() {
 
         {/* ── Today's Highlights — tile 1×2 (col 2, rows 3-4) ─────────── */}
         <TodaysHighlightsCard
-          todayStats={todayStats}
           observation={observation}
           loading={obsLoading}
         />
@@ -201,7 +181,6 @@ export function NowPage() {
         {/* ── Solar Radiation — tile 1×1 (col 3, row 4) ───────────────── */}
         <SolarRadiationCard
           observation={observation}
-          todayArchive={todayArchive ?? []}
           loading={obsLoading}
           error={obsError?.message ?? null}
           onRetry={obsRefetch}
@@ -210,7 +189,6 @@ export function NowPage() {
         {/* ── UV Index — tile 1×1 (col 4, row 4) ──────────────────────── */}
         <UvIndexCard
           observation={observation}
-          todayArchive={todayArchive ?? []}
           todayForecast={todayForecast}
           sunrise={almanac?.sun?.rise ?? null}
           sunset={almanac?.sun?.set ?? null}

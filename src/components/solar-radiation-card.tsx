@@ -27,7 +27,7 @@
 //   - maxSolarRad is archive field (raw number, W/m²) — no unit conversion needed
 //     since it is purely a chart overlay shape, never presented as a standalone value.
 
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AreaChart,
@@ -37,6 +37,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { asConverted } from '../api/types';
+import { useArchive } from '../hooks/useWeatherData';
 import {
   Card,
   CardHeader,
@@ -308,7 +309,6 @@ function SolarChart({ data }: SolarChartProps) {
 
 export interface SolarRadiationCardProps {
   observation: Observation | null;
-  todayArchive: ArchiveRecord[];
   loading?: boolean;
   error?: string | null;
   onRetry?: () => void;
@@ -320,20 +320,23 @@ export interface SolarRadiationCardProps {
 
 export function SolarRadiationCard({
   observation,
-  todayArchive,
   loading = false,
   error = null,
   onRetry,
 }: SolarRadiationCardProps) {
   const { t } = useTranslation('now');
 
+  const archiveStart24h = useMemo(() => new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), []);
+  const { data: solarArchive, refetch: solarRefetch } = useArchive({ from: archiveStart24h, aggregate_interval: '300', fields: 'radiation,maxSolarRad' });
+  useEffect(() => { const id = setInterval(() => solarRefetch(), 5 * 60 * 1000); return () => clearInterval(id); }, [solarRefetch]);
+
   const radiationCV = asConverted(observation?.radiation ?? null);
   const radiationFormatted = radiationCV?.formatted ?? '—';
   const radiationLabel = radiationCV?.label ?? '';
 
   const chartData = useMemo(
-    () => buildChartData(todayArchive),
-    [todayArchive],
+    () => buildChartData(solarArchive ?? []),
+    [solarArchive],
   );
 
   return (

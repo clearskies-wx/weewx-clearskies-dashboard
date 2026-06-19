@@ -40,6 +40,7 @@ import {
 } from './ui/card';
 import { WeatherIcon } from './weather-icon';
 import type { Observation, UnitsBlock, ArchiveRecord, HourlyForecastPoint } from '../api/types';
+import { useArchive } from '../hooks/useWeatherData';
 
 // ---------------------------------------------------------------------------
 // Sub-components: loading / error states
@@ -337,8 +338,6 @@ interface CurrentConditionsCardProps {
   todayHigh?: number | null;
   /** Today's low temperature (raw number, native unit — from useTodayStats). */
   todayLow?: number | null;
-  /** Today's archive records for the curve past leg. */
-  todayArchive?: ArchiveRecord[] | null;
   /** Hourly forecast for the curve future leg. */
   hourlyForecast?: HourlyForecastPoint[] | null;
   onRetry: () => void;
@@ -358,11 +357,13 @@ export function CurrentConditionsCard({
   isNight = false,
   todayHigh,
   todayLow,
-  todayArchive,
   hourlyForecast,
   onRetry,
 }: CurrentConditionsCardProps) {
   const { t } = useTranslation('now');
+
+  const archiveStart24h = useMemo(() => new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), []);
+  const { data: tempArchive } = useArchive({ from: archiveStart24h, aggregate_interval: '300', fields: 'outTemp' });
 
   // Temperature — via ConvertedValue; no client unit math
   const outTempCV = asConverted(observation?.outTemp ?? null);
@@ -572,7 +573,7 @@ export function CurrentConditionsCard({
 
             {/* ── Bottom region: temperature curve ──────────────────────── */}
             <TempCurve
-              todayArchive={todayArchive ?? null}
+              todayArchive={tempArchive ?? null}
               hourlyForecast={hourlyForecast ?? null}
               currentTemp={currentTempRaw}
               tempUnit={tempUnit}
