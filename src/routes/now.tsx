@@ -14,7 +14,7 @@ import { useRealtimeObservation } from '../hooks/useRealtimeObservation';
 import { useBranding } from '../lib/branding-provider';
 import type { DataBag } from '../lib/card-registry';
 import { getCard } from '../lib/card-registry';
-import { fetchNowLayout } from '../lib/now-layout';
+import { fetchNowLayout, DEFAULT_NOW_LAYOUT } from '../lib/now-layout';
 import type { NowLayoutConfig } from '../lib/now-layout';
 
 export function NowPage() {
@@ -59,7 +59,7 @@ export function NowPage() {
 
   // ── Layout config (loaded from /now-layout.json; falls back to DEFAULT_NOW_LAYOUT) ──
 
-  const [layoutConfig, setLayoutConfig] = useState<NowLayoutConfig | null>(null);
+  const [layoutConfig, setLayoutConfig] = useState<NowLayoutConfig>(DEFAULT_NOW_LAYOUT);
 
   useEffect(() => {
     fetchNowLayout().then(setLayoutConfig);
@@ -172,7 +172,7 @@ export function NowPage() {
       */}
       <Grid>
         <Suspense fallback={null}>
-          {layoutConfig !== null && layoutConfig.cards.map((entry) => {
+          {layoutConfig.cards.map((entry) => {
             const reg = getCard(entry.type);
             if (!reg) return null;
 
