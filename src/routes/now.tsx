@@ -1,19 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import type { WebcamConfig } from '../api/types';
-import { CurrentConditionsCard } from '../components/current-conditions-card';
-import { PrecipitationCard } from '../components/precipitation-card';
-import { BarometerCard } from '../components/barometer-card';
-import { SolarRadiationCard } from '../components/solar-radiation-card';
-import { UvIndexCard } from '../components/uv-index-card';
-import { AqiCard } from '../components/aqi-card';
-import { SunMoonCard } from '../components/sun-moon-card';
-import { LightningCard } from '../components/lightning-card';
-import { EarthquakeCard } from '../components/earthquake-card';
-import { WindCompassCard } from '../components/WindCompassCard';
-import { NowForecastCard } from '../components/forecast/NowForecastCard';
-import { TodaysHighlightsCard } from '../components/todays-highlights-card';
-import { RadarCard } from '../components/shared/radar-card';
-import { WebcamCard } from '../components/webcam-card';
 import { Grid } from '../components/layout/grid';
 import { NowHeroCard } from '../components/layout/now-hero-card';
 import {
@@ -27,7 +13,9 @@ import { useSmartAlmanac } from '../hooks/useSmartAlmanac';
 import { useRealtimeObservation } from '../hooks/useRealtimeObservation';
 import { useBranding } from '../lib/branding-provider';
 import type { DataBag } from '../lib/card-registry';
-import { CARD_METADATA } from '../lib/card-metadata';
+import { getCard } from '../lib/card-registry';
+import { fetchNowLayout } from '../lib/now-layout';
+import type { NowLayoutConfig } from '../lib/now-layout';
 
 export function NowPage() {
   const branding = useBranding();
@@ -67,6 +55,14 @@ export function NowPage() {
   useEffect(() => {
     const interval = setInterval(() => setVideoRefreshTs(Date.now()), 900000);
     return () => clearInterval(interval);
+  }, []);
+
+  // ── Layout config (loaded from /now-layout.json; falls back to DEFAULT_NOW_LAYOUT) ──
+
+  const [layoutConfig, setLayoutConfig] = useState<NowLayoutConfig | null>(null);
+
+  useEffect(() => {
+    fetchNowLayout().then(setLayoutConfig);
   }, []);
 
   // ── DataBag construction ───────────────────────────────────────────────────
@@ -152,14 +148,6 @@ export function NowPage() {
     : branding.logo?.light;
   const logoAlt = branding.logo?.alt;
 
-  // ── Layout helpers ─────────────────────────────────────────────────────────
-  // Each card receives its default layout from CARD_METADATA.allowedLayouts[0].
-  // Cards ignore the layout prop (they set their own footprint/rowSpan internally)
-  // but the prop is required by CardComponentProps for the admin page contract.
-
-  const layout = (type: keyof typeof CARD_METADATA) =>
-    CARD_METADATA[type].allowedLayouts[0];
-
   return (
     <div className="flex flex-col">
       {/* sr-only h1 for this page (the NowHeroCard renders an h1 that's visible) */}
@@ -177,117 +165,31 @@ export function NowPage() {
         A4 Grid primitive — 4 columns on lg, 2 on md, 1 on mobile.
         Only weather data cards live here; hero and alert are above.
         Row track: --card-row (11rem) at md+.
+        Cards are rendered dynamically from the layout config loaded via
+        fetchNowLayout(). Falls back to DEFAULT_NOW_LAYOUT when /now-layout.json
+        is absent, producing the same 14-card arrangement as the previous
+        hardcoded layout.
       */}
       <Grid>
+        <Suspense fallback={null}>
+          {layoutConfig !== null && layoutConfig.cards.map((entry) => {
+            const reg = getCard(entry.type);
+            if (!reg) return null;
 
-        {/* Row 1-2: Current Conditions (wide 2×2) + Today's Forecast (wide 2×2) ── */}
+            // Webcam special case: skip rendering when webcam is not configured/enabled
+            if (entry.type === 'webcam' && !webcamEnabled) return null;
 
-        {/* ── Current Conditions — wide 2×2 (cols 1-2, rows 1-2) ───────── */}
-        <CurrentConditionsCard
-          dataBag={dataBag}
-          layout={layout('current-conditions')}
-          stationTz={tz}
-        />
-
-        {/* ── Today's Forecast — wide 2×2 (cols 3-4, rows 1-2) ─────────── */}
-        <NowForecastCard
-          dataBag={dataBag}
-          layout={layout('now-forecast')}
-          stationTz={tz}
-        />
-
-        {/* Row 3-4: Wind (tile 1×2) + Highlights (tile 1×2) + Precip/Baro/Solar/UV ── */}
-
-        {/* ── Wind Compass — tile 1×2 (col 1, rows 3-4) ───────────────── */}
-        <WindCompassCard
-          dataBag={dataBag}
-          layout={layout('wind-compass')}
-          stationTz={tz}
-        />
-
-        {/* ── Today's Highlights — tile 1×2 (col 2, rows 3-4) ─────────── */}
-        <TodaysHighlightsCard
-          dataBag={dataBag}
-          layout={layout('todays-highlights')}
-          stationTz={tz}
-        />
-
-        {/* ── Precipitation — tile 1×1 (col 3, row 3) ─────────────────── */}
-        <PrecipitationCard
-          dataBag={dataBag}
-          layout={layout('precipitation')}
-          stationTz={tz}
-        />
-
-        {/* ── Barometer — tile 1×1 (col 4, row 3) ─────────────────────── */}
-        <BarometerCard
-          dataBag={dataBag}
-          layout={layout('barometer')}
-          stationTz={tz}
-        />
-
-        {/* ── Solar Radiation — tile 1×1 (col 3, row 4) ───────────────── */}
-        <SolarRadiationCard
-          dataBag={dataBag}
-          layout={layout('solar-radiation')}
-          stationTz={tz}
-        />
-
-        {/* ── UV Index — tile 1×1 (col 4, row 4) ──────────────────────── */}
-        <UvIndexCard
-          dataBag={dataBag}
-          layout={layout('uv-index')}
-          stationTz={tz}
-        />
-
-        {/* Row 5: AQI · Sun & Moon · Lightning · Earthquake (4 tiles) ──── */}
-
-        {/* ── AQI — tile 1×1 (col 1, row 5) ───────────────────────────── */}
-        <AqiCard
-          dataBag={dataBag}
-          layout={layout('aqi')}
-          stationTz={tz}
-        />
-
-        {/* ── Sun & Moon — tile 1×1 (col 2, row 5) ────────────────────── */}
-        <SunMoonCard
-          dataBag={dataBag}
-          layout={layout('sun-moon')}
-          stationTz={tz}
-        />
-
-        {/* ── Lightning — tile 1×1 (col 3, row 5) ─────────────────────── */}
-        <LightningCard
-          dataBag={dataBag}
-          layout={layout('lightning')}
-          stationTz={tz}
-        />
-
-        {/* ── Earthquake — tile 1×1 (col 4, row 5) ────────────────────── */}
-        <EarthquakeCard
-          dataBag={dataBag}
-          layout={layout('earthquake')}
-          stationTz={tz}
-        />
-
-        {/* Row 6+: Radar (wide 2×2.5) + Webcam (wide 2×2.5) ─────────────── */}
-
-        {/* ── Radar — wide 2×2.5 (cols 1-2, rows 6+) ──────────────────── */}
-        <RadarCard
-          dataBag={dataBag}
-          layout={layout('radar')}
-          stationTz={tz}
-        />
-
-        {/* ── Webcam — wide 2×2.5 (cols 3-4, rows 6+) ─────────────────── */}
-        {webcamEnabled && (
-          <WebcamCard
-            dataBag={dataBag}
-            layout={layout('webcam')}
-            stationTz={tz}
-          />
-        )}
-
+            const CardComponent = reg.component;
+            return (
+              <CardComponent
+                key={entry.type}
+                dataBag={dataBag}
+                layout={{ footprint: entry.footprint, rowSpan: entry.rowSpan }}
+                stationTz={tz}
+              />
+            );
+          })}
+        </Suspense>
       </Grid>
     </div>
   );
