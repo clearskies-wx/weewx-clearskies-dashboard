@@ -5,6 +5,8 @@ import { AppLayout } from './components/layout/app-layout';
 import { SetupGuard } from './components/SetupGuard';
 import { useLocaleSync } from './i18n/use-locale-sync';
 import { useBranding } from './lib/branding-provider';
+import { PageVisibilityProvider, usePageVisibility, isPageVisible } from './lib/page-visibility';
+import { NotFoundPage } from './routes/not-found';
 
 // After a deploy, chunk hashes change. If the browser has a stale index.js
 // cached, lazy imports 404. Catch that and reload once to pick up new chunks.
@@ -27,7 +29,6 @@ const ReportsPage = lazyWithReload(() => import('./routes/reports'));
 const AboutPage = lazyWithReload(() => import('./routes/about'));
 const LegalPage = lazyWithReload(() => import('./routes/legal'));
 const CustomPage = lazyWithReload(() => import('./routes/custom-page'));
-const NotFoundPage = lazyWithReload(() => import('./routes/not-found'));
 
 // PageLoader — Suspense fallback used for every lazy route.
 // Includes a visually-hidden <h1> so axe-core's page-has-heading-one rule
@@ -46,6 +47,26 @@ function PageLoader({ title }: { title: string }) {
       <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
     </div>
   );
+}
+
+/**
+ * VisibilityGuard — renders children when the page is visible; renders
+ * NotFoundPage when the page is hidden via /pages.json config.
+ * Ensures hidden pages are unreachable even by direct URL entry.
+ * "now" is always visible — isPageVisible() enforces this.
+ */
+function VisibilityGuard({
+  pageKey,
+  children,
+}: {
+  pageKey: string;
+  children: React.ReactNode;
+}) {
+  const config = usePageVisibility();
+  if (!isPageVisible(pageKey, config)) {
+    return <NotFoundPage />;
+  }
+  return <>{children}</>;
 }
 
 function App() {
@@ -82,100 +103,114 @@ function App() {
 
   return (
     <SetupGuard>
-    <BrowserRouter>
-      <Routes>
-        <Route element={<AppLayout />}>
-          <Route
-            index
-            element={
-              <Suspense fallback={<PageLoader title={tNav('pages.now')} />}>
-                <NowPage />
-              </Suspense>
-            }
-          />
-          <Route
-            path="forecast"
-            element={
-              <Suspense fallback={<PageLoader title={tNav('pages.forecast')} />}>
-                <ForecastPage />
-              </Suspense>
-            }
-          />
-          <Route
-            path="charts"
-            element={
-              <Suspense fallback={<PageLoader title={tNav('pages.charts')} />}>
-                <ChartsPage />
-              </Suspense>
-            }
-          />
-          <Route
-            path="almanac"
-            element={
-              <Suspense fallback={<PageLoader title={tNav('pages.almanac')} />}>
-                <AlmanacPage />
-              </Suspense>
-            }
-          />
-          <Route
-            path="seismic"
-            element={
-              <Suspense fallback={<PageLoader title={tNav('pages.seismic')} />}>
-                <SeismicPage />
-              </Suspense>
-            }
-          />
-          <Route
-            path="records"
-            element={
-              <Suspense fallback={<PageLoader title={tNav('pages.records')} />}>
-                <RecordsPage />
-              </Suspense>
-            }
-          />
-          <Route
-            path="reports"
-            element={
-              <Suspense fallback={<PageLoader title={tNav('pages.reports')} />}>
-                <ReportsPage />
-              </Suspense>
-            }
-          />
-          <Route
-            path="about"
-            element={
-              <Suspense fallback={<PageLoader title={tNav('pages.about')} />}>
-                <AboutPage />
-              </Suspense>
-            }
-          />
-          <Route
-            path="legal"
-            element={
-              <Suspense fallback={<PageLoader title={tNav('pages.legalPrivacy')} />}>
-                <LegalPage />
-              </Suspense>
-            }
-          />
-          <Route
-            path=":slug"
-            element={
-              <Suspense fallback={<PageLoader title={tCommon('customPageLoading')} />}>
-                <CustomPage />
-              </Suspense>
-            }
-          />
-          <Route
-            path="*"
-            element={
-              <Suspense fallback={<PageLoader title={tCommon('pageNotFound')} />}>
-                <NotFoundPage />
-              </Suspense>
-            }
-          />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+      <PageVisibilityProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route element={<AppLayout />}>
+              <Route
+                index
+                element={
+                  <Suspense fallback={<PageLoader title={tNav('pages.now')} />}>
+                    <NowPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="forecast"
+                element={
+                  <VisibilityGuard pageKey="forecast">
+                    <Suspense fallback={<PageLoader title={tNav('pages.forecast')} />}>
+                      <ForecastPage />
+                    </Suspense>
+                  </VisibilityGuard>
+                }
+              />
+              <Route
+                path="charts"
+                element={
+                  <VisibilityGuard pageKey="charts">
+                    <Suspense fallback={<PageLoader title={tNav('pages.charts')} />}>
+                      <ChartsPage />
+                    </Suspense>
+                  </VisibilityGuard>
+                }
+              />
+              <Route
+                path="almanac"
+                element={
+                  <VisibilityGuard pageKey="almanac">
+                    <Suspense fallback={<PageLoader title={tNav('pages.almanac')} />}>
+                      <AlmanacPage />
+                    </Suspense>
+                  </VisibilityGuard>
+                }
+              />
+              <Route
+                path="seismic"
+                element={
+                  <VisibilityGuard pageKey="seismic">
+                    <Suspense fallback={<PageLoader title={tNav('pages.seismic')} />}>
+                      <SeismicPage />
+                    </Suspense>
+                  </VisibilityGuard>
+                }
+              />
+              <Route
+                path="records"
+                element={
+                  <VisibilityGuard pageKey="records">
+                    <Suspense fallback={<PageLoader title={tNav('pages.records')} />}>
+                      <RecordsPage />
+                    </Suspense>
+                  </VisibilityGuard>
+                }
+              />
+              <Route
+                path="reports"
+                element={
+                  <VisibilityGuard pageKey="reports">
+                    <Suspense fallback={<PageLoader title={tNav('pages.reports')} />}>
+                      <ReportsPage />
+                    </Suspense>
+                  </VisibilityGuard>
+                }
+              />
+              <Route
+                path="about"
+                element={
+                  <VisibilityGuard pageKey="about">
+                    <Suspense fallback={<PageLoader title={tNav('pages.about')} />}>
+                      <AboutPage />
+                    </Suspense>
+                  </VisibilityGuard>
+                }
+              />
+              <Route
+                path="legal"
+                element={
+                  <VisibilityGuard pageKey="legal">
+                    <Suspense fallback={<PageLoader title={tNav('pages.legalPrivacy')} />}>
+                      <LegalPage />
+                    </Suspense>
+                  </VisibilityGuard>
+                }
+              />
+              <Route
+                path=":slug"
+                element={
+                  <Suspense fallback={<PageLoader title={tCommon('customPageLoading')} />}>
+                    <CustomPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="*"
+                element={<NotFoundPage />}
+              />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </PageVisibilityProvider>
     </SetupGuard>
   );
 }

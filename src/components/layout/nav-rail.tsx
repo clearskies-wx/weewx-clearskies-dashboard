@@ -6,6 +6,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { usePageVisibility, isPageVisible } from '../../lib/page-visibility';
 import {
   House,
   ChartLine,
@@ -46,11 +47,8 @@ const NAV_ITEMS: NavItemDef[] = [
   { to: '/legal', pageKey: 'legal', icon: <Scales aria-hidden="true" className="h-5 w-5" /> },
 ];
 
-// Mobile: first 4 slots are always visible; remaining 5 go into the overflow sheet.
-const MOBILE_VISIBLE_ITEMS = NAV_ITEMS.slice(0, 4);
-const MOBILE_OVERFLOW_ITEMS = NAV_ITEMS.slice(4);
-
-const OVERFLOW_ROUTES = new Set(MOBILE_OVERFLOW_ITEMS.map((item) => item.to));
+// Mobile slot splits are computed dynamically inside NavRail after page-visibility
+// filtering — see visibleItems derivation inside the component.
 
 // NavLink className helper — active state: bg shift + left border (desktop) / top border (mobile).
 function navLinkClass({ isActive }: { isActive: boolean }): string {
@@ -158,9 +156,11 @@ interface MoreSheetProps {
   onClose: () => void;
   /** ref to the "More" button so focus returns there on close */
   triggerRef: React.RefObject<HTMLButtonElement | null>;
+  /** Visible nav items that overflow past the 4 primary mobile slots */
+  overflowItems: NavItemDef[];
 }
 
-function MoreSheet({ isOpen, onClose, triggerRef }: MoreSheetProps) {
+function MoreSheet({ isOpen, onClose, triggerRef, overflowItems }: MoreSheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const { t } = useTranslation('nav');
@@ -274,7 +274,7 @@ function MoreSheet({ isOpen, onClose, triggerRef }: MoreSheetProps) {
 
         <nav aria-label={t('ariaAdditionalPages')}>
           <ul role="list" className="flex flex-col px-2 pb-1">
-            {MOBILE_OVERFLOW_ITEMS.map((item) => {
+            {overflowItems.map((item) => {
               const isActive = location.pathname === item.to ||
                 (item.to !== '/' && location.pathname.startsWith(item.to));
               return (
@@ -325,6 +325,16 @@ export function NavRail() {
   const moreButtonRef = useRef<HTMLButtonElement>(null);
   const location = useLocation();
   const { t } = useTranslation('nav');
+
+  // Filter NAV_ITEMS by page visibility config from /pages.json.
+  // "now" is always included (isPageVisible enforces this).
+  const pagesConfig = usePageVisibility();
+  const visibleItems = NAV_ITEMS.filter((item) => isPageVisible(item.pageKey, pagesConfig));
+
+  // Derive mobile splits dynamically so they respect visibility filtering.
+  const mobileVisibleItems = visibleItems.slice(0, 4);
+  const mobileOverflowItems = visibleItems.slice(4);
+  const overflowRoutes = new Set(mobileOverflowItems.map((item) => item.to));
 
   // ── Desktop auto-hide state ──────────────────────────────────────────────
   // Read initial pinned state from localStorage on mount.
@@ -403,7 +413,7 @@ export function NavRail() {
   }
 
   // "More" is active when the current route is one of the overflow pages.
-  const moreIsActive = OVERFLOW_ROUTES.has(location.pathname);
+  const moreIsActive = overflowRoutes.has(location.pathname);
 
   function openSheet() {
     setSheetOpen(true);
@@ -545,7 +555,7 @@ export function NavRail() {
 
         {/* Nav items */}
         <ul className="flex flex-col gap-1 w-full px-1" role="list">
-          {NAV_ITEMS.map((item) => {
+          {visibleItems.map((item) => {
             const label = t(`pages.${item.pageKey}`);
             return (
               <li key={item.to}>
@@ -583,7 +593,7 @@ export function NavRail() {
           className="flex flex-row items-stretch"
           role="list"
         >
-          {MOBILE_VISIBLE_ITEMS.map((item) => {
+          {mobileVisibleItems.map((item) => {
             const label = t(`pages.${item.pageKey}`);
             return (
               <li key={item.to} className="flex-1 min-w-0">
@@ -624,6 +634,7 @@ export function NavRail() {
         isOpen={sheetOpen}
         onClose={closeSheet}
         triggerRef={moreButtonRef}
+        overflowItems={mobileOverflowItems}
       />
     </>
   );
