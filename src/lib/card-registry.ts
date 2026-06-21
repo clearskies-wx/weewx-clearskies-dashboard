@@ -36,94 +36,80 @@ export interface CardRegistration extends CardMetadata {
 // ---------------------------------------------------------------------------
 // Lazy component imports for all 14 built-in cards.
 //
-// Type assertions (`as unknown as ComponentType<CardComponentProps>`) are a
-// deliberate bridge: existing card components still use their old props
-// interfaces. T0B.2 will update each component to accept CardComponentProps
-// and remove these assertions.
+// Each card exposes a `default` export typed as an overloaded function that
+// accepts BOTH CardComponentProps and its legacy props signature. TypeScript's
+// overload type inference makes the function type the intersection of all
+// overloads, which is not directly assignable to ComponentType<CardComponentProps>
+// without a cast. The single `as ComponentType<CardComponentProps>` cast here
+// is safe because the first overload of each card guarantees acceptance of
+// CardComponentProps. The `as unknown` intermediate is required by TypeScript
+// when overloaded function types are involved.
+//
+// This is the correct pattern as of T0B.2 — the cast documents the intentional
+// dual-signature design, not a workaround for a missing overload.
 // ---------------------------------------------------------------------------
 
-const CurrentConditionsLazy = lazy(() =>
-  import('../components/current-conditions-card').then(m => ({
-    default: m.CurrentConditionsCard as unknown as ComponentType<CardComponentProps>,
-  }))
+/** Helper: wraps a lazy import to produce ComponentType<CardComponentProps>. */
+function lazyCard<T extends ComponentType<CardComponentProps>>(
+  importer: () => Promise<{ default: T }>
+): ComponentType<CardComponentProps> {
+  return lazy(importer) as unknown as ComponentType<CardComponentProps>;
+}
+
+const CurrentConditionsLazy = lazyCard(
+  () => import('../components/current-conditions-card')
 );
 
-const NowForecastLazy = lazy(() =>
-  import('../components/forecast/NowForecastCard').then(m => ({
-    default: m.NowForecastCard as unknown as ComponentType<CardComponentProps>,
-  }))
+const NowForecastLazy = lazyCard(
+  () => import('../components/forecast/NowForecastCard')
 );
 
-const WindCompassLazy = lazy(() =>
-  import('../components/WindCompassCard').then(m => ({
-    default: m.WindCompassCard as unknown as ComponentType<CardComponentProps>,
-  }))
+const WindCompassLazy = lazyCard(
+  () => import('../components/WindCompassCard')
 );
 
-const TodaysHighlightsLazy = lazy(() =>
-  import('../components/todays-highlights-card').then(m => ({
-    default: m.TodaysHighlightsCard as unknown as ComponentType<CardComponentProps>,
-  }))
+const TodaysHighlightsLazy = lazyCard(
+  () => import('../components/todays-highlights-card')
 );
 
-const PrecipitationLazy = lazy(() =>
-  import('../components/precipitation-card').then(m => ({
-    default: m.PrecipitationCard as unknown as ComponentType<CardComponentProps>,
-  }))
+const PrecipitationLazy = lazyCard(
+  () => import('../components/precipitation-card')
 );
 
-const BarometerLazy = lazy(() =>
-  import('../components/barometer-card').then(m => ({
-    default: m.BarometerCard as unknown as ComponentType<CardComponentProps>,
-  }))
+const BarometerLazy = lazyCard(
+  () => import('../components/barometer-card')
 );
 
-const SolarRadiationLazy = lazy(() =>
-  import('../components/solar-radiation-card').then(m => ({
-    default: m.SolarRadiationCard as unknown as ComponentType<CardComponentProps>,
-  }))
+const SolarRadiationLazy = lazyCard(
+  () => import('../components/solar-radiation-card')
 );
 
-const UvIndexLazy = lazy(() =>
-  import('../components/uv-index-card').then(m => ({
-    default: m.UvIndexCard as unknown as ComponentType<CardComponentProps>,
-  }))
+const UvIndexLazy = lazyCard(
+  () => import('../components/uv-index-card')
 );
 
-const AqiLazy = lazy(() =>
-  import('../components/aqi-card').then(m => ({
-    default: m.AqiCard as unknown as ComponentType<CardComponentProps>,
-  }))
+const AqiLazy = lazyCard(
+  () => import('../components/aqi-card')
 );
 
-const SunMoonLazy = lazy(() =>
-  import('../components/sun-moon-card').then(m => ({
-    default: m.SunMoonCard as unknown as ComponentType<CardComponentProps>,
-  }))
+const SunMoonLazy = lazyCard(
+  () => import('../components/sun-moon-card')
 );
 
-const LightningLazy = lazy(() =>
-  import('../components/lightning-card').then(m => ({
-    default: m.LightningCard as unknown as ComponentType<CardComponentProps>,
-  }))
+const LightningLazy = lazyCard(
+  () => import('../components/lightning-card')
 );
 
-const EarthquakeLazy = lazy(() =>
-  import('../components/earthquake-card').then(m => ({
-    default: m.EarthquakeCard as unknown as ComponentType<CardComponentProps>,
-  }))
+const EarthquakeLazy = lazyCard(
+  () => import('../components/earthquake-card')
 );
 
-const RadarLazy = lazy(() =>
-  import('../components/shared/radar-card').then(m => ({
-    default: m.RadarCard as unknown as ComponentType<CardComponentProps>,
-  }))
+const RadarLazy = lazyCard(
+  () => import('../components/shared/radar-card')
 );
 
-const WebcamLazy = lazy(() =>
-  import('../components/webcam-card').then(m => ({
-    default: m.WebcamCard as unknown as ComponentType<CardComponentProps>,
-  }))
+const WebcamLazy = lazyCard(
+  () => import('../components/webcam-card')
 );
 
 // ---------------------------------------------------------------------------
