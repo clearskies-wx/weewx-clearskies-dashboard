@@ -8,6 +8,7 @@ import {
 } from './ui/card';
 import { HeaderTabs } from './ui/header-controls';
 import type { WebcamConfig } from '../api/types';
+import type { CardComponentProps } from '../lib/card-registry';
 
 export interface WebcamCardProps {
   webcamConfig: WebcamConfig;
@@ -15,7 +16,7 @@ export interface WebcamCardProps {
   videoRefreshTs: number;
 }
 
-export function WebcamCard({ webcamConfig, refreshTs, videoRefreshTs }: WebcamCardProps) {
+function WebcamCardContent({ webcamConfig, refreshTs, videoRefreshTs }: WebcamCardProps) {
   const { t } = useTranslation('now');
   const [webcamTab, setWebcamTab] = useState<'live' | 'timelapse'>('live');
   const [imageAvailable, setImageAvailable] = useState(true);
@@ -77,3 +78,43 @@ export function WebcamCard({ webcamConfig, refreshTs, videoRefreshTs }: WebcamCa
     </Card>
   );
 }
+
+// ---------------------------------------------------------------------------
+// DataBag-aware component (CardComponentProps — T0B.2 contract)
+// ---------------------------------------------------------------------------
+
+export function WebcamCard(props: CardComponentProps): React.ReactElement;
+export function WebcamCard(props: WebcamCardProps): React.ReactElement;
+export function WebcamCard(props: CardComponentProps | WebcamCardProps): React.ReactElement {
+  if ('dataBag' in props) {
+    // DataBag path — self-extract from dataBag['webcam']
+    const webcamData = props.dataBag['webcam'] as {
+      config?: WebcamConfig | null;
+      refreshTs?: number;
+      videoRefreshTs?: number;
+    } | undefined;
+
+    const config = webcamData?.config;
+
+    // If webcam is not configured in the DataBag, render nothing (card not enabled)
+    if (!config) return <></>;
+
+    return (
+      <WebcamCardContent
+        webcamConfig={config}
+        refreshTs={webcamData?.refreshTs ?? 0}
+        videoRefreshTs={webcamData?.videoRefreshTs ?? 0}
+      />
+    );
+  }
+  // Legacy path — explicit props
+  return (
+    <WebcamCardContent
+      webcamConfig={props.webcamConfig}
+      refreshTs={props.refreshTs}
+      videoRefreshTs={props.videoRefreshTs}
+    />
+  );
+}
+
+export default WebcamCard;
