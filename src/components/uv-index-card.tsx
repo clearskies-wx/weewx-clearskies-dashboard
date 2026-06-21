@@ -29,6 +29,12 @@
 //   - UV field from archive is raw number (dimensionless index) — no conversion needed.
 //
 // UV utilities: src/utils/uv.ts — UV_SEGMENTS, getUvSegment(), getUvLabel().
+//
+// DataBag pattern (T0B.2): card self-extracts from:
+//   dataBag["/api/v1/current"]  (observation)
+//   dataBag["/api/v1/forecast"] (todayForecast.uvIndexMax)
+//   dataBag["/api/v1/almanac"]  (sunrise/sunset)
+// onRetry removed — page container manages data freshness in the DataBag model.
 
 import { useMemo, useId } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -48,7 +54,8 @@ import {
   CardTitle,
   CardContent,
 } from './ui/card';
-import type { Observation } from '../api/types';
+import type { Observation, AlmanacSnapshot, ForecastBundle } from '../api/types';
+import type { CardComponentProps } from '../lib/card-registry';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -188,29 +195,6 @@ function UvSkeleton() {
       className="animate-pulse rounded-lg bg-muted h-32"
       aria-hidden="true"
     />
-  );
-}
-
-function UvError({
-  message,
-  onRetry,
-}: {
-  message: string;
-  onRetry: () => void;
-}) {
-  const { t } = useTranslation('common');
-  return (
-    <div role="alert" className="flex flex-col gap-2 items-start" style={{ fontSize: 'var(--text-body)' }}>
-      <p className="text-destructive">{message}</p>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
-        style={{ fontSize: 'var(--text-label)' }}
-      >
-        {t('retry')}
-      </button>
-    </div>
   );
 }
 
@@ -585,7 +569,7 @@ function GroupSeparator() {
 }
 
 // ---------------------------------------------------------------------------
-// Props
+// Legacy props interface — kept for any non-Now-page callers.
 // ---------------------------------------------------------------------------
 
 export interface UvIndexCardProps {
@@ -602,18 +586,17 @@ export interface UvIndexCardProps {
 }
 
 // ---------------------------------------------------------------------------
-// Component
+// Core render logic (shared by both prop shapes)
 // ---------------------------------------------------------------------------
 
-export function UvIndexCard({
+function UvIndexCardContent({
   observation,
   todayForecast,
   sunrise,
   sunset,
   loading = false,
   error = null,
-  onRetry,
-}: UvIndexCardProps) {
+}: Omit<UvIndexCardProps, 'onRetry'>) {
   const { t } = useTranslation('now');
 
   // Stable gradient ID — avoids SVG ID collisions if multiple instances on page.
@@ -655,10 +638,13 @@ export function UvIndexCard({
             <UvSkeleton />
           </>
         ) : error ? (
-          <UvError
-            message={t('error.solarUv')}
-            onRetry={onRetry ?? (() => undefined)}
-          />
+          <p
+            role="alert"
+            className="text-muted-foreground"
+            style={{ fontSize: 'var(--text-body)' }}
+          >
+            {t('error.solarUv')}
+          </p>
         ) : (
           <>
             {/* Upper ~70%: chart */}
@@ -716,6 +702,57 @@ export function UvIndexCard({
     </Card>
   );
 }
+
+// ---------------------------------------------------------------------------
+// DataBag-aware component (CardComponentProps — T0B.2 contract)
+// ---------------------------------------------------------------------------
+
+export function UvIndexCard(props: CardComponentProps): React.ReactElement;
+export function UvIndexCard(props: UvIndexCardProps): React.ReactElement;
+export function UvIndexCard(props: CardComponentProps | UvIndexCardProps): React.ReactElement {
+  if ('dataBag' in props) {
+    // DataBag path — self-extract from /api/v1/current, /api/v1/forecast, /api/v1/almanac
+    const currentData = props.dataBag['/api/v1/current'] as {
+      data?: Observation | null;
+      loading?: boolean;
+      error?: unknown;
+    } | undefined;
+    const forecastData = props.dataBag['/api/v1/forecast'] as {
+      data?: ForecastBundle | null;
+    } | undefined;
+    const almanacData = props.dataBag['/api/v1/almanac'] as {
+      data?: AlmanacSnapshot | null;
+    } | undefined;
+
+    const todayForecast = forecastData?.data?.daily?.[0] ?? null;
+    const sunrise = almanacData?.data?.sun?.rise ?? null;
+    const sunset = almanacData?.data?.sun?.set ?? null;
+
+    return (
+      <UvIndexCardContent
+        observation={currentData?.data ?? null}
+        todayForecast={todayForecast}
+        sunrise={sunrise}
+        sunset={sunset}
+        loading={currentData?.loading ?? true}
+        error={currentData?.error ? 'error' : null}
+      />
+    );
+  }
+  // Legacy path — explicit props
+  return (
+    <UvIndexCardContent
+      observation={props.observation}
+      todayForecast={props.todayForecast}
+      sunrise={props.sunrise}
+      sunset={props.sunset}
+      loading={props.loading}
+      error={props.error}
+    />
+  );
+}
+
+export default UvIndexCard;
 
 // Re-export UV utilities for callers that need them alongside this component.
 export { UV_SEGMENTS, getUvSegment } from '../utils/uv';

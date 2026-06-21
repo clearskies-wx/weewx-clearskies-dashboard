@@ -17,6 +17,8 @@
 //   - All text values through i18n (no hardcoded UI strings)
 //   - 1 decimal place enforced on all displayed wind values
 //   - Missing avg/gust → "—" fallback (before BFF warm-up)
+//
+// DataBag pattern (T0B.2): card self-extracts from dataBag["/api/v1/current"].
 
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -31,6 +33,7 @@ import {
 } from './ui/card';
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
 import type { Observation } from '../api/types';
+import type { CardComponentProps } from '../lib/card-registry';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -72,7 +75,7 @@ const TICK_COUNT = 72;
 const LIT_HALF_RANGE = 8; // degrees either side of bearing — lights up ~3 ticks
 
 // ---------------------------------------------------------------------------
-// Component
+// Legacy props interface — kept for any non-Now-page callers.
 // ---------------------------------------------------------------------------
 
 export interface WindCompassCardProps {
@@ -81,7 +84,11 @@ export interface WindCompassCardProps {
   windGustMax10m?: import('../api/types').ConvertedValue | number | null;
 }
 
-export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, windGustMax10m: gustMax10mProp }: WindCompassCardProps) {
+// ---------------------------------------------------------------------------
+// Core render logic (shared by both prop shapes)
+// ---------------------------------------------------------------------------
+
+function WindCompassCardContent({ observation, windSpeedAvg10m: avg10mProp, windGustMax10m: gustMax10mProp }: WindCompassCardProps) {
   const { t } = useTranslation('now');
   const { t: tCommon } = useTranslation('common');
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -466,3 +473,37 @@ export function WindCompassCard({ observation, windSpeedAvg10m: avg10mProp, wind
     </Card>
   );
 }
+
+// ---------------------------------------------------------------------------
+// DataBag-aware component (CardComponentProps — T0B.2 contract)
+// ---------------------------------------------------------------------------
+
+export function WindCompassCard(props: CardComponentProps): React.ReactElement;
+export function WindCompassCard(props: WindCompassCardProps): React.ReactElement;
+export function WindCompassCard(props: CardComponentProps | WindCompassCardProps): React.ReactElement {
+  if ('dataBag' in props) {
+    // DataBag path — self-extract from /api/v1/current
+    const currentData = props.dataBag['/api/v1/current'] as {
+      data?: Observation | null;
+      windSpeedAvg10m?: import('../api/types').ConvertedValue | number | null;
+      windGustMax10m?: import('../api/types').ConvertedValue | number | null;
+    } | undefined;
+    return (
+      <WindCompassCardContent
+        observation={currentData?.data ?? null}
+        windSpeedAvg10m={currentData?.windSpeedAvg10m ?? null}
+        windGustMax10m={currentData?.windGustMax10m ?? null}
+      />
+    );
+  }
+  // Legacy path — explicit props
+  return (
+    <WindCompassCardContent
+      observation={props.observation}
+      windSpeedAvg10m={props.windSpeedAvg10m}
+      windGustMax10m={props.windGustMax10m}
+    />
+  );
+}
+
+export default WindCompassCard;

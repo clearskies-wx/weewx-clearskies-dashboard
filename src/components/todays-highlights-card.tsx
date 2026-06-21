@@ -14,6 +14,8 @@
 //   - Loading state: sr-only role="status" text + skeleton.
 //   - No color-only signals: each stat has a text label and value (§5.1).
 //   - aria-busy on Card during loading.
+//
+// DataBag pattern (T0B.2): card self-extracts from dataBag["/api/v1/current"].
 
 import { useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -35,9 +37,10 @@ import {
   CardTitle,
   CardContent,
 } from './ui/card';
+import type { CardComponentProps } from '../lib/card-registry';
 
 // ---------------------------------------------------------------------------
-// Props
+// Legacy props interface — kept for any non-Now-page callers.
 // ---------------------------------------------------------------------------
 
 export interface TodaysHighlightsCardProps {
@@ -94,10 +97,10 @@ function StatItem({ icon, value, microLabel }: StatItemProps) {
 }
 
 // ---------------------------------------------------------------------------
-// TodaysHighlightsCard
+// Core render logic (shared by both prop shapes)
 // ---------------------------------------------------------------------------
 
-export function TodaysHighlightsCard({
+function TodaysHighlightsCardContent({
   observation,
   loading = false,
 }: TodaysHighlightsCardProps) {
@@ -220,3 +223,34 @@ export function TodaysHighlightsCard({
     </Card>
   );
 }
+
+// ---------------------------------------------------------------------------
+// DataBag-aware component (CardComponentProps — T0B.2 contract)
+// ---------------------------------------------------------------------------
+
+export function TodaysHighlightsCard(props: CardComponentProps): React.ReactElement;
+export function TodaysHighlightsCard(props: TodaysHighlightsCardProps): React.ReactElement;
+export function TodaysHighlightsCard(props: CardComponentProps | TodaysHighlightsCardProps): React.ReactElement {
+  if ('dataBag' in props) {
+    // DataBag path — self-extract from /api/v1/current
+    const currentData = props.dataBag['/api/v1/current'] as {
+      data?: Observation | null;
+      loading?: boolean;
+    } | undefined;
+    return (
+      <TodaysHighlightsCardContent
+        observation={currentData?.data ?? null}
+        loading={currentData?.loading ?? true}
+      />
+    );
+  }
+  // Legacy path — explicit props
+  return (
+    <TodaysHighlightsCardContent
+      observation={props.observation}
+      loading={props.loading}
+    />
+  );
+}
+
+export default TodaysHighlightsCard;
