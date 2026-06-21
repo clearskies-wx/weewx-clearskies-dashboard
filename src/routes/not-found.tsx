@@ -80,7 +80,7 @@ export function NotFoundPage() {
 
       <Link
         to="/"
-        className="text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded px-3 py-2"
+        className="text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded px-3 py-2"
         style={{ fontSize: 'var(--text-body)' }}
       >
         ← {t('backToNow', 'Back to Now')}
