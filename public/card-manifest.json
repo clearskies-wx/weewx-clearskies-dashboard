@@ -1,0 +1,203 @@
+{
+  "version": 1,
+  "cards": [
+    {
+      "type": "current-conditions",
+      "displayName": "Current Conditions",
+      "apiEndpoints": [
+        "/api/v1/current",
+        "/api/v1/forecast",
+        "/api/v1/almanac"
+      ],
+      "allowedLayouts": [
+        {
+          "footprint": "wide",
+          "rowSpan": 2
+        }
+      ],
+      "thumbnail": "/card-thumbnails/current-conditions.png"
+    },
+    {
+      "type": "now-forecast",
+      "displayName": "Today's Forecast",
+      "apiEndpoints": [
+        "/api/v1/forecast"
+      ],
+      "allowedLayouts": [
+        {
+          "footprint": "wide",
+          "rowSpan": 2
+        }
+      ],
+      "thumbnail": "/card-thumbnails/now-forecast.png"
+    },
+    {
+      "type": "wind-compass",
+      "displayName": "Wind",
+      "apiEndpoints": [
+        "/api/v1/current"
+      ],
+      "allowedLayouts": [
+        {
+          "footprint": "tile",
+          "rowSpan": 2
+        }
+      ],
+      "thumbnail": "/card-thumbnails/wind-compass.png"
+    },
+    {
+      "type": "todays-highlights",
+      "displayName": "Today's Highlights",
+      "apiEndpoints": [
+        "/api/v1/current"
+      ],
+      "allowedLayouts": [
+        {
+          "footprint": "tile",
+          "rowSpan": 2
+        }
+      ],
+      "thumbnail": "/card-thumbnails/todays-highlights.png"
+    },
+    {
+      "type": "precipitation",
+      "displayName": "Precipitation",
+      "apiEndpoints": [
+        "/api/v1/current"
+      ],
+      "allowedLayouts": [
+        {
+          "footprint": "tile",
+          "rowSpan": 1
+        }
+      ],
+      "thumbnail": "/card-thumbnails/precipitation.png"
+    },
+    {
+      "type": "barometer",
+      "displayName": "Barometer",
+      "apiEndpoints": [
+        "/api/v1/current"
+      ],
+      "allowedLayouts": [
+        {
+          "footprint": "tile",
+          "rowSpan": 1
+        }
+      ],
+      "thumbnail": "/card-thumbnails/barometer.png"
+    },
+    {
+      "type": "solar-radiation",
+      "displayName": "Solar Radiation",
+      "apiEndpoints": [
+        "/api/v1/current"
+      ],
+      "allowedLayouts": [
+        {
+          "footprint": "tile",
+          "rowSpan": 1
+        }
+      ],
+      "thumbnail": "/card-thumbnails/solar-radiation.png"
+    },
+    {
+      "type": "uv-index",
+      "displayName": "UV Index",
+      "apiEndpoints": [
+        "/api/v1/current",
+        "/api/v1/forecast",
+        "/api/v1/almanac"
+      ],
+      "allowedLayouts": [
+        {
+          "footprint": "tile",
+          "rowSpan": 1
+        }
+      ],
+      "thumbnail": "/card-thumbnails/uv-index.png"
+    },
+    {
+      "type": "aqi",
+      "displayName": "Air Quality Index",
+      "apiEndpoints": [
+        "/api/v1/aqi/current"
+      ],
+      "allowedLayouts": [
+        {
+          "footprint": "tile",
+          "rowSpan": 1
+        }
+      ],
+      "thumbnail": "/card-thumbnails/aqi.png"
+    },
+    {
+      "type": "sun-moon",
+      "displayName": "Sun & Moon",
+      "apiEndpoints": [
+        "/api/v1/almanac"
+      ],
+      "allowedLayouts": [
+        {
+          "footprint": "tile",
+          "rowSpan": 1
+        }
+      ],
+      "thumbnail": "/card-thumbnails/sun-moon.png"
+    },
+    {
+      "type": "lightning",
+      "displayName": "Lightning",
+      "apiEndpoints": [
+        "/api/v1/current"
+      ],
+      "allowedLayouts": [
+        {
+          "footprint": "tile",
+          "rowSpan": 1
+        }
+      ],
+      "thumbnail": "/card-thumbnails/lightning.png"
+    },
+    {
+      "type": "earthquake",
+      "displayName": "Earthquakes",
+      "apiEndpoints": [
+        "/api/v1/earthquakes"
+      ],
+      "allowedLayouts": [
+        {
+          "footprint": "tile",
+          "rowSpan": 1
+        }
+      ],
+      "thumbnail": "/card-thumbnails/earthquake.png"
+    },
+    {
+      "type": "radar",
+      "displayName": "Radar",
+      "apiEndpoints": [
+        "/api/v1/station"
+      ],
+      "allowedLayouts": [
+        {
+          "footprint": "wide",
+          "rowSpan": 2.5
+        }
+      ],
+      "thumbnail": "/card-thumbnails/radar.png"
+    },
+    {
+      "type": "webcam",
+      "displayName": "Webcam",
+      "apiEndpoints": [],
+      "allowedLayouts": [
+        {
+          "footprint": "wide",
+          "rowSpan": 2.5
+        }
+      ],
+      "thumbnail": "/card-thumbnails/webcam.png"
+    }
+  ]
+}
