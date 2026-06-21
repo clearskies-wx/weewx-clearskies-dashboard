@@ -6,6 +6,9 @@
 //
 // Per ADR-042: dashboard has zero unit knowledge.
 //   rain/rainRate/snow/snowRate use ConvertedValue.formatted verbatim.
+//
+// DataBag pattern (T0B.2): card self-extracts from dataBag["/api/v1/current"].
+// onRetry removed — page container manages data freshness in the DataBag model.
 
 import { useTranslation } from 'react-i18next';
 import { asConverted } from '../api/types';
@@ -16,6 +19,7 @@ import {
   CardContent,
 } from './ui/card';
 import type { Observation, UnitsBlock } from '../api/types';
+import type { CardComponentProps } from '../lib/card-registry';
 
 // ---------------------------------------------------------------------------
 // Sub-components
@@ -27,29 +31,6 @@ function PrecipitationSkeleton() {
       className="animate-pulse rounded-lg bg-muted h-20"
       aria-hidden="true"
     />
-  );
-}
-
-function PrecipitationError({
-  message,
-  onRetry,
-}: {
-  message: string;
-  onRetry: () => void;
-}) {
-  const { t } = useTranslation('common');
-  return (
-    <div role="alert" className="flex flex-col gap-2 items-start" style={{ fontSize: 'var(--text-body)' }}>
-      <p className="text-destructive">{message}</p>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
-        style={{ fontSize: 'var(--text-label)' }}
-      >
-        {t('retry')}
-      </button>
-    </div>
   );
 }
 
@@ -145,7 +126,7 @@ const secondaryValueStyle: React.CSSProperties = {
 };
 
 // ---------------------------------------------------------------------------
-// Props
+// Legacy props interface — kept for any non-Now-page callers.
 // ---------------------------------------------------------------------------
 
 export interface PrecipitationCardProps {
@@ -157,16 +138,15 @@ export interface PrecipitationCardProps {
 }
 
 // ---------------------------------------------------------------------------
-// Component
+// Core render logic (shared by both prop shapes)
 // ---------------------------------------------------------------------------
 
-export function PrecipitationCard({
+function PrecipitationCardContent({
   observation,
   units,
   loading = false,
   error = null,
-  onRetry,
-}: PrecipitationCardProps) {
+}: Omit<PrecipitationCardProps, 'onRetry'>) {
   const { t } = useTranslation('now');
 
   const rainCV = asConverted(observation?.rain ?? null);
@@ -208,10 +188,13 @@ export function PrecipitationCard({
             <PrecipitationSkeleton />
           </>
         ) : error ? (
-          <PrecipitationError
-            message={t('error.precipitation')}
-            onRetry={onRetry ?? (() => undefined)}
-          />
+          <p
+            role="alert"
+            className="text-muted-foreground"
+            style={{ fontSize: 'var(--text-body)' }}
+          >
+            {t('error.precipitation')}
+          </p>
         ) : (
           <div
             aria-live="polite"
@@ -284,3 +267,40 @@ export function PrecipitationCard({
     </Card>
   );
 }
+
+// ---------------------------------------------------------------------------
+// DataBag-aware component (CardComponentProps — T0B.2 contract)
+// ---------------------------------------------------------------------------
+
+export function PrecipitationCard(props: CardComponentProps): React.ReactElement;
+export function PrecipitationCard(props: PrecipitationCardProps): React.ReactElement;
+export function PrecipitationCard(props: CardComponentProps | PrecipitationCardProps): React.ReactElement {
+  if ('dataBag' in props) {
+    // DataBag path — self-extract from /api/v1/current
+    const currentData = props.dataBag['/api/v1/current'] as {
+      data?: Observation | null;
+      units?: UnitsBlock | null;
+      loading?: boolean;
+      error?: unknown;
+    } | undefined;
+    return (
+      <PrecipitationCardContent
+        observation={currentData?.data ?? null}
+        units={currentData?.units ?? null}
+        loading={currentData?.loading ?? true}
+        error={currentData?.error ? 'error' : null}
+      />
+    );
+  }
+  // Legacy path — explicit props
+  return (
+    <PrecipitationCardContent
+      observation={props.observation}
+      units={props.units}
+      loading={props.loading}
+      error={props.error}
+    />
+  );
+}
+
+export default PrecipitationCard;

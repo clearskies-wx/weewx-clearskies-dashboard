@@ -34,6 +34,9 @@
 //         will need to read the unit from barometer.label and apply hPa-scaled
 //         defaults, or receive those as props from the caller.  For v0.1 (US units
 //         default per ADR-042), these constants are correct.
+//
+// DataBag pattern (T0B.2): card self-extracts from dataBag["/api/v1/current"].
+// onRetry removed — page container manages data freshness in the DataBag model.
 
 import { useTranslation } from 'react-i18next';
 import { ArrowUp, ArrowDown, ArrowRight } from '@phosphor-icons/react';
@@ -48,6 +51,7 @@ import {
   CardContent,
 } from './ui/card';
 import type { Observation } from '../api/types';
+import type { CardComponentProps } from '../lib/card-registry';
 
 // ---------------------------------------------------------------------------
 // Constants (inHg scale — see unit note in file header)
@@ -118,29 +122,6 @@ function BarometerSkeleton() {
   );
 }
 
-function BarometerError({
-  message,
-  onRetry,
-}: {
-  message: string;
-  onRetry: () => void;
-}) {
-  const { t } = useTranslation('common');
-  return (
-    <div role="alert" className="flex flex-col gap-2 items-start" style={{ fontSize: 'var(--text-body)' }}>
-      <p className="text-destructive">{message}</p>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
-        style={{ fontSize: 'var(--text-label)' }}
-      >
-        {t('retry')}
-      </button>
-    </div>
-  );
-}
-
 /**
  * Trend arrow icon — Phosphor icon set (ADR-050: consistent set for all metric trends).
  * ph:arrow-up (rising) · ph:arrow-down (falling) · ph:arrow-right (steady).
@@ -158,7 +139,7 @@ function TrendIcon({ direction }: { direction: BarometerTrendDirection }) {
 }
 
 // ---------------------------------------------------------------------------
-// Props
+// Legacy props interface — kept for any non-Now-page callers.
 // ---------------------------------------------------------------------------
 
 export interface BarometerCardProps {
@@ -175,16 +156,15 @@ export interface BarometerCardProps {
 }
 
 // ---------------------------------------------------------------------------
-// Component
+// Core render logic (shared by both prop shapes)
 // ---------------------------------------------------------------------------
 
-export function BarometerCard({
+function BarometerCardContent({
   observation,
   barometerTrendDirection,
   loading = false,
   error = null,
-  onRetry,
-}: BarometerCardProps) {
+}: Omit<BarometerCardProps, 'onRetry'>) {
   const { t } = useTranslation('now');
 
   // Normalise the barometer field via asConverted (ADR-042).
@@ -219,10 +199,13 @@ export function BarometerCard({
             <BarometerSkeleton />
           </>
         ) : error ? (
-          <BarometerError
-            message={t('error.barometer')}
-            onRetry={onRetry ?? (() => undefined)}
-          />
+          <p
+            role="alert"
+            className="text-muted-foreground"
+            style={{ fontSize: 'var(--text-body)' }}
+          >
+            {t('error.barometer')}
+          </p>
         ) : (
           /* Flex-grow wrapper keeps the gauge from overflowing the card height.
              alignItems: stretch forces the wrapper to fill available height so
@@ -319,3 +302,40 @@ export function BarometerCard({
     </Card>
   );
 }
+
+// ---------------------------------------------------------------------------
+// DataBag-aware component (CardComponentProps — T0B.2 contract)
+// ---------------------------------------------------------------------------
+
+export function BarometerCard(props: CardComponentProps): React.ReactElement;
+export function BarometerCard(props: BarometerCardProps): React.ReactElement;
+export function BarometerCard(props: CardComponentProps | BarometerCardProps): React.ReactElement {
+  if ('dataBag' in props) {
+    // DataBag path — self-extract from /api/v1/current
+    const currentData = props.dataBag['/api/v1/current'] as {
+      data?: Observation | null;
+      loading?: boolean;
+      error?: unknown;
+      barometerTrendDirection?: BarometerTrendDirection | null;
+    } | undefined;
+    return (
+      <BarometerCardContent
+        observation={currentData?.data ?? null}
+        barometerTrendDirection={currentData?.barometerTrendDirection ?? null}
+        loading={currentData?.loading ?? true}
+        error={currentData?.error ? 'error' : null}
+      />
+    );
+  }
+  // Legacy path — explicit props
+  return (
+    <BarometerCardContent
+      observation={props.observation}
+      barometerTrendDirection={props.barometerTrendDirection}
+      loading={props.loading}
+      error={props.error}
+    />
+  );
+}
+
+export default BarometerCard;

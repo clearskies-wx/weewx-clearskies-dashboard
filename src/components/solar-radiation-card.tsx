@@ -26,6 +26,9 @@
 //   - radiation.label used for unit string.
 //   - maxSolarRad is archive field (raw number, W/m²) — no unit conversion needed
 //     since it is purely a chart overlay shape, never presented as a standalone value.
+//
+// DataBag pattern (T0B.2): card self-extracts from dataBag["/api/v1/current"].
+// onRetry removed — page container manages data freshness in the DataBag model.
 
 import { useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -45,6 +48,7 @@ import {
   CardContent,
 } from './ui/card';
 import type { Observation, ArchiveRecord } from '../api/types';
+import type { CardComponentProps } from '../lib/card-registry';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -123,29 +127,6 @@ function SolarSkeleton() {
       className="animate-pulse rounded-lg bg-muted h-32"
       aria-hidden="true"
     />
-  );
-}
-
-function SolarError({
-  message,
-  onRetry,
-}: {
-  message: string;
-  onRetry: () => void;
-}) {
-  const { t } = useTranslation('common');
-  return (
-    <div role="alert" className="flex flex-col gap-2 items-start" style={{ fontSize: 'var(--text-body)' }}>
-      <p className="text-destructive">{message}</p>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
-        style={{ fontSize: 'var(--text-label)' }}
-      >
-        {t('retry')}
-      </button>
-    </div>
   );
 }
 
@@ -304,7 +285,7 @@ function SolarChart({ data }: SolarChartProps) {
 }
 
 // ---------------------------------------------------------------------------
-// Props
+// Legacy props interface — kept for any non-Now-page callers.
 // ---------------------------------------------------------------------------
 
 export interface SolarRadiationCardProps {
@@ -315,15 +296,14 @@ export interface SolarRadiationCardProps {
 }
 
 // ---------------------------------------------------------------------------
-// Component
+// Core render logic (shared by both prop shapes)
 // ---------------------------------------------------------------------------
 
-export function SolarRadiationCard({
+function SolarRadiationCardContent({
   observation,
   loading = false,
   error = null,
-  onRetry,
-}: SolarRadiationCardProps) {
+}: Omit<SolarRadiationCardProps, 'onRetry'>) {
   const { t } = useTranslation('now');
 
   const archiveStart24h = useMemo(() => new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), []);
@@ -353,10 +333,13 @@ export function SolarRadiationCard({
             <SolarSkeleton />
           </>
         ) : error ? (
-          <SolarError
-            message={t('error.solarUv')}
-            onRetry={onRetry ?? (() => undefined)}
-          />
+          <p
+            role="alert"
+            className="text-muted-foreground"
+            style={{ fontSize: 'var(--text-body)' }}
+          >
+            {t('error.solarUv')}
+          </p>
         ) : (
           <>
             {/* Upper ~70%: chart */}
@@ -416,3 +399,37 @@ export function SolarRadiationCard({
     </Card>
   );
 }
+
+// ---------------------------------------------------------------------------
+// DataBag-aware component (CardComponentProps — T0B.2 contract)
+// ---------------------------------------------------------------------------
+
+export function SolarRadiationCard(props: CardComponentProps): React.ReactElement;
+export function SolarRadiationCard(props: SolarRadiationCardProps): React.ReactElement;
+export function SolarRadiationCard(props: CardComponentProps | SolarRadiationCardProps): React.ReactElement {
+  if ('dataBag' in props) {
+    // DataBag path — self-extract from /api/v1/current
+    const currentData = props.dataBag['/api/v1/current'] as {
+      data?: Observation | null;
+      loading?: boolean;
+      error?: unknown;
+    } | undefined;
+    return (
+      <SolarRadiationCardContent
+        observation={currentData?.data ?? null}
+        loading={currentData?.loading ?? true}
+        error={currentData?.error ? 'error' : null}
+      />
+    );
+  }
+  // Legacy path — explicit props
+  return (
+    <SolarRadiationCardContent
+      observation={props.observation}
+      loading={props.loading}
+      error={props.error}
+    />
+  );
+}
+
+export default SolarRadiationCard;

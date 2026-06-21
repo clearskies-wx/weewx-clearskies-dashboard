@@ -8,12 +8,6 @@
 //   - Lower zone: flex row — Phosphor lightning SVG icon (22px, aria-hidden) +
 //     stats line ("<N> /hr · <N> /24h") + "Nearest: X mi" sub-line.
 //
-// Props:
-//   observation  — current Observation (for lightningStrikeHistory)
-//   lightning    — LightningData (count1h, count24h, nearestDistanceKm)
-//   loading      — shows skeleton
-//   error        — shows error text (no retry; lightning is best-effort)
-//
 // A11y (WCAG 2.1 AA):
 //   - Chart container has aria-label summarising the data (§5.5: complex graphic).
 //   - SR-only data table mirrors the history array for non-sighted users (§5.5).
@@ -26,6 +20,9 @@
 // Per ADR-042: zero unit knowledge. nearestDistanceKm is rendered as-is (km);
 // the BFF owns distance unit conversion. The "km" suffix is appended here only
 // as a fallback display unit — a future ADR-042 extension point.
+//
+// DataBag pattern (T0B.2): card self-extracts from dataBag["/api/v1/current"]
+// and dataBag["lightning"].
 
 import { useMemo } from 'react';
 import {
@@ -44,6 +41,7 @@ import {
 } from './ui/card';
 import type { Observation, LightningData } from '../api/types';
 import { asConverted } from '../api/types';
+import type { CardComponentProps } from '../lib/card-registry';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -96,7 +94,7 @@ function LightningIcon() {
 }
 
 // ---------------------------------------------------------------------------
-// LightningCard
+// Legacy props interface — kept for any non-Now-page callers.
 // ---------------------------------------------------------------------------
 
 export interface LightningCardProps {
@@ -106,7 +104,11 @@ export interface LightningCardProps {
   error?: string | null;
 }
 
-export function LightningCard({
+// ---------------------------------------------------------------------------
+// Core render logic (shared by both prop shapes)
+// ---------------------------------------------------------------------------
+
+function LightningCardContent({
   observation,
   lightning,
   loading = false,
@@ -358,3 +360,42 @@ export function LightningCard({
     </Card>
   );
 }
+
+// ---------------------------------------------------------------------------
+// DataBag-aware component (CardComponentProps — T0B.2 contract)
+// ---------------------------------------------------------------------------
+
+export function LightningCard(props: CardComponentProps): React.ReactElement;
+export function LightningCard(props: LightningCardProps): React.ReactElement;
+export function LightningCard(props: CardComponentProps | LightningCardProps): React.ReactElement {
+  if ('dataBag' in props) {
+    // DataBag path — self-extract from /api/v1/current and "lightning" key
+    const currentData = props.dataBag['/api/v1/current'] as {
+      data?: Observation | null;
+      loading?: boolean;
+      error?: unknown;
+    } | undefined;
+    const lightningData = props.dataBag['lightning'] as {
+      data?: LightningData | null;
+    } | undefined;
+    return (
+      <LightningCardContent
+        observation={currentData?.data ?? null}
+        lightning={lightningData?.data ?? null}
+        loading={currentData?.loading ?? true}
+        error={currentData?.error ? 'error' : null}
+      />
+    );
+  }
+  // Legacy path — explicit props
+  return (
+    <LightningCardContent
+      observation={props.observation}
+      lightning={props.lightning}
+      loading={props.loading}
+      error={props.error}
+    />
+  );
+}
+
+export default LightningCard;
