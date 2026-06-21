@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useState, useEffect, useMemo } from 'react';
 import type { WebcamConfig } from '../api/types';
 import { CurrentConditionsCard } from '../components/current-conditions-card';
 import { PrecipitationCard } from '../components/precipitation-card';
@@ -13,16 +12,10 @@ import { EarthquakeCard } from '../components/earthquake-card';
 import { WindCompassCard } from '../components/WindCompassCard';
 import { NowForecastCard } from '../components/forecast/NowForecastCard';
 import { TodaysHighlightsCard } from '../components/todays-highlights-card';
-import { RadarMap } from '../components/shared/radar-map';
+import { RadarCard } from '../components/shared/radar-card';
 import { WebcamCard } from '../components/webcam-card';
 import { Grid } from '../components/layout/grid';
 import { NowHeroCard } from '../components/layout/now-hero-card';
-import {
-  Card,
-  CardHeader,
-  CardContent,
-  CardTitle,
-} from '../components/ui/card';
 import {
   useForecast,
   useEarthquakes,
@@ -33,31 +26,24 @@ import {
 import { useSmartAlmanac } from '../hooks/useSmartAlmanac';
 import { useRealtimeObservation } from '../hooks/useRealtimeObservation';
 import { useBranding } from '../lib/branding-provider';
-import { toWmoCode } from '../utils/weather-code';
-
-/** Skeleton tile for loading states. */
-function TileSkeleton({ className }: { className?: string }) {
-  return (
-    <div
-      className={`animate-pulse rounded-lg bg-muted ${className ?? 'h-32'}`}
-      aria-hidden="true"
-    />
-  );
-}
+import type { DataBag } from '../lib/card-registry';
+import { CARD_METADATA } from '../lib/card-metadata';
 
 export function NowPage() {
-  const { t: tRadar } = useTranslation('radar');
-
   const branding = useBranding();
 
-  const { data: observation, units, loading: obsLoading, error: obsError, refetch: obsRefetch, barometerTrendDirection, windSpeedAvg10m, windGustMax10m, scene } = useRealtimeObservation();
+  // ── Data hooks ─────────────────────────────────────────────────────────────
+
+  const { data: observation, units, loading: obsLoading, error: obsError, barometerTrendDirection, windSpeedAvg10m, windGustMax10m, scene } = useRealtimeObservation();
   const { data: forecast, loading: fcLoading, error: fcError } = useForecast();
-  const { data: almanac, loading: almLoading, error: almError, refetch: almRefetch } = useSmartAlmanac();
-  const { data: earthquakes, loading: eqLoading, error: eqError, refetch: eqRefetch } = useEarthquakes();
-  const { data: aqi, loading: aqiLoading, error: aqiError, refetch: aqiRefetch } = useAqi();
-  const { data: station } = useStation();
+  const { data: almanac, loading: almLoading, error: almError } = useSmartAlmanac();
+  const { data: earthquakes, loading: eqLoading, error: eqError } = useEarthquakes();
+  const { data: aqi, loading: aqiLoading, error: aqiError } = useAqi();
+  const { data: station, loading: stationLoading } = useStation();
 
   const lightning = useLightning(observation);
+
+  // ── Webcam config (loaded from static /webcam.json) ───────────────────────
 
   const [refreshTs, setRefreshTs] = useState(Date.now());
   const [videoRefreshTs, setVideoRefreshTs] = useState(Date.now());
@@ -83,19 +69,81 @@ export function NowPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // ── DataBag construction ───────────────────────────────────────────────────
+  //
+  // A single DataBag is built once per render from all hook results and passed
+  // to every card. Cards self-extract the fields they need from the bag.
+  // The bag is stable across re-renders via useMemo to prevent unnecessary
+  // re-renders of pure card components.
+
+  const dataBag: DataBag = useMemo(() => ({
+    // /api/v1/current — observation + envelope fields from useRealtimeObservation
+    '/api/v1/current': {
+      data: observation,
+      units,
+      loading: obsLoading,
+      error: obsError,
+      barometerTrendDirection,
+      windSpeedAvg10m,
+      windGustMax10m,
+      scene,
+    },
+    // /api/v1/forecast — forecast bundle
+    '/api/v1/forecast': {
+      data: forecast,
+      loading: fcLoading,
+      error: fcError,
+    },
+    // /api/v1/almanac — almanac snapshot (smart today/tomorrow)
+    '/api/v1/almanac': {
+      data: almanac,
+      loading: almLoading,
+      error: almError,
+    },
+    // /api/v1/earthquakes — earthquake records
+    '/api/v1/earthquakes': {
+      data: earthquakes,
+      loading: eqLoading,
+      error: eqError,
+    },
+    // /api/v1/aqi/current — AQI reading
+    '/api/v1/aqi/current': {
+      data: aqi,
+      loading: aqiLoading,
+      error: aqiError,
+    },
+    // /api/v1/station — station metadata (lat/lon for radar map center)
+    '/api/v1/station': {
+      data: station,
+      loading: stationLoading,
+    },
+    // lightning — derived from observation via useLightning (not an API endpoint)
+    'lightning': {
+      data: lightning,
+    },
+    // webcam — from /webcam.json static file + refresh timestamps
+    'webcam': {
+      config: webcamConfig,
+      refreshTs,
+      videoRefreshTs,
+    },
+  }), [
+    observation, units, obsLoading, obsError,
+    barometerTrendDirection, windSpeedAvg10m, windGustMax10m, scene,
+    forecast, fcLoading, fcError,
+    almanac, almLoading, almError,
+    earthquakes, eqLoading, eqError,
+    aqi, aqiLoading, aqiError,
+    station, stationLoading,
+    lightning,
+    webcamConfig, refreshTs, videoRefreshTs,
+  ]);
+
+  // ── Derived values ──────────────────────────────────────────────────────────
+
   const tz = station?.timezone ?? 'UTC';
 
-  const todayForecast = forecast?.daily?.[0] ?? null;
-  const hourlyForecast = forecast?.hourly ?? null;
-
-  // Derive a WMO weather code for the CC card icon.
-  // Priority: conditions engine weatherCode (integer, from BFF) > forecast daily
-  // code (string, mapped via toWmoCode) > 0 (clear fallback).
-  // Scene is NOT used here; it drives background theming only (4d).
-  const derivedWeatherCode = observation?.weatherCode ?? toWmoCode(todayForecast?.weatherCode) ?? 0;
-
   // Determine logo URL based on current theme
-  // The theme toggle sets data-theme on <html>; detect it from the DOM
   const isDark = typeof document !== 'undefined'
     ? document.documentElement.getAttribute('data-theme') === 'dark'
     : false;
@@ -103,6 +151,14 @@ export function NowPage() {
     ? (branding.logo?.dark ?? branding.logo?.light)
     : branding.logo?.light;
   const logoAlt = branding.logo?.alt;
+
+  // ── Layout helpers ─────────────────────────────────────────────────────────
+  // Each card receives its default layout from CARD_METADATA.allowedLayouts[0].
+  // Cards ignore the layout prop (they set their own footprint/rowSpan internally)
+  // but the prop is required by CardComponentProps for the admin page contract.
+
+  const layout = (type: keyof typeof CARD_METADATA) =>
+    CARD_METADATA[type].allowedLayouts[0];
 
   return (
     <div className="flex flex-col">
@@ -128,139 +184,107 @@ export function NowPage() {
 
         {/* ── Current Conditions — wide 2×2 (cols 1-2, rows 1-2) ───────── */}
         <CurrentConditionsCard
-          observation={observation}
-          loading={obsLoading}
-          error={obsError}
-          units={units}
-          weatherText={observation?.weatherText ?? todayForecast?.weatherText ?? null}
-          weatherCode={derivedWeatherCode}
-          isNight={scene ? !scene.daytime : false}
-          todayHigh={todayForecast?.tempMax ?? null}
-          todayLow={todayForecast?.tempMin ?? null}
-          hourlyForecast={hourlyForecast ?? null}
-          onRetry={obsRefetch}
+          dataBag={dataBag}
+          layout={layout('current-conditions')}
+          stationTz={tz}
         />
 
         {/* ── Today's Forecast — wide 2×2 (cols 3-4, rows 1-2) ─────────── */}
         <NowForecastCard
-          forecast={forecast}
-          loading={fcLoading}
-          error={fcError}
-          stationTz={station?.timezone}
+          dataBag={dataBag}
+          layout={layout('now-forecast')}
+          stationTz={tz}
         />
 
         {/* Row 3-4: Wind (tile 1×2) + Highlights (tile 1×2) + Precip/Baro/Solar/UV ── */}
 
         {/* ── Wind Compass — tile 1×2 (col 1, rows 3-4) ───────────────── */}
-        <WindCompassCard observation={observation} windSpeedAvg10m={windSpeedAvg10m} windGustMax10m={windGustMax10m} />
+        <WindCompassCard
+          dataBag={dataBag}
+          layout={layout('wind-compass')}
+          stationTz={tz}
+        />
 
         {/* ── Today's Highlights — tile 1×2 (col 2, rows 3-4) ─────────── */}
         <TodaysHighlightsCard
-          observation={observation}
-          loading={obsLoading}
+          dataBag={dataBag}
+          layout={layout('todays-highlights')}
+          stationTz={tz}
         />
 
         {/* ── Precipitation — tile 1×1 (col 3, row 3) ─────────────────── */}
         <PrecipitationCard
-          observation={observation}
-          units={units}
-          loading={obsLoading}
-          error={obsError?.message ?? null}
-          onRetry={obsRefetch}
+          dataBag={dataBag}
+          layout={layout('precipitation')}
+          stationTz={tz}
         />
 
         {/* ── Barometer — tile 1×1 (col 4, row 3) ─────────────────────── */}
         <BarometerCard
-          observation={observation}
-          barometerTrendDirection={barometerTrendDirection}
-          loading={obsLoading}
-          error={obsError?.message ?? null}
-          onRetry={obsRefetch}
+          dataBag={dataBag}
+          layout={layout('barometer')}
+          stationTz={tz}
         />
 
         {/* ── Solar Radiation — tile 1×1 (col 3, row 4) ───────────────── */}
         <SolarRadiationCard
-          observation={observation}
-          loading={obsLoading}
-          error={obsError?.message ?? null}
-          onRetry={obsRefetch}
+          dataBag={dataBag}
+          layout={layout('solar-radiation')}
+          stationTz={tz}
         />
 
         {/* ── UV Index — tile 1×1 (col 4, row 4) ──────────────────────── */}
         <UvIndexCard
-          observation={observation}
-          todayForecast={todayForecast}
-          sunrise={almanac?.sun?.rise ?? null}
-          sunset={almanac?.sun?.set ?? null}
-          loading={obsLoading}
-          error={obsError?.message ?? null}
-          onRetry={obsRefetch}
+          dataBag={dataBag}
+          layout={layout('uv-index')}
+          stationTz={tz}
         />
 
         {/* Row 5: AQI · Sun & Moon · Lightning · Earthquake (4 tiles) ──── */}
 
         {/* ── AQI — tile 1×1 (col 1, row 5) ───────────────────────────── */}
         <AqiCard
-          aqi={aqi}
-          loading={aqiLoading}
-          error={aqiError?.message ?? null}
-          onRetry={aqiRefetch}
+          dataBag={dataBag}
+          layout={layout('aqi')}
+          stationTz={tz}
         />
 
         {/* ── Sun & Moon — tile 1×1 (col 2, row 5) ────────────────────── */}
         <SunMoonCard
-          almanac={almanac}
-          loading={almLoading}
-          error={almError?.message ?? null}
-          onRetry={almRefetch}
+          dataBag={dataBag}
+          layout={layout('sun-moon')}
           stationTz={tz}
         />
 
         {/* ── Lightning — tile 1×1 (col 3, row 5) ─────────────────────── */}
         <LightningCard
-          observation={observation}
-          lightning={lightning}
-          loading={obsLoading}
-          error={obsError?.message ?? null}
+          dataBag={dataBag}
+          layout={layout('lightning')}
+          stationTz={tz}
         />
 
         {/* ── Earthquake — tile 1×1 (col 4, row 5) ────────────────────── */}
         <EarthquakeCard
-          earthquakes={earthquakes}
-          loading={eqLoading}
-          error={eqError?.message ?? null}
-          onRetry={eqRefetch}
+          dataBag={dataBag}
+          layout={layout('earthquake')}
           stationTz={tz}
         />
 
         {/* Row 6+: Radar (wide 2×2.5) + Webcam (wide 2×2.5) ─────────────── */}
 
         {/* ── Radar — wide 2×2.5 (cols 1-2, rows 6+) ──────────────────── */}
-        {/* relative z-0: creates a stacking context to contain Leaflet's internal z-indices.
-            min-h-[37.5rem]: 2.5-row height fallback on mobile where auto-rows:auto makes rowSpan inert.
-            md:min-h-0 md:h-auto: on desktop the grid row-span controls height; min-h is removed. */}
-        <Card footprint="wide" rowSpan={2.5} className="relative z-0 min-h-[37.5rem] md:min-h-0 md:h-auto">
-          <CardHeader>
-            <CardTitle as="h2">{tRadar('radarTitle')}</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-1">
-            {station ? (
-              <RadarMap
-                center={[station.latitude, station.longitude]}
-                stationTz={station.timezone}
-              />
-            ) : (
-              <TileSkeleton className="h-96" />
-            )}
-          </CardContent>
-        </Card>
+        <RadarCard
+          dataBag={dataBag}
+          layout={layout('radar')}
+          stationTz={tz}
+        />
 
         {/* ── Webcam — wide 2×2.5 (cols 3-4, rows 6+) ─────────────────── */}
-        {webcamEnabled && webcamConfig && (
+        {webcamEnabled && (
           <WebcamCard
-            webcamConfig={webcamConfig}
-            refreshTs={refreshTs}
-            videoRefreshTs={videoRefreshTs}
+            dataBag={dataBag}
+            layout={layout('webcam')}
+            stationTz={tz}
           />
         )}
 
