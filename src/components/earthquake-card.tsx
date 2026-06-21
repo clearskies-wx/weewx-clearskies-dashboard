@@ -38,6 +38,7 @@ import {
 } from './ui/card';
 import { magnitudeClasses } from '../utils/earthquake';
 import type { EarthquakeRecord } from '../api/types';
+import type { CardComponentProps } from '../lib/card-registry';
 
 // ---------------------------------------------------------------------------
 // Time formatting
@@ -241,7 +242,7 @@ export interface EarthquakeCardProps {
   stationTz: string;
 }
 
-export function EarthquakeCard({
+function EarthquakeCardContent({
   earthquakes,
   loading = false,
   error = null,
@@ -265,7 +266,13 @@ export function EarthquakeCard({
             <EarthquakeSkeleton />
           </>
         ) : error ? (
-          <EarthquakeError message={error} onRetry={onRetry} />
+          onRetry ? (
+            <EarthquakeError message={error} onRetry={onRetry} />
+          ) : (
+            <p role="alert" className="text-muted-foreground" style={{ fontFamily: 'var(--font-sans, system-ui, sans-serif)', fontSize: 'var(--text-secondary)' }}>
+              {error}
+            </p>
+          )
         ) : !hasData ? (
           <p
             style={{
@@ -294,3 +301,42 @@ export function EarthquakeCard({
     </Card>
   );
 }
+
+// ---------------------------------------------------------------------------
+// DataBag-aware component (CardComponentProps — T0B.2 contract)
+// ---------------------------------------------------------------------------
+
+export function EarthquakeCard(props: CardComponentProps): React.ReactElement;
+export function EarthquakeCard(props: EarthquakeCardProps): React.ReactElement;
+export function EarthquakeCard(props: CardComponentProps | EarthquakeCardProps): React.ReactElement {
+  if ('dataBag' in props) {
+    // DataBag path — self-extract from /api/v1/earthquakes; use stationTz from CardComponentProps
+    const eqData = props.dataBag['/api/v1/earthquakes'] as {
+      data?: EarthquakeRecord[] | null;
+      loading?: boolean;
+      error?: unknown;
+    } | undefined;
+
+    return (
+      <EarthquakeCardContent
+        earthquakes={eqData?.data ?? null}
+        loading={eqData?.loading ?? true}
+        error={eqData?.error ? 'Data unavailable' : null}
+        stationTz={props.stationTz}
+        // omit onRetry → renders muted text instead of retry button
+      />
+    );
+  }
+  // Legacy path — explicit props
+  return (
+    <EarthquakeCardContent
+      earthquakes={props.earthquakes}
+      loading={props.loading}
+      error={props.error}
+      onRetry={props.onRetry}
+      stationTz={props.stationTz}
+    />
+  );
+}
+
+export default EarthquakeCard;

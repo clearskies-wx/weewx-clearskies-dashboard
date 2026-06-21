@@ -35,6 +35,7 @@ import {
   CardTitle,
   CardContent,
 } from './ui/card';
+import type { CardComponentProps } from '../lib/card-registry';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -416,18 +417,7 @@ function SunMoonContent({ almanac, stationTz }: SunMoonContentProps) {
 // Component
 // ---------------------------------------------------------------------------
 
-/**
- * SunMoonCard — displays nested semicircular arc visualization of today's
- * sun and moon arcs with position markers for the current time.
- *
- * Props:
- *   almanac    — AlmanacSnapshot from useAlmanac() hook, or null.
- *   loading    — Show skeleton while data is loading.
- *   error      — Show error + retry when non-null.
- *   onRetry    — Callback for retry button.
- *   stationTz  — IANA TZ from StationMetadata for local time display.
- */
-export function SunMoonCard({
+function SunMoonCardContent({
   almanac,
   loading = false,
   error = null,
@@ -452,10 +442,16 @@ export function SunMoonCard({
             <SunMoonSkeleton />
           </>
         ) : error ? (
-          <SunMoonError
-            message={t('error.almanac')}
-            onRetry={onRetry ?? (() => undefined)}
-          />
+          onRetry ? (
+            <SunMoonError
+              message={t('error.almanac')}
+              onRetry={onRetry}
+            />
+          ) : (
+            <p role="alert" className="text-muted-foreground" style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--text-secondary)' }}>
+              {t('error.almanac')}
+            </p>
+          )
         ) : almanac ? (
           <SunMoonContent almanac={almanac} stationTz={stationTz} />
         ) : (
@@ -467,3 +463,42 @@ export function SunMoonCard({
     </Card>
   );
 }
+
+// ---------------------------------------------------------------------------
+// DataBag-aware component (CardComponentProps — T0B.2 contract)
+// ---------------------------------------------------------------------------
+
+export function SunMoonCard(props: CardComponentProps): React.ReactElement;
+export function SunMoonCard(props: SunMoonCardProps): React.ReactElement;
+export function SunMoonCard(props: CardComponentProps | SunMoonCardProps): React.ReactElement {
+  if ('dataBag' in props) {
+    // DataBag path — self-extract from /api/v1/almanac; use stationTz from CardComponentProps
+    const almanacData = props.dataBag['/api/v1/almanac'] as {
+      data?: AlmanacSnapshot | null;
+      loading?: boolean;
+      error?: unknown;
+    } | undefined;
+
+    return (
+      <SunMoonCardContent
+        almanac={almanacData?.data ?? null}
+        loading={almanacData?.loading ?? true}
+        error={almanacData?.error ? 'error' : null}
+        stationTz={props.stationTz}
+        // omit onRetry → renders muted text instead of retry button
+      />
+    );
+  }
+  // Legacy path — explicit props
+  return (
+    <SunMoonCardContent
+      almanac={props.almanac}
+      loading={props.loading}
+      error={props.error}
+      onRetry={props.onRetry}
+      stationTz={props.stationTz}
+    />
+  );
+}
+
+export default SunMoonCard;

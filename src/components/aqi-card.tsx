@@ -51,6 +51,7 @@ import {
   CardContent,
 } from './ui/card';
 import type { AQIReading, AQIScale } from '../api/types';
+import type { CardComponentProps } from '../lib/card-registry';
 
 // ---------------------------------------------------------------------------
 // Scale configuration — maps each known aqiScale to gauge range and color bands.
@@ -638,7 +639,7 @@ export interface AqiCardProps {
 // Component
 // ---------------------------------------------------------------------------
 
-export function AqiCard({
+function AqiCardContent({
   aqi,
   loading = false,
   error = null,
@@ -725,10 +726,16 @@ export function AqiCard({
             <AqiSkeleton />
           </>
         ) : error ? (
-          <AqiError
-            message={t('error.airQuality')}
-            onRetry={onRetry ?? (() => undefined)}
-          />
+          onRetry ? (
+            <AqiError
+              message={t('error.airQuality')}
+              onRetry={onRetry}
+            />
+          ) : (
+            <p role="alert" className="text-muted-foreground" style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--text-secondary)' }}>
+              {t('error.airQuality')}
+            </p>
+          )
         ) : (
           hasPollutants ? (
             /* Split layout: gauge left (62%) + pollutant column right (38%) */
@@ -808,3 +815,41 @@ export function AqiCard({
     </Card>
   );
 }
+
+// ---------------------------------------------------------------------------
+// DataBag-aware component (CardComponentProps — T0B.2 contract)
+// ---------------------------------------------------------------------------
+
+export function AqiCard(props: CardComponentProps): React.ReactElement;
+export function AqiCard(props: AqiCardProps): React.ReactElement;
+export function AqiCard(props: CardComponentProps | AqiCardProps): React.ReactElement {
+  if ('dataBag' in props) {
+    // DataBag path — self-extract from /api/v1/aqi/current
+    // No onRetry: error shows muted text (page container manages freshness)
+    const aqiData = props.dataBag['/api/v1/aqi/current'] as {
+      data?: AQIReading | null;
+      loading?: boolean;
+      error?: unknown;
+    } | undefined;
+
+    return (
+      <AqiCardContent
+        aqi={aqiData?.data ?? null}
+        loading={aqiData?.loading ?? true}
+        error={aqiData?.error ? 'error' : null}
+        // omit onRetry → AqiCardContent renders muted text instead of retry button
+      />
+    );
+  }
+  // Legacy path — explicit props
+  return (
+    <AqiCardContent
+      aqi={props.aqi}
+      loading={props.loading}
+      error={props.error}
+      onRetry={props.onRetry}
+    />
+  );
+}
+
+export default AqiCard;
