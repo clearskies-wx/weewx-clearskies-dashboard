@@ -18,6 +18,11 @@
 //   - <table class="sr-only"> fallback for chart data
 //   - All values via ConvertedValue.formatted — no client unit math
 //   - Missing values → "—" or element hidden
+//
+// DataBag pattern (T0B.2): card self-extracts from:
+//   dataBag["/api/v1/current"]  (observation, units, scene)
+//   dataBag["/api/v1/forecast"] (todayHigh/Low, hourlyForecast, weatherText fallback)
+// onRetry removed — page container manages data freshness in the DataBag model.
 
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -39,8 +44,10 @@ import {
   CardTitle,
 } from './ui/card';
 import { WeatherIcon } from './weather-icon';
-import type { Observation, UnitsBlock, ArchiveRecord, HourlyForecastPoint } from '../api/types';
+import type { Observation, UnitsBlock, ArchiveRecord, HourlyForecastPoint, ForecastBundle, SceneDescriptor } from '../api/types';
 import { useArchive } from '../hooks/useWeatherData';
+import { toWmoCode } from '../utils/weather-code';
+import type { CardComponentProps } from '../lib/card-registry';
 
 // ---------------------------------------------------------------------------
 // Sub-components: loading / error states
@@ -52,23 +59,6 @@ function TileSkeleton({ className }: { className?: string }) {
       className={`animate-pulse rounded-lg bg-muted ${className ?? 'h-32'}`}
       aria-hidden="true"
     />
-  );
-}
-
-function TileError({ message, onRetry }: { message: string; onRetry: () => void }) {
-  const { t } = useTranslation('common');
-  return (
-    <div role="alert" className="flex flex-col gap-2 items-start" style={{ fontSize: 'var(--text-body)' }}>
-      <p className="text-destructive">{message}</p>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
-        style={{ fontSize: 'var(--text-label)' }}
-      >
-        {t('retry')}
-      </button>
-    </div>
   );
 }
 
@@ -317,10 +307,10 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
 }
 
 // ---------------------------------------------------------------------------
-// Props
+// Legacy props interface — kept for any non-Now-page callers.
 // ---------------------------------------------------------------------------
 
-interface CurrentConditionsCardProps {
+export interface CurrentConditionsCardProps {
   observation: Observation | null;
   loading: boolean;
   error: Error | null;
@@ -344,10 +334,23 @@ interface CurrentConditionsCardProps {
 }
 
 // ---------------------------------------------------------------------------
-// Component
+// Core render logic (shared by both prop shapes)
 // ---------------------------------------------------------------------------
 
-export function CurrentConditionsCard({
+interface CurrentConditionsCardInternalProps {
+  observation: Observation | null;
+  loading: boolean;
+  error: Error | null;
+  units?: UnitsBlock;
+  weatherText?: string | null;
+  weatherCode?: number | string | null;
+  isNight?: boolean;
+  todayHigh?: number | null;
+  todayLow?: number | null;
+  hourlyForecast?: HourlyForecastPoint[] | null;
+}
+
+function CurrentConditionsCardContent({
   observation,
   loading,
   error,
@@ -358,8 +361,7 @@ export function CurrentConditionsCard({
   todayHigh,
   todayLow,
   hourlyForecast,
-  onRetry,
-}: CurrentConditionsCardProps) {
+}: CurrentConditionsCardInternalProps) {
   const { t } = useTranslation('now');
 
   const [archiveTick, setArchiveTick] = useState(0);
@@ -419,7 +421,13 @@ export function CurrentConditionsCard({
             </div>
           </>
         ) : error ? (
-          <TileError message={t('error.currentConditions')} onRetry={onRetry} />
+          <p
+            role="alert"
+            className="text-muted-foreground"
+            style={{ fontFamily: 'var(--font-sans)', fontSize: 'var(--text-secondary)' }}
+          >
+            {t('error.currentConditions')}
+          </p>
         ) : observation ? (
           <>
             {/* ── Top region: icon LEFT, text RIGHT ─────────────────────── */}
@@ -596,3 +604,70 @@ export function CurrentConditionsCard({
     </Card>
   );
 }
+
+// ---------------------------------------------------------------------------
+// DataBag-aware component (CardComponentProps — T0B.2 contract)
+// ---------------------------------------------------------------------------
+
+export function CurrentConditionsCard(props: CardComponentProps): React.ReactElement;
+export function CurrentConditionsCard(props: CurrentConditionsCardProps): React.ReactElement;
+export function CurrentConditionsCard(props: CardComponentProps | CurrentConditionsCardProps): React.ReactElement {
+  if ('dataBag' in props) {
+    // DataBag path — self-extract from /api/v1/current and /api/v1/forecast
+    const currentData = props.dataBag['/api/v1/current'] as {
+      data?: Observation | null;
+      units?: UnitsBlock;
+      loading?: boolean;
+      error?: unknown;
+      scene?: SceneDescriptor | null;
+    } | undefined;
+    const forecastData = props.dataBag['/api/v1/forecast'] as {
+      data?: ForecastBundle | null;
+    } | undefined;
+
+    const observation = currentData?.data ?? null;
+    const forecast = forecastData?.data ?? null;
+    const scene = currentData?.scene ?? null;
+    const todayForecast = forecast?.daily?.[0] ?? null;
+
+    // Derived values constructed in the card (per brief §"Critical details for each card")
+    const weatherText = observation?.weatherText ?? todayForecast?.weatherText ?? null;
+    const weatherCode = observation?.weatherCode ?? toWmoCode(todayForecast?.weatherCode) ?? 0;
+    const isNight = scene ? !scene.daytime : false;
+    const todayHigh = todayForecast?.tempMax ?? null;
+    const todayLow = todayForecast?.tempMin ?? null;
+    const hourlyForecast = forecast?.hourly ?? null;
+
+    return (
+      <CurrentConditionsCardContent
+        observation={observation}
+        loading={currentData?.loading ?? true}
+        error={currentData?.error ? new Error('error') : null}
+        units={currentData?.units}
+        weatherText={weatherText}
+        weatherCode={weatherCode}
+        isNight={isNight}
+        todayHigh={todayHigh}
+        todayLow={todayLow}
+        hourlyForecast={hourlyForecast}
+      />
+    );
+  }
+  // Legacy path — explicit props (onRetry is discarded — DataBag model has no per-card retry)
+  return (
+    <CurrentConditionsCardContent
+      observation={props.observation}
+      loading={props.loading}
+      error={props.error}
+      units={props.units}
+      weatherText={props.weatherText}
+      weatherCode={props.weatherCode}
+      isNight={props.isNight}
+      todayHigh={props.todayHigh}
+      todayLow={props.todayLow}
+      hourlyForecast={props.hourlyForecast}
+    />
+  );
+}
+
+export default CurrentConditionsCard;

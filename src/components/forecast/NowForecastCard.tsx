@@ -7,6 +7,9 @@
 //
 // WAI-ARIA tabs pattern: role="tablist"/"tab"/"tabpanel", Arrow keys.
 // Card header: calendar icon + "Today's Forecast" + tab pills right-justified.
+//
+// DataBag pattern (T0B.2): card self-extracts from dataBag["/api/v1/forecast"].
+// Uses props.stationTz from CardComponentProps directly.
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +18,7 @@ import { HeaderTabs } from '../ui/header-controls';
 import { HourlyStrip } from './HourlyStrip';
 import { DailyColumns } from './DailyColumns';
 import type { ForecastBundle } from '../../api/types';
+import type { CardComponentProps } from '../../lib/card-registry';
 
 // ── Loading / Error skeletons ────────────────────────────────────────────────
 
@@ -39,9 +43,9 @@ export interface NowForecastCardProps {
 
 type Tab = 'today' | '7day';
 
-// ── Component ────────────────────────────────────────────────────────────────
+// ── Core render logic (shared by both prop shapes) ───────────────────────────
 
-export function NowForecastCard({
+function NowForecastCardContent({
   forecast,
   loading,
   error,
@@ -81,10 +85,10 @@ export function NowForecastCard({
         ) : error ? (
           <p
             role="alert"
+            className="text-muted-foreground"
             style={{
               fontFamily: 'var(--font-sans, system-ui, sans-serif)',
               fontSize: 'var(--text-body, 0.9rem)',
-              color: 'var(--destructive)',
             }}
           >
             Unable to load forecast.
@@ -146,6 +150,39 @@ export function NowForecastCard({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+// ── DataBag-aware component (CardComponentProps — T0B.2 contract) ─────────────
+
+export function NowForecastCard(props: CardComponentProps): React.ReactElement;
+export function NowForecastCard(props: NowForecastCardProps): React.ReactElement;
+export function NowForecastCard(props: CardComponentProps | NowForecastCardProps): React.ReactElement {
+  if ('dataBag' in props) {
+    // DataBag path — self-extract from /api/v1/forecast; use stationTz from CardComponentProps
+    const forecastData = props.dataBag['/api/v1/forecast'] as {
+      data?: ForecastBundle | null;
+      loading?: boolean;
+      error?: unknown;
+    } | undefined;
+
+    return (
+      <NowForecastCardContent
+        forecast={forecastData?.data ?? null}
+        loading={forecastData?.loading ?? true}
+        error={forecastData?.error ? new Error('error') : null}
+        stationTz={props.stationTz}
+      />
+    );
+  }
+  // Legacy path — explicit props
+  return (
+    <NowForecastCardContent
+      forecast={props.forecast}
+      loading={props.loading}
+      error={props.error}
+      stationTz={props.stationTz}
+    />
   );
 }
 
