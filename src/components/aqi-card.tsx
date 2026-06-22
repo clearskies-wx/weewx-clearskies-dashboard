@@ -775,6 +775,21 @@ function AqiCardContent({
                   justifyContent: 'center',
                 }}
               >
+                {/* Unit header for pollutant column */}
+                <span
+                  style={{
+                    fontFamily: 'var(--font-sans, system-ui, sans-serif)',
+                    fontWeight: 400,
+                    fontSize: 'var(--text-micro)',
+                    color: 'var(--muted-foreground)',
+                    textAlign: 'right',
+                    lineHeight: 1.25,
+                    paddingBottom: '2px',
+                  }}
+                  aria-hidden="true"
+                >
+                  µg/m³
+                </span>
                 {/* Particulate matter */}
                 <PollutantRow name="PM2.5" value={aqi?.pollutantPM25 ?? null} dotColor={dotColor} isLocalSource={isLocal('pollutantPM25')} />
                 <PollutantRow name="PM10"  value={aqi?.pollutantPM10 ?? null} dotColor={dotColor} isLocalSource={isLocal('pollutantPM10')} />
