@@ -121,8 +121,12 @@ function arcProgress(
 ): number | null {
   if (!riseIso || !setIso) return null;
   const riseMs = new Date(riseIso).getTime();
-  const setMs = new Date(setIso).getTime();
-  if (!isFinite(riseMs) || !isFinite(setMs) || setMs <= riseMs) return null;
+  let setMs = new Date(setIso).getTime();
+  if (!isFinite(riseMs) || !isFinite(setMs)) return null;
+  // Cross-midnight transit: set time is earlier in the calendar day than rise,
+  // meaning the body rises today and sets tomorrow (e.g. moonrise 12:53 PM,
+  // moonset 12:25 AM). Shift set forward 24h to model the actual arc duration.
+  if (setMs <= riseMs) setMs += 24 * 60 * 60 * 1000;
   return (nowMs - riseMs) / (setMs - riseMs);
 }
 
@@ -346,8 +350,8 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
   const PHASE_CX = 20;
   const PHASE_R = 16;
   const shadowOffsetX = isWaning
-    ? PHASE_R * (2 * illumFrac - 1)
-    : PHASE_R * (1 - 2 * illumFrac);
+    ? 2 * PHASE_R * illumFrac
+    : -(2 * PHASE_R * illumFrac);
 
   // Traveled-arc technique: draw the SAME full elliptical path as the dashed
   // background, but use stroke-dasharray to reveal only the traveled portion.
@@ -554,7 +558,7 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
                 />
                 {/* Crescent shadow — offset circle to show illuminated fraction */}
                 <circle
-                  cx={moonMarker.x + (isWaning ? (isMobile ? 6 : 3.5) : (isMobile ? -6 : -3.5)) * (1 - illumFrac) * 2}
+                  cx={moonMarker.x + (isWaning ? 1 : -1) * 2 * (isMobile ? 12 : 7) * illumFrac}
                   cy={moonMarker.y}
                   r={isMobile ? 12 : 7}
                   fill="var(--card-background, #1e293b)"

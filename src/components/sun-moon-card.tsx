@@ -121,8 +121,11 @@ function arcProgress(
 ): number | null {
   if (!riseIso || !setIso) return null;
   const riseMs = new Date(riseIso).getTime();
-  const setMs = new Date(setIso).getTime();
-  if (!isFinite(riseMs) || !isFinite(setMs) || setMs <= riseMs) return null;
+  let setMs = new Date(setIso).getTime();
+  if (!isFinite(riseMs) || !isFinite(setMs)) return null;
+  // Cross-midnight transit: set time is earlier in the calendar day than rise,
+  // meaning the body rises today and sets tomorrow. Shift set forward 24h.
+  if (setMs <= riseMs) setMs += 24 * 60 * 60 * 1000;
   return (nowMs - riseMs) / (setMs - riseMs);
 }
 
