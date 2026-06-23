@@ -60,12 +60,8 @@ import type { CardComponentProps } from '../lib/card-registry';
 //   All colors are paired with position (arc fill position) and category text,
 //   so color is never the only signal (ADR-026 / §5.1 color-alone rule met).
 //
-// Light-mode dot contrast notes (dots are 5px non-text UI elements, require 3:1):
-//   Good variants (#1A7A1A green, #0072B2 blue-safe, #388E3C mid-green): all > 3:1 on white.
-//   Moderate yellow-gold (#B8A000): 3.08:1 on white (meets non-text 3:1 threshold).
-//   Poor orange (#C45E00): 4.5:1+ on white.
-//   Hazardous maroon (#7E0023) / purple (#6B2D8B): > 4.5:1 on white.
-//   Dark-mode card-glass background is ~#1e2028 (near-black); all these colors pass 3:1.
+// Dot colors match gauge band colors — dots are always paired with the pollutant
+// name label so color is never the sole signal (§5.1 satisfied by text pairing).
 // ---------------------------------------------------------------------------
 
 interface AQIScaleConfig {
@@ -102,12 +98,12 @@ const EPA_CONFIG: AQIScaleConfig = {
     { from: 300, to: 500, color: '#7e0023' },  // Hazardous
   ],
   dotColor: (aqi: number): string => {
-    if (aqi <= 50)  return '#1A7A1A';   // Good — accessible green
-    if (aqi <= 100) return '#B8A000';   // Moderate — accessible yellow-gold
-    if (aqi <= 150) return '#C45E00';   // USG — accessible orange
-    if (aqi <= 200) return '#CC0000';   // Unhealthy — accessible red
-    if (aqi <= 300) return '#6B2D8B';   // Very Unhealthy — accessible purple
-    return '#7E0023';                   // Hazardous — accessible maroon
+    if (aqi <= 50)  return '#00e400';   // Good
+    if (aqi <= 100) return '#ffff00';   // Moderate
+    if (aqi <= 150) return '#ff7e00';   // USG
+    if (aqi <= 200) return '#ff0000';   // Unhealthy
+    if (aqi <= 300) return '#8f3f97';   // Very Unhealthy
+    return '#7e0023';                   // Hazardous
   },
 };
 
@@ -124,11 +120,11 @@ const EAQI_CONFIG: AQIScaleConfig = {
     { from: 80, to: 100, color: '#D55E00' },  // Very Poor
   ],
   dotColor: (aqi: number): string => {
-    if (aqi <= 20)  return '#2E8B6A';  // Good
-    if (aqi <= 40)  return '#2E8B6A';  // Fair
-    if (aqi <= 60)  return '#9A8800';  // Moderate
-    if (aqi <= 80)  return '#A06000';  // Poor
-    return '#B03000';                  // Very Poor
+    if (aqi <= 20)  return '#50CCAA';  // Good
+    if (aqi <= 40)  return '#50CCAA';  // Fair
+    if (aqi <= 60)  return '#F0E442';  // Moderate
+    if (aqi <= 80)  return '#E69F00';  // Poor
+    return '#D55E00';                  // Very Poor
   },
 };
 
@@ -143,11 +139,11 @@ const CAQI_CONFIG: AQIScaleConfig = {
     { from: 75, to: 100, color: '#F29305' },  // High
   ],
   dotColor: (aqi: number): string => {
-    if (aqi <= 25)  return '#3A7A2A';  // Very Low
-    if (aqi <= 50)  return '#6A8A00';  // Low
-    if (aqi <= 75)  return '#8A6500';  // Medium
-    if (aqi <= 100) return '#A04A00';  // High
-    return '#B03000';                  // Very High
+    if (aqi <= 25)  return '#79BC6A';  // Very Low
+    if (aqi <= 50)  return '#BBCF4C';  // Low
+    if (aqi <= 75)  return '#EEC20B';  // Medium
+    if (aqi <= 100) return '#F29305';  // High
+    return '#F29305';                  // Very High (same as High)
   },
 };
 
@@ -164,11 +160,11 @@ const INDIA_CONFIG: AQIScaleConfig = {
     { from: 400, to: 500, color: '#7E0023' },  // Severe
   ],
   dotColor: (aqi: number): string => {
-    if (aqi <= 50)  return '#007A4A';  // Good
-    if (aqi <= 100) return '#9A8000';  // Satisfactory
-    if (aqi <= 200) return '#A05A00';  // Moderate
-    if (aqi <= 300) return '#AA0022';  // Poor
-    if (aqi <= 400) return '#550080';  // Very Poor
+    if (aqi <= 50)  return '#009966';  // Good
+    if (aqi <= 100) return '#FFDE33';  // Satisfactory
+    if (aqi <= 200) return '#FF9933';  // Moderate
+    if (aqi <= 300) return '#CC0033';  // Poor
+    if (aqi <= 400) return '#660099';  // Very Poor
     return '#7E0023';                  // Severe
   },
 };
@@ -186,12 +182,12 @@ const CHINA_CONFIG: AQIScaleConfig = {
     { from: 300, to: 500, color: '#7e0023' },  // Serious Pollution (严重污染)
   ],
   dotColor: (aqi: number): string => {
-    if (aqi <= 50)  return '#1A7A1A';
-    if (aqi <= 100) return '#B8A000';
-    if (aqi <= 150) return '#C45E00';
-    if (aqi <= 200) return '#CC0000';
-    if (aqi <= 300) return '#6B2D8B';
-    return '#7E0023';
+    if (aqi <= 50)  return '#00e400';
+    if (aqi <= 100) return '#ffff00';
+    if (aqi <= 150) return '#ff7e00';
+    if (aqi <= 200) return '#ff0000';
+    if (aqi <= 300) return '#8f3f97';
+    return '#7e0023';
   },
 };
 
@@ -207,11 +203,11 @@ const OWM_CONFIG: AQIScaleConfig = {
     { from: 5, to: 5, color: '#ff0000' },  // 5 = Very Poor
   ],
   dotColor: (aqi: number): string => {
-    if (aqi <= 1) return '#1A7A1A';   // Good
-    if (aqi <= 2) return '#5A8A00';   // Fair
-    if (aqi <= 3) return '#B8A000';   // Moderate
-    if (aqi <= 4) return '#C45E00';   // Poor
-    return '#CC0000';                 // Very Poor
+    if (aqi <= 1) return '#00e400';   // Good
+    if (aqi <= 2) return '#AACF4A';   // Fair
+    if (aqi <= 3) return '#ffff00';   // Moderate
+    if (aqi <= 4) return '#ff7e00';   // Poor
+    return '#ff0000';                 // Very Poor
   },
 };
 
@@ -226,10 +222,10 @@ const UK_CONFIG: AQIScaleConfig = {
     { from: 9,  to: 10, color: '#FF0000' },  // Very High
   ],
   dotColor: (aqi: number): string => {
-    if (aqi <= 3)  return '#2A7A2A';  // Low
-    if (aqi <= 6)  return '#B8A000';  // Moderate
-    if (aqi <= 9)  return '#C45E00';  // High
-    return '#CC0000';                 // Very High
+    if (aqi <= 3)  return '#9CFF9C';  // Low
+    if (aqi <= 6)  return '#FFFF00';  // Moderate
+    if (aqi <= 9)  return '#FF7E00';  // High
+    return '#FF0000';                 // Very High
   },
 };
 
@@ -246,11 +242,11 @@ const DE_CONFIG: AQIScaleConfig = {
     { from: 4, to: 5, color: '#ff0000' },
   ],
   dotColor: (aqi: number): string => {
-    if (aqi <= 1) return '#1A7A1A';
-    if (aqi <= 2) return '#5A8A00';
-    if (aqi <= 3) return '#B8A000';
-    if (aqi <= 4) return '#C45E00';
-    return '#CC0000';
+    if (aqi <= 1) return '#00e400';
+    if (aqi <= 2) return '#AACF4A';
+    if (aqi <= 3) return '#ffff00';
+    if (aqi <= 4) return '#ff7e00';
+    return '#ff0000';
   },
 };
 
@@ -264,9 +260,9 @@ const CAI_CONFIG: AQIScaleConfig = {
     { from: 6,  to: 10, color: '#ff0000' },
   ],
   dotColor: (aqi: number): string => {
-    if (aqi <= 3)  return '#1A7A1A';
-    if (aqi <= 6)  return '#B8A000';
-    return '#CC0000';
+    if (aqi <= 3)  return '#00e400';
+    if (aqi <= 6)  return '#ffff00';
+    return '#ff0000';
   },
 };
 
