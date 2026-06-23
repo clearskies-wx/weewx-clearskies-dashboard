@@ -358,6 +358,22 @@ const LEAF_PATH =
   'M223.45,40.07a8,8,0,0,0-7.52-7.52C139.8,28.08,78.82,51,52.82,94a87.09,87.09,0,0,0-12.76,49c.57,15.92,5.21,32,13.79,47.85l-19.51,19.5a8,8,0,0,0,11.32,11.32l19.5-19.51C81,210.73,97.09,215.37,113,215.94q1.67.06,3.33.06A86.93,86.93,0,0,0,162,203.18C205,177.18,227.93,116.21,223.45,40.07ZM153.75,189.5c-22.75,13.78-49.68,14-76.71.77l88.63-88.62a8,8,0,0,0-11.32-11.32L65.73,179c-13.19-27-13-54,.77-76.71,22.09-36.47,74.6-56.44,141.31-54.06C210.2,114.89,190.22,167.41,153.75,189.5Z';
 
 // ---------------------------------------------------------------------------
+// Per-pollutant dot color helper
+// ---------------------------------------------------------------------------
+
+function getPollutantDotColor(
+  pollutantId: string,
+  subIndices: Record<string, number | null> | null,
+  scaleConfig: AQIScaleConfig,
+  fallbackColor: string,
+): string {
+  if (!subIndices) return fallbackColor;
+  const subAqi = subIndices[pollutantId];
+  if (subAqi == null) return fallbackColor;
+  return scaleConfig.dotColor(subAqi);
+}
+
+// ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
 
@@ -685,6 +701,11 @@ function AqiCardContent({
     ? scaleConfig.dotColor(aqiValue)
     : '#4A6A8A';  // neutral fallback when AQI is null
 
+  // Per-pollutant sub-indices — used by getPollutantDotColor to color each dot
+  // independently based on that pollutant's own sub-index value.
+  // Null when the provider doesn't supply sub-indices (IQAir free tier, weewx Path A).
+  const subIndices = aqi?.pollutantSubIndices ?? null;
+
   // Check whether any pollutant data is present (all 8 pollutants).
   const hasPollutants = [
     aqi?.pollutantPM25,
@@ -791,14 +812,14 @@ function AqiCardContent({
                   µg/m³
                 </span>
                 {/* Particulate matter */}
-                <PollutantRow name="PM2.5" value={aqi?.pollutantPM25 ?? null} dotColor={dotColor} isLocalSource={isLocal('pollutantPM25')} />
-                <PollutantRow name="PM10"  value={aqi?.pollutantPM10 ?? null} dotColor={dotColor} isLocalSource={isLocal('pollutantPM10')} />
+                <PollutantRow name="PM2.5" value={aqi?.pollutantPM25 ?? null} dotColor={getPollutantDotColor('PM2.5', subIndices, scaleConfig, dotColor)} isLocalSource={isLocal('pollutantPM25')} />
+                <PollutantRow name="PM10"  value={aqi?.pollutantPM10 ?? null} dotColor={getPollutantDotColor('PM10', subIndices, scaleConfig, dotColor)} isLocalSource={isLocal('pollutantPM10')} />
                 {/* Gases */}
-                <PollutantRow name="O3"    value={aqi?.pollutantO3   ?? null} dotColor={dotColor} isLocalSource={isLocal('pollutantO3')} />
-                <PollutantRow name="NO2"   value={aqi?.pollutantNO2  ?? null} dotColor={dotColor} isLocalSource={isLocal('pollutantNO2')} />
-                <PollutantRow name="SO2"   value={aqi?.pollutantSO2  ?? null} dotColor={dotColor} isLocalSource={isLocal('pollutantSO2')} />
-                <PollutantRow name="CO"    value={aqi?.pollutantCO   ?? null} dotColor={dotColor} isLocalSource={isLocal('pollutantCO')} />
-                {/* Additional — NO and NH3 (shown when non-null) */}
+                <PollutantRow name="O3"    value={aqi?.pollutantO3   ?? null} dotColor={getPollutantDotColor('O3', subIndices, scaleConfig, dotColor)} isLocalSource={isLocal('pollutantO3')} />
+                <PollutantRow name="NO2"   value={aqi?.pollutantNO2  ?? null} dotColor={getPollutantDotColor('NO2', subIndices, scaleConfig, dotColor)} isLocalSource={isLocal('pollutantNO2')} />
+                <PollutantRow name="SO2"   value={aqi?.pollutantSO2  ?? null} dotColor={getPollutantDotColor('SO2', subIndices, scaleConfig, dotColor)} isLocalSource={isLocal('pollutantSO2')} />
+                <PollutantRow name="CO"    value={aqi?.pollutantCO   ?? null} dotColor={getPollutantDotColor('CO', subIndices, scaleConfig, dotColor)} isLocalSource={isLocal('pollutantCO')} />
+                {/* Additional — NO and NH3 (shown when non-null); not part of standard AQI sub-index calc */}
                 <PollutantRow name="NO"    value={aqi?.pollutantNO   ?? null} dotColor={dotColor} isLocalSource={isLocal('pollutantNO')} />
                 <PollutantRow name="NH3"   value={aqi?.pollutantNH3  ?? null} dotColor={dotColor} isLocalSource={isLocal('pollutantNH3')} />
               </div>

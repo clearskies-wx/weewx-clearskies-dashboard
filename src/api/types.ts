@@ -499,6 +499,13 @@ export interface AQIReading {
    * Absent (null) when all values come from the configured AQI provider.
    */
   pollutantSources: Record<string, string> | null;
+  /**
+   * Per-pollutant AQI sub-index values on the same scale as the main `aqi` field.
+   * Keys: canonical pollutant ids ("PM2.5", "PM10", "O3", "NO2", "SO2", "CO").
+   * Values: numeric sub-AQI value, or null if the provider didn't supply it.
+   * Null when the provider doesn't supply per-pollutant sub-indices (e.g. IQAir free tier, weewx Path A).
+   */
+  pollutantSubIndices: Record<string, number | null> | null;
   observedAt: string;
   source: string;
 }

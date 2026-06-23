@@ -48,6 +48,7 @@ export const mockAqi: AQIReading = {
   pollutantNO: null,
   pollutantNH3: null,
   pollutantSources: null,
+  pollutantSubIndices: null,
   observedAt: '2026-05-18T14:00:00Z',
   source: 'airnow',
 };
