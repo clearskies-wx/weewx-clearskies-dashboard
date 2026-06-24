@@ -29,6 +29,8 @@ const ReportsPage = lazyWithReload(() => import('./routes/reports'));
 const AboutPage = lazyWithReload(() => import('./routes/about'));
 const LegalPage = lazyWithReload(() => import('./routes/legal'));
 const CustomPage = lazyWithReload(() => import('./routes/custom-page'));
+// T3.4 — Full-screen expanded radar view. Phase 4 will complete the implementation.
+const RadarExpandedPage = lazyWithReload(() => import('./pages/radar-expanded'));
 
 // PageLoader — Suspense fallback used for every lazy route.
 // Includes a visually-hidden <h1> so axe-core's page-has-heading-one rule
@@ -193,6 +195,17 @@ function App() {
                       <LegalPage />
                     </Suspense>
                   </VisibilityGuard>
+                }
+              />
+              {/* T3.4 — Expanded radar view. Not page-visibility-gated; reachable via
+                  /radar directly or via the expand button on the radar card.
+                  Phase 4 will implement the full view. */}
+              <Route
+                path="radar"
+                element={
+                  <Suspense fallback={<PageLoader title="Radar" />}>
+                    <RadarExpandedPage />
+                  </Suspense>
                 }
               />
               <Route

@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import { Play, Pause, CaretLeft, CaretRight } from '@phosphor-icons/react';
 import { useCapabilities, useRadarFrames } from '../../hooks/useWeatherData';
-import type { CapabilityDeclaration, RadarFrame } from '../../api/types';
+import { getRadarLayerFrames } from '../../api/client';
+import type { CapabilityDeclaration, RadarFrame, RadarFrameList, LayerDeclaration } from '../../api/types';
 import { useTheme } from '../../lib/theme-provider';
 
 interface RadarMapProps {
@@ -15,11 +16,26 @@ interface RadarMapProps {
    * Defaults to UTC when absent.
    */
   stationTz?: string;
+  /**
+   * When true, the component is rendered in the expanded /radar page view.
+   * Expanded view shows full frame history; card view caps at 24 frames (T3.5).
+   */
+  expanded?: boolean;
 }
 
 const SUBSTEPS = 5;        // interpolation steps between each real frame pair
-const TICK_MS = 100;       // milliseconds per sub-step
 const MAX_OPACITY = 0.7;   // max radar overlay opacity
+
+// Target loop duration for adaptive animation speed (T3.5).
+// Keeps the animation loop near 18 seconds regardless of frame count.
+const TARGET_LOOP_DURATION_MS = 18_000;
+
+// Minimum tick interval — prevents animation from being so fast tiles can't keep up.
+const MIN_TICK_MS = 30;
+
+// Card-view frame cap: limit to most-recent N frames to keep animation manageable (T3.5).
+// The expanded view (/radar page, Phase 4) will show the full history.
+const CARD_FRAME_CAP = 24;
 
 // How long to wait after frames load before starting auto-play.
 // Gives the browser time to begin fetching tiles for all frames so the first
@@ -34,14 +50,26 @@ const PRELOAD_DELAY_MS = 1500;
 // The CAPABILITY template keeps the placeholders generic; we resolve them here
 // so Leaflet never sees an unknown {variable} and throws.
 const RAINVIEWER_TILE_SIZE = 512;
-const RAINVIEWER_COLOR = 2;
 const RAINVIEWER_OPTIONS = '0_0';
+
+// Default color scheme index. 2 = "Universal Blue" (meteorological standard).
+const DEFAULT_COLOR_SCHEME = 2;
 
 function buildTileUrl(
   frame: RadarFrame,
   capability: CapabilityDeclaration,
   tileHost: string | null,
+  colorScheme: number,
 ): string | null {
+  // T3.1 — LibreWxR tiles go through the API proxy.
+  // The URL uses Leaflet's {z}/{x}/{y} placeholders so Leaflet handles
+  // tile coordinate substitution as normal. Time and color are query params
+  // baked into the template URL at frame-switch time.
+  if (capability.providerId === 'librewxr') {
+    const t = encodeURIComponent(frame.time);
+    return `/api/v1/radar/providers/librewxr/tiles/{z}/{x}/{y}?t=${t}&color=${colorScheme}`;
+  }
+
   const template = capability.tileUrlTemplate;
 
   if (template) {
@@ -53,7 +81,7 @@ function buildTileUrl(
     // Leaflet's getTileUrl throws "No value provided for variable {X}" for any
     // {placeholder} it cannot expand from its built-in set ({x},{y},{z},{s},{r}).
     url = url.replace('{size}', String(RAINVIEWER_TILE_SIZE));
-    url = url.replace('{color}', String(RAINVIEWER_COLOR));
+    url = url.replace('{color}', String(colorScheme));
     url = url.replace('{options}', RAINVIEWER_OPTIONS);
     return url;
   }
@@ -71,6 +99,24 @@ function buildTileUrl(
     );
   }
 
+  return null;
+}
+
+/**
+ * Build a WMS-T tile URL for a NOAA sub-layer declaration (T3.2).
+ */
+function buildLayerTileUrl(frame: RadarFrame, layer: LayerDeclaration): string | null {
+  if (layer.wmsEndpointUrl && layer.wmsLayerName) {
+    const base = layer.wmsEndpointUrl;
+    const layerName = encodeURIComponent(layer.wmsLayerName);
+    const time = encodeURIComponent(frame.time);
+    return (
+      `${base}?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap` +
+      `&LAYERS=${layerName}&TIME=${time}` +
+      `&BBOX={bbox-epsg-3857}&CRS=EPSG:3857` +
+      `&WIDTH=256&HEIGHT=256&FORMAT=image/png&TRANSPARENT=TRUE`
+    );
+  }
   return null;
 }
 
@@ -139,10 +185,14 @@ const TILE_CONFIG = {
   },
 } as const;
 
-export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
+export function RadarMap({ center, zoom = 7, stationTz, expanded = false }: RadarMapProps) {
   const { t } = useTranslation('radar');
   const { resolved: resolvedTheme } = useTheme();
   const baseTile = TILE_CONFIG[resolvedTheme];
+
+  // T3.1 — color scheme state. Default 2 = "Universal Blue".
+  // Future UI: add a color scheme picker that updates this state.
+  const [colorScheme] = useState<number>(DEFAULT_COLOR_SCHEME);
 
   // --- Capabilities fetch to discover radar provider ---
   const { data: capabilities, loading: capLoading, error: capError } = useCapabilities();
@@ -161,7 +211,72 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
 
   const { data: radarFrameList, loading: framesLoading, error: framesError } = useRadarFrames(providerId);
 
-  const frames: RadarFrame[] = radarFrameList?.frames ?? [];
+  // T3.2 — NOAA dual-layer: fetch per-sub-layer frames when the provider is NOAA
+  // and the capability includes a layers array. The NEXRAD layer (first enabled
+  // radar-type layer) drives the animation timeline; MRMS renders in sync.
+  const isNoaa = providerId === 'noaa';
+  const capabilityLayers = radarCapability?.layers ?? null;
+  const enabledRadarLayers: LayerDeclaration[] | null = isNoaa && capabilityLayers
+    ? capabilityLayers.filter((l) => l.layerType === 'radar' && l.defaultEnabled)
+    : null;
+
+  // Stable string key for the NOAA layer set — used as a useEffect dep.
+  const noaaLayerIdsKey = enabledRadarLayers?.map((l) => l.layerId).join(',') ?? '';
+
+  const [noaaLayerFrameLists, setNoaaLayerFrameLists] = useState<Record<string, RadarFrameList>>({});
+  const [noaaLayersLoading, setNoaaLayersLoading] = useState(false);
+
+  useEffect(() => {
+    if (!enabledRadarLayers || enabledRadarLayers.length === 0 || !providerId) {
+      setNoaaLayerFrameLists({});
+      return;
+    }
+
+    let cancelled = false;
+    const controller = new AbortController();
+    setNoaaLayersLoading(true);
+
+    Promise.all(
+      enabledRadarLayers.map((layer) =>
+        getRadarLayerFrames(providerId, layer.layerId, controller.signal)
+          .then((resp) => ({ layerId: layer.layerId, frameList: resp.data }))
+          .catch(() => ({ layerId: layer.layerId, frameList: null as RadarFrameList | null })),
+      ),
+    ).then((results) => {
+      if (cancelled) return;
+      const merged: Record<string, RadarFrameList> = {};
+      for (const r of results) {
+        if (r.frameList) merged[r.layerId] = r.frameList;
+      }
+      setNoaaLayerFrameLists(merged);
+      setNoaaLayersLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  // noaaLayerIdsKey is a stable string encoding of enabledRadarLayers ids.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [providerId, noaaLayerIdsKey]);
+
+  // Determine the authoritative frames list.
+  // For NOAA: use the NEXRAD layer's frames (first enabled radar layer) for the
+  // animation timeline. For other providers: use the standard radarFrameList.
+  const allFrames: RadarFrame[] = (() => {
+    if (isNoaa && enabledRadarLayers && enabledRadarLayers.length > 0) {
+      const nexradLayerId = enabledRadarLayers[0].layerId;
+      return noaaLayerFrameLists[nexradLayerId]?.frames ?? radarFrameList?.frames ?? [];
+    }
+    return radarFrameList?.frames ?? [];
+  })();
+
+  // T3.5 — Card view caps displayed frames at CARD_FRAME_CAP (most recent).
+  // Expanded view (/radar page, Phase 4) shows full history.
+  const frames: RadarFrame[] = !expanded && allFrames.length > CARD_FRAME_CAP
+    ? allFrames.slice(-CARD_FRAME_CAP)
+    : allFrames;
+
   const tileHost = radarFrameList?.tileHost ?? null;
 
   // --- Animation state ---
@@ -170,10 +285,16 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const preloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Tracks which frame indices have fully loaded all their tiles.
+  // Tracks which (frame, layer) pairs have fully loaded their tiles.
   const loadedLayersRef = useRef(new Set<number>());
 
   const frameCount = frames.length;
+
+  // T3.5 — Adaptive tick interval. Targets TARGET_LOOP_DURATION_MS per full loop.
+  // More frames → smaller tick so the total loop stays near 18 seconds.
+  const adaptiveTickMs = frameCount > 0
+    ? Math.max(MIN_TICK_MS, Math.floor(TARGET_LOOP_DURATION_MS / (frameCount * SUBSTEPS)))
+    : MIN_TICK_MS;
 
   const goNext = useCallback(() => {
     const total = frameCount * SUBSTEPS;
@@ -227,6 +348,7 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
   // Animation timer — advances animationStep one sub-step at a time; cross-fade
   // between real frames is handled by getFrameOpacity. No URL swaps or tile
   // re-fetches after the initial load, resulting in smooth looping.
+  // Uses adaptiveTickMs so long frame lists still produce an ~18s loop (T3.5).
   useEffect(() => {
     if (intervalRef.current !== null) {
       clearInterval(intervalRef.current);
@@ -236,7 +358,7 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
       const totalSteps = frameCount * SUBSTEPS;
       intervalRef.current = setInterval(() => {
         setAnimationStep((s) => (s + 1) % totalSteps);
-      }, TICK_MS);
+      }, adaptiveTickMs);
     }
     return () => {
       if (intervalRef.current !== null) {
@@ -244,13 +366,13 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
         intervalRef.current = null;
       }
     };
-  }, [isPlaying, frameCount]);
+  }, [isPlaying, frameCount, adaptiveTickMs]);
 
   // Derive the display frame index from animationStep for timestamp/counter display.
   const displayFrameIndex = frameCount > 0 ? Math.floor(animationStep / SUBSTEPS) % frameCount : 0;
   const currentFrame: RadarFrame | null = frames[displayFrameIndex] ?? null;
 
-  const isLoading = capLoading || framesLoading;
+  const isLoading = capLoading || framesLoading || noaaLayersLoading;
 
   const formatFrameTime = (isoTime: string) => {
     try {
@@ -289,6 +411,10 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
       </div>
     );
   }
+
+  // Attribution text: prefer the frames response (provider-specific per-fetch),
+  // fall back to the capability-level attribution (T3.3).
+  const providerAttribution = radarFrameList?.attribution ?? radarCapability?.attribution ?? undefined;
 
   return (
     // flex-col h-full: fills the available CardContent height (flex-1 min-h-0).
@@ -350,6 +476,10 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
           so React never unmounts/remounts a layer between renders (which would
           discard cached tiles). The key is intentional here — it is the correct
           pattern to keep layers stable across re-renders.
+
+          T3.2 — NOAA dual-layer: when the provider is NOAA with sub-layers,
+          each frame slot renders TWO TileLayers (NEXRAD + MRMS) at the same
+          opacity, both animated in sync by the shared animationStep.
         */}
         <MapContainer
           center={center}
@@ -363,20 +493,19 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
             url={baseTile.url}
             attribution={baseTile.attribution}
           />
-          {radarCapability !== null && frames.map((frame, i) => {
-            // Capture the non-null capability so TypeScript can confirm it inside
-            // the map callback closure.
+
+          {/* Single-layer providers (RainViewer, LibreWxR, non-NOAA WMS-T) */}
+          {radarCapability !== null && !isNoaa && frames.map((frame, i) => {
             const cap = radarCapability;
-            const url = buildTileUrl(frame, cap, tileHost);
+            const url = buildTileUrl(frame, cap, tileHost, colorScheme);
             if (!url) return null;
-            // Capture the loop index in a stable const for use inside closures.
             const frameIndex = i;
             return (
               <TileLayer
                 key={frame.time}
                 url={url}
                 opacity={Math.max(getFrameOpacity(i, animationStep, frameCount), 0.001)}
-                attribution={i === 0 ? (radarFrameList?.attribution ?? undefined) : undefined}
+                attribution={i === 0 ? providerAttribution : undefined}
                 eventHandlers={{
                   load: () => {
                     // Mark this frame as fully loaded. When all frames are ready,
@@ -394,6 +523,46 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
                 }}
               />
             );
+          })}
+
+          {/* T3.2 — NOAA dual-layer: render NEXRAD + MRMS simultaneously, in sync.
+              Each frame slot produces one TileLayer per sub-layer; both share the
+              same opacity computed from the shared animationStep. */}
+          {radarCapability !== null && isNoaa && enabledRadarLayers && frames.map((frame, i) => {
+            const frameOpacity = Math.max(getFrameOpacity(i, animationStep, frameCount), 0.001);
+            const layerCount = enabledRadarLayers.length;
+            return enabledRadarLayers.map((layer, layerIdx) => {
+              const layerFrameList = noaaLayerFrameLists[layer.layerId];
+              // Use the matching frame from this sub-layer's own frame list when available,
+              // falling back to the primary frame (same time index) when sub-layer frames
+              // haven't loaded yet or the index is out of range.
+              const layerFrame = layerFrameList?.frames[i] ?? frame;
+              const url = buildLayerTileUrl(layerFrame, layer);
+              if (!url) return null;
+              const loadKey = i * layerCount + layerIdx;
+              const expectedLoads = frames.length * layerCount;
+              return (
+                <TileLayer
+                  key={`${layer.layerId}-${frame.time}`}
+                  url={url}
+                  opacity={frameOpacity}
+                  attribution={i === 0 && layerIdx === 0 ? providerAttribution : undefined}
+                  eventHandlers={{
+                    load: () => {
+                      // Count loads across all layers × frames.
+                      loadedLayersRef.current.add(loadKey);
+                      if (loadedLayersRef.current.size >= expectedLoads) {
+                        if (preloadTimerRef.current !== null) {
+                          clearTimeout(preloadTimerRef.current);
+                          preloadTimerRef.current = null;
+                        }
+                        setIsPlaying(true);
+                      }
+                    },
+                  }}
+                />
+              );
+            });
           })}
         </MapContainer>
 
