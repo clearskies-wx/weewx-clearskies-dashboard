@@ -631,7 +631,7 @@ export function LunarEclipseCard({
           const MAX_COLS = 4;
           const TWO_YEARS_MS = 2 * 365.25 * 24 * 60 * 60 * 1000;
           const cutoff = new Date(Date.now() + TWO_YEARS_MS);
-          const visible = eclipses.eclipses.filter(e => e.visibility !== 'Not Visible');
+          const visible = eclipses.eclipses.filter(e => e.visibility != null && e.visibility !== 'Not Visible');
           const twoYr = visible.filter(e => new Date(e.date) <= cutoff);
           const display = twoYr.length >= MAX_COLS
             ? twoYr.slice(0, MAX_COLS)
