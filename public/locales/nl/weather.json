@@ -4,6 +4,8 @@
     "1":       "Overwegend helder",
     "2":       "Gedeeltelijk bewolkt",
     "3":       "Geheel bewolkt",
+    "5":       "Nevel",
+    "10":      "Mist",
     "45":      "Mist",
     "48":      "Aanvriezende mist",
     "51":      "Lichte motregen",

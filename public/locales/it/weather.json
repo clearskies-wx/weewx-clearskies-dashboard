@@ -4,6 +4,8 @@
     "1":       "Prevalentemente sereno",
     "2":       "Parzialmente nuvoloso",
     "3":       "Coperto",
+    "5":       "Foschia",
+    "10":      "Nebbia leggera",
     "45":      "Nebbia",
     "48":      "Nebbia con brina",
     "51":      "Pioviggine leggera",

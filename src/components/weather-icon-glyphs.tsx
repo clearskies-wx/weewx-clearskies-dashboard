@@ -64,6 +64,11 @@ function GradientDefs({ p }: { p: string }): ReactElement {
         <stop offset="0%"   stopColor="#86C3DB" />
         <stop offset="100%" stopColor="#72B9D5" />
       </linearGradient>
+      {/* Haze gradient: amber/brown — haze stripes below clipped sun/moon */}
+      <linearGradient id={`${p}hazeGrad`} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"   stopColor="#CDAA6D" />
+        <stop offset="100%" stopColor="#A07840" />
+      </linearGradient>
     </defs>
   );
 }
@@ -270,6 +275,72 @@ export function GlyphBedtime({ size }: GlyphProps): ReactElement {
   return (
     <Svg size={size} p={p}>
       <path fill={`url(#${p}moonGrad)`} d={d} />
+    </Svg>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 9. Hazy day — clipped sun (top) + fog-style haze stripes (bottom, amber).
+//    Sun body clipped at y=16.5; fog stripe bars + dots filled with hazeGrad.
+//    Brown stripes visually distinguish haze from grey fog stripes.
+// ---------------------------------------------------------------------------
+
+export function GlyphHazy({ size }: GlyphProps): ReactElement {
+  const p = useId();
+  // Reuse the sunny path from GlyphSunny
+  const sunPath = 'M11 5V1h2v4zm6.65 2.75l-1.375-1.375l2.8-2.875l1.4 1.425zM19 13v-2h4v2zm-8 10v-4h2v4zM6.35 7.7L3.5 4.925l1.425-1.4L7.75 6.35zm12.7 12.8l-2.775-2.875l1.35-1.35l2.85 2.75zM1 13v-2h4v2zm3.925 7.5l-1.4-1.425l2.8-2.8l.725.675l.725.7zm2.825-4.25Q6 14.5 6 12t1.75-4.25T12 6t4.25 1.75T18 12t-1.75 4.25T12 18t-4.25-1.75';
+  // Fog stripe subpaths (from foggy.svg, absolute coordinates)
+  const hazePaths = [
+    'M6 19q-.425 0-.712-.288T5 18t.288-.712T6 17h9q.425 0 .713.288T16 18t-.288.713T15 19z',
+    'M18 19q-.425 0-.712-.288T17 18t.288-.712T18 17t.713.288T19 18t-.288.713T18 19',
+    'M10 22q-.425 0-.712-.288T9 21t.288-.712T10 20h7q.425 0 .713.288T18 21t-.288.713T17 22z',
+    'M7 22q-.425 0-.712-.288T6 21t.288-.712T7 20t.713.288T8 21t-.288.713T7 22',
+  ];
+  return (
+    <Svg size={size} p={p}>
+      <defs>
+        <clipPath id={`${p}hazeClip`}>
+          <rect x="0" y="0" width="24" height="16.5" />
+        </clipPath>
+      </defs>
+      <g clipPath={`url(#${p}hazeClip)`}>
+        <path fill={`url(#${p}goldGrad)`} d={sunPath} />
+      </g>
+      {hazePaths.map((d, i) => (
+        <path key={i} fill={`url(#${p}hazeGrad)`} d={d} />
+      ))}
+    </Svg>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 10. Hazy night — clipped crescent moon (top) + fog-style haze stripes (bottom, amber).
+//     Moon body clipped at y=16.5; same haze stripe paths as day variant.
+// ---------------------------------------------------------------------------
+
+export function GlyphHazyNight({ size }: GlyphProps): ReactElement {
+  const p = useId();
+  // Reuse the bedtime moon path from GlyphBedtime
+  const moonPath = 'M12.1 22q-2.1 0-3.937-.8t-3.2-2.162t-2.163-3.2T2 11.9q0-3.65 2.325-6.437T10.25 2q-.45 2.475.275 4.838t2.5 4.137t4.138 2.5T22 13.75q-.65 3.6-3.45 5.925T12.1 22';
+  const hazePaths = [
+    'M6 19q-.425 0-.712-.288T5 18t.288-.712T6 17h9q.425 0 .713.288T16 18t-.288.713T15 19z',
+    'M18 19q-.425 0-.712-.288T17 18t.288-.712T18 17t.713.288T19 18t-.288.713T18 19',
+    'M10 22q-.425 0-.712-.288T9 21t.288-.712T10 20h7q.425 0 .713.288T18 21t-.288.713T17 22z',
+    'M7 22q-.425 0-.712-.288T6 21t.288-.712T7 20t.713.288T8 21t-.288.713T7 22',
+  ];
+  return (
+    <Svg size={size} p={p}>
+      <defs>
+        <clipPath id={`${p}hazeClipN`}>
+          <rect x="0" y="0" width="24" height="16.5" />
+        </clipPath>
+      </defs>
+      <g clipPath={`url(#${p}hazeClipN)`}>
+        <path fill={`url(#${p}moonGrad)`} d={moonPath} />
+      </g>
+      {hazePaths.map((d, i) => (
+        <path key={i} fill={`url(#${p}hazeGrad)`} d={d} />
+      ))}
     </Svg>
   );
 }

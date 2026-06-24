@@ -23,6 +23,8 @@ import {
   GlyphSnowy,
   GlyphThunderstorm,
   GlyphBedtime,
+  GlyphHazy,
+  GlyphHazyNight,
 } from './weather-icon-glyphs';
 import type { ComponentType } from 'react';
 import type { GlyphProps } from './weather-icon-glyphs';
@@ -57,6 +59,10 @@ const WMO_MAP: Record<number, GlyphEntry> = {
   2:  { day: GlyphPartlyCloudy, night: GlyphPartlyCloudyNight, descriptionKey: 'wmo.2'  },
   // Overcast
   3:  { day: GlyphCloud,                                  descriptionKey: 'wmo.3'  },
+  // Haze
+  5:  { day: GlyphHazy,        night: GlyphHazyNight,    descriptionKey: 'wmo.5'  },
+  // Mist
+  10: { day: GlyphFoggy,                                  descriptionKey: 'wmo.10' },
   // Fog / rime fog
   45: { day: GlyphFoggy,                                  descriptionKey: 'wmo.45' },
   48: { day: GlyphFoggy,                                  descriptionKey: 'wmo.48' },

@@ -4,6 +4,8 @@
     "1":       "Mainly clear",
     "2":       "Partly cloudy",
     "3":       "Overcast",
+    "5":       "Haze",
+    "10":      "Mist",
     "45":      "Fog",
     "48":      "Depositing rime fog",
     "51":      "Light drizzle",

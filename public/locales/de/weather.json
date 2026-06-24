@@ -4,6 +4,8 @@
     "1":       "Überwiegend klar",
     "2":       "Teilweise bewölkt",
     "3":       "Bedeckt",
+    "5":       "Dunst",
+    "10":      "Nebel",
     "45":      "Nebel",
     "48":      "Reifnebel",
     "51":      "Leichter Nieselregen",

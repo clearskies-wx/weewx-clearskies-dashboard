@@ -4,6 +4,8 @@
     "1":       "Predominantemente limpo",
     "2":       "Parcialmente nublado",
     "3":       "Encoberto",
+    "5":       "Bruma",
+    "10":      "Neblina",
     "45":      "Nevoeiro",
     "48":      "Nevoeiro com geada",
     "51":      "Chuvisco fraco",

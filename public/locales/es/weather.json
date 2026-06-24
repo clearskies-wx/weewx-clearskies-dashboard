@@ -4,6 +4,8 @@
     "1":       "Mayormente despejado",
     "2":       "Parcialmente nublado",
     "3":       "Cubierto",
+    "5":       "Calima",
+    "10":      "Neblina",
     "45":      "Niebla",
     "48":      "Niebla con cencellada",
     "51":      "Llovizna ligera",
