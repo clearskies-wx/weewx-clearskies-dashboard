@@ -29,6 +29,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AlmanacSnapshot } from '../api/types';
+import { MoonPhaseG } from './moon-phase-icon';
 import {
   Card,
   CardHeader,
@@ -197,7 +198,6 @@ function ArcVisualization({
     moonPct !== null ? arcPoint(moonPct, CX, CY, MOON_RX, MOON_RY) : null;
 
   const illumination = almanac.moon.illuminationPercent;
-  const isNewMoon = illumination !== null && illumination === 0;
   const phaseWords = formatPhaseName(almanac.moon.phaseName).split(' ');
 
   return (
@@ -269,35 +269,13 @@ function ArcVisualization({
       {/* ── Moon position marker ───────────────────────────────────────── */}
       {moonMarker && (
         <g aria-hidden="true">
-          {isNewMoon ? (
-            /* New moon: outlined ring with dark fill (no illumination) */
-            <circle
-              cx={moonMarker.x}
-              cy={moonMarker.y}
-              r={6.5}
-              fill="var(--background, #0f172a)"
-              stroke={MOON_COLOR}
-              strokeWidth={1.5}
-            />
-          ) : (
-            /* Illuminated moon: solid marker with crescent shadow overlay */
-            <>
-              <circle
-                cx={moonMarker.x}
-                cy={moonMarker.y}
-                r={7}
-                fill={MOON_COLOR}
-              />
-              {/* Crescent shadow — offset dark circle covering the "dark" side */}
-              <circle
-                cx={moonMarker.x + 2.6}
-                cy={moonMarker.y - 2}
-                r={5}
-                fill="var(--card-background, #1e293b)"
-                fillOpacity={0.55}
-              />
-            </>
-          )}
+          <MoonPhaseG
+            cx={moonMarker.x}
+            cy={moonMarker.y}
+            r={6.5}
+            illuminationPercent={illumination ?? 50}
+            phaseName={almanac.moon.phaseName}
+          />
         </g>
       )}
 

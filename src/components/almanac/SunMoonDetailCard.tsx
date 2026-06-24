@@ -31,6 +31,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AlmanacSnapshot, MoonNameData } from '../../api/types';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { MoonPhaseG, MoonPhaseIcon } from '../moon-phase-icon';
 import {
   Card,
   CardHeader,
@@ -288,7 +289,6 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
 
   // Moon phase
   const illumination = almanac.moon.illuminationPercent;
-  const isNewMoon = illumination !== null && illumination === 0;
   const phaseName = formatPhaseName(almanac.moon.phaseName);
   const illumText =
     illumination !== null ? `${Math.round(illumination)}%` : '—';
@@ -333,25 +333,7 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
         ]
       : [];
 
-  // Moon phase SVG circle — mimic waxing/waning gibbous crescent
-  // illum 0 = outlined ring (new moon), otherwise solid with crescent overlay.
-  // The crescent effect: fill illuminated side, dark-overlay the shadowed side.
-  // For waxing phases: shadow on left; for waning: shadow on right.
-  // Simplified approach: always put dark overlay on the side opposite the
-  // illuminated fraction, proportional to (1 - illumination/100).
-  const illumFrac = illumination !== null ? illumination / 100 : 0.5;
-  // x-offset for the shadow circle: negative = left shadow (waxing)
-  // When phaseName contains "waning", flip to right shadow.
-  const isWaning =
-    almanac.moon.phaseName?.includes('waning') ?? false;
-  // Phase SVG for the moon-phase-row below the arc
-  // viewBox 40×40, center 20,20, r=16 — 4px padding avoids anti-alias clipping
-  const phaseViewBox = '0 0 40 40';
-  const PHASE_CX = 20;
-  const PHASE_R = 16;
-  const shadowOffsetX = isWaning
-    ? 2 * PHASE_R * illumFrac
-    : -(2 * PHASE_R * illumFrac);
+  // (Moon phase rendering is handled by MoonPhaseG / MoonPhaseIcon components)
 
   // Traveled-arc technique: draw the SAME full elliptical path as the dashed
   // background, but use stroke-dasharray to reveal only the traveled portion.
@@ -537,35 +519,13 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
         {/* ── Moon position marker ────────────────────────────────────────── */}
         {moonMarker && (
           <g aria-hidden="true">
-            {isNewMoon ? (
-              /* New moon: outlined ring with dark fill */
-              <circle
-                cx={moonMarker.x}
-                cy={moonMarker.y}
-                r={isMobile ? 12 : 7}
-                fill="var(--background, #0f172a)"
-                stroke={MOON_COLOR}
-                strokeWidth={isMobile ? 2.5 : 1.5}
-              />
-            ) : (
-              /* Illuminated moon with crescent shadow overlay */
-              <>
-                <circle
-                  cx={moonMarker.x}
-                  cy={moonMarker.y}
-                  r={isMobile ? 12 : 7}
-                  fill={MOON_COLOR}
-                />
-                {/* Crescent shadow — offset circle to show illuminated fraction */}
-                <circle
-                  cx={moonMarker.x + (isWaning ? 1 : -1) * 2 * (isMobile ? 12 : 7) * illumFrac}
-                  cy={moonMarker.y}
-                  r={isMobile ? 12 : 7}
-                  fill="var(--card-background, #1e293b)"
-                  fillOpacity={illumFrac < 0.9 ? 0.65 : 0.0}
-                />
-              </>
-            )}
+            <MoonPhaseG
+              cx={moonMarker.x}
+              cy={moonMarker.y}
+              r={isMobile ? 12 : 7}
+              illuminationPercent={illumination ?? 50}
+              phaseName={almanac.moon.phaseName}
+            />
             {/* Altitude label above moon marker */}
             {moonAltText && (
               <text
@@ -635,40 +595,13 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
 
       {/* ── Moon phase row ──────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3" aria-label={`${phaseName}, ${illumText} illuminated`}>
-        {/* Moon phase SVG circle */}
-        <svg
-          width={isMobile ? 48 : 40}
-          height={isMobile ? 48 : 40}
-          viewBox={phaseViewBox}
-          role="img"
-          aria-label={`${phaseName} ${illumText} illuminated`}
-          style={{ flexShrink: 0 }}
-        >
-          <title>{phaseName} — {illumText} illuminated</title>
-          {isNewMoon ? (
-            /* New moon: outlined ring only */
-            <circle
-              cx={PHASE_CX}
-              cy={PHASE_CX}
-              r={PHASE_R}
-              fill="var(--background, #1a1a2e)"
-              stroke={MOON_COLOR}
-              strokeWidth={1.5}
-            />
-          ) : (
-            <>
-              {/* Full illuminated disc */}
-              <circle cx={PHASE_CX} cy={PHASE_CX} r={PHASE_R} fill={MOON_COLOR} />
-              {/* Shadow crescent — offset circle covers the dark portion */}
-              <circle
-                cx={PHASE_CX + shadowOffsetX}
-                cy={PHASE_CX}
-                r={PHASE_R}
-                fill="var(--background, #1a1a2e)"
-              />
-            </>
-          )}
-        </svg>
+        {/* Moon phase SVG icon — elliptical terminator rendering */}
+        <MoonPhaseIcon
+          size={isMobile ? 48 : 40}
+          illuminationPercent={illumination ?? 50}
+          phaseName={almanac.moon.phaseName}
+          ariaLabel={`${phaseName} ${illumText} illuminated`}
+        />
 
         <div>
           <div
