@@ -1,7 +1,7 @@
 // moon-phase-icon.tsx — Shared moon phase SVG rendering component.
 //
 // Uses the correct elliptical terminator algorithm:
-//   rx_terminator = R × |cos(π × illuminationFraction)|
+//   rx_terminator = R × |1 − 2 × illuminationFraction|
 //
 // This produces straight vertical lines at quarter phases (f=0.5),
 // correct narrow crescents at low illumination, and correct wide gibbous
@@ -69,7 +69,7 @@ function litPath(
   if (f <= 0.01) return null;   // new moon — no lit path
   if (f >= 0.99) return null;   // full moon — use full circle instead
 
-  const rx = r * Math.abs(Math.cos(Math.PI * f));
+  const rx = r * Math.abs(1 - 2 * f);
   const top = `${cx},${cy - r}`;
   const bot = `${cx},${cy + r}`;
 
