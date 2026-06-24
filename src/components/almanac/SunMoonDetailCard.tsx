@@ -29,7 +29,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { AlmanacSnapshot, MoonNameData } from '../../api/types';
+import type { AlmanacSnapshot, MoonNameData, PositionsSnapshot } from '../../api/types';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { MoonPhaseG, MoonPhaseIcon } from '../moon-phase-icon';
 import {
@@ -231,6 +231,7 @@ function fmtEventDate(iso: string | null, tz: string, locale: string): string {
 export interface SunMoonDetailCardProps {
   almanac: AlmanacSnapshot | null;
   almanacTomorrow: AlmanacSnapshot | null;
+  positions: PositionsSnapshot | null;
   moonNames: MoonNameData | null;
   stationTz: string;
   loading: boolean;
@@ -265,11 +266,12 @@ function SunMoonDetailError({ message }: { message: string }) {
 
 interface ArcPanelProps {
   almanac: AlmanacSnapshot;
+  positions: PositionsSnapshot | null;
   moonNames: MoonNameData | null;
   tz: string;
 }
 
-function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
+function ArcPanel({ almanac, positions, moonNames, tz }: ArcPanelProps) {
   const isMobile = useIsMobile();
   const [nowMs, setNowMs] = useState(Date.now());
   useEffect(() => {
@@ -299,13 +301,11 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
   const moonriseText = fmtCompact(almanac.moon.rise, tz);
   const moonsetText = fmtCompact(almanac.moon.set, tz);
 
-  // Sun altitude label at marker position
-  const sunAltText =
-    almanac.sun.altitude !== null ? `${almanac.sun.altitude.toFixed(1)}°` : null;
-  const moonAltText =
-    almanac.moon.altitude !== null
-      ? `${almanac.moon.altitude.toFixed(1)}°`
-      : null;
+  // Sun/moon altitude from live positions (polled every 60s), not static daily snapshot
+  const sunAlt = positions?.sun.altitude ?? null;
+  const moonAlt = positions?.moon.altitude ?? null;
+  const sunAltText = sunAlt !== null ? `${sunAlt.toFixed(1)}°` : null;
+  const moonAltText = moonAlt !== null ? `${moonAlt.toFixed(1)}°` : null;
 
   // SVG accessible title for screen readers
   const svgTitle = [
@@ -671,6 +671,7 @@ function ArcPanel({ almanac, moonNames, tz }: ArcPanelProps) {
 interface SunPanelProps {
   almanac: AlmanacSnapshot;
   tomorrow: AlmanacSnapshot | null;
+  positions: PositionsSnapshot | null;
   tz: string;
   locale: string;
 }
@@ -689,7 +690,7 @@ function fmtTime(iso: string | null, tz: string): string {
   }
 }
 
-function SunPanel({ almanac, tomorrow, tz, locale }: SunPanelProps) {
+function SunPanel({ almanac, tomorrow, positions, tz, locale }: SunPanelProps) {
   const todayLabel = formatShortDate(almanac.date, tz, locale);
   const tomorrowLabel = tomorrow ? formatShortDate(tomorrow.date, tz, locale) : null;
   const hasTomorrow = tomorrow !== null;
@@ -699,14 +700,10 @@ function SunPanel({ almanac, tomorrow, tz, locale }: SunPanelProps) {
   const daylightTextTmw = tomorrow ? formatDaylight(tomorrow.sun.daylightMinutes) : null;
   const deltaTextTmw = tomorrow ? formatDelta(tomorrow.sun.daylightDeltaVsYesterdayMinutes) : null;
 
-  const azimuthText =
-    almanac.sun.azimuth !== null
-      ? `${almanac.sun.azimuth.toFixed(1)}°`
-      : '—';
-  const altitudeText =
-    almanac.sun.altitude !== null
-      ? `${almanac.sun.altitude.toFixed(1)}°`
-      : '—';
+  const liveAz = positions?.sun.azimuth ?? null;
+  const liveAlt = positions?.sun.altitude ?? null;
+  const azimuthText = liveAz !== null ? `${liveAz.toFixed(1)}°` : '—';
+  const altitudeText = liveAlt !== null ? `${liveAlt.toFixed(1)}°` : '—';
 
   const colHeaderStyle: React.CSSProperties = {
     textAlign: 'right',
@@ -822,11 +819,12 @@ function SunPanel({ almanac, tomorrow, tz, locale }: SunPanelProps) {
 interface MoonPanelProps {
   almanac: AlmanacSnapshot;
   tomorrow: AlmanacSnapshot | null;
+  positions: PositionsSnapshot | null;
   tz: string;
   locale: string;
 }
 
-function MoonPanel({ almanac, tomorrow, tz, locale }: MoonPanelProps) {
+function MoonPanel({ almanac, tomorrow, positions, tz, locale }: MoonPanelProps) {
   const todayLabel = formatShortDate(almanac.date, tz, locale);
   const tomorrowLabel = tomorrow ? formatShortDate(tomorrow.date, tz, locale) : null;
   const hasTomorrow = tomorrow !== null;
@@ -837,14 +835,10 @@ function MoonPanel({ almanac, tomorrow, tz, locale }: MoonPanelProps) {
   const fmtIllum = (pct: number | null) =>
     pct !== null ? `${Math.round(pct)}%` : '—';
 
-  const azimuthText =
-    almanac.moon.azimuth !== null
-      ? `${almanac.moon.azimuth.toFixed(1)}°`
-      : '—';
-  const altitudeText =
-    almanac.moon.altitude !== null
-      ? `${almanac.moon.altitude.toFixed(1)}°`
-      : '—';
+  const liveAz = positions?.moon.azimuth ?? null;
+  const liveAlt = positions?.moon.altitude ?? null;
+  const azimuthText = liveAz !== null ? `${liveAz.toFixed(1)}°` : '—';
+  const altitudeText = liveAlt !== null ? `${liveAlt.toFixed(1)}°` : '—';
   const fullMoonText = fmtEventDate(almanac.moon.nextFullMoon, tz, locale);
   const newMoonText = fmtEventDate(almanac.moon.nextNewMoon, tz, locale);
 
@@ -980,6 +974,7 @@ const valueStyle: React.CSSProperties = {
 export function SunMoonDetailCard({
   almanac,
   almanacTomorrow,
+  positions,
   moonNames,
   stationTz,
   loading,
@@ -1018,17 +1013,18 @@ export function SunMoonDetailCard({
             >
               {/* Mobile: arc first (order-2 → center on desktop, order-first on mobile) */}
               <div className="order-2 md:order-none">
-                <SunPanel almanac={almanac} tomorrow={almanacTomorrow} tz={stationTz} locale={locale} />
+                <SunPanel almanac={almanac} tomorrow={almanacTomorrow} positions={positions} tz={stationTz} locale={locale} />
               </div>
               <div className="order-1 md:order-none">
                 <ArcPanel
                   almanac={almanac}
+                  positions={positions}
                   moonNames={moonNames}
                   tz={stationTz}
                 />
               </div>
               <div className="order-3 md:order-none">
-                <MoonPanel almanac={almanac} tomorrow={almanacTomorrow} tz={stationTz} locale={locale} />
+                <MoonPanel almanac={almanac} tomorrow={almanacTomorrow} positions={positions} tz={stationTz} locale={locale} />
               </div>
             </div>
 

@@ -18,6 +18,7 @@ import {
   useAlmanac,
   useAlmanacMoonNames,
   useAlmanacPlanets,
+  useAlmanacPositions,
   useChartsConfig,
   useSolarEclipses,
   useAlmanacEclipses,
@@ -81,6 +82,7 @@ export function AlmanacPage() {
   // Data hooks — fetch today and tomorrow for Sun & Moon two-column layout
   const almanac         = useAlmanac(todayStr);
   const almanacTomorrow = useAlmanac(tomorrowStr);
+  const positions       = useAlmanacPositions();
   const moonNames       = useAlmanacMoonNames();
   const planets         = useAlmanacPlanets();
   const solarEclipses   = useSolarEclipses();
@@ -109,6 +111,7 @@ export function AlmanacPage() {
         <SunMoonDetailCard
           almanac={almanac.data}
           almanacTomorrow={almanacTomorrow.data}
+          positions={positions.data ?? null}
           moonNames={moonNames.data}
           stationTz={stationTz}
           loading={almanac.loading}
