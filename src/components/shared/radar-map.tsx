@@ -21,6 +21,30 @@ interface RadarMapProps {
    * Expanded view shows full frame history; card view caps at 24 frames (T3.5).
    */
   expanded?: boolean;
+  /**
+   * T4.2 — External animation control for the expanded view.
+   * When provided, RadarMap uses this frame index instead of its own internal
+   * animationStep. The TimeSlider in the expanded view drives this value.
+   * Uses the "primary frame" index (0-based), not the sub-step index.
+   */
+  externalFrameIndex?: number;
+  /**
+   * T4.2 — Callback invoked when frames are loaded so the parent (expanded
+   * view) can drive the TimeSlider from the actual frame list.
+   */
+  onFramesLoaded?: (frames: RadarFrame[]) => void;
+  /**
+   * T4.5 — External opacity override (0–1 float).
+   * When provided, overrides the internal MAX_OPACITY for all radar tile layers.
+   * Driven by the opacity slider in the expanded view's layer panel.
+   */
+  opacityOverride?: number;
+  /**
+   * T4.4 — External color scheme override.
+   * When provided, overrides the internal colorScheme state. Driven by the
+   * color scheme picker in the layer panel (LibreWxR only).
+   */
+  colorSchemeOverride?: number;
 }
 
 const SUBSTEPS = 5;        // interpolation steps between each real frame pair
@@ -120,21 +144,21 @@ function buildLayerTileUrl(frame: RadarFrame, layer: LayerDeclaration): string |
   return null;
 }
 
-function getFrameOpacity(frameIndex: number, step: number, totalFrames: number): number {
+function getFrameOpacity(frameIndex: number, step: number, totalFrames: number, maxOpacity: number = MAX_OPACITY): number {
   const primaryFrame = Math.floor(step / SUBSTEPS) % totalFrames;
   const subStep = step % SUBSTEPS;
   const nextFrame = (primaryFrame + 1) % totalFrames;
 
   if (subStep === 0) {
-    return frameIndex === primaryFrame ? MAX_OPACITY : 0;
+    return frameIndex === primaryFrame ? maxOpacity : 0;
   }
 
   // Constant-composite cross-fade: compute opacities so two overlapping
-  // semi-transparent layers composite to exactly MAX_OPACITY throughout.
-  // Formula: composite = 1 - (1-a)(1-b) = MAX_OPACITY
+  // semi-transparent layers composite to exactly maxOpacity throughout.
+  // Formula: composite = 1 - (1-a)(1-b) = maxOpacity
   // Solved: a = 1 - transparency^(1-t), b = 1 - transparency^t
   const t = subStep / SUBSTEPS;
-  const transparency = 1 - MAX_OPACITY;
+  const transparency = 1 - maxOpacity;
   if (frameIndex === primaryFrame) {
     return 1 - Math.pow(transparency, 1 - t);
   }
@@ -185,14 +209,24 @@ const TILE_CONFIG = {
   },
 } as const;
 
-export function RadarMap({ center, zoom = 7, stationTz, expanded = false }: RadarMapProps) {
+export function RadarMap({
+  center,
+  zoom = 7,
+  stationTz,
+  expanded = false,
+  externalFrameIndex,
+  onFramesLoaded,
+  opacityOverride,
+  colorSchemeOverride,
+}: RadarMapProps) {
   const { t } = useTranslation('radar');
   const { resolved: resolvedTheme } = useTheme();
   const baseTile = TILE_CONFIG[resolvedTheme];
 
-  // T3.1 — color scheme state. Default 2 = "Universal Blue".
-  // Future UI: add a color scheme picker that updates this state.
+  // T3.1 / T4.4 — color scheme state. Default 2 = "Universal Blue".
+  // colorSchemeOverride (from the layer panel picker) takes precedence when set.
   const [colorScheme] = useState<number>(DEFAULT_COLOR_SCHEME);
+  const effectiveColorScheme = colorSchemeOverride ?? colorScheme;
 
   // --- Capabilities fetch to discover radar provider ---
   const { data: capabilities, loading: capLoading, error: capError } = useCapabilities();
@@ -279,6 +313,18 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false }: Rada
 
   const tileHost = radarFrameList?.tileHost ?? null;
 
+  // T4.2 — Notify parent when frame list changes so TimeSlider can render the track.
+  // Using a ref to hold the callback avoids re-triggering on every render.
+  const onFramesLoadedRef = useRef(onFramesLoaded);
+  onFramesLoadedRef.current = onFramesLoaded;
+  useEffect(() => {
+    if (frames.length > 0 && onFramesLoadedRef.current) {
+      onFramesLoadedRef.current(frames);
+    }
+  // frames reference changes when the array content changes (new frame list).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [frames.length, providerId]);
+
   // --- Animation state ---
   const [animationStep, setAnimationStep] = useState(0);
   // Start paused; auto-play begins after PRELOAD_DELAY_MS once frames are ready.
@@ -349,12 +395,15 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false }: Rada
   // between real frames is handled by getFrameOpacity. No URL swaps or tile
   // re-fetches after the initial load, resulting in smooth looping.
   // Uses adaptiveTickMs so long frame lists still produce an ~18s loop (T3.5).
+  // T4.2 — When externalFrameIndex is set, the expanded view's TimeSlider drives
+  // the display; internal animation is suppressed to avoid conflicting state.
+  const isExternallyControlled = externalFrameIndex !== undefined;
   useEffect(() => {
     if (intervalRef.current !== null) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
-    if (isPlaying && frameCount > 1) {
+    if (isPlaying && frameCount > 1 && !isExternallyControlled) {
       const totalSteps = frameCount * SUBSTEPS;
       intervalRef.current = setInterval(() => {
         setAnimationStep((s) => (s + 1) % totalSteps);
@@ -366,10 +415,21 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false }: Rada
         intervalRef.current = null;
       }
     };
-  }, [isPlaying, frameCount, adaptiveTickMs]);
+  }, [isPlaying, frameCount, adaptiveTickMs, isExternallyControlled]);
+
+  // T4.2 — When externalFrameIndex is set (expanded view with TimeSlider), convert
+  // it to an animationStep by snapping to the keyframe boundary (SUBSTEPS alignment).
+  // This lets the expanded view's TimeSlider drive the frame shown on the map.
+  const effectiveAnimationStep = externalFrameIndex !== undefined && frameCount > 0
+    ? (externalFrameIndex % frameCount) * SUBSTEPS
+    : animationStep;
+
+  // T4.5 — Effective opacity: use the override from the layer panel when provided,
+  // otherwise fall back to the internal MAX_OPACITY constant.
+  const effectiveMaxOpacity = opacityOverride !== undefined ? opacityOverride : MAX_OPACITY;
 
   // Derive the display frame index from animationStep for timestamp/counter display.
-  const displayFrameIndex = frameCount > 0 ? Math.floor(animationStep / SUBSTEPS) % frameCount : 0;
+  const displayFrameIndex = frameCount > 0 ? Math.floor(effectiveAnimationStep / SUBSTEPS) % frameCount : 0;
   const currentFrame: RadarFrame | null = frames[displayFrameIndex] ?? null;
 
   const isLoading = capLoading || framesLoading || noaaLayersLoading;
@@ -497,14 +557,14 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false }: Rada
           {/* Single-layer providers (RainViewer, LibreWxR, non-NOAA WMS-T) */}
           {radarCapability !== null && !isNoaa && frames.map((frame, i) => {
             const cap = radarCapability;
-            const url = buildTileUrl(frame, cap, tileHost, colorScheme);
+            const url = buildTileUrl(frame, cap, tileHost, effectiveColorScheme);
             if (!url) return null;
             const frameIndex = i;
             return (
               <TileLayer
                 key={frame.time}
                 url={url}
-                opacity={Math.max(getFrameOpacity(i, animationStep, frameCount), 0.001)}
+                opacity={Math.max(getFrameOpacity(i, effectiveAnimationStep, frameCount, effectiveMaxOpacity), 0.001)}
                 attribution={i === 0 ? providerAttribution : undefined}
                 eventHandlers={{
                   load: () => {
@@ -529,7 +589,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false }: Rada
               Each frame slot produces one TileLayer per sub-layer; both share the
               same opacity computed from the shared animationStep. */}
           {radarCapability !== null && isNoaa && enabledRadarLayers && frames.map((frame, i) => {
-            const frameOpacity = Math.max(getFrameOpacity(i, animationStep, frameCount), 0.001);
+            const frameOpacity = Math.max(getFrameOpacity(i, effectiveAnimationStep, frameCount, effectiveMaxOpacity), 0.001);
             const layerCount = enabledRadarLayers.length;
             return enabledRadarLayers.map((layer, layerIdx) => {
               const layerFrameList = noaaLayerFrameLists[layer.layerId];
@@ -570,9 +630,11 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false }: Rada
         {!isLoading && frameCount > 0 && <RadarLegend />}
       </div>
 
-      {/* Animation controls — only shown when there are frames to animate.
+      {/* Animation controls — only shown when there are frames to animate and this
+          is NOT in externally-controlled expanded mode (expanded view has its own
+          TimeSlider; showing both would duplicate controls).
           flex-shrink-0 keeps the control bar from being squashed by the map. */}
-      {frameCount > 0 && (
+      {frameCount > 0 && !isExternallyControlled && (
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
             type="button"
