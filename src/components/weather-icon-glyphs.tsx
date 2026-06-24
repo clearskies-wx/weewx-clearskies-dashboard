@@ -138,6 +138,30 @@ export function GlyphPartlyCloudy({ size }: GlyphProps): ReactElement {
 }
 
 // ---------------------------------------------------------------------------
+// 2b. Partly cloudy night — cloud (grey) + crescent moon (moon gradient).
+//
+// Same split-path treatment as GlyphPartlyCloudy but with a moon behind the
+// cloud instead of a sun.  Paths from material-symbols/partly_cloudy_night.svg
+// via Iconify, then split into cloud blob and moon crescent.
+// ---------------------------------------------------------------------------
+
+export function GlyphPartlyCloudyNight({ size }: GlyphProps): ReactElement {
+  const p = useId();
+  // Cloud blob (grey) — same lower-left position as day variant
+  const cloudPath =
+    'M6 13q1.2 0 2.2.65t1.475 1.775l.25.575h.625q1.05 0 1.75.738T13 18.5q0 1.05-.725 1.775T10.5 21H6q-1.65 0-2.825-1.175T2 17q0-1.675 1.175-2.838T6 13';
+  // Crescent moon (moon gradient) — upper-right, peeking behind the cloud
+  const moonPath =
+    'M11.25 2q-.45 2.475.275 4.838t2.5 4.137t4.138 2.5T23 13.75q-.65 3.55-3.375 5.863T13.325 22q.8-.65 1.238-1.562T15 18.5q0-1.7-1.062-2.937t-2.713-1.488q-.8-1.425-2.187-2.25T6 11q-.8 0-1.562.2T3 11.8q.05-3.625 2.363-6.375T11.25 2';
+  return (
+    <Svg size={size} p={p}>
+      <path fillRule="nonzero" fill={`url(#${p}moonGrad)`} d={moonPath} />
+      <path fillRule="nonzero" fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={cloudPath} />
+    </Svg>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // 3. Cloud — overcast
 //    Single cloud blob, grey gradient.
 //    Path from material-symbols/cloud.svg via Iconify.

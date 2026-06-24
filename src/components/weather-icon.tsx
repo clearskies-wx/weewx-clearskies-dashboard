@@ -6,17 +6,17 @@
  * aria-hidden; a sibling <span class="sr-only"> carries the translated
  * description for screen readers — same pattern as the original component.
  *
- * Night handling (lead call — ADR-049 implementation brief):
+ * Night handling:
  *   - WMO code 0 at night → bedtime (crescent moon).
- *   - All other codes use the same glyph day or night.  Clouds/rain/snow/storm
- *     read correctly without a sun present, and the locked glyph set has no
- *     moon-behind-cloud variant.  Richer night glyphs are a possible future
- *     follow-up; this simplification is intentional.
+ *   - WMO codes 1–2 at night → moon behind cloud (GlyphPartlyCloudyNight).
+ *   - All other codes use the same glyph day or night — clouds/rain/snow/storm
+ *     read correctly without a celestial body present.
  */
 import { useTranslation } from 'react-i18next';
 import {
   GlyphSunny,
   GlyphPartlyCloudy,
+  GlyphPartlyCloudyNight,
   GlyphCloud,
   GlyphFoggy,
   GlyphRainy,
@@ -46,16 +46,15 @@ interface GlyphEntry {
  * Source: https://open-meteo.com/en/docs (WMO code table)
  * Glyph set: Material Symbols (Apache-2.0), Meteocons-style gradients (ADR-049).
  *
- * Night handling: only code 0 has a dedicated night glyph (bedtime / moon).
- * All other codes use the same glyph regardless of day/night — the locked
- * glyph set has no moon-behind-cloud variant (intentional simplification).
+ * Night handling: codes 0–2 have dedicated night glyphs (bedtime moon,
+ * moon behind cloud).  All other codes use the same glyph day or night.
  */
 const WMO_MAP: Record<number, GlyphEntry> = {
   // Clear
   0:  { day: GlyphSunny,        night: GlyphBedtime,     descriptionKey: 'wmo.0'  },
   // Mainly clear / partly cloudy
-  1:  { day: GlyphPartlyCloudy,                           descriptionKey: 'wmo.1'  },
-  2:  { day: GlyphPartlyCloudy,                           descriptionKey: 'wmo.2'  },
+  1:  { day: GlyphPartlyCloudy, night: GlyphPartlyCloudyNight, descriptionKey: 'wmo.1'  },
+  2:  { day: GlyphPartlyCloudy, night: GlyphPartlyCloudyNight, descriptionKey: 'wmo.2'  },
   // Overcast
   3:  { day: GlyphCloud,                                  descriptionKey: 'wmo.3'  },
   // Fog / rime fog

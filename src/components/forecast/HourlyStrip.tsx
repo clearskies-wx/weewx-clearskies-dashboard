@@ -58,9 +58,19 @@ export interface HourlyStripProps {
   hideTrend?: boolean;
   /** Units block from the API response — drives temp suffix. */
   units?: UnitsBlock | null;
+  /** ISO sunrise time for determining night icons. */
+  sunrise?: string | null;
+  /** ISO sunset time for determining night icons. */
+  sunset?: string | null;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
+
+function isNightHour(validTime: string, sunrise?: string | null, sunset?: string | null): boolean {
+  if (!sunrise || !sunset) return false;
+  const t = new Date(validTime).getTime();
+  return t < new Date(sunrise).getTime() || t >= new Date(sunset).getTime();
+}
 
 export function HourlyStrip({
   hours,
@@ -68,6 +78,8 @@ export function HourlyStrip({
   stationTz = 'UTC',
   hideTrend = false,
   units,
+  sunrise,
+  sunset,
 }: HourlyStripProps) {
   const tempSuffix = units?.outTemp ?? '°';
 
@@ -145,7 +157,11 @@ export function HourlyStrip({
   const weatherIconSize = 36;
   const iconRow = displayHours.map((hour, i) => (
     <div key={i} style={{ ...colStyle, ...CELL_BASE, height: rowH.icon }}>
-      <WeatherIcon code={toWmoCode(hour.weatherCode)} size={weatherIconSize} />
+      <WeatherIcon
+        code={toWmoCode(hour.weatherCode)}
+        size={weatherIconSize}
+        isNight={isNightHour(hour.validTime, sunrise, sunset)}
+      />
     </div>
   ));
 
