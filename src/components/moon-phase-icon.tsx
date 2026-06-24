@@ -11,9 +11,9 @@
 // isWaning detection correctly handles "last-quarter" (which does NOT
 // contain the word "waning") by checking against a fixed set.
 //
-// Colors: contrast is between 100% and 25% opacity of the same hue, so
-// the rendering is clear in both light and dark themes regardless of
-// the page background color.
+// Colors: lit is light silver (#c8d3e0), dark is slate-500 (#64748b).
+// The lit portion is always LIGHTER than the dark portion regardless
+// of theme, so the visual metaphor matches reality (moonlight = bright).
 
 import type { SVGProps } from 'react';
 
@@ -21,12 +21,12 @@ import type { SVGProps } from 'react';
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Lit portion — full opacity silver */
-const MOON_LIT = '#94a3b8';
-/** Dark portion — 25% opacity of the same hue, visible in both themes */
-const MOON_DARK = 'rgba(148, 163, 184, 0.25)';
-/** Subtle outline ring */
-const MOON_OUTLINE = 'rgba(148, 163, 184, 0.4)';
+/** Lit portion — light silver, reads as "bright/illuminated" in both themes */
+const MOON_LIT = '#c8d3e0';
+/** Dark portion — slate-500, reads as "shadow" in both themes */
+const MOON_DARK = '#64748b';
+/** Outline ring — defines the disc boundary when lit color is close to a light bg */
+const MOON_OUTLINE = 'rgba(100, 116, 139, 0.6)';
 
 /** Phase names that represent waning (right-side dark, left-side lit) */
 const WANING_PHASES = new Set(['waning-gibbous', 'last-quarter', 'waning-crescent']);
