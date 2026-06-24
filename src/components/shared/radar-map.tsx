@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MapContainer, TileLayer } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, Pane } from 'react-leaflet';
 import { Play, Pause, CaretLeft, CaretRight } from '@phosphor-icons/react';
 import { useCapabilities, useRadarFrames } from '../../hooks/useWeatherData';
-import { getRadarLayerFrames } from '../../api/client';
+import { getRadarLayerFrames, getAlerts } from '../../api/client';
 import type { CapabilityDeclaration, RadarFrame, RadarFrameList, LayerDeclaration } from '../../api/types';
+import type { Feature, FeatureCollection } from 'geojson';
+import type { Layer, PathOptions } from 'leaflet';
 import { useTheme } from '../../lib/theme-provider';
 
 interface RadarMapProps {
@@ -45,6 +47,12 @@ interface RadarMapProps {
    * color scheme picker in the layer panel (LibreWxR only).
    */
   colorSchemeOverride?: number;
+  /**
+   * T4.6–T4.8 — Set of layer IDs currently enabled in the layer panel.
+   * Controls which satellite, SPC overlay, and alert polygon layers are rendered.
+   * When undefined, default behavior applies (all default-enabled layers visible).
+   */
+  enabledLayers?: Set<string>;
 }
 
 const SUBSTEPS = 5;        // interpolation steps between each real frame pair
@@ -218,6 +226,7 @@ export function RadarMap({
   onFramesLoaded,
   opacityOverride,
   colorSchemeOverride,
+  enabledLayers,
 }: RadarMapProps) {
   const { t } = useTranslation('radar');
   const { resolved: resolvedTheme } = useTheme();
@@ -293,6 +302,218 @@ export function RadarMap({
   // noaaLayerIdsKey is a stable string encoding of enabledRadarLayers ids.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [providerId, noaaLayerIdsKey]);
+
+  // ---------------------------------------------------------------------------
+  // T4.6 — Satellite layer frame fetching.
+  // When the provider is NOAA and a satellite layer is enabled, fetch its frames
+  // so the satellite TileLayer can animate in sync with radar.
+  // ---------------------------------------------------------------------------
+
+  // All satellite-type layers from the capability declaration.
+  const allSatelliteLayers: LayerDeclaration[] = isNoaa && capabilityLayers
+    ? capabilityLayers.filter((l) => l.layerType === 'satellite')
+    : [];
+
+  // Only fetch frames for satellite layers that are currently enabled in the panel.
+  const activeSatelliteLayers: LayerDeclaration[] = enabledLayers
+    ? allSatelliteLayers.filter((l) => enabledLayers.has(l.layerId))
+    : [];
+
+  const satelliteLayerIdsKey = activeSatelliteLayers.map((l) => l.layerId).join(',');
+
+  const [satelliteFrameLists, setSatelliteFrameLists] = useState<Record<string, RadarFrameList>>({});
+
+  useEffect(() => {
+    if (activeSatelliteLayers.length === 0 || !providerId) {
+      setSatelliteFrameLists({});
+      return;
+    }
+
+    let cancelled = false;
+    const controller = new AbortController();
+
+    Promise.all(
+      activeSatelliteLayers.map((layer) =>
+        getRadarLayerFrames(providerId, layer.layerId, controller.signal)
+          .then((resp) => ({ layerId: layer.layerId, frameList: resp.data }))
+          .catch(() => ({ layerId: layer.layerId, frameList: null as RadarFrameList | null })),
+      ),
+    ).then((results) => {
+      if (cancelled) return;
+      const merged: Record<string, RadarFrameList> = {};
+      for (const r of results) {
+        if (r.frameList) merged[r.layerId] = r.frameList;
+      }
+      setSatelliteFrameLists(merged);
+    });
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  // satelliteLayerIdsKey encodes which satellite layers are active.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [providerId, satelliteLayerIdsKey]);
+
+  // ---------------------------------------------------------------------------
+  // T4.7 — SPC overlay GeoJSON fetching.
+  // Fetches GeoJSON from the ArcGIS REST endpoint when an overlay layer is enabled.
+  // Auto-refreshes every 5 minutes. NOT time-animated.
+  // ---------------------------------------------------------------------------
+
+  const allOverlayLayers: LayerDeclaration[] = isNoaa && capabilityLayers
+    ? capabilityLayers.filter((l) => l.layerType === 'overlay')
+    : [];
+
+  const activeOverlayLayers: LayerDeclaration[] = enabledLayers
+    ? allOverlayLayers.filter((l) => enabledLayers.has(l.layerId))
+    : [];
+
+  const overlayLayerIdsKey = activeOverlayLayers.map((l) => l.layerId).join(',');
+
+  // Map of layerId → GeoJSON FeatureCollection (or null on error).
+  const [spcGeoJsonData, setSpcGeoJsonData] = useState<Record<string, FeatureCollection | null>>({});
+
+  useEffect(() => {
+    if (activeOverlayLayers.length === 0) {
+      setSpcGeoJsonData({});
+      return;
+    }
+
+    let cancelled = false;
+
+    async function fetchSpcData() {
+      const results: Record<string, FeatureCollection | null> = {};
+      await Promise.all(
+        activeOverlayLayers.map(async (layer) => {
+          if (!layer.wmsEndpointUrl) {
+            results[layer.layerId] = null;
+            return;
+          }
+          try {
+            // SPC layers use ArcGIS REST MapServer query endpoints.
+            // Append GeoJSON query params to get all features.
+            const url = `${layer.wmsEndpointUrl}?where=1%3D1&outFields=*&f=geojson`;
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`SPC fetch failed: ${resp.status}`);
+            const data = await resp.json() as FeatureCollection;
+            results[layer.layerId] = data;
+          } catch {
+            results[layer.layerId] = null;
+          }
+        }),
+      );
+      if (!cancelled) setSpcGeoJsonData(results);
+    }
+
+    void fetchSpcData();
+
+    // Auto-refresh every 5 minutes while any SPC layer is active.
+    const refreshInterval = setInterval(() => { void fetchSpcData(); }, 5 * 60 * 1000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(refreshInterval);
+    };
+  // overlayLayerIdsKey encodes which overlay layers are active.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [overlayLayerIdsKey]);
+
+  // ---------------------------------------------------------------------------
+  // T4.8 — Alert polygon fetching.
+  // Fetches alerts from /api/v1/alerts when the "alerts" layer type is enabled.
+  // Auto-refreshes every 5 minutes. Renders as GeoJSON polygons when geometry
+  // is present; skips alerts with no geometry (zone-based alerts have no polygon).
+  // ---------------------------------------------------------------------------
+
+  // Check if any alerts-type layer is enabled.
+  const allAlertLayers: LayerDeclaration[] = isNoaa && capabilityLayers
+    ? capabilityLayers.filter((l) => l.layerType === 'alerts')
+    : [];
+
+  const alertsEnabled = enabledLayers
+    ? allAlertLayers.some((l) => enabledLayers.has(l.layerId))
+    : false;
+
+  // GeoJSON FeatureCollection synthesised from alert records that include geometry.
+  const [alertGeoJson, setAlertGeoJson] = useState<FeatureCollection | null>(null);
+
+  useEffect(() => {
+    if (!alertsEnabled) {
+      setAlertGeoJson(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function fetchAlertData() {
+      try {
+        const resp = await getAlerts();
+        if (cancelled) return;
+
+        // Build a GeoJSON FeatureCollection from alerts that carry polygon geometry.
+        // AlertRecord does not have a geometry field in the current type definition;
+        // real NWS alerts arrive with a `geometry` field at runtime.
+        // We cast through `unknown` and check for the geometry field defensively.
+        const features: Feature[] = [];
+        for (const alert of resp.data.alerts) {
+          const raw = alert as unknown as Record<string, unknown>;
+          if (
+            raw['geometry'] &&
+            typeof raw['geometry'] === 'object' &&
+            raw['geometry'] !== null
+          ) {
+            features.push({
+              type: 'Feature',
+              geometry: raw['geometry'] as Feature['geometry'],
+              properties: {
+                id: alert.id,
+                event: alert.event,
+                headline: alert.headline,
+                description: alert.description ?? '',
+                severityLevel: alert.severityLevel,
+                severityLabel: alert.severityLabel,
+                areaDesc: alert.areaDesc,
+              },
+            });
+          }
+        }
+
+        setAlertGeoJson(features.length > 0
+          ? { type: 'FeatureCollection', features }
+          : null,
+        );
+      } catch {
+        // Silently discard — alerts overlay degrades gracefully on error.
+        if (!cancelled) setAlertGeoJson(null);
+      }
+    }
+
+    void fetchAlertData();
+
+    const refreshInterval = setInterval(() => { void fetchAlertData(); }, 5 * 60 * 1000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(refreshInterval);
+    };
+  }, [alertsEnabled]);
+
+  // ---------------------------------------------------------------------------
+  // Alert severity → fill color mapping (T4.8).
+  // Level 4 = Extreme (red), 3 = Severe (orange), 2 = Moderate (yellow),
+  // 1 = Minor (green). Pairs color with a label/icon in popups (not color-only).
+  // ---------------------------------------------------------------------------
+
+  function getAlertSeverityColor(severityLevel: number | null): string {
+    switch (severityLevel) {
+      case 4: return '#ef4444'; // red-500 — Extreme
+      case 3: return '#f97316'; // orange-500 — Severe
+      case 2: return '#eab308'; // yellow-500 — Moderate
+      case 1: return '#22c55e'; // green-500 — Minor
+      default: return '#6b7280'; // gray-500 — Unknown
+    }
+  }
 
   // Determine the authoritative frames list.
   // For NOAA: use the NEXRAD layer's frames (first enabled radar layer) for the
@@ -624,6 +845,190 @@ export function RadarMap({
               );
             });
           })}
+
+          {/*
+            T4.6 — Satellite WMS TileLayers.
+            Rendered in a custom Pane at z-index 100 (below radar at z-index 200).
+            Each active satellite layer renders one TileLayer per frame, animated
+            in sync with the shared animationStep (same cross-fade logic as radar).
+            The pane z-index places satellite below radar in the map stacking order.
+          */}
+          {activeSatelliteLayers.length > 0 && (
+            <Pane name="satellite-pane" style={{ zIndex: 100 }}>
+              {activeSatelliteLayers.map((layer) => {
+                const layerFrameList = satelliteFrameLists[layer.layerId];
+                // Fall back to the primary frames when satellite-specific frames aren't loaded yet.
+                const satFrames = layerFrameList?.frames ?? frames;
+                return satFrames.map((frame, i) => {
+                  const url = buildLayerTileUrl(frame, layer);
+                  if (!url) return null;
+                  const opacity = Math.max(
+                    getFrameOpacity(i, effectiveAnimationStep, satFrames.length, effectiveMaxOpacity),
+                    0.001,
+                  );
+                  return (
+                    <TileLayer
+                      key={`sat-${layer.layerId}-${frame.time}`}
+                      url={url}
+                      opacity={opacity}
+                      pane="satellite-pane"
+                    />
+                  );
+                });
+              })}
+            </Pane>
+          )}
+
+          {/*
+            T4.7 — SPC overlay GeoJSON layers.
+            Rendered in a custom Pane at z-index 300 (above radar at z-index 200).
+            NOT time-animated — current snapshot only; auto-refreshed every 5 min.
+            Click on any feature shows a popup with risk label and details.
+            Colors come from GeoJSON feature properties when available, falling
+            back to a neutral stroke color.
+            Color is NOT the only signal — the popup includes the risk label text.
+          */}
+          {activeOverlayLayers.length > 0 && (
+            <Pane name="spc-overlay-pane" style={{ zIndex: 300 }}>
+              {activeOverlayLayers.map((layer) => {
+                const data = spcGeoJsonData[layer.layerId];
+                if (!data) return null;
+                return (
+                  <GeoJSON
+                    key={`spc-${layer.layerId}-${JSON.stringify(data).length}`}
+                    data={data}
+                    pane="spc-overlay-pane"
+                    style={(feature?: Feature) => {
+                      // Use stroke/fill from GeoJSON properties when present.
+                      const props = feature?.properties ?? {};
+                      const stroke: PathOptions = {
+                        color: (props['stroke'] as string | undefined) ??
+                               (props['stroke_color'] as string | undefined) ??
+                               '#f97316',
+                        fillColor: (props['fill'] as string | undefined) ??
+                                   (props['fill_color'] as string | undefined) ??
+                                   '#f97316',
+                        fillOpacity: 0.25,
+                        weight: 2,
+                        opacity: 0.9,
+                      };
+                      return stroke;
+                    }}
+                    onEachFeature={(feature: Feature, leafletLayer: Layer) => {
+                      // Build popup content from feature properties.
+                      // Uses textContent assignment (safe, no XSS risk).
+                      const props = feature.properties ?? {};
+                      const label =
+                        (props['Label'] as string | undefined) ??
+                        (props['LABEL'] as string | undefined) ??
+                        (props['label'] as string | undefined) ??
+                        (props['DN'] as string | undefined) ??
+                        layer.layerName;
+                      const dn = (props['DN'] as string | number | undefined) ?? '';
+                      const popupDiv = document.createElement('div');
+                      popupDiv.style.fontFamily = 'var(--font-sans)';
+                      popupDiv.style.fontSize = 'var(--text-label, 0.75rem)';
+                      popupDiv.style.maxWidth = '200px';
+                      const title = document.createElement('strong');
+                      title.textContent = String(label);
+                      popupDiv.appendChild(title);
+                      if (dn) {
+                        const detail = document.createElement('p');
+                        detail.style.margin = '4px 0 0';
+                        detail.textContent = `Risk level: ${String(dn)}`;
+                        popupDiv.appendChild(detail);
+                      }
+                      leafletLayer.bindPopup(popupDiv);
+                    }}
+                  />
+                );
+              })}
+            </Pane>
+          )}
+
+          {/*
+            T4.8 — Alert polygon GeoJSON layer.
+            Rendered in a custom Pane at z-index 400 (topmost layer).
+            Color-coded by severityLevel — but color is NOT the only signal:
+            the popup includes the severity label text and event name.
+            Alerts with no geometry are silently skipped (zone-based alerts).
+            Auto-refreshed every 5 minutes when the alerts layer is enabled.
+          */}
+          {alertsEnabled && alertGeoJson && (
+            <Pane name="alert-polygon-pane" style={{ zIndex: 400 }}>
+              <GeoJSON
+                key={`alerts-${alertGeoJson.features.length}`}
+                data={alertGeoJson}
+                pane="alert-polygon-pane"
+                style={(feature?: Feature) => {
+                  const props = feature?.properties ?? {};
+                  const level = props['severityLevel'] as number | null | undefined;
+                  const fillColor = getAlertSeverityColor(level ?? null);
+                  return {
+                    color: fillColor,
+                    fillColor,
+                    fillOpacity: 0.3,
+                    weight: 2,
+                    opacity: 0.9,
+                  };
+                }}
+                onEachFeature={(feature: Feature, leafletLayer: Layer) => {
+                  const props = feature.properties ?? {};
+                  const event = (props['event'] as string | undefined) ?? 'Alert';
+                  const headline = (props['headline'] as string | undefined) ?? '';
+                  const severityLabel = (props['severityLabel'] as string | undefined) ?? '';
+                  const description = (props['description'] as string | undefined) ?? '';
+                  const areaDesc = (props['areaDesc'] as string | undefined) ?? '';
+
+                  const popupDiv = document.createElement('div');
+                  popupDiv.style.fontFamily = 'var(--font-sans)';
+                  popupDiv.style.fontSize = 'var(--text-label, 0.75rem)';
+                  popupDiv.style.maxWidth = '240px';
+
+                  const title = document.createElement('strong');
+                  title.textContent = event;
+                  popupDiv.appendChild(title);
+
+                  if (severityLabel) {
+                    const severity = document.createElement('p');
+                    severity.style.margin = '4px 0 0';
+                    severity.style.fontWeight = '600';
+                    severity.textContent = `Severity: ${severityLabel}`;
+                    popupDiv.appendChild(severity);
+                  }
+
+                  if (headline) {
+                    const hl = document.createElement('p');
+                    hl.style.margin = '4px 0 0';
+                    hl.textContent = headline;
+                    popupDiv.appendChild(hl);
+                  }
+
+                  if (areaDesc) {
+                    const area = document.createElement('p');
+                    area.style.margin = '4px 0 0';
+                    area.style.color = 'var(--muted-foreground, #666)';
+                    area.textContent = areaDesc;
+                    popupDiv.appendChild(area);
+                  }
+
+                  if (description) {
+                    const desc = document.createElement('p');
+                    desc.style.margin = '8px 0 0';
+                    desc.style.maxHeight = '120px';
+                    desc.style.overflowY = 'auto';
+                    // description is from our own API (not user-supplied HTML), but
+                    // we use textContent to prevent any XSS risk from provider data.
+                    desc.textContent = description.slice(0, 500) +
+                      (description.length > 500 ? '…' : '');
+                    popupDiv.appendChild(desc);
+                  }
+
+                  leafletLayer.bindPopup(popupDiv);
+                }}
+              />
+            </Pane>
+          )}
         </MapContainer>
 
         {/* Color legend — visible when radar frames are loaded */}

@@ -1,4 +1,4 @@
-// radar-expanded.tsx — T4.1–T4.5
+// radar-expanded.tsx — T4.1–T4.9
 // Full-viewport expanded radar overlay page at /radar.
 //
 // Renders RadarMap in expanded mode (full frame history), with:
@@ -6,12 +6,19 @@
 //   T4.3 — RadarLayerPanel: layer toggles grouped by type, localStorage
 //   T4.4 — Color scheme picker (via RadarLayerPanel, LibreWxR only)
 //   T4.5 — Opacity slider (via RadarLayerPanel)
+//   T4.6 — Satellite WMS TileLayer rendering (wired via enabledLayers)
+//   T4.7 — SPC overlay GeoJSON rendering (wired via enabledLayers)
+//   T4.8 — Alert polygon rendering (wired via enabledLayers)
+//   T4.9 — WCAG 2.1 AA accessibility audit (focus trap, Escape, keyboard nav,
+//           prefers-reduced-motion, aria-live layer announcements)
 //
 // Accessibility:
 //   - role="dialog", aria-modal="true", aria-label
 //   - Focus trap: on mount, saves previously-focused element; restores on close
 //   - Escape key closes; close button (X) also navigates back
 //   - All interactive controls keyboard-reachable with visible focus indicator
+//   - prefers-reduced-motion: animation starts paused (via RadarTimeSlider)
+//   - Layer changes announced via aria-live region
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -99,10 +106,14 @@ export default function RadarExpandedPage() {
     setOpacity(value);
   }, []);
 
-  // T4.3 — Layer toggle handler (for Phase 4b wiring; no map effect yet for non-radar).
-  const handleLayerToggle = useCallback((_enabledIds: Set<string>) => {
-    // Phase 4b: wire enabled layer IDs to show/hide satellite/overlay/alert tile layers.
-    // For now this is a no-op — radar layers always render, others deferred.
+  // T4.6–T4.8 — Enabled layer IDs from the layer panel.
+  // Passed to RadarMap to control satellite, SPC overlay, and alert polygon rendering.
+  const [enabledLayers, setEnabledLayers] = useState<Set<string>>(new Set<string>());
+
+  // T4.3 — Layer toggle handler: stores the full enabled-layer set from the panel
+  // and passes it down to RadarMap so non-radar layers can be shown/hidden.
+  const handleLayerToggle = useCallback((enabledIds: Set<string>) => {
+    setEnabledLayers(enabledIds);
   }, []);
 
   // ---------------------------------------------------------------------------
@@ -201,7 +212,22 @@ export default function RadarExpandedPage() {
           onFramesLoaded={handleFramesLoaded}
           opacityOverride={opacity}
           colorSchemeOverride={colorScheme}
+          enabledLayers={enabledLayers}
         />
+      </div>
+
+      {/* T4.9 — aria-live region for layer toggle announcements.
+          sr-only: visually hidden but announced to screen readers when content changes.
+          Announces which layers are currently active so AT users know what changed. */}
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {enabledLayers.size > 0
+          ? `Active layers: ${Array.from(enabledLayers).join(', ')}`
+          : 'No overlay layers active'}
       </div>
 
       {/* Close button — top-right, 44×44px, above all other controls (z-40) */}

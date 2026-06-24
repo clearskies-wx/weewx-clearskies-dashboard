@@ -81,7 +81,12 @@ export function RadarTimeSlider({
   onPlayingChange,
   stationTz,
 }: RadarTimeSliderProps) {
-  const [isPlaying, setIsPlaying] = useState(true);
+  // T4.9 — prefers-reduced-motion: start paused when the user has requested
+  // reduced motion (DESIGN-MANUAL §14, WCAG 2.1 SC 2.3.3 / ATAG B.3).
+  // The user can still press play manually.
+  const [isPlaying, setIsPlaying] = useState(
+    () => !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
   const [speed, setSpeed] = useState<SpeedMultiplier>(1);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const frameCount = frames.length;
