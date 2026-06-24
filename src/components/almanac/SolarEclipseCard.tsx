@@ -570,10 +570,11 @@ export function SolarEclipseCard({
                 const MAX_COLS = 4;
                 const TWO_YEARS_MS = 2 * 365.25 * 24 * 60 * 60 * 1000;
                 const cutoff = new Date(Date.now() + TWO_YEARS_MS);
-                const twoYr = eclipses.eclipses.filter(e => new Date(e.date) <= cutoff);
+                const visible = eclipses.eclipses.filter(e => e.visibility !== 'Not Visible');
+                const twoYr = visible.filter(e => new Date(e.date) <= cutoff);
                 const display = twoYr.length >= MAX_COLS
                   ? twoYr.slice(0, MAX_COLS)
-                  : eclipses.eclipses.slice(0, MAX_COLS);
+                  : visible.slice(0, MAX_COLS);
                 return (
                 <div
                   className="flex flex-col sm:flex-row gap-6 sm:gap-4 flex-wrap"
