@@ -199,7 +199,7 @@ export default function RadarExpandedPage() {
     >
       {/* Map fills the entire overlay — wait for station data so MapContainer
           initializes with the correct center (MapContainer's center is init-only). */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 z-0">
         {station ? (
           <RadarMap
             center={[station.latitude, station.longitude]}
