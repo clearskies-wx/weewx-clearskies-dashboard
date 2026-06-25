@@ -824,7 +824,7 @@ export function RadarMap({
                   <WMSTileLayer
                     key={`${layer.layerId}-${layerFrame.time}`}
                     url={`${layer.wmsEndpointUrl}?TIME=${encodeURIComponent(layerFrame.time)}`}
-                    layers={layer.wmsLayerName}
+                    layers={layer.wmsLayerName!}
                     format="image/png"
                     transparent={true}
                     version="1.1.1"
@@ -858,7 +858,7 @@ export function RadarMap({
                     <WMSTileLayer
                       key={`sat-${layer.layerId}-${satFrame.time}`}
                       url={`${layer.wmsEndpointUrl}?TIME=${encodeURIComponent(satFrame.time)}`}
-                      layers={layer.wmsLayerName}
+                      layers={layer.wmsLayerName!}
                       format="image/png"
                       transparent={true}
                       version="1.1.1"
