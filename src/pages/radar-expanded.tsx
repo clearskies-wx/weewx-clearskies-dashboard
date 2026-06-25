@@ -63,10 +63,6 @@ export default function RadarExpandedPage() {
   const radarCapability: CapabilityDeclaration | null =
     capabilities?.providers.find((p) => p.domain === 'radar') ?? null;
 
-  // Map center: station coordinates, or a continental US fallback.
-  const center: [number, number] = station
-    ? [station.latitude, station.longitude]
-    : [39.5, -98.35];
   const stationTz = station?.timezone;
 
   // ---------------------------------------------------------------------------
@@ -201,19 +197,26 @@ export default function RadarExpandedPage() {
       className="fixed inset-0 z-50 focus:outline-none"
       onKeyDown={handleKeyDown}
     >
-      {/* Map fills the entire overlay */}
+      {/* Map fills the entire overlay — wait for station data so MapContainer
+          initializes with the correct center (MapContainer's center is init-only). */}
       <div className="absolute inset-0">
-        <RadarMap
-          center={center}
-          zoom={7}
-          stationTz={stationTz}
-          expanded={true}
-          externalFrameIndex={currentFrameIndex}
-          onFramesLoaded={handleFramesLoaded}
-          opacityOverride={opacity}
-          colorSchemeOverride={colorScheme}
-          enabledLayers={enabledLayers}
-        />
+        {station ? (
+          <RadarMap
+            center={[station.latitude, station.longitude]}
+            zoom={7}
+            stationTz={stationTz}
+            expanded={true}
+            externalFrameIndex={currentFrameIndex}
+            onFramesLoaded={handleFramesLoaded}
+            opacityOverride={opacity}
+            colorSchemeOverride={colorScheme}
+            enabledLayers={enabledLayers}
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-background">
+            <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>Loading radar…</p>
+          </div>
+        )}
       </div>
 
       {/* T4.9 — aria-live region for layer toggle announcements.
