@@ -258,18 +258,6 @@ export function getRadarFrames(
   );
 }
 
-export function getRadarLayerFrames(
-  providerId: string,
-  layerId: string,
-  signal?: AbortSignal,
-): Promise<RadarFramesResponse> {
-  return fetchApi<RadarFramesResponse>(
-    `/radar/providers/${encodeURIComponent(providerId)}/layers/${encodeURIComponent(layerId)}/frames`,
-    undefined,
-    signal,
-  );
-}
-
 // ---------------------------------------------------------------------------
 // GET /branding.json — operator branding (static file served by Caddy).
 // Per ADR-022 amendment 2026-06-10: branding is a static JSON file, not an

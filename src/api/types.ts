@@ -554,23 +554,6 @@ export interface StationMetadata {
   weekStartDay: number;
 }
 
-/**
- * LayerDeclaration — one sub-layer within a multi-layer provider (e.g. NOAA NEXRAD + MRMS).
- * Present in CapabilityDeclaration.layers when the provider exposes multiple simultaneous layers.
- */
-export interface LayerDeclaration {
-  layerId: string;
-  layerName: string;
-  layerType: 'radar' | 'satellite' | 'overlay' | 'alerts';
-  wmsEndpointUrl?: string | null;
-  tileUrlTemplate?: string | null;
-  wmsLayerName?: string | null;
-  timeEnabled: boolean;
-  geographicCoverage: string;
-  defaultEnabled: boolean;
-  browserDirect: boolean;
-}
-
 export interface CapabilityDeclaration {
   providerId: string;
   domain: 'forecast' | 'alerts' | 'aqi' | 'earthquakes' | 'radar' | 'seeing' | 'almanac';
@@ -583,10 +566,6 @@ export interface CapabilityDeclaration {
   wmsLayerName: string | null;
   tileContentType: string | null;
   iframeUrl: string | null;
-  /** Multi-layer providers (e.g. NOAA) expose sub-layers here. Single-layer providers omit this field. */
-  layers?: LayerDeclaration[] | null;
-  /** Provider attribution text for display in the map attribution control. */
-  attribution?: string | null;
 }
 
 export interface CapabilityRegistry {

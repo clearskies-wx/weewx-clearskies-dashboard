@@ -12,20 +12,14 @@
 // 2.5-row height fallback on mobile where auto-rows:auto makes rowSpan
 // inert. md:min-h-0 md:h-auto restores grid control on desktop.
 //
-// T3.4 — Expand button: ArrowsOut icon in the card header navigates to
-// /radar for the full-screen expanded radar view.
-//
 // A11y (WCAG 2.1 AA):
 //   - Card title uses CardTitle as="h2" (landmark + heading hierarchy).
 //   - RadarMap has role="region" + aria-label=radarTitle on its inner div.
 //   - Loading state uses aria-busy + TileSkeleton (aria-hidden).
 //   - Keyboard: map zoom controls are native Leaflet buttons (focusable).
 //   - Animation controls in RadarMap: <button> elements, not <div onClick>.
-//   - Expand button: <button> with aria-label, visible focus ring (T3.4).
 
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowsOut } from '@phosphor-icons/react';
 import {
   Card,
   CardHeader,
@@ -65,7 +59,6 @@ export interface RadarCardProps {
 
 function RadarCardContent({ station, stationTz, loading = false }: RadarCardProps) {
   const { t } = useTranslation('radar');
-  const navigate = useNavigate();
 
   return (
     <Card
@@ -74,20 +67,8 @@ function RadarCardContent({ station, stationTz, loading = false }: RadarCardProp
       className="relative z-0 min-h-[37.5rem] md:min-h-0 md:h-auto"
       aria-busy={loading}
     >
-      <CardHeader className="flex flex-row items-center justify-between gap-2">
+      <CardHeader>
         <CardTitle as="h2">{t('radarTitle')}</CardTitle>
-        {/* T3.4 — Expand-to-fullscreen button.
-            Uses <button> (not <div onClick>) per coding.md §5.2.
-            aria-label describes the action for screen readers (coding.md §5.4).
-            focus-visible ring matches the pattern from animation control buttons. */}
-        <button
-          type="button"
-          onClick={() => navigate('/radar')}
-          aria-label={t('expandRadar', 'Expand radar to full screen')}
-          className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex-shrink-0"
-        >
-          <ArrowsOut size={20} aria-hidden="true" />
-        </button>
       </CardHeader>
       <CardContent className="pt-1">
         {loading || station === null ? (
