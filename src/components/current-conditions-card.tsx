@@ -174,12 +174,13 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
         paddingTop: '0.2rem',
         borderTop: '1px solid var(--border)',
         marginTop: 'auto',
+        marginBottom: 'calc(-1 * var(--card-pad))',
       }}
     >
       {/* Chart: role="img" with aria-label for screen readers */}
       <div role="img" aria-label={t('tempCurveAriaLabel')}>
         <ResponsiveContainer width="100%" height={120}>
-          <ComposedChart data={data} margin={{ top: 6, right: 16, bottom: 0, left: 4 }}>
+          <ComposedChart data={data} margin={{ top: 6, right: 16, bottom: 16, left: 4 }}>
             {/* Past actual: solid blue filled area */}
             <Area
               type="monotone"
@@ -255,7 +256,6 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
               tick={{ fontFamily: 'var(--font-chart)', fontSize: 14, fill: 'var(--foreground)' }}
               interval={0}
               scale="time"
-              height={20}
             />
 
             <YAxis
