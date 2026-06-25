@@ -265,9 +265,11 @@ function WmsAnimatedLayer({
 
   // Load-gated visibility: show the target frame only when its tiles are loaded.
   const targetTime = frames[targetFrameIndex]?.time ?? null;
-  if (targetTime && loadedTimesRef.current.has(targetTime) && visibleTime !== targetTime) {
-    setVisibleTime(targetTime);
-  }
+  useEffect(() => {
+    if (targetTime && loadedTimesRef.current.has(targetTime)) {
+      setVisibleTime(targetTime);
+    }
+  }, [targetTime]);
 
   if (frameCount === 0) return null;
 
@@ -287,7 +289,7 @@ function WmsAnimatedLayer({
             version="1.1.1"
             opacity={isVisible ? maxOpacity : 0.001}
             attribution={isVisible ? (attribution ?? undefined) : undefined}
-            pane={pane}
+            {...(pane != null ? { pane } : {})}
             eventHandlers={{
               load: () => {
                 loadedTimesRef.current.add(frame.time);
