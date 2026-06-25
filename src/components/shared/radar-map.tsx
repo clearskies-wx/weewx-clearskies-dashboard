@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MapContainer, TileLayer, GeoJSON, Pane } from 'react-leaflet';
+import { MapContainer, TileLayer, WMSTileLayer, GeoJSON, Pane } from 'react-leaflet';
 import { Play, Pause, CaretLeft, CaretRight } from '@phosphor-icons/react';
 import { useCapabilities, useRadarFrames } from '../../hooks/useWeatherData';
 import { getRadarLayerFrames, getAlerts } from '../../api/client';
@@ -118,39 +118,9 @@ function buildTileUrl(
     return url;
   }
 
-  // WMS-T fallback: compose from wmsEndpointUrl
-  if (capability.wmsEndpointUrl && capability.wmsLayerName) {
-    const base = capability.wmsEndpointUrl;
-    const layer = encodeURIComponent(capability.wmsLayerName);
-    const time = encodeURIComponent(frame.time);
-    return (
-      `${base}?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap` +
-      `&LAYERS=${layer}&TIME=${time}` +
-      `&BBOX={bbox-epsg-3857}&CRS=EPSG:3857` +
-      `&WIDTH=256&HEIGHT=256&FORMAT=image/png&TRANSPARENT=TRUE`
-    );
-  }
-
   return null;
 }
 
-/**
- * Build a WMS-T tile URL for a NOAA sub-layer declaration (T3.2).
- */
-function buildLayerTileUrl(frame: RadarFrame, layer: LayerDeclaration): string | null {
-  if (layer.wmsEndpointUrl && layer.wmsLayerName) {
-    const base = layer.wmsEndpointUrl;
-    const layerName = encodeURIComponent(layer.wmsLayerName);
-    const time = encodeURIComponent(frame.time);
-    return (
-      `${base}?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap` +
-      `&LAYERS=${layerName}&TIME=${time}` +
-      `&BBOX={bbox-epsg-3857}&CRS=EPSG:3857` +
-      `&WIDTH=256&HEIGHT=256&FORMAT=image/png&TRANSPARENT=TRUE`
-    );
-  }
-  return null;
-}
 
 function getFrameOpacity(frameIndex: number, step: number, totalFrames: number, maxOpacity: number = MAX_OPACITY): number {
   const primaryFrame = Math.floor(step / SUBSTEPS) % totalFrames;
@@ -775,10 +745,9 @@ export function RadarMap({
             attribution={baseTile.attribution}
           />
 
-          {/* Single-layer providers (RainViewer, LibreWxR, non-NOAA WMS-T) */}
-          {radarCapability !== null && !isNoaa && frames.map((frame, i) => {
-            const cap = radarCapability;
-            const url = buildTileUrl(frame, cap, tileHost, effectiveColorScheme);
+          {/* Single-layer tile providers (RainViewer, LibreWxR) — use TileLayer */}
+          {radarCapability !== null && !isNoaa && radarCapability.tileUrlTemplate && frames.map((frame, i) => {
+            const url = buildTileUrl(frame, radarCapability, tileHost, effectiveColorScheme);
             if (!url) return null;
             const frameIndex = i;
             return (
@@ -789,9 +758,39 @@ export function RadarMap({
                 attribution={i === 0 ? providerAttribution : undefined}
                 eventHandlers={{
                   load: () => {
-                    // Mark this frame as fully loaded. When all frames are ready,
-                    // start playback immediately rather than waiting for the
-                    // PRELOAD_DELAY_MS fallback timeout.
+                    loadedLayersRef.current.add(frameIndex);
+                    if (loadedLayersRef.current.size >= frames.length) {
+                      if (preloadTimerRef.current !== null) {
+                        clearTimeout(preloadTimerRef.current);
+                        preloadTimerRef.current = null;
+                      }
+                      setIsPlaying(true);
+                    }
+                  },
+                }}
+              />
+            );
+          })}
+
+          {/* Single-layer WMS-T providers (MSC GeoMet, DWD Radolan) — use WMSTileLayer.
+              WMSTileLayer computes BBOX from tile coordinates automatically.
+              TIME is baked into the base URL so each frame is a distinct layer instance. */}
+          {radarCapability !== null && !isNoaa && !radarCapability.tileUrlTemplate &&
+            radarCapability.wmsEndpointUrl && radarCapability.wmsLayerName && frames.map((frame, i) => {
+            const wmsUrl = `${radarCapability.wmsEndpointUrl}?TIME=${encodeURIComponent(frame.time)}`;
+            const frameIndex = i;
+            return (
+              <WMSTileLayer
+                key={frame.time}
+                url={wmsUrl}
+                layers={radarCapability.wmsLayerName!}
+                format="image/png"
+                transparent={true}
+                version="1.1.1"
+                opacity={Math.max(getFrameOpacity(i, effectiveAnimationStep, frameCount, effectiveMaxOpacity), 0.001)}
+                attribution={i === 0 ? providerAttribution : undefined}
+                eventHandlers={{
+                  load: () => {
                     loadedLayersRef.current.add(frameIndex);
                     if (loadedLayersRef.current.size >= frames.length) {
                       if (preloadTimerRef.current !== null) {
@@ -807,30 +806,32 @@ export function RadarMap({
           })}
 
           {/* T3.2 — NOAA dual-layer: render NEXRAD + MRMS simultaneously, in sync.
-              Each frame slot produces one TileLayer per sub-layer; both share the
-              same opacity computed from the shared animationStep. */}
+              Each frame slot produces one WMSTileLayer per sub-layer; both share
+              the same opacity computed from the shared animationStep.
+              WMSTileLayer handles BBOX computation automatically — the TIME param
+              is baked into the base URL so each frame is a distinct layer instance. */}
           {radarCapability !== null && isNoaa && enabledRadarLayers && frames.map((frame, i) => {
             const frameOpacity = Math.max(getFrameOpacity(i, effectiveAnimationStep, frameCount, effectiveMaxOpacity), 0.001);
             const layerCount = enabledRadarLayers.length;
             return enabledRadarLayers.map((layer, layerIdx) => {
+              if (!layer.wmsEndpointUrl || !layer.wmsLayerName) return null;
               const layerFrameList = noaaLayerFrameLists[layer.layerId];
-              // Use the matching frame from this sub-layer's own frame list when available,
-              // falling back to the primary frame (same time index) when sub-layer frames
-              // haven't loaded yet or the index is out of range.
               const layerFrame = layerFrameList?.frames[i] ?? frame;
-              const url = buildLayerTileUrl(layerFrame, layer);
-              if (!url) return null;
+              const wmsUrl = `${layer.wmsEndpointUrl}?TIME=${encodeURIComponent(layerFrame.time)}`;
               const loadKey = i * layerCount + layerIdx;
               const expectedLoads = frames.length * layerCount;
               return (
-                <TileLayer
+                <WMSTileLayer
                   key={`${layer.layerId}-${frame.time}`}
-                  url={url}
+                  url={wmsUrl}
+                  layers={layer.wmsLayerName}
+                  format="image/png"
+                  transparent={true}
+                  version="1.1.1"
                   opacity={frameOpacity}
                   attribution={i === 0 && layerIdx === 0 ? providerAttribution : undefined}
                   eventHandlers={{
                     load: () => {
-                      // Count loads across all layers × frames.
                       loadedLayersRef.current.add(loadKey);
                       if (loadedLayersRef.current.size >= expectedLoads) {
                         if (preloadTimerRef.current !== null) {
@@ -849,27 +850,30 @@ export function RadarMap({
           {/*
             T4.6 — Satellite WMS TileLayers.
             Rendered in a custom Pane at z-index 100 (below radar at z-index 200).
-            Each active satellite layer renders one TileLayer per frame, animated
+            Each active satellite layer renders one WMSTileLayer per frame, animated
             in sync with the shared animationStep (same cross-fade logic as radar).
-            The pane z-index places satellite below radar in the map stacking order.
+            WMSTileLayer handles BBOX computation; TIME is baked into the base URL.
           */}
           {activeSatelliteLayers.length > 0 && (
             <Pane name="satellite-pane" style={{ zIndex: 100 }}>
               {activeSatelliteLayers.map((layer) => {
+                if (!layer.wmsEndpointUrl || !layer.wmsLayerName) return null;
                 const layerFrameList = satelliteFrameLists[layer.layerId];
-                // Fall back to the primary frames when satellite-specific frames aren't loaded yet.
                 const satFrames = layerFrameList?.frames ?? frames;
                 return satFrames.map((frame, i) => {
-                  const url = buildLayerTileUrl(frame, layer);
-                  if (!url) return null;
+                  const wmsUrl = `${layer.wmsEndpointUrl}?TIME=${encodeURIComponent(frame.time)}`;
                   const opacity = Math.max(
                     getFrameOpacity(i, effectiveAnimationStep, satFrames.length, effectiveMaxOpacity),
                     0.001,
                   );
                   return (
-                    <TileLayer
+                    <WMSTileLayer
                       key={`sat-${layer.layerId}-${frame.time}`}
-                      url={url}
+                      url={wmsUrl}
+                      layers={layer.wmsLayerName!}
+                      format="image/png"
+                      transparent={true}
+                      version="1.1.1"
                       opacity={opacity}
                       pane="satellite-pane"
                     />
