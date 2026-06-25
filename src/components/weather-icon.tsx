@@ -59,6 +59,9 @@ const WMO_MAP: Record<number, GlyphEntry> = {
   2:  { day: GlyphPartlyCloudy, night: GlyphPartlyCloudyNight, descriptionKey: 'wmo.2'  },
   // Overcast
   3:  { day: GlyphCloud,                                  descriptionKey: 'wmo.3'  },
+  // Overcast / Heavy Overcast (Clear Skies API extension — _derive_weather_code
+  // returns 4 for "Overcast"/"Heavy Overcast"; standard WMO stops at 3)
+  4:  { day: GlyphCloud,                                  descriptionKey: 'wmo.4'  },
   // Haze
   5:  { day: GlyphHazy,        night: GlyphHazyNight,    descriptionKey: 'wmo.5'  },
   // Mist
@@ -86,6 +89,9 @@ const WMO_MAP: Record<number, GlyphEntry> = {
   75: { day: GlyphSnowy,                                  descriptionKey: 'wmo.75' },
   // Snow grains
   77: { day: GlyphSnowy,                                  descriptionKey: 'wmo.77' },
+  // Ice pellets / sleet (Clear Skies API extension — _derive_weather_code
+  // returns 79 for "Sleet")
+  79: { day: GlyphSnowy,                                  descriptionKey: 'wmo.79' },
   // Rain showers — slight, moderate, violent
   80: { day: GlyphRainy,                                  descriptionKey: 'wmo.80' },
   81: { day: GlyphRainy,                                  descriptionKey: 'wmo.81' },
