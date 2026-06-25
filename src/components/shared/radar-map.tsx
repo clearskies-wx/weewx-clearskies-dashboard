@@ -771,66 +771,102 @@ export function RadarMap({
             );
           })}
 
-          {/* Single-layer WMS-T providers (MSC GeoMet, DWD Radolan).
-              ONE WMSTileLayer — TIME swaps on each frame advance.  WMS servers
-              render tiles server-side; pre-rendering all frames is wrong. */}
+          {/* WMS sliding-window animation (all WMS providers).
+              Renders 3 WMSTileLayers per sub-layer: previous, current, next.
+              - "next" preloads tiles at opacity 0.001 (invisible).
+              - When the animation advances, React reconciles by key:
+                old "next" becomes "current" → setOpacity(max) — tiles already loaded.
+                old "current" becomes "previous" → setOpacity(0.001).
+                new "next" mounts and starts loading invisibly.
+                old "previous" unmounts (was invisible, no visual effect).
+              No flash because the becoming-visible layer was preloaded. */}
+
+          {/* Single-layer WMS-T providers (MSC GeoMet, DWD Radolan) */}
           {radarCapability !== null && !isNoaa && !radarCapability.tileUrlTemplate &&
-            radarCapability.wmsEndpointUrl && radarCapability.wmsLayerName && currentFrame && (
-            <WMSTileLayer
-              key={`wms-${currentFrame.time}`}
-              url={`${radarCapability.wmsEndpointUrl}?TIME=${encodeURIComponent(currentFrame.time)}`}
-              layers={radarCapability.wmsLayerName}
-              format="image/png"
-              transparent={true}
-              version="1.1.1"
-              opacity={effectiveMaxOpacity}
-              attribution={providerAttribution}
-            />
-          )}
+            radarCapability.wmsEndpointUrl && radarCapability.wmsLayerName && frameCount > 0 &&
+            [
+              (displayFrameIndex - 1 + frameCount) % frameCount,
+              displayFrameIndex,
+              (displayFrameIndex + 1) % frameCount,
+            ].map((fi, slot) => {
+              const frame = frames[fi];
+              if (!frame) return null;
+              const isCurrent = slot === 1;
+              return (
+                <WMSTileLayer
+                  key={`wms-${frame.time}`}
+                  url={`${radarCapability.wmsEndpointUrl}?TIME=${encodeURIComponent(frame.time)}`}
+                  layers={radarCapability.wmsLayerName!}
+                  format="image/png"
+                  transparent={true}
+                  version="1.1.1"
+                  opacity={isCurrent ? effectiveMaxOpacity : 0.001}
+                  attribution={isCurrent ? providerAttribution : undefined}
+                />
+              );
+            })
+          }
 
-          {/* T3.2 — NOAA dual-layer: ONE WMSTileLayer per sub-layer, TIME swaps
-              on each frame advance.  Standard WMS radar animation — every WMS
-              radar viewer works this way (one layer, change TIME parameter). */}
-          {radarCapability !== null && isNoaa && enabledRadarLayers && currentFrame && enabledRadarLayers.map((layer) => {
-            if (!layer.wmsEndpointUrl || !layer.wmsLayerName) return null;
-            const layerFrameList = noaaLayerFrameLists[layer.layerId];
-            const layerFrame = layerFrameList?.frames[displayFrameIndex] ?? currentFrame;
-            return (
-              <WMSTileLayer
-                key={`${layer.layerId}-${layerFrame.time}`}
-                url={`${layer.wmsEndpointUrl}?TIME=${encodeURIComponent(layerFrame.time)}`}
-                layers={layer.wmsLayerName}
-                format="image/png"
-                transparent={true}
-                version="1.1.1"
-                opacity={effectiveMaxOpacity}
-                attribution={providerAttribution}
-              />
-            );
-          })}
+          {/* T3.2 — NOAA dual-layer sliding window */}
+          {radarCapability !== null && isNoaa && enabledRadarLayers && frameCount > 0 &&
+            enabledRadarLayers.map((layer) => {
+              if (!layer.wmsEndpointUrl || !layer.wmsLayerName) return null;
+              const layerFrameList = noaaLayerFrameLists[layer.layerId];
+              return [
+                (displayFrameIndex - 1 + frameCount) % frameCount,
+                displayFrameIndex,
+                (displayFrameIndex + 1) % frameCount,
+              ].map((fi, slot) => {
+                const layerFrame = layerFrameList?.frames[fi] ?? frames[fi];
+                if (!layerFrame) return null;
+                const isCurrent = slot === 1;
+                return (
+                  <WMSTileLayer
+                    key={`${layer.layerId}-${layerFrame.time}`}
+                    url={`${layer.wmsEndpointUrl}?TIME=${encodeURIComponent(layerFrame.time)}`}
+                    layers={layer.wmsLayerName}
+                    format="image/png"
+                    transparent={true}
+                    version="1.1.1"
+                    opacity={isCurrent ? effectiveMaxOpacity : 0.001}
+                    attribution={isCurrent ? providerAttribution : undefined}
+                  />
+                );
+              });
+            })
+          }
 
-          {/* T4.6 — Satellite WMS TileLayers.
-              ONE WMSTileLayer per active satellite layer, TIME synced to the
-              current radar frame.  Rendered below radar (z-index 100). */}
-          {activeSatelliteLayers.length > 0 && currentFrame && (
+          {/* T4.6 — Satellite sliding window */}
+          {activeSatelliteLayers.length > 0 && frameCount > 0 && (
             <Pane name="satellite-pane" style={{ zIndex: 100 }}>
               {activeSatelliteLayers.map((layer) => {
                 if (!layer.wmsEndpointUrl || !layer.wmsLayerName) return null;
                 const layerFrameList = satelliteFrameLists[layer.layerId];
                 const satFrames = layerFrameList?.frames ?? frames;
-                const satFrame = satFrames[displayFrameIndex] ?? currentFrame;
-                return (
-                  <WMSTileLayer
-                    key={`sat-${layer.layerId}-${satFrame.time}`}
-                    url={`${layer.wmsEndpointUrl}?TIME=${encodeURIComponent(satFrame.time)}`}
-                    layers={layer.wmsLayerName}
-                    format="image/png"
-                    transparent={true}
-                    version="1.1.1"
-                    opacity={effectiveMaxOpacity}
-                    pane="satellite-pane"
-                  />
-                );
+                const satCount = satFrames.length;
+                if (satCount === 0) return null;
+                const satIdx = Math.min(displayFrameIndex, satCount - 1);
+                return [
+                  (satIdx - 1 + satCount) % satCount,
+                  satIdx,
+                  (satIdx + 1) % satCount,
+                ].map((fi, slot) => {
+                  const satFrame = satFrames[fi];
+                  if (!satFrame) return null;
+                  const isCurrent = slot === 1;
+                  return (
+                    <WMSTileLayer
+                      key={`sat-${layer.layerId}-${satFrame.time}`}
+                      url={`${layer.wmsEndpointUrl}?TIME=${encodeURIComponent(satFrame.time)}`}
+                      layers={layer.wmsLayerName}
+                      format="image/png"
+                      transparent={true}
+                      version="1.1.1"
+                      opacity={isCurrent ? effectiveMaxOpacity : 0.001}
+                      pane="satellite-pane"
+                    />
+                  );
+                });
               })}
             </Pane>
           )}
