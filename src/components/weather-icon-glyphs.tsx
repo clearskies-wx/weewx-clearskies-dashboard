@@ -18,6 +18,7 @@
  */
 
 import { useId } from 'react';
+import type React from 'react';
 import type { ReactElement } from 'react';
 
 // ---------------------------------------------------------------------------
@@ -81,7 +82,7 @@ function GradientDefs({ p }: { p: string }): ReactElement {
 const CLOUD_STROKE = 'rgba(0,0,0,0.12)';
 const CLOUD_STROKE_WIDTH = 0.4;
 
-function Svg({ size, p, children }: { size: number; p: string; children: ReactElement | ReactElement[] }): ReactElement {
+function Svg({ size, p, children }: { size: number; p: string; children: React.ReactNode }): ReactElement {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
