@@ -905,8 +905,9 @@ export function RadarMap({
             attribution={baseTile.attribution}
           />
 
-          {/* Single-layer tile providers (RainViewer, LibreWxR) — use TileLayer */}
-          {radarCapability !== null && !isNoaa && radarCapability.tileUrlTemplate && frames.map((frame, i) => {
+          {/* XYZ tile providers (RainViewer, LibreWxR, NOAA NEXRAD TMS) — pre-render
+              all frames as TileLayer with opacity cross-fade. */}
+          {radarCapability !== null && radarCapability.tileUrlTemplate && frames.map((frame, i) => {
             const url = buildTileUrl(frame, radarCapability, tileHost, effectiveColorScheme);
             if (!url) return null;
             const frameIndex = i;
