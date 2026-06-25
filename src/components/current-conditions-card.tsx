@@ -219,11 +219,9 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
               strokeDasharray="2 2"
               label={{
                 value: 'Now',
-                position: (() => {
-                  const fractionOfDay = (now - todayMidnight) / (24 * 3600 * 1000);
-                  if (fractionOfDay < 0.15 || fractionOfDay > 0.85) return 'insideTopRight';
-                  return 'insideTopLeft';
-                })(),
+                position: (now - todayMidnight) / (24 * 3600 * 1000) > 0.85
+                  ? 'insideTopRight'
+                  : 'insideTopLeft',
                 style: {
                   fontFamily: 'var(--font-chart)',
                   fontSize: 'var(--text-micro)',
