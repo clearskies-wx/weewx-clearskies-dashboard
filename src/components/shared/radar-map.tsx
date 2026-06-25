@@ -801,7 +801,7 @@ export function RadarMap({
                   transparent={true}
                   version="1.1.1"
                   opacity={isCurrent ? effectiveMaxOpacity : 0.001}
-                  attribution={isCurrent ? providerAttribution : undefined}
+                  attribution={isCurrent ? (providerAttribution ?? undefined) : undefined}
                 />
               );
             })
@@ -829,7 +829,7 @@ export function RadarMap({
                     transparent={true}
                     version="1.1.1"
                     opacity={isCurrent ? effectiveMaxOpacity : 0.001}
-                    attribution={isCurrent ? providerAttribution : undefined}
+                    attribution={isCurrent ? (providerAttribution ?? undefined) : undefined}
                   />
                 );
               });
