@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MapContainer, TileLayer, WMSTileLayer, GeoJSON, Pane } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, Pane } from 'react-leaflet';
 import { Play, Pause, CaretLeft, CaretRight } from '@phosphor-icons/react';
 import { useCapabilities, useRadarFrames } from '../../hooks/useWeatherData';
 import { getRadarLayerFrames, getAlerts } from '../../api/client';
@@ -55,31 +55,19 @@ interface RadarMapProps {
   enabledLayers?: Set<string>;
 }
 
-const SUBSTEPS = 5;        // interpolation steps between each real frame pair (XYZ tiles only)
+const SUBSTEPS = 5;        // interpolation steps between each real frame pair
 const MAX_OPACITY = 0.7;   // max radar overlay opacity
 
-// Target loop duration for adaptive animation speed (T3.5, XYZ tiles only).
+// Target loop duration for adaptive animation speed (T3.5).
+// Keeps the animation loop near 18 seconds regardless of frame count.
 const TARGET_LOOP_DURATION_MS = 18_000;
 
-// Minimum tick interval for XYZ cross-fade animation.
+// Minimum tick interval — prevents animation from being so fast tiles can't keep up.
 const MIN_TICK_MS = 30;
 
-// WMS layer pool: buffer window around the current frame. Layers outside the
-// window unmount; layers inside preload at opacity 0.001 so tiles are ready
-// before the animation reaches them. Modelled on Leaflet.TimeDimension.
-const WMS_BUFFER_FORWARD = 5;
-const WMS_BUFFER_BACKWARD = 2;
-
-// WMS animation hold time per frame (ms). The animation timer advances the
-// target index, and the layer pool makes the frame visible once its tiles have
-// loaded. If tiles load faster, the display still waits this long for visual
-// pacing. If tiles load slower, the display holds the previous frame until ready.
-const WMS_FRAME_HOLD_MS = 800;
-
-// Frame caps: card shows ~2 hours, expanded shows ~6 hours.
-// NOAA returns 300 frames (25 hours) which is far more than any radar viewer loops.
-const CARD_FRAME_CAP = 24;       // 24 × 5 min = 2 hours
-const EXPANDED_FRAME_CAP = 72;   // 72 × 5 min = 6 hours
+// Card-view frame cap: limit to most-recent N frames to keep animation manageable (T3.5).
+// The expanded view (/radar page, Phase 4) will show the full history.
+const CARD_FRAME_CAP = 24;
 
 // How long to wait after frames load before starting auto-play.
 // Gives the browser time to begin fetching tiles for all frames so the first
@@ -130,9 +118,39 @@ function buildTileUrl(
     return url;
   }
 
+  // WMS-T fallback: compose from wmsEndpointUrl
+  if (capability.wmsEndpointUrl && capability.wmsLayerName) {
+    const base = capability.wmsEndpointUrl;
+    const layer = encodeURIComponent(capability.wmsLayerName);
+    const time = encodeURIComponent(frame.time);
+    return (
+      `${base}?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap` +
+      `&LAYERS=${layer}&TIME=${time}` +
+      `&BBOX={bbox-epsg-3857}&CRS=EPSG:3857` +
+      `&WIDTH=256&HEIGHT=256&FORMAT=image/png&TRANSPARENT=TRUE`
+    );
+  }
+
   return null;
 }
 
+/**
+ * Build a WMS-T tile URL for a NOAA sub-layer declaration (T3.2).
+ */
+function buildLayerTileUrl(frame: RadarFrame, layer: LayerDeclaration): string | null {
+  if (layer.wmsEndpointUrl && layer.wmsLayerName) {
+    const base = layer.wmsEndpointUrl;
+    const layerName = encodeURIComponent(layer.wmsLayerName);
+    const time = encodeURIComponent(frame.time);
+    return (
+      `${base}?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap` +
+      `&LAYERS=${layerName}&TIME=${time}` +
+      `&BBOX={bbox-epsg-3857}&CRS=EPSG:3857` +
+      `&WIDTH=256&HEIGHT=256&FORMAT=image/png&TRANSPARENT=TRUE`
+    );
+  }
+  return null;
+}
 
 function getFrameOpacity(frameIndex: number, step: number, totalFrames: number, maxOpacity: number = MAX_OPACITY): number {
   const primaryFrame = Math.floor(step / SUBSTEPS) % totalFrames;
@@ -198,113 +216,6 @@ const TILE_CONFIG = {
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
   },
 } as const;
-
-// ---------------------------------------------------------------------------
-// WmsAnimatedLayer — Leaflet.TimeDimension layer-pool pattern in React.
-//
-// Maintains a sliding buffer window of WMSTileLayer components. The target
-// frame is at full opacity; buffer frames are invisible (opacity 0.001) but
-// mounted so tiles preload. When the target advances, the new target was
-// already preloaded — React just calls setOpacity (CSS-only, no tile refetch).
-//
-// Load-gated: the visible frame only changes when the target frame's tiles
-// have loaded. If the target changes before tiles are ready, the previous
-// frame stays visible until the new one is ready.
-// ---------------------------------------------------------------------------
-
-interface WmsAnimatedLayerProps {
-  endpoint: string;
-  layerName: string;
-  frames: RadarFrame[];
-  targetFrameIndex: number;
-  maxOpacity: number;
-  attribution?: string;
-  pane?: string;
-}
-
-function WmsAnimatedLayer({
-  endpoint,
-  layerName,
-  frames,
-  targetFrameIndex,
-  maxOpacity,
-  attribution,
-  pane,
-}: WmsAnimatedLayerProps) {
-  const frameCount = frames.length;
-
-  // Set of frame timestamps whose tiles have fully loaded on this mount cycle.
-  const loadedTimesRef = useRef(new Set<string>());
-
-  // The frame time currently shown at full opacity. Changes only when the
-  // target frame's tiles have loaded (load-gating).
-  const [visibleTime, setVisibleTime] = useState<string | null>(null);
-
-  // Reset load tracking when the frame list changes (provider switch, new fetch).
-  const prevFrameCountRef = useRef(frameCount);
-  if (frameCount !== prevFrameCountRef.current) {
-    loadedTimesRef.current = new Set<string>();
-    prevFrameCountRef.current = frameCount;
-  }
-
-  // Compute buffer window: indices of frames to keep mounted.
-  const windowIndices = new Set<number>();
-  for (let offset = -WMS_BUFFER_BACKWARD; offset <= WMS_BUFFER_FORWARD; offset++) {
-    windowIndices.add((targetFrameIndex + offset + frameCount) % frameCount);
-  }
-
-  // Evict load-tracking entries for frames no longer in the window.
-  // When a WMSTileLayer unmounts (leaves the window), its cached tiles are gone;
-  // if it re-enters later it needs to reload, so we must forget its loaded state.
-  const windowTimes = new Set(
-    Array.from(windowIndices).map((i) => frames[i]?.time).filter(Boolean),
-  );
-  for (const t of loadedTimesRef.current) {
-    if (!windowTimes.has(t)) loadedTimesRef.current.delete(t);
-  }
-
-  // Load-gated visibility: show the target frame only when its tiles are loaded.
-  const targetTime = frames[targetFrameIndex]?.time ?? null;
-  useEffect(() => {
-    if (targetTime && loadedTimesRef.current.has(targetTime)) {
-      setVisibleTime(targetTime);
-    }
-  }, [targetTime]);
-
-  if (frameCount === 0) return null;
-
-  return (
-    <>
-      {Array.from(windowIndices).map((fi) => {
-        const frame = frames[fi];
-        if (!frame) return null;
-        const isVisible = frame.time === visibleTime;
-        return (
-          <WMSTileLayer
-            key={frame.time}
-            url={`${endpoint}?TIME=${encodeURIComponent(frame.time)}`}
-            layers={layerName}
-            format="image/png"
-            transparent={true}
-            version="1.1.1"
-            opacity={isVisible ? maxOpacity : 0.001}
-            attribution={isVisible ? (attribution ?? undefined) : undefined}
-            {...(pane != null ? { pane } : {})}
-            eventHandlers={{
-              load: () => {
-                loadedTimesRef.current.add(frame.time);
-                // If this is the target frame, trigger a re-render to update visibility.
-                if (frame.time === targetTime) {
-                  setVisibleTime(frame.time);
-                }
-              },
-            }}
-          />
-        );
-      })}
-    </>
-  );
-}
 
 export function RadarMap({
   center,
@@ -615,9 +526,10 @@ export function RadarMap({
     return radarFrameList?.frames ?? [];
   })();
 
-  const cap = expanded ? EXPANDED_FRAME_CAP : CARD_FRAME_CAP;
-  const frames: RadarFrame[] = allFrames.length > cap
-    ? allFrames.slice(-cap)
+  // T3.5 — Card view caps displayed frames at CARD_FRAME_CAP (most recent).
+  // Expanded view (/radar page, Phase 4) shows full history.
+  const frames: RadarFrame[] = !expanded && allFrames.length > CARD_FRAME_CAP
+    ? allFrames.slice(-CARD_FRAME_CAP)
     : allFrames;
 
   const tileHost = radarFrameList?.tileHost ?? null;
@@ -737,50 +649,8 @@ export function RadarMap({
   // otherwise fall back to the internal MAX_OPACITY constant.
   const effectiveMaxOpacity = opacityOverride !== undefined ? opacityOverride : MAX_OPACITY;
 
-  // Detect WMS-based provider (no tileUrlTemplate → WMS, or NOAA).
-  const isWmsProvider = radarCapability != null && !radarCapability.tileUrlTemplate;
-
-  // --- WMS animation state (separate from XYZ cross-fade) ---
-  // WMS uses a simple frame index with load-gated visibility in WmsAnimatedLayer.
-  // No sub-steps, no cross-fade — hard swap between frames when tiles are ready.
-  const [wmsFrameIndex, setWmsFrameIndex] = useState(0);
-  const wmsTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // WMS auto-play timer: advances wmsFrameIndex at WMS_FRAME_HOLD_MS intervals.
-  // Suppressed when externally controlled (expanded view TimeSlider drives it).
-  useEffect(() => {
-    if (wmsTimerRef.current !== null) {
-      clearInterval(wmsTimerRef.current);
-      wmsTimerRef.current = null;
-    }
-    if (isWmsProvider && isPlaying && frameCount > 1 && !isExternallyControlled) {
-      wmsTimerRef.current = setInterval(() => {
-        setWmsFrameIndex((prev) => (prev + 1) % frameCount);
-      }, WMS_FRAME_HOLD_MS);
-    }
-    return () => {
-      if (wmsTimerRef.current !== null) {
-        clearInterval(wmsTimerRef.current);
-        wmsTimerRef.current = null;
-      }
-    };
-  }, [isWmsProvider, isPlaying, frameCount, isExternallyControlled]);
-
-  // Reset WMS frame index when frame list changes.
-  useEffect(() => {
-    setWmsFrameIndex(0);
-  }, [frameCount]);
-
-  // Effective WMS target: externally controlled → use TimeSlider's index.
-  const wmsTargetIndex = isExternallyControlled
-    ? (externalFrameIndex ?? 0) % Math.max(1, frameCount)
-    : wmsFrameIndex;
-
   // Derive the display frame index from animationStep for timestamp/counter display.
-  // For WMS providers, use wmsTargetIndex directly (no sub-steps).
-  const displayFrameIndex = isWmsProvider
-    ? wmsTargetIndex
-    : (frameCount > 0 ? Math.floor(effectiveAnimationStep / SUBSTEPS) % frameCount : 0);
+  const displayFrameIndex = frameCount > 0 ? Math.floor(effectiveAnimationStep / SUBSTEPS) % frameCount : 0;
   const currentFrame: RadarFrame | null = frames[displayFrameIndex] ?? null;
 
   const isLoading = capLoading || framesLoading || noaaLayersLoading;
@@ -905,10 +775,10 @@ export function RadarMap({
             attribution={baseTile.attribution}
           />
 
-          {/* XYZ tile providers (RainViewer, LibreWxR, NOAA NEXRAD TMS) — pre-render
-              all frames as TileLayer with opacity cross-fade. */}
-          {radarCapability !== null && radarCapability.tileUrlTemplate && frames.map((frame, i) => {
-            const url = buildTileUrl(frame, radarCapability, tileHost, effectiveColorScheme);
+          {/* Single-layer providers (RainViewer, LibreWxR, non-NOAA WMS-T) */}
+          {radarCapability !== null && !isNoaa && frames.map((frame, i) => {
+            const cap = radarCapability;
+            const url = buildTileUrl(frame, cap, tileHost, effectiveColorScheme);
             if (!url) return null;
             const frameIndex = i;
             return (
@@ -919,6 +789,9 @@ export function RadarMap({
                 attribution={i === 0 ? providerAttribution : undefined}
                 eventHandlers={{
                   load: () => {
+                    // Mark this frame as fully loaded. When all frames are ready,
+                    // start playback immediately rather than waiting for the
+                    // PRELOAD_DELAY_MS fallback timeout.
                     loadedLayersRef.current.add(frameIndex);
                     if (loadedLayersRef.current.size >= frames.length) {
                       if (preloadTimerRef.current !== null) {
@@ -933,61 +806,75 @@ export function RadarMap({
             );
           })}
 
-          {/* WMS layer pool animation (Leaflet.TimeDimension pattern).
-              WmsAnimatedLayer manages a buffer window of WMSTileLayer components:
-              tiles preload invisibly, visibility is load-gated, no flash on swap. */}
-
-          {/* Single-layer WMS-T providers (MSC GeoMet, DWD Radolan) */}
-          {radarCapability !== null && !isNoaa && !radarCapability.tileUrlTemplate &&
-            radarCapability.wmsEndpointUrl && radarCapability.wmsLayerName && frameCount > 0 && (
-            <WmsAnimatedLayer
-              endpoint={radarCapability.wmsEndpointUrl}
-              layerName={radarCapability.wmsLayerName}
-              frames={frames}
-              targetFrameIndex={wmsTargetIndex}
-              maxOpacity={effectiveMaxOpacity}
-              attribution={providerAttribution}
-            />
-          )}
-
-          {/* NOAA dual-layer: one WmsAnimatedLayer per radar sub-layer */}
-          {radarCapability !== null && isNoaa && enabledRadarLayers && frameCount > 0 &&
-            enabledRadarLayers.map((layer) => {
-              if (!layer.wmsEndpointUrl || !layer.wmsLayerName) return null;
+          {/* T3.2 — NOAA dual-layer: render NEXRAD + MRMS simultaneously, in sync.
+              Each frame slot produces one TileLayer per sub-layer; both share the
+              same opacity computed from the shared animationStep. */}
+          {radarCapability !== null && isNoaa && enabledRadarLayers && frames.map((frame, i) => {
+            const frameOpacity = Math.max(getFrameOpacity(i, effectiveAnimationStep, frameCount, effectiveMaxOpacity), 0.001);
+            const layerCount = enabledRadarLayers.length;
+            return enabledRadarLayers.map((layer, layerIdx) => {
               const layerFrameList = noaaLayerFrameLists[layer.layerId];
-              const layerFrames = layerFrameList?.frames ?? frames;
+              // Use the matching frame from this sub-layer's own frame list when available,
+              // falling back to the primary frame (same time index) when sub-layer frames
+              // haven't loaded yet or the index is out of range.
+              const layerFrame = layerFrameList?.frames[i] ?? frame;
+              const url = buildLayerTileUrl(layerFrame, layer);
+              if (!url) return null;
+              const loadKey = i * layerCount + layerIdx;
+              const expectedLoads = frames.length * layerCount;
               return (
-                <WmsAnimatedLayer
-                  key={layer.layerId}
-                  endpoint={layer.wmsEndpointUrl}
-                  layerName={layer.wmsLayerName}
-                  frames={layerFrames}
-                  targetFrameIndex={Math.min(wmsTargetIndex, layerFrames.length - 1)}
-                  maxOpacity={effectiveMaxOpacity}
-                  attribution={providerAttribution}
+                <TileLayer
+                  key={`${layer.layerId}-${frame.time}`}
+                  url={url}
+                  opacity={frameOpacity}
+                  attribution={i === 0 && layerIdx === 0 ? providerAttribution : undefined}
+                  eventHandlers={{
+                    load: () => {
+                      // Count loads across all layers × frames.
+                      loadedLayersRef.current.add(loadKey);
+                      if (loadedLayersRef.current.size >= expectedLoads) {
+                        if (preloadTimerRef.current !== null) {
+                          clearTimeout(preloadTimerRef.current);
+                          preloadTimerRef.current = null;
+                        }
+                        setIsPlaying(true);
+                      }
+                    },
+                  }}
                 />
               );
-            })
-          }
+            });
+          })}
 
-          {/* Satellite layers: one WmsAnimatedLayer per active satellite layer */}
-          {activeSatelliteLayers.length > 0 && frameCount > 0 && (
+          {/*
+            T4.6 — Satellite WMS TileLayers.
+            Rendered in a custom Pane at z-index 100 (below radar at z-index 200).
+            Each active satellite layer renders one TileLayer per frame, animated
+            in sync with the shared animationStep (same cross-fade logic as radar).
+            The pane z-index places satellite below radar in the map stacking order.
+          */}
+          {activeSatelliteLayers.length > 0 && (
             <Pane name="satellite-pane" style={{ zIndex: 100 }}>
               {activeSatelliteLayers.map((layer) => {
-                if (!layer.wmsEndpointUrl || !layer.wmsLayerName) return null;
                 const layerFrameList = satelliteFrameLists[layer.layerId];
+                // Fall back to the primary frames when satellite-specific frames aren't loaded yet.
                 const satFrames = layerFrameList?.frames ?? frames;
-                return (
-                  <WmsAnimatedLayer
-                    key={`sat-${layer.layerId}`}
-                    endpoint={layer.wmsEndpointUrl}
-                    layerName={layer.wmsLayerName}
-                    frames={satFrames}
-                    targetFrameIndex={Math.min(wmsTargetIndex, satFrames.length - 1)}
-                    maxOpacity={effectiveMaxOpacity}
-                    pane="satellite-pane"
-                  />
-                );
+                return satFrames.map((frame, i) => {
+                  const url = buildLayerTileUrl(frame, layer);
+                  if (!url) return null;
+                  const opacity = Math.max(
+                    getFrameOpacity(i, effectiveAnimationStep, satFrames.length, effectiveMaxOpacity),
+                    0.001,
+                  );
+                  return (
+                    <TileLayer
+                      key={`sat-${layer.layerId}-${frame.time}`}
+                      url={url}
+                      opacity={opacity}
+                      pane="satellite-pane"
+                    />
+                  );
+                });
               })}
             </Pane>
           )}
