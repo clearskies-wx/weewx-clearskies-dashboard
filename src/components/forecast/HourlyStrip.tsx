@@ -46,6 +46,56 @@ const CELL_BASE: React.CSSProperties = {
   justifyContent: 'center',
 };
 
+// ── Sun event timeline for day/night classification ─────────────────────────
+
+interface SunTimes {
+  sunrise?: string | null;
+  sunset?: string | null;
+}
+
+interface SunEvent {
+  time: number;
+  type: 'rise' | 'set';
+}
+
+function buildSunEvents(dailyForecasts: SunTimes[]): SunEvent[] {
+  const events: SunEvent[] = [];
+
+  for (const day of dailyForecasts) {
+    if (day.sunrise) events.push({ time: new Date(day.sunrise).getTime(), type: 'rise' });
+    if (day.sunset) events.push({ time: new Date(day.sunset).getTime(), type: 'set' });
+  }
+
+  events.sort((a, b) => a.time - b.time);
+
+  // The daily forecast often starts with tomorrow — the earliest hours in the
+  // hourly forecast may belong to today and predate all known sun events.
+  // Extrapolate one day backwards from the first known sunrise and sunset so
+  // those hours get correct day/night classification.
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const firstRise = events.find(e => e.type === 'rise');
+  const firstSet = events.find(e => e.type === 'set');
+  if (firstRise) events.push({ time: firstRise.time - DAY_MS, type: 'rise' });
+  if (firstSet) events.push({ time: firstSet.time - DAY_MS, type: 'set' });
+
+  events.sort((a, b) => a.time - b.time);
+  return events;
+}
+
+function isNightFromEvents(validTime: string, events: SunEvent[]): boolean {
+  if (events.length === 0) return false;
+  const t = new Date(validTime).getTime();
+
+  let lastEvent: SunEvent | null = null;
+  for (const event of events) {
+    if (event.time <= t) lastEvent = event;
+    else break;
+  }
+
+  if (!lastEvent) return true;
+  return lastEvent.type === 'set';
+}
+
 // ── Props ────────────────────────────────────────────────────────────────────
 
 export interface HourlyStripProps {
@@ -58,18 +108,8 @@ export interface HourlyStripProps {
   hideTrend?: boolean;
   /** Units block from the API response — drives temp suffix. */
   units?: UnitsBlock | null;
-  /** ISO sunrise time for determining night icons. */
-  sunrise?: string | null;
-  /** ISO sunset time for determining night icons. */
-  sunset?: string | null;
-}
-
-// ── Component ────────────────────────────────────────────────────────────────
-
-function isNightHour(validTime: string, sunrise?: string | null, sunset?: string | null): boolean {
-  if (!sunrise || !sunset) return false;
-  const t = new Date(validTime).getTime();
-  return t < new Date(sunrise).getTime() || t >= new Date(sunset).getTime();
+  /** Daily forecast entries providing sunrise/sunset for day/night icon lookup. */
+  dailyForecasts?: SunTimes[];
 }
 
 export function HourlyStrip({
@@ -78,10 +118,10 @@ export function HourlyStrip({
   stationTz = 'UTC',
   hideTrend = false,
   units,
-  sunrise,
-  sunset,
+  dailyForecasts,
 }: HourlyStripProps) {
   const tempSuffix = units?.outTemp ?? '°';
+  const sunEvents = useMemo(() => buildSunEvents(dailyForecasts ?? []), [dailyForecasts]);
 
   // Select the data to display
   const displayHours = useMemo(() => {
@@ -160,7 +200,7 @@ export function HourlyStrip({
       <WeatherIcon
         code={toWmoCode(hour.weatherCode)}
         size={weatherIconSize}
-        isNight={isNightHour(hour.validTime, sunrise, sunset)}
+        isNight={isNightFromEvents(hour.validTime, sunEvents)}
       />
     </div>
   ));

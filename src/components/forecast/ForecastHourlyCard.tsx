@@ -50,14 +50,12 @@ export function ForecastHourlyCard({
   const { t } = useTranslation('forecast');
   const [activeTab, setActiveTab] = useState<HourTab>('today');
 
-  const { todayHours, tomorrowHours, todaySun, tomorrowSun } = useMemo(() => {
+  const { todayHours, tomorrowHours, daily } = useMemo(() => {
     const all = forecast?.hourly ?? [];
-    const daily = forecast?.daily ?? [];
     return {
       todayHours: all.slice(0, 24),
       tomorrowHours: all.slice(24, 48),
-      todaySun: daily[0] ?? null,
-      tomorrowSun: daily[1] ?? null,
+      daily: forecast?.daily ?? [],
     };
   }, [forecast]);
 
@@ -97,7 +95,7 @@ export function ForecastHourlyCard({
               style={{ display: activeTab === 'today' ? 'block' : 'none' }}
             >
               {todayHours.length > 0 ? (
-                <HourlyStrip hours={todayHours} stationTz={stationTz} units={units} sunrise={todaySun?.sunrise} sunset={todaySun?.sunset} />
+                <HourlyStrip hours={todayHours} stationTz={stationTz} units={units} dailyForecasts={daily} />
               ) : (
                 <p style={{ color: 'var(--muted-foreground)', fontSize: 'var(--text-body, 0.9rem)' }}>
                   {t('noHourlyData')}
@@ -112,7 +110,7 @@ export function ForecastHourlyCard({
               style={{ display: activeTab === 'tomorrow' ? 'block' : 'none' }}
             >
               {tomorrowHours.length > 0 ? (
-                <HourlyStrip hours={tomorrowHours} stationTz={stationTz} units={units} sunrise={tomorrowSun?.sunrise} sunset={tomorrowSun?.sunset} />
+                <HourlyStrip hours={tomorrowHours} stationTz={stationTz} units={units} dailyForecasts={daily} />
               ) : (
                 <p style={{ color: 'var(--muted-foreground)', fontSize: 'var(--text-body, 0.9rem)' }}>
                   {t('noHourlyData')}

@@ -57,7 +57,6 @@ function NowForecastCardContent({
   // Take only the first 24 hours for the Today tab (3-hour windows = 8 data points)
   const next24hours = forecast?.hourly?.slice(0, 24) ?? [];
   const dailyDays = forecast?.daily?.slice(0, 7) ?? [];
-  const todaySun = dailyDays[0] ?? null;
 
   return (
     <Card footprint="wide" rowSpan={2} aria-busy={loading}>
@@ -114,8 +113,7 @@ function NowForecastCardContent({
                   hours={next24hours}
                   threeHourWindows
                   stationTz={stationTz}
-                  sunrise={todaySun?.sunrise}
-                  sunset={todaySun?.sunset}
+                  dailyForecasts={dailyDays}
                 />
               ) : (
                 <p style={{ color: 'var(--muted-foreground)', fontSize: 'var(--text-body, 0.9rem)' }}>
