@@ -16,5 +16,8 @@
   "layerSettings": "Mga Setting",
   "closePanel": "Isara ang mga setting",
   "opacity": "Opacity",
-  "colorScheme": "Kulay ng scheme"
+  "colorScheme": "Kulay ng scheme",
+  "layers": "Mga Layer",
+  "weatherAlerts": "Mga babala sa panahon",
+  "windArrows": "Mga palaso ng hangin"
 }

@@ -16,5 +16,8 @@
   "layerSettings": "Impostazioni",
   "closePanel": "Chiudi impostazioni",
   "opacity": "Opacità",
-  "colorScheme": "Schema colori"
+  "colorScheme": "Schema colori",
+  "layers": "Livelli",
+  "weatherAlerts": "Allerte meteo",
+  "windArrows": "Frecce del vento"
 }

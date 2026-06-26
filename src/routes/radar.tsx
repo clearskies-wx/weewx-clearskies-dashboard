@@ -59,6 +59,16 @@ export default function RadarPage() {
   // Opacity resets to 70% each session (intentionally not persisted).
   const [opacity, setOpacity] = useState<number>(0.7);
   const [colorScheme, setColorScheme] = useState<number>(() => readStorage().colorScheme);
+  // Alert overlay: default on so users see active warnings immediately.
+  const [showAlerts, setShowAlerts] = useState<boolean>(true);
+  // Wind arrow overlay: default off — an opt-in layer.
+  const [showWind, setShowWind] = useState<boolean>(false);
+
+  // Derived alert/wind availability from capability declaration.
+  const alertUrl = radarCapability?.alertUrl ?? null;
+  const alertsAvailable = radarCapability?.alertsAvailable ?? false;
+  // Wind tiles are LibreWxR-specific; available whenever that provider is active.
+  const windAvailable = radarCapability?.providerId === 'librewxr';
 
   // Persist panel open/close and color scheme to localStorage whenever they change.
   useEffect(() => {
@@ -174,6 +184,10 @@ export default function RadarPage() {
               maxBounds={maxBounds}
               opacity={opacity}
               colorScheme={colorScheme}
+              showAlerts={showAlerts && alertsAvailable}
+              alertUrl={alertUrl}
+              showWind={showWind && windAvailable}
+              caddyPrefix={radarCapability?.caddyPrefix ?? null}
             />
           )}
         </div>
@@ -189,6 +203,12 @@ export default function RadarPage() {
             onOpacityChange={setOpacity}
             isOpen={panelOpen}
             onToggle={() => setPanelOpen(false)}
+            alertsAvailable={alertsAvailable}
+            showAlerts={showAlerts}
+            onShowAlertsChange={setShowAlerts}
+            windAvailable={windAvailable}
+            showWind={showWind}
+            onShowWindChange={setShowWind}
           />
         )}
       </div>

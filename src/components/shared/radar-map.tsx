@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MapContainer, TileLayer, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import { Play, Pause, CaretLeft, CaretRight } from '@phosphor-icons/react';
 import { useCapabilities, useRadarFrames } from '../../hooks/useWeatherData';
 import type { CapabilityDeclaration, RadarFrame } from '../../api/types';
 import { useTheme } from '../../lib/theme-provider';
+import type { FeatureCollection } from 'geojson';
 
 interface RadarMapProps {
   center: [number, number];
@@ -26,6 +27,20 @@ interface RadarMapProps {
   opacity?: number;
   /** Color scheme ID for tile URL {color} placeholder. Defaults to RAINVIEWER_COLOR (2). */
   colorScheme?: number;
+  /**
+   * When true and alertUrl is provided, fetches and renders GeoJSON alert polygons.
+   * LibreWxR only.
+   */
+  showAlerts?: boolean;
+  /** Alert GeoJSON endpoint URL (e.g. "/librewxr/v2/alerts"). */
+  alertUrl?: string | null;
+  /**
+   * When true, renders a wind arrow tile overlay from LibreWxR.
+   * Best-effort — gracefully degrades if wind tile URL is not yet serving.
+   */
+  showWind?: boolean;
+  /** Caddy prefix for the radar provider (used to construct wind tile URL). */
+  caddyPrefix?: string | null;
 }
 
 const SUBSTEPS = 5;        // interpolation steps between each real frame pair
@@ -50,6 +65,16 @@ const IDLE_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutes
 
 // Speed multiplier options for expanded mode.
 const SPEED_OPTIONS = [0.5, 1, 2] as const;
+
+// Alert polygon severity → stroke color mapping.
+// Severity labels match the NWS CAP standard used by LibreWxR.
+const SEVERITY_COLORS: Record<string, string> = {
+  Extreme: '#CC0033',   // dark red
+  Severe: '#FF6600',    // orange
+  Moderate: '#FFCC00',  // yellow
+  Minor: '#339900',     // green
+  Unknown: '#888888',   // gray
+};
 
 // RainViewer tile defaults.
 // {size}    — tile size in pixels; 512 is the high-DPI option (also valid: 256).
@@ -190,7 +215,7 @@ function MapBoundsEnforcer({ bounds }: { bounds?: [[number, number], [number, nu
   return null;
 }
 
-export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBounds, opacity, colorScheme }: RadarMapProps) {
+export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBounds, opacity, colorScheme, showAlerts, alertUrl, showWind, caddyPrefix }: RadarMapProps) {
   const { t } = useTranslation('radar');
   const { resolved: resolvedTheme } = useTheme();
   const baseTile = TILE_CONFIG[resolvedTheme];
@@ -257,6 +282,43 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
     setSpeedIndex((i) => (i + 1) % SPEED_OPTIONS.length);
   }, []);
 
+  // --- prefers-reduced-motion: suppress auto-play when user has opted out ---
+  const prefersReducedMotion =
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // --- Alert polygon state (T4.6) ---
+  // GeoJSON FeatureCollection fetched from alertUrl. Null when alerts are off or unavailable.
+  const [alertData, setAlertData] = useState<FeatureCollection | null>(null);
+
+  useEffect(() => {
+    if (!showAlerts || !alertUrl) {
+      setAlertData(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function fetchAlerts() {
+      try {
+        const resp = await fetch(alertUrl!);
+        if (!resp.ok) return;
+        const data = await resp.json() as FeatureCollection;
+        if (!cancelled) setAlertData(data);
+      } catch {
+        // Alerts are best-effort — don't surface an error to the user.
+      }
+    }
+
+    void fetchAlerts();
+    // Auto-refresh every 5 minutes.
+    const id = setInterval(() => { void fetchAlerts(); }, 5 * 60 * 1000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [showAlerts, alertUrl]);
+
   const frameCount = frames.length;
 
   // Resolve effective opacity and color scheme from props, falling back to defaults.
@@ -309,7 +371,11 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
       clearTimeout(preloadTimerRef.current);
     }
     preloadTimerRef.current = setTimeout(() => {
-      setIsPlaying(true);
+      // Respect prefers-reduced-motion: only auto-play when the user
+      // has not opted out of motion.  Manual play/pause still works.
+      if (!prefersReducedMotion) {
+        setIsPlaying(true);
+      }
     }, PRELOAD_DELAY_MS);
 
     return () => {
@@ -521,18 +587,62 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
                         clearTimeout(preloadTimerRef.current);
                         preloadTimerRef.current = null;
                       }
-                      setIsPlaying(true);
+                      // Respect prefers-reduced-motion for early-start too.
+                      if (!prefersReducedMotion) {
+                        setIsPlaying(true);
+                      }
                     }
                   },
                 }}
               />
             );
           })}
+          {/* Wind arrow tile overlay (T4.7) — LibreWxR only; best-effort */}
+          {showWind && caddyPrefix && (
+            <TileLayer
+              url={`${caddyPrefix}/v2/wind/{z}/{x}/{y}/arrows.png`}
+              opacity={0.6}
+              zIndex={500}
+            />
+          )}
+
+          {/* Alert polygon overlay (T4.6) — GeoJSON polygons from LibreWxR */}
+          {showAlerts && alertData && (
+            <GeoJSON
+              key={JSON.stringify(alertData).slice(0, 100)}
+              data={alertData}
+              style={(feature) => {
+                const severity = feature?.properties?.severity as string | undefined ?? 'Unknown';
+                return {
+                  color: SEVERITY_COLORS[severity] ?? '#888888',
+                  weight: 2,
+                  fillOpacity: 0.15,
+                  opacity: 0.8,
+                };
+              }}
+              onEachFeature={(feature, layer) => {
+                const props = feature.properties ?? {};
+                const headline = (props.headline as string | undefined) || (props.event as string | undefined) || 'Weather Alert';
+                layer.bindPopup(`<strong>${headline}</strong>`);
+              }}
+            />
+          )}
         </MapContainer>
 
         {/* Color legend — visible when radar frames are loaded */}
         {!isLoading && frameCount > 0 && <RadarLegend />}
       </div>
+
+      {/* Screen-reader live region: announces the current frame timestamp when the
+          display frame index changes (play, pause, or manual scrub). Polite so it
+          does not interrupt other announcements. aria-atomic so the full string is
+          read rather than just the diff. */}
+      {frameCount > 0 && (
+        <span className="sr-only" aria-live="polite" aria-atomic="true">
+          {currentFrame ? formatFrameTime(currentFrame.time) : ''}
+          {currentFrame?.kind === 'nowcast' ? ` (${t('nowcastLabel')})` : ''}
+        </span>
+      )}
 
       {/* Animation controls — only shown when there are frames to animate.
           flex-shrink-0 keeps the control bar from being squashed by the map.

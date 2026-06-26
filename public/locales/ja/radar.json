@@ -16,5 +16,8 @@
   "layerSettings": "設定",
   "closePanel": "設定を閉じる",
   "opacity": "不透明度",
-  "colorScheme": "カラースキーム"
+  "colorScheme": "カラースキーム",
+  "layers": "レイヤー",
+  "weatherAlerts": "気象警報",
+  "windArrows": "風向矢印"
 }

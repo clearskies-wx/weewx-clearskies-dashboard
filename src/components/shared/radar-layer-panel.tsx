@@ -30,6 +30,19 @@ export interface RadarLayerPanelProps {
   isOpen: boolean;
   /** Called to toggle or close the panel. */
   onToggle: () => void;
+  // --- Overlay toggles (LibreWxR only) ---
+  /** When true, show the "Weather alerts" toggle. */
+  alertsAvailable?: boolean;
+  /** Whether the alert overlay is currently enabled. */
+  showAlerts: boolean;
+  /** Called when the user toggles the alert overlay. */
+  onShowAlertsChange: (val: boolean) => void;
+  /** When true, show the "Wind arrows" toggle. */
+  windAvailable?: boolean;
+  /** Whether the wind arrow overlay is currently enabled. */
+  showWind: boolean;
+  /** Called when the user toggles the wind arrow overlay. */
+  onShowWindChange: (val: boolean) => void;
 }
 
 export function RadarLayerPanel({
@@ -39,6 +52,12 @@ export function RadarLayerPanel({
   opacity,
   onOpacityChange,
   onToggle,
+  alertsAvailable,
+  showAlerts,
+  onShowAlertsChange,
+  windAvailable,
+  showWind,
+  onShowWindChange,
 }: RadarLayerPanelProps) {
   const { t } = useTranslation('radar');
 
@@ -107,6 +126,40 @@ export function RadarLayerPanel({
                   {scheme.name}
                 </button>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Layer toggles — LibreWxR only.
+            Shown when at least one overlay type is available for this provider. */}
+        {(alertsAvailable || windAvailable) && (
+          <div>
+            <span className="text-xs font-medium text-muted-foreground block mb-2">
+              {t('layers')}
+            </span>
+            <div className="space-y-2">
+              {alertsAvailable && (
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showAlerts}
+                    onChange={(e) => onShowAlertsChange(e.target.checked)}
+                    className="accent-primary"
+                  />
+                  {t('weatherAlerts')}
+                </label>
+              )}
+              {windAvailable && (
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showWind}
+                    onChange={(e) => onShowWindChange(e.target.checked)}
+                    className="accent-primary"
+                  />
+                  {t('windArrows')}
+                </label>
+              )}
             </div>
           </div>
         )}

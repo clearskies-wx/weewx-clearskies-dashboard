@@ -16,5 +16,8 @@
   "layerSettings": "Einstellungen",
   "closePanel": "Einstellungen schließen",
   "opacity": "Deckkraft",
-  "colorScheme": "Farbschema"
+  "colorScheme": "Farbschema",
+  "layers": "Ebenen",
+  "weatherAlerts": "Wetterwarnungen",
+  "windArrows": "Windpfeile"
 }

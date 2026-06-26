@@ -16,5 +16,8 @@
   "layerSettings": "设置",
   "closePanel": "关闭设置",
   "opacity": "不透明度",
-  "colorScheme": "配色方案"
+  "colorScheme": "配色方案",
+  "layers": "图层",
+  "weatherAlerts": "天气预警",
+  "windArrows": "风向箭头"
 }

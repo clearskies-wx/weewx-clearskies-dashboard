@@ -16,5 +16,8 @@
   "layerSettings": "Definições",
   "closePanel": "Fechar definições",
   "opacity": "Opacidade",
-  "colorScheme": "Esquema de cores"
+  "colorScheme": "Esquema de cores",
+  "layers": "Camadas",
+  "weatherAlerts": "Alertas meteorológicos",
+  "windArrows": "Setas de vento"
 }
