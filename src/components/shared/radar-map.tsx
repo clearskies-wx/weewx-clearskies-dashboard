@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Tooltip, GeoJSON, useMap } from 'react-leaflet';
 import { Play, Pause, CaretLeft, CaretRight } from '@phosphor-icons/react';
 import { useCapabilities, useRadarFrames } from '../../hooks/useWeatherData';
 import type { CapabilityDeclaration, RadarFrame } from '../../api/types';
@@ -154,13 +154,28 @@ function getFrameOpacity(
   return 0;
 }
 
-// RainViewer "Universal Blue" (scheme 2) precipitation intensity color stops.
-// Source: RainViewer API color-schemes page + rendered tile sampling.
-const LEGEND_GRADIENT =
-  'linear-gradient(to right, #96C8FA, #0096FA, #00D800, #FFFF00, #FF9600, #E80000, #C000C0)';
+// Precipitation color stops per color scheme ID.
+// Sources: RainViewer color-schemes page, LibreWxR rendered tile sampling,
+// standard NWS/NEXRAD/TWC palettes.
+const SCHEME_GRADIENTS: Record<number, string> = {
+  0: 'linear-gradient(to right, #C8C8C8, #969696, #646464, #323232, #000000)',
+  1: 'linear-gradient(to right, #88DDEE, #00AA00, #FFFF00, #FF6600, #FF0000, #CC00CC)',
+  2: 'linear-gradient(to right, #96C8FA, #0096FA, #00D800, #FFFF00, #FF9600, #E80000, #C000C0)',
+  3: 'linear-gradient(to right, #08C864, #2CFA46, #FAFA00, #FF9600, #FA0000, #FA00FA)',
+  4: 'linear-gradient(to right, #00E600, #01B301, #FFE600, #FFA500, #FF0000, #CC0000, #FF00FF)',
+  5: 'linear-gradient(to right, #A0E6FF, #00B4FF, #00DC00, #FFE600, #FF8C00, #FF0000, #C800C8)',
+  6: 'linear-gradient(to right, #04E9E7, #019FF4, #0300F4, #02FD02, #01C501, #008E00, #FFFE33, #F87C09, #E40000, #FD00FD, #9854C6)',
+  7: 'linear-gradient(to right, #0000FF, #00FFFF, #00FF00, #FFFF00, #FF8000, #FF0000, #FF00FF)',
+  8: 'linear-gradient(to right, #6EC1EA, #4DAFDA, #3B9FCC, #5BBF5B, #FFFF00, #FF8C00, #FF0000, #CC0000)',
+  9: 'linear-gradient(to right, #00BFFF, #00FF00, #FFFF00, #FF6600, #FF0000, #9900CC)',
+  10: 'linear-gradient(to right, #00E0E0, #00C000, #FFFF00, #E0A000, #FF0000, #D060C0, #E0E0FF)',
+  11: 'linear-gradient(to right, #00E0E0, #0080FF, #00C000, #FFE000, #FF8000, #FF0000, #C000C0, #FFFFFF)',
+};
+const DEFAULT_GRADIENT = SCHEME_GRADIENTS[2];
 
-function RadarLegend() {
+function RadarLegend({ colorScheme = 2 }: { colorScheme?: number }) {
   const { t } = useTranslation('radar');
+  const gradient = SCHEME_GRADIENTS[colorScheme] ?? DEFAULT_GRADIENT;
   return (
     <div
       className="absolute bottom-8 right-2 z-10 flex flex-col gap-0.5 rounded bg-background/80 px-2 py-1.5 backdrop-blur-sm"
@@ -168,7 +183,7 @@ function RadarLegend() {
     >
       <div
         className="h-2.5 w-36 rounded-sm"
-        style={{ background: LEGEND_GRADIENT }}
+        style={{ background: gradient }}
       />
       <div className="flex justify-between text-[10px] leading-tight text-muted-foreground">
         <span>{t('legendLight')}</span>
@@ -562,6 +577,16 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
             url={baseTile.url}
             attribution={baseTile.attribution}
           />
+          {/* Station location marker */}
+          <CircleMarker
+            center={center}
+            radius={6}
+            pathOptions={{ color: '#E80000', fillColor: '#FF3333', fillOpacity: 0.9, weight: 2 }}
+          >
+            <Tooltip direction="top" offset={[0, -8]} permanent={false}>
+              {t('stationMarker')}
+            </Tooltip>
+          </CircleMarker>
           {radarCapability !== null && frames.map((frame, i) => {
             // Capture the non-null capability so TypeScript can confirm it inside
             // the map callback closure.
@@ -622,15 +647,30 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
               }}
               onEachFeature={(feature, layer) => {
                 const props = feature.properties ?? {};
-                const headline = (props.headline as string | undefined) || (props.event as string | undefined) || 'Weather Alert';
-                layer.bindPopup(`<strong>${headline}</strong>`);
+                const title = (props.title as string | undefined)
+                  || (props.headline as string | undefined)
+                  || (props.event as string | undefined)
+                  || 'Weather Alert';
+                const severity = props.severity as string | undefined;
+                const description = props.description as string | undefined;
+                const regions = props.regions as string[] | undefined;
+                const expires = props.expires as number | undefined;
+                let html = `<strong>${title}</strong>`;
+                if (severity) html += `<br/><em>${severity}</em>`;
+                if (description && description !== title) html += `<br/>${description}`;
+                if (regions?.length) html += `<br/>${regions.join(', ')}`;
+                if (expires) {
+                  const exp = new Date(expires * 1000);
+                  html += `<br/>Expires: ${exp.toLocaleString()}`;
+                }
+                layer.bindPopup(html, { maxWidth: 300 });
               }}
             />
           )}
         </MapContainer>
 
         {/* Color legend — visible when radar frames are loaded */}
-        {!isLoading && frameCount > 0 && <RadarLegend />}
+        {!isLoading && frameCount > 0 && <RadarLegend colorScheme={effectiveColorScheme} />}
       </div>
 
       {/* Screen-reader live region: announces the current frame timestamp when the

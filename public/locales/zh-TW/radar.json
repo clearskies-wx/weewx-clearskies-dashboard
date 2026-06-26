@@ -19,5 +19,6 @@
   "colorScheme": "配色方案",
   "layers": "圖層",
   "weatherAlerts": "天氣預警",
-  "windArrows": "風向箭頭"
+  "windArrows": "風向箭頭",
+  "stationMarker": "您的氣象站"
 }

@@ -19,5 +19,6 @@
   "colorScheme": "Schema colori",
   "layers": "Livelli",
   "weatherAlerts": "Allerte meteo",
-  "windArrows": "Frecce del vento"
+  "windArrows": "Frecce del vento",
+  "stationMarker": "La tua stazione"
 }

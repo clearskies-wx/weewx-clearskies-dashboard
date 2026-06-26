@@ -19,5 +19,6 @@
   "colorScheme": "Esquema de color",
   "layers": "Capas",
   "weatherAlerts": "Alertas meteorológicas",
-  "windArrows": "Flechas de viento"
+  "windArrows": "Flechas de viento",
+  "stationMarker": "Tu estación"
 }

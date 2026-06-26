@@ -19,5 +19,6 @@
   "colorScheme": "カラースキーム",
   "layers": "レイヤー",
   "weatherAlerts": "気象警報",
-  "windArrows": "風向矢印"
+  "windArrows": "風向矢印",
+  "stationMarker": "あなたの観測所"
 }

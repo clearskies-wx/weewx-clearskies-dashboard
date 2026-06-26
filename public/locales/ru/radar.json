@@ -19,5 +19,6 @@
   "colorScheme": "Цветовая схема",
   "layers": "Слои",
   "weatherAlerts": "Погодные предупреждения",
-  "windArrows": "Стрелки ветра"
+  "windArrows": "Стрелки ветра",
+  "stationMarker": "Ваша станция"
 }

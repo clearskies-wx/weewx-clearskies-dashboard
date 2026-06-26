@@ -21,5 +21,6 @@
   "colorScheme": "Color scheme",
   "layers": "Layers",
   "weatherAlerts": "Weather alerts",
-  "windArrows": "Wind arrows"
+  "windArrows": "Wind arrows",
+  "stationMarker": "Your station"
 }

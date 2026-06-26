@@ -19,5 +19,6 @@
   "colorScheme": "Farbschema",
   "layers": "Ebenen",
   "weatherAlerts": "Wetterwarnungen",
-  "windArrows": "Windpfeile"
+  "windArrows": "Windpfeile",
+  "stationMarker": "Ihre Station"
 }

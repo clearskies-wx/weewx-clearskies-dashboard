@@ -19,5 +19,6 @@
   "colorScheme": "Kleurenschema",
   "layers": "Lagen",
   "weatherAlerts": "Weerwaarschuwingen",
-  "windArrows": "Windpijlen"
+  "windArrows": "Windpijlen",
+  "stationMarker": "Uw station"
 }

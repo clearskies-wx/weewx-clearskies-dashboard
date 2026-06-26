@@ -19,5 +19,6 @@
   "colorScheme": "Esquema de cores",
   "layers": "Camadas",
   "weatherAlerts": "Alertas meteorológicos",
-  "windArrows": "Setas de vento"
+  "windArrows": "Setas de vento",
+  "stationMarker": "Sua estação"
 }
