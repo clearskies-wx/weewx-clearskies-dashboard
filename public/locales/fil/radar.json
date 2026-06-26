@@ -10,5 +10,7 @@
   "frameOf": "Frame {{current}} ng {{total}}",
   "nowcastLabel": "Forecast",
   "expandRadar": "Palawakin ang radar",
-  "closeRadar": "Isara ang radar"
+  "closeRadar": "Isara ang radar",
+  "timeSlider": "Oras",
+  "speed": "Bilis"
 }

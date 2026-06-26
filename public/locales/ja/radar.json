@@ -10,5 +10,7 @@
   "frameOf": "フレーム {{current}} / {{total}}",
   "nowcastLabel": "予報",
   "expandRadar": "レーダーを拡大",
-  "closeRadar": "レーダーを閉じる"
+  "closeRadar": "レーダーを閉じる",
+  "timeSlider": "時刻",
+  "speed": "速度"
 }

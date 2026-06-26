@@ -10,5 +10,7 @@
   "frameOf": "Image {{current}} sur {{total}}",
   "nowcastLabel": "Prévision",
   "expandRadar": "Agrandir le radar",
-  "closeRadar": "Fermer le radar"
+  "closeRadar": "Fermer le radar",
+  "timeSlider": "Heure",
+  "speed": "Vitesse"
 }

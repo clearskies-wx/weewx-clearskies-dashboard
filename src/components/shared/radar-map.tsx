@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MapContainer, TileLayer } from 'react-leaflet';
+import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import { Play, Pause, CaretLeft, CaretRight } from '@phosphor-icons/react';
 import { useCapabilities, useRadarFrames } from '../../hooks/useWeatherData';
 import type { CapabilityDeclaration, RadarFrame } from '../../api/types';
@@ -15,6 +15,13 @@ interface RadarMapProps {
    * Defaults to UTC when absent.
    */
   stationTz?: string;
+  /** When true, show all frames and the expanded control bar (time slider + speed). */
+  expanded?: boolean;
+  /**
+   * Leaflet maxBounds: [[south, west], [north, east]].
+   * Constrains pan/zoom to the given bounding box.
+   */
+  maxBounds?: [[number, number], [number, number]];
 }
 
 const SUBSTEPS = 5;        // interpolation steps between each real frame pair
@@ -36,6 +43,9 @@ const TARGET_LOOP_MS = 17000;
 // Idle timeout — pause animation and stop live refresh after this long
 // without any user interaction.
 const IDLE_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutes
+
+// Speed multiplier options for expanded mode.
+const SPEED_OPTIONS = [0.5, 1, 2] as const;
 
 // RainViewer tile defaults.
 // {size}    — tile size in pixels; 512 is the high-DPI option (also valid: 256).
@@ -150,7 +160,27 @@ const TILE_CONFIG = {
   },
 } as const;
 
-export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
+/**
+ * Inner component that applies maxBounds dynamically to the Leaflet map.
+ * MapContainer is an uncontrolled component — it reads props only on mount.
+ * This component uses the useMap() hook to call setMaxBounds imperatively
+ * whenever the bounds prop changes.
+ */
+function MapBoundsEnforcer({ bounds }: { bounds?: [[number, number], [number, number]] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (bounds) {
+      map.setMaxBounds(bounds);
+    } else {
+      // Remove bounds constraint by passing an empty array.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      map.setMaxBounds([] as any);
+    }
+  }, [map, bounds]);
+  return null;
+}
+
+export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBounds }: RadarMapProps) {
   const { t } = useTranslation('radar');
   const { resolved: resolvedTheme } = useTheme();
   const baseTile = TILE_CONFIG[resolvedTheme];
@@ -172,9 +202,10 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
 
   const { data: radarFrameList, loading: framesLoading, error: framesError, refetch } = useRadarFrames(providerId);
 
-  // Cap frames to MAX_CARD_FRAMES most recent in card view.
+  // In card view, cap frames to MAX_CARD_FRAMES most recent.
+  // In expanded view, show ALL frames from the API.
   const allFrames: RadarFrame[] = radarFrameList?.frames ?? [];
-  const frames: RadarFrame[] = allFrames.length > MAX_CARD_FRAMES
+  const frames: RadarFrame[] = (!expanded && allFrames.length > MAX_CARD_FRAMES)
     ? allFrames.slice(allFrames.length - MAX_CARD_FRAMES)
     : allFrames;
 
@@ -209,12 +240,22 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
   // Tracks which frame indices have fully loaded all their tiles.
   const loadedLayersRef = useRef(new Set<number>());
 
+  // --- Speed multiplier state (expanded mode only) ---
+  const [speedIndex, setSpeedIndex] = useState(1); // default 1x
+  const speedMultiplier = SPEED_OPTIONS[speedIndex];
+  const cycleSpeed = useCallback(() => {
+    setSpeedIndex((i) => (i + 1) % SPEED_OPTIONS.length);
+  }, []);
+
   const frameCount = frames.length;
 
   // Adaptive tick interval — target ~17s full loop regardless of frame count.
+  // In expanded mode, the speed multiplier shortens/lengthens the effective interval.
   const tickMs = frameCount > 0
     ? Math.max(50, Math.floor(TARGET_LOOP_MS / (frameCount * SUBSTEPS)))
     : TICK_MS;
+
+  const effectiveTickMs = Math.max(30, Math.round(tickMs / speedMultiplier));
 
   const goNext = useCallback(() => {
     const total = frameCount * SUBSTEPS;
@@ -284,7 +325,7 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
       const totalSteps = frameCount * SUBSTEPS;
       intervalRef.current = setInterval(() => {
         setAnimationStep((s) => (s + 1) % totalSteps);
-      }, tickMs);
+      }, effectiveTickMs);
     }
     return () => {
       if (intervalRef.current !== null) {
@@ -292,7 +333,7 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
         intervalRef.current = null;
       }
     };
-  }, [isPlaying, frameCount, tickMs]);
+  }, [isPlaying, frameCount, effectiveTickMs]);
 
   // Live refresh — re-fetch frame metadata at the provider's configured interval.
   const refreshIntervalMs = (radarCapability?.refreshInterval ?? 600) * 1000;
@@ -322,6 +363,9 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
   // Derive the display frame index from animationStep for timestamp/counter display.
   const displayFrameIndex = frameCount > 0 ? Math.floor(animationStep / SUBSTEPS) % frameCount : 0;
   const currentFrame: RadarFrame | null = frames[displayFrameIndex] ?? null;
+
+  // Index at which nowcast frames start (used to label the slider in expanded mode).
+  const nowcastStartIndex = frames.findIndex((f) => f.kind === 'nowcast');
 
   const isLoading = capLoading || framesLoading;
 
@@ -427,10 +471,12 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
         <MapContainer
           center={center}
           zoom={zoom}
+          maxBounds={maxBounds}
           className="h-full w-full"
           scrollWheelZoom={false}
           zoomControl={true}
         >
+          <MapBoundsEnforcer bounds={maxBounds} />
           <TileLayer
             key={baseTile.url}
             url={baseTile.url}
@@ -475,55 +521,153 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
       </div>
 
       {/* Animation controls — only shown when there are frames to animate.
-          flex-shrink-0 keeps the control bar from being squashed by the map. */}
+          flex-shrink-0 keeps the control bar from being squashed by the map.
+          Expanded mode shows a time slider above the button row; card mode
+          shows the compact button row only. */}
       {frameCount > 0 && (
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <button
-            type="button"
-            onClick={goPrev}
-            aria-label={t('previousFrame')}
-            className="rounded p-1 text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          >
-            <CaretLeft className="h-5 w-5" aria-hidden="true" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setIsPlaying((p) => !p)}
-            aria-label={isPlaying ? t('pause') : t('play')}
-            className="rounded p-1 text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          >
-            {isPlaying ? (
-              <Pause className="h-5 w-5" aria-hidden="true" />
-            ) : (
-              <Play className="h-5 w-5" aria-hidden="true" />
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={goNext}
-            aria-label={t('nextFrame')}
-            className="rounded p-1 text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          >
-            <CaretRight className="h-5 w-5" aria-hidden="true" />
-          </button>
-
-          <span className="text-muted-foreground tabular-nums ml-1" style={{ fontSize: 'var(--text-label)' }}>
-            {t('frameOf', { current: displayFrameIndex + 1, total: frameCount })}
-          </span>
-
-          {currentFrame && (
-            <span className="text-muted-foreground tabular-nums ml-auto" style={{ fontSize: 'var(--text-label)' }}>
-              {formatFrameTime(currentFrame.time)}
-              {currentFrame.kind === 'nowcast' && (
-                <span className="ml-1 text-primary" aria-label={t('nowcastLabel')}>
+        expanded ? (
+          <div className="flex flex-col gap-2 flex-shrink-0">
+            {/* Time slider */}
+            <div className="relative">
+              <input
+                type="range"
+                min={0}
+                max={Math.max(frameCount - 1, 0)}
+                value={displayFrameIndex}
+                onChange={(e) => {
+                  const idx = parseInt(e.target.value, 10);
+                  setAnimationStep(idx * SUBSTEPS);
+                }}
+                className="w-full accent-primary"
+                aria-label={t('timeSlider')}
+                aria-valuetext={currentFrame ? formatFrameTime(currentFrame.time) : ''}
+              />
+              {/* Nowcast start marker label */}
+              {nowcastStartIndex > 0 && frameCount > 1 && (
+                <span
+                  className="absolute top-full mt-0.5 text-primary pointer-events-none"
+                  style={{
+                    fontSize: 'var(--text-label)',
+                    left: `${(nowcastStartIndex / (frameCount - 1)) * 100}%`,
+                    transform: 'translateX(-50%)',
+                  }}
+                  aria-hidden="true"
+                >
                   {t('nowcastLabel')}
                 </span>
               )}
+            </div>
+
+            {/* Controls row */}
+            <div className="flex items-center gap-2 mt-4">
+              <button
+                type="button"
+                onClick={goPrev}
+                aria-label={t('previousFrame')}
+                className="rounded p-1 text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <CaretLeft className="h-5 w-5" aria-hidden="true" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsPlaying((p) => !p)}
+                aria-label={isPlaying ? t('pause') : t('play')}
+                className="rounded p-1 text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                {isPlaying ? (
+                  <Pause className="h-5 w-5" aria-hidden="true" />
+                ) : (
+                  <Play className="h-5 w-5" aria-hidden="true" />
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={goNext}
+                aria-label={t('nextFrame')}
+                className="rounded p-1 text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <CaretRight className="h-5 w-5" aria-hidden="true" />
+              </button>
+
+              {/* Speed cycle button */}
+              <button
+                type="button"
+                onClick={cycleSpeed}
+                aria-label={t('speed')}
+                className="rounded px-2 py-1 text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 tabular-nums"
+                style={{ fontSize: 'var(--text-label)' }}
+              >
+                {speedMultiplier}x
+              </button>
+
+              <span className="text-muted-foreground tabular-nums ml-1" style={{ fontSize: 'var(--text-label)' }}>
+                {t('frameOf', { current: displayFrameIndex + 1, total: frameCount })}
+              </span>
+
+              {currentFrame && (
+                <span className="text-muted-foreground tabular-nums ml-auto" style={{ fontSize: 'var(--text-label)' }}>
+                  {formatFrameTime(currentFrame.time)}
+                  {currentFrame.kind === 'nowcast' && (
+                    <span className="ml-1 text-primary" aria-label={t('nowcastLabel')}>
+                      {t('nowcastLabel')}
+                    </span>
+                  )}
+                </span>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* Compact card-view control bar (unchanged) */
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              type="button"
+              onClick={goPrev}
+              aria-label={t('previousFrame')}
+              className="rounded p-1 text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <CaretLeft className="h-5 w-5" aria-hidden="true" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsPlaying((p) => !p)}
+              aria-label={isPlaying ? t('pause') : t('play')}
+              className="rounded p-1 text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              {isPlaying ? (
+                <Pause className="h-5 w-5" aria-hidden="true" />
+              ) : (
+                <Play className="h-5 w-5" aria-hidden="true" />
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={goNext}
+              aria-label={t('nextFrame')}
+              className="rounded p-1 text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <CaretRight className="h-5 w-5" aria-hidden="true" />
+            </button>
+
+            <span className="text-muted-foreground tabular-nums ml-1" style={{ fontSize: 'var(--text-label)' }}>
+              {t('frameOf', { current: displayFrameIndex + 1, total: frameCount })}
             </span>
-          )}
-        </div>
+
+            {currentFrame && (
+              <span className="text-muted-foreground tabular-nums ml-auto" style={{ fontSize: 'var(--text-label)' }}>
+                {formatFrameTime(currentFrame.time)}
+                {currentFrame.kind === 'nowcast' && (
+                  <span className="ml-1 text-primary" aria-label={t('nowcastLabel')}>
+                    {t('nowcastLabel')}
+                  </span>
+                )}
+              </span>
+            )}
+          </div>
+        )
       )}
     </div>
   );

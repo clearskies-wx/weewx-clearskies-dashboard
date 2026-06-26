@@ -10,5 +10,7 @@
   "frameOf": "第 {{current}} 影格，共 {{total}} 影格",
   "nowcastLabel": "預報",
   "expandRadar": "展開雷達",
-  "closeRadar": "關閉雷達"
+  "closeRadar": "關閉雷達",
+  "timeSlider": "時間",
+  "speed": "速度"
 }

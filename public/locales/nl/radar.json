@@ -10,5 +10,7 @@
   "frameOf": "Beeld {{current}} van {{total}}",
   "nowcastLabel": "Voorspelling",
   "expandRadar": "Radar vergroten",
-  "closeRadar": "Radar sluiten"
+  "closeRadar": "Radar sluiten",
+  "timeSlider": "Tijd",
+  "speed": "Snelheid"
 }

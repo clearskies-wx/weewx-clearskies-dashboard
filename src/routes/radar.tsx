@@ -7,18 +7,32 @@
 // Station metadata is fetched here directly via useStation so this route
 // works independently of the Now page's DataBag.
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { X } from '@phosphor-icons/react';
 import { RadarMap } from '../components/shared/radar-map';
-import { useStation } from '../hooks/useWeatherData';
+import { useStation, useCapabilities } from '../hooks/useWeatherData';
 
 export default function RadarPage() {
   const { t } = useTranslation('radar');
   const navigate = useNavigate();
 
   const { data: station, loading: stationLoading } = useStation();
+  const { data: capabilities } = useCapabilities();
+
+  const radarCapability = capabilities?.providers.find((p) => p.domain === 'radar') ?? null;
+
+  const maxBounds: [[number, number], [number, number]] | undefined =
+    radarCapability?.bounds
+      ? [
+          [radarCapability.bounds.south, radarCapability.bounds.west],
+          [radarCapability.bounds.north, radarCapability.bounds.east],
+        ]
+      : undefined;
+
+  // Ref for the overlay div — used for focus trap.
+  const overlayRef = useRef<HTMLDivElement>(null);
 
   // Keyboard shortcut: Escape closes the expanded view.
   useEffect(() => {
@@ -31,8 +45,54 @@ export default function RadarPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [navigate]);
 
+  // Focus trap: keep keyboard focus within the overlay while it is open.
+  // Restores focus to the previously focused element when unmounted.
+  useEffect(() => {
+    const overlay = overlayRef.current;
+    if (!overlay) return;
+
+    // Save the element that had focus before we opened the dialog.
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+
+    const focusableSelector =
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+    function handleTab(e: KeyboardEvent) {
+      if (e.key !== 'Tab') return;
+      const focusable = overlay!.querySelectorAll<HTMLElement>(focusableSelector);
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+
+    overlay.addEventListener('keydown', handleTab);
+
+    // Focus the close button on mount so keyboard users can immediately dismiss.
+    const closeBtn = overlay.querySelector<HTMLElement>('button');
+    closeBtn?.focus();
+
+    return () => {
+      overlay.removeEventListener('keydown', handleTab);
+      // Restore focus to whatever was focused before the dialog opened.
+      previouslyFocused?.focus();
+    };
+  }, []);
+
   return (
-    <div className="fixed inset-0 z-50 bg-background flex flex-col">
+    <div
+      ref={overlayRef}
+      className="fixed inset-0 z-50 bg-background flex flex-col"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('radarTitle')}
+    >
       <div className="flex items-center justify-between px-4 py-2 border-b flex-shrink-0">
         <h1 className="text-lg font-semibold">{t('radarTitle')}</h1>
         <button
@@ -55,6 +115,8 @@ export default function RadarPage() {
             center={[station.latitude, station.longitude]}
             stationTz={station.timezone}
             zoom={7}
+            expanded={true}
+            maxBounds={maxBounds}
           />
         )}
       </div>

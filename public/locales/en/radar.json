@@ -12,5 +12,7 @@
   "legendHeavy": "Heavy",
   "nowcastLabel": "Forecast",
   "expandRadar": "Expand radar",
-  "closeRadar": "Close radar"
+  "closeRadar": "Close radar",
+  "timeSlider": "Time",
+  "speed": "Speed"
 }

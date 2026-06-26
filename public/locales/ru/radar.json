@@ -10,5 +10,7 @@
   "frameOf": "Кадр {{current}} из {{total}}",
   "nowcastLabel": "Прогноз",
   "expandRadar": "Развернуть радар",
-  "closeRadar": "Закрыть радар"
+  "closeRadar": "Закрыть радар",
+  "timeSlider": "Время",
+  "speed": "Скорость"
 }
