@@ -22,6 +22,10 @@ interface RadarMapProps {
    * Constrains pan/zoom to the given bounding box.
    */
   maxBounds?: [[number, number], [number, number]];
+  /** Radar overlay opacity 0–1. Defaults to MAX_OPACITY (0.7). */
+  opacity?: number;
+  /** Color scheme ID for tile URL {color} placeholder. Defaults to RAINVIEWER_COLOR (2). */
+  colorScheme?: number;
 }
 
 const SUBSTEPS = 5;        // interpolation steps between each real frame pair
@@ -62,6 +66,7 @@ function buildTileUrl(
   frame: RadarFrame,
   capability: CapabilityDeclaration,
   tileHost: string | null,
+  colorScheme: number = RAINVIEWER_COLOR,
 ): string | null {
   const template = capability.tileUrlTemplate;
 
@@ -74,7 +79,7 @@ function buildTileUrl(
     // Leaflet's getTileUrl throws "No value provided for variable {X}" for any
     // {placeholder} it cannot expand from its built-in set ({x},{y},{z},{s},{r}).
     url = url.replace('{size}', String(RAINVIEWER_TILE_SIZE));
-    url = url.replace('{color}', String(RAINVIEWER_COLOR));
+    url = url.replace('{color}', String(colorScheme));
     url = url.replace('{options}', RAINVIEWER_OPTIONS);
     return url;
   }
@@ -95,21 +100,26 @@ function buildTileUrl(
   return null;
 }
 
-function getFrameOpacity(frameIndex: number, step: number, totalFrames: number): number {
+function getFrameOpacity(
+  frameIndex: number,
+  step: number,
+  totalFrames: number,
+  effectiveMaxOpacity: number = MAX_OPACITY,
+): number {
   const primaryFrame = Math.floor(step / SUBSTEPS) % totalFrames;
   const subStep = step % SUBSTEPS;
   const nextFrame = (primaryFrame + 1) % totalFrames;
 
   if (subStep === 0) {
-    return frameIndex === primaryFrame ? MAX_OPACITY : 0;
+    return frameIndex === primaryFrame ? effectiveMaxOpacity : 0;
   }
 
   // Constant-composite cross-fade: compute opacities so two overlapping
-  // semi-transparent layers composite to exactly MAX_OPACITY throughout.
-  // Formula: composite = 1 - (1-a)(1-b) = MAX_OPACITY
+  // semi-transparent layers composite to exactly effectiveMaxOpacity throughout.
+  // Formula: composite = 1 - (1-a)(1-b) = effectiveMaxOpacity
   // Solved: a = 1 - transparency^(1-t), b = 1 - transparency^t
   const t = subStep / SUBSTEPS;
-  const transparency = 1 - MAX_OPACITY;
+  const transparency = 1 - effectiveMaxOpacity;
   if (frameIndex === primaryFrame) {
     return 1 - Math.pow(transparency, 1 - t);
   }
@@ -180,7 +190,7 @@ function MapBoundsEnforcer({ bounds }: { bounds?: [[number, number], [number, nu
   return null;
 }
 
-export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBounds }: RadarMapProps) {
+export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBounds, opacity, colorScheme }: RadarMapProps) {
   const { t } = useTranslation('radar');
   const { resolved: resolvedTheme } = useTheme();
   const baseTile = TILE_CONFIG[resolvedTheme];
@@ -248,6 +258,10 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
   }, []);
 
   const frameCount = frames.length;
+
+  // Resolve effective opacity and color scheme from props, falling back to defaults.
+  const effectiveMaxOpacity = opacity ?? MAX_OPACITY;
+  const effectiveColorScheme = colorScheme ?? RAINVIEWER_COLOR;
 
   // Adaptive tick interval — target ~17s full loop regardless of frame count.
   // In expanded mode, the speed multiplier shortens/lengthens the effective interval.
@@ -486,7 +500,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
             // Capture the non-null capability so TypeScript can confirm it inside
             // the map callback closure.
             const cap = radarCapability;
-            const url = buildTileUrl(frame, cap, tileHost);
+            const url = buildTileUrl(frame, cap, tileHost, effectiveColorScheme);
             if (!url) return null;
             // Capture the loop index in a stable const for use inside closures.
             const frameIndex = i;
@@ -494,7 +508,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
               <TileLayer
                 key={frame.time}
                 url={url}
-                opacity={Math.max(getFrameOpacity(i, animationStep, frameCount), 0.001)}
+                opacity={Math.max(getFrameOpacity(i, animationStep, frameCount, effectiveMaxOpacity), 0.001)}
                 attribution={i === 0 ? (radarFrameList?.attribution ?? undefined) : undefined}
                 eventHandlers={{
                   load: () => {

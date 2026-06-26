@@ -12,5 +12,9 @@
   "expandRadar": "Radar vergroten",
   "closeRadar": "Radar sluiten",
   "timeSlider": "Tijd",
-  "speed": "Snelheid"
+  "speed": "Snelheid",
+  "layerSettings": "Instellingen",
+  "closePanel": "Instellingen sluiten",
+  "opacity": "Dekking",
+  "colorScheme": "Kleurenschema"
 }

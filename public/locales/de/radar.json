@@ -12,5 +12,9 @@
   "expandRadar": "Radar vergrößern",
   "closeRadar": "Radar schließen",
   "timeSlider": "Zeit",
-  "speed": "Geschwindigkeit"
+  "speed": "Geschwindigkeit",
+  "layerSettings": "Einstellungen",
+  "closePanel": "Einstellungen schließen",
+  "opacity": "Deckkraft",
+  "colorScheme": "Farbschema"
 }

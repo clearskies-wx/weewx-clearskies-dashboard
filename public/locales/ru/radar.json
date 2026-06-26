@@ -12,5 +12,9 @@
   "expandRadar": "Развернуть радар",
   "closeRadar": "Закрыть радар",
   "timeSlider": "Время",
-  "speed": "Скорость"
+  "speed": "Скорость",
+  "layerSettings": "Настройки",
+  "closePanel": "Закрыть настройки",
+  "opacity": "Прозрачность",
+  "colorScheme": "Цветовая схема"
 }

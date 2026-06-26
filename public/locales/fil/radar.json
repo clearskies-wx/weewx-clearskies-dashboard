@@ -12,5 +12,9 @@
   "expandRadar": "Palawakin ang radar",
   "closeRadar": "Isara ang radar",
   "timeSlider": "Oras",
-  "speed": "Bilis"
+  "speed": "Bilis",
+  "layerSettings": "Mga Setting",
+  "closePanel": "Isara ang mga setting",
+  "opacity": "Opacity",
+  "colorScheme": "Kulay ng scheme"
 }

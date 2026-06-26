@@ -12,5 +12,9 @@
   "expandRadar": "レーダーを拡大",
   "closeRadar": "レーダーを閉じる",
   "timeSlider": "時刻",
-  "speed": "速度"
+  "speed": "速度",
+  "layerSettings": "設定",
+  "closePanel": "設定を閉じる",
+  "opacity": "不透明度",
+  "colorScheme": "カラースキーム"
 }

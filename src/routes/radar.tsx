@@ -7,12 +7,30 @@
 // Station metadata is fetched here directly via useStation so this route
 // works independently of the Now page's DataBag.
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { X } from '@phosphor-icons/react';
+import { X, Sliders } from '@phosphor-icons/react';
 import { RadarMap } from '../components/shared/radar-map';
-import { useStation, useCapabilities } from '../hooks/useWeatherData';
+import { RadarLayerPanel } from '../components/shared/radar-layer-panel';
+import { useStation, useCapabilities, useRadarFrames } from '../hooks/useWeatherData';
+
+// localStorage key for persisting panel state + color scheme across sessions.
+const STORAGE_KEY = 'clearskies-radar-panel';
+
+function readStorage(): { open: boolean; colorScheme: number } {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { open: false, colorScheme: 2 };
+    const parsed = JSON.parse(raw) as { open?: boolean; colorScheme?: number };
+    return {
+      open: parsed.open !== false,
+      colorScheme: parsed.colorScheme ?? 2,
+    };
+  } catch {
+    return { open: false, colorScheme: 2 };
+  }
+}
 
 export default function RadarPage() {
   const { t } = useTranslation('radar');
@@ -30,6 +48,24 @@ export default function RadarPage() {
           [radarCapability.bounds.north, radarCapability.bounds.east],
         ]
       : undefined;
+
+  // Fetch radar frames to access colorSchemes (returned alongside frame data).
+  const providerId = radarCapability?.providerId ?? null;
+  const { data: radarFrameList } = useRadarFrames(providerId);
+  const colorSchemes = radarFrameList?.colorSchemes ?? null;
+
+  // --- Panel + layer state ---
+  const [panelOpen, setPanelOpen] = useState<boolean>(() => readStorage().open);
+  // Opacity resets to 70% each session (intentionally not persisted).
+  const [opacity, setOpacity] = useState<number>(0.7);
+  const [colorScheme, setColorScheme] = useState<number>(() => readStorage().colorScheme);
+
+  // Persist panel open/close and color scheme to localStorage whenever they change.
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ open: panelOpen, colorScheme }));
+    } catch { /* ignore write errors (e.g. private browsing quota) */ }
+  }, [panelOpen, colorScheme]);
 
   // Ref for the overlay div — used for focus trap.
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -93,30 +129,66 @@ export default function RadarPage() {
       aria-modal="true"
       aria-label={t('radarTitle')}
     >
+      {/* Header bar */}
       <div className="flex items-center justify-between px-4 py-2 border-b flex-shrink-0">
         <h1 className="text-lg font-semibold">{t('radarTitle')}</h1>
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          aria-label={t('closeRadar')}
-          className="rounded p-1 text-muted-foreground hover:text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        >
-          <X className="h-5 w-5" aria-hidden="true" />
-        </button>
+        <div className="flex items-center gap-1">
+          {/* Settings toggle — opens/closes the layer panel */}
+          <button
+            type="button"
+            onClick={() => setPanelOpen((p) => !p)}
+            aria-label={t('layerSettings')}
+            aria-expanded={panelOpen}
+            className="rounded p-1 text-muted-foreground hover:text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <Sliders className="h-5 w-5" aria-hidden="true" />
+          </button>
+
+          {/* Close button */}
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            aria-label={t('closeRadar')}
+            className="rounded p-1 text-muted-foreground hover:text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <X className="h-5 w-5" aria-hidden="true" />
+          </button>
+        </div>
       </div>
-      <div className="flex-1 min-h-0 p-3">
-        {stationLoading || station === null ? (
-          <div
-            className="h-full rounded-lg bg-muted animate-pulse"
-            aria-hidden="true"
-          />
-        ) : (
-          <RadarMap
-            center={[station.latitude, station.longitude]}
-            stationTz={station.timezone}
-            zoom={7}
-            expanded={true}
-            maxBounds={maxBounds}
+
+      {/* Content area: map + optional layer panel side by side */}
+      <div className="flex-1 min-h-0 flex">
+        {/* Map area */}
+        <div className="flex-1 min-h-0 p-3">
+          {stationLoading || station === null ? (
+            <div
+              className="h-full rounded-lg bg-muted animate-pulse"
+              aria-hidden="true"
+            />
+          ) : (
+            <RadarMap
+              center={[station.latitude, station.longitude]}
+              stationTz={station.timezone}
+              zoom={7}
+              expanded={true}
+              maxBounds={maxBounds}
+              opacity={opacity}
+              colorScheme={colorScheme}
+            />
+          )}
+        </div>
+
+        {/* Layer panel — desktop sidebar; hidden when panelOpen is false */}
+        {panelOpen && (
+          <RadarLayerPanel
+            providerId={radarCapability?.providerId ?? null}
+            colorSchemes={colorSchemes}
+            selectedColorScheme={colorScheme}
+            onColorSchemeChange={setColorScheme}
+            opacity={opacity}
+            onOpacityChange={setOpacity}
+            isOpen={panelOpen}
+            onToggle={() => setPanelOpen(false)}
           />
         )}
       </div>

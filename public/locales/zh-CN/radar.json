@@ -12,5 +12,9 @@
   "expandRadar": "展开雷达",
   "closeRadar": "关闭雷达",
   "timeSlider": "时间",
-  "speed": "速度"
+  "speed": "速度",
+  "layerSettings": "设置",
+  "closePanel": "关闭设置",
+  "opacity": "不透明度",
+  "colorScheme": "配色方案"
 }
