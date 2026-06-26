@@ -566,6 +566,12 @@ export interface CapabilityDeclaration {
   wmsLayerName: string | null;
   tileContentType: string | null;
   iframeUrl: string | null;
+  caddyPrefix?: string | null;
+  alertUrl?: string | null;
+  bounds?: { south: number; west: number; north: number; east: number } | null;
+  refreshInterval?: number | null;
+  nowcastAvailable?: boolean | null;
+  alertsAvailable?: boolean | null;
 }
 
 export interface CapabilityRegistry {
@@ -787,6 +793,7 @@ export interface RadarFrameList {
   frames: RadarFrame[];
   attribution: string | null;
   tileHost: string | null; // RainViewer per-fetch tile host; null for WMS-T
+  colorSchemes?: Array<{ id: number; name: string }> | null;
 }
 
 export interface RadarFramesResponse {

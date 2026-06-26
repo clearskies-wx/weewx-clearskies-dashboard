@@ -7,5 +7,8 @@
   "noProvider": "Walang naka-configure na radar provider.",
   "noFrames": "Walang available na datos ng radar.",
   "loading": "Naglo-load ng datos ng radar…",
-  "frameOf": "Frame {{current}} ng {{total}}"
+  "frameOf": "Frame {{current}} ng {{total}}",
+  "nowcastLabel": "Forecast",
+  "expandRadar": "Palawakin ang radar",
+  "closeRadar": "Isara ang radar"
 }

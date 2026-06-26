@@ -18,13 +18,24 @@ interface RadarMapProps {
 }
 
 const SUBSTEPS = 5;        // interpolation steps between each real frame pair
-const TICK_MS = 100;       // milliseconds per sub-step
+const TICK_MS = 100;       // milliseconds per sub-step (fallback when frameCount is 0)
 const MAX_OPACITY = 0.7;   // max radar overlay opacity
 
 // How long to wait after frames load before starting auto-play.
 // Gives the browser time to begin fetching tiles for all frames so the first
 // loop isn't visibly stuttery while tiles are still in-flight.
 const PRELOAD_DELAY_MS = 1500;
+
+// Cap frame count in card view to keep animation tight and memory manageable.
+const MAX_CARD_FRAMES = 24;
+
+// Target full-loop duration. Tick interval is derived from frame count so
+// short frame lists (e.g. 6 frames) don't blaze through in 3 seconds.
+const TARGET_LOOP_MS = 17000;
+
+// Idle timeout — pause animation and stop live refresh after this long
+// without any user interaction.
+const IDLE_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutes
 
 // RainViewer tile defaults.
 // {size}    — tile size in pixels; 512 is the high-DPI option (also valid: 256).
@@ -159,10 +170,35 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
       ? radarCapability.providerId
       : null;
 
-  const { data: radarFrameList, loading: framesLoading, error: framesError } = useRadarFrames(providerId);
+  const { data: radarFrameList, loading: framesLoading, error: framesError, refetch } = useRadarFrames(providerId);
 
-  const frames: RadarFrame[] = radarFrameList?.frames ?? [];
+  // Cap frames to MAX_CARD_FRAMES most recent in card view.
+  const allFrames: RadarFrame[] = radarFrameList?.frames ?? [];
+  const frames: RadarFrame[] = allFrames.length > MAX_CARD_FRAMES
+    ? allFrames.slice(allFrames.length - MAX_CARD_FRAMES)
+    : allFrames;
+
   const tileHost = radarFrameList?.tileHost ?? null;
+
+  // --- Idle state ---
+  const [isIdle, setIsIdle] = useState(false);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const resetIdleTimer = useCallback(() => {
+    setIsIdle(false);
+    if (idleTimerRef.current !== null) clearTimeout(idleTimerRef.current);
+    idleTimerRef.current = setTimeout(() => setIsIdle(true), IDLE_TIMEOUT_MS);
+  }, []);
+
+  useEffect(() => {
+    const events = ['mousemove', 'touchstart', 'keydown', 'scroll'] as const;
+    events.forEach(e => window.addEventListener(e, resetIdleTimer, { passive: true }));
+    resetIdleTimer();
+    return () => {
+      events.forEach(e => window.removeEventListener(e, resetIdleTimer));
+      if (idleTimerRef.current !== null) clearTimeout(idleTimerRef.current);
+    };
+  }, [resetIdleTimer]);
 
   // --- Animation state ---
   const [animationStep, setAnimationStep] = useState(0);
@@ -174,6 +210,11 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
   const loadedLayersRef = useRef(new Set<number>());
 
   const frameCount = frames.length;
+
+  // Adaptive tick interval — target ~17s full loop regardless of frame count.
+  const tickMs = frameCount > 0
+    ? Math.max(50, Math.floor(TARGET_LOOP_MS / (frameCount * SUBSTEPS)))
+    : TICK_MS;
 
   const goNext = useCallback(() => {
     const total = frameCount * SUBSTEPS;
@@ -224,6 +265,13 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
     };
   }, [frameCount]);
 
+  // Pause animation when idle.
+  useEffect(() => {
+    if (isIdle) {
+      setIsPlaying(false);
+    }
+  }, [isIdle]);
+
   // Animation timer — advances animationStep one sub-step at a time; cross-fade
   // between real frames is handled by getFrameOpacity. No URL swaps or tile
   // re-fetches after the initial load, resulting in smooth looping.
@@ -236,7 +284,7 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
       const totalSteps = frameCount * SUBSTEPS;
       intervalRef.current = setInterval(() => {
         setAnimationStep((s) => (s + 1) % totalSteps);
-      }, TICK_MS);
+      }, tickMs);
     }
     return () => {
       if (intervalRef.current !== null) {
@@ -244,7 +292,32 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
         intervalRef.current = null;
       }
     };
-  }, [isPlaying, frameCount]);
+  }, [isPlaying, frameCount, tickMs]);
+
+  // Live refresh — re-fetch frame metadata at the provider's configured interval.
+  const refreshIntervalMs = (radarCapability?.refreshInterval ?? 600) * 1000;
+  useEffect(() => {
+    if (!providerId || framesLoading || isIdle) return;
+    const id = setInterval(() => {
+      void refetch();
+    }, refreshIntervalMs);
+    return () => clearInterval(id);
+  }, [providerId, refreshIntervalMs, framesLoading, refetch, isIdle]);
+
+  // Page Visibility API — pause animation when tab hidden, refresh when visible.
+  useEffect(() => {
+    function handleVisibility() {
+      if (document.hidden) {
+        setIsPlaying(false);
+      } else {
+        setIsIdle(false);
+        // Refresh data when tab becomes visible.
+        if (providerId) void refetch();
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [providerId, refetch]);
 
   // Derive the display frame index from animationStep for timestamp/counter display.
   const displayFrameIndex = frameCount > 0 ? Math.floor(animationStep / SUBSTEPS) % frameCount : 0;
@@ -443,6 +516,11 @@ export function RadarMap({ center, zoom = 7, stationTz }: RadarMapProps) {
           {currentFrame && (
             <span className="text-muted-foreground tabular-nums ml-auto" style={{ fontSize: 'var(--text-label)' }}>
               {formatFrameTime(currentFrame.time)}
+              {currentFrame.kind === 'nowcast' && (
+                <span className="ml-1 text-primary" aria-label={t('nowcastLabel')}>
+                  {t('nowcastLabel')}
+                </span>
+              )}
             </span>
           )}
         </div>

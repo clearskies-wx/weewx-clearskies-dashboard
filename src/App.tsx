@@ -19,6 +19,7 @@ function lazyWithReload(factory: () => Promise<{ default: React.ComponentType }>
   );
 }
 
+const RadarPage = lazyWithReload(() => import('./routes/radar'));
 const NowPage = lazyWithReload(() => import('./routes/now'));
 const ForecastPage = lazyWithReload(() => import('./routes/forecast'));
 const ChartsPage = lazyWithReload(() => import('./routes/charts'));
@@ -106,6 +107,15 @@ function App() {
       <PageVisibilityProvider>
         <BrowserRouter>
           <Routes>
+            {/* /radar — full-viewport expanded radar overlay, outside AppLayout */}
+            <Route
+              path="radar"
+              element={
+                <Suspense fallback={<PageLoader title="Radar" />}>
+                  <RadarPage />
+                </Suspense>
+              }
+            />
             <Route element={<AppLayout />}>
               <Route
                 index

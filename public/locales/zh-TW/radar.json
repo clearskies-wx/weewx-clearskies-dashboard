@@ -7,5 +7,8 @@
   "noProvider": "未設定雷達資料來源。",
   "noFrames": "暫無雷達資料。",
   "loading": "正在載入雷達資料…",
-  "frameOf": "第 {{current}} 影格，共 {{total}} 影格"
+  "frameOf": "第 {{current}} 影格，共 {{total}} 影格",
+  "nowcastLabel": "預報",
+  "expandRadar": "展開雷達",
+  "closeRadar": "關閉雷達"
 }

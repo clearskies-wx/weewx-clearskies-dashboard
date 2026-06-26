@@ -18,8 +18,11 @@
 //   - Loading state uses aria-busy + TileSkeleton (aria-hidden).
 //   - Keyboard: map zoom controls are native Leaflet buttons (focusable).
 //   - Animation controls in RadarMap: <button> elements, not <div onClick>.
+//   - Expand button: <button> with aria-label, keyboard accessible.
 
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { ArrowsOut } from '@phosphor-icons/react';
 import {
   Card,
   CardHeader,
@@ -59,6 +62,7 @@ export interface RadarCardProps {
 
 function RadarCardContent({ station, stationTz, loading = false }: RadarCardProps) {
   const { t } = useTranslation('radar');
+  const navigate = useNavigate();
 
   return (
     <Card
@@ -67,8 +71,16 @@ function RadarCardContent({ station, stationTz, loading = false }: RadarCardProp
       className="relative z-0 min-h-[37.5rem] md:min-h-0 md:h-auto"
       aria-busy={loading}
     >
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle as="h2">{t('radarTitle')}</CardTitle>
+        <button
+          type="button"
+          onClick={() => navigate('/radar')}
+          aria-label={t('expandRadar')}
+          className="rounded p-1 text-muted-foreground hover:text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          <ArrowsOut className="h-5 w-5" aria-hidden="true" />
+        </button>
       </CardHeader>
       <CardContent className="pt-1">
         {loading || station === null ? (

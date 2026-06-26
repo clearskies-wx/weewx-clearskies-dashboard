@@ -7,5 +7,8 @@
   "noProvider": "Nenhum provedor de radar configurado.",
   "noFrames": "Nenhum dado de radar disponível.",
   "loading": "Carregando dados do radar…",
-  "frameOf": "Quadro {{current}} de {{total}}"
+  "frameOf": "Quadro {{current}} de {{total}}",
+  "nowcastLabel": "Previsão",
+  "expandRadar": "Expandir radar",
+  "closeRadar": "Fechar radar"
 }

@@ -7,5 +7,8 @@
   "noProvider": "Geen radarprovider geconfigureerd.",
   "noFrames": "Geen radargegevens beschikbaar.",
   "loading": "Radargegevens laden…",
-  "frameOf": "Beeld {{current}} van {{total}}"
+  "frameOf": "Beeld {{current}} van {{total}}",
+  "nowcastLabel": "Voorspelling",
+  "expandRadar": "Radar vergroten",
+  "closeRadar": "Radar sluiten"
 }

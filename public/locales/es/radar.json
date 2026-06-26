@@ -7,5 +7,8 @@
   "noProvider": "No hay proveedor de radar configurado.",
   "noFrames": "No hay datos de radar disponibles.",
   "loading": "Cargando datos del radar…",
-  "frameOf": "Fotograma {{current}} de {{total}}"
+  "frameOf": "Fotograma {{current}} de {{total}}",
+  "nowcastLabel": "Pronóstico",
+  "expandRadar": "Expandir radar",
+  "closeRadar": "Cerrar radar"
 }

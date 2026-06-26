@@ -7,5 +7,8 @@
   "noProvider": "Поставщик радарных данных не настроен.",
   "noFrames": "Радарные данные недоступны.",
   "loading": "Загрузка радарных данных…",
-  "frameOf": "Кадр {{current}} из {{total}}"
+  "frameOf": "Кадр {{current}} из {{total}}",
+  "nowcastLabel": "Прогноз",
+  "expandRadar": "Развернуть радар",
+  "closeRadar": "Закрыть радар"
 }

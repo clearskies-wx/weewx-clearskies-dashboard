@@ -9,5 +9,8 @@
   "loading": "Loading radar data...",
   "frameOf": "Frame {{current}} of {{total}}",
   "legendLight": "Light",
-  "legendHeavy": "Heavy"
+  "legendHeavy": "Heavy",
+  "nowcastLabel": "Forecast",
+  "expandRadar": "Expand radar",
+  "closeRadar": "Close radar"
 }
