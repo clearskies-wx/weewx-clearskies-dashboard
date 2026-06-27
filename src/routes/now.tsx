@@ -48,11 +48,15 @@ export function NowPage() {
 
   useEffect(() => {
     const ms = (webcamConfig?.refreshInterval ?? 60) * 1000;
+    // ADR-075: webcam file refresh, not API data. Operator-configured interval
+    // from webcam.json drives image URL cache-busting. Not subject to freshness.
     const interval = setInterval(() => setRefreshTs(Date.now()), ms);
     return () => clearInterval(interval);
   }, [webcamConfig?.refreshInterval]);
 
   useEffect(() => {
+    // ADR-075: webcam file refresh, not API data. 15min timelapse video
+    // URL cache-busting — not an API data-refresh interval.
     const interval = setInterval(() => setVideoRefreshTs(Date.now()), 900000);
     return () => clearInterval(interval);
   }, []);

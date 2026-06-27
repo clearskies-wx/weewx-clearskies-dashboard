@@ -326,7 +326,8 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
     }
 
     void fetchAlerts();
-    // Auto-refresh every 5 minutes.
+    // ADR-075: alert GeoJSON is a standalone fetch (not via useApiQuery), so a
+    // fixed interval is used. 300s matches the NWS alert update cadence.
     const id = setInterval(() => { void fetchAlerts(); }, 5 * 60 * 1000);
     return () => {
       cancelled = true;
@@ -431,6 +432,9 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
   }, [isPlaying, frameCount, effectiveTickMs]);
 
   // Live refresh — re-fetch frame metadata at the provider's configured interval.
+  // ADR-075: refreshIntervalMs derives from radarCapability?.refreshInterval (provider-
+  // configured, served from the API) — not a hardcoded constant. isIdle suppresses
+  // the interval when the user is idle, per ADR-075 §7.
   const refreshIntervalMs = (radarCapability?.refreshInterval ?? 600) * 1000;
   useEffect(() => {
     if (!providerId || framesLoading || isIdle) return;
@@ -661,7 +665,8 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
                 if (regions?.length) html += `<br/>${regions.join(', ')}`;
                 if (expires) {
                   const exp = new Date(expires * 1000);
-                  html += `<br/>Expires: ${exp.toLocaleString()}`;
+                  // ADR-020/ADR-075: always format in station-local time zone.
+                  html += `<br/>Expires: ${exp.toLocaleString(undefined, { timeZone: stationTz ?? 'UTC' })}`;
                 }
                 layer.bindPopup(html, { maxWidth: 300 });
               }}

@@ -30,7 +30,7 @@
 // DataBag pattern (T0B.2): card self-extracts from dataBag["/api/v1/current"].
 // onRetry removed — page container manages data freshness in the DataBag model.
 
-import { useMemo, useEffect } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AreaChart,
@@ -307,8 +307,9 @@ function SolarRadiationCardContent({
   const { t } = useTranslation('now');
 
   const archiveStart24h = useMemo(() => new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), []);
-  const { data: solarArchive, refetch: solarRefetch } = useArchive({ from: archiveStart24h, aggregate_interval: '300', fields: 'radiation,maxSolarRad' });
-  useEffect(() => { const id = setInterval(() => solarRefetch(), 5 * 60 * 1000); return () => clearInterval(id); }, [solarRefetch]);
+  // ADR-075: freshness-driven refetch is handled by useApiQuery inside useArchive.
+  // No standalone setInterval needed here.
+  const { data: solarArchive } = useArchive({ from: archiveStart24h, aggregate_interval: '300', fields: 'radiation,maxSolarRad' });
 
   const radiationCV = asConverted(observation?.radiation ?? null);
   const radiationFormatted = radiationCV?.formatted ?? '—';

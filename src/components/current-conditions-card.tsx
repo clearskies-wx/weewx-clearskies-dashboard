@@ -130,6 +130,8 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
 
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
+    // ADR-075: display tick, not data refresh. Updates the "now" marker
+    // position on the temperature curve without triggering any API call.
     const interval = setInterval(() => setNow(Date.now()), 60_000);
     return () => clearInterval(interval);
   }, []);
@@ -363,12 +365,10 @@ function CurrentConditionsCardContent({
 }: CurrentConditionsCardInternalProps) {
   const { t } = useTranslation('now');
 
-  const [archiveTick, setArchiveTick] = useState(0);
-  useEffect(() => {
-    const iv = setInterval(() => setArchiveTick(t => t + 1), 60_000);
-    return () => clearInterval(iv);
-  }, []);
-  const archiveStart24h = useMemo(() => new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), [archiveTick]);
+  // ADR-075: freshness-driven refetch is handled by useApiQuery inside useArchive.
+  // The archiveStart24h window is stable (mount-time); useArchive triggers
+  // background refetches when freshness.validUntil elapses.
+  const archiveStart24h = useMemo(() => new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), []);
   const { data: tempArchive } = useArchive({ from: archiveStart24h, aggregate_interval: '300', fields: 'outTemp' });
 
   // Temperature — via ConvertedValue; no client unit math

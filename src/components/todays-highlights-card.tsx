@@ -17,7 +17,7 @@
 //
 // DataBag pattern (T0B.2): card self-extracts from dataBag["/api/v1/current"].
 
-import { useMemo, useEffect } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ThermometerHot,
@@ -122,8 +122,9 @@ function TodaysHighlightsCardContent({
 
   // Fetch archive data and compute today's stats internally.
   const archiveStart24h = useMemo(() => new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), []);
-  const { data: highlightsArchive, refetch: highlightsRefetch } = useArchive({ from: archiveStart24h, fields: 'outTemp,windGust,windSpeed,rain' });
-  useEffect(() => { const id = setInterval(() => highlightsRefetch(), 5 * 60 * 1000); return () => clearInterval(id); }, [highlightsRefetch]);
+  // ADR-075: freshness-driven refetch is handled by useApiQuery inside useArchive.
+  // No standalone setInterval needed here.
+  const { data: highlightsArchive } = useArchive({ from: archiveStart24h, fields: 'outTemp,windGust,windSpeed,rain' });
   const todayStats = useTodayStats(observation, highlightsArchive, stationDate, stationTz);
 
   // Unit labels come from the observation's ConvertedValue fields (ADR-042).
