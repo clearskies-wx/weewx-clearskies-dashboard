@@ -42,6 +42,12 @@ export interface HaysChartProps {
   height?: number;
   /** When true, disables CSS transitions on SVG elements. */
   reducedMotion?: boolean;
+  /**
+   * IANA timezone identifier for the station (ADR-075 T3.8).
+   * All toLocale* calls use this timezone so date labels render in station
+   * local time rather than browser local time.
+   */
+  stationTz?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -128,24 +134,33 @@ function useContainerWidth(ref: React.RefObject<HTMLDivElement | null>): number 
 /**
  * Short label shown around the chart perimeter.
  * Monthly data (≤12 points) → month abbreviation; daily → day-of-month number.
+ *
+ * ADR-075 T3.8: stationTz added so labels render in the station's local timezone.
  */
-function periodLabel(dateTime: number, totalCount: number): string {
+function periodLabel(dateTime: number, totalCount: number, stationTz: string): string {
   const d = new Date(dateTime * 1000);
   if (totalCount <= 12) {
-    return d.toLocaleString('default', { month: 'short' });
+    return d.toLocaleString('default', { month: 'short', timeZone: stationTz });
   }
-  return String(d.getDate());
+  return String(
+    parseInt(
+      new Intl.DateTimeFormat('en-US', { day: 'numeric', timeZone: stationTz }).format(d),
+      10,
+    ),
+  );
 }
 
 /**
  * Full date string for tooltip and sr-only table rows.
+ *
+ * ADR-075 T3.8: stationTz added so labels render in the station's local timezone.
  */
-function fullDateLabel(dateTime: number, totalCount: number): string {
+function fullDateLabel(dateTime: number, totalCount: number, stationTz: string): string {
   const d = new Date(dateTime * 1000);
   if (totalCount <= 12) {
-    return d.toLocaleString('default', { month: 'long', year: 'numeric' });
+    return d.toLocaleString('default', { month: 'long', year: 'numeric', timeZone: stationTz });
   }
-  return d.toLocaleDateString('default', { year: 'numeric', month: 'short', day: 'numeric' });
+  return d.toLocaleDateString('default', { year: 'numeric', month: 'short', day: 'numeric', timeZone: stationTz });
 }
 
 // ---------------------------------------------------------------------------
@@ -172,6 +187,7 @@ interface HaysChartSvgProps {
   size: number;
   reducedMotion: boolean;
   titleId: string;
+  stationTz: string;
 }
 
 function HaysChartSvg({
@@ -182,6 +198,7 @@ function HaysChartSvg({
   size,
   reducedMotion,
   titleId,
+  stationTz,
 }: HaysChartSvgProps) {
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
@@ -267,7 +284,7 @@ function HaysChartSvg({
     const pathD = radialBandPath(cx, cy, innerR, outerR, startAngle, endAngle);
     if (!pathD) continue;
 
-    const label = fullDateLabel(highPoint.dateTime, totalCount);
+    const label = fullDateLabel(highPoint.dateTime, totalCount, stationTz);
 
     if (focusedIndex === i) {
       focusedPathD = pathD;
@@ -389,7 +406,7 @@ function HaysChartSvg({
         fill="var(--foreground)"
         aria-hidden="true"
       >
-        {periodLabel(d.dateTime, totalCount)}
+        {periodLabel(d.dateTime, totalCount, stationTz)}
       </text>
     );
   });
@@ -498,6 +515,7 @@ export function HaysChart({
   softMax,
   height = 300,
   reducedMotion = false,
+  stationTz = 'UTC',
 }: HaysChartProps) {
   const id = useId();
   const titleId = `hays-chart-title-${id}`;
@@ -541,6 +559,7 @@ export function HaysChart({
             size={chartSize}
             reducedMotion={reducedMotion}
             titleId={titleId}
+            stationTz={stationTz}
           />
         )}
       </div>
@@ -576,7 +595,7 @@ export function HaysChart({
         <tbody>
           {tableRows.map((row, i) => (
             <tr key={i}>
-              <th scope="row">{fullDateLabel(row.dateTime, totalCount)}</th>
+              <th scope="row">{fullDateLabel(row.dateTime, totalCount, stationTz)}</th>
               <td>{row.high !== null ? row.high.toFixed(1) : '—'}</td>
               <td>{row.low !== null ? row.low.toFixed(1) : '—'}</td>
             </tr>

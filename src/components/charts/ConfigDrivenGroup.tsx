@@ -1236,6 +1236,7 @@ export function ConfigDrivenGroup({
                       softMax={haysSoftMax}
                       height={300}
                       reducedMotion={reducedMotion}
+                      stationTz={stationTz}
                     />
                   </div>
                 );
@@ -1266,6 +1267,7 @@ export function ConfigDrivenGroup({
                       unit={unitLabel}
                       height={300}
                       reducedMotion={reducedMotion}
+                      stationTz={stationTz}
                     />
                   </div>
                 );
@@ -1439,7 +1441,7 @@ export function ConfigDrivenGroup({
                   return (
                     <div key={chart.chartId} className="h-full">
                       {chart.title && <h3 className="font-semibold text-center mb-2" style={{ fontSize: 'var(--text-section)' }}>{chart.title}</h3>}
-                      <HaysChart highData={rangeHighPoints} lowData={rangeLowPoints} field={haysField} unit={haysUnit} softMax={haysSoftMax} height={500} reducedMotion={reducedMotion} />
+                      <HaysChart highData={rangeHighPoints} lowData={rangeLowPoints} field={haysField} unit={haysUnit} softMax={haysSoftMax} height={500} reducedMotion={reducedMotion} stationTz={stationTz} />
                     </div>
                   );
                 }
@@ -1454,7 +1456,7 @@ export function ConfigDrivenGroup({
                   return (
                     <div key={chart.chartId} className="h-full">
                       {chart.title && <h3 className="font-semibold text-center mb-2" style={{ fontSize: 'var(--text-section)' }}>{chart.title}</h3>}
-                      <WeatherRangeChart highData={rangeHighPoints} lowData={rangeLowPoints} field={fieldName} unit={unitLabel} height={500} reducedMotion={reducedMotion} />
+                      <WeatherRangeChart highData={rangeHighPoints} lowData={rangeLowPoints} field={fieldName} unit={unitLabel} height={500} reducedMotion={reducedMotion} stationTz={stationTz} />
                     </div>
                   );
                 }

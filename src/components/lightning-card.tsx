@@ -102,6 +102,8 @@ export interface LightningCardProps {
   lightning: LightningData | null;
   loading?: boolean;
   error?: string | null;
+  /** IANA timezone identifier for the station (ADR-075 T3.8). */
+  stationTz?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -113,6 +115,7 @@ function LightningCardContent({
   lightning,
   loading = false,
   error = null,
+  stationTz = 'UTC',
 }: LightningCardProps) {
   const now = Date.now();
   const windowStart = now - WINDOW_MS;
@@ -208,10 +211,13 @@ function LightningCardContent({
                       type="number"
                       domain={xDomain}
                       tickCount={4}
-                      tickFormatter={(v: number) => {
-                        const d = new Date(v);
-                        return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
-                      }}
+                      tickFormatter={(v: number) =>
+                        new Date(v).toLocaleTimeString(undefined, {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          timeZone: stationTz,
+                        })
+                      }
                       tick={{
                         fontFamily: 'var(--font-chart, system-ui, sans-serif)',
                         fontSize: 11,
@@ -250,7 +256,7 @@ function LightningCardContent({
                       formatter={(value, name) =>
                         name === 'd' ? [`${Number(value).toFixed(1)} ${distanceUnit}`, 'Distance'] : [value, name]
                       }
-                      labelFormatter={(label) => new Date(Number(label)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      labelFormatter={(label) => new Date(Number(label)).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', timeZone: stationTz })}
                     />
                     <Scatter
                       data={strikePoints}
@@ -280,7 +286,7 @@ function LightningCardContent({
                   <tbody>
                     {strikePoints.map((s) => (
                       <tr key={s.timeIso}>
-                        <td>{new Date(s.timeIso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                        <td>{new Date(s.timeIso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', timeZone: stationTz })}</td>
                         <td>{s.d.toFixed(1)}</td>
                       </tr>
                     ))}
@@ -384,6 +390,7 @@ export function LightningCard(props: CardComponentProps | LightningCardProps): R
         lightning={lightningData?.data ?? null}
         loading={currentData?.loading ?? true}
         error={currentData?.error ? 'error' : null}
+        stationTz={props.stationTz}
       />
     );
   }
@@ -394,6 +401,7 @@ export function LightningCard(props: CardComponentProps | LightningCardProps): R
       lightning={props.lightning}
       loading={props.loading}
       error={props.error}
+      stationTz={props.stationTz}
     />
   );
 }

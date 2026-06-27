@@ -79,6 +79,19 @@ interface UvChartPoint {
 // ---------------------------------------------------------------------------
 
 /**
+ * stationMidnightMs — computes the Unix timestamp (ms) of today's midnight in
+ * the station's local timezone (ADR-075 T3.8).
+ *
+ * Strategy: format today's date as "YYYY-MM-DD" in the station tz, then parse
+ * it as a UTC midnight ISO string. The difference from true UTC midnight is the
+ * station's UTC offset, which positions the window correctly on the UTC timeline.
+ */
+function stationMidnightMs(stationTz: string): number {
+  const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: stationTz }).format(Date.now());
+  return new Date(todayStr + 'T00:00:00Z').getTime();
+}
+
+/**
  * buildUvBellCurve — synthesises a predicted UV day curve from forecast data.
  *
  * Formula (EPA sinusoidal model):
@@ -92,11 +105,13 @@ interface UvChartPoint {
  * @param uvIndexMax   Forecast UV peak for the day (from /forecast daily[0]).
  * @param sunriseIso   ISO-8601 string for today's sunrise, or null.
  * @param sunsetIso    ISO-8601 string for today's sunset, or null.
+ * @param stationTz    IANA timezone for the station (ADR-075 T3.8).
  */
 function buildUvBellCurve(
   uvIndexMax: number | null,
   sunriseIso: string | null,
   sunsetIso: string | null,
+  stationTz: string,
 ): UvChartPoint[] {
   const peak = uvIndexMax ?? 0;
 
@@ -107,10 +122,8 @@ function buildUvBellCurve(
   // UvChart shows "No data" only when BOTH data is empty AND currentUv is null —
   // so this flat baseline is the correct fallback when observation data may exist.
   if (peak <= 0) {
-    const nowFlat = new Date();
-    const midnightFlat = new Date(nowFlat);
-    midnightFlat.setHours(0, 0, 0, 0);
-    const midnightFlatMs = midnightFlat.getTime();
+    // ADR-075 T3.8: midnight is station-local, not browser-local.
+    const midnightFlatMs = stationMidnightMs(stationTz);
     const endFlatMs = midnightFlatMs + 24 * 60 * 60 * 1000;
     const FLAT_INTERVAL_MS = 15 * 60 * 1000;
     const flatPoints: UvChartPoint[] = [];
@@ -120,10 +133,8 @@ function buildUvBellCurve(
     return flatPoints;
   }
 
-  const now = new Date();
-  const midnight = new Date(now);
-  midnight.setHours(0, 0, 0, 0);
-  const midnightMs = midnight.getTime();
+  // ADR-075 T3.8: midnight is station-local, not browser-local.
+  const midnightMs = stationMidnightMs(stationTz);
   const endMs = midnightMs + 24 * 60 * 60 * 1000;
 
   // Parse sunrise/sunset — fall back to 06:00/20:00 local when unavailable
@@ -162,12 +173,12 @@ function buildUvBellCurve(
   return points;
 }
 
-/** Returns the daily-window domain and ticks (midnight to next midnight). */
-function buildDailyDomainAndTicks(): { domain: [number, number]; ticks: number[] } {
-  const now = new Date();
-  const midnight = new Date(now);
-  midnight.setHours(0, 0, 0, 0);
-  const midnightMs = midnight.getTime();
+/**
+ * Returns the daily-window domain and ticks (midnight to next midnight).
+ * ADR-075 T3.8: midnight is computed in station timezone, not browser timezone.
+ */
+function buildDailyDomainAndTicks(stationTz: string): { domain: [number, number]; ticks: number[] } {
+  const midnightMs = stationMidnightMs(stationTz);
   const endMs = midnightMs + 24 * 60 * 60 * 1000;
 
   return {
@@ -389,11 +400,13 @@ interface UvChartProps {
   gradientId: string;
   /** Forecast peak UV — used to compute dynamic Y-axis max and ticks. */
   peakUv: number | null;
+  /** IANA timezone identifier for the station (ADR-075 T3.8). */
+  stationTz: string;
 }
 
-function UvChart({ data, currentUv, gradientId, peakUv }: UvChartProps) {
+function UvChart({ data, currentUv, gradientId, peakUv, stationTz }: UvChartProps) {
   const { t } = useTranslation('now');
-  const { domain, ticks } = useMemo(buildDailyDomainAndTicks, []);
+  const { domain, ticks } = useMemo(() => buildDailyDomainAndTicks(stationTz), [stationTz]);
 
   // Dynamic Y-axis: one unit above the forecast peak, minimum ceiling of 4.
   // e.g. peakUv=9 → yMax=10, ticks=[0,2,4,6,8,10]
@@ -533,6 +546,7 @@ function UvChart({ data, currentUv, gradientId, peakUv }: UvChartProps) {
                 hour: 'numeric',
                 minute: '2-digit',
                 hour12: true,
+                timeZone: stationTz,
               }).format(new Date(row.ts));
               return (
                 <tr key={row.ts}>
@@ -583,6 +597,8 @@ export interface UvIndexCardProps {
   loading?: boolean;
   error?: string | null;
   onRetry?: () => void;
+  /** IANA timezone identifier for the station (ADR-075 T3.8). */
+  stationTz?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -596,6 +612,7 @@ function UvIndexCardContent({
   sunset,
   loading = false,
   error = null,
+  stationTz = 'UTC',
 }: Omit<UvIndexCardProps, 'onRetry'>) {
   const { t } = useTranslation('now');
 
@@ -620,8 +637,8 @@ function UvIndexCardContent({
   const forecastAbbr = forecastSegment?.label ?? '';
 
   const chartData = useMemo(
-    () => buildUvBellCurve(forecastUv, sunrise, sunset),
-    [forecastUv, sunrise, sunset],
+    () => buildUvBellCurve(forecastUv, sunrise, sunset, stationTz),
+    [forecastUv, sunrise, sunset, stationTz],
   );
 
   return (
@@ -653,6 +670,7 @@ function UvIndexCardContent({
               currentUv={currentUv}
               gradientId={gradientId}
               peakUv={forecastUv}
+              stationTz={stationTz}
             />
 
             {/* Lower: custom UV icon + Now/Peak value groups */}
@@ -736,6 +754,7 @@ export function UvIndexCard(props: CardComponentProps | UvIndexCardProps): React
         sunset={sunset}
         loading={currentData?.loading ?? true}
         error={currentData?.error ? 'error' : null}
+        stationTz={props.stationTz}
       />
     );
   }
@@ -748,6 +767,7 @@ export function UvIndexCard(props: CardComponentProps | UvIndexCardProps): React
       sunset={props.sunset}
       loading={props.loading}
       error={props.error}
+      stationTz={props.stationTz}
     />
   );
 }

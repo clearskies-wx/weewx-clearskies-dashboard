@@ -26,6 +26,12 @@ export interface WeatherRangeChartProps {
   unit?: string;
   height?: number;
   reducedMotion?: boolean;
+  /**
+   * IANA timezone identifier for the station (ADR-075 T3.8).
+   * All toLocale* calls use this timezone so date labels render in station
+   * local time rather than browser local time.
+   */
+  stationTz?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -160,15 +166,19 @@ function computeYDomain(highs: number[], lows: number[]): {
 // Date formatters
 // ---------------------------------------------------------------------------
 
-function formatXAxisTick(timestamp: number): string {
+/**
+ * ADR-075 T3.8: stationTz is threaded from the chart component so all date
+ * labels render in the station's local timezone rather than the browser's.
+ */
+function formatXAxisTick(timestamp: number, stationTz: string): string {
   const d = new Date(timestamp * 1000);
-  return d.toLocaleDateString('default', { day: 'numeric', month: 'short' });
+  return d.toLocaleDateString('default', { day: 'numeric', month: 'short', timeZone: stationTz });
 }
 
-function formatFullDate(timestamp: number, totalCount: number): string {
+function formatFullDate(timestamp: number, totalCount: number, stationTz: string): string {
   const d = new Date(timestamp * 1000);
-  if (totalCount <= 12) return d.toLocaleString('default', { month: 'long', year: 'numeric' });
-  return d.toLocaleDateString('default', { year: 'numeric', month: 'short', day: 'numeric' });
+  if (totalCount <= 12) return d.toLocaleString('default', { month: 'long', year: 'numeric', timeZone: stationTz });
+  return d.toLocaleDateString('default', { year: 'numeric', month: 'short', day: 'numeric', timeZone: stationTz });
 }
 
 // ---------------------------------------------------------------------------
@@ -177,11 +187,12 @@ function formatFullDate(timestamp: number, totalCount: number): string {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function CustomTooltip(props: any) {
-  const { active, payload, unit, totalCount } = props as {
+  const { active, payload, unit, totalCount, stationTz } = props as {
     active?: boolean;
     payload?: Array<{ payload?: ZoneBandRow }>;
     unit: string;
     totalCount: number;
+    stationTz: string;
   };
   if (!active || !payload || payload.length === 0) return null;
   const row = payload[0]?.payload ?? null;
@@ -190,7 +201,7 @@ function CustomTooltip(props: any) {
 
   return (
     <div role="tooltip" className="rounded-md border border-border bg-popover px-2 py-1.5 text-xs text-popover-foreground shadow-md">
-      <div className="font-semibold mb-1">{formatFullDate(timestamp, totalCount)}</div>
+      <div className="font-semibold mb-1">{formatFullDate(timestamp, totalCount, stationTz)}</div>
       {high !== null && (
         <div className="flex items-center gap-1.5">
           <span aria-hidden="true" className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: getOutTempColor(high, unit) }} />
@@ -230,6 +241,7 @@ export function WeatherRangeChart({
   unit = '',
   height = 300,
   reducedMotion: _reducedMotion = false,
+  stationTz = 'UTC',
 }: WeatherRangeChartProps) {
   const isMobile = useIsMobile();
   if (highData.length === 0) return null;
@@ -276,7 +288,7 @@ export function WeatherRangeChart({
           <tbody>
             {mergedData.map((row, i) => (
               <tr key={i}>
-                <th scope="row">{formatFullDate(row.timestamp, totalCount)}</th>
+                <th scope="row">{formatFullDate(row.timestamp, totalCount, stationTz)}</th>
                 <td>{row.high?.toFixed(1) ?? '—'}</td>
                 <td>{row.low?.toFixed(1) ?? '—'}</td>
                 <td>{row.avg?.toFixed(1) ?? '—'}</td>
@@ -295,7 +307,7 @@ export function WeatherRangeChart({
               type="number"
               scale="time"
               domain={['dataMin', 'dataMax']}
-              tickFormatter={formatXAxisTick}
+              tickFormatter={(v: number) => formatXAxisTick(v, stationTz)}
               minTickGap={isMobile ? 20 : 50}
               height={XAXIS_HEIGHT}
               tick={{ fontSize: 14, fontFamily: CHART_FONT }}
@@ -341,7 +353,7 @@ export function WeatherRangeChart({
 
             <Tooltip
               content={(tooltipProps) => (
-                <CustomTooltip {...tooltipProps} unit={unit} totalCount={totalCount} />
+                <CustomTooltip {...tooltipProps} unit={unit} totalCount={totalCount} stationTz={stationTz} />
               )}
             />
 

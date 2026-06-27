@@ -53,14 +53,15 @@ function viewingQualityClass(quality: MeteorShowerEntry['viewingQuality']): stri
 /**
  * Format an ISO date string (YYYY-MM-DD or full ISO-8601) to a short local
  * date string, e.g. "Jan 3" or "Aug 12".
- * stationTz is accepted but the display is intentionally just month+day —
- * year is omitted for brevity in the range display.
+ *
+ * ADR-075 T3.8: stationTz is passed explicitly so the displayed date reflects
+ * the station's local timezone rather than the browser's.
  */
-function formatShortDate(isoDate: string | null | undefined): string {
+function formatShortDate(isoDate: string | null | undefined, stationTz: string): string {
   if (!isoDate) return '—';
   try {
     const d = new Date(isoDate);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: stationTz });
   } catch {
     return isoDate;
   }
@@ -69,12 +70,14 @@ function formatShortDate(isoDate: string | null | undefined): string {
 /**
  * Format an ISO date string to a short date that INCLUDES the year,
  * used for peak-night values (e.g. "Jan 3, 2026").
+ *
+ * ADR-075 T3.8: stationTz added for timezone-correct display.
  */
-function formatDateWithYear(isoDate: string | null | undefined): string {
+function formatDateWithYear(isoDate: string | null | undefined, stationTz: string): string {
   if (!isoDate) return '—';
   try {
     const d = new Date(isoDate);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: stationTz });
   } catch {
     return isoDate;
   }
@@ -83,36 +86,46 @@ function formatDateWithYear(isoDate: string | null | undefined): string {
 /**
  * Produce the active date range string, e.g. "Dec 28 – Jan 12".
  * Falls back to just the peak date if active window is absent.
+ *
+ * ADR-075 T3.8: stationTz threaded to all date formatters.
  */
-function formatActiveRange(shower: MeteorShowerEntry): string {
+function formatActiveRange(shower: MeteorShowerEntry, stationTz: string): string {
   if (shower.activeStart && shower.activeEnd) {
-    return `${formatShortDate(shower.activeStart)} – ${formatShortDate(shower.activeEnd)}`;
+    return `${formatShortDate(shower.activeStart, stationTz)} – ${formatShortDate(shower.activeEnd, stationTz)}`;
   }
-  return formatShortDate(shower.peakDate);
+  return formatShortDate(shower.peakDate, stationTz);
 }
 
 /**
  * Produce the peak-night display string: the peakDate night and next morning,
  * e.g. "Jan 3 – 4, 2026".
+ *
+ * ADR-075 T3.8: stationTz added for timezone-correct date-part extraction.
  */
-function formatPeakNight(isoDate: string | null | undefined): string {
+function formatPeakNight(isoDate: string | null | undefined, stationTz: string): string {
   if (!isoDate) return '—';
   try {
     const peak = new Date(isoDate);
     const nextDay = new Date(peak);
     nextDay.setDate(peak.getDate() + 1);
-    const month = peak.toLocaleDateString('en-US', { month: 'short' });
-    const day1 = peak.getDate();
-    const day2 = nextDay.getDate();
-    const year = peak.getFullYear();
+    const month = peak.toLocaleDateString('en-US', { month: 'short', timeZone: stationTz });
+    // Extract numeric day and year in station timezone.
+    const dtfDay  = new Intl.DateTimeFormat('en-US', { day: 'numeric', timeZone: stationTz });
+    const dtfYear = new Intl.DateTimeFormat('en-US', { year: 'numeric', timeZone: stationTz });
+    const dtfMon  = new Intl.DateTimeFormat('en-US', { month: 'numeric', timeZone: stationTz });
+    const day1 = parseInt(dtfDay.format(peak), 10);
+    const day2 = parseInt(dtfDay.format(nextDay), 10);
+    const year = parseInt(dtfYear.format(peak), 10);
+    const mon1 = parseInt(dtfMon.format(peak), 10);
+    const mon2 = parseInt(dtfMon.format(nextDay), 10);
     // Same-month range: "Aug 12 – 13, 2026"
     // Cross-month range: "Dec 31 – Jan 1, 2026" — fall back to full dates
-    if (peak.getMonth() === nextDay.getMonth()) {
+    if (mon1 === mon2) {
       return `${month} ${day1} – ${day2}, ${year}`;
     }
-    return `${formatDateWithYear(isoDate)} – ${formatShortDate(nextDay.toISOString())}`;
+    return `${formatDateWithYear(isoDate, stationTz)} – ${formatShortDate(nextDay.toISOString(), stationTz)}`;
   } catch {
-    return formatDateWithYear(isoDate);
+    return formatDateWithYear(isoDate, stationTz);
   }
 }
 
@@ -179,9 +192,10 @@ function InfoIcon() {
 
 interface ShowerColumnProps {
   shower: MeteorShowerEntry;
+  stationTz: string;
 }
 
-function ShowerColumn({ shower }: ShowerColumnProps) {
+function ShowerColumn({ shower, stationTz }: ShowerColumnProps) {
   const qClass = viewingQualityClass(shower.viewingQuality ?? null);
   const isNotVisible = shower.viewingQuality === 'Not Visible';
   const imageSrc = shower.image
@@ -208,7 +222,7 @@ function ShowerColumn({ shower }: ShowerColumnProps) {
             {shower.name}
           </span>
           <span className="text-[0.75rem] text-muted-foreground leading-tight mt-0.5">
-            {formatActiveRange(shower)}
+            {formatActiveRange(shower, stationTz)}
           </span>
         </div>
         {/* Red "Peak" pill badge — matches .peak-badge in mockup */}
@@ -256,7 +270,7 @@ function ShowerColumn({ shower }: ShowerColumnProps) {
             className="text-[0.75rem] font-semibold leading-[1.3]"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            {formatPeakNight(shower.peakDate)}
+            {formatPeakNight(shower.peakDate, stationTz)}
           </span>
         </div>
       </div>
@@ -349,6 +363,7 @@ function CardSkeleton() {
  */
 export function MeteorShowerCard({
   showers,
+  stationTz,
   loading,
   error,
 }: MeteorShowerCardProps) {
@@ -427,7 +442,7 @@ export function MeteorShowerCard({
             <div key={shower.name} role="listitem">
               {/* On mobile each ShowerColumn is full-width; override the fixed 190px width */}
               <div style={{ width: '100%' }}>
-                <ShowerColumn shower={shower} />
+                <ShowerColumn shower={shower} stationTz={stationTz} />
               </div>
             </div>
           ))}
@@ -442,7 +457,7 @@ export function MeteorShowerCard({
             >
               {showers.map((shower) => (
                 <div key={shower.name} role="listitem">
-                  <ShowerColumn shower={shower} />
+                  <ShowerColumn shower={shower} stationTz={stationTz} />
                 </div>
               ))}
             </div>
