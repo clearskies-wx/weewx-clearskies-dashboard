@@ -124,22 +124,28 @@ export function RecordsPage() {
   const { t, i18n } = useTranslation('records');
   const locale = i18n.language;
   const [period, setPeriod] = useState<Period>('ytd');
-  const { data: records, units, loading, error, refetch } = useRecords(period);
+  const { data: records, units, loading, error, refetch, stationClock } = useRecords(period);
   const { data: station } = useStation();
   const tz = station?.timezone ?? 'UTC';
 
+  // Compute station-local midnight epoch from stationClock (ADR-075 T3.4).
+  // stationClock.time is an ISO-8601 string with UTC offset from the API,
+  // so new Date(stationClock.time) gives the correct UTC instant — no
+  // browser-local clock involved.
   const todayFromEpoch = useMemo(() => {
-    const now = new Date();
+    if (!stationClock) return '0';
+    const nowMs = new Date(stationClock.time).getTime();
+    const tzForCalc = stationClock.timezone;
     const parts = new Intl.DateTimeFormat('en-US', {
-      timeZone: tz,
+      timeZone: tzForCalc,
       hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
-    }).formatToParts(now);
+    }).formatToParts(new Date(stationClock.time));
     const get = (type: string) => parseInt(parts.find(p => p.type === type)?.value ?? '0', 10);
     const elapsed = get('hour') * 3600 + get('minute') * 60 + get('second');
-    return String(Math.floor(now.getTime() / 1000) - elapsed);
-  }, [tz]);
+    return String(Math.floor(nowMs / 1000) - elapsed);
+  }, [stationClock]);
 
-  const { data: todayArchive } = useArchive({ from: todayFromEpoch });
+  const { data: todayArchive } = useArchive({ from: todayFromEpoch }, { skip: todayFromEpoch === '0' });
 
   return (
     <PageLayout
