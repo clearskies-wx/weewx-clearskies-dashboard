@@ -693,6 +693,8 @@ export function useRadarFrames(
 export function useTodayStats(
   observation: Observation | null,
   todayArchive: ArchiveRecord[] | null,
+  stationDate?: string,
+  stationTz?: string,
 ): TodayStats | null {
   return useMemo(() => {
     if (isMockMode()) {
@@ -710,15 +712,25 @@ export function useTodayStats(
 
     if (!observation && (!todayArchive || todayArchive.length === 0)) return null;
 
-    // Filter to today-only records (midnight local time onwards).
-    // todayArchive may span 24h rolling; useTodayStats only cares about
-    // records from the current calendar day.
-    const todayMidnight = new Date();
-    todayMidnight.setHours(0, 0, 0, 0);
-    const todayMs = todayMidnight.getTime();
+    // Filter to today-only records using the station timezone when available
+    // (ADR-075 T3.5). When stationDate + stationTz are provided, compare each
+    // record's timestamp formatted in the station timezone against stationDate
+    // rather than using browser-local midnight — which would be wrong for visitors
+    // in a different timezone from the station.
     const todayRecords = (todayArchive ?? []).filter(rec => {
-      const ts = new Date(rec.timestamp).getTime();
-      return ts >= todayMs;
+      if (stationDate && stationTz) {
+        // en-CA locale produces YYYY-MM-DD — matches stationDate format exactly.
+        // Formatter is created inside the filter for correctness; the archive is
+        // typically small (288 records / 24h at 5-min interval), so this is fine.
+        const recDate = new Intl.DateTimeFormat('en-CA', { timeZone: stationTz }).format(
+          new Date(rec.timestamp),
+        );
+        return recDate === stationDate;
+      }
+      // Fallback: browser-local midnight (used when stationClock has not arrived yet).
+      const todayMidnight = new Date();
+      todayMidnight.setHours(0, 0, 0, 0);
+      return new Date(rec.timestamp).getTime() >= todayMidnight.getTime();
     });
 
     const records = todayRecords;
@@ -774,7 +786,7 @@ export function useTodayStats(
       peakAQI: 0, // not available from archive; AQI hook handles this separately
       recordsBrokenToday: [],
     };
-  }, [observation, todayArchive]);
+  }, [observation, todayArchive, stationDate, stationTz]);
 }
 
 // ---------------------------------------------------------------------------
