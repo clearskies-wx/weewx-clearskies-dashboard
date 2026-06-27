@@ -4,7 +4,7 @@
 // All UI logic lives in src/components/almanac/*.tsx.
 // Pattern mirrors forecast.tsx (Grid + PageHeaderCard composition).
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MoonStars } from '@phosphor-icons/react';
 import { PageLayout } from '../components/layout/page-layout';
@@ -25,6 +25,7 @@ import {
   useAlmanacMeteorShowers,
   useStation,
 } from '../hooks/useWeatherData';
+import { addDays } from '../utils/station-clock';
 
 // ---------------------------------------------------------------------------
 // usePrefersReducedMotion — local hook, passed down to ConfigDrivenGroup
@@ -47,13 +48,6 @@ function usePrefersReducedMotion(): boolean {
   return reduced;
 }
 
-/** Compute a YYYY-MM-DD date string in the station timezone. */
-function stationDate(tz: string, offsetDays: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() + offsetDays);
-  return new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(d);
-}
-
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
@@ -69,9 +63,17 @@ export function AlmanacPage() {
     ? new Date(station.firstRecord).getFullYear()
     : undefined;
 
-  // Compute today/tomorrow date strings in station timezone
-  const todayStr = useMemo(() => stationDate(stationTz, 0), [stationTz]);
-  const tomorrowStr = useMemo(() => stationDate(stationTz, 1), [stationTz]);
+  // Bootstrap almanac fetch (no date arg) to obtain station-local date from
+  // stationClock (ADR-075 T3.3). The API returns today's almanac by default.
+  const almanacBase = useAlmanac();
+  const stationClock = almanacBase.stationClock;
+
+  // Derive today/tomorrow date strings from the station clock rather than
+  // browser-local time. Fall back to empty strings while the first response
+  // is in flight — the subsequent date-parameterized calls will skip while
+  // todayStr/tomorrowStr are empty.
+  const todayStr    = stationClock?.date ?? '';
+  const tomorrowStr = stationClock ? addDays(stationClock.date, 1) : '';
 
   // Charts config — used to find the grouped chart group (xAxisGroupby)
   const { data: chartsConfig } = useChartsConfig();
@@ -79,9 +81,11 @@ export function AlmanacPage() {
     (g) => g.charts.some((c) => c.xAxisGroupby)
   ) ?? null;
 
-  // Data hooks — fetch today and tomorrow for Sun & Moon two-column layout
-  const almanac         = useAlmanac(todayStr);
-  const almanacTomorrow = useAlmanac(tomorrowStr);
+  // Data hooks — fetch today and tomorrow for Sun & Moon two-column layout.
+  // When todayStr is empty (stationClock not yet arrived), useAlmanac skips
+  // the fetch and returns loading:true so UI stays in skeleton state.
+  const almanac         = useAlmanac(todayStr || undefined);
+  const almanacTomorrow = useAlmanac(tomorrowStr || undefined);
   const positions       = useAlmanacPositions();
   const moonNames       = useAlmanacMoonNames();
   const planets         = useAlmanacPlanets();
