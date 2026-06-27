@@ -60,12 +60,34 @@ export interface PageInfo {
   count: number;
 }
 
+/** ADR-075: Station clock — the station's current local date and time. */
+export interface StationClock {
+  /** Station-local date as YYYY-MM-DD. Canonical answer to "what day is it?" */
+  date: string;
+  /** Station-local time as ISO-8601 with UTC offset (e.g. "2026-06-27T22:30:00-04:00"). */
+  time: string;
+  /** IANA timezone identifier (e.g. "America/New_York"). */
+  timezone: string;
+}
+
+/** ADR-075: Freshness envelope — tells the dashboard when to refetch. */
+export interface FreshnessInfo {
+  /** UTC ISO-8601 Z timestamp when the API produced this response. */
+  generatedAt: string;
+  /** UTC ISO-8601 Z timestamp after which data should be considered stale. */
+  validUntil: string;
+  /** How often this data type typically updates at the source, in seconds. */
+  refreshInterval: number;
+}
+
 /** Standard API envelope for most endpoints. */
 export interface ApiResponse<T> {
   data: T;
   units?: UnitsBlock;
   source?: string;
   generatedAt: string;
+  stationClock?: StationClock;    // ADR-075 — present on all API responses
+  freshness?: FreshnessInfo;      // ADR-075 — present on cacheable responses only
 }
 
 /**
@@ -552,6 +574,8 @@ export interface StationMetadata {
   hardware: string | null;
   archiveIntervalSeconds: number;
   weekStartDay: number;
+  idleTimeout?: number;           // minutes, default 30. 0 = disabled (kiosk mode)
+  idleRefreshFactor?: number;     // divisor for poll interval when idle, default 10
 }
 
 export interface CapabilityDeclaration {
