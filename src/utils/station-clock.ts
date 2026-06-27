@@ -6,20 +6,11 @@
  */
 
 // ---------------------------------------------------------------------------
-// Interfaces (local copies — will be removed when types.ts integration lands)
+// Re-export canonical interfaces from types.ts (ADR-075)
 // ---------------------------------------------------------------------------
 
-export interface StationClock {
-  date: string;       // YYYY-MM-DD station-local date
-  time: string;       // ISO-8601 with UTC offset, e.g. "2026-06-27T22:30:00-04:00"
-  timezone: string;   // IANA identifier, e.g. "America/New_York"
-}
-
-export interface FreshnessInfo {
-  generatedAt: string;      // UTC ISO-8601 Z
-  validUntil: string;       // UTC ISO-8601 Z
-  refreshInterval: number;  // seconds
-}
+import type { StationClock, FreshnessInfo } from '../api/types';
+export type { StationClock, FreshnessInfo };
 
 // ---------------------------------------------------------------------------
 // Functions

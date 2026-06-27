@@ -92,6 +92,8 @@ import type {
   MeteorShowerData,
   PositionsSnapshot,
   ChartsConfigData,
+  StationClock,
+  FreshnessInfo,
 } from '../api/types';
 
 // ---------------------------------------------------------------------------
@@ -105,6 +107,8 @@ interface HookResult<T> {
   loading: boolean;
   error: Error | null;
   refetch: () => void;
+  stationClock?: StationClock;
+  freshness?: FreshnessInfo;
 }
 
 // ---------------------------------------------------------------------------
@@ -163,15 +167,10 @@ export function useObservation(): ObservationHookResult {
   // Re-fetch /current every 60 seconds to pick up envelope fields
   // (windSpeedAvg10m, windGustMax10m, barometerTrendDirection, scene)
   // that are not available in SSE packets.
-  const [pollTick, setPollTick] = useState(0);
-  useEffect(() => {
-    const interval = setInterval(() => setPollTick(t => t + 1), 60_000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const { data, loading, error, refetch } = useApiQuery<CurrentResponse>(
+  // pollInterval replaces the previous manual setInterval/pollTick pattern (ADR-075).
+  const { data, loading, error, refetch, freshness: apiFreshness } = useApiQuery<CurrentResponse>(
     (signal) => getCurrent(signal),
-    { skip: isMockMode(), deps: [pollTick] },
+    { skip: isMockMode(), pollInterval: 60 },
   );
 
   if (isMockMode()) {
@@ -192,6 +191,8 @@ export function useObservation(): ObservationHookResult {
     loading,
     error,
     refetch,
+    stationClock: data?.stationClock,
+    freshness: apiFreshness,
     barometerTrendDirection: data?.barometerTrendDirection ?? null,
     windSpeedAvg10m: data?.windSpeedAvg10m ?? null,
     windGustMax10m: data?.windGustMax10m ?? null,
@@ -227,6 +228,8 @@ export function useForecast(config?: UseForecastConfig): HookResult<ForecastBund
     loading,
     error,
     refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
   };
 }
 
@@ -250,6 +253,8 @@ export function useAlerts(): HookResult<AlertRecord[]> {
     loading,
     error,
     refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
   };
 }
 
@@ -272,6 +277,8 @@ export function useAlmanac(date?: string): HookResult<AlmanacSnapshot> {
     loading,
     error,
     refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
   };
 }
 
@@ -296,6 +303,8 @@ export function useEarthquakes(): HookResult<EarthquakeRecord[]> {
     loading,
     error,
     refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
   };
 }
 
@@ -320,6 +329,8 @@ export function useAqi(): HookResult<AQIReading | null> {
     loading,
     error,
     refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
   };
 }
 
@@ -344,6 +355,8 @@ export function useRecords(period?: string): HookResult<RecordsBundle> {
     loading,
     error,
     refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
   };
 }
 
@@ -367,6 +380,8 @@ export function useStation(): HookResult<StationMetadata> {
     loading,
     error,
     refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
   };
 }
 
@@ -400,6 +415,8 @@ export function useArchive(params?: ArchiveParams, options?: { skip?: boolean })
     loading,
     error,
     refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
   };
 }
 
@@ -422,6 +439,8 @@ export function useChartGroups(): HookResult<ChartGroup[]> {
     loading,
     error,
     refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
   };
 }
 
@@ -455,6 +474,8 @@ export function useReports(): HookResult<ReportEntry[]> {
     loading,
     error,
     refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
   };
 }
 
@@ -479,6 +500,8 @@ export function useReport(year: number | null, month: number | null): HookResult
     loading,
     error,
     refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
   };
 }
 
@@ -503,6 +526,8 @@ export function useYearlyReport(year: number | null): HookResult<NOAAYearlyRepor
     loading,
     error,
     refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
   };
 }
 
@@ -535,6 +560,8 @@ export function useContent(slug: 'about' | 'legal'): HookResult<ContentBlock | n
     loading,
     error,
     refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
   };
 }
 
@@ -600,6 +627,8 @@ export function useBrandingApi(): HookResult<ApiBrandingConfig> {
     loading,
     error,
     refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
   };
 }
 
@@ -622,6 +651,8 @@ export function useCapabilities(): HookResult<CapabilityRegistry> {
     loading,
     error,
     refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
   };
 }
 
@@ -649,6 +680,8 @@ export function useRadarFrames(
     loading: providerId === null ? false : loading,
     error,
     refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
   };
 }
 
@@ -783,6 +816,8 @@ export function useGroupedArchive(params: {
     loading,
     error,
     refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
   };
 }
 
@@ -805,6 +840,8 @@ export function useAlmanacPlanets(): HookResult<PlanetsVisible> {
     loading,
     error,
     refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
   };
 }
 
@@ -852,6 +889,8 @@ export function useAlmanacMoonNames(): HookResult<MoonNameData> {
     loading,
     error,
     refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
   };
 }
 
@@ -877,6 +916,8 @@ export function useAlmanacEclipses(): HookResult<LunarEclipseData> {
     loading,
     error,
     refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
   };
 }
 
@@ -899,6 +940,8 @@ export function useSolarEclipses(): HookResult<SolarEclipseData> {
     loading,
     error,
     refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
   };
 }
 
@@ -921,6 +964,8 @@ export function useAlmanacMeteorShowers(): HookResult<MeteorShowerData> {
     loading,
     error,
     refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
   };
 }
 
@@ -949,6 +994,8 @@ export function useEarthquakeConfig(): HookResult<EarthquakeConfig> {
     loading,
     error,
     refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
   };
 }
 
@@ -976,6 +1023,8 @@ export function useEarthquakeFaults(): HookResult<FaultFeatureCollection> {
     loading,
     error,
     refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
   };
 }
 
@@ -984,15 +1033,10 @@ export function useEarthquakeFaults(): HookResult<FaultFeatureCollection> {
 // ---------------------------------------------------------------------------
 
 export function useAlmanacPositions(): HookResult<PositionsSnapshot> {
-  const [pollTick, setPollTick] = useState(0);
-  useEffect(() => {
-    const interval = setInterval(() => setPollTick(t => t + 1), 60_000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const { data, loading, error, refetch } = useApiQuery<{ data: PositionsSnapshot }>(
+  // pollInterval replaces the previous manual setInterval/pollTick pattern (ADR-075).
+  const { data, loading, error, refetch, freshness: apiFreshness } = useApiQuery<{ data: PositionsSnapshot }>(
     (signal) => getAlmanacPositions(signal),
-    { skip: isMockMode(), deps: [pollTick] },
+    { skip: isMockMode(), pollInterval: 60 },
   );
 
   if (isMockMode()) {
@@ -1007,6 +1051,8 @@ export function useAlmanacPositions(): HookResult<PositionsSnapshot> {
     loading,
     error,
     refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: apiFreshness,
   };
 }
 
@@ -1029,6 +1075,8 @@ export function useChartsConfig(): HookResult<ChartsConfigData> {
     loading,
     error,
     refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
   };
 }
 
