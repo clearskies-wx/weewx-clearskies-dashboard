@@ -29,6 +29,8 @@ export interface ForecastDailyCardProps {
   error: Error | null;
   stationTz?: string;
   units?: UnitsBlock;
+  /** Station-local date (YYYY-MM-DD) from stationClock.date (ADR-075). */
+  stationDate?: string;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -39,6 +41,7 @@ export function ForecastDailyCard({
   error,
   stationTz = 'UTC',
   units,
+  stationDate,
 }: ForecastDailyCardProps) {
   const { t } = useTranslation('forecast');
 
@@ -66,6 +69,7 @@ export function ForecastDailyCard({
             expandable
             stationTz={stationTz}
             units={units}
+            stationDate={stationDate}
           />
         ) : (
           <p style={{ color: 'var(--muted-foreground)', fontSize: 'var(--text-body, 0.9rem)' }}>

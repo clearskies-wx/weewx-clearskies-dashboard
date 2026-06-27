@@ -24,7 +24,7 @@ export function ForecastPage() {
   const { t } = useTranslation('forecast');
 
   // Request 48h of hourly data so the Tomorrow tab is populated.
-  const { data: forecast, units: fcUnits, loading: fcLoading, error: fcError } = useForecast({ hours: 48 });
+  const { data: forecast, units: fcUnits, loading: fcLoading, error: fcError, stationClock } = useForecast({ hours: 48 });
   const { data: station } = useStation();
 
   const tz = station?.timezone ?? 'UTC';
@@ -47,6 +47,7 @@ export function ForecastPage() {
         error={fcError}
         stationTz={tz}
         units={fcUnits}
+        stationDate={stationClock?.date}
       />
 
       {/* ── Surface D: Discussion (self-hides when empty) ─────────────── */}

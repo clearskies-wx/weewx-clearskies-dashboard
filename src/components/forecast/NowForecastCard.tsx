@@ -17,7 +17,7 @@ import { Card, CardHeader, CardContent, CardTitle } from '../ui/card';
 import { HeaderTabs } from '../ui/header-controls';
 import { HourlyStrip } from './HourlyStrip';
 import { DailyColumns } from './DailyColumns';
-import type { ForecastBundle } from '../../api/types';
+import type { ForecastBundle, StationClock } from '../../api/types';
 import type { CardComponentProps } from '../../lib/card-registry';
 
 // ── Loading / Error skeletons ────────────────────────────────────────────────
@@ -39,6 +39,8 @@ export interface NowForecastCardProps {
   loading: boolean;
   error: Error | null;
   stationTz?: string;
+  /** Station-local date (YYYY-MM-DD) from stationClock.date (ADR-075). */
+  stationDate?: string;
 }
 
 type Tab = 'today' | '7day';
@@ -50,6 +52,7 @@ function NowForecastCardContent({
   loading,
   error,
   stationTz = 'UTC',
+  stationDate,
 }: NowForecastCardProps) {
   const { t } = useTranslation('forecast');
   const [activeTab, setActiveTab] = useState<Tab>('today');
@@ -140,6 +143,7 @@ function NowForecastCardContent({
                   days={dailyDays}
                   expandable={false}
                   stationTz={stationTz}
+                  stationDate={stationDate}
                 />
               ) : (
                 <p style={{ color: 'var(--muted-foreground)', fontSize: 'var(--text-body, 0.9rem)' }}>
@@ -165,6 +169,7 @@ export function NowForecastCard(props: CardComponentProps | NowForecastCardProps
       data?: ForecastBundle | null;
       loading?: boolean;
       error?: unknown;
+      stationClock?: StationClock;
     } | undefined;
 
     return (
@@ -173,6 +178,7 @@ export function NowForecastCard(props: CardComponentProps | NowForecastCardProps
         loading={forecastData?.loading ?? true}
         error={forecastData?.error ? new Error('error') : null}
         stationTz={props.stationTz}
+        stationDate={forecastData?.stationClock?.date}
       />
     );
   }
@@ -183,6 +189,7 @@ export function NowForecastCard(props: CardComponentProps | NowForecastCardProps
       loading={props.loading}
       error={props.error}
       stationTz={props.stationTz}
+      stationDate={props.stationDate}
     />
   );
 }

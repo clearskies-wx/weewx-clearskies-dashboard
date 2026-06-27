@@ -28,12 +28,16 @@ import { WeatherIcon } from '../weather-icon';
 import { WindSymbol } from './WindSymbol';
 import { TempTrendLine } from './TempTrendLine';
 import { toWmoCode } from '../../utils/weather-code';
+import { addDays, isStationToday } from '../../utils/station-clock';
 import type { DailyForecastPoint, UnitsBlock } from '../../api/types';
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
 
-function getDayName(validDate: string, index: number): string {
-  if (index === 0) return 'Today';
+function getDayName(validDate: string, stationDate?: string): string {
+  if (stationDate) {
+    if (isStationToday(validDate, stationDate)) return 'Today';
+    if (validDate === addDays(stationDate, 1)) return 'Tomorrow';
+  }
   // Parse as UTC noon to avoid DST/timezone date shifting
   const d = new Date(validDate + 'T12:00:00Z');
   return new Intl.DateTimeFormat('en-US', {
@@ -42,8 +46,11 @@ function getDayName(validDate: string, index: number): string {
   }).format(d);
 }
 
-function getShortDayName(validDate: string, index: number): string {
-  if (index === 0) return 'Today';
+function getShortDayName(validDate: string, stationDate?: string): string {
+  if (stationDate) {
+    if (isStationToday(validDate, stationDate)) return 'Today';
+    if (validDate === addDays(stationDate, 1)) return 'Tmrw';
+  }
   const d = new Date(validDate + 'T12:00:00Z');
   return new Intl.DateTimeFormat('en-US', {
     weekday: 'short',
@@ -84,6 +91,9 @@ export interface DailyColumnsProps {
   stationTz?: string;
   /** Units block from the API response — drives suffixes in the detail panel. */
   units?: UnitsBlock;
+  /** Station-local date (YYYY-MM-DD) from stationClock.date (ADR-075). Used to label
+   *  Today / Tomorrow correctly — avoids the index===0 bug when providers roll data early. */
+  stationDate?: string;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -93,6 +103,7 @@ export function DailyColumns({
   expandable = false,
   stationTz = 'UTC',
   units,
+  stationDate,
 }: DailyColumnsProps) {
   const { t } = useTranslation('forecast');
   // Auto-select first column when expandable so users discover the detail panel.
@@ -161,9 +172,9 @@ export function DailyColumns({
         // expandable=false (now card): always short names (unchanged)
         // expandable=true (forecast page): short on mobile, full on desktop
         const dayName = expandable
-          ? getDayName(day.validDate, i)
-          : getShortDayName(day.validDate, i);
-        const shortDayName = expandable ? getShortDayName(day.validDate, i) : null;
+          ? getDayName(day.validDate, stationDate)
+          : getShortDayName(day.validDate, stationDate);
+        const shortDayName = expandable ? getShortDayName(day.validDate, stationDate) : null;
         const dateLabel = expandable ? getDateLabel(day.validDate) : null;
 
         return (
@@ -469,7 +480,7 @@ export function DailyColumns({
   // ── Expansion detail panel ───────────────────────────────────────────────
   const detailPanel = expandable && expandedIdx !== null ? (() => {
     const day = days[expandedIdx];
-    const dayName = getDayName(day.validDate, expandedIdx);
+    const dayName = getDayName(day.validDate, stationDate);
     const dateLabel = getDateLabel(day.validDate);
     const sunrise = formatSunTime(day.sunrise, stationTz);
     const sunset = formatSunTime(day.sunset, stationTz);
