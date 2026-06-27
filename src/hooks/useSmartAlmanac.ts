@@ -9,8 +9,9 @@
 // rises tonight — today's data IS the next period. Only fetch tomorrow
 // when today's data doesn't have a future rise after the set.
 
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useAlmanac } from './useWeatherData';
+import { getStationDate, addDays, stationTimeMs } from '../utils/station-clock';
 import type { AlmanacSnapshot } from '../api/types';
 
 interface SmartAlmanacResult {
@@ -29,14 +30,12 @@ function isoMs(iso: string | null): number | null {
 }
 
 export function useSmartAlmanac(): SmartAlmanacResult {
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setTick(t => t + 1), 60_000);
-    return () => clearInterval(id);
-  }, []);
-
   const today = useAlmanac();
-  const now = Date.now();
+  const stationClock = today.stationClock;
+
+  // Use station-local time for rise/set comparisons (ADR-075).
+  // Falls back to Date.now() only on initial load before stationClock arrives.
+  const now = stationClock ? stationTimeMs(stationClock) : Date.now();
 
   // --- Sun: need tomorrow only if past sunset + 2hr ---
   const sunSetMs = isoMs(today.data?.sun.set ?? null);
@@ -54,12 +53,13 @@ export function useSmartAlmanac(): SmartAlmanacResult {
 
   const needsTomorrow = sunNeedsTomorrow || moonNeedsTomorrow;
 
+  // Compute tomorrow's date string from the station clock (ADR-075).
+  // Undefined until stationClock is available; needsTomorrow is false
+  // in that case so useAlmanac will not be called with undefined.
   const tomorrowStr = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 1);
-    return d.toISOString().split('T')[0];
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tick]);
+    if (!today.data || !stationClock) return undefined;
+    return addDays(getStationDate({ stationClock }), 1);
+  }, [today.data, stationClock]);
 
   const tomorrow = useAlmanac(needsTomorrow ? tomorrowStr : undefined);
 
