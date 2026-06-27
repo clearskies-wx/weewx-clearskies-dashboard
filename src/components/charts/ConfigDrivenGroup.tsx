@@ -58,6 +58,12 @@ export interface ConfigDrivenGroupProps {
   /** Week start day from /station: 0=Monday, 6=Sunday. Defaults to 6. */
   weekStartDay?: number;
   /**
+   * Station IANA timezone string from /station (e.g. "America/New_York").
+   * Required for ADR-075-compliant date/time formatting in station timezone.
+   * Falls back to browser locale when absent (station data in flight).
+   */
+  stationTz?: string;
+  /**
    * When true, the rolling-range radiogroup and year/month dropdowns are not
    * rendered. The parent (ChartsPage TabNavCard) owns date controls instead.
    * Data fetching is unaffected — only the UI controls are hidden.
@@ -111,9 +117,18 @@ function parseRangeToSeconds(range: string): number {
 /**
  * Build a year list from stationFirstYear (or currentYear) down to currentYear,
  * descending so the most-recent year appears first.
+ *
+ * Uses stationTz (IANA timezone string) when available to determine the current
+ * year at the station rather than at the browser (ADR-075 T3.6).
  */
-function buildYearList(stationFirstYear: number | undefined): number[] {
-  const currentYear = new Date().getFullYear();
+function buildYearList(stationFirstYear: number | undefined, stationTz?: string): number[] {
+  // Derive current year in station timezone when available; fall back to browser local.
+  const currentYear = stationTz
+    ? parseInt(
+        new Intl.DateTimeFormat('en-US', { timeZone: stationTz, year: 'numeric' }).format(new Date()),
+        10,
+      )
+    : new Date().getFullYear();
   const firstYear = stationFirstYear ?? currentYear;
   const years: number[] = [];
   for (let y = currentYear; y >= firstYear; y--) {
@@ -162,23 +177,30 @@ function buildGroupedChartData(
 /**
  * Format a timestamp ISO string for the x-axis tick, choosing resolution
  * based on the active range string.
+ *
+ * stationTz must be provided so timestamps render in the station's local
+ * timezone rather than the browser's timezone (ADR-075 T3.6).
  */
-function formatTimestamp(value: string | number, selectedRange: string): string {
+function formatTimestamp(value: string | number, selectedRange: string, stationTz?: string): string {
   const d = new Date(typeof value === 'number' ? value : value);
   if (isNaN(d.getTime())) return String(value);
   const rangeSec = parseRangeToSeconds(selectedRange);
   const rangeDays = rangeSec / 86400;
 
+  // timeZone option is required by ADR-075. Falls back to browser locale when
+  // stationTz is not yet known (station data in flight).
+  const tzOption = stationTz ? { timeZone: stationTz } : {};
+
   if (rangeDays <= 3) {
     // Sub-3-day: show hour ("1 AM", "2 PM")
-    return d.toLocaleTimeString([], { hour: 'numeric', hour12: true });
+    return d.toLocaleTimeString([], { hour: 'numeric', hour12: true, ...tzOption });
   }
   if (rangeDays <= 90) {
     // 3d–90d: show day + month ("6 Jun", "15 May")
-    return d.toLocaleDateString([], { day: 'numeric', month: 'short' });
+    return d.toLocaleDateString([], { day: 'numeric', month: 'short', ...tzOption });
   }
   // >90d: show month + year ("Mar '26")
-  return d.toLocaleDateString([], { month: 'short', year: '2-digit' });
+  return d.toLocaleDateString([], { month: 'short', year: '2-digit', ...tzOption });
 }
 
 // ---------------------------------------------------------------------------
@@ -230,6 +252,7 @@ export function ConfigDrivenGroup({
   stationFirstYear,
   archiveIntervalSeconds = 300,
   weekStartDay = 6,
+  stationTz,
   hideControls = false,
   selectedRange: controlledRange,
   selectedYear: controlledYear,
@@ -250,7 +273,17 @@ export function ConfigDrivenGroup({
   const [internalSelectedYear, setInternalSelectedYear] = useState<number | null>(
     group.availableYears.length > 0 ? group.availableYears[0] : null,
   );
-  const [internalSelectedMonth, setInternalSelectedMonth] = useState<number | null>(new Date().getMonth() + 1);
+  const [internalSelectedMonth, setInternalSelectedMonth] = useState<number | null>(() => {
+    // Use station timezone when available for ADR-075 compliance (T3.6).
+    // Falls back to browser-local month when stationTz is not yet known.
+    if (stationTz) {
+      return parseInt(
+        new Intl.DateTimeFormat('en-US', { timeZone: stationTz, month: 'numeric' }).format(new Date()),
+        10,
+      );
+    }
+    return new Date().getMonth() + 1;
+  });
 
   // Effective values: use controlled prop when provided, fall back to internal state
   const selectedRange = controlledRange ?? internalSelectedRange;
@@ -388,15 +421,37 @@ export function ConfigDrivenGroup({
         // weewx week_start: 0=Monday, 6=Sunday.
         // JS getDay(): 0=Sunday, 1=Monday, ..., 6=Saturday.
         // Convert: jsWeekStartDay = (weekStartDay + 1) % 7
-        const now = new Date();
+        //
+        // ADR-075 T3.6: derive day-of-week and week-start date from the station
+        // timezone so that "this week" matches the station's calendar, not the
+        // browser's.
+        const nowMs = Date.now(); // ADR-075: approved UTC epoch for query window
         const jsWeekStartDay = (weekStartDay + 1) % 7;
-        const jsToday = now.getDay();
+        let jsToday: number;
+        if (stationTz) {
+          // Extract station-local day-of-week (0=Sun…6=Sat) via Intl short weekday.
+          const weekdayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+          const stationWeekday = new Intl.DateTimeFormat('en-US', {
+            timeZone: stationTz,
+            weekday: 'short',
+          }).format(nowMs);
+          jsToday = weekdayNames.indexOf(stationWeekday);
+          if (jsToday < 0) jsToday = new Date(nowMs).getDay(); // safety fallback
+        } else {
+          jsToday = new Date(nowMs).getDay(); // browser-local fallback (station data in flight)
+        }
         const daysSinceWeekStart = (jsToday - jsWeekStartDay + 7) % 7;
-        const weekStart = new Date(now);
-        weekStart.setDate(weekStart.getDate() - daysSinceWeekStart);
-        weekStart.setHours(0, 0, 0, 0);
-        from = weekStart.toISOString();
-        to = now.toISOString();
+        // Derive the week-start date in station timezone, then build a UTC Date
+        // at that date's UTC midnight. The API accepts ISO timestamps in UTC;
+        // a UTC-midnight boundary is an accurate enough approximation for a
+        // rolling weekly archive query (any DST offset error is < 1 hour).
+        const todayDateStr = stationTz
+          ? new Intl.DateTimeFormat('en-CA', { timeZone: stationTz }).format(nowMs)
+          : new Intl.DateTimeFormat('en-CA').format(nowMs); // en-CA → YYYY-MM-DD
+        const [tYear, tMonth, tDay] = todayDateStr.split('-').map(Number);
+        const weekStartDate = new Date(Date.UTC(tYear, tMonth - 1, tDay - daysSinceWeekStart));
+        from = weekStartDate.toISOString();
+        to = new Date(nowMs).toISOString(); // ADR-075: UTC epoch for query window, not display
       } else {
         let maxSeconds = typeof group.timeLength === 'number'
           ? group.timeLength
@@ -760,11 +815,12 @@ export function ConfigDrivenGroup({
     !showRollingRanges &&
     group.availableYears.length > 0;
 
-  // Build the year list: prefer group.availableYears, fall back to computed range
+  // Build the year list: prefer group.availableYears, fall back to computed range.
+  // Pass stationTz so the current year is determined in the station timezone (ADR-075 T3.6).
   const yearList = useMemo(() => {
     if (group.availableYears.length > 0) return group.availableYears;
-    return buildYearList(stationFirstYear);
-  }, [group.availableYears, stationFirstYear]);
+    return buildYearList(stationFirstYear, stationTz);
+  }, [group.availableYears, stationFirstYear, stationTz]);
 
   // -------------------------------------------------------------------------
   // Visible data table columns (for table mode)
@@ -933,7 +989,10 @@ export function ConfigDrivenGroup({
                 style={{ fontSize: 'var(--text-label)' }}
               >
                 {Array.from({ length: 12 }, (_, i) => {
-                  const label = new Intl.DateTimeFormat(i18n.language, { month: 'long' }).format(new Date(2000, i));
+                  // new Date(Date.UTC(2000, i, 15)) — static reference date for month name
+                  // generation. timeZone: 'UTC' is explicit (ADR-075): this formats a month
+                  // label, not a station timestamp, so UTC is the correct stable reference.
+                  const label = new Intl.DateTimeFormat(i18n.language, { month: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(2000, i, 15)));
                   return <option key={i + 1} value={i + 1}>{label}</option>;
                 })}
               </select>
@@ -1034,7 +1093,7 @@ export function ConfigDrivenGroup({
                     {rangeTableData.map((row, rowIndex) => (
                       <tr key={rowIndex} className="border-b border-border last:border-0">
                         <td className="py-1.5 px-3 text-foreground">
-                          {formatTimestamp(row.timestamp, selectedRange)}
+                          {formatTimestamp(row.timestamp, selectedRange, stationTz)}
                         </td>
                         <td className="py-1.5 px-3 text-right text-foreground">
                           {row.high != null ? String(row.high) : '—'}
@@ -1072,7 +1131,7 @@ export function ConfigDrivenGroup({
                   const xVal = row[xKey];
                   const displayX =
                     xVal != null
-                      ? formatTimestamp(xVal, selectedRange)
+                      ? formatTimestamp(xVal, selectedRange, stationTz)
                       : '—';
                   return (
                     <tr
@@ -1313,7 +1372,7 @@ export function ConfigDrivenGroup({
                     config={chart}
                     data={chartData}
                     xKey="timestamp"
-                    xFormatter={(v: string | number) => formatTimestamp(v, displayedRange)}
+                    xFormatter={(v: string | number) => formatTimestamp(v, displayedRange, stationTz)}
                     globalColors={globalColors}
                     globalType={globalType}
                     height={300}
@@ -1422,7 +1481,7 @@ export function ConfigDrivenGroup({
                   const cutoff = new Date(Date.now() - chart.timeLength * 1000).toISOString();
                   fsChartData = downsampledArchiveData.filter((r) => r.timestamp != null && String(r.timestamp) >= cutoff);
                 }
-                return <ConfigDrivenChart key={chart.chartId} config={chart} data={fsChartData} xKey="timestamp" xFormatter={(v: string | number) => formatTimestamp(v, displayedRange)} globalColors={globalColors} globalType={globalType} height={500} reducedMotion={reducedMotion} />;
+                return <ConfigDrivenChart key={chart.chartId} config={chart} data={fsChartData} xKey="timestamp" xFormatter={(v: string | number) => formatTimestamp(v, displayedRange, stationTz)} globalColors={globalColors} globalType={globalType} height={500} reducedMotion={reducedMotion} />;
               })}
             </div>
           )}

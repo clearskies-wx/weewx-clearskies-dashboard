@@ -37,11 +37,12 @@ export function ChartsPage() {
   // Fetch charts config
   const { data: chartsConfig, loading: configLoading, error: configError } = useChartsConfig();
 
-  // Fetch station for firstRecord year
+  // Fetch station for firstRecord year and timezone
   const { data: station } = useStation();
   const stationFirstYear = station?.firstRecord
     ? new Date(station.firstRecord).getFullYear()
     : undefined;
+  const stationTz = station?.timezone;
 
   // Filter to groups that should show as tabs
   const groups = chartsConfig?.groups?.filter((g) => g.showButton) ?? [];
@@ -220,6 +221,7 @@ export function ChartsPage() {
                 stationFirstYear={stationFirstYear}
                 archiveIntervalSeconds={station?.archiveIntervalSeconds}
                 weekStartDay={station?.weekStartDay}
+                stationTz={stationTz}
               />
             )}
           </div>

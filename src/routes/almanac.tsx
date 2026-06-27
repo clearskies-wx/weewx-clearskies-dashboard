@@ -106,6 +106,7 @@ export function AlmanacPage() {
               stationFirstYear={stationFirstYear}
               archiveIntervalSeconds={station?.archiveIntervalSeconds}
               weekStartDay={station?.weekStartDay}
+              stationTz={stationTz}
               hideControls
             />
           </div>
