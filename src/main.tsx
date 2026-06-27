@@ -9,6 +9,7 @@ import App from './App.tsx'
 import { BrandingProvider } from './lib/branding-provider'
 import { ThemeProvider } from './lib/theme-provider'
 import { ErrorBoundary } from './components/error-boundary'
+import { IdleDetectorProvider } from './hooks/useIdleDetector'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -20,7 +21,9 @@ createRoot(document.getElementById('root')!).render(
       <Suspense fallback={<div>Loading…</div>}>
         <BrandingProvider>
           <ThemeProvider>
-            <App />
+            <IdleDetectorProvider>
+              <App />
+            </IdleDetectorProvider>
           </ThemeProvider>
         </BrandingProvider>
       </Suspense>
