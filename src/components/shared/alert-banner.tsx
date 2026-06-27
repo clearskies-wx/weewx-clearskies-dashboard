@@ -38,6 +38,8 @@ import { getAlertColors } from '../../utils/alert-colors';
 
 interface AlertBannerProps {
   alerts: AlertRecord[];
+  /** IANA timezone identifier for the station (ADR-075 T3.7). */
+  stationTz: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -74,29 +76,36 @@ function ariaLive(role: 'alert' | 'status'): 'assertive' | 'polite' {
 /**
  * formatExpiry — produces a human-readable "until X" string from an ISO
  * expires timestamp. Falls back to "ongoing" when expires is null or invalid.
+ *
+ * ADR-075 T3.7: uses stationTz so "today" and time display are determined
+ * in the station's local timezone, not the browser's.
  */
 function formatExpiry(
   expires: string | null,
   t: (key: string, opts?: Record<string, unknown>) => string,
+  stationTz: string,
 ): string {
   if (!expires) return t('alertBanner.ongoing');
 
   const expiresDate = new Date(expires);
   if (isNaN(expiresDate.getTime())) return t('alertBanner.ongoing');
 
-  const now    = new Date();
-  const today  = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const expDay = new Date(
-    expiresDate.getFullYear(),
-    expiresDate.getMonth(),
-    expiresDate.getDate(),
-  );
+  // Determine "today" in the station's timezone using Intl (ADR-075 T3.7).
+  // Format both the current moment and the expiry instant as YYYY-MM-DD
+  // date strings in the station tz, then compare them to get diffDays.
+  const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: stationTz });
+  const todayStr  = fmt.format(Date.now());           // "YYYY-MM-DD" today
+  const expDayStr = fmt.format(expiresDate);          // "YYYY-MM-DD" of expiry
 
-  const diffDays = Math.round((expDay.getTime() - today.getTime()) / 86_400_000);
+  // Parse the date-only strings back to UTC midnight for day-diff arithmetic.
+  const todayMs  = new Date(todayStr  + 'T00:00:00Z').getTime();
+  const expDayMs = new Date(expDayStr + 'T00:00:00Z').getTime();
+  const diffDays = Math.round((expDayMs - todayMs) / 86_400_000);
 
   const timeStr = expiresDate.toLocaleTimeString(undefined, {
-    hour:   'numeric',
-    minute: '2-digit',
+    hour:     'numeric',
+    minute:   '2-digit',
+    timeZone: stationTz,
   });
 
   let dateLabel: string;
@@ -105,14 +114,18 @@ function formatExpiry(
   } else if (diffDays === 1) {
     dateLabel = `tomorrow ${timeStr}`;
   } else if (diffDays > 1 && diffDays < 7) {
-    const dayName = expiresDate.toLocaleDateString(undefined, { weekday: 'long' });
+    const dayName = expiresDate.toLocaleDateString(undefined, {
+      weekday:  'long',
+      timeZone: stationTz,
+    });
     dateLabel = `${dayName} ${timeStr}`;
   } else {
     dateLabel = expiresDate.toLocaleDateString(undefined, {
-      month:  'short',
-      day:    'numeric',
-      hour:   'numeric',
-      minute: '2-digit',
+      month:    'short',
+      day:      'numeric',
+      hour:     'numeric',
+      minute:   '2-digit',
+      timeZone: stationTz,
     });
   }
 
@@ -132,17 +145,22 @@ function reflowDescription(text: string): string[] {
     .filter(Boolean);
 }
 
-/** formatDateTime — formats a full ISO datetime for the metadata grid. */
-function formatDateTime(iso: string | null | undefined): string {
+/**
+ * formatDateTime — formats a full ISO datetime for the metadata grid.
+ * ADR-075 T3.7: timeZone must be explicit so the time displays in the station's
+ * local timezone rather than the browser's.
+ */
+function formatDateTime(iso: string | null | undefined, stationTz: string): string {
   if (!iso) return '—';
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;
   return d.toLocaleString(undefined, {
-    month:  'short',
-    day:    'numeric',
-    year:   'numeric',
-    hour:   'numeric',
-    minute: '2-digit',
+    month:    'short',
+    day:      'numeric',
+    year:     'numeric',
+    hour:     'numeric',
+    minute:   '2-digit',
+    timeZone: stationTz,
   });
 }
 
@@ -167,7 +185,7 @@ function Pip({ color, active }: { color: string; active: boolean }) {
 // Component
 // ---------------------------------------------------------------------------
 
-export function AlertBanner({ alerts }: AlertBannerProps) {
+export function AlertBanner({ alerts, stationTz }: AlertBannerProps) {
   const { t } = useTranslation('now');
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -196,7 +214,7 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
   const role       = ariaRole(alert.severityLevel);
   const multiAlert = sorted.length > 1;
 
-  const expiryText = formatExpiry(alert.expires, t);
+  const expiryText = formatExpiry(alert.expires, t, stationTz);
 
   // Detail line: "Area · until X"
   const detailParts: string[] = [];
@@ -211,8 +229,8 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
 
   // Metadata grid items for expanded state.
   const metadata: Array<{ label: string; value: string }> = [
-    { label: t('alertBanner.effective'),    value: formatDateTime(alert.effective) },
-    { label: t('alertBanner.expires'),      value: formatDateTime(alert.expires) },
+    { label: t('alertBanner.effective'),    value: formatDateTime(alert.effective, stationTz) },
+    { label: t('alertBanner.expires'),      value: formatDateTime(alert.expires, stationTz) },
     ...(alert.urgency
       ? [{ label: t('alertBanner.urgency'),   value: alert.urgency }]
       : []),

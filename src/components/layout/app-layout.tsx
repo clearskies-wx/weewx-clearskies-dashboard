@@ -19,7 +19,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { SkipLink } from './skip-link';
 import { NavRail } from './nav-rail';
 import { Footer } from './footer';
-import { useObservation, useAlerts } from '../../hooks/useWeatherData';
+import { useObservation, useAlerts, useStation } from '../../hooks/useWeatherData';
 import { useTheme } from '../../lib/theme-provider';
 import { SceneBackground } from '../background/scene-background';
 import { AlertBanner } from '../shared/alert-banner';
@@ -30,6 +30,7 @@ import type { SceneDescriptor } from '../../api/types';
 export function AppLayout() {
   const { scene, sceneLoaded } = useObservation();
   const { data: alerts, loading: alertLoading } = useAlerts();
+  const { data: station } = useStation();
   const { preference, setDaytime } = useTheme();
   const location = useLocation();
 
@@ -107,7 +108,7 @@ export function AppLayout() {
             >
               {!alertLoading && alerts && alerts.length > 0 && (
                 <div className="mb-4">
-                  <AlertBanner alerts={alerts} />
+                  <AlertBanner alerts={alerts} stationTz={station?.timezone ?? 'UTC'} />
                 </div>
               )}
               <Outlet />
