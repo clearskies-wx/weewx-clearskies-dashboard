@@ -178,7 +178,7 @@ function RadarLegend({ colorScheme = 2 }: { colorScheme?: number }) {
   const gradient = SCHEME_GRADIENTS[colorScheme] ?? DEFAULT_GRADIENT;
   return (
     <div
-      className="absolute bottom-8 right-2 z-10 flex flex-col gap-0.5 rounded bg-background/80 px-2 py-1.5 backdrop-blur-sm"
+      className="absolute bottom-8 right-2 z-[1001] flex flex-col gap-0.5 rounded bg-background/80 px-2 py-1.5 backdrop-blur-sm"
       aria-hidden="true"
     >
       <div
@@ -189,6 +189,126 @@ function RadarLegend({ colorScheme = 2 }: { colorScheme?: number }) {
         <span>{t('legendLight')}</span>
         <span>{t('legendHeavy')}</span>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Graphical frame progress bar — shows timeline position with color-coded
+ * past vs nowcast segments.  Clickable to seek.
+ *
+ * Past/current frames: muted track color.
+ * Nowcast frames: primary accent color.
+ * Playhead: small circle at the current frame position.
+ *
+ * On mobile the "Forecast" label is hidden to avoid wordwrap shifts.
+ */
+function FrameProgressBar({
+  frameCount,
+  displayFrameIndex,
+  nowcastStartIndex,
+  onSeek,
+  ariaLabel,
+}: {
+  frameCount: number;
+  displayFrameIndex: number;
+  nowcastStartIndex: number;
+  onSeek: (frameIndex: number) => void;
+  ariaLabel?: string;
+}) {
+  const barRef = useRef<HTMLDivElement>(null);
+
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const bar = barRef.current;
+    if (!bar || frameCount <= 1) return;
+    const rect = bar.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const ratio = Math.max(0, Math.min(1, x / rect.width));
+    const idx = Math.round(ratio * (frameCount - 1));
+    onSeek(idx);
+  };
+
+  if (frameCount <= 0) return null;
+
+  const playheadPct = frameCount > 1
+    ? (displayFrameIndex / (frameCount - 1)) * 100
+    : 50;
+
+  const hasNowcast = nowcastStartIndex > 0 && nowcastStartIndex < frameCount;
+  const nowcastPct = hasNowcast
+    ? (nowcastStartIndex / frameCount) * 100
+    : 100;
+
+  return (
+    <div
+      ref={barRef}
+      className="relative cursor-pointer select-none"
+      style={{ height: 20, touchAction: 'none' }}
+      onClick={handleClick}
+      role="slider"
+      aria-label={ariaLabel}
+      aria-valuemin={0}
+      aria-valuemax={frameCount - 1}
+      aria-valuenow={displayFrameIndex}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'ArrowRight') onSeek(Math.min(displayFrameIndex + 1, frameCount - 1));
+        else if (e.key === 'ArrowLeft') onSeek(Math.max(displayFrameIndex - 1, 0));
+      }}
+    >
+      {/* Track */}
+      <div
+        className="absolute left-0 right-0 rounded-full overflow-hidden"
+        style={{ top: 7, height: 6 }}
+      >
+        {/* Past segment */}
+        <div
+          className="absolute inset-y-0 left-0 bg-muted-foreground/40"
+          style={{ width: `${nowcastPct}%` }}
+        />
+        {/* Nowcast segment */}
+        {hasNowcast && (
+          <div
+            className="absolute inset-y-0 right-0 bg-primary/50"
+            style={{ left: `${nowcastPct}%` }}
+          />
+        )}
+        {/* Filled (elapsed) portion */}
+        <div
+          className={displayFrameIndex >= nowcastStartIndex && hasNowcast
+            ? 'absolute inset-y-0 left-0 bg-primary/80'
+            : 'absolute inset-y-0 left-0 bg-muted-foreground/70'}
+          style={{ width: `${playheadPct}%` }}
+        />
+      </div>
+
+      {/* Nowcast boundary tick */}
+      {hasNowcast && (
+        <div
+          className="absolute bg-primary"
+          style={{
+            left: `${nowcastPct}%`,
+            top: 5,
+            width: 2,
+            height: 10,
+            transform: 'translateX(-1px)',
+          }}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Playhead dot */}
+      <div
+        className="absolute bg-foreground rounded-full shadow-sm"
+        style={{
+          left: `${playheadPct}%`,
+          top: 4,
+          width: 12,
+          height: 12,
+          transform: 'translateX(-6px)',
+        }}
+        aria-hidden="true"
+      />
     </div>
   );
 }
@@ -691,44 +811,42 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
 
       {/* Animation controls — only shown when there are frames to animate.
           flex-shrink-0 keeps the control bar from being squashed by the map.
-          Expanded mode shows a time slider above the button row; card mode
-          shows the compact button row only. */}
+          Both expanded and card modes show the graphical frame progress bar
+          above the button row.  The bar is color-coded: past frames in muted
+          color, nowcast frames in primary accent.  "Forecast" label hidden
+          on mobile (<768 px) to prevent wordwrap shifts. */}
       {frameCount > 0 && (
         expanded ? (
-          <div className="flex flex-col gap-2 flex-shrink-0">
-            {/* Time slider */}
-            <div className="relative">
-              <input
-                type="range"
-                min={0}
-                max={Math.max(frameCount - 1, 0)}
-                value={displayFrameIndex}
-                onChange={(e) => {
-                  const idx = parseInt(e.target.value, 10);
-                  setAnimationStep(idx * SUBSTEPS);
-                }}
-                className="w-full accent-primary"
-                aria-label={t('timeSlider')}
-                aria-valuetext={currentFrame ? formatFrameTime(currentFrame.time) : ''}
-              />
-              {/* Nowcast start marker label */}
-              {nowcastStartIndex > 0 && frameCount > 1 && (
+          <div className="flex flex-col gap-1 flex-shrink-0">
+            {/* Graphical frame progress bar */}
+            <FrameProgressBar
+              frameCount={frameCount}
+              displayFrameIndex={displayFrameIndex}
+              nowcastStartIndex={nowcastStartIndex}
+              onSeek={(idx) => setAnimationStep(idx * SUBSTEPS)}
+              ariaLabel={t('timeSlider')}
+            />
+
+            {/* Nowcast label — hidden on mobile to avoid wordwrap */}
+            {nowcastStartIndex > 0 && frameCount > 1 && (
+              <div className="relative hidden md:block" style={{ height: 16 }}>
                 <span
-                  className="absolute top-full mt-0.5 text-primary pointer-events-none"
+                  className="absolute text-primary pointer-events-none"
                   style={{
-                    fontSize: 'var(--text-label)',
-                    left: `${(nowcastStartIndex / (frameCount - 1)) * 100}%`,
+                    fontSize: 'var(--text-micro)',
+                    left: `${(nowcastStartIndex / frameCount) * 100}%`,
                     transform: 'translateX(-50%)',
+                    top: 0,
                   }}
                   aria-hidden="true"
                 >
                   {t('nowcastLabel')}
                 </span>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Controls row */}
-            <div className="flex items-center gap-2 mt-4">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={goPrev}
@@ -779,7 +897,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
                 <span className="text-muted-foreground tabular-nums ml-auto" style={{ fontSize: 'var(--text-label)' }}>
                   {formatFrameTime(currentFrame.time)}
                   {currentFrame.kind === 'nowcast' && (
-                    <span className="ml-1 text-primary" aria-label={t('nowcastLabel')}>
+                    <span className="ml-1 text-primary hidden md:inline" aria-label={t('nowcastLabel')}>
                       {t('nowcastLabel')}
                     </span>
                   )}
@@ -788,53 +906,61 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
             </div>
           </div>
         ) : (
-          /* Compact card-view control bar (unchanged) */
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <button
-              type="button"
-              onClick={goPrev}
-              aria-label={t('previousFrame')}
-              className="rounded p-1 text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              <CaretLeft className="h-5 w-5" aria-hidden="true" />
-            </button>
+          /* Card-view control bar with graphical frame progress bar */
+          <div className="flex flex-col gap-1 flex-shrink-0">
+            {/* Graphical frame progress bar */}
+            <FrameProgressBar
+              frameCount={frameCount}
+              displayFrameIndex={displayFrameIndex}
+              nowcastStartIndex={nowcastStartIndex}
+              onSeek={(idx) => setAnimationStep(idx * SUBSTEPS)}
+              ariaLabel={t('timeSlider')}
+            />
 
-            <button
-              type="button"
-              onClick={() => setIsPlaying((p) => !p)}
-              aria-label={isPlaying ? t('pause') : t('play')}
-              className="rounded p-1 text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              {isPlaying ? (
-                <Pause className="h-5 w-5" aria-hidden="true" />
-              ) : (
-                <Play className="h-5 w-5" aria-hidden="true" />
-              )}
-            </button>
+            {/* Controls row */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={goPrev}
+                aria-label={t('previousFrame')}
+                className="rounded p-1 text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <CaretLeft className="h-5 w-5" aria-hidden="true" />
+              </button>
 
-            <button
-              type="button"
-              onClick={goNext}
-              aria-label={t('nextFrame')}
-              className="rounded p-1 text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              <CaretRight className="h-5 w-5" aria-hidden="true" />
-            </button>
-
-            <span className="text-muted-foreground tabular-nums ml-1" style={{ fontSize: 'var(--text-label)' }}>
-              {t('frameOf', { current: displayFrameIndex + 1, total: frameCount })}
-            </span>
-
-            {currentFrame && (
-              <span className="text-muted-foreground tabular-nums ml-auto" style={{ fontSize: 'var(--text-label)' }}>
-                {formatFrameTime(currentFrame.time)}
-                {currentFrame.kind === 'nowcast' && (
-                  <span className="ml-1 text-primary" aria-label={t('nowcastLabel')}>
-                    {t('nowcastLabel')}
-                  </span>
+              <button
+                type="button"
+                onClick={() => setIsPlaying((p) => !p)}
+                aria-label={isPlaying ? t('pause') : t('play')}
+                className="rounded p-1 text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                {isPlaying ? (
+                  <Pause className="h-5 w-5" aria-hidden="true" />
+                ) : (
+                  <Play className="h-5 w-5" aria-hidden="true" />
                 )}
-              </span>
-            )}
+              </button>
+
+              <button
+                type="button"
+                onClick={goNext}
+                aria-label={t('nextFrame')}
+                className="rounded p-1 text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <CaretRight className="h-5 w-5" aria-hidden="true" />
+              </button>
+
+              {currentFrame && (
+                <span className="text-muted-foreground tabular-nums ml-auto" style={{ fontSize: 'var(--text-label)' }}>
+                  {formatFrameTime(currentFrame.time)}
+                  {currentFrame.kind === 'nowcast' && (
+                    <span className="ml-1 text-primary hidden md:inline" aria-label={t('nowcastLabel')}>
+                      {t('nowcastLabel')}
+                    </span>
+                  )}
+                </span>
+              )}
+            </div>
           </div>
         )
       )}
