@@ -69,6 +69,13 @@ function RadarCardContent({ station, stationTz, loading = false }: RadarCardProp
   const radarCapability = capabilities?.providers.find((p) => p.domain === 'radar') ?? null;
   const alertUrl = radarCapability?.alertUrl ?? null;
   const alertsAvailable = radarCapability?.alertsAvailable ?? false;
+  const maxBounds: [[number, number], [number, number]] | undefined =
+    radarCapability?.bounds
+      ? [
+          [radarCapability.bounds.south, radarCapability.bounds.west],
+          [radarCapability.bounds.north, radarCapability.bounds.east],
+        ]
+      : undefined;
 
   return (
     <Card
@@ -95,6 +102,7 @@ function RadarCardContent({ station, stationTz, loading = false }: RadarCardProp
           <RadarMap
             center={[station.latitude, station.longitude]}
             stationTz={stationTz}
+            maxBounds={maxBounds}
             showAlerts={alertsAvailable}
             alertUrl={alertUrl}
             caddyPrefix={radarCapability?.caddyPrefix ?? null}
