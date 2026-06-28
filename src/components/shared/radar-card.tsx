@@ -30,6 +30,7 @@ import {
   CardTitle,
 } from '../ui/card';
 import { RadarMap } from './radar-map';
+import { useCapabilities } from '../../hooks/useWeatherData';
 import type { StationMetadata } from '../../api/types';
 import type { CardComponentProps } from '../../lib/card-registry';
 
@@ -63,6 +64,11 @@ export interface RadarCardProps {
 function RadarCardContent({ station, stationTz, loading = false }: RadarCardProps) {
   const { t } = useTranslation('radar');
   const navigate = useNavigate();
+  const { data: capabilities } = useCapabilities();
+
+  const radarCapability = capabilities?.providers.find((p) => p.domain === 'radar') ?? null;
+  const alertUrl = radarCapability?.alertUrl ?? null;
+  const alertsAvailable = radarCapability?.alertsAvailable ?? false;
 
   return (
     <Card
@@ -89,6 +95,9 @@ function RadarCardContent({ station, stationTz, loading = false }: RadarCardProp
           <RadarMap
             center={[station.latitude, station.longitude]}
             stationTz={stationTz}
+            showAlerts={alertsAvailable}
+            alertUrl={alertUrl}
+            caddyPrefix={radarCapability?.caddyPrefix ?? null}
           />
         )}
       </CardContent>

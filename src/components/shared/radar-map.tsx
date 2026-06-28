@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import L from 'leaflet';
 import { MapContainer, TileLayer, CircleMarker, Tooltip, GeoJSON, useMap } from 'react-leaflet';
 import { Play, Pause, CaretLeft, CaretRight } from '@phosphor-icons/react';
 import { useCapabilities, useRadarFrames } from '../../hooks/useWeatherData';
@@ -346,10 +347,13 @@ function MapBoundsEnforcer({ bounds }: { bounds?: [[number, number], [number, nu
   useEffect(() => {
     if (bounds) {
       map.setMaxBounds(bounds);
+      const boundsObj = L.latLngBounds(bounds);
+      const minZoom = map.getBoundsZoom(boundsObj, false);
+      map.setMinZoom(minZoom);
     } else {
-      // Remove bounds constraint by passing an empty array.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       map.setMaxBounds([] as any);
+      map.setMinZoom(0);
     }
   }, [map, bounds]);
   return null;
