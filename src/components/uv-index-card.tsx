@@ -79,16 +79,36 @@ interface UvChartPoint {
 // ---------------------------------------------------------------------------
 
 /**
- * stationMidnightMs — computes the Unix timestamp (ms) of today's midnight in
- * the station's local timezone (ADR-075 T3.8).
+ * stationMidnightMs — computes the UTC epoch (ms) of today's midnight in the
+ * station's local timezone (ADR-075 T3.8).
  *
- * Strategy: format today's date as "YYYY-MM-DD" in the station tz, then parse
- * it as a UTC midnight ISO string. The difference from true UTC midnight is the
- * station's UTC offset, which positions the window correctly on the UTC timeline.
+ * Strategy: get today's date in the station tz, then compute the UTC offset by
+ * probing what local time UTC midnight corresponds to. Station midnight is UTC
+ * midnight adjusted by the offset.
  */
 function stationMidnightMs(stationTz: string): number {
-  const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: stationTz }).format(Date.now());
-  return new Date(todayStr + 'T00:00:00Z').getTime();
+  const now = Date.now();
+  const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: stationTz }).format(now);
+  const [y, m, d] = todayStr.split('-').map(Number);
+  const utcMidnight = Date.UTC(y, m - 1, d);
+
+  // What local date+time is it in stationTz at UTC midnight?
+  const localDateAtUtc = new Intl.DateTimeFormat('en-CA', { timeZone: stationTz }).format(utcMidnight);
+  const timeParts = new Intl.DateTimeFormat('en-US', {
+    timeZone: stationTz,
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+  }).formatToParts(utcMidnight);
+  const h = parseInt(timeParts.find(p => p.type === 'hour')!.value, 10) % 24;
+  const min = parseInt(timeParts.find(p => p.type === 'minute')!.value, 10);
+  const offsetMs = (h * 60 + min) * 60 * 1000;
+
+  // Same day → station ahead of UTC → midnight was offsetMs ago
+  // Different day → station behind UTC → midnight is (24h - offsetMs) away
+  return localDateAtUtc === todayStr
+    ? utcMidnight - offsetMs
+    : utcMidnight + 24 * 3600 * 1000 - offsetMs;
 }
 
 /**
@@ -187,8 +207,13 @@ function buildDailyDomainAndTicks(stationTz: string): { domain: [number, number]
   };
 }
 
-function fmtDailyAxisTime(ts: number): string {
-  const h = new Date(ts).getHours();
+function fmtDailyAxisTime(ts: number, stationTz: string): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: stationTz,
+    hour12: false,
+    hour: '2-digit',
+  }).formatToParts(ts);
+  const h = parseInt(parts.find(p => p.type === 'hour')!.value, 10) % 24;
   if (h === 0) return '12a';
   if (h === 6) return '6a';
   if (h === 12) return '12p';
@@ -489,7 +514,7 @@ function UvChart({ data, currentUv, gradientId, peakUv, stationTz }: UvChartProp
               type="number"
               domain={domain}
               ticks={ticks}
-              tickFormatter={fmtDailyAxisTime}
+              tickFormatter={(ts: number) => fmtDailyAxisTime(ts, stationTz)}
               tickLine={false}
               axisLine={false}
               tick={{
