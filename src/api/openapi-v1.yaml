@@ -46,7 +46,7 @@ info:
     url: https://www.gnu.org/licenses/gpl-3.0.html
   contact:
     name: Clear Skies (weewx-clearskies-api)
-    url: https://github.com/inguy24/weewx-clearskies-api
+    url: https://github.com/clearskies-wx/weewx-clearskies-api
 
 servers:
   - url: /api/v1

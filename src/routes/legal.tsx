@@ -366,7 +366,7 @@ export function LegalPage() {
         <Body>{t('openSource.body')}</Body>
         <p className="mt-2">
           <a
-            href="https://github.com/inguy24/weewx-clearskies-stack"
+            href="https://github.com/clearskies-wx/weewx-clearskies-stack"
             target="_blank"
             rel="noopener"
             className="font-semibold text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
