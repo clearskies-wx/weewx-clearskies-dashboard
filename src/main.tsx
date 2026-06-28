@@ -19,13 +19,13 @@ createRoot(document.getElementById('root')!).render(
     <ErrorBoundary>
       {/* Suspense boundary handles async locale file loading from /locales/. */}
       <Suspense fallback={<div>Loading…</div>}>
-        <BrandingProvider>
-          <ThemeProvider>
-            <IdleDetectorProvider>
+        <IdleDetectorProvider>
+          <BrandingProvider>
+            <ThemeProvider>
               <App />
-            </IdleDetectorProvider>
-          </ThemeProvider>
-        </BrandingProvider>
+            </ThemeProvider>
+          </BrandingProvider>
+        </IdleDetectorProvider>
       </Suspense>
     </ErrorBoundary>
   </StrictMode>,
