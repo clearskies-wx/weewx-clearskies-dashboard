@@ -172,13 +172,18 @@ function formatDelta(delta: number | null): string | null {
  * Format a UTC ISO date string as a short local date for a column header,
  * e.g. "Jun 3". Falls back to "Today" when formatting fails.
  */
-function formatShortDate(iso: string, tz: string, locale: string): string {
+function formatShortDate(iso: string, _tz: string, locale: string): string {
   try {
+    // Date-only strings (YYYY-MM-DD) are parsed as midnight UTC by Date().
+    // Formatting with a negative-offset timezone shifts the date backward
+    // (e.g. midnight UTC Jun 27 → Jun 26 5 PM PDT). Parse as noon UTC and
+    // format in UTC so the calendar date is stable across all timezones.
+    const d = new Date(iso.length === 10 ? iso + 'T12:00:00Z' : iso);
     return new Intl.DateTimeFormat(locale, {
       month: 'short',
       day: 'numeric',
-      timeZone: tz,
-    }).format(new Date(iso));
+      timeZone: 'UTC',
+    }).format(d);
   } catch {
     return 'Today';
   }
