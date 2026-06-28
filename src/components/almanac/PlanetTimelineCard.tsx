@@ -282,36 +282,32 @@ function buildPlanetList(
   planets: PlanetsVisible,
   sunsetIso: string | null,
 ): PlanetEntry[] {
-  const seen = new Set<string>();
-  const all: PlanetEntry[] = [];
+  const sunsetMs = sunsetIso ? new Date(sunsetIso).getTime() : null;
 
-  for (const p of [...planets.evening, ...planets.allNight, ...planets.morning]) {
-    const key = p.name.toLowerCase();
-    if (!seen.has(key)) {
-      seen.add(key);
-      all.push(p);
+  function isVisibleTonight(p: PlanetEntry): boolean {
+    if (p.set && sunsetMs !== null) {
+      if (new Date(p.set).getTime() <= sunsetMs) return false;
+    }
+    return true;
+  }
+
+  // Preserve evening → allNight → morning order: evening planets appear
+  // first (after sunset), all-night planets persist, morning planets last
+  // (before sunrise).  Deduplicate across groups.
+  const seen = new Set<string>();
+  const result: PlanetEntry[] = [];
+
+  for (const group of [planets.evening, planets.allNight, planets.morning]) {
+    for (const p of group) {
+      const key = p.name.toLowerCase();
+      if (!seen.has(key) && isVisibleTonight(p)) {
+        seen.add(key);
+        result.push(p);
+      }
     }
   }
 
-  const sunsetMs = sunsetIso ? new Date(sunsetIso).getTime() : null;
-
-  const visible = all.filter((p) => {
-    // Exclude planets that set before sunset (below horizon all night)
-    if (p.set && sunsetMs !== null) {
-      const setMs = new Date(p.set).getTime();
-      if (setMs <= sunsetMs) return false;
-    }
-    return true;
-  });
-
-  // Sort by rise time (planets with no rise time go to the end)
-  visible.sort((a, b) => {
-    const ta = a.rise ? new Date(a.rise).getTime() : Infinity;
-    const tb = b.rise ? new Date(b.rise).getTime() : Infinity;
-    return ta - tb;
-  });
-
-  return visible;
+  return result;
 }
 
 // ---------------------------------------------------------------------------
