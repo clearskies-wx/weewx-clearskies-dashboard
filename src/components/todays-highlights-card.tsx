@@ -28,6 +28,7 @@ import {
 } from '@phosphor-icons/react';
 import type { Observation } from '../api/types';
 import { asConverted } from '../api/types';
+import { getStationDate } from '../utils/station-clock';
 import { useArchive, useTodayStats, useStation } from '../hooks/useWeatherData';
 import { formatValue } from '../utils/format';
 import { aqiCategoryLabel } from './aqi-card';
@@ -106,25 +107,12 @@ function TodaysHighlightsCardContent({
 }: TodaysHighlightsCardProps) {
   const { t } = useTranslation('now');
 
-  // Station timezone for ADR-075-compliant date filtering in useTodayStats.
   const { data: station } = useStation();
   const stationTz = station?.timezone;
-  // Derive today's station-local date (YYYY-MM-DD) from the station timezone.
-  // Computed only when stationTz is known; undefined otherwise so useTodayStats
-  // falls back to its browser-local-midnight path until station data arrives.
-  const stationDate = useMemo(
-    () =>
-      stationTz
-        ? new Intl.DateTimeFormat('en-CA', { timeZone: stationTz }).format(new Date())
-        : undefined,
-    [stationTz],
-  );
 
-  // Fetch archive data and compute today's stats internally.
   const archiveStart24h = useMemo(() => new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), []);
-  // ADR-075: freshness-driven refetch is handled by useApiQuery inside useArchive.
-  // No standalone setInterval needed here.
-  const { data: highlightsArchive } = useArchive({ from: archiveStart24h, fields: 'outTemp,windGust,windSpeed,rain' });
+  const { data: highlightsArchive, stationClock } = useArchive({ from: archiveStart24h, fields: 'outTemp,windGust,windSpeed,rain' });
+  const stationDate = stationClock ? getStationDate({ stationClock }) : undefined;
   const todayStats = useTodayStats(observation, highlightsArchive, stationDate, stationTz);
 
   // Unit labels come from the observation's ConvertedValue fields (ADR-042).

@@ -45,7 +45,9 @@ import {
 } from './ui/card';
 import { WeatherIcon } from './weather-icon';
 import type { Observation, UnitsBlock, ArchiveRecord, HourlyForecastPoint, ForecastBundle, SceneDescriptor } from '../api/types';
-import { useArchive } from '../hooks/useWeatherData';
+import type { StationClock } from '../utils/station-clock';
+import { stationMidnightMs } from '../utils/station-clock';
+import { useArchive, useStation } from '../hooks/useWeatherData';
 import { toWmoCode } from '../utils/weather-code';
 import type { CardComponentProps } from '../lib/card-registry';
 
@@ -72,13 +74,15 @@ interface CurvePoint {
   future: number | null;
 }
 
-function fmtAxisTime(ts: number): string {
-  const h = new Date(ts).getHours();
-  if (h === 0) return '12a';
-  if (h === 6) return '6a';
-  if (h === 12) return '12p';
-  if (h === 18) return '6p';
-  return '';
+function makeFmtAxisTime(midnightMs: number) {
+  return (ts: number): string => {
+    const h = Math.round((ts - midnightMs) / 3_600_000);
+    if (h === 0 || h === 24) return '12a';
+    if (h === 6) return '6a';
+    if (h === 12) return '12p';
+    if (h === 18) return '6p';
+    return '';
+  };
 }
 
 function buildCurveData(
@@ -123,9 +127,11 @@ interface TempCurveProps {
   hourlyForecast: HourlyForecastPoint[] | null;
   currentTemp: number | null;
   tempUnit: string;
+  stationClock?: StationClock;
+  stationTz?: string;
 }
 
-function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: TempCurveProps) {
+function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit, stationClock, stationTz }: TempCurveProps) {
   const { t } = useTranslation('now');
 
   const [now, setNow] = useState(Date.now());
@@ -137,10 +143,11 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
   }, []);
 
   const todayMidnight = useMemo(() => {
+    if (stationClock) return stationMidnightMs(stationClock);
     const d = new Date();
     d.setHours(0, 0, 0, 0);
     return d.getTime();
-  }, []);
+  }, [stationClock]);
 
   const data = useMemo(
     () => buildCurveData(todayArchive, hourlyForecast, now, todayMidnight, currentTemp),
@@ -149,6 +156,7 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
 
   const domainEnd = todayMidnight + 24 * 3600 * 1000;
   const ticks = [0, 6, 12, 18, 24].map((h) => todayMidnight + h * 3600 * 1000);
+  const fmtAxisTime = useMemo(() => makeFmtAxisTime(todayMidnight), [todayMidnight]);
 
   const allTemps = data
     .flatMap((d) => [d.past, d.future])
@@ -289,6 +297,7 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit }: Temp
                 hour: 'numeric',
                 minute: '2-digit',
                 hour12: true,
+                timeZone: stationTz ?? undefined,
               }).format(new Date(row.ts));
               const temp = (row.past ?? row.future);
               const type = row.future !== null ? 'Forecast' : 'Actual';
@@ -369,7 +378,9 @@ function CurrentConditionsCardContent({
   // The archiveStart24h window is stable (mount-time); useArchive triggers
   // background refetches when freshness.validUntil elapses.
   const archiveStart24h = useMemo(() => new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), []);
-  const { data: tempArchive } = useArchive({ from: archiveStart24h, aggregate_interval: '300', fields: 'outTemp' });
+  const { data: tempArchive, stationClock } = useArchive({ from: archiveStart24h, aggregate_interval: '300', fields: 'outTemp' });
+  const { data: station } = useStation();
+  const stationTz = station?.timezone;
 
   // Temperature — via ConvertedValue; no client unit math
   const outTempCV = asConverted(observation?.outTemp ?? null);
@@ -589,6 +600,8 @@ function CurrentConditionsCardContent({
               hourlyForecast={hourlyForecast ?? null}
               currentTemp={currentTempRaw}
               tempUnit={tempUnit}
+              stationClock={stationClock}
+              stationTz={stationTz}
             />
           </>
         ) : (

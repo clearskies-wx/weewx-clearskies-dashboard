@@ -40,7 +40,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { asConverted } from '../api/types';
-import { useArchive } from '../hooks/useWeatherData';
+import { useArchive, useStation } from '../hooks/useWeatherData';
 import {
   Card,
   CardHeader,
@@ -165,6 +165,8 @@ interface SolarChartProps {
 function SolarChart({ data }: SolarChartProps) {
   const { t } = useTranslation('now');
   const now = Date.now();
+  const { data: station } = useStation();
+  const stationTz = station?.timezone;
 
   const ticks = useMemo(() => buildTicks(now), [now]);
 
@@ -269,6 +271,7 @@ function SolarChart({ data }: SolarChartProps) {
                 hour: 'numeric',
                 minute: '2-digit',
                 hour12: true,
+                timeZone: stationTz ?? undefined,
               }).format(new Date(row.ts));
               return (
                 <tr key={row.ts}>

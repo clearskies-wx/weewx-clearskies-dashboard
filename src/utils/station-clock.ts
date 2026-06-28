@@ -62,3 +62,17 @@ export function isStationToday(validDate: string, stationDate: string): boolean 
 export function stationTimeMs(stationClock: StationClock): number {
   return new Date(stationClock.time).getTime();
 }
+
+/**
+ * Compute station-local midnight (00:00:00) as epoch ms.
+ *
+ * Extracts the UTC offset from stationClock.time (e.g., "-04:00" from
+ * "2026-06-27T22:30:00-04:00") and constructs midnight for stationClock.date
+ * at that offset. This gives the correct epoch ms for "start of today at the
+ * station" regardless of the visitor's browser timezone.
+ */
+export function stationMidnightMs(stationClock: StationClock): number {
+  const offsetMatch = stationClock.time.match(/([+-]\d{2}:\d{2})$/);
+  const offset = offsetMatch ? offsetMatch[1] : '+00:00';
+  return new Date(`${stationClock.date}T00:00:00${offset}`).getTime();
+}
