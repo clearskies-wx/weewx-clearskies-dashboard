@@ -386,7 +386,16 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
 
   // Satellite frames — extracted from the same radarFrameList response.
   // Satellite frames use hourly cadence (fewer frames than radar's 10-min cadence).
-  const allSatelliteFrames: RadarFrame[] = radarFrameList?.satelliteFrames ?? [];
+  // Staleness guard: if the newest satellite frame is >24 hours old, the provider's
+  // satellite pipeline is likely broken — treat as no satellite data available.
+  const allSatelliteFrames: RadarFrame[] = (() => {
+    const raw = radarFrameList?.satelliteFrames ?? [];
+    if (raw.length === 0) return raw;
+    const newestMs = new Date(raw[raw.length - 1].time).getTime();
+    const ageMs = Date.now() - newestMs;
+    if (ageMs > 24 * 60 * 60 * 1000) return [];
+    return raw;
+  })();
   const satelliteFrames: RadarFrame[] = (!expanded && allSatelliteFrames.length > MAX_CARD_FRAMES)
     ? allSatelliteFrames.slice(allSatelliteFrames.length - MAX_CARD_FRAMES)
     : allSatelliteFrames;
