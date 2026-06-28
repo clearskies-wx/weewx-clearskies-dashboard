@@ -240,11 +240,17 @@ function formatViewingWindow(
 
   // Clamp start to sunset (don't show afternoon times for planets already up)
   let effectiveStart = start ? new Date(start) : null;
+  let startIsSunset = false;
   if (effectiveStart && sunsetIso) {
     const sunsetMs = new Date(sunsetIso).getTime();
     if (effectiveStart.getTime() < sunsetMs) {
       effectiveStart = new Date(sunsetMs);
+      startIsSunset = true;
     }
+  }
+  if (!start && sunsetIso) {
+    effectiveStart = new Date(sunsetIso);
+    startIsSunset = true;
   }
 
   // Clamp end to sunrise
@@ -263,10 +269,15 @@ function formatViewingWindow(
       effectiveEnd = new Date(srAdj);
     }
   }
+  if (!end) {
+    endIsSunrise = true;
+  }
 
-  const startStr = effectiveStart
-    ? formatTimeOnly(effectiveStart.toISOString(), tz, locale)
-    : '—';
+  const startStr = startIsSunset
+    ? t('planets.sunset')
+    : (effectiveStart
+        ? formatTimeOnly(effectiveStart.toISOString(), tz, locale)
+        : '—');
   if (endIsSunrise) return `${startStr} – ${t('planets.sunrise')}`;
   const endStr = effectiveEnd
     ? formatTimeOnly(effectiveEnd.toISOString(), tz, locale)
