@@ -87,13 +87,13 @@ function getChartImgSize(name: string): number {
 // Scaled up from PLANET_CHART_IMG_SIZE ratios so the largest planet (Saturn)
 // reads clearly at column-header size while smaller planets stay visually subordinate.
 const PLANET_TOP_IMG_SIZE: Record<string, number> = {
-  saturn:  100,
-  jupiter:  80,
-  mars:     56,
-  venus:    52,
-  uranus:   52,
-  neptune:  52,
-  mercury:  44,
+  saturn:  130,
+  jupiter: 104,
+  mars:     73,
+  venus:    68,
+  uranus:   68,
+  neptune:  68,
+  mercury:  57,
 };
 
 function getTopImgSize(name: string): number {
@@ -282,32 +282,45 @@ function buildPlanetList(
   planets: PlanetsVisible,
   sunsetIso: string | null,
 ): PlanetEntry[] {
+  const seen = new Set<string>();
+  const all: PlanetEntry[] = [];
+
+  for (const p of [...planets.evening, ...planets.allNight, ...planets.morning]) {
+    const key = p.name.toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      all.push(p);
+    }
+  }
+
   const sunsetMs = sunsetIso ? new Date(sunsetIso).getTime() : null;
 
-  function isVisibleTonight(p: PlanetEntry): boolean {
+  const visible = all.filter((p) => {
     if (p.set && sunsetMs !== null) {
-      if (new Date(p.set).getTime() <= sunsetMs) return false;
+      const setMs = new Date(p.set).getTime();
+      if (setMs <= sunsetMs) return false;
     }
     return true;
-  }
+  });
 
-  // Preserve evening → allNight → morning order: evening planets appear
-  // first (after sunset), all-night planets persist, morning planets last
-  // (before sunrise).  Deduplicate across groups.
-  const seen = new Set<string>();
-  const result: PlanetEntry[] = [];
+  // Sort by effective visibility start: planets already up at sunset
+  // use sunset as their start, others use their rise time.  This puts
+  // evening planets first (all start at sunset) then morning planets
+  // in chronological rise order.
+  visible.sort((a, b) => {
+    const sa = effectiveStartMs(a, sunsetMs);
+    const sb = effectiveStartMs(b, sunsetMs);
+    return sa - sb;
+  });
 
-  for (const group of [planets.evening, planets.allNight, planets.morning]) {
-    for (const p of group) {
-      const key = p.name.toLowerCase();
-      if (!seen.has(key) && isVisibleTonight(p)) {
-        seen.add(key);
-        result.push(p);
-      }
-    }
-  }
+  return visible;
+}
 
-  return result;
+function effectiveStartMs(p: PlanetEntry, sunsetMs: number | null): number {
+  const riseMs = p.rise ? new Date(p.rise).getTime() : null;
+  if (riseMs === null) return sunsetMs ?? 0;
+  if (sunsetMs !== null && riseMs < sunsetMs) return sunsetMs;
+  return riseMs;
 }
 
 // ---------------------------------------------------------------------------
@@ -378,7 +391,7 @@ function PlanetColumn({ planet, stationTz, sunsetIso, sunriseIso, locale, t }: P
       {/* Planet image — fixed container, planet centered within */}
       <div
         className="flex-shrink-0 flex items-center justify-center md:w-full"
-        style={{ width: 104, height: 104 }}
+        style={{ width: 135, height: 135 }}
       >
         <img
           src={imgSrc}
