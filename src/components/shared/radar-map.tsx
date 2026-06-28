@@ -41,6 +41,11 @@ interface RadarMapProps {
   showWind?: boolean;
   /** Caddy prefix for the radar provider (used to construct wind tile URL). */
   caddyPrefix?: string | null;
+  /**
+   * When true and satellite frames exist, renders satellite tile layers below
+   * the radar tiles. Satellite tiles come from LibreWxR's infrared imagery.
+   */
+  showSatellite?: boolean;
 }
 
 const SUBSTEPS = 5;        // interpolation steps between each real frame pair
@@ -350,7 +355,7 @@ function MapBoundsEnforcer({ bounds }: { bounds?: [[number, number], [number, nu
   return null;
 }
 
-export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBounds, opacity, colorScheme, showAlerts, alertUrl, showWind, caddyPrefix }: RadarMapProps) {
+export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBounds, opacity, colorScheme, showAlerts, alertUrl, showWind, caddyPrefix, showSatellite }: RadarMapProps) {
   const { t } = useTranslation('radar');
   const { resolved: resolvedTheme } = useTheme();
   const baseTile = TILE_CONFIG[resolvedTheme];
@@ -378,6 +383,14 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
   const frames: RadarFrame[] = (!expanded && allFrames.length > MAX_CARD_FRAMES)
     ? allFrames.slice(allFrames.length - MAX_CARD_FRAMES)
     : allFrames;
+
+  // Satellite frames — extracted from the same radarFrameList response.
+  // Satellite frames use hourly cadence (fewer frames than radar's 10-min cadence).
+  const allSatelliteFrames: RadarFrame[] = radarFrameList?.satelliteFrames ?? [];
+  const satelliteFrames: RadarFrame[] = (!expanded && allSatelliteFrames.length > MAX_CARD_FRAMES)
+    ? allSatelliteFrames.slice(allSatelliteFrames.length - MAX_CARD_FRAMES)
+    : allSatelliteFrames;
+  const satelliteFrameCount = satelliteFrames.length;
 
   const tileHost = radarFrameList?.tileHost ?? null;
 
@@ -409,6 +422,10 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
   const preloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Tracks which frame indices have fully loaded all their tiles.
   const loadedLayersRef = useRef(new Set<number>());
+
+  // --- Satellite animation state (independent frame index, shared play/pause) ---
+  const [satelliteAnimationStep, setSatelliteAnimationStep] = useState(0);
+  const satelliteIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // --- Speed multiplier state (expanded mode only) ---
   const [speedIndex, setSpeedIndex] = useState(1); // default 1x
@@ -522,6 +539,12 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
     };
   }, [frameCount]);
 
+  // Clamp satellite animation step when satellite frames change.
+  useEffect(() => {
+    if (satelliteFrameCount === 0) return;
+    setSatelliteAnimationStep(0);
+  }, [satelliteFrameCount]);
+
   // Pause animation when idle.
   useEffect(() => {
     if (isIdle) {
@@ -550,6 +573,30 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
       }
     };
   }, [isPlaying, frameCount, effectiveTickMs]);
+
+  // Satellite animation timer — runs independently from radar but shares
+  // play/pause state. Uses the same adaptive timing approach.
+  useEffect(() => {
+    if (satelliteIntervalRef.current !== null) {
+      clearInterval(satelliteIntervalRef.current);
+      satelliteIntervalRef.current = null;
+    }
+    if (isPlaying && showSatellite && satelliteFrameCount > 1) {
+      const satTotalSteps = satelliteFrameCount * SUBSTEPS;
+      // Adaptive tick for satellite — target the same ~17s loop.
+      const satTickMs = Math.max(50, Math.floor(TARGET_LOOP_MS / (satelliteFrameCount * SUBSTEPS)));
+      const effectiveSatTickMs = Math.max(30, Math.round(satTickMs / speedMultiplier));
+      satelliteIntervalRef.current = setInterval(() => {
+        setSatelliteAnimationStep((s) => (s + 1) % satTotalSteps);
+      }, effectiveSatTickMs);
+    }
+    return () => {
+      if (satelliteIntervalRef.current !== null) {
+        clearInterval(satelliteIntervalRef.current);
+        satelliteIntervalRef.current = null;
+      }
+    };
+  }, [isPlaying, showSatellite, satelliteFrameCount, speedMultiplier]);
 
   // Live refresh — re-fetch frame metadata at the provider's configured interval.
   // ADR-075: refreshIntervalMs derives from radarCapability?.refreshInterval (provider-
@@ -711,6 +758,22 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
               {t('stationMarker')}
             </Tooltip>
           </CircleMarker>
+          {/* Satellite tile layers — rendered BELOW radar for correct z-order
+              (base map → satellite → radar → wind → alerts).
+              Uses the same cross-fade animation system as radar but with its
+              own independent frame index (satelliteAnimationStep). */}
+          {showSatellite && caddyPrefix && satelliteFrameCount > 0 && satelliteFrames.map((frame, i) => {
+            if (!frame.path) return null;
+            const satUrl = `${caddyPrefix}${frame.path}/${RAINVIEWER_TILE_SIZE}/{z}/{x}/{y}/0/0_0.webp`;
+            return (
+              <TileLayer
+                key={`sat-${frame.time}`}
+                url={satUrl}
+                opacity={Math.max(getFrameOpacity(i, satelliteAnimationStep, satelliteFrameCount, effectiveMaxOpacity), 0.001)}
+                zIndex={100}
+              />
+            );
+          })}
           {radarCapability !== null && frames.map((frame, i) => {
             // Capture the non-null capability so TypeScript can confirm it inside
             // the map callback closure.

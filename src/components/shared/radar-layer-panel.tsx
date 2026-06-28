@@ -43,6 +43,12 @@ export interface RadarLayerPanelProps {
   showWind: boolean;
   /** Called when the user toggles the wind arrow overlay. */
   onShowWindChange: (val: boolean) => void;
+  /** When true, show the "Satellite imagery" toggle. */
+  satelliteAvailable?: boolean;
+  /** Whether the satellite overlay is currently enabled. */
+  showSatellite: boolean;
+  /** Called when the user toggles the satellite overlay. */
+  onShowSatelliteChange: (val: boolean) => void;
 }
 
 export function RadarLayerPanel({
@@ -58,6 +64,9 @@ export function RadarLayerPanel({
   windAvailable,
   showWind,
   onShowWindChange,
+  satelliteAvailable,
+  showSatellite,
+  onShowSatelliteChange,
 }: RadarLayerPanelProps) {
   const { t } = useTranslation('radar');
 
@@ -132,7 +141,7 @@ export function RadarLayerPanel({
 
         {/* Layer toggles — LibreWxR only.
             Shown when at least one overlay type is available for this provider. */}
-        {(alertsAvailable || windAvailable) && (
+        {(alertsAvailable || windAvailable || satelliteAvailable) && (
           <div>
             <span className="text-xs font-medium text-muted-foreground block mb-2">
               {t('layers')}
@@ -158,6 +167,18 @@ export function RadarLayerPanel({
                     className="accent-primary"
                   />
                   {t('windArrows')}
+                </label>
+              )}
+              {satelliteAvailable && (
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showSatellite}
+                    onChange={(e) => onShowSatelliteChange(e.target.checked)}
+                    className="accent-primary"
+                    aria-label={t('satelliteImagery')}
+                  />
+                  {t('satelliteImagery')}
                 </label>
               )}
             </div>

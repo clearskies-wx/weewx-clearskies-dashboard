@@ -596,6 +596,8 @@ export interface CapabilityDeclaration {
   refreshInterval?: number | null;
   nowcastAvailable?: boolean | null;
   alertsAvailable?: boolean | null;
+  satelliteAvailable?: boolean | null;
+  satelliteTileUrlTemplate?: string | null;
 }
 
 export interface CapabilityRegistry {
@@ -818,6 +820,7 @@ export interface RadarFrameList {
   attribution: string | null;
   tileHost: string | null; // RainViewer per-fetch tile host; null for WMS-T
   colorSchemes?: Array<{ id: number; name: string }> | null;
+  satelliteFrames?: RadarFrame[] | null;
 }
 
 export interface RadarFramesResponse {

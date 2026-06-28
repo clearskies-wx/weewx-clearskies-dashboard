@@ -63,12 +63,22 @@ export default function RadarPage() {
   const [showAlerts, setShowAlerts] = useState<boolean>(true);
   // Wind arrow overlay: default off — an opt-in layer.
   const [showWind, setShowWind] = useState<boolean>(false);
+  // Satellite imagery overlay: default off — an opt-in layer.
+  const [showSatellite, setShowSatellite] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('clearskies-radar-satellite') === 'true';
+    } catch {
+      return false;
+    }
+  });
 
   // Derived alert/wind availability from capability declaration.
   const alertUrl = radarCapability?.alertUrl ?? null;
   const alertsAvailable = radarCapability?.alertsAvailable ?? false;
   // Wind tiles are LibreWxR-specific; available whenever that provider is active.
   const windAvailable = radarCapability?.providerId === 'librewxr';
+  // Satellite imagery availability comes from the capability declaration.
+  const satelliteAvailable = radarCapability?.satelliteAvailable ?? false;
 
   // Persist panel open/close and color scheme to localStorage whenever they change.
   useEffect(() => {
@@ -76,6 +86,13 @@ export default function RadarPage() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ open: panelOpen, colorScheme }));
     } catch { /* ignore write errors (e.g. private browsing quota) */ }
   }, [panelOpen, colorScheme]);
+
+  // Persist satellite toggle to localStorage.
+  useEffect(() => {
+    try {
+      localStorage.setItem('clearskies-radar-satellite', String(showSatellite));
+    } catch { /* ignore write errors (e.g. private browsing quota) */ }
+  }, [showSatellite]);
 
   // Ref for the overlay div — used for focus trap.
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -188,6 +205,7 @@ export default function RadarPage() {
               alertUrl={alertUrl}
               showWind={showWind && windAvailable}
               caddyPrefix={radarCapability?.caddyPrefix ?? null}
+              showSatellite={showSatellite && satelliteAvailable}
             />
           )}
         </div>
@@ -209,6 +227,9 @@ export default function RadarPage() {
             windAvailable={windAvailable}
             showWind={showWind}
             onShowWindChange={setShowWind}
+            satelliteAvailable={satelliteAvailable}
+            showSatellite={showSatellite}
+            onShowSatelliteChange={setShowSatellite}
           />
         )}
       </div>

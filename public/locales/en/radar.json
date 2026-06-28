@@ -22,5 +22,6 @@
   "layers": "Layers",
   "weatherAlerts": "Weather alerts",
   "windArrows": "Wind arrows",
-  "stationMarker": "Your station"
+  "stationMarker": "Your station",
+  "satelliteImagery": "Satellite imagery"
 }
