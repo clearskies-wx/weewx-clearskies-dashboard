@@ -426,6 +426,11 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
   // --- Satellite animation state (independent frame index, shared play/pause) ---
   const [satelliteAnimationStep, setSatelliteAnimationStep] = useState(0);
   const satelliteIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Satellite preload: tiles must load before animation starts, otherwise
+  // frames flicker (visible when cached, blank when still loading).
+  const [satelliteReady, setSatelliteReady] = useState(false);
+  const satellitePreloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const loadedSatLayersRef = useRef(new Set<number>());
 
   // --- Speed multiplier state (expanded mode only) ---
   const [speedIndex, setSpeedIndex] = useState(1); // default 1x
@@ -539,11 +544,33 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
     };
   }, [frameCount]);
 
-  // Clamp satellite animation step when satellite frames change.
+  // Reset satellite preload when frames change or satellite is toggled on.
   useEffect(() => {
-    if (satelliteFrameCount === 0) return;
+    if (!showSatellite || satelliteFrameCount === 0) {
+      setSatelliteReady(false);
+      loadedSatLayersRef.current = new Set<number>();
+      if (satellitePreloadTimerRef.current !== null) {
+        clearTimeout(satellitePreloadTimerRef.current);
+        satellitePreloadTimerRef.current = null;
+      }
+      return;
+    }
+
     setSatelliteAnimationStep(0);
-  }, [satelliteFrameCount]);
+    setSatelliteReady(false);
+    loadedSatLayersRef.current = new Set<number>();
+
+    satellitePreloadTimerRef.current = setTimeout(() => {
+      setSatelliteReady(true);
+    }, PRELOAD_DELAY_MS);
+
+    return () => {
+      if (satellitePreloadTimerRef.current !== null) {
+        clearTimeout(satellitePreloadTimerRef.current);
+        satellitePreloadTimerRef.current = null;
+      }
+    };
+  }, [showSatellite, satelliteFrameCount]);
 
   // Pause animation when idle.
   useEffect(() => {
@@ -574,16 +601,15 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
     };
   }, [isPlaying, frameCount, effectiveTickMs]);
 
-  // Satellite animation timer — runs independently from radar but shares
-  // play/pause state. Uses the same adaptive timing approach.
+  // Satellite animation timer — gated on satelliteReady so tiles have time
+  // to load before animation starts (prevents flickering on toggle-on).
   useEffect(() => {
     if (satelliteIntervalRef.current !== null) {
       clearInterval(satelliteIntervalRef.current);
       satelliteIntervalRef.current = null;
     }
-    if (isPlaying && showSatellite && satelliteFrameCount > 1) {
+    if (isPlaying && satelliteReady && showSatellite && satelliteFrameCount > 1) {
       const satTotalSteps = satelliteFrameCount * SUBSTEPS;
-      // Adaptive tick for satellite — target the same ~17s loop.
       const satTickMs = Math.max(50, Math.floor(TARGET_LOOP_MS / (satelliteFrameCount * SUBSTEPS)));
       const effectiveSatTickMs = Math.max(30, Math.round(satTickMs / speedMultiplier));
       satelliteIntervalRef.current = setInterval(() => {
@@ -596,7 +622,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
         satelliteIntervalRef.current = null;
       }
     };
-  }, [isPlaying, showSatellite, satelliteFrameCount, speedMultiplier]);
+  }, [isPlaying, satelliteReady, showSatellite, satelliteFrameCount, speedMultiplier]);
 
   // Live refresh — re-fetch frame metadata at the provider's configured interval.
   // ADR-075: refreshIntervalMs derives from radarCapability?.refreshInterval (provider-
@@ -758,19 +784,35 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
               {t('stationMarker')}
             </Tooltip>
           </CircleMarker>
-          {/* Satellite tile layers — rendered BELOW radar for correct z-order
-              (base map → satellite → radar → wind → alerts).
-              Uses the same cross-fade animation system as radar but with its
-              own independent frame index (satelliteAnimationStep). */}
+          {/* Satellite tile layers — rendered BELOW radar for correct z-order.
+              During preload (!satelliteReady), first frame shows at full opacity
+              while all others load at 0.001.  Once ready, cross-fade animation
+              starts using the shared play/pause state. */}
           {showSatellite && caddyPrefix && satelliteFrameCount > 0 && satelliteFrames.map((frame, i) => {
             if (!frame.path) return null;
             const satUrl = `${caddyPrefix}${frame.path}/${RAINVIEWER_TILE_SIZE}/{z}/{x}/{y}/0/0_0.webp`;
+            const satFrameIndex = i;
+            const satOpacity = satelliteReady
+              ? Math.max(getFrameOpacity(i, satelliteAnimationStep, satelliteFrameCount, effectiveMaxOpacity), 0.001)
+              : (i === 0 ? effectiveMaxOpacity : 0.001);
             return (
               <TileLayer
                 key={`sat-${frame.time}`}
                 url={satUrl}
-                opacity={Math.max(getFrameOpacity(i, satelliteAnimationStep, satelliteFrameCount, effectiveMaxOpacity), 0.001)}
+                opacity={satOpacity}
                 zIndex={100}
+                eventHandlers={{
+                  load: () => {
+                    loadedSatLayersRef.current.add(satFrameIndex);
+                    if (loadedSatLayersRef.current.size >= satelliteFrameCount) {
+                      if (satellitePreloadTimerRef.current !== null) {
+                        clearTimeout(satellitePreloadTimerRef.current);
+                        satellitePreloadTimerRef.current = null;
+                      }
+                      setSatelliteReady(true);
+                    }
+                  },
+                }}
               />
             );
           })}
