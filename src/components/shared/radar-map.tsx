@@ -47,6 +47,8 @@ interface RadarMapProps {
    * the radar tiles. Satellite tiles come from LibreWxR's infrared imagery.
    */
   showSatellite?: boolean;
+  /** When true (default), render radar tile layers. When false, hide them. */
+  showRadar?: boolean;
 }
 
 const SUBSTEPS = 5;        // interpolation steps between each real frame pair
@@ -339,11 +341,6 @@ const TILE_CONFIG = {
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
   },
-  'satellite-dark': {
-    url: 'https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-  },
 } as const;
 
 /**
@@ -369,7 +366,7 @@ function MapBoundsEnforcer({ bounds }: { bounds?: [[number, number], [number, nu
   return null;
 }
 
-export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBounds, opacity, colorScheme, showAlerts, alertUrl, showWind, caddyPrefix, showSatellite }: RadarMapProps) {
+export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBounds, opacity, colorScheme, showAlerts, alertUrl, showWind, caddyPrefix, showSatellite, showRadar }: RadarMapProps) {
   const { t } = useTranslation('radar');
   const { resolved: resolvedTheme } = useTheme();
 
@@ -418,7 +415,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
   // the satellite tiles are visible underneath. Otherwise use the full basemap.
   const satelliteActive = showSatellite && satelliteFrameCount > 0;
   const tileConfigKey: keyof typeof TILE_CONFIG = satelliteActive
-    ? (resolvedTheme === 'dark' ? 'satellite-dark' : 'satellite-light')
+    ? 'satellite-light'
     : resolvedTheme;
   const baseTile = TILE_CONFIG[tileConfigKey];
 
@@ -848,7 +845,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
               />
             );
           })}
-          {radarCapability !== null && frames.map((frame, i) => {
+          {showRadar !== false && radarCapability !== null && frames.map((frame, i) => {
             // Capture the non-null capability so TypeScript can confirm it inside
             // the map callback closure.
             const cap = radarCapability;

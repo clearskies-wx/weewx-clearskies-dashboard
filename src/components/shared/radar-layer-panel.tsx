@@ -49,6 +49,10 @@ export interface RadarLayerPanelProps {
   showSatellite: boolean;
   /** Called when the user toggles the satellite overlay. */
   onShowSatelliteChange: (val: boolean) => void;
+  /** Whether the radar overlay is currently enabled. */
+  showRadar: boolean;
+  /** Called when the user toggles the radar overlay. */
+  onShowRadarChange: (val: boolean) => void;
 }
 
 export function RadarLayerPanel({
@@ -67,6 +71,8 @@ export function RadarLayerPanel({
   satelliteAvailable,
   showSatellite,
   onShowSatelliteChange,
+  showRadar,
+  onShowRadarChange,
 }: RadarLayerPanelProps) {
   const { t } = useTranslation('radar');
 
@@ -139,51 +145,57 @@ export function RadarLayerPanel({
           </div>
         )}
 
-        {/* Layer toggles — LibreWxR only.
-            Shown when at least one overlay type is available for this provider. */}
-        {(alertsAvailable || windAvailable || satelliteAvailable) && (
-          <div>
-            <span className="text-xs font-medium text-muted-foreground block mb-2">
-              {t('layers')}
-            </span>
-            <div className="space-y-2">
-              {alertsAvailable && (
-                <label className="flex items-center gap-2 text-sm cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={showAlerts}
-                    onChange={(e) => onShowAlertsChange(e.target.checked)}
-                    className="accent-primary"
-                  />
-                  {t('weatherAlerts')}
-                </label>
-              )}
-              {windAvailable && (
-                <label className="flex items-center gap-2 text-sm cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={showWind}
-                    onChange={(e) => onShowWindChange(e.target.checked)}
-                    className="accent-primary"
-                  />
-                  {t('windArrows')}
-                </label>
-              )}
-              {satelliteAvailable && (
-                <label className="flex items-center gap-2 text-sm cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={showSatellite}
-                    onChange={(e) => onShowSatelliteChange(e.target.checked)}
-                    className="accent-primary"
-                    aria-label={t('satelliteImagery')}
-                  />
-                  {t('satelliteImagery')}
-                </label>
-              )}
-            </div>
+        {/* Layer toggles — radar always shown; alerts/wind/satellite shown when available. */}
+        <div>
+          <span className="text-xs font-medium text-muted-foreground block mb-2">
+            {t('layers')}
+          </span>
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showRadar}
+                onChange={(e) => onShowRadarChange(e.target.checked)}
+                className="accent-primary"
+              />
+              {t('radar')}
+            </label>
+            {alertsAvailable && (
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showAlerts}
+                  onChange={(e) => onShowAlertsChange(e.target.checked)}
+                  className="accent-primary"
+                />
+                {t('weatherAlerts')}
+              </label>
+            )}
+            {windAvailable && (
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showWind}
+                  onChange={(e) => onShowWindChange(e.target.checked)}
+                  className="accent-primary"
+                />
+                {t('windArrows')}
+              </label>
+            )}
+            {satelliteAvailable && (
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showSatellite}
+                  onChange={(e) => onShowSatelliteChange(e.target.checked)}
+                  className="accent-primary"
+                  aria-label={t('satelliteImagery')}
+                />
+                {t('satelliteImagery')}
+              </label>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </aside>
   );

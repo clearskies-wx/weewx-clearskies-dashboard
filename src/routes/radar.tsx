@@ -71,6 +71,15 @@ export default function RadarPage() {
       return false;
     }
   });
+  // Radar overlay: default on — the primary layer.
+  const [showRadar, setShowRadar] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem('clearskies-radar-show');
+      return stored === null ? true : stored === 'true';
+    } catch {
+      return true;
+    }
+  });
 
   // Derived alert/wind availability from capability declaration.
   const alertUrl = radarCapability?.alertUrl ?? null;
@@ -93,6 +102,13 @@ export default function RadarPage() {
       localStorage.setItem('clearskies-radar-satellite', String(showSatellite));
     } catch { /* ignore write errors (e.g. private browsing quota) */ }
   }, [showSatellite]);
+
+  // Persist radar toggle to localStorage.
+  useEffect(() => {
+    try {
+      localStorage.setItem('clearskies-radar-show', String(showRadar));
+    } catch { /* ignore write errors */ }
+  }, [showRadar]);
 
   // Ref for the overlay div — used for focus trap.
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -206,6 +222,7 @@ export default function RadarPage() {
               showWind={showWind && windAvailable}
               caddyPrefix={radarCapability?.caddyPrefix ?? null}
               showSatellite={showSatellite && satelliteAvailable}
+              showRadar={showRadar}
             />
           )}
         </div>
@@ -230,6 +247,8 @@ export default function RadarPage() {
             satelliteAvailable={satelliteAvailable}
             showSatellite={showSatellite}
             onShowSatelliteChange={setShowSatellite}
+            showRadar={showRadar}
+            onShowRadarChange={setShowRadar}
           />
         )}
       </div>
