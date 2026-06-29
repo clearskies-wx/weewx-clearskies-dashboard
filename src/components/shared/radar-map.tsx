@@ -338,7 +338,7 @@ const TILE_CONFIG = {
   },
 } as const;
 
-const SATELLITE_LABELS_URL = 'https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png';
+const SATELLITE_LABELS_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png';
 const SATELLITE_LABELS_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
 /**
@@ -792,15 +792,18 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
           zoom={zoom}
           maxBounds={maxBounds}
           className="h-full w-full"
+          style={satelliteActive ? { backgroundColor: '#0a0a1a' } : undefined}
           scrollWheelZoom={false}
           zoomControl={true}
         >
           <MapBoundsEnforcer bounds={maxBounds} />
-          <TileLayer
-            key={baseTile.url}
-            url={baseTile.url}
-            attribution={baseTile.attribution}
-          />
+          {!satelliteActive && (
+            <TileLayer
+              key={baseTile.url}
+              url={baseTile.url}
+              attribution={baseTile.attribution}
+            />
+          )}
           {/* Station location marker */}
           <CircleMarker
             center={center}
