@@ -376,12 +376,4 @@
     mask-image: linear-gradient(to right, black calc(100% - 4rem), transparent);
   }
 
-  /* Extracts geographic feature lines (boundaries, roads, water) from a dark
-     basemap tile and composites them onto layers below. invert(1) flips the
-     dark background to white; multiply blend makes white transparent while
-     keeping the feature lines visible. Used for satellite imagery overlays. */
-  .satellite-features {
-    filter: invert(1) brightness(1.8);
-    mix-blend-mode: multiply;
-  }
 }
