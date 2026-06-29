@@ -336,12 +336,10 @@ const TILE_CONFIG = {
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
   },
-  'satellite-light': {
-    url: 'https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png',
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-  },
 } as const;
+
+const SATELLITE_LABELS_URL = 'https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png';
+const SATELLITE_LABELS_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
 /**
  * Inner component that applies maxBounds dynamically to the Leaflet map.
@@ -411,13 +409,8 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
     : allSatelliteFrames;
   const satelliteFrameCount = satelliteFrames.length;
 
-  // Select basemap: when satellite data is active, use a labels-only overlay so
-  // the satellite tiles are visible underneath. Otherwise use the full basemap.
   const satelliteActive = showSatellite && satelliteFrameCount > 0;
-  const tileConfigKey: keyof typeof TILE_CONFIG = satelliteActive
-    ? 'satellite-light'
-    : resolvedTheme;
-  const baseTile = TILE_CONFIG[tileConfigKey];
+  const baseTile = TILE_CONFIG[resolvedTheme];
 
   const tileHost = radarFrameList?.tileHost ?? null;
 
@@ -866,6 +859,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
                 key={frame.time}
                 url={url}
                 opacity={Math.max(getFrameOpacity(i, animationStep, frameCount, effectiveMaxOpacity), 0.001)}
+                zIndex={200}
                 attribution={i === 0 ? (radarFrameList?.attribution ?? undefined) : undefined}
                 eventHandlers={{
                   load: () => {
@@ -889,6 +883,16 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
               />
             );
           })}
+          {/* Labels overlay — renders ABOVE satellite and radar so place names
+              are always readable on opaque satellite imagery. Only shown when
+              satellite is active; otherwise the normal basemap has labels. */}
+          {satelliteActive && (
+            <TileLayer
+              url={SATELLITE_LABELS_URL}
+              attribution={SATELLITE_LABELS_ATTRIBUTION}
+              zIndex={300}
+            />
+          )}
           {/* Wind arrow tile overlay (T4.7) — LibreWxR only; best-effort */}
           {showWind && caddyPrefix && (
             <TileLayer
