@@ -180,10 +180,8 @@ export async function getEarthquakeFaults(signal?: AbortSignal): Promise<FaultFe
 }
 
 export async function getGeographicFeatures(signal?: AbortSignal): Promise<FeatureCollection> {
-  const resp = await fetchApi<{ data: FeatureCollection; attribution?: string }>(
-    '/geographic-features', undefined, signal,
-  );
-  return { ...resp.data, attribution: resp.attribution ?? '' };
+  const resp = await fetchApi<{ data: FeatureCollection }>('/geographic-features', undefined, signal);
+  return resp.data;
 }
 
 export function getAqiCurrent(signal?: AbortSignal): Promise<ApiResponse<AQIReading | null>> {
