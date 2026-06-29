@@ -338,8 +338,9 @@ const TILE_CONFIG = {
   },
 } as const;
 
+const SATELLITE_OVERLAY_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+const SATELLITE_FEATURES_URL = 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png';
 const SATELLITE_LABELS_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png';
-const SATELLITE_LABELS_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
 /**
  * Inner component that applies maxBounds dynamically to the Leaflet map.
@@ -886,13 +887,23 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
               />
             );
           })}
-          {/* Labels overlay — renders ABOVE satellite and radar so place names
-              are always readable on opaque satellite imagery. Only shown when
-              satellite is active; otherwise the normal basemap has labels. */}
+          {/* Geographic features overlay — political boundaries, roads, water.
+              dark_nolabels tiles are inverted + multiply-blended via CSS so the
+              dark background becomes transparent and only feature lines remain
+              visible on the satellite imagery beneath. */}
+          {satelliteActive && (
+            <TileLayer
+              url={SATELLITE_FEATURES_URL}
+              className="satellite-features"
+              zIndex={250}
+            />
+          )}
+          {/* Labels overlay — city/state names on top of everything so they're
+              always readable. Voyager labels have bolder text than Positron. */}
           {satelliteActive && (
             <TileLayer
               url={SATELLITE_LABELS_URL}
-              attribution={SATELLITE_LABELS_ATTRIBUTION}
+              attribution={SATELLITE_OVERLAY_ATTRIBUTION}
               zIndex={300}
             />
           )}
