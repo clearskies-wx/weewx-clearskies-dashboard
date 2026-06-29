@@ -220,6 +220,16 @@ function ArcVisualization({
   const illumination = almanac.moon.illuminationPercent;
   const phaseWords = formatPhaseName(almanac.moon.phaseName).split(' ');
 
+  // Traveled-arc: Ramanujan semi-perimeter approximation for a semi-ellipse.
+  function semiPerimeter(rx: number, ry: number): number {
+    return Math.PI * (3 * (rx + ry) - Math.sqrt((3 * rx + ry) * (rx + 3 * ry))) / 2;
+  }
+
+  const sunArcLen = semiPerimeter(SUN_RX, SUN_RY);
+  const moonArcLen = semiPerimeter(MOON_RX, MOON_RY);
+  const sunActive = sunPct !== null && sunPct >= 0 && sunPct <= 1;
+  const moonActive = moonPct !== null && moonPct >= 0 && moonPct <= 1;
+
   return (
     <svg
       role="img"
@@ -243,7 +253,7 @@ function ArcVisualization({
         aria-hidden="true"
       />
 
-      {/* ── Sun arc (outer) ────────────────────────────────────────────── */}
+      {/* ── Sun arc (outer) — dashed background ───────────────────────── */}
       <path
         d={ellipsePath(CX, CY, SUN_RX, SUN_RY)}
         fill="none"
@@ -251,10 +261,24 @@ function ArcVisualization({
         strokeWidth={3}
         strokeDasharray={DASH}
         strokeLinecap="round"
+        opacity={0.45}
         aria-hidden="true"
       />
 
-      {/* ── Moon arc (inner) ───────────────────────────────────────────── */}
+      {/* ── Sun arc — traveled portion solid ──────────────────────────── */}
+      {sunActive && sunPct !== null && sunPct > 0 && (
+        <path
+          d={ellipsePath(CX, CY, SUN_RX, SUN_RY)}
+          fill="none"
+          stroke={SUN_COLOR}
+          strokeWidth={3}
+          strokeLinecap="round"
+          strokeDasharray={`${sunPct * sunArcLen} ${sunArcLen}`}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* ── Moon arc (inner) — dashed background ─────────────────────── */}
       <path
         d={ellipsePath(CX, CY, MOON_RX, MOON_RY)}
         fill="none"
@@ -262,8 +286,22 @@ function ArcVisualization({
         strokeWidth={3}
         strokeDasharray={DASH}
         strokeLinecap="round"
+        opacity={0.45}
         aria-hidden="true"
       />
+
+      {/* ── Moon arc — traveled portion solid ─────────────────────────── */}
+      {moonActive && moonPct !== null && moonPct > 0 && (
+        <path
+          d={ellipsePath(CX, CY, MOON_RX, MOON_RY)}
+          fill="none"
+          stroke={MOON_COLOR}
+          strokeWidth={3}
+          strokeLinecap="round"
+          strokeDasharray={`${moonPct * moonArcLen} ${moonArcLen}`}
+          aria-hidden="true"
+        />
+      )}
 
       {/* ── Sun position marker ────────────────────────────────────────── */}
       {sunMarker && (
