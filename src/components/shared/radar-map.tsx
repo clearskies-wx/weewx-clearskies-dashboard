@@ -459,6 +459,10 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
   const satellitePreloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const loadedSatLayersRef = useRef(new Set<number>());
 
+  // --- Loading progress state (for the tile-load progress indicator) ---
+  const [radarLoadedCount, setRadarLoadedCount] = useState(0);
+  const [satelliteLoadedCount, setSatelliteLoadedCount] = useState(0);
+
   // --- Speed multiplier state (expanded mode only) ---
   const [speedIndex, setSpeedIndex] = useState(1); // default 1x
   const speedMultiplier = SPEED_OPTIONS[speedIndex];
@@ -549,6 +553,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
 
     // Reset tile-load tracking for the new frame list.
     loadedLayersRef.current = new Set<number>();
+    setRadarLoadedCount(0);
 
     // Cancel any previous preload timer, then start a fresh fallback one.
     // The fallback fires only if tiles haven't all reported loaded yet.
@@ -576,6 +581,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
     if (!showSatellite || satelliteFrameCount === 0) {
       setSatelliteReady(false);
       loadedSatLayersRef.current = new Set<number>();
+      setSatelliteLoadedCount(0);
       if (satellitePreloadTimerRef.current !== null) {
         clearTimeout(satellitePreloadTimerRef.current);
         satellitePreloadTimerRef.current = null;
@@ -586,6 +592,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
     setSatelliteAnimationStep(0);
     setSatelliteReady(false);
     loadedSatLayersRef.current = new Set<number>();
+    setSatelliteLoadedCount(0);
 
     satellitePreloadTimerRef.current = setTimeout(() => {
       setSatelliteReady(true);
@@ -833,6 +840,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
                 eventHandlers={{
                   load: () => {
                     loadedSatLayersRef.current.add(satFrameIndex);
+                    setSatelliteLoadedCount(loadedSatLayersRef.current.size);
                     if (loadedSatLayersRef.current.size >= satelliteFrameCount) {
                       if (satellitePreloadTimerRef.current !== null) {
                         clearTimeout(satellitePreloadTimerRef.current);
@@ -865,6 +873,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
                     // start playback immediately rather than waiting for the
                     // PRELOAD_DELAY_MS fallback timeout.
                     loadedLayersRef.current.add(frameIndex);
+                    setRadarLoadedCount(loadedLayersRef.current.size);
                     if (loadedLayersRef.current.size >= frames.length) {
                       if (preloadTimerRef.current !== null) {
                         clearTimeout(preloadTimerRef.current);
@@ -927,6 +936,43 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
             />
           )}
         </MapContainer>
+
+        {/* Tile-load progress indicator — bottom-left pill showing frame counts.
+            Disappears once all tiles for each active layer are loaded.
+            pointer-events-none so it never blocks map interaction. */}
+        {(() => {
+          const radarLoading = showRadar !== false && frameCount > 0 && radarLoadedCount < frameCount;
+          const satelliteLoading = showSatellite && satelliteFrameCount > 0 && satelliteLoadedCount < satelliteFrameCount;
+          const anyLoading = radarLoading || satelliteLoading;
+          return anyLoading ? (
+            <div
+              className="absolute bottom-8 left-3 z-[1000] rounded-lg bg-background/80 backdrop-blur-sm border px-3 py-2 text-xs pointer-events-none select-none"
+              role="status"
+              aria-live="polite"
+            >
+              <div className="flex flex-col gap-1">
+                {radarLoading && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    <span>Radar {radarLoadedCount} / {frameCount}</span>
+                  </div>
+                )}
+                {satelliteLoading && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    <span>Satellite {satelliteLoadedCount} / {satelliteFrameCount}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : null;
+        })()}
 
         {/* Color legend — visible when radar frames are loaded */}
         {!isLoading && frameCount > 0 && <RadarLegend colorScheme={effectiveColorScheme} />}
