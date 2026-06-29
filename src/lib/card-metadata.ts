@@ -26,12 +26,23 @@ export interface CardLayout {
   rowSpan: 1 | 2 | 2.5;
 }
 
+export interface CardConfigField {
+  fieldId: string;
+  fieldType: 'text' | 'url' | 'number' | 'boolean' | 'select' | 'radio' | 'password' | 'textarea';
+  label: string;
+  helpText?: string;
+  default?: string | number | boolean;
+  options?: Array<{ value: string; label: string; description?: string }>;
+  validation?: Array<{ ruleType: string; value: string | number }>;
+}
+
 export interface CardMetadata {
   type: CardType;
   displayName: string;
   apiEndpoints: string[];
   allowedLayouts: CardLayout[];
   thumbnail: string;
+  configFields?: CardConfigField[];
 }
 
 /**

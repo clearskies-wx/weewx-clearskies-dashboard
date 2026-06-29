@@ -10,7 +10,7 @@
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { CARD_METADATA } from '../src/lib/card-metadata.ts';
+import { CARD_METADATA, CardConfigField } from '../src/lib/card-metadata.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -24,6 +24,7 @@ interface ManifestCard {
   apiEndpoints: string[];
   allowedLayouts: Array<{ footprint: string; rowSpan: number }>;
   thumbnail: string;
+  configFields?: CardConfigField[];
 }
 
 interface CardManifest {
@@ -31,13 +32,19 @@ interface CardManifest {
   cards: ManifestCard[];
 }
 
-const cards: ManifestCard[] = Object.values(CARD_METADATA).map(meta => ({
-  type: meta.type,
-  displayName: meta.displayName,
-  apiEndpoints: meta.apiEndpoints,
-  allowedLayouts: meta.allowedLayouts,
-  thumbnail: meta.thumbnail,
-}));
+const cards: ManifestCard[] = Object.values(CARD_METADATA).map(meta => {
+  const card: ManifestCard = {
+    type: meta.type,
+    displayName: meta.displayName,
+    apiEndpoints: meta.apiEndpoints,
+    allowedLayouts: meta.allowedLayouts,
+    thumbnail: meta.thumbnail,
+  };
+  if (meta.configFields && meta.configFields.length > 0) {
+    card.configFields = meta.configFields;
+  }
+  return card;
+});
 
 const manifest: CardManifest = {
   version: 1,
