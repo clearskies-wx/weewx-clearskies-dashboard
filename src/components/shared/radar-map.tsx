@@ -334,6 +334,16 @@ const TILE_CONFIG = {
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
   },
+  'satellite-light': {
+    url: 'https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png',
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+  },
+  'satellite-dark': {
+    url: 'https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+  },
 } as const;
 
 /**
@@ -362,7 +372,6 @@ function MapBoundsEnforcer({ bounds }: { bounds?: [[number, number], [number, nu
 export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBounds, opacity, colorScheme, showAlerts, alertUrl, showWind, caddyPrefix, showSatellite }: RadarMapProps) {
   const { t } = useTranslation('radar');
   const { resolved: resolvedTheme } = useTheme();
-  const baseTile = TILE_CONFIG[resolvedTheme];
 
   // --- Capabilities fetch to discover radar provider ---
   const { data: capabilities, loading: capLoading, error: capError } = useCapabilities();
@@ -404,6 +413,14 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
     ? allSatelliteFrames.slice(allSatelliteFrames.length - MAX_CARD_FRAMES)
     : allSatelliteFrames;
   const satelliteFrameCount = satelliteFrames.length;
+
+  // Select basemap: when satellite data is active, use a labels-only overlay so
+  // the satellite tiles are visible underneath. Otherwise use the full basemap.
+  const satelliteActive = showSatellite && satelliteFrameCount > 0;
+  const tileConfigKey: keyof typeof TILE_CONFIG = satelliteActive
+    ? (resolvedTheme === 'dark' ? 'satellite-dark' : 'satellite-light')
+    : resolvedTheme;
+  const baseTile = TILE_CONFIG[tileConfigKey];
 
   const tileHost = radarFrameList?.tileHost ?? null;
 
@@ -814,6 +831,8 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
                 url={satUrl}
                 opacity={satOpacity}
                 zIndex={100}
+                tileSize={512}
+                zoomOffset={-1}
                 eventHandlers={{
                   load: () => {
                     loadedSatLayersRef.current.add(satFrameIndex);
