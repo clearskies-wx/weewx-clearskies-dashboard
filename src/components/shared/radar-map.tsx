@@ -915,7 +915,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
               Only visible in satellite mode; non-interactive. */}
           {satelliteActive && geoFeatures && geoFeatures.features.length > 0 && (
             <GeoJSON
-              key="geo-features"
+              key={`geo-features-${geoFeatures.features.length}`}
               data={geoFeatures}
               style={(feature) => {
                 const featureType = feature?.properties?.type as string | undefined;
