@@ -421,12 +421,19 @@ function GeoFeaturesLayer() {
         const status = await resp.json() as { available?: boolean };
         if (!status.available || cancelled) return;
 
+        // Create a custom pane above satellite/radar tiles (z200) and labels (z300)
+        // but below alert polygons (overlay pane, z400).
+        if (!map.getPane('geoFeaturesPane')) {
+          const pane = map.createPane('geoFeaturesPane');
+          pane.style.zIndex = '350';
+        }
+
         layer = leafletLayer({
           url: '/api/v1/geographic-features/tiles',
           paintRules: GEO_FEATURES_PAINT_RULES,
           labelRules: [],
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors (ODbL)',
-          zIndex: 350,
+          pane: 'geoFeaturesPane',
         });
         layer.addTo(map);
       } catch {
