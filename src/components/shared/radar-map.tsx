@@ -392,8 +392,8 @@ const GEO_FEATURES_PAINT_RULES: PaintRule[] = [
       width: 1,
       opacity: 0.5,
     }),
-    filter: (_zoom: number, feature: { props?: Record<string, unknown> }) => {
-      const kind = (feature.props as Record<string, unknown> | undefined)?.['pmap:kind'];
+    filter: (_zoom: number, feature: { props: Record<string, unknown> }) => {
+      const kind = feature.props['kind'];
       return kind === 'highway' || kind === 'major_road';
     },
   },
