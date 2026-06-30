@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, CircleMarker, Tooltip, GeoJSON, useMap } from 
 import { Play, Pause, CaretLeft, CaretRight } from '@phosphor-icons/react';
 import { leafletLayer, LineSymbolizer } from 'protomaps-leaflet';
 import type { PaintRule } from 'protomaps-leaflet';
+import { PMTiles } from 'pmtiles';
 import { useCapabilities, useRadarFrames } from '../../hooks/useWeatherData';
 import type { CapabilityDeclaration, RadarFrame } from '../../api/types';
 import { useTheme } from '../../lib/theme-provider';
@@ -428,8 +429,9 @@ function GeoFeaturesLayer() {
           pane.style.zIndex = '350';
         }
 
+        const pmtiles = new PMTiles('/api/v1/geographic-features/tiles');
         layer = leafletLayer({
-          url: '/api/v1/geographic-features/tiles',
+          url: pmtiles,
           paintRules: GEO_FEATURES_PAINT_RULES,
           labelRules: [],
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors (ODbL)',
