@@ -25,6 +25,7 @@ import {
   useAlmanacMeteorShowers,
   useStation,
 } from '../hooks/useWeatherData';
+import { useSmartAlmanac } from '../hooks/useSmartAlmanac';
 import { addDays } from '../utils/station-clock';
 
 // ---------------------------------------------------------------------------
@@ -86,6 +87,7 @@ export function AlmanacPage() {
   // the fetch and returns loading:true so UI stays in skeleton state.
   const almanac         = useAlmanac(todayStr || undefined);
   const almanacTomorrow = useAlmanac(tomorrowStr || undefined);
+  const smartAlmanac    = useSmartAlmanac();
   const positions       = useAlmanacPositions();
   const moonNames       = useAlmanacMoonNames();
   const planets         = useAlmanacPlanets();
@@ -116,6 +118,7 @@ export function AlmanacPage() {
         <SunMoonDetailCard
           almanac={almanac.data}
           almanacTomorrow={almanacTomorrow.data}
+          arcAlmanac={smartAlmanac.data}
           positions={positions.data ?? null}
           moonNames={moonNames.data}
           stationTz={stationTz}

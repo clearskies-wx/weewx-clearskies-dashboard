@@ -27,7 +27,7 @@
 // Time: formatLocalTime from src/utils/time.ts (ADR-020).
 // Units: no unit knowledge in dashboard (ADR-042).
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AlmanacSnapshot, MoonNameData, PositionsSnapshot } from '../../api/types';
 import { useIsMobile } from '../../hooks/useIsMobile';
@@ -236,6 +236,9 @@ function fmtEventDate(iso: string | null, tz: string, locale: string): string {
 export interface SunMoonDetailCardProps {
   almanac: AlmanacSnapshot | null;
   almanacTomorrow: AlmanacSnapshot | null;
+  /** Transit-paired almanac from useSmartAlmanac — used by the arc panel
+   *  so the marker tracks the correct transit across date boundaries. */
+  arcAlmanac: AlmanacSnapshot | null;
   positions: PositionsSnapshot | null;
   moonNames: MoonNameData | null;
   stationTz: string;
@@ -284,35 +287,15 @@ function ArcPanel({ almanac, positions, moonNames, tz }: ArcPanelProps) {
     return () => clearInterval(id);
   }, []);
 
-  // Pin rise/set values during an active transit so a data refresh across a
-  // date boundary cannot yank the arc mid-cycle.  New values are accepted
-  // only when the body is NOT between rise and set (pct outside 0-1).
-  const sunRiseRef = useRef(almanac.sun.rise);
-  const sunSetRef = useRef(almanac.sun.set);
-  const moonRiseRef = useRef(almanac.moon.rise);
-  const moonSetRef = useRef(almanac.moon.set);
-
-  const sunPinPct = arcProgress(sunRiseRef.current, sunSetRef.current, nowMs);
-  if (sunPinPct === null || sunPinPct < 0 || sunPinPct > 1) {
-    sunRiseRef.current = almanac.sun.rise;
-    sunSetRef.current = almanac.sun.set;
-  }
-
-  const moonPinPct = arcProgress(moonRiseRef.current, moonSetRef.current, nowMs);
-  if (moonPinPct === null || moonPinPct < 0 || moonPinPct > 1) {
-    moonRiseRef.current = almanac.moon.rise;
-    moonSetRef.current = almanac.moon.set;
-  }
-
-  // Sun arc progress (using pinned values).
-  // arcPoint clamps to [0,1] so the marker stays at the rise/set endpoint
-  // when the body is below the horizon — intentional on this detail card.
-  const sunPct = arcProgress(sunRiseRef.current, sunSetRef.current, nowMs);
+  // arcAlmanac (from useSmartAlmanac) provides transit-paired rise/set,
+  // so no ref-based pinning is needed.  arcPoint clamps to [0,1] so the
+  // marker stays at the rise/set endpoint when the body is below the
+  // horizon — intentional on this detail card.
+  const sunPct = arcProgress(almanac.sun.rise, almanac.sun.set, nowMs);
   const sunMarker =
     sunPct !== null ? arcPoint(sunPct, CX, CY, SUN_RX, SUN_RY) : null;
 
-  // Moon arc progress (using pinned values)
-  const moonPct = arcProgress(moonRiseRef.current, moonSetRef.current, nowMs);
+  const moonPct = arcProgress(almanac.moon.rise, almanac.moon.set, nowMs);
   const moonMarker =
     moonPct !== null ? arcPoint(moonPct, CX, CY, MOON_RX, MOON_RY) : null;
 
@@ -322,12 +305,11 @@ function ArcPanel({ almanac, positions, moonNames, tz }: ArcPanelProps) {
   const illumText =
     illumination !== null ? `${Math.round(illumination)}%` : '—';
 
-  // Arc labels use PINNED values so they match the arc being drawn,
-  // not the raw API values which may be from a different transit.
-  const sunriseText = fmtCompact(sunRiseRef.current, tz);
-  const sunsetText = fmtCompact(sunSetRef.current, tz);
-  const moonriseText = fmtCompact(moonRiseRef.current, tz);
-  const moonsetText = fmtCompact(moonSetRef.current, tz);
+  // Arc labels use transit-paired values from arcAlmanac (via useSmartAlmanac).
+  const sunriseText = fmtCompact(almanac.sun.rise, tz);
+  const sunsetText = fmtCompact(almanac.sun.set, tz);
+  const moonriseText = fmtCompact(almanac.moon.rise, tz);
+  const moonsetText = fmtCompact(almanac.moon.set, tz);
 
   // Sun/moon altitude from live positions (polled every 60s), not static daily snapshot
   const sunAlt = positions?.sun.altitude ?? null;
@@ -1002,6 +984,7 @@ const valueStyle: React.CSSProperties = {
 export function SunMoonDetailCard({
   almanac,
   almanacTomorrow,
+  arcAlmanac,
   positions,
   moonNames,
   stationTz,
@@ -1045,7 +1028,7 @@ export function SunMoonDetailCard({
               </div>
               <div className="order-1 md:order-none">
                 <ArcPanel
-                  almanac={almanac}
+                  almanac={arcAlmanac ?? almanac}
                   positions={positions}
                   moonNames={moonNames}
                   tz={stationTz}
