@@ -101,6 +101,7 @@ export default function RadarPage() {
     try {
       localStorage.setItem('clearskies-radar-satellite', String(showSatellite));
     } catch { /* ignore write errors (e.g. private browsing quota) */ }
+    if (showSatellite) setOpacity(1.0);
   }, [showSatellite]);
 
   // Persist radar toggle to localStorage.
