@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import L from 'leaflet';
-import { MapContainer, TileLayer, CircleMarker, Tooltip, GeoJSON, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Tooltip, GeoJSON, ScaleControl, useMap } from 'react-leaflet';
 import { Play, Pause, CaretLeft, CaretRight } from '@phosphor-icons/react';
 import { leafletLayer, LineSymbolizer } from 'protomaps-leaflet';
 import type { PaintRule } from 'protomaps-leaflet';
@@ -368,6 +368,48 @@ function MapBoundsEnforcer({ bounds }: { bounds?: [[number, number], [number, nu
 }
 
 /**
+ * BoundsMask — renders an opaque polygon covering the entire world EXCEPT the
+ * BBOX, creating a hard visual cutoff at the map edges.  Leaflet maxBounds only
+ * restricts panning; tiles at the viewport edges still extend beyond the boundary.
+ * This overlay sits on top of all layers and hides everything outside the BBOX so
+ * satellite, radar, and base map all clip cleanly.
+ *
+ * Uses imperative Leaflet API (not the GeoJSON component) to avoid renderer
+ * lifecycle issues with custom panes.
+ */
+function BoundsMask({ bounds }: { bounds: [[number, number], [number, number]] }) {
+  const map = useMap();
+  const { resolved } = useTheme();
+  const fillColor = resolved === 'dark' ? '#0a0a1a' : '#ffffff';
+
+  useEffect(() => {
+    const [[south, west], [north, east]] = bounds;
+
+    const outer: L.LatLngTuple[] = [[-90, -180], [-90, 180], [90, 180], [90, -180]];
+    const hole: L.LatLngTuple[] = [[south, west], [north, west], [north, east], [south, east]];
+
+    const mask = L.polygon([outer, hole], {
+      fillColor,
+      fillOpacity: 1,
+      stroke: false,
+      interactive: false,
+    });
+
+    mask.addTo(map);
+    const el = mask.getElement() as HTMLElement | undefined;
+    if (el) {
+      el.style.zIndex = '9999';
+      el.style.pointerEvents = 'none';
+    }
+
+    return () => { mask.remove(); };
+  }, [map, bounds, fillColor]);
+
+  return null;
+}
+
+
+/**
  * GeoFeaturesLayer — adds a protomaps-leaflet Canvas vector tile layer for geographic
  * context (boundaries, roads, water) when satellite view is active.
  *
@@ -543,14 +585,12 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
   const [animationStep, setAnimationStep] = useState(0);
   // Start paused; auto-play begins after PRELOAD_DELAY_MS once frames are ready.
   const [isPlaying, setIsPlaying] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const preloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Tracks which frame indices have fully loaded all their tiles.
   const loadedLayersRef = useRef(new Set<number>());
 
   // --- Satellite animation state (independent frame index, shared play/pause) ---
   const [satelliteAnimationStep, setSatelliteAnimationStep] = useState(0);
-  const satelliteIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // Satellite preload: tiles must load before animation starts, otherwise
   // frames flicker (visible when cached, blank when still loading).
   const [satelliteReady, setSatelliteReady] = useState(false);
@@ -711,50 +751,73 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
     }
   }, [isIdle]);
 
-  // Animation timer — advances animationStep one sub-step at a time; cross-fade
-  // between real frames is handled by getFrameOpacity. No URL swaps or tile
-  // re-fetches after the initial load, resulting in smooth looping.
-  useEffect(() => {
-    if (intervalRef.current !== null) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-    if (isPlaying && frameCount > 1) {
-      const totalSteps = frameCount * SUBSTEPS;
-      intervalRef.current = setInterval(() => {
-        setAnimationStep((s) => (s + 1) % totalSteps);
-      }, effectiveTickMs);
-    }
-    return () => {
-      if (intervalRef.current !== null) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [isPlaying, frameCount, effectiveTickMs]);
+  // Unified animation loop — a single requestAnimationFrame drives both radar
+  // and satellite animations.  Using one loop instead of two setIntervals
+  // eliminates beat-frequency jank (two timers whose ticks drift in and out
+  // of phase cause fast-slow-fast re-render bursts).  State updates that land
+  // in the same rAF callback are batched by React 18 into one render.
+  const rafRef = useRef<number | null>(null);
+  const radarAccRef = useRef(0);
+  const satAccRef = useRef(0);
 
-  // Satellite animation timer — gated on satelliteReady so tiles have time
-  // to load before animation starts (prevents flickering on toggle-on).
   useEffect(() => {
-    if (satelliteIntervalRef.current !== null) {
-      clearInterval(satelliteIntervalRef.current);
-      satelliteIntervalRef.current = null;
+    const radarActive = isPlaying && frameCount > 1;
+    const satActive = isPlaying && satelliteReady && showSatellite && satelliteFrameCount > 1;
+
+    if (!radarActive && !satActive) {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+      return;
     }
-    if (isPlaying && satelliteReady && showSatellite && satelliteFrameCount > 1) {
-      const satTotalSteps = satelliteFrameCount * SUBSTEPS;
-      const satTickMs = Math.max(50, Math.floor(TARGET_LOOP_MS / (satelliteFrameCount * SUBSTEPS)));
-      const effectiveSatTickMs = Math.max(30, Math.round(satTickMs / speedMultiplier));
-      satelliteIntervalRef.current = setInterval(() => {
-        setSatelliteAnimationStep((s) => (s + 1) % satTotalSteps);
-      }, effectiveSatTickMs);
+
+    const satTickMs = satActive
+      ? Math.max(30, Math.round(
+          Math.max(50, Math.floor(TARGET_LOOP_MS / (satelliteFrameCount * SUBSTEPS)))
+          / speedMultiplier))
+      : 0;
+
+    const radarTotal = frameCount * SUBSTEPS;
+    const satTotal = satelliteFrameCount * SUBSTEPS;
+
+    radarAccRef.current = 0;
+    satAccRef.current = 0;
+    let lastTime = performance.now();
+
+    function animate(now: number) {
+      const dt = now - lastTime;
+      lastTime = now;
+
+      if (radarActive) {
+        radarAccRef.current += dt;
+        if (radarAccRef.current >= effectiveTickMs) {
+          const steps = Math.floor(radarAccRef.current / effectiveTickMs);
+          radarAccRef.current -= steps * effectiveTickMs;
+          setAnimationStep((s) => (s + steps) % radarTotal);
+        }
+      }
+
+      if (satActive) {
+        satAccRef.current += dt;
+        if (satAccRef.current >= satTickMs) {
+          const steps = Math.floor(satAccRef.current / satTickMs);
+          satAccRef.current -= steps * satTickMs;
+          setSatelliteAnimationStep((s) => (s + steps) % satTotal);
+        }
+      }
+
+      rafRef.current = requestAnimationFrame(animate);
     }
+
+    rafRef.current = requestAnimationFrame(animate);
     return () => {
-      if (satelliteIntervalRef.current !== null) {
-        clearInterval(satelliteIntervalRef.current);
-        satelliteIntervalRef.current = null;
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
       }
     };
-  }, [isPlaying, satelliteReady, showSatellite, satelliteFrameCount, speedMultiplier]);
+  }, [isPlaying, frameCount, effectiveTickMs, satelliteReady, showSatellite, satelliteFrameCount, speedMultiplier]);
 
   // Live refresh — re-fetch frame metadata at the provider's configured interval.
   // ADR-075: refreshIntervalMs derives from radarCapability?.refreshInterval (provider-
@@ -902,6 +965,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
           zoomControl={true}
         >
           <MapBoundsEnforcer bounds={maxBounds} />
+          {maxBounds && <BoundsMask bounds={maxBounds} />}
           {!satelliteActive && (
             <TileLayer
               key={baseTile.url}
@@ -909,6 +973,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
               attribution={baseTile.attribution}
             />
           )}
+          <ScaleControl position="topleft" imperial metric={false} />
           {/* Station location marker */}
           <CircleMarker
             center={center}
@@ -939,6 +1004,11 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
                 tileSize={512}
                 zoomOffset={-1}
                 eventHandlers={{
+                  loading: () => {
+                    loadedSatLayersRef.current.delete(satFrameIndex);
+                    setSatelliteLoadedCount(loadedSatLayersRef.current.size);
+                    setSatelliteReady(false);
+                  },
                   load: () => {
                     loadedSatLayersRef.current.add(satFrameIndex);
                     setSatelliteLoadedCount(loadedSatLayersRef.current.size);
@@ -970,10 +1040,11 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
                 zIndex={200}
                 attribution={i === 0 ? (radarFrameList?.attribution ?? undefined) : undefined}
                 eventHandlers={{
+                  loading: () => {
+                    loadedLayersRef.current.delete(frameIndex);
+                    setRadarLoadedCount(loadedLayersRef.current.size);
+                  },
                   load: () => {
-                    // Mark this frame as fully loaded. When all frames are ready,
-                    // start playback immediately rather than waiting for the
-                    // PRELOAD_DELAY_MS fallback timeout.
                     loadedLayersRef.current.add(frameIndex);
                     setRadarLoadedCount(loadedLayersRef.current.size);
                     if (loadedLayersRef.current.size >= frames.length) {
@@ -981,7 +1052,6 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
                         clearTimeout(preloadTimerRef.current);
                         preloadTimerRef.current = null;
                       }
-                      // Respect prefers-reduced-motion for early-start too.
                       if (!prefersReducedMotion) {
                         setIsPlaying(true);
                       }
