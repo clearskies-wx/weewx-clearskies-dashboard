@@ -31,7 +31,6 @@ import {
   getAlmanacMeteorShowers,
   getEarthquakeConfig,
   getEarthquakeFaults,
-  getGeographicFeatures,
   getAlmanacPositions,
   getChartsConfig,
   getCustomQuery,
@@ -96,7 +95,6 @@ import type {
   StationClock,
   FreshnessInfo,
 } from '../api/types';
-import type { FeatureCollection } from 'geojson';
 
 // ---------------------------------------------------------------------------
 // Shared result shape
@@ -1029,34 +1027,6 @@ export function useEarthquakeFaults(): HookResult<FaultFeatureCollection> {
       type: 'FeatureCollection',
       features: [],
       attribution: 'Active faults: GEM Global Active Faults Database, CC-BY-SA 4.0',
-    });
-  }
-
-  return {
-    data: data ?? null,
-    loading,
-    error,
-    refetch,
-    stationClock: (data as any)?.stationClock,
-    freshness: (data as any)?.freshness,
-  };
-}
-
-// ---------------------------------------------------------------------------
-// useGeographicFeatures — /geographic-features  (bare GeoJSON FeatureCollection)
-// ---------------------------------------------------------------------------
-
-export function useGeographicFeatures(): HookResult<FeatureCollection> {
-  const { data, loading, error, refetch } = useApiQuery<FeatureCollection>(
-    (signal) => getGeographicFeatures(signal),
-    { skip: isMockMode() },
-  );
-
-  if (isMockMode()) {
-    // Empty feature collection in mock mode — geographic features are optional visual context.
-    return mockResult<FeatureCollection>({
-      type: 'FeatureCollection',
-      features: [],
     });
   }
 

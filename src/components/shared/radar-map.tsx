@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import L from 'leaflet';
-import type { PathOptions } from 'leaflet';
 import { MapContainer, TileLayer, CircleMarker, Tooltip, GeoJSON, useMap } from 'react-leaflet';
 import { Play, Pause, CaretLeft, CaretRight } from '@phosphor-icons/react';
-import { useCapabilities, useRadarFrames, useGeographicFeatures } from '../../hooks/useWeatherData';
+import { useCapabilities, useRadarFrames } from '../../hooks/useWeatherData';
 import type { CapabilityDeclaration, RadarFrame } from '../../api/types';
 import { useTheme } from '../../lib/theme-provider';
 import type { FeatureCollection } from 'geojson';
@@ -342,56 +341,6 @@ const TILE_CONFIG = {
 const SATELLITE_OVERLAY_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 const SATELLITE_LABELS_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png';
 
-// Static path styles for geographic feature vector overlay (satellite mode only).
-const GEO_BOUNDARY_STYLE: PathOptions = {
-  color: '#ffffff',
-  weight: 1.5,
-  opacity: 0.7,
-  fill: false,
-};
-
-const GEO_ROAD_STYLE: PathOptions = {
-  color: '#999999',
-  weight: 1,
-  opacity: 0.5,
-  fill: false,
-};
-
-const GEO_WATER_STYLE: PathOptions = {
-  color: '#4a90d9',
-  weight: 1,
-  opacity: 0.6,
-  fill: false,
-};
-
-const GEO_STYLE_MAP: Record<string, PathOptions> = {
-  boundary: GEO_BOUNDARY_STYLE,
-  road: GEO_ROAD_STYLE,
-  water: GEO_WATER_STYLE,
-};
-
-function GeoFeaturesLayer({ data }: { data: FeatureCollection }) {
-  const map = useMap();
-  const layerRef = useRef<L.GeoJSON | null>(null);
-
-  useEffect(() => {
-    const renderer = L.canvas({ padding: 1.0 });
-    const layer = L.geoJSON(data, {
-      renderer,
-      interactive: false,
-      style: (feature) => GEO_STYLE_MAP[feature?.properties?.type] ?? GEO_BOUNDARY_STYLE,
-    } as L.GeoJSONOptions);
-    layer.addTo(map);
-    layerRef.current = layer;
-    return () => {
-      map.removeLayer(layer);
-      layerRef.current = null;
-    };
-  }, [map, data]);
-
-  return null;
-}
-
 /**
  * Inner component that applies maxBounds dynamically to the Leaflet map.
  * MapContainer is an uncontrolled component — it reads props only on mount.
@@ -461,7 +410,6 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
   const satelliteFrameCount = satelliteFrames.length;
 
   const satelliteActive = showSatellite && satelliteFrameCount > 0;
-  const { data: geoFeatures } = useGeographicFeatures();
   const baseTile = TILE_CONFIG[resolvedTheme];
 
   const tileHost = radarFrameList?.tileHost ?? null;
@@ -938,12 +886,6 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
               />
             );
           })}
-          {/* Geographic features vector overlay — political boundaries, roads, water
-              rendered as GeoJSON lines from the API (/geographic-features).
-              Only visible in satellite mode; non-interactive. */}
-          {satelliteActive && geoFeatures && geoFeatures.features.length > 0 && (
-            <GeoFeaturesLayer data={geoFeatures} />
-          )}
           {/* Labels overlay — city/state names on top of everything so they're
               always readable. Voyager labels have bolder text than Positron. */}
           {satelliteActive && (

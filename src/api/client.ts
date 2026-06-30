@@ -34,8 +34,6 @@ import type {
   PositionsSnapshot,
   ChartsConfigData,
 } from './types';
-import type { FeatureCollection } from 'geojson';
-
 // ---------------------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------------------
@@ -177,11 +175,6 @@ export function getEarthquakeConfig(signal?: AbortSignal): Promise<ApiResponse<E
 export async function getEarthquakeFaults(signal?: AbortSignal): Promise<FaultFeatureCollection> {
   const resp = await fetchApi<{ data: FaultFeatureCollection; attribution?: string }>('/earthquakes/faults', undefined, signal);
   return { ...resp.data, attribution: resp.attribution ?? resp.data.attribution };
-}
-
-export async function getGeographicFeatures(signal?: AbortSignal): Promise<FeatureCollection> {
-  const resp = await fetchApi<{ data: FeatureCollection }>('/geographic-features', undefined, signal);
-  return resp.data;
 }
 
 export function getAqiCurrent(signal?: AbortSignal): Promise<ApiResponse<AQIReading | null>> {
