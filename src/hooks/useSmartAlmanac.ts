@@ -51,7 +51,6 @@ export function useSmartAlmanac(): SmartAlmanacResult {
   );
 
   // --- Sun timestamps ---
-  const sunRiseMs = isoMs(today.data?.sun.rise ?? null);
   const sunSetMs = isoMs(today.data?.sun.set ?? null);
 
   // --- Moon timestamps ---
