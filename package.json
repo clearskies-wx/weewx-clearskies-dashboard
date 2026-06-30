@@ -27,6 +27,8 @@
     "i18next-http-backend": "^4.0.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.16.0",
+    "pmtiles": "^4.4.1",
+    "protomaps-leaflet": "^5.1.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-i18next": "^17.0.8",
