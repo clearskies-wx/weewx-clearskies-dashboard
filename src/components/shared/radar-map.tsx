@@ -70,6 +70,13 @@ const MAX_CARD_FRAMES = 24;
 // short frame lists (e.g. 6 frames) don't blaze through in 3 seconds.
 const TARGET_LOOP_MS = 17000;
 
+// How many frames to keep mounted on each side of the current frame.
+// Only layers within this window exist in the DOM; the rest are unmounted
+// to keep compositor layer count and tile-image DOM elements low.
+// 3 = 7 layers max (current ± 3). The cross-fade needs current + next (2),
+// plus 1 buffer for preloading the frame entering the window.
+const LAYER_BUFFER = 3;
+
 // Idle timeout — pause animation and stop live refresh after this long
 // without any user interaction.
 const IDLE_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutes
@@ -582,15 +589,30 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
   }, [resetIdleTimer]);
 
   // --- Animation state ---
-  const [animationStep, setAnimationStep] = useState(0);
+  // animationStep lives in a REF, not state.  The setInterval tick updates
+  // opacity on cached Leaflet layer instances imperatively (no React render).
+  // Only displayFrameIndex is state — it drives the progress bar and updates
+  // once per keyframe, not once per sub-step.
+  const animationStepRef = useRef(0);
+  const [displayFrameIndex, setDisplayFrameIndex] = useState(0);
   // Start paused; auto-play begins after PRELOAD_DELAY_MS once frames are ready.
   const [isPlaying, setIsPlaying] = useState(false);
   const preloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Tracks which frame indices have fully loaded all their tiles.
   const loadedLayersRef = useRef(new Set<number>());
 
+  // Refs to Leaflet layer instances for imperative opacity control.
+  const radarLayerRefs = useRef<Map<number, L.TileLayer>>(new Map());
+  const satLayerRefs = useRef<Map<number, L.TileLayer>>(new Map());
+
+  // Stable event-handler objects per frame index.  Cached in refs so
+  // react-leaflet sees the same object reference across re-renders and
+  // does not detach/reattach event listeners on every progress-bar update.
+  const radarHandlersRef = useRef<Map<number, Record<string, () => void>>>(new Map());
+  const satHandlersRef = useRef<Map<number, Record<string, () => void>>>(new Map());
+
   // --- Satellite animation state (independent frame index, shared play/pause) ---
-  const [satelliteAnimationStep, setSatelliteAnimationStep] = useState(0);
+  const satelliteStepRef = useRef(0);
   // Satellite preload: tiles must load before animation starts, otherwise
   // frames flicker (visible when cached, blank when still loading).
   const [satelliteReady, setSatelliteReady] = useState(false);
@@ -660,26 +682,55 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
 
   const effectiveTickMs = Math.max(30, Math.round(tickMs / speedMultiplier));
 
+  // Apply the current animationStepRef to cached Leaflet radar layers.
+  // Inactive layers are set to display:none so the browser's GPU compositor
+  // skips them entirely — only the 2-3 active cross-fade layers occupy
+  // compositor memory.  With 54 layers all at opacity 0, the GPU still had
+  // to manage 54 compositor layers, causing VRAM pressure, texture eviction,
+  // and the uneven frame cadence.
+  const applyRadarStep = useCallback((step: number) => {
+    animationStepRef.current = step;
+    radarLayerRefs.current.forEach((layer, i) => {
+      const next = getFrameOpacity(i, step, frameCount, effectiveMaxOpacity);
+      const container = (layer as any).getContainer?.() as HTMLElement | undefined;
+      if (next > 0) {
+        if (container?.style.display === 'none') container.style.display = '';
+        layer.setOpacity(next);
+      } else {
+        if (container && container.style.display !== 'none') container.style.display = 'none';
+      }
+    });
+    const frame = frameCount > 0 ? Math.floor(step / SUBSTEPS) % frameCount : 0;
+    setDisplayFrameIndex((prev) => (prev !== frame ? frame : prev));
+  }, [frameCount, effectiveMaxOpacity]);
+
+  const applySatStep = useCallback((step: number) => {
+    satelliteStepRef.current = step;
+    satLayerRefs.current.forEach((layer, i) => {
+      const next = getFrameOpacity(i, step, satelliteFrameCount, effectiveMaxOpacity);
+      const container = (layer as any).getContainer?.() as HTMLElement | undefined;
+      if (next > 0) {
+        if (container?.style.display === 'none') container.style.display = '';
+        layer.setOpacity(next);
+      } else {
+        if (container && container.style.display !== 'none') container.style.display = 'none';
+      }
+    });
+  }, [satelliteFrameCount, effectiveMaxOpacity]);
+
   const goNext = useCallback(() => {
-    const total = frameCount * SUBSTEPS;
-    if (total > 0) {
-      setAnimationStep((s) => {
-        // Snap to the next keyframe
-        const currentKey = Math.floor(s / SUBSTEPS);
-        return ((currentKey + 1) % frameCount) * SUBSTEPS;
-      });
+    if (frameCount > 0) {
+      const currentKey = Math.floor(animationStepRef.current / SUBSTEPS);
+      applyRadarStep(((currentKey + 1) % frameCount) * SUBSTEPS);
     }
-  }, [frameCount]);
+  }, [frameCount, applyRadarStep]);
 
   const goPrev = useCallback(() => {
-    const total = frameCount * SUBSTEPS;
-    if (total > 0) {
-      setAnimationStep((s) => {
-        const currentKey = Math.floor(s / SUBSTEPS);
-        return ((currentKey - 1 + frameCount) % frameCount) * SUBSTEPS;
-      });
+    if (frameCount > 0) {
+      const currentKey = Math.floor(animationStepRef.current / SUBSTEPS);
+      applyRadarStep(((currentKey - 1 + frameCount) % frameCount) * SUBSTEPS);
     }
-  }, [frameCount]);
+  }, [frameCount, applyRadarStep]);
 
   // Clamp animationStep when frames change; start the preload delay when a new
   // frame list arrives so the browser has time to fetch tiles before animation starts.
@@ -687,7 +738,8 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
     if (frameCount === 0) return;
 
     // Reset to step 0 on new frame list.
-    setAnimationStep(0);
+    animationStepRef.current = 0;
+    setDisplayFrameIndex(0);
 
     // Reset tile-load tracking for the new frame list.
     loadedLayersRef.current = new Set<number>();
@@ -727,7 +779,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
       return;
     }
 
-    setSatelliteAnimationStep(0);
+    satelliteStepRef.current = 0;
     setSatelliteReady(false);
     loadedSatLayersRef.current = new Set<number>();
     setSatelliteLoadedCount(0);
@@ -744,6 +796,57 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
     };
   }, [showSatellite, satelliteFrameCount]);
 
+  // Build stable event-handler objects synchronously during render (not in
+  // useEffect) so they're available on the FIRST render when TileLayer
+  // components mount. Ref mutation during render is safe — no side effects.
+  if (radarHandlersRef.current.size !== frameCount) {
+    radarHandlersRef.current.clear();
+    for (let fi = 0; fi < frameCount; fi++) {
+      radarHandlersRef.current.set(fi, {
+        loading: () => {
+          loadedLayersRef.current.delete(fi);
+          setRadarLoadedCount(loadedLayersRef.current.size);
+        },
+        load: () => {
+          loadedLayersRef.current.add(fi);
+          setRadarLoadedCount(loadedLayersRef.current.size);
+          if (loadedLayersRef.current.size >= Math.min(frameCount, 2 * LAYER_BUFFER + 1)) {
+            if (preloadTimerRef.current !== null) {
+              clearTimeout(preloadTimerRef.current);
+              preloadTimerRef.current = null;
+            }
+            if (!prefersReducedMotion) {
+              setIsPlaying(true);
+            }
+          }
+        },
+      });
+    }
+  }
+  if (satHandlersRef.current.size !== satelliteFrameCount) {
+    satHandlersRef.current.clear();
+    for (let fi = 0; fi < satelliteFrameCount; fi++) {
+      satHandlersRef.current.set(fi, {
+        loading: () => {
+          loadedSatLayersRef.current.delete(fi);
+          setSatelliteLoadedCount(loadedSatLayersRef.current.size);
+          setSatelliteReady(false);
+        },
+        load: () => {
+          loadedSatLayersRef.current.add(fi);
+          setSatelliteLoadedCount(loadedSatLayersRef.current.size);
+          if (loadedSatLayersRef.current.size >= Math.min(satelliteFrameCount, 2 * LAYER_BUFFER + 1)) {
+            if (satellitePreloadTimerRef.current !== null) {
+              clearTimeout(satellitePreloadTimerRef.current);
+              satellitePreloadTimerRef.current = null;
+            }
+            setSatelliteReady(true);
+          }
+        },
+      });
+    }
+  }
+
   // Pause animation when idle.
   useEffect(() => {
     if (isIdle) {
@@ -751,23 +854,25 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
     }
   }, [isIdle]);
 
-  // Unified animation loop — a single requestAnimationFrame drives both radar
-  // and satellite animations.  Using one loop instead of two setIntervals
-  // eliminates beat-frequency jank (two timers whose ticks drift in and out
-  // of phase cause fast-slow-fast re-render bursts).  State updates that land
-  // in the same rAF callback are batched by React 18 into one render.
-  const rafRef = useRef<number | null>(null);
-  const radarAccRef = useRef(0);
-  const satAccRef = useRef(0);
+  // Self-scheduling setTimeout animation loop.  Unlike setInterval, each
+  // tick schedules the next AFTER the current one's work completes.  This
+  // prevents callback queuing during browser busy periods (compositor work,
+  // GC pauses) which causes the fast-slow-fast cadence with setInterval.
+  // Pattern matches the RainViewer reference implementation.
+  //
+  // Opacity changes are imperative (Leaflet setOpacity on cached layer refs)
+  // so the tick callback is lightweight — no React re-render per sub-step.
+  // displayFrameIndex state updates only on keyframe boundaries.
+  const animTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const radarActive = isPlaying && frameCount > 1;
     const satActive = isPlaying && satelliteReady && showSatellite && satelliteFrameCount > 1;
 
     if (!radarActive && !satActive) {
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
+      if (animTimerRef.current !== null) {
+        clearTimeout(animTimerRef.current);
+        animTimerRef.current = null;
       }
       return;
     }
@@ -776,48 +881,37 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
       ? Math.max(30, Math.round(
           Math.max(50, Math.floor(TARGET_LOOP_MS / (satelliteFrameCount * SUBSTEPS)))
           / speedMultiplier))
-      : 0;
+      : Infinity;
 
     const radarTotal = frameCount * SUBSTEPS;
     const satTotal = satelliteFrameCount * SUBSTEPS;
 
-    radarAccRef.current = 0;
-    satAccRef.current = 0;
-    let lastTime = performance.now();
+    let satAcc = 0;
 
-    function animate(now: number) {
-      const dt = now - lastTime;
-      lastTime = now;
-
+    function tick() {
       if (radarActive) {
-        radarAccRef.current += dt;
-        if (radarAccRef.current >= effectiveTickMs) {
-          const steps = Math.floor(radarAccRef.current / effectiveTickMs);
-          radarAccRef.current -= steps * effectiveTickMs;
-          setAnimationStep((s) => (s + steps) % radarTotal);
-        }
+        applyRadarStep((animationStepRef.current + 1) % radarTotal);
       }
 
       if (satActive) {
-        satAccRef.current += dt;
-        if (satAccRef.current >= satTickMs) {
-          const steps = Math.floor(satAccRef.current / satTickMs);
-          satAccRef.current -= steps * satTickMs;
-          setSatelliteAnimationStep((s) => (s + steps) % satTotal);
+        satAcc += effectiveTickMs;
+        if (satAcc >= satTickMs) {
+          satAcc -= satTickMs;
+          applySatStep((satelliteStepRef.current + 1) % satTotal);
         }
       }
 
-      rafRef.current = requestAnimationFrame(animate);
+      animTimerRef.current = setTimeout(tick, effectiveTickMs);
     }
 
-    rafRef.current = requestAnimationFrame(animate);
+    animTimerRef.current = setTimeout(tick, effectiveTickMs);
     return () => {
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
+      if (animTimerRef.current !== null) {
+        clearTimeout(animTimerRef.current);
+        animTimerRef.current = null;
       }
     };
-  }, [isPlaying, frameCount, effectiveTickMs, satelliteReady, showSatellite, satelliteFrameCount, speedMultiplier]);
+  }, [isPlaying, frameCount, effectiveTickMs, satelliteReady, showSatellite, satelliteFrameCount, speedMultiplier, applyRadarStep, applySatStep]);
 
   // Live refresh — re-fetch frame metadata at the provider's configured interval.
   // ADR-075: refreshIntervalMs derives from radarCapability?.refreshInterval (provider-
@@ -847,8 +941,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [providerId, refetch]);
 
-  // Derive the display frame index from animationStep for timestamp/counter display.
-  const displayFrameIndex = frameCount > 0 ? Math.floor(animationStep / SUBSTEPS) % frameCount : 0;
+  // displayFrameIndex is now state, updated by applyRadarStep on keyframe boundaries.
   const currentFrame: RadarFrame | null = frames[displayFrameIndex] ?? null;
 
   // Index at which nowcast frames start (used to label the slider in expanded mode).
@@ -946,7 +1039,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
           and caches every frame's tiles on first load. Cross-fade between frames
           is achieved by computing per-frame opacity via getFrameOpacity — frames
           near the current animationStep are blended together, all others get
-          0.001 (invisible but kept alive in Leaflet so tiles stay cached).
+          0 (invisible — tiles stay cached in Leaflet regardless of opacity).
           Advancing the animation only changes `animationStep` — no URL swaps, no
           tile re-fetches after the initial load, resulting in smooth looping.
 
@@ -986,78 +1079,53 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
           </CircleMarker>
           {/* Satellite tile layers — rendered BELOW radar for correct z-order.
               During preload (!satelliteReady), first frame shows at full opacity
-              while all others load at 0.001.  Once ready, cross-fade animation
+              while all others load at 0.  Once ready, cross-fade animation
               starts using the shared play/pause state. */}
           {showSatellite && caddyPrefix && satelliteFrameCount > 0 && satelliteFrames.map((frame, i) => {
             if (!frame.path) return null;
+            // Only mount layers within the active window to limit DOM/compositor load.
+            const satDisplayIdx = satelliteFrameCount > 0
+              ? Math.floor(satelliteStepRef.current / SUBSTEPS) % satelliteFrameCount
+              : 0;
+            const satDist = Math.min(Math.abs(i - satDisplayIdx), satelliteFrameCount - Math.abs(i - satDisplayIdx));
+            if (isPlaying && satDist > LAYER_BUFFER) return null;
             const satUrl = `${caddyPrefix}${frame.path}/${RAINVIEWER_TILE_SIZE}/{z}/{x}/{y}/0/0_0.webp`;
-            const satFrameIndex = i;
-            const satOpacity = satelliteReady
-              ? Math.max(getFrameOpacity(i, satelliteAnimationStep, satelliteFrameCount, effectiveMaxOpacity), 0.001)
-              : (i === 0 ? effectiveMaxOpacity : 0.001);
+            const satInitialOpacity = i === 0 ? effectiveMaxOpacity : 0;
             return (
               <TileLayer
                 key={`sat-${frame.time}`}
                 url={satUrl}
-                opacity={satOpacity}
+                opacity={satInitialOpacity}
                 zIndex={100}
                 tileSize={512}
                 zoomOffset={-1}
-                eventHandlers={{
-                  loading: () => {
-                    loadedSatLayersRef.current.delete(satFrameIndex);
-                    setSatelliteLoadedCount(loadedSatLayersRef.current.size);
-                    setSatelliteReady(false);
-                  },
-                  load: () => {
-                    loadedSatLayersRef.current.add(satFrameIndex);
-                    setSatelliteLoadedCount(loadedSatLayersRef.current.size);
-                    if (loadedSatLayersRef.current.size >= satelliteFrameCount) {
-                      if (satellitePreloadTimerRef.current !== null) {
-                        clearTimeout(satellitePreloadTimerRef.current);
-                        satellitePreloadTimerRef.current = null;
-                      }
-                      setSatelliteReady(true);
-                    }
-                  },
+                ref={(layer: L.TileLayer | null) => {
+                  if (layer) satLayerRefs.current.set(i, layer);
+                  else satLayerRefs.current.delete(i);
                 }}
+                eventHandlers={satHandlersRef.current.get(i)}
               />
             );
           })}
           {showRadar !== false && radarCapability !== null && frames.map((frame, i) => {
-            // Capture the non-null capability so TypeScript can confirm it inside
-            // the map callback closure.
+            // Only mount layers within the active window during playback.
+            const radarDist = Math.min(Math.abs(i - displayFrameIndex), frameCount - Math.abs(i - displayFrameIndex));
+            if (isPlaying && radarDist > LAYER_BUFFER) return null;
             const cap = radarCapability;
             const url = buildTileUrl(frame, cap, tileHost, effectiveColorScheme);
             if (!url) return null;
-            // Capture the loop index in a stable const for use inside closures.
-            const frameIndex = i;
             return (
               <TileLayer
                 key={frame.time}
                 url={url}
-                opacity={Math.max(getFrameOpacity(i, animationStep, frameCount, effectiveMaxOpacity), 0.001)}
+                opacity={i === 0 ? effectiveMaxOpacity : 0}
                 zIndex={200}
                 attribution={i === 0 ? (radarFrameList?.attribution ?? undefined) : undefined}
-                eventHandlers={{
-                  loading: () => {
-                    loadedLayersRef.current.delete(frameIndex);
-                    setRadarLoadedCount(loadedLayersRef.current.size);
-                  },
-                  load: () => {
-                    loadedLayersRef.current.add(frameIndex);
-                    setRadarLoadedCount(loadedLayersRef.current.size);
-                    if (loadedLayersRef.current.size >= frames.length) {
-                      if (preloadTimerRef.current !== null) {
-                        clearTimeout(preloadTimerRef.current);
-                        preloadTimerRef.current = null;
-                      }
-                      if (!prefersReducedMotion) {
-                        setIsPlaying(true);
-                      }
-                    }
-                  },
+                ref={(layer: L.TileLayer | null) => {
+                  if (layer) radarLayerRefs.current.set(i, layer);
+                  else radarLayerRefs.current.delete(i);
                 }}
+                eventHandlers={radarHandlersRef.current.get(i)}
               />
             );
           })}
@@ -1188,7 +1256,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
               frameCount={frameCount}
               displayFrameIndex={displayFrameIndex}
               nowcastStartIndex={nowcastStartIndex}
-              onSeek={(idx) => setAnimationStep(idx * SUBSTEPS)}
+              onSeek={(idx) => applyRadarStep(idx * SUBSTEPS)}
               ariaLabel={t('timeSlider')}
             />
 
@@ -1278,7 +1346,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
               frameCount={frameCount}
               displayFrameIndex={displayFrameIndex}
               nowcastStartIndex={nowcastStartIndex}
-              onSeek={(idx) => setAnimationStep(idx * SUBSTEPS)}
+              onSeek={(idx) => applyRadarStep(idx * SUBSTEPS)}
               ariaLabel={t('timeSlider')}
             />
 
