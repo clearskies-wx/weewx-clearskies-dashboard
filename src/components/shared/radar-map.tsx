@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import L from 'leaflet';
 import { MapContainer, TileLayer, CircleMarker, Tooltip, GeoJSON, useMap } from 'react-leaflet';
 import { Play, Pause, CaretLeft, CaretRight } from '@phosphor-icons/react';
+import { leafletLayer, LineSymbolizer } from 'protomaps-leaflet';
+import type { PaintRule } from 'protomaps-leaflet';
 import { useCapabilities, useRadarFrames } from '../../hooks/useWeatherData';
 import type { CapabilityDeclaration, RadarFrame } from '../../api/types';
 import { useTheme } from '../../lib/theme-provider';
@@ -361,6 +363,87 @@ function MapBoundsEnforcer({ bounds }: { bounds?: [[number, number], [number, nu
       map.setMinZoom(0);
     }
   }, [map, bounds]);
+  return null;
+}
+
+/**
+ * GeoFeaturesLayer — adds a protomaps-leaflet Canvas vector tile layer for geographic
+ * context (boundaries, roads, water) when satellite view is active.
+ *
+ * Self-contained: checks /api/v1/geographic-features/status on mount. If available is
+ * false (PMTiles file not yet downloaded), does nothing — no error, no console warning.
+ * Renders null (no DOM output); the layer is added imperatively to the Leaflet map.
+ * Sits below alert polygons (zIndex 350, alerts use Leaflet default SVG overlay above).
+ */
+const GEO_FEATURES_PAINT_RULES: PaintRule[] = [
+  {
+    dataLayer: 'boundaries',
+    symbolizer: new LineSymbolizer({
+      color: '#ffffff',
+      width: 1.5,
+      opacity: 0.7,
+    }),
+  },
+  {
+    dataLayer: 'roads',
+    symbolizer: new LineSymbolizer({
+      color: '#999999',
+      width: 1,
+      opacity: 0.5,
+    }),
+    filter: (_zoom: number, feature: { props?: Record<string, unknown> }) => {
+      const kind = (feature.props as Record<string, unknown> | undefined)?.['pmap:kind'];
+      return kind === 'highway' || kind === 'major_road';
+    },
+  },
+  {
+    dataLayer: 'water',
+    symbolizer: new LineSymbolizer({
+      color: '#4a90d9',
+      width: 1,
+      opacity: 0.6,
+    }),
+  },
+];
+
+function GeoFeaturesLayer() {
+  const map = useMap();
+
+  useEffect(() => {
+    let cancelled = false;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let layer: any = null;
+
+    async function init() {
+      try {
+        const resp = await fetch('/api/v1/geographic-features/status');
+        if (!resp.ok || cancelled) return;
+        const status = await resp.json() as { available?: boolean };
+        if (!status.available || cancelled) return;
+
+        layer = leafletLayer({
+          url: '/api/v1/geographic-features/tiles',
+          paintRules: GEO_FEATURES_PAINT_RULES,
+          labelRules: [],
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors (ODbL)',
+          zIndex: 350,
+        });
+        layer.addTo(map);
+      } catch {
+        // Geographic features are non-critical — never surface errors to users.
+      }
+    }
+
+    void init();
+
+    return () => {
+      cancelled = true;
+      if (layer !== null) {
+        map.removeLayer(layer);
+      }
+    };
+  }, [map]);
+
   return null;
 }
 
@@ -895,6 +978,10 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
               zIndex={300}
             />
           )}
+          {/* Geographic features vector tile overlay (ADR-078) — boundaries, roads, water.
+              Rendered below alert polygons and wind arrows. Only active in satellite view
+              (basemap already includes roads/boundaries; no overlay needed). */}
+          {satelliteActive && <GeoFeaturesLayer />}
           {/* Wind arrow tile overlay (T4.7) — LibreWxR only; best-effort */}
           {showWind && caddyPrefix && (
             <TileLayer
