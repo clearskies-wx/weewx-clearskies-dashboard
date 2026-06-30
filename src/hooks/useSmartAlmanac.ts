@@ -1,17 +1,21 @@
-// useSmartAlmanac.ts — Wraps useAlmanac with smart period switching.
+// useSmartAlmanac.ts — Wraps useAlmanac with transit-aware period switching.
 //
-// Shows the NEXT rise/set period for each body. The 2-hour buffer after
-// set keeps the previous period visible briefly so it doesn't vanish
-// the instant the body sets.
+// The API returns rise/set events per calendar date, but those events may
+// belong to DIFFERENT transits.  Example for Jun 30:
+//   moonset  6:04 AM  — end of yesterday's transit
+//   moonrise 9:06 PM  — start of tonight's transit
 //
-// Key insight: today's API data may already contain the next period.
-// If moonrise > moonset in today's data, the moon set this morning and
-// rises tonight — today's data IS the next period. Only fetch tomorrow
-// when today's data doesn't have a future rise after the set.
+// This hook detects in-progress transits that span date boundaries and
+// fetches the adjacent day's data to reconstruct a valid transit pair
+// (a rise and the NEXT set that follows it).  The tile card and arc
+// visualization receive a coherent snapshot where rise → set always
+// represents a single passage across the sky.
+//
+// Rule: body data does not change until the body sets.
 
 import { useMemo } from 'react';
 import { useAlmanac } from './useWeatherData';
-import { getStationDate, addDays, stationTimeMs } from '../utils/station-clock';
+import { addDays, stationTimeMs } from '../utils/station-clock';
 import type { AlmanacSnapshot } from '../api/types';
 
 interface SmartAlmanacResult {
@@ -33,54 +37,106 @@ export function useSmartAlmanac(): SmartAlmanacResult {
   const today = useAlmanac();
   const stationClock = today.stationClock;
 
-  // Use station-local time for rise/set comparisons (ADR-075).
-  // Falls back to Date.now() only on initial load before stationClock arrives.
   const now = stationClock ? stationTimeMs(stationClock) : Date.now();
 
-  // --- Sun: need tomorrow only if past sunset + 2hr ---
+  const todayDate = stationClock?.date ?? '';
+
+  const yesterdayStr = useMemo(
+    () => (todayDate ? addDays(todayDate, -1) : undefined),
+    [todayDate],
+  );
+  const tomorrowStr = useMemo(
+    () => (todayDate ? addDays(todayDate, 1) : undefined),
+    [todayDate],
+  );
+
+  // --- Sun timestamps ---
+  const sunRiseMs = isoMs(today.data?.sun.rise ?? null);
   const sunSetMs = isoMs(today.data?.sun.set ?? null);
-  const sunNeedsTomorrow = sunSetMs !== null && now > sunSetMs + TWO_HOURS_MS;
 
-  // --- Moon: need tomorrow only if past moonset + 2hr AND today's data
-  // doesn't already contain the next rise (rise > set means tonight's
-  // rise is in today's data — don't fetch tomorrow) ---
-  const moonSetMs = isoMs(today.data?.moon.set ?? null);
+  // --- Moon timestamps ---
   const moonRiseMs = isoMs(today.data?.moon.rise ?? null);
-  const todayHasNextMoonRise = moonRiseMs !== null && moonSetMs !== null && moonRiseMs > moonSetMs;
-  const moonNeedsTomorrow = moonSetMs !== null
-    && now > moonSetMs + TWO_HOURS_MS
-    && !todayHasNextMoonRise;
+  const moonSetMs = isoMs(today.data?.moon.set ?? null);
 
-  const needsTomorrow = sunNeedsTomorrow || moonNeedsTomorrow;
+  // When rise > set in today's data, today has two events from different
+  // transits: set = end of yesterday's transit (morning), rise = start of
+  // tonight's transit (evening).
+  const moonCrossesDates =
+    moonRiseMs !== null && moonSetMs !== null && moonRiseMs > moonSetMs;
 
-  // Compute tomorrow's date string from the station clock (ADR-075).
-  // Undefined until stationClock is available; needsTomorrow is false
-  // in that case so useAlmanac will not be called with undefined.
-  const tomorrowStr = useMemo(() => {
-    if (!today.data || !stationClock) return undefined;
-    return addDays(getStationDate({ stationClock }), 1);
-  }, [today.data, stationClock]);
+  // Moon is still up from yesterday's rise (set hasn't happened yet).
+  // Need yesterday's data to get the correct rise time.
+  const moonInYesterdayTransit = moonCrossesDates && now < moonSetMs!;
 
+  // Moon has set this morning.  Tonight's transit starts at today's rise
+  // and ends at tomorrow's set.  Need tomorrow for the set time.
+  const moonNeedsTomorrowForSet =
+    moonCrossesDates && now >= moonSetMs!;
+
+  // Standard case: rise < set on same day (rare for moon, common for sun).
+  // After set, switch to tomorrow's full data.
+  const moonPastSimpleSet =
+    !moonCrossesDates &&
+    moonSetMs !== null &&
+    now > moonSetMs;
+
+  // --- Sun: after sunset + 2h buffer, show tomorrow's sun data ---
+  // The buffer keeps today's data visible briefly so the card doesn't
+  // snap to tomorrow the instant the sun dips below the horizon.
+  const sunNeedsTomorrow =
+    sunSetMs !== null && now > sunSetMs + TWO_HOURS_MS;
+
+  const needsYesterday = moonInYesterdayTransit;
+  const needsTomorrow =
+    sunNeedsTomorrow || moonNeedsTomorrowForSet || moonPastSimpleSet;
+
+  // Hooks are always called (React rules); pass undefined to get today's
+  // default data when the adjacent day isn't needed (harmless duplicate).
+  const yesterday = useAlmanac(needsYesterday ? yesterdayStr : undefined);
   const tomorrow = useAlmanac(needsTomorrow ? tomorrowStr : undefined);
 
   const merged = useMemo<AlmanacSnapshot | null>(() => {
     if (!today.data) return null;
 
-    const sunData = (sunNeedsTomorrow && tomorrow.data)
-      ? tomorrow.data.sun
-      : today.data.sun;
+    // --- Sun ---
+    const sunData =
+      sunNeedsTomorrow && tomorrow.data
+        ? tomorrow.data.sun
+        : today.data.sun;
 
-    const moonData = (moonNeedsTomorrow && tomorrow.data)
-      ? tomorrow.data.moon
-      : today.data.moon;
+    // --- Moon: construct a valid transit pair ---
+    let moonData = today.data.moon;
+
+    if (moonInYesterdayTransit && yesterday.data) {
+      // Active transit from yesterday: yesterday's rise + today's set.
+      // Keep today's phase/illumination (they're "now" values).
+      moonData = { ...today.data.moon, rise: yesterday.data.moon.rise };
+    } else if (moonNeedsTomorrowForSet && tomorrow.data) {
+      // Tonight's transit: today's rise + tomorrow's set.
+      moonData = { ...today.data.moon, set: tomorrow.data.moon.set };
+    } else if (moonPastSimpleSet && tomorrow.data) {
+      // Past simple same-day set: switch to tomorrow entirely.
+      moonData = tomorrow.data.moon;
+    }
 
     return { date: today.data.date, sun: sunData, moon: moonData };
-  }, [today.data, tomorrow.data, sunNeedsTomorrow, moonNeedsTomorrow]);
+  }, [
+    today.data,
+    yesterday.data,
+    tomorrow.data,
+    sunNeedsTomorrow,
+    moonInYesterdayTransit,
+    moonNeedsTomorrowForSet,
+    moonPastSimpleSet,
+  ]);
 
   return {
     data: merged,
-    loading: today.loading || (needsTomorrow && tomorrow.loading),
-    error: today.error ?? tomorrow.error,
+    loading:
+      today.loading ||
+      (needsYesterday && yesterday.loading) ||
+      (needsTomorrow && tomorrow.loading),
+    error: today.error ?? yesterday.error ?? tomorrow.error,
     refetch: today.refetch,
   };
 }

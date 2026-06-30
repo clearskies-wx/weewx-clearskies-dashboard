@@ -307,12 +307,16 @@ function ArcPanel({ almanac, positions, moonNames, tz }: ArcPanelProps) {
   // Sun arc progress (using pinned values)
   const sunPct = arcProgress(sunRiseRef.current, sunSetRef.current, nowMs);
   const sunMarker =
-    sunPct !== null ? arcPoint(sunPct, CX, CY, SUN_RX, SUN_RY) : null;
+    sunPct !== null && sunPct >= 0 && sunPct <= 1
+      ? arcPoint(sunPct, CX, CY, SUN_RX, SUN_RY)
+      : null;
 
   // Moon arc progress (using pinned values)
   const moonPct = arcProgress(moonRiseRef.current, moonSetRef.current, nowMs);
   const moonMarker =
-    moonPct !== null ? arcPoint(moonPct, CX, CY, MOON_RX, MOON_RY) : null;
+    moonPct !== null && moonPct >= 0 && moonPct <= 1
+      ? arcPoint(moonPct, CX, CY, MOON_RX, MOON_RY)
+      : null;
 
   // Moon phase
   const illumination = almanac.moon.illuminationPercent;
@@ -320,11 +324,12 @@ function ArcPanel({ almanac, positions, moonNames, tz }: ArcPanelProps) {
   const illumText =
     illumination !== null ? `${Math.round(illumination)}%` : '—';
 
-  // Compact time labels for arc endpoints and rise/set labels
-  const sunriseText = fmtCompact(almanac.sun.rise, tz);
-  const sunsetText = fmtCompact(almanac.sun.set, tz);
-  const moonriseText = fmtCompact(almanac.moon.rise, tz);
-  const moonsetText = fmtCompact(almanac.moon.set, tz);
+  // Arc labels use PINNED values so they match the arc being drawn,
+  // not the raw API values which may be from a different transit.
+  const sunriseText = fmtCompact(sunRiseRef.current, tz);
+  const sunsetText = fmtCompact(sunSetRef.current, tz);
+  const moonriseText = fmtCompact(moonRiseRef.current, tz);
+  const moonsetText = fmtCompact(moonSetRef.current, tz);
 
   // Sun/moon altitude from live positions (polled every 60s), not static daily snapshot
   const sunAlt = positions?.sun.altitude ?? null;

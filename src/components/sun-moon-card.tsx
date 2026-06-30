@@ -26,7 +26,7 @@
 // Units: zero unit knowledge in dashboard (ADR-042).
 // i18n: 'now' namespace for labels (ADR-021).
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AlmanacSnapshot } from '../api/types';
 import { MoonPhaseG } from './moon-phase-icon';
@@ -187,35 +187,22 @@ function ArcVisualization({
     return () => clearInterval(id);
   }, []);
 
-  // Pin rise/set values during an active transit so a data refresh across a
-  // date boundary cannot yank the arc mid-cycle.  New values are accepted
-  // only when the body is NOT between rise and set (pct outside 0-1).
-  const sunRiseRef = useRef(almanac.sun.rise);
-  const sunSetRef = useRef(almanac.sun.set);
-  const moonRiseRef = useRef(almanac.moon.rise);
-  const moonSetRef = useRef(almanac.moon.set);
+  // useSmartAlmanac already returns valid transit pairs (rise → set for
+  // the same passage), so no ref-based pinning is needed here.
 
-  const sunPinPct = arcProgress(sunRiseRef.current, sunSetRef.current, nowMs);
-  if (sunPinPct === null || sunPinPct < 0 || sunPinPct > 1) {
-    sunRiseRef.current = almanac.sun.rise;
-    sunSetRef.current = almanac.sun.set;
-  }
-
-  const moonPinPct = arcProgress(moonRiseRef.current, moonSetRef.current, nowMs);
-  if (moonPinPct === null || moonPinPct < 0 || moonPinPct > 1) {
-    moonRiseRef.current = almanac.moon.rise;
-    moonSetRef.current = almanac.moon.set;
-  }
-
-  // Sun arc progress (using pinned values)
-  const sunPct = arcProgress(sunRiseRef.current, sunSetRef.current, nowMs);
+  // Sun arc progress
+  const sunPct = arcProgress(almanac.sun.rise, almanac.sun.set, nowMs);
   const sunMarker =
-    sunPct !== null ? arcPoint(sunPct, CX, CY, SUN_RX, SUN_RY) : null;
+    sunPct !== null && sunPct >= 0 && sunPct <= 1
+      ? arcPoint(sunPct, CX, CY, SUN_RX, SUN_RY)
+      : null;
 
-  // Moon arc progress (using pinned values)
-  const moonPct = arcProgress(moonRiseRef.current, moonSetRef.current, nowMs);
+  // Moon arc progress
+  const moonPct = arcProgress(almanac.moon.rise, almanac.moon.set, nowMs);
   const moonMarker =
-    moonPct !== null ? arcPoint(moonPct, CX, CY, MOON_RX, MOON_RY) : null;
+    moonPct !== null && moonPct >= 0 && moonPct <= 1
+      ? arcPoint(moonPct, CX, CY, MOON_RX, MOON_RY)
+      : null;
 
   const illumination = almanac.moon.illuminationPercent;
   const phaseWords = formatPhaseName(almanac.moon.phaseName).split(' ');
