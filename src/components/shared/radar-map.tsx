@@ -718,21 +718,15 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
   const effectiveTickMs = Math.max(30, Math.round(tickMs / speedMultiplier));
 
   // Apply the current animationStepRef to cached Leaflet radar layers.
-  // Inactive layers use visibility:hidden — no layout recalculation (unlike
-  // display:none), no DOM mount/unmount churn. Leaflet 1.9.4 has no
-  // will-change on tile images (removed in v1.8.0), so keeping all layers
-  // permanently mounted does not cause GPU compositor overload.
+  // Uses only Leaflet's setOpacity() — no direct container style manipulation.
+  // setOpacity(0) is cheap (Chromium skips compositing opacity:0 layers) and
+  // keeps tiles in cache. Per RainViewer's reference implementation, opacity
+  // is the correct way to show/hide pre-loaded tile layers.
   const applyRadarStep = useCallback((step: number) => {
     animationStepRef.current = step;
     radarLayerRefs.current.forEach((layer, i) => {
       const next = getFrameOpacity(i, step, frameCount, effectiveMaxOpacity);
-      const container = (layer as any).getContainer?.() as HTMLElement | undefined;
-      if (next > 0) {
-        if (container?.style.visibility === 'hidden') container.style.visibility = 'visible';
-        layer.setOpacity(next);
-      } else {
-        if (container && container.style.visibility !== 'hidden') container.style.visibility = 'hidden';
-      }
+      layer.setOpacity(next);
     });
     const frame = frameCount > 0 ? Math.floor(step / SUBSTEPS) % frameCount : 0;
     setDisplayFrameIndex((prev) => (prev !== frame ? frame : prev));
@@ -742,13 +736,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
     satelliteStepRef.current = step;
     satLayerRefs.current.forEach((layer, i) => {
       const next = getFrameOpacity(i, step, satelliteFrameCount, effectiveMaxOpacity);
-      const container = (layer as any).getContainer?.() as HTMLElement | undefined;
-      if (next > 0) {
-        if (container?.style.visibility === 'hidden') container.style.visibility = 'visible';
-        layer.setOpacity(next);
-      } else {
-        if (container && container.style.visibility !== 'hidden') container.style.visibility = 'hidden';
-      }
+      layer.setOpacity(next);
     });
   }, [satelliteFrameCount, effectiveMaxOpacity]);
 
@@ -1133,13 +1121,13 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
         )}
 
         {/*
-          All frame TileLayers remain mounted permanently — inactive layers use
-          visibility:hidden (no mount/unmount churn, no display:none layout cost).
-          Tile prefetching via new Image() populates the browser HTTP cache before
-          animation starts. Cross-fade between frames is achieved by computing
-          per-frame opacity via getFrameOpacity. Leaflet 1.9.4 has no will-change
-          on tile images (removed in v1.8.0 PR #7872), so keeping all layers
-          mounted does not cause GPU compositor overload.
+          All frame TileLayers remain mounted permanently. Inactive layers are
+          hidden via setOpacity(0) — Leaflet's native method, keeps tiles cached,
+          costs nothing on the GPU compositor (Chromium skips opacity:0 layers).
+          No direct container style manipulation (display/visibility) — that
+          fights Leaflet's internal _updateOpacity fade-in animation and causes
+          brightness pulsing. Tile prefetching via new Image() populates the
+          browser HTTP cache before animation starts.
         */}
         <MapContainer
           center={center}
