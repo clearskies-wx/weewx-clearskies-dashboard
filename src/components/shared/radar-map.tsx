@@ -147,27 +147,11 @@ function getFrameOpacity(
   totalFrames: number,
   effectiveMaxOpacity: number = MAX_OPACITY,
 ): number {
+  // Hard-cut: only the current frame is visible. No cross-fade — two
+  // overlapping semi-transparent radar layers create a double-image flash.
+  // Per RainViewer reference: old frame → 0, new frame → target opacity.
   const primaryFrame = Math.floor(step / SUBSTEPS) % totalFrames;
-  const subStep = step % SUBSTEPS;
-  const nextFrame = (primaryFrame + 1) % totalFrames;
-
-  if (subStep === 0) {
-    return frameIndex === primaryFrame ? effectiveMaxOpacity : 0;
-  }
-
-  // Constant-composite cross-fade: compute opacities so two overlapping
-  // semi-transparent layers composite to exactly effectiveMaxOpacity throughout.
-  // Formula: composite = 1 - (1-a)(1-b) = effectiveMaxOpacity
-  // Solved: a = 1 - transparency^(1-t), b = 1 - transparency^t
-  const t = subStep / SUBSTEPS;
-  const transparency = 1 - effectiveMaxOpacity;
-  if (frameIndex === primaryFrame) {
-    return 1 - Math.pow(transparency, 1 - t);
-  }
-  if (frameIndex === nextFrame) {
-    return 1 - Math.pow(transparency, t);
-  }
-  return 0;
+  return frameIndex === primaryFrame ? effectiveMaxOpacity : 0;
 }
 
 // Precipitation color stops per color scheme ID.
