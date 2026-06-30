@@ -304,19 +304,17 @@ function ArcPanel({ almanac, positions, moonNames, tz }: ArcPanelProps) {
     moonSetRef.current = almanac.moon.set;
   }
 
-  // Sun arc progress (using pinned values)
+  // Sun arc progress (using pinned values).
+  // arcPoint clamps to [0,1] so the marker stays at the rise/set endpoint
+  // when the body is below the horizon — intentional on this detail card.
   const sunPct = arcProgress(sunRiseRef.current, sunSetRef.current, nowMs);
   const sunMarker =
-    sunPct !== null && sunPct >= 0 && sunPct <= 1
-      ? arcPoint(sunPct, CX, CY, SUN_RX, SUN_RY)
-      : null;
+    sunPct !== null ? arcPoint(sunPct, CX, CY, SUN_RX, SUN_RY) : null;
 
   // Moon arc progress (using pinned values)
   const moonPct = arcProgress(moonRiseRef.current, moonSetRef.current, nowMs);
   const moonMarker =
-    moonPct !== null && moonPct >= 0 && moonPct <= 1
-      ? arcPoint(moonPct, CX, CY, MOON_RX, MOON_RY)
-      : null;
+    moonPct !== null ? arcPoint(moonPct, CX, CY, MOON_RX, MOON_RY) : null;
 
   // Moon phase
   const illumination = almanac.moon.illuminationPercent;
