@@ -378,6 +378,14 @@ function MapBoundsEnforcer({ bounds }: { bounds?: [[number, number], [number, nu
  */
 const GEO_FEATURES_PAINT_RULES: PaintRule[] = [
   {
+    dataLayer: 'earth',
+    symbolizer: new LineSymbolizer({
+      color: '#ffffff',
+      width: 1.5,
+      opacity: 0.7,
+    }),
+  },
+  {
     dataLayer: 'boundaries',
     symbolizer: new LineSymbolizer({
       color: '#ffffff',
@@ -404,6 +412,9 @@ const GEO_FEATURES_PAINT_RULES: PaintRule[] = [
       width: 1,
       opacity: 0.6,
     }),
+    filter: (_zoom: number, feature: { props: Record<string, unknown> }) => {
+      return feature.props['kind'] !== 'ocean';
+    },
   },
 ];
 
