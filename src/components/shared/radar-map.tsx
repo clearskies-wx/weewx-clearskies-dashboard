@@ -429,9 +429,11 @@ function GeoFeaturesLayer() {
           pane.style.zIndex = '350';
         }
 
+        // PMTiles v4 from our dependency vs v3 bundled in protomaps-leaflet —
+        // runtime-compatible but types diverge. Cast to satisfy both.
         const pmtiles = new PMTiles('/api/v1/geographic-features/tiles');
         layer = leafletLayer({
-          url: pmtiles,
+          url: pmtiles as any,  // eslint-disable-line @typescript-eslint/no-explicit-any
           paintRules: GEO_FEATURES_PAINT_RULES,
           labelRules: [],
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors (ODbL)',
