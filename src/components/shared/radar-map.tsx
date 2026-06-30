@@ -364,6 +364,34 @@ const GEO_WATER_STYLE: PathOptions = {
   fill: false,
 };
 
+const GEO_STYLE_MAP: Record<string, PathOptions> = {
+  boundary: GEO_BOUNDARY_STYLE,
+  road: GEO_ROAD_STYLE,
+  water: GEO_WATER_STYLE,
+};
+
+function GeoFeaturesLayer({ data }: { data: FeatureCollection }) {
+  const map = useMap();
+  const layerRef = useRef<L.GeoJSON | null>(null);
+
+  useEffect(() => {
+    const renderer = L.canvas({ padding: 1.0 });
+    const layer = L.geoJSON(data, {
+      renderer,
+      interactive: false,
+      style: (feature) => GEO_STYLE_MAP[feature?.properties?.type] ?? GEO_BOUNDARY_STYLE,
+    } as L.GeoJSONOptions);
+    layer.addTo(map);
+    layerRef.current = layer;
+    return () => {
+      map.removeLayer(layer);
+      layerRef.current = null;
+    };
+  }, [map, data]);
+
+  return null;
+}
+
 /**
  * Inner component that applies maxBounds dynamically to the Leaflet map.
  * MapContainer is an uncontrolled component — it reads props only on mount.
@@ -914,20 +942,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
               rendered as GeoJSON lines from the API (/geographic-features).
               Only visible in satellite mode; non-interactive. */}
           {satelliteActive && geoFeatures && geoFeatures.features.length > 0 && (
-            <GeoJSON
-              key={`geo-features-${geoFeatures.features.length}`}
-              data={geoFeatures}
-              style={(feature) => {
-                const featureType = feature?.properties?.type as string | undefined;
-                switch (featureType) {
-                  case 'boundary': return GEO_BOUNDARY_STYLE;
-                  case 'road': return GEO_ROAD_STYLE;
-                  case 'water': return GEO_WATER_STYLE;
-                  default: return GEO_BOUNDARY_STYLE;
-                }
-              }}
-              interactive={false}
-            />
+            <GeoFeaturesLayer data={geoFeatures} />
           )}
           {/* Labels overlay — city/state names on top of everything so they're
               always readable. Voyager labels have bolder text than Positron. */}
