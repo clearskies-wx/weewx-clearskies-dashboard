@@ -70,12 +70,10 @@ const MAX_CARD_FRAMES = 24;
 // short frame lists (e.g. 6 frames) don't blaze through in 3 seconds.
 const TARGET_LOOP_MS = 17000;
 
-// How many frames to keep mounted on each side of the current frame.
-// Only layers within this window exist in the DOM; the rest are unmounted
-// to keep compositor layer count and tile-image DOM elements low.
-// 3 = 7 layers max (current ± 3). The cross-fade needs current + next (2),
-// plus 1 buffer for preloading the frame entering the window.
-const LAYER_BUFFER = 3;
+// Number of frames that must load before auto-play begins.
+// Replaces the old LAYER_BUFFER-based threshold (LAYER_BUFFER was removed when
+// switching from display:none/mount-churn to permanent visibility:hidden layers).
+const PRELOAD_FRAME_COUNT = 7;
 
 // Idle timeout — pause animation and stop live refresh after this long
 // without any user interaction.
@@ -518,6 +516,30 @@ function GeoFeaturesLayer() {
   return null;
 }
 
+/**
+ * Compute slippy-map tile coordinates visible within the given Leaflet bounds
+ * at the given zoom level.  Used for client-side tile prefetching.
+ */
+function getTileCoords(bounds: L.LatLngBounds, zoom: number): Array<{ x: number; y: number }> {
+  const n = Math.pow(2, zoom);
+  const minX = Math.floor(((bounds.getWest() + 180) / 360) * n);
+  const maxX = Math.floor(((bounds.getEast() + 180) / 360) * n);
+  const minY = Math.floor(
+    (1 - Math.log(Math.tan(bounds.getNorth() * Math.PI / 180) + 1 / Math.cos(bounds.getNorth() * Math.PI / 180)) / Math.PI) / 2 * n,
+  );
+  const maxY = Math.floor(
+    (1 - Math.log(Math.tan(bounds.getSouth() * Math.PI / 180) + 1 / Math.cos(bounds.getSouth() * Math.PI / 180)) / Math.PI) / 2 * n,
+  );
+
+  const coords: Array<{ x: number; y: number }> = [];
+  for (let x = minX; x <= maxX; x++) {
+    for (let y = minY; y <= maxY; y++) {
+      coords.push({ x: ((x % n) + n) % n, y: Math.max(0, Math.min(n - 1, y)) });
+    }
+  }
+  return coords;
+}
+
 export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBounds, opacity, colorScheme, showAlerts, alertUrl, showWind, caddyPrefix, showSatellite, showRadar }: RadarMapProps) {
   const { t } = useTranslation('radar');
   const { resolved: resolvedTheme } = useTheme();
@@ -564,6 +586,15 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
   const satelliteFrameCount = satelliteFrames.length;
 
   const satelliteActive = showSatellite && satelliteFrameCount > 0;
+
+  // When satellite is active, exclude nowcast frames so radar and satellite
+  // have matching frame counts (both 24) for consistent animation cadence.
+  // The original `frames` variable is kept for reference; downstream code
+  // uses `activeFrames` so the satellite/radar tick rates stay in lock-step.
+  const activeFrames: RadarFrame[] = satelliteActive
+    ? frames.filter((f) => f.kind !== 'nowcast')
+    : frames;
+
   const baseTile = TILE_CONFIG[resolvedTheme];
 
   const tileHost = radarFrameList?.tileHost ?? null;
@@ -600,6 +631,10 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
   const preloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Tracks which frame indices have fully loaded all their tiles.
   const loadedLayersRef = useRef(new Set<number>());
+
+  // Ref to the Leaflet map instance, captured via MapContainer ref callback.
+  // Used for tile prefetching (getTileCoords needs the live bounds and zoom).
+  const mapRef = useRef<L.Map | null>(null);
 
   // Refs to Leaflet layer instances for imperative opacity control.
   const radarLayerRefs = useRef<Map<number, L.TileLayer>>(new Map());
@@ -668,7 +703,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
     };
   }, [showAlerts, alertUrl]);
 
-  const frameCount = frames.length;
+  const frameCount = activeFrames.length;
 
   // Resolve effective opacity and color scheme from props, falling back to defaults.
   const effectiveMaxOpacity = opacity ?? MAX_OPACITY;
@@ -683,21 +718,20 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
   const effectiveTickMs = Math.max(30, Math.round(tickMs / speedMultiplier));
 
   // Apply the current animationStepRef to cached Leaflet radar layers.
-  // Inactive layers are set to display:none so the browser's GPU compositor
-  // skips them entirely — only the 2-3 active cross-fade layers occupy
-  // compositor memory.  With 54 layers all at opacity 0, the GPU still had
-  // to manage 54 compositor layers, causing VRAM pressure, texture eviction,
-  // and the uneven frame cadence.
+  // Inactive layers use visibility:hidden — no layout recalculation (unlike
+  // display:none), no DOM mount/unmount churn. Leaflet 1.9.4 has no
+  // will-change on tile images (removed in v1.8.0), so keeping all layers
+  // permanently mounted does not cause GPU compositor overload.
   const applyRadarStep = useCallback((step: number) => {
     animationStepRef.current = step;
     radarLayerRefs.current.forEach((layer, i) => {
       const next = getFrameOpacity(i, step, frameCount, effectiveMaxOpacity);
       const container = (layer as any).getContainer?.() as HTMLElement | undefined;
       if (next > 0) {
-        if (container?.style.display === 'none') container.style.display = '';
+        if (container?.style.visibility === 'hidden') container.style.visibility = 'visible';
         layer.setOpacity(next);
       } else {
-        if (container && container.style.display !== 'none') container.style.display = 'none';
+        if (container && container.style.visibility !== 'hidden') container.style.visibility = 'hidden';
       }
     });
     const frame = frameCount > 0 ? Math.floor(step / SUBSTEPS) % frameCount : 0;
@@ -710,10 +744,10 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
       const next = getFrameOpacity(i, step, satelliteFrameCount, effectiveMaxOpacity);
       const container = (layer as any).getContainer?.() as HTMLElement | undefined;
       if (next > 0) {
-        if (container?.style.display === 'none') container.style.display = '';
+        if (container?.style.visibility === 'hidden') container.style.visibility = 'visible';
         layer.setOpacity(next);
       } else {
-        if (container && container.style.display !== 'none') container.style.display = 'none';
+        if (container && container.style.visibility !== 'hidden') container.style.visibility = 'hidden';
       }
     });
   }, [satelliteFrameCount, effectiveMaxOpacity]);
@@ -810,7 +844,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
         load: () => {
           loadedLayersRef.current.add(fi);
           setRadarLoadedCount(loadedLayersRef.current.size);
-          if (loadedLayersRef.current.size >= Math.min(frameCount, 2 * LAYER_BUFFER + 1)) {
+          if (loadedLayersRef.current.size >= Math.min(frameCount, PRELOAD_FRAME_COUNT)) {
             if (preloadTimerRef.current !== null) {
               clearTimeout(preloadTimerRef.current);
               preloadTimerRef.current = null;
@@ -835,7 +869,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
         load: () => {
           loadedSatLayersRef.current.add(fi);
           setSatelliteLoadedCount(loadedSatLayersRef.current.size);
-          if (loadedSatLayersRef.current.size >= Math.min(satelliteFrameCount, 2 * LAYER_BUFFER + 1)) {
+          if (loadedSatLayersRef.current.size >= Math.min(satelliteFrameCount, PRELOAD_FRAME_COUNT)) {
             if (satellitePreloadTimerRef.current !== null) {
               clearTimeout(satellitePreloadTimerRef.current);
               satellitePreloadTimerRef.current = null;
@@ -941,11 +975,75 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [providerId, refetch]);
 
+  // Prefetch tile URLs into the browser HTTP cache so animation is smooth from
+  // the first loop.  Runs whenever the active frame lists change.  Uses the
+  // live map bounds and zoom when the map is mounted; falls back to the default
+  // zoom prop + center when the map ref is not yet available.
+  useEffect(() => {
+    if (activeFrames.length === 0 && satelliteFrames.length === 0) return;
+
+    let bounds: L.LatLngBounds;
+    let currentZoom: number;
+
+    if (mapRef.current) {
+      bounds = mapRef.current.getBounds();
+      currentZoom = mapRef.current.getZoom();
+    } else {
+      // Map not mounted yet — approximate visible tiles from center + zoom prop.
+      // 0.5° lat/lng padding approximates a typical viewport at zoom 7.
+      bounds = L.latLngBounds(
+        [center[0] - 3, center[1] - 5],
+        [center[0] + 3, center[1] + 5],
+      );
+      currentZoom = zoom;
+    }
+
+    const urls: string[] = [];
+
+    // Radar frame URLs
+    if (radarCapability) {
+      const tileCoords = getTileCoords(bounds, currentZoom);
+      for (const frame of activeFrames) {
+        const baseUrl = buildTileUrl(frame, radarCapability, tileHost, effectiveColorScheme);
+        if (!baseUrl) continue;
+        for (const { x, y } of tileCoords) {
+          urls.push(
+            baseUrl
+              .replace('{z}', String(currentZoom))
+              .replace('{x}', String(x))
+              .replace('{y}', String(y)),
+          );
+        }
+      }
+    }
+
+    // Satellite frame URLs — satellite uses zoomOffset=-1 so tiles are one zoom level coarser
+    if (showSatellite && caddyPrefix) {
+      const satZoom = Math.max(0, currentZoom - 1);
+      const satCoords = getTileCoords(bounds, satZoom);
+      for (const frame of satelliteFrames) {
+        if (!frame.path) continue;
+        for (const { x, y } of satCoords) {
+          urls.push(`${caddyPrefix}${frame.path}/${RAINVIEWER_TILE_SIZE}/${satZoom}/${x}/${y}/0/0_0.webp`);
+        }
+      }
+    }
+
+    // Fire-and-forget: set img.src so the browser fetches into its HTTP cache.
+    for (const url of urls) {
+      const img = new Image();
+      img.src = url;
+    }
+  }, [activeFrames, satelliteFrames, radarCapability, tileHost, effectiveColorScheme, showSatellite, caddyPrefix, center, zoom]);
+
   // displayFrameIndex is now state, updated by applyRadarStep on keyframe boundaries.
-  const currentFrame: RadarFrame | null = frames[displayFrameIndex] ?? null;
+  const currentFrame: RadarFrame | null = activeFrames[displayFrameIndex] ?? null;
 
   // Index at which nowcast frames start (used to label the slider in expanded mode).
-  const nowcastStartIndex = frames.findIndex((f) => f.kind === 'nowcast');
+  // When satellite is active, nowcast frames are excluded from activeFrames, so this
+  // returns -1 — FrameProgressBar and the nowcast label both guard on > 0, so -1
+  // safely means "no nowcast segment shown."
+  const nowcastStartIndex = activeFrames.findIndex((f) => f.kind === 'nowcast');
 
   const isLoading = capLoading || framesLoading;
 
@@ -1035,18 +1133,13 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
         )}
 
         {/*
-          All frame TileLayers are rendered simultaneously so the browser fetches
-          and caches every frame's tiles on first load. Cross-fade between frames
-          is achieved by computing per-frame opacity via getFrameOpacity — frames
-          near the current animationStep are blended together, all others get
-          0 (invisible — tiles stay cached in Leaflet regardless of opacity).
-          Advancing the animation only changes `animationStep` — no URL swaps, no
-          tile re-fetches after the initial load, resulting in smooth looping.
-
-          Each radar TileLayer has a stable key derived from the frame timestamp
-          so React never unmounts/remounts a layer between renders (which would
-          discard cached tiles). The key is intentional here — it is the correct
-          pattern to keep layers stable across re-renders.
+          All frame TileLayers remain mounted permanently — inactive layers use
+          visibility:hidden (no mount/unmount churn, no display:none layout cost).
+          Tile prefetching via new Image() populates the browser HTTP cache before
+          animation starts. Cross-fade between frames is achieved by computing
+          per-frame opacity via getFrameOpacity. Leaflet 1.9.4 has no will-change
+          on tile images (removed in v1.8.0 PR #7872), so keeping all layers
+          mounted does not cause GPU compositor overload.
         */}
         <MapContainer
           center={center}
@@ -1056,6 +1149,8 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
           style={satelliteActive ? { backgroundColor: '#0a0a1a' } : undefined}
           scrollWheelZoom={false}
           zoomControl={true}
+          preferCanvas={true}
+          ref={mapRef}
         >
           <MapBoundsEnforcer bounds={maxBounds} />
           {maxBounds && <BoundsMask bounds={maxBounds} />}
@@ -1083,12 +1178,6 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
               starts using the shared play/pause state. */}
           {showSatellite && caddyPrefix && satelliteFrameCount > 0 && satelliteFrames.map((frame, i) => {
             if (!frame.path) return null;
-            // Only mount layers within the active window to limit DOM/compositor load.
-            const satDisplayIdx = satelliteFrameCount > 0
-              ? Math.floor(satelliteStepRef.current / SUBSTEPS) % satelliteFrameCount
-              : 0;
-            const satDist = Math.min(Math.abs(i - satDisplayIdx), satelliteFrameCount - Math.abs(i - satDisplayIdx));
-            if (isPlaying && satDist > LAYER_BUFFER) return null;
             const satUrl = `${caddyPrefix}${frame.path}/${RAINVIEWER_TILE_SIZE}/{z}/{x}/{y}/0/0_0.webp`;
             const satInitialOpacity = i === 0 ? effectiveMaxOpacity : 0;
             return (
@@ -1107,10 +1196,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
               />
             );
           })}
-          {showRadar !== false && radarCapability !== null && frames.map((frame, i) => {
-            // Only mount layers within the active window during playback.
-            const radarDist = Math.min(Math.abs(i - displayFrameIndex), frameCount - Math.abs(i - displayFrameIndex));
-            if (isPlaying && radarDist > LAYER_BUFFER) return null;
+          {showRadar !== false && radarCapability !== null && activeFrames.map((frame, i) => {
             const cap = radarCapability;
             const url = buildTileUrl(frame, cap, tileHost, effectiveColorScheme);
             if (!url) return null;
