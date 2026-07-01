@@ -329,7 +329,7 @@ export function HourlyStrip({
         flex: 1,
         overflow: 'hidden',
         paddingTop: '0.35rem',
-        paddingBottom: '0.35rem',
+        paddingBottom: '0.75rem',
       }}
     >
       {tableContent}

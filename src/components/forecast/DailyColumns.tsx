@@ -113,9 +113,8 @@ export function DailyColumns({
 
   const N = days.length;
 
-  // Trend SVG sizes: 45px for forecast page, 65px for now card 2×2.
-  // 65px gives the chart visual weight without dominating the card.
-  const trendH = expandable ? 45 : 65;
+  // Trend SVG sizes: 45px for forecast page, 40px for now card.
+  const trendH = expandable ? 45 : 40;
   // SVG viewbox width: 700 units for N=7, proportional otherwise
   const svgViewWidth = 100 * N;
 
@@ -633,7 +632,7 @@ export function DailyColumns({
         overflow: 'hidden',
         // Small top/bottom padding gives breathing room between the card title
         // border and the day-name row, and between the wind row and card bottom.
-        ...(expandable ? {} : { paddingTop: '0.35rem', paddingBottom: '0.35rem' }),
+        ...(expandable ? {} : { paddingTop: '0.35rem', paddingBottom: '0.75rem' }),
       }}
     >
       {/* Column layout — always visible on all breakpoints.
