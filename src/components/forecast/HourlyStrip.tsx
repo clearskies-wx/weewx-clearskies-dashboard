@@ -158,8 +158,8 @@ export function HourlyStrip({
     ? { time: 20, icon: 40, temp: 24, precip: 20, wind: 36 }
     : { time: 18, icon: 43, temp: 22, precip: 18, wind: 42 };
 
-  // ── Trend SVG: 48px for 2×2 card, 40px for page ─────────────────────────
-  const trendH = threeHourWindows ? 48 : 40;
+  // ── Trend SVG: 40px for both modes ───────────────────────────────────────
+  const trendH = 40;
 
   // The trend line SVG spans the full width of ALL columns.
   // We render this as an absolutely-positioned overlay between temp and precip.
