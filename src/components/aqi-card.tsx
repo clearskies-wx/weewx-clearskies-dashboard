@@ -588,8 +588,7 @@ function PollutantRow({ name, value, dotColor, isLocalSource = false }: Pollutan
         display: 'flex',
         alignItems: 'center',
         gap: '4px',
-        lineHeight: 1.25,
-        padding: '1px 0',
+        lineHeight: 1.2,
       }}
     >
       {/* Severity dot — 5px circle.  Non-text UI element (3:1 required, met).

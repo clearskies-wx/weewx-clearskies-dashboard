@@ -7,7 +7,7 @@ import nwsLogo from '../../assets/providers/nws.svg';
 import openMeteoLogo from '../../assets/providers/open-meteo.png';
 
 const LOGO_HEIGHT = 32;
-const LOGO_HEIGHT_COMPACT = 14;
+const LOGO_HEIGHT_COMPACT = 16;
 
 interface ProviderAttribution {
   text: string;
