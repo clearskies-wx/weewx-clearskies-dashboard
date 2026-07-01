@@ -20,28 +20,28 @@ const PROVIDERS: Record<string, ProviderAttribution> = {
     lightLogo: xweatherDark,
     darkLogo: xweatherLight,
     alt: 'Vaisala Xweather',
-    logoHeight: 14,
+    logoHeight: 24,
   },
   owm: {
     text: 'Powered by',
     lightLogo: owmMaster,
     darkLogo: owmNegative,
     alt: 'OpenWeather',
-    logoHeight: 18,
+    logoHeight: 24,
   },
   nws: {
     text: 'Powered by',
     lightLogo: nwsLogo,
     darkLogo: nwsLogo,
     alt: 'National Weather Service',
-    logoHeight: 20,
+    logoHeight: 26,
   },
   openmeteo: {
     text: 'Weather data by',
     lightLogo: openMeteoLogo,
     darkLogo: openMeteoLogo,
     alt: 'Open-Meteo.com',
-    logoHeight: 18,
+    logoHeight: 22,
   },
 };
 
@@ -53,7 +53,7 @@ export function ForecastAttribution({ source }: { source?: string | null }) {
   const hasDarkVariant = provider.lightLogo !== provider.darkLogo;
 
   return (
-    <CardFooter style={{ padding: '0.375rem var(--card-pad)' }}>
+    <CardFooter style={{ padding: '0.625rem var(--card-pad)' }}>
       <span
         style={{
           fontSize: 'var(--text-micro)',
@@ -68,14 +68,14 @@ export function ForecastAttribution({ source }: { source?: string | null }) {
         src={provider.lightLogo}
         alt={provider.alt}
         className={hasDarkVariant ? 'dark:hidden' : undefined}
-        style={{ height: provider.logoHeight, width: 'auto', marginLeft: 6 }}
+        style={{ height: provider.logoHeight, width: 'auto', marginLeft: 8 }}
       />
       {hasDarkVariant && (
         <img
           src={provider.darkLogo}
           alt={provider.alt}
           className="hidden dark:block"
-          style={{ height: provider.logoHeight, width: 'auto', marginLeft: 6 }}
+          style={{ height: provider.logoHeight, width: 'auto', marginLeft: 8 }}
         />
       )}
     </CardFooter>
