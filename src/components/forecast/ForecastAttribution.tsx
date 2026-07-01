@@ -6,12 +6,13 @@ import owmNegative from '../../assets/providers/openweathermap-negative.png';
 import nwsLogo from '../../assets/providers/nws.svg';
 import openMeteoLogo from '../../assets/providers/open-meteo.png';
 
+const LOGO_HEIGHT = 32;
+
 interface ProviderAttribution {
   text: string;
   lightLogo: string;
   darkLogo: string;
   alt: string;
-  logoHeight: number;
 }
 
 const PROVIDERS: Record<string, ProviderAttribution> = {
@@ -20,28 +21,24 @@ const PROVIDERS: Record<string, ProviderAttribution> = {
     lightLogo: xweatherDark,
     darkLogo: xweatherLight,
     alt: 'Vaisala Xweather',
-    logoHeight: 24,
   },
   owm: {
     text: 'Powered by',
     lightLogo: owmMaster,
     darkLogo: owmNegative,
     alt: 'OpenWeather',
-    logoHeight: 24,
   },
   nws: {
     text: 'Powered by',
     lightLogo: nwsLogo,
     darkLogo: nwsLogo,
     alt: 'National Weather Service',
-    logoHeight: 26,
   },
   openmeteo: {
-    text: 'Weather data by',
+    text: 'Powered by',
     lightLogo: openMeteoLogo,
     darkLogo: openMeteoLogo,
     alt: 'Open-Meteo.com',
-    logoHeight: 22,
   },
 };
 
@@ -68,14 +65,14 @@ export function ForecastAttribution({ source }: { source?: string | null }) {
         src={provider.lightLogo}
         alt={provider.alt}
         className={hasDarkVariant ? 'dark:hidden' : undefined}
-        style={{ height: provider.logoHeight, width: 'auto', marginLeft: 8 }}
+        style={{ height: LOGO_HEIGHT, width: 'auto', marginLeft: 8 }}
       />
       {hasDarkVariant && (
         <img
           src={provider.darkLogo}
           alt={provider.alt}
           className="hidden dark:block"
-          style={{ height: provider.logoHeight, width: 'auto', marginLeft: 8 }}
+          style={{ height: LOGO_HEIGHT, width: 'auto', marginLeft: 8 }}
         />
       )}
     </CardFooter>
