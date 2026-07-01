@@ -158,10 +158,22 @@ interface ObservationHookResult extends HookResult<Observation> {
   sceneLoaded: boolean;
 }
 
-/** Safe fallback scene when the server hasn't sent one yet.
- *  daytime: false prevents a flash of a bright daytime photo before the first
- *  /current response arrives; the dark navy SceneBackground base fills instead. */
-const SCENE_DEFAULT: SceneDescriptor = { sky: 'clear', daytime: false, overlay: null };
+/** Reads the cached scene from localStorage (written by ThemeProvider.cacheScene
+ *  on every /current response). Falls back to clear/false/null on first-ever visit
+ *  — the splash screen covers the page until real data arrives anyway. */
+function getCachedScene(): SceneDescriptor {
+  if (typeof window === 'undefined') return { sky: 'clear', daytime: false, overlay: null };
+  const sky = localStorage.getItem('clearskies.scene.sky');
+  const daytime = localStorage.getItem('clearskies.scene.daytime');
+  const overlay = localStorage.getItem('clearskies.scene.overlay');
+  return {
+    sky: (sky === 'clear' || sky === 'cloudy' || sky === 'storm') ? sky : 'clear',
+    daytime: daytime === 'true',
+    overlay: overlay === 'rain' ? 'rain' : overlay === 'snow' ? 'snow' : null,
+  };
+}
+
+const SCENE_DEFAULT: SceneDescriptor = getCachedScene();
 
 export function useObservation(): ObservationHookResult {
   // Re-fetch /current every 60 seconds to pick up envelope fields

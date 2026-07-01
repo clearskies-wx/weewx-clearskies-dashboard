@@ -226,7 +226,19 @@ interface RealtimeObservationResult {
   scene: SceneDescriptor;
 }
 
-const SCENE_DEFAULT: SceneDescriptor = { sky: 'clear', daytime: true, overlay: null };
+function getCachedScene(): SceneDescriptor {
+  if (typeof window === 'undefined') return { sky: 'clear', daytime: true, overlay: null };
+  const sky = localStorage.getItem('clearskies.scene.sky');
+  const daytime = localStorage.getItem('clearskies.scene.daytime');
+  const overlay = localStorage.getItem('clearskies.scene.overlay');
+  return {
+    sky: (sky === 'clear' || sky === 'cloudy' || sky === 'storm') ? sky : 'clear',
+    daytime: daytime !== 'false',
+    overlay: overlay === 'rain' ? 'rain' : overlay === 'snow' ? 'snow' : null,
+  };
+}
+
+const SCENE_DEFAULT: SceneDescriptor = getCachedScene();
 
 // ---------------------------------------------------------------------------
 // useRealtimeObservation

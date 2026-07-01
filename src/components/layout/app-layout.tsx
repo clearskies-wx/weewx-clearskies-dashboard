@@ -25,20 +25,23 @@ import { SceneBackground } from '../background/scene-background';
 import { AlertBanner } from '../shared/alert-banner';
 import { CookieConsentBanner } from '../shared/cookie-consent-banner';
 import { trackPageView } from '../../lib/analytics';
+import { dismissSplash } from '../../lib/dismiss-splash';
 import type { SceneDescriptor } from '../../api/types';
 
 export function AppLayout() {
   const { scene, sceneLoaded } = useObservation();
   const { data: alerts, loading: alertLoading } = useAlerts();
   const { data: station } = useStation();
-  const { preference, setDaytime } = useTheme();
+  const { preference, setDaytime, cacheScene } = useTheme();
   const location = useLocation();
 
   useEffect(() => {
     if (sceneLoaded) {
       setDaytime(scene.daytime);
+      cacheScene({ daytime: scene.daytime, sky: scene.sky, overlay: scene.overlay });
+      dismissSplash();
     }
-  }, [scene.daytime, sceneLoaded, setDaytime]);
+  }, [scene.daytime, scene.sky, scene.overlay, sceneLoaded, setDaytime, cacheScene]);
 
   // GA page view tracking — fires on every route change.
   // trackPageView() is a no-op when GA has not been initialised (consent not given),
@@ -66,7 +69,7 @@ export function AppLayout() {
           aria-hidden / role="presentation" are set inside the component.
           visible=false until the first /current response arrives to avoid a
           flash of the wrong (default) scene before real data loads. */}
-      <SceneBackground scene={resolvedScene} visible={sceneLoaded} />
+      <SceneBackground scene={resolvedScene} />
 
       {/* Cookie consent banner (T3.4) — self-manages visibility.
           Renders nothing when googleAnalyticsId is absent or consent is stored. */}

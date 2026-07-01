@@ -16,12 +16,21 @@ export type OperatorDefault = 'light' | 'dark' | 'auto-os' | 'auto-sunrise-sunse
 
 const STORAGE_KEY = 'clearskies.theme.user-override';
 const DAYTIME_CACHE_KEY = 'clearskies.scene.daytime';
+const SKY_CACHE_KEY = 'clearskies.scene.sky';
+const OVERLAY_CACHE_KEY = 'clearskies.scene.overlay';
+
+interface SceneCache {
+  daytime: boolean | null;
+  sky?: string;
+  overlay?: string | null;
+}
 
 interface ThemeContextValue {
   preference: ThemePreference;
   resolved: ResolvedTheme;
   setTheme: (t: ThemePreference) => void;
   setDaytime: (d: boolean | null) => void;
+  cacheScene: (scene: SceneCache) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -263,9 +272,21 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const cacheScene = useCallback((scene: SceneCache) => {
+    if (scene.daytime !== null) {
+      localStorage.setItem(DAYTIME_CACHE_KEY, String(scene.daytime));
+    }
+    if (scene.sky !== undefined) {
+      localStorage.setItem(SKY_CACHE_KEY, scene.sky);
+    }
+    if (scene.overlay !== undefined) {
+      localStorage.setItem(OVERLAY_CACHE_KEY, scene.overlay ?? '');
+    }
+  }, []);
+
   const contextValue = useMemo(
-    () => ({ preference, resolved, setTheme, setDaytime }),
-    [preference, resolved, setTheme, setDaytime],
+    () => ({ preference, resolved, setTheme, setDaytime, cacheScene }),
+    [preference, resolved, setTheme, setDaytime, cacheScene],
   );
 
   return (

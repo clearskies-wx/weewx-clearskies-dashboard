@@ -14,6 +14,7 @@ import { X, Sliders } from '@phosphor-icons/react';
 import { RadarMap } from '../components/shared/radar-map';
 import { RadarLayerPanel } from '../components/shared/radar-layer-panel';
 import { useStation, useCapabilities, useRadarFrames } from '../hooks/useWeatherData';
+import { dismissSplash } from '../lib/dismiss-splash';
 
 // localStorage key for persisting panel state + color scheme across sessions.
 const STORAGE_KEY = 'clearskies-radar-panel';
@@ -33,6 +34,7 @@ function readStorage(): { open: boolean; colorScheme: number } {
 }
 
 export default function RadarPage() {
+  useEffect(() => { dismissSplash(); }, []);
   const { t } = useTranslation('radar');
   const navigate = useNavigate();
 
