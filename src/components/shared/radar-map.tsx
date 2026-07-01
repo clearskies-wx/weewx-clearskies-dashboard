@@ -500,30 +500,6 @@ function GeoFeaturesLayer() {
   return null;
 }
 
-/**
- * Compute slippy-map tile coordinates visible within the given Leaflet bounds
- * at the given zoom level.  Used for client-side tile prefetching.
- */
-function getTileCoords(bounds: L.LatLngBounds, zoom: number): Array<{ x: number; y: number }> {
-  const n = Math.pow(2, zoom);
-  const minX = Math.floor(((bounds.getWest() + 180) / 360) * n);
-  const maxX = Math.floor(((bounds.getEast() + 180) / 360) * n);
-  const minY = Math.floor(
-    (1 - Math.log(Math.tan(bounds.getNorth() * Math.PI / 180) + 1 / Math.cos(bounds.getNorth() * Math.PI / 180)) / Math.PI) / 2 * n,
-  );
-  const maxY = Math.floor(
-    (1 - Math.log(Math.tan(bounds.getSouth() * Math.PI / 180) + 1 / Math.cos(bounds.getSouth() * Math.PI / 180)) / Math.PI) / 2 * n,
-  );
-
-  const coords: Array<{ x: number; y: number }> = [];
-  for (let x = minX; x <= maxX; x++) {
-    for (let y = minY; y <= maxY; y++) {
-      coords.push({ x: ((x % n) + n) % n, y: Math.max(0, Math.min(n - 1, y)) });
-    }
-  }
-  return coords;
-}
-
 export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBounds, opacity, colorScheme, showAlerts, alertUrl, showWind, caddyPrefix, showSatellite, showRadar }: RadarMapProps) {
   const { t } = useTranslation('radar');
   const { resolved: resolvedTheme } = useTheme();
@@ -615,10 +591,6 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
   const preloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Tracks which frame indices have fully loaded all their tiles.
   const loadedLayersRef = useRef(new Set<number>());
-
-  // Ref to the Leaflet map instance, captured via MapContainer ref callback.
-  // Used for tile prefetching (getTileCoords needs the live bounds and zoom).
-  const mapRef = useRef<L.Map | null>(null);
 
   // Refs to Leaflet layer instances for imperative opacity control.
   const radarLayerRefs = useRef<Map<number, L.TileLayer>>(new Map());
@@ -947,67 +919,6 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [providerId, refetch]);
 
-  // Prefetch tile URLs into the browser HTTP cache so animation is smooth from
-  // the first loop.  Runs whenever the active frame lists change.  Uses the
-  // live map bounds and zoom when the map is mounted; falls back to the default
-  // zoom prop + center when the map ref is not yet available.
-  useEffect(() => {
-    if (activeFrames.length === 0 && satelliteFrames.length === 0) return;
-
-    let bounds: L.LatLngBounds;
-    let currentZoom: number;
-
-    if (mapRef.current) {
-      bounds = mapRef.current.getBounds();
-      currentZoom = mapRef.current.getZoom();
-    } else {
-      // Map not mounted yet — approximate visible tiles from center + zoom prop.
-      // 0.5° lat/lng padding approximates a typical viewport at zoom 7.
-      bounds = L.latLngBounds(
-        [center[0] - 3, center[1] - 5],
-        [center[0] + 3, center[1] + 5],
-      );
-      currentZoom = zoom;
-    }
-
-    const urls: string[] = [];
-
-    // Radar frame URLs
-    if (radarCapability) {
-      const tileCoords = getTileCoords(bounds, currentZoom);
-      for (const frame of activeFrames) {
-        const baseUrl = buildTileUrl(frame, radarCapability, tileHost, effectiveColorScheme);
-        if (!baseUrl) continue;
-        for (const { x, y } of tileCoords) {
-          urls.push(
-            baseUrl
-              .replace('{z}', String(currentZoom))
-              .replace('{x}', String(x))
-              .replace('{y}', String(y)),
-          );
-        }
-      }
-    }
-
-    // Satellite frame URLs — satellite uses zoomOffset=-1 so tiles are one zoom level coarser
-    if (showSatellite && caddyPrefix) {
-      const satZoom = Math.max(0, currentZoom - 1);
-      const satCoords = getTileCoords(bounds, satZoom);
-      for (const frame of satelliteFrames) {
-        if (!frame.path) continue;
-        for (const { x, y } of satCoords) {
-          urls.push(`${caddyPrefix}${frame.path}/${RAINVIEWER_TILE_SIZE}/${satZoom}/${x}/${y}/0/0_0.webp`);
-        }
-      }
-    }
-
-    // Fire-and-forget: set img.src so the browser fetches into its HTTP cache.
-    for (const url of urls) {
-      const img = new Image();
-      img.src = url;
-    }
-  }, [activeFrames, satelliteFrames, radarCapability, tileHost, effectiveColorScheme, showSatellite, caddyPrefix, center, zoom]);
-
   // displayFrameIndex is now state, updated by applyRadarStep on keyframe boundaries.
   const currentFrame: RadarFrame | null = activeFrames[displayFrameIndex] ?? null;
 
@@ -1122,7 +1033,6 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
           scrollWheelZoom={false}
           zoomControl={true}
           preferCanvas={true}
-          ref={mapRef}
         >
           <MapBoundsEnforcer bounds={maxBounds} />
           {maxBounds && <BoundsMask bounds={maxBounds} />}
