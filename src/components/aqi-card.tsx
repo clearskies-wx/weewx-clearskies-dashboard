@@ -845,7 +845,7 @@ function AqiCardContent({
           )
         )}
       </CardContent>
-      <ForecastAttribution source={aqi?.source} />
+      <ForecastAttribution source={aqi?.source} compact />
     </Card>
   );
 }

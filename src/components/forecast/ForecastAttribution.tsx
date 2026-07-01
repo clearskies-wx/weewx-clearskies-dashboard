@@ -7,6 +7,7 @@ import nwsLogo from '../../assets/providers/nws.svg';
 import openMeteoLogo from '../../assets/providers/open-meteo.png';
 
 const LOGO_HEIGHT = 32;
+const LOGO_HEIGHT_COMPACT = 14;
 
 interface ProviderAttribution {
   text: string;
@@ -46,13 +47,15 @@ const PROVIDERS: Record<string, ProviderAttribution> = {
   },
 };
 
-export function ForecastAttribution({ source }: { source?: string | null }) {
+export function ForecastAttribution({ source, compact }: { source?: string | null; compact?: boolean }) {
   if (!source) return null;
   const provider = PROVIDERS[source];
   if (!provider) return null;
 
   const hasLogo = !!provider.lightLogo;
   const hasDarkVariant = hasLogo && provider.lightLogo !== provider.darkLogo;
+  const logoH = compact ? LOGO_HEIGHT_COMPACT : LOGO_HEIGHT;
+  const footerPad = compact ? '0.1875rem var(--card-pad)' : '0.625rem var(--card-pad)';
 
   const textStyle: React.CSSProperties = {
     fontSize: 'var(--text-micro)',
@@ -62,7 +65,7 @@ export function ForecastAttribution({ source }: { source?: string | null }) {
   };
 
   return (
-    <CardFooter style={{ padding: '0.625rem var(--card-pad)' }}>
+    <CardFooter style={{ padding: footerPad }}>
       <span style={textStyle}>{provider.text}</span>
       {hasLogo ? (
         <>
@@ -70,14 +73,14 @@ export function ForecastAttribution({ source }: { source?: string | null }) {
             src={provider.lightLogo}
             alt={provider.alt}
             className={hasDarkVariant ? 'dark:hidden' : undefined}
-            style={{ height: LOGO_HEIGHT, width: 'auto', marginLeft: 8 }}
+            style={{ height: logoH, width: 'auto', marginLeft: compact ? 6 : 8 }}
           />
           {hasDarkVariant && (
             <img
               src={provider.darkLogo}
               alt={provider.alt}
               className="hidden dark:block"
-              style={{ height: LOGO_HEIGHT, width: 'auto', marginLeft: 8 }}
+              style={{ height: logoH, width: 'auto', marginLeft: compact ? 6 : 8 }}
             />
           )}
         </>
