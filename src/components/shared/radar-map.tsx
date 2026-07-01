@@ -344,7 +344,7 @@ function MapBoundsEnforcer({ bounds }: { bounds?: [[number, number], [number, nu
     if (bounds) {
       map.setMaxBounds(bounds);
       const boundsObj = L.latLngBounds(bounds);
-      const minZoom = map.getBoundsZoom(boundsObj, false);
+      const minZoom = map.getBoundsZoom(boundsObj, true);
       map.setMinZoom(minZoom);
     } else {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
