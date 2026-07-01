@@ -10,8 +10,8 @@ const LOGO_HEIGHT = 32;
 
 interface ProviderAttribution {
   text: string;
-  lightLogo: string;
-  darkLogo: string;
+  lightLogo?: string;
+  darkLogo?: string;
   alt: string;
 }
 
@@ -40,6 +40,10 @@ const PROVIDERS: Record<string, ProviderAttribution> = {
     darkLogo: openMeteoLogo,
     alt: 'Open-Meteo.com',
   },
+  iqair: {
+    text: 'Powered by',
+    alt: 'IQAir',
+  },
 };
 
 export function ForecastAttribution({ source }: { source?: string | null }) {
@@ -47,33 +51,40 @@ export function ForecastAttribution({ source }: { source?: string | null }) {
   const provider = PROVIDERS[source];
   if (!provider) return null;
 
-  const hasDarkVariant = provider.lightLogo !== provider.darkLogo;
+  const hasLogo = !!provider.lightLogo;
+  const hasDarkVariant = hasLogo && provider.lightLogo !== provider.darkLogo;
+
+  const textStyle: React.CSSProperties = {
+    fontSize: 'var(--text-micro)',
+    color: 'var(--muted-foreground)',
+    fontFamily: 'var(--font-sans)',
+    fontWeight: 400,
+  };
 
   return (
     <CardFooter style={{ padding: '0.625rem var(--card-pad)' }}>
-      <span
-        style={{
-          fontSize: 'var(--text-micro)',
-          color: 'var(--muted-foreground)',
-          fontFamily: 'var(--font-sans)',
-          fontWeight: 400,
-        }}
-      >
-        {provider.text}
-      </span>
-      <img
-        src={provider.lightLogo}
-        alt={provider.alt}
-        className={hasDarkVariant ? 'dark:hidden' : undefined}
-        style={{ height: LOGO_HEIGHT, width: 'auto', marginLeft: 8 }}
-      />
-      {hasDarkVariant && (
-        <img
-          src={provider.darkLogo}
-          alt={provider.alt}
-          className="hidden dark:block"
-          style={{ height: LOGO_HEIGHT, width: 'auto', marginLeft: 8 }}
-        />
+      <span style={textStyle}>{provider.text}</span>
+      {hasLogo ? (
+        <>
+          <img
+            src={provider.lightLogo}
+            alt={provider.alt}
+            className={hasDarkVariant ? 'dark:hidden' : undefined}
+            style={{ height: LOGO_HEIGHT, width: 'auto', marginLeft: 8 }}
+          />
+          {hasDarkVariant && (
+            <img
+              src={provider.darkLogo}
+              alt={provider.alt}
+              className="hidden dark:block"
+              style={{ height: LOGO_HEIGHT, width: 'auto', marginLeft: 8 }}
+            />
+          )}
+        </>
+      ) : (
+        <span style={{ ...textStyle, fontWeight: 600, marginLeft: 6 }}>
+          {provider.alt}
+        </span>
       )}
     </CardFooter>
   );
