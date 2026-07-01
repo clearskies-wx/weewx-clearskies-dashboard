@@ -658,7 +658,7 @@ export function DailyColumns({
             overflow: 'visible',
             ...(expandable
               ? { gap: 6 }
-              : { flex: 1, justifyContent: 'space-between' }),
+              : { flex: 1, justifyContent: 'space-between', gap: 8 }),
           }}
         >
           {accentBarRow}

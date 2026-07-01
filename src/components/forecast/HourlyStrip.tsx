@@ -270,7 +270,7 @@ export function HourlyStrip({
         minHeight: 0,
         // In fill mode (threeHourWindows), stretch to full height and spread rows
         // evenly so content occupies the full 22rem card height.
-        ...(threeHourWindows ? { flex: 1, justifyContent: 'space-between' } : {}),
+        ...(threeHourWindows ? { flex: 1, justifyContent: 'space-between', gap: 6 } : {}),
       }}
     >
       {/* Time row */}
