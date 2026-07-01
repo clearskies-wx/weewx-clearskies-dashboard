@@ -7,6 +7,7 @@
 import { useTranslation } from 'react-i18next';
 import { Card, CardHeader, CardContent, CardTitle } from '../ui/card';
 import { DailyColumns } from './DailyColumns';
+import { ForecastAttribution } from './ForecastAttribution';
 import type { ForecastBundle, UnitsBlock } from '../../api/types';
 
 // ── Skeleton ─────────────────────────────────────────────────────────────────
@@ -53,7 +54,7 @@ export function ForecastDailyCard({
         <CardTitle as="h2">{t('sevenDayForecast')}</CardTitle>
       </CardHeader>
 
-      <CardContent>
+      <CardContent style={{ paddingBottom: 'var(--card-pad)' }}>
         {loading ? (
           <>
             <span className="sr-only" role="status">Loading 7-day forecast…</span>
@@ -77,6 +78,7 @@ export function ForecastDailyCard({
           </p>
         )}
       </CardContent>
+      <ForecastAttribution source={forecast?.source} />
     </Card>
   );
 }
