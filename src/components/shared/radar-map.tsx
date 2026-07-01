@@ -61,7 +61,6 @@ const MAX_OPACITY = 0.7;   // max radar overlay opacity
 // How long to wait after frames load before starting auto-play.
 // Gives the browser time to begin fetching tiles for all frames so the first
 // loop isn't visibly stuttery while tiles are still in-flight.
-const PRELOAD_DELAY_MS = 1500;
 
 // Cap frame count in card view to keep animation tight and memory manageable.
 const MAX_CARD_FRAMES = 24;
@@ -586,9 +585,8 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
   // once per keyframe, not once per sub-step.
   const animationStepRef = useRef(0);
   const [displayFrameIndex, setDisplayFrameIndex] = useState(0);
-  // Start paused; auto-play begins after PRELOAD_DELAY_MS once frames are ready.
+  // Start paused; auto-play begins when PRELOAD_FRAME_COUNT layers fire load.
   const [isPlaying, setIsPlaying] = useState(false);
-  const preloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Tracks which frame indices have fully loaded all their tiles.
   const loadedLayersRef = useRef(new Set<number>());
 
@@ -607,7 +605,6 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
   // Satellite preload: tiles must load before animation starts, otherwise
   // frames flicker (visible when cached, blank when still loading).
   const [satelliteReady, setSatelliteReady] = useState(false);
-  const satellitePreloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const loadedSatLayersRef = useRef(new Set<number>());
 
   // --- Loading progress state (for the tile-load progress indicator) ---
@@ -720,28 +717,10 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
     setDisplayFrameIndex(0);
 
     // Reset tile-load tracking for the new frame list.
+    // Animation starts only when PRELOAD_FRAME_COUNT layers fire their
+    // load event — no fallback timer that would start before tiles are ready.
     loadedLayersRef.current = new Set<number>();
     setRadarLoadedCount(0);
-
-    // Cancel any previous preload timer, then start a fresh fallback one.
-    // The fallback fires only if tiles haven't all reported loaded yet.
-    if (preloadTimerRef.current !== null) {
-      clearTimeout(preloadTimerRef.current);
-    }
-    preloadTimerRef.current = setTimeout(() => {
-      // Respect prefers-reduced-motion: only auto-play when the user
-      // has not opted out of motion.  Manual play/pause still works.
-      if (!prefersReducedMotion) {
-        setIsPlaying(true);
-      }
-    }, PRELOAD_DELAY_MS);
-
-    return () => {
-      if (preloadTimerRef.current !== null) {
-        clearTimeout(preloadTimerRef.current);
-        preloadTimerRef.current = null;
-      }
-    };
   }, [frameCount]);
 
   // Reset satellite preload when frames change or satellite is toggled on.
@@ -750,10 +729,6 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
       setSatelliteReady(false);
       loadedSatLayersRef.current = new Set<number>();
       setSatelliteLoadedCount(0);
-      if (satellitePreloadTimerRef.current !== null) {
-        clearTimeout(satellitePreloadTimerRef.current);
-        satellitePreloadTimerRef.current = null;
-      }
       return;
     }
 
@@ -761,17 +736,6 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
     setSatelliteReady(false);
     loadedSatLayersRef.current = new Set<number>();
     setSatelliteLoadedCount(0);
-
-    satellitePreloadTimerRef.current = setTimeout(() => {
-      setSatelliteReady(true);
-    }, PRELOAD_DELAY_MS);
-
-    return () => {
-      if (satellitePreloadTimerRef.current !== null) {
-        clearTimeout(satellitePreloadTimerRef.current);
-        satellitePreloadTimerRef.current = null;
-      }
-    };
   }, [showSatellite, satelliteFrameCount]);
 
   // Build stable event-handler objects synchronously during render (not in
@@ -789,10 +753,6 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
           loadedLayersRef.current.add(fi);
           setRadarLoadedCount(loadedLayersRef.current.size);
           if (loadedLayersRef.current.size >= Math.min(frameCount, PRELOAD_FRAME_COUNT)) {
-            if (preloadTimerRef.current !== null) {
-              clearTimeout(preloadTimerRef.current);
-              preloadTimerRef.current = null;
-            }
             if (!prefersReducedMotion) {
               setIsPlaying(true);
             }
@@ -814,10 +774,6 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
           loadedSatLayersRef.current.add(fi);
           setSatelliteLoadedCount(loadedSatLayersRef.current.size);
           if (loadedSatLayersRef.current.size >= Math.min(satelliteFrameCount, PRELOAD_FRAME_COUNT)) {
-            if (satellitePreloadTimerRef.current !== null) {
-              clearTimeout(satellitePreloadTimerRef.current);
-              satellitePreloadTimerRef.current = null;
-            }
             setSatelliteReady(true);
           }
         },
