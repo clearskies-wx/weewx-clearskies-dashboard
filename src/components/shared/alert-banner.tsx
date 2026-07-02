@@ -461,7 +461,7 @@ export function AlertBanner({ alerts, stationTz }: AlertBannerProps) {
               <p className="mt-2 font-heading text-[length:var(--text-micro)] text-muted-foreground">
                 Powered by {alert.source === 'aeris' ? 'Xweather' : alert.source === 'owm' ? 'OpenWeather' : alert.source}
               </p>
-            )}}
+            )}
 
           </div>
         </div>
