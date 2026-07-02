@@ -71,14 +71,13 @@ export function ProviderAttribution({
 
   return (
     <CardFooter className={ATTRIBUTION_FOOTER_CLASS} style={{ padding: footerPad }}>
-      <span style={textStyle}>{renderedText}</span>
       {logoAsset ? (
         <>
           <img
             src={`/providers/${providerId}.${logoAsset.ext}`}
-            alt={displayName}
+            alt={renderedText}
             className={logoAsset.hasDarkVariant ? 'dark:hidden' : undefined}
-            style={{ height: logoH, width: 'auto', marginLeft }}
+            style={{ height: logoH, width: 'auto' }}
             onError={(e) => {
               e.currentTarget.style.display = 'none';
             }}
@@ -86,9 +85,9 @@ export function ProviderAttribution({
           {logoAsset.hasDarkVariant && (
             <img
               src={`/providers/${providerId}-dark.${logoAsset.ext}`}
-              alt={displayName}
+              alt={renderedText}
               className="hidden dark:block"
-              style={{ height: logoH, width: 'auto', marginLeft }}
+              style={{ height: logoH, width: 'auto' }}
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
               }}
@@ -96,7 +95,7 @@ export function ProviderAttribution({
           )}
         </>
       ) : (
-        <span style={{ ...textStyle, fontWeight: 600, marginLeft }}>{displayName}</span>
+        <span style={textStyle}>{renderedText}</span>
       )}
     </CardFooter>
   );
