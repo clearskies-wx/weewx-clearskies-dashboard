@@ -5,6 +5,15 @@
 @import "@fontsource/manrope/latin-400.css";
 @import "@fontsource/manrope/latin-600.css";
 @import "@fontsource/manrope/latin-700.css";
+@import "@fontsource/manrope/cyrillic-400.css";
+@import "@fontsource/manrope/cyrillic-600.css";
+@import "@fontsource/manrope/cyrillic-700.css";
+/* Outfit and Lexend ship no cyrillic-*.css subset upstream (Google Fonts
+   Outfit/Lexend only cover latin/latin-ext, +vietnamese for Lexend) — T4.1
+   confirmed this by inspecting node_modules/@fontsource/{outfit,lexend}.
+   Cyrillic text set in these fonts (--font-display, --font-chart) falls
+   through to the system-ui fallback already present in each font-family
+   stack, which has full Cyrillic coverage on every supported OS. */
 @import "@fontsource/outfit/latin-400.css";
 @import "@fontsource/outfit/latin-600.css";
 @import "@fontsource/outfit/latin-700.css";
@@ -33,9 +42,12 @@
     /* --font-sans: Manrope — body, labels, card titles, station name (DEFAULT) */
     /* --font-display: Outfit — every card's large primary stat numeral only    */
     /* --font-chart: Lexend — SVG chart axis/tick/data labels only              */
+    /* CJK fallback (T4.1): Noto Sans JP/SC/TC loaded on demand via              */
+    /* src/i18n/font-loader.ts when locale is ja/zh-CN/zh-TW — see              */
+    /* DASHBOARD-MANUAL.md §3 and DESIGN-MANUAL.md §4.                          */
     --font-heading: var(--font-sans);
-    --font-display: 'Outfit', system-ui, sans-serif;
-    --font-chart:   'Lexend', system-ui, sans-serif;
+    --font-display: 'Outfit', 'Noto Sans JP', 'Noto Sans SC', 'Noto Sans TC', system-ui, sans-serif;
+    --font-chart:   'Lexend', 'Noto Sans JP', 'Noto Sans SC', 'Noto Sans TC', system-ui, sans-serif;
 
     /* ── Font weights ───────────────────────────────────────────────────────── */
     --font-weight-normal:   400;
@@ -58,7 +70,7 @@
     --text-chart-label:  0.875rem;/* chart axis/tick/data labels — Lexend (standard cards) */
     --text-chart-label-sm: 0.6875rem;/* chart axis/tick labels — Lexend (tile-footprint cards) */
 
-    --font-sans: 'Manrope', 'Inter Variable', system-ui, sans-serif;
+    --font-sans: 'Manrope', 'Inter Variable', 'Noto Sans JP', 'Noto Sans SC', 'Noto Sans TC', system-ui, sans-serif;
 
     --color-sidebar-ring: var(--sidebar-ring);
 
