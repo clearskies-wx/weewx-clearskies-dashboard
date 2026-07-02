@@ -32,6 +32,7 @@ import { useTranslation } from 'react-i18next';
 import type { AlmanacSnapshot, MoonNameData, PositionsSnapshot } from '../../api/types';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { MoonPhaseG, MoonPhaseIcon } from '../moon-phase-icon';
+import { formatNumber } from '../../utils/format-number';
 import {
   Card,
   CardHeader,
@@ -316,8 +317,8 @@ function ArcPanel({ almanac, positions, moonNames, tz }: ArcPanelProps) {
   // Sun/moon altitude from live positions (polled every 60s), not static daily snapshot
   const sunAlt = positions?.sun.altitude ?? null;
   const moonAlt = positions?.moon.altitude ?? null;
-  const sunAltText = sunAlt !== null ? `${sunAlt.toFixed(1)}°` : null;
-  const moonAltText = moonAlt !== null ? `${moonAlt.toFixed(1)}°` : null;
+  const sunAltText = sunAlt !== null ? `${formatNumber(sunAlt, 1, locale)}°` : null;
+  const moonAltText = moonAlt !== null ? `${formatNumber(moonAlt, 1, locale)}°` : null;
 
   // SVG accessible title for screen readers
   const svgTitle = [
@@ -715,8 +716,8 @@ function SunPanel({ almanac, tomorrow, positions, tz, locale }: SunPanelProps) {
 
   const liveAz = positions?.sun.azimuth ?? null;
   const liveAlt = positions?.sun.altitude ?? null;
-  const azimuthText = liveAz !== null ? `${liveAz.toFixed(1)}°` : '—';
-  const altitudeText = liveAlt !== null ? `${liveAlt.toFixed(1)}°` : '—';
+  const azimuthText = liveAz !== null ? `${formatNumber(liveAz, 1, locale)}°` : '—';
+  const altitudeText = liveAlt !== null ? `${formatNumber(liveAlt, 1, locale)}°` : '—';
 
   const colHeaderStyle: React.CSSProperties = {
     textAlign: 'right',
@@ -851,8 +852,8 @@ function MoonPanel({ almanac, tomorrow, positions, tz, locale }: MoonPanelProps)
 
   const liveAz = positions?.moon.azimuth ?? null;
   const liveAlt = positions?.moon.altitude ?? null;
-  const azimuthText = liveAz !== null ? `${liveAz.toFixed(1)}°` : '—';
-  const altitudeText = liveAlt !== null ? `${liveAlt.toFixed(1)}°` : '—';
+  const azimuthText = liveAz !== null ? `${formatNumber(liveAz, 1, locale)}°` : '—';
+  const altitudeText = liveAlt !== null ? `${formatNumber(liveAlt, 1, locale)}°` : '—';
   const fullMoonText = fmtEventDate(almanac.moon.nextFullMoon, tz, locale);
   const newMoonText = fmtEventDate(almanac.moon.nextNewMoon, tz, locale);
 

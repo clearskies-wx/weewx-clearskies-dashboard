@@ -38,6 +38,7 @@ import {
 } from 'recharts';
 import { asConverted } from '../api/types';
 import { formatTime } from '../utils/format-date';
+import { formatNumber } from '../utils/format-number';
 import {
   Card,
   CardHeader,
@@ -375,7 +376,7 @@ function CurrentConditionsCardContent({
   todayLow,
   hourlyForecast,
 }: CurrentConditionsCardInternalProps) {
-  const { t } = useTranslation('now');
+  const { t, i18n } = useTranslation('now');
 
   // ADR-075: freshness-driven refetch is handled by useApiQuery inside useArchive.
   // The archiveStart24h window is stable (mount-time); useArchive triggers
@@ -391,8 +392,8 @@ function CurrentConditionsCardContent({
 
   const tempDisplay = useMemo(() => {
     if (!outTempCV || outTempCV.value === null) return '—';
-    return outTempCV.value.toFixed(1);
-  }, [outTempCV]);
+    return formatNumber(outTempCV.value, 1, i18n.language);
+  }, [outTempCV, i18n.language]);
 
   // Raw float for the chart reference dot
   const currentTempRaw = outTempCV?.value ?? null;
@@ -510,7 +511,7 @@ function CurrentConditionsCardContent({
                   >
                     {t('feelsLike')}{' '}
                     <span style={{ fontWeight: 600 }}>
-                      {feelsLikeCV.value.toFixed(1)}{feelsLikeCV.label || '°'}
+                      {formatNumber(feelsLikeCV.value, 1, i18n.language)}{feelsLikeCV.label || '°'}
                     </span>
                   </p>
                 )}
@@ -583,7 +584,7 @@ function CurrentConditionsCardContent({
                     <div>
                       {dewCV !== null && dewCV.value !== null && (
                         <p style={lineStyle}>
-                          {t('observations.dewpoint')} {dewCV.value.toFixed(1)}{dewCV.label || '°'}
+                          {t('observations.dewpoint')} {formatNumber(dewCV.value, 1, i18n.language)}{dewCV.label || '°'}
                         </p>
                       )}
                       {humCV !== null && humCV.value !== null && (

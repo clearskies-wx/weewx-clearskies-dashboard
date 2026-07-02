@@ -105,7 +105,7 @@ function TodaysHighlightsCardContent({
   observation,
   loading = false,
 }: TodaysHighlightsCardProps) {
-  const { t } = useTranslation('now');
+  const { t, i18n } = useTranslation('now');
 
   const { data: station } = useStation();
   const stationTz = station?.timezone;
@@ -155,7 +155,7 @@ function TodaysHighlightsCardContent({
     const rain = todayStats?.rainSoFar;
     if (rain === null || rain === undefined) return '—';
     const unit = rainCV?.label ?? ' in';
-    return `${(Math.round(rain * 100) / 100).toFixed(2)}${unit}`;
+    return `${formatValue(rain, 'rain', i18n.language)}${unit}`;
   }
 
   return (

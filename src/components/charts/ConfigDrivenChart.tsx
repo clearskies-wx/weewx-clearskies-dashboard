@@ -29,6 +29,7 @@ import { ChartContainer } from './chart-container';
 import type { ChartConfig, SeriesConfig } from '../../api/types';
 import { useTheme } from '../../lib/theme-provider';
 import { ensureChartContrast } from '../../utils/chart-contrast';
+import { formatNumber } from '../../utils/format-number';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -348,7 +349,7 @@ export function ConfigDrivenChart({
   height = 300,
   reducedMotion = false,
 }: ConfigDrivenChartProps) {
-  const { t } = useTranslation('charts');
+  const { t, i18n } = useTranslation('charts');
   const { resolved: resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
   const isMobile = useIsMobile();
@@ -603,7 +604,7 @@ export function ConfigDrivenChart({
               interval={leftTicks ? 0 : undefined}
               tickFormatter={
                 leftAxisCfg.mirrored ? (v: number) => String(Math.abs(v)) :
-                leftTickDecimals != null ? (v: number) => v.toFixed(leftTickDecimals) :
+                leftTickDecimals != null ? (v: number) => formatNumber(v, leftTickDecimals, i18n.language) :
                 undefined
               }
               label={
@@ -648,7 +649,7 @@ export function ConfigDrivenChart({
                   rightAxisIsWindDir
                     ? (v: number) => COMPASS_TICKS[v] ?? String(v)
                     : rightTickDecimals != null
-                      ? (v: number) => v.toFixed(rightTickDecimals)
+                      ? (v: number) => formatNumber(v, rightTickDecimals, i18n.language)
                       : undefined
                 }
                 label={
@@ -704,7 +705,7 @@ export function ConfigDrivenChart({
                   return [`${compass} (${deg}°)`, name];
                 }
                 const decimals = fmt?.decimals ?? 1;
-                const formatted = numVal.toFixed(decimals);
+                const formatted = formatNumber(numVal, decimals, i18n.language);
                 const unit = fmt?.unit ?? '';
                 return [unit ? `${formatted} ${unit}` : formatted, name];
               }}

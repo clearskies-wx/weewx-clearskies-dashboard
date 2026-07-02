@@ -25,6 +25,7 @@ import { useTranslation } from 'react-i18next';
 import { Wind } from '@phosphor-icons/react';
 import { asConverted } from '../api/types';
 import { cardinalFromDegrees } from '../utils/wind';
+import { formatNumber } from '../utils/format-number';
 import {
   Card,
   CardHeader,
@@ -51,12 +52,13 @@ import type { CardComponentProps } from '../lib/card-registry';
  */
 function formatWindField(
   field: import('../api/types').ConvertedValue | number | null | undefined,
+  locale: string,
   fallbackUnit = '',
 ): { display: string; unit: string } {
   const cv = asConverted(field ?? null);
   if (!cv || cv.value === null) return { display: '—', unit: fallbackUnit };
   return {
-    display: cv.value.toFixed(1),
+    display: formatNumber(cv.value, 1, locale),
     unit: cv.label || fallbackUnit,
   };
 }
@@ -89,7 +91,7 @@ export interface WindCompassCardProps {
 // ---------------------------------------------------------------------------
 
 function WindCompassCardContent({ observation, windSpeedAvg10m: avg10mProp, windGustMax10m: gustMax10mProp }: WindCompassCardProps) {
-  const { t } = useTranslation('now');
+  const { t, i18n } = useTranslation('now');
   const { t: tCommon } = useTranslation('common');
   const prefersReducedMotion = usePrefersReducedMotion();
 
@@ -168,15 +170,15 @@ function WindCompassCardContent({ observation, windSpeedAvg10m: avg10mProp, wind
   // number can be rendered in the display font and unit in a smaller weight.
   const speedUnit = windSpeedCV?.label ?? '';
   const speedDisplay = windSpeedCV?.value !== null && windSpeedCV?.value !== undefined
-    ? windSpeedCV.value.toFixed(1)
+    ? formatNumber(windSpeedCV.value, 1, i18n.language)
     : '—';
 
   // Bearing label string: "305°" — uses retained bearing during calm.
   const bearingLabel = `${Math.round(targetDeg)}°`;
 
   // 10-min avg and max gust — from BFF envelope (wired via props, not observation).
-  const avg10m = formatWindField(avg10mProp ?? null, speedUnit);
-  const gustMax10m = formatWindField(gustMax10mProp ?? null, speedUnit);
+  const avg10m = formatWindField(avg10mProp ?? null, i18n.language, speedUnit);
+  const gustMax10m = formatWindField(gustMax10mProp ?? null, i18n.language, speedUnit);
 
   // SVG <title> summarises all wind data for screen readers.
   const hasAvg = avg10m.display !== '—';
