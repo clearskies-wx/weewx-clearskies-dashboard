@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo, Suspense } from 'react';
 import type { WebcamConfig } from '../api/types';
 import { Grid } from '../components/layout/grid';
 import { NowHeroCard } from '../components/layout/now-hero-card';
-import { footprintColSpan } from '../components/ui/card';
 import { ProviderAttribution } from '../components/shared/ProviderAttribution';
 import {
   useForecast,
