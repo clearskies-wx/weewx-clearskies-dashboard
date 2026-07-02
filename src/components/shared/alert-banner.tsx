@@ -31,6 +31,7 @@ import type { AlertRecord } from '../../api/types';
 import { AlertIcon } from '../icons/alert-icon-map';
 import { getAlertCategory } from '../icons/alert-category';
 import { getAlertColors } from '../../utils/alert-colors';
+import { useCapabilities } from '../../hooks/useWeatherData';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -191,6 +192,12 @@ export function AlertBanner({ alerts, stationTz }: AlertBannerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
 
+  // useApiQuery caches by endpoint, so this does not trigger a redundant
+  // fetch — capabilities is already loaded by the Now page / other callers.
+  // Must be called unconditionally before the early-return guard below
+  // (React rules of hooks; DASHBOARD-MANUAL §9).
+  const { data: capabilities } = useCapabilities();
+
   // Guard: empty or undefined — render nothing.
   if (!alerts || alerts.length === 0) return null;
 
@@ -215,6 +222,13 @@ export function AlertBanner({ alerts, stationTz }: AlertBannerProps) {
   const multiAlert = sorted.length > 1;
 
   const expiryText = formatExpiry(alert.expires, t, stationTz);
+
+  // Provider attribution (ADR-080) — capabilities-driven, no hardcoded
+  // provider name mapping. NWS-sourced alerts show no attribution line
+  // (attributionRequired is false for the nws capability entry).
+  const alertAttribution = capabilities?.providers.find(
+    (p) => p.providerId === alert.source,
+  )?.attribution;
 
   // Detail line: "Area · until X"
   const detailParts: string[] = [];
@@ -456,10 +470,10 @@ export function AlertBanner({ alerts, stationTz }: AlertBannerProps) {
               </dl>
             )}
 
-            {/* Provider attribution — text only, not needed for NWS */}
-            {alert.source && alert.source !== 'nws' && (
+            {/* Provider attribution — text only, capabilities-driven (ADR-080) */}
+            {alertAttribution?.attributionRequired && (
               <p className="mt-2 font-heading text-[length:var(--text-micro)] text-muted-foreground">
-                Powered by {alert.source === 'aeris' ? 'Xweather' : alert.source === 'owm' ? 'OpenWeather' : alert.source}
+                {alertAttribution.attributionText}
               </p>
             )}
 
