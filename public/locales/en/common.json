@@ -65,6 +65,22 @@
     "ariaLight": "Theme: light — click to switch to dark mode",
     "ariaDark": "Theme: dark — click to switch to system preference"
   },
+  "cards": {
+    "currentConditions": "Current Conditions",
+    "todaysForecast": "Today's Forecast",
+    "wind": "Wind",
+    "todaysHighlights": "Today's Highlights",
+    "precipitation": "Precipitation",
+    "barometer": "Barometer",
+    "solarRadiation": "Solar Radiation",
+    "uvIndex": "UV Index",
+    "airQualityIndex": "Air Quality Index",
+    "sunAndMoon": "Sun & Moon",
+    "lightning": "Lightning",
+    "earthquakes": "Earthquakes",
+    "radar": "Radar",
+    "webcam": "Webcam"
+  },
   "directions": {
     "N":   "N",
     "NNE": "NNE",

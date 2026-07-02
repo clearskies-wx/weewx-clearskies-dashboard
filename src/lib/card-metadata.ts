@@ -38,7 +38,10 @@ export interface CardConfigField {
 
 export interface CardMetadata {
   type: CardType;
-  displayName: string;
+  /** i18n key (common namespace) for the human-readable card name — resolve
+   *  via t(displayNameKey) wherever this metadata reaches a rendering
+   *  context. Never a raw English string (ADR-021 / rules/coding.md §6). */
+  displayNameKey: string;
   apiEndpoints: string[];
   allowedLayouts: CardLayout[];
   thumbnail: string;
@@ -54,98 +57,98 @@ export interface CardMetadata {
 export const CARD_METADATA: Record<CardType, CardMetadata> = {
   "current-conditions": {
     type: "current-conditions",
-    displayName: "Current Conditions",
+    displayNameKey: "cards.currentConditions",
     apiEndpoints: ["/api/v1/current", "/api/v1/forecast", "/api/v1/almanac"],
     allowedLayouts: [{ footprint: "wide", rowSpan: 2 }],
     thumbnail: "/card-thumbnails/current-conditions.png",
   },
   "now-forecast": {
     type: "now-forecast",
-    displayName: "Today's Forecast",
+    displayNameKey: "cards.todaysForecast",
     apiEndpoints: ["/api/v1/forecast"],
     allowedLayouts: [{ footprint: "wide", rowSpan: 2 }],
     thumbnail: "/card-thumbnails/now-forecast.png",
   },
   "wind-compass": {
     type: "wind-compass",
-    displayName: "Wind",
+    displayNameKey: "cards.wind",
     apiEndpoints: ["/api/v1/current"],
     allowedLayouts: [{ footprint: "tile", rowSpan: 2 }],
     thumbnail: "/card-thumbnails/wind-compass.png",
   },
   "todays-highlights": {
     type: "todays-highlights",
-    displayName: "Today's Highlights",
+    displayNameKey: "cards.todaysHighlights",
     apiEndpoints: ["/api/v1/current"],
     allowedLayouts: [{ footprint: "tile", rowSpan: 2 }],
     thumbnail: "/card-thumbnails/todays-highlights.png",
   },
   "precipitation": {
     type: "precipitation",
-    displayName: "Precipitation",
+    displayNameKey: "cards.precipitation",
     apiEndpoints: ["/api/v1/current"],
     allowedLayouts: [{ footprint: "tile", rowSpan: 1 }],
     thumbnail: "/card-thumbnails/precipitation.png",
   },
   "barometer": {
     type: "barometer",
-    displayName: "Barometer",
+    displayNameKey: "cards.barometer",
     apiEndpoints: ["/api/v1/current"],
     allowedLayouts: [{ footprint: "tile", rowSpan: 1 }],
     thumbnail: "/card-thumbnails/barometer.png",
   },
   "solar-radiation": {
     type: "solar-radiation",
-    displayName: "Solar Radiation",
+    displayNameKey: "cards.solarRadiation",
     apiEndpoints: ["/api/v1/current"],
     allowedLayouts: [{ footprint: "tile", rowSpan: 1 }],
     thumbnail: "/card-thumbnails/solar-radiation.png",
   },
   "uv-index": {
     type: "uv-index",
-    displayName: "UV Index",
+    displayNameKey: "cards.uvIndex",
     apiEndpoints: ["/api/v1/current", "/api/v1/forecast", "/api/v1/almanac"],
     allowedLayouts: [{ footprint: "tile", rowSpan: 1 }],
     thumbnail: "/card-thumbnails/uv-index.png",
   },
   "aqi": {
     type: "aqi",
-    displayName: "Air Quality Index",
+    displayNameKey: "cards.airQualityIndex",
     apiEndpoints: ["/api/v1/aqi/current"],
     allowedLayouts: [{ footprint: "tile", rowSpan: 1 }],
     thumbnail: "/card-thumbnails/aqi.png",
   },
   "sun-moon": {
     type: "sun-moon",
-    displayName: "Sun & Moon",
+    displayNameKey: "cards.sunAndMoon",
     apiEndpoints: ["/api/v1/almanac"],
     allowedLayouts: [{ footprint: "tile", rowSpan: 1 }],
     thumbnail: "/card-thumbnails/sun-moon.png",
   },
   "lightning": {
     type: "lightning",
-    displayName: "Lightning",
+    displayNameKey: "cards.lightning",
     apiEndpoints: ["/api/v1/current"],
     allowedLayouts: [{ footprint: "tile", rowSpan: 1 }],
     thumbnail: "/card-thumbnails/lightning.png",
   },
   "earthquake": {
     type: "earthquake",
-    displayName: "Earthquakes",
+    displayNameKey: "cards.earthquakes",
     apiEndpoints: ["/api/v1/earthquakes"],
     allowedLayouts: [{ footprint: "tile", rowSpan: 1 }],
     thumbnail: "/card-thumbnails/earthquake.png",
   },
   "radar": {
     type: "radar",
-    displayName: "Radar",
+    displayNameKey: "cards.radar",
     apiEndpoints: ["/api/v1/station"],
     allowedLayouts: [{ footprint: "wide", rowSpan: 2.5 }],
     thumbnail: "/card-thumbnails/radar.png",
   },
   "webcam": {
     type: "webcam",
-    displayName: "Webcam",
+    displayNameKey: "cards.webcam",
     // Webcam reads /webcam.json (a static file served by Caddy), not an API endpoint.
     apiEndpoints: [],
     allowedLayouts: [{ footprint: "wide", rowSpan: 2.5 }],

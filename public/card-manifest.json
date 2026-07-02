@@ -3,7 +3,7 @@
   "cards": [
     {
       "type": "current-conditions",
-      "displayName": "Current Conditions",
+      "displayNameKey": "cards.currentConditions",
       "apiEndpoints": [
         "/api/v1/current",
         "/api/v1/forecast",
@@ -19,7 +19,7 @@
     },
     {
       "type": "now-forecast",
-      "displayName": "Today's Forecast",
+      "displayNameKey": "cards.todaysForecast",
       "apiEndpoints": [
         "/api/v1/forecast"
       ],
@@ -33,7 +33,7 @@
     },
     {
       "type": "wind-compass",
-      "displayName": "Wind",
+      "displayNameKey": "cards.wind",
       "apiEndpoints": [
         "/api/v1/current"
       ],
@@ -47,7 +47,7 @@
     },
     {
       "type": "todays-highlights",
-      "displayName": "Today's Highlights",
+      "displayNameKey": "cards.todaysHighlights",
       "apiEndpoints": [
         "/api/v1/current"
       ],
@@ -61,7 +61,7 @@
     },
     {
       "type": "precipitation",
-      "displayName": "Precipitation",
+      "displayNameKey": "cards.precipitation",
       "apiEndpoints": [
         "/api/v1/current"
       ],
@@ -75,7 +75,7 @@
     },
     {
       "type": "barometer",
-      "displayName": "Barometer",
+      "displayNameKey": "cards.barometer",
       "apiEndpoints": [
         "/api/v1/current"
       ],
@@ -89,7 +89,7 @@
     },
     {
       "type": "solar-radiation",
-      "displayName": "Solar Radiation",
+      "displayNameKey": "cards.solarRadiation",
       "apiEndpoints": [
         "/api/v1/current"
       ],
@@ -103,7 +103,7 @@
     },
     {
       "type": "uv-index",
-      "displayName": "UV Index",
+      "displayNameKey": "cards.uvIndex",
       "apiEndpoints": [
         "/api/v1/current",
         "/api/v1/forecast",
@@ -119,7 +119,7 @@
     },
     {
       "type": "aqi",
-      "displayName": "Air Quality Index",
+      "displayNameKey": "cards.airQualityIndex",
       "apiEndpoints": [
         "/api/v1/aqi/current"
       ],
@@ -133,7 +133,7 @@
     },
     {
       "type": "sun-moon",
-      "displayName": "Sun & Moon",
+      "displayNameKey": "cards.sunAndMoon",
       "apiEndpoints": [
         "/api/v1/almanac"
       ],
@@ -147,7 +147,7 @@
     },
     {
       "type": "lightning",
-      "displayName": "Lightning",
+      "displayNameKey": "cards.lightning",
       "apiEndpoints": [
         "/api/v1/current"
       ],
@@ -161,7 +161,7 @@
     },
     {
       "type": "earthquake",
-      "displayName": "Earthquakes",
+      "displayNameKey": "cards.earthquakes",
       "apiEndpoints": [
         "/api/v1/earthquakes"
       ],
@@ -175,7 +175,7 @@
     },
     {
       "type": "radar",
-      "displayName": "Radar",
+      "displayNameKey": "cards.radar",
       "apiEndpoints": [
         "/api/v1/station"
       ],
@@ -189,7 +189,7 @@
     },
     {
       "type": "webcam",
-      "displayName": "Webcam",
+      "displayNameKey": "cards.webcam",
       "apiEndpoints": [],
       "allowedLayouts": [
         {

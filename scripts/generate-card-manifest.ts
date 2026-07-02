@@ -20,7 +20,10 @@ const outputPath = resolve(repoRoot, 'public', 'card-manifest.json');
 
 interface ManifestCard {
   type: string;
-  displayName: string;
+  // i18n key (dashboard's common namespace), not display text — this script
+  // has no React/i18next context to resolve it. The consumer (admin card
+  // layout editor) resolves the key through its own translation mechanism.
+  displayNameKey: string;
   apiEndpoints: string[];
   allowedLayouts: Array<{ footprint: string; rowSpan: number }>;
   thumbnail: string;
@@ -35,7 +38,7 @@ interface CardManifest {
 const cards: ManifestCard[] = Object.values(CARD_METADATA).map(meta => {
   const card: ManifestCard = {
     type: meta.type,
-    displayName: meta.displayName,
+    displayNameKey: meta.displayNameKey,
     apiEndpoints: meta.apiEndpoints,
     allowedLayouts: meta.allowedLayouts,
     thumbnail: meta.thumbnail,
