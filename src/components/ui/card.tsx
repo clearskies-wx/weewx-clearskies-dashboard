@@ -47,7 +47,7 @@ export const footprintColSpan: Record<CardFootprint, string> = {
  *   2         -> md:row-span-8  (8 tracks = 26rem)     — tall/chart cards
  *   2.5       -> md:row-span-10 (10 tracks = 32.5rem)  — extra-tall cards (radar, webcam)
  */
-export function rowSpanClass(rowSpan: "quarter" | "half" | 1 | 2 | 2.5 | undefined): string {
+function rowSpanClass(rowSpan: "quarter" | "half" | 1 | 2 | 2.5 | undefined): string {
   switch (rowSpan) {
     case "quarter": return "md:row-span-1";
     case "half":    return "md:row-span-2";

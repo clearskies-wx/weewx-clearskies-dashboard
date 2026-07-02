@@ -31,6 +31,7 @@ export interface ForecastDailyCardProps {
   units?: UnitsBlock;
   /** Station-local date (YYYY-MM-DD) from stationClock.date (ADR-075). */
   stationDate?: string;
+  footer?: React.ReactNode;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -42,6 +43,7 @@ export function ForecastDailyCard({
   stationTz = 'UTC',
   units,
   stationDate,
+  footer,
 }: ForecastDailyCardProps) {
   const { t } = useTranslation('forecast');
 
@@ -77,6 +79,7 @@ export function ForecastDailyCard({
           </p>
         )}
       </CardContent>
+      {footer}
     </Card>
   );
 }

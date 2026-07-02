@@ -16,7 +16,6 @@ import { PageLayout } from '../components/layout/page-layout';
 import { ForecastHourlyCard } from '../components/forecast/ForecastHourlyCard';
 import { ForecastDailyCard } from '../components/forecast/ForecastDailyCard';
 import { ForecastDiscussionCard } from '../components/forecast/ForecastDiscussionCard';
-import { footprintColSpan } from '../components/ui/card';
 import { ProviderAttribution } from '../components/shared/ProviderAttribution';
 import { useForecast, useStation, useCapabilities } from '../hooks/useWeatherData';
 
@@ -45,15 +44,13 @@ export function ForecastPage() {
   return (
     <PageLayout title={t('title')} icon={<CloudSun weight="duotone" />}>
       {/* ── Surface B: Hourly ─────────────────────────────────────────── */}
-      <div className={footprintColSpan.full}>
-        <ForecastHourlyCard
-          forecast={forecast}
-          loading={fcLoading}
-          error={fcError}
-          stationTz={tz}
-          units={fcUnits}
-        />
-        {showForecastAttribution && forecast?.source && forecastAttribution && (
+      <ForecastHourlyCard
+        forecast={forecast}
+        loading={fcLoading}
+        error={fcError}
+        stationTz={tz}
+        units={fcUnits}
+        footer={showForecastAttribution && forecast?.source && forecastAttribution ? (
           <ProviderAttribution
             attributionText={forecastAttribution.attributionText}
             displayName={forecastAttribution.displayName}
@@ -62,20 +59,18 @@ export function ForecastPage() {
             textTranslatable={forecastAttribution.textTranslatable}
             providerId={forecast.source}
           />
-        )}
-      </div>
+        ) : undefined}
+      />
 
       {/* ── Surface C: 7-Day ──────────────────────────────────────────── */}
-      <div className={footprintColSpan.full}>
-        <ForecastDailyCard
-          forecast={forecast}
-          loading={fcLoading}
-          error={fcError}
-          stationTz={tz}
-          units={fcUnits}
-          stationDate={stationClock?.date}
-        />
-        {showForecastAttribution && forecast?.source && forecastAttribution && (
+      <ForecastDailyCard
+        forecast={forecast}
+        loading={fcLoading}
+        error={fcError}
+        stationTz={tz}
+        units={fcUnits}
+        stationDate={stationClock?.date}
+        footer={showForecastAttribution && forecast?.source && forecastAttribution ? (
           <ProviderAttribution
             attributionText={forecastAttribution.attributionText}
             displayName={forecastAttribution.displayName}
@@ -84,8 +79,8 @@ export function ForecastPage() {
             textTranslatable={forecastAttribution.textTranslatable}
             providerId={forecast.source}
           />
-        )}
-      </div>
+        ) : undefined}
+      />
 
       {/* ── Surface D: Discussion (self-hides when empty) ─────────────── */}
       <ForecastDiscussionCard

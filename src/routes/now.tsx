@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, Suspense } from 'react';
 import type { WebcamConfig } from '../api/types';
 import { Grid } from '../components/layout/grid';
 import { NowHeroCard } from '../components/layout/now-hero-card';
-import { footprintColSpan, rowSpanClass } from '../components/ui/card';
+import { footprintColSpan } from '../components/ui/card';
 import { ProviderAttribution } from '../components/shared/ProviderAttribution';
 import {
   useForecast,
@@ -229,38 +229,26 @@ export function NowPage() {
             if (entry.type === 'webcam' && !webcamEnabled) return null;
 
             const CardComponent = reg.component;
-            const cardElement = (
+            const attribution = findCardAttribution(entry.type, dataBag, capabilities?.providers);
+
+            return (
               <CardComponent
                 key={entry.type}
                 dataBag={dataBag}
                 layout={{ footprint: entry.footprint, rowSpan: entry.rowSpan }}
                 stationTz={tz}
+                footer={attribution ? (
+                  <ProviderAttribution
+                    attributionText={attribution.attributionText}
+                    displayName={attribution.displayName}
+                    logoRequired={attribution.logoRequired}
+                    doNotUseLogo={attribution.doNotUseLogo}
+                    textTranslatable={attribution.textTranslatable}
+                    compact={entry.footprint === 'tile'}
+                    providerId={attribution.providerId}
+                  />
+                ) : undefined}
               />
-            );
-
-            // ── Host-rendered provider attribution (ADR-080, DASHBOARD-MANUAL §8) ──
-            // Cards must not import ProviderAttribution themselves. The host reads
-            // `source` from the card's own dataBag response(s), matches it against
-            // the capabilities registry, and renders attribution as a sibling when
-            // attributionRequired is true. Wrapped in a div carrying the same
-            // grid column-span classes as the card's own footprint so the pair
-            // occupies a single grid cell and the page grid layout is undisturbed.
-            const attribution = findCardAttribution(entry.type, dataBag, capabilities?.providers);
-            if (!attribution) return cardElement;
-
-            return (
-              <div key={entry.type} className={`${footprintColSpan[entry.footprint]} ${rowSpanClass(entry.rowSpan)}`}>
-                {cardElement}
-                <ProviderAttribution
-                  attributionText={attribution.attributionText}
-                  displayName={attribution.displayName}
-                  logoRequired={attribution.logoRequired}
-                  doNotUseLogo={attribution.doNotUseLogo}
-                  textTranslatable={attribution.textTranslatable}
-                  compact={entry.footprint === 'tile'}
-                  providerId={attribution.providerId}
-                />
-              </div>
             );
           })}
         </Suspense>

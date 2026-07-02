@@ -34,6 +34,7 @@ export interface ForecastHourlyCardProps {
   error: Error | null;
   stationTz?: string;
   units?: UnitsBlock | null;
+  footer?: React.ReactNode;
 }
 
 type HourTab = 'today' | 'tomorrow';
@@ -46,6 +47,7 @@ export function ForecastHourlyCard({
   error,
   stationTz = 'UTC',
   units,
+  footer,
 }: ForecastHourlyCardProps) {
   const { t } = useTranslation('forecast');
   const [activeTab, setActiveTab] = useState<HourTab>('today');
@@ -120,6 +122,7 @@ export function ForecastHourlyCard({
           </>
         )}
       </CardContent>
+      {forecast?.source && footer}
     </Card>
   );
 }

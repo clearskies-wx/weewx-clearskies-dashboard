@@ -2,7 +2,7 @@
 // Per §8 Card Plugin Contract in DASHBOARD-MANUAL.md.
 // This file HAS React imports (lazy). For the zero-React metadata, see card-metadata.ts.
 
-import type { ComponentType } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import { lazy } from 'react';
 import type { CardType, CardMetadata, CardLayout } from './card-metadata';
 import { CARD_METADATA } from './card-metadata';
@@ -24,6 +24,7 @@ export interface CardComponentProps {
   dataBag: DataBag;
   layout: CardLayout;
   stationTz: string;
+  footer?: ReactNode;
 }
 
 /**

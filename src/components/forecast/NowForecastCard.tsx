@@ -53,7 +53,8 @@ function NowForecastCardContent({
   error,
   stationTz = 'UTC',
   stationDate,
-}: NowForecastCardProps) {
+  footer,
+}: NowForecastCardProps & { footer?: React.ReactNode }) {
   const { t } = useTranslation('forecast');
   const [activeTab, setActiveTab] = useState<Tab>('today');
 
@@ -154,6 +155,7 @@ function NowForecastCardContent({
           </>
         )}
       </CardContent>
+      {footer}
     </Card>
   );
 }
@@ -179,6 +181,7 @@ export function NowForecastCard(props: CardComponentProps | NowForecastCardProps
         error={forecastData?.error ? new Error('error') : null}
         stationTz={props.stationTz}
         stationDate={forecastData?.stationClock?.date}
+        footer={props.footer}
       />
     );
   }

@@ -655,7 +655,8 @@ function AqiCardContent({
   loading = false,
   error = null,
   onRetry,
-}: AqiCardProps) {
+  footer,
+}: AqiCardProps & { footer?: React.ReactNode }) {
   const { t } = useTranslation('now');
 
   // Resolve scale configuration.
@@ -843,6 +844,7 @@ function AqiCardContent({
           )
         )}
       </CardContent>
+      {footer}
     </Card>
   );
 }
@@ -868,7 +870,7 @@ export function AqiCard(props: CardComponentProps | AqiCardProps): React.ReactEl
         aqi={aqiData?.data ?? null}
         loading={aqiData?.loading ?? true}
         error={aqiData?.error ? 'error' : null}
-        // omit onRetry → AqiCardContent renders muted text instead of retry button
+        footer={props.footer}
       />
     );
   }
