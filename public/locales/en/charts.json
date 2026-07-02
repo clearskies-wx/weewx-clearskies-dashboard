@@ -61,5 +61,69 @@
   "ariaMonthlyChartFigure": "Daily temperature for {{monthName}} {{year}}",
   "ariaAnnualChartFigure": "Daily temperature for {{year}}",
   "exportPng": "Export as PNG",
-  "exportCsv": "Export as CSV"
+  "exportCsv": "Export as CSV",
+  "chartFallbackTitle": "Chart",
+  "tooltip": {
+    "high": "High: {{value}}",
+    "low": "Low: {{value}}",
+    "avg": "Avg: {{value}}"
+  },
+  "weatherRangeChart": {
+    "outsideTemperature": "Outside Temperature",
+    "tableAriaLabel": "{{field}} range data",
+    "tableCaption": "{{field}} high and low values for each period.",
+    "columnDate": "Date",
+    "columnHigh": "High",
+    "columnLow": "Low",
+    "columnAverage": "Average",
+    "ariaLabel": "{{field}} daily high and low range chart",
+    "ariaLabelWithUnit": "{{field}} daily high and low range chart in {{unit}}"
+  },
+  "windRose": {
+    "title": "Wind Rose",
+    "calm": "Calm",
+    "calmAllDirections": "Calm (all directions)",
+    "ariaLegend": "Wind speed legend by Beaufort scale",
+    "ariaData": "Wind Rose Data",
+    "srDescription": "Wind Rose chart showing wind direction frequency by Beaufort category. Calm percentage: {{calm}}%. Total records: {{total}}. See the accessible data table below for full values.",
+    "segmentAriaLabel": "{{direction}}: {{category}} {{percentage}}%",
+    "percentValue": "{{value}}%",
+    "tableCaption": "Wind Rose Data — percentage of time wind came from each direction at each Beaufort level. Calm: {{calm}}% of {{total}} records.",
+    "columnDirection": "Direction",
+    "columnCategory": "{{label}} (Beaufort {{beaufort}})"
+  },
+  "haysChart": {
+    "high": "High: {{value}}",
+    "low": "Low: {{value}}",
+    "bandAriaLabel": "{{label}}: high {{high}}, low {{low}}",
+    "peakLabel": "peak",
+    "srDescription": "Polar arearange chart for {{field}}. Each position around the circle represents a time period. Each band spans from the low value to the high value for that period. See the accessible data table below for all values.",
+    "legendAriaLabel": "Color legend for {{field}} chart",
+    "legendLabel": "{{field}} range (low to high)",
+    "tableAriaLabel": "{{field}} range data",
+    "tableCaption": "{{field}} high and low values for each period.",
+    "columnPeriod": "Period",
+    "columnHigh": "High",
+    "columnHighUnit": "High ({{unit}})",
+    "columnLow": "Low",
+    "columnLowUnit": "Low ({{unit}})"
+  },
+  "gauge": {
+    "srDescription": "{{value}}. Scale from {{min}} to {{max}}.{{zones}}",
+    "srDescriptionWithTitle": "{{title}}: {{value}}. Scale from {{min}} to {{max}}.{{zones}}",
+    "titleWithLabel": "{{title}}: {{value}}",
+    "titleFallback": "Gauge: {{value}}",
+    "zones": "Zones: {{list}}."
+  },
+  "configDriven": {
+    "value": "Value",
+    "high": "{{field}} High",
+    "low": "{{field}} Low",
+    "fullscreen": "Chart fullscreen view",
+    "fullscreenWithTitle": "{{title}} — fullscreen"
+  },
+  "chartFullscreen": {
+    "viewButton": "View chart fullscreen",
+    "closeButton": "Close fullscreen"
+  }
 }

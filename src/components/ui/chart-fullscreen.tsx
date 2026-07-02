@@ -15,6 +15,7 @@
 //   - All icon elements are aria-hidden (the button's aria-label carries the name)
 
 import * as React from "react";
+import { useTranslation } from "react-i18next";
 import { ArrowsOut, X } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
@@ -42,11 +43,12 @@ export const ChartFullscreenButton = React.forwardRef<
   HTMLButtonElement,
   ChartFullscreenButtonProps
 >(({ onClick, className }, ref) => {
+  const { t } = useTranslation('charts');
   return (
     <button
       ref={ref}
       type="button"
-      aria-label="View chart fullscreen"
+      aria-label={t('chartFullscreen.viewButton')}
       onClick={onClick}
       className={cn(
         // Size, shape, and base appearance
@@ -156,9 +158,11 @@ export function ChartFullscreenOverlay({
   isOpen,
   onClose,
   children,
-  "aria-label": ariaLabel = "Chart fullscreen view",
+  "aria-label": ariaLabelProp,
   className,
 }: ChartFullscreenOverlayProps) {
+  const { t } = useTranslation('charts');
+  const ariaLabel = ariaLabelProp ?? t('configDriven.fullscreen');
   // Ref for the dialog container — used for focus trap and initial focus.
   const dialogRef = React.useRef<HTMLDivElement>(null);
 
@@ -264,7 +268,7 @@ export function ChartFullscreenOverlay({
         <div className="absolute top-3 right-3 z-10">
           <button
             type="button"
-            aria-label="Close fullscreen"
+            aria-label={t('chartFullscreen.closeButton')}
             onClick={onClose}
             className={cn(
               "inline-flex items-center justify-center rounded-md",

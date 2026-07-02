@@ -1,7 +1,6 @@
 {
   "loading": "Loading…",
   "loadingPage": "Loading {{title}}",
-  "error": "An error occurred",
   "retry": "Retry",
   "noData": "No data available",
   "skipToContent": "Skip to main content",
@@ -27,7 +26,24 @@
     "shareFacebook": "Share on Facebook",
     "sharePinterest": "Pin on Pinterest",
     "copyLink": "Copy link",
-    "linkCopied": "Link copied!"
+    "linkCopied": "Link copied!",
+    "defaultStationName": "Clear Skies Weather"
+  },
+  "error": {
+    "generic": "An error occurred",
+    "somethingWentWrong": "Something went wrong",
+    "reloadPage": "Reload page",
+    "unexpectedError": "An unexpected error occurred."
+  },
+  "aria": {
+    "scrollableContent": "Scrollable content"
+  },
+  "layout": {
+    "myWeatherStation": "My Weather Station",
+    "heroAriaLabelWithLocation": "{{name}} — {{location}}"
+  },
+  "radar": {
+    "weatherAlert": "Weather Alert"
   },
   "theme": {
     "ariaAuto": "Theme: following system preference — click to switch to light mode",

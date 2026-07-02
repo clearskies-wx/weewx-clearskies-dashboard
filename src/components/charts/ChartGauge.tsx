@@ -26,6 +26,8 @@
 //   --font-sans          Font stack for SVG text.
 
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
+import { formatNumber } from '../../utils/format-number';
 
 // ---------------------------------------------------------------------------
 // Public interface
@@ -151,6 +153,7 @@ function buildZoneDescription(
   zones: ChartGaugeColorZone[],
   min: number,
   max: number,
+  t: (key: string, opts?: Record<string, unknown>) => string,
 ): string {
   if (zones.length === 0) return '';
   const parts: string[] = [];
@@ -161,7 +164,7 @@ function buildZoneDescription(
     parts.push(`${label} ${from}–${to}`);
     from = to;
   }
-  return `Zones: ${parts.join(', ')}.`;
+  return t('gauge.zones', { list: parts.join(', ') });
 }
 
 // ---------------------------------------------------------------------------
@@ -178,6 +181,7 @@ export function ChartGauge({
   colorsEnabled = false,
   reducedMotion = false,
 }: ChartGaugeProps) {
+  const { t, i18n } = useTranslation('charts');
   // Clamp value within [min, max]
   const clamped = Math.min(Math.max(value, min), max);
   const range = max > min ? max - min : 1;
@@ -237,24 +241,19 @@ export function ChartGauge({
   const indicatorInner = polarToXY(indicatorAngle, R - TICK_LEN_INDICATOR);
 
   // Format the displayed value — round to 1 decimal for floats, integer for whole numbers
-  const displayValue =
-    Number.isFinite(value)
-      ? Number.isInteger(value)
-        ? String(value)
-        : value.toFixed(1)
-      : '—';
+  const displayValue = Number.isFinite(value)
+    ? formatNumber(value, Number.isInteger(value) ? 0 : 1, i18n.language)
+    : '—';
 
-  const minLabel = String(min);
-  const maxLabel = String(max);
+  const minLabel = formatNumber(min, Number.isInteger(min) ? 0 : 1, i18n.language);
+  const maxLabel = formatNumber(max, Number.isInteger(max) ? 0 : 1, i18n.language);
 
   // sr-only description
-  const zoneDesc = buildZoneDescription(activeZones, min, max);
-  const srDescription = [
-    title ? `${title}: ` : '',
-    `${displayValue}${unit ? ' ' + unit : ''}`,
-    `. Scale from ${minLabel} to ${maxLabel}.`,
-    zoneDesc ? ` ${zoneDesc}` : '',
-  ].join('');
+  const zoneDesc = buildZoneDescription(activeZones, min, max, t);
+  const valueWithUnit = unit ? `${displayValue} ${unit}` : displayValue;
+  const srDescription = title
+    ? t('gauge.srDescriptionWithTitle', { title, value: valueWithUnit, min: minLabel, max: maxLabel, zones: zoneDesc })
+    : t('gauge.srDescription', { value: valueWithUnit, min: minLabel, max: maxLabel, zones: zoneDesc });
 
   const titleId = React.useId();
   const descId = React.useId();
@@ -293,8 +292,8 @@ export function ChartGauge({
           {/* SVG title for screen readers */}
           <title id={titleId}>
             {title
-              ? `${title}: ${displayValue}${unit ? ' ' + unit : ''}`
-              : `Gauge: ${displayValue}${unit ? ' ' + unit : ''}`}
+              ? t('gauge.titleWithLabel', { title, value: valueWithUnit })
+              : t('gauge.titleFallback', { value: valueWithUnit })}
           </title>
 
           {/* All tick marks — decorative; a11y info is on the SVG element and sr-only span */}

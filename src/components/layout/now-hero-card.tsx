@@ -15,6 +15,7 @@
 //   - Station name is the visible heading (h1) for screen readers
 //   - Color pairs (text on glass) pass WCAG AA in both light and dark themes
 
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 
@@ -92,7 +93,8 @@ export function NowHeroCard({
   logoAlt,
   className,
 }: NowHeroCardProps) {
-  const displayName = stationName?.trim() || 'My Weather Station';
+  const { t } = useTranslation('common');
+  const displayName = stationName?.trim() || t('layout.myWeatherStation');
 
   return (
     <Card
@@ -102,7 +104,7 @@ export function NowHeroCard({
       <header
         aria-label={
           location
-            ? `${displayName} — ${location}`
+            ? t('layout.heroAriaLabelWithLocation', { name: displayName, location })
             : displayName
         }
         className="flex flex-col items-start gap-0.5 px-[var(--card-pad-compact)] md:flex-row md:items-center md:justify-between md:gap-4"

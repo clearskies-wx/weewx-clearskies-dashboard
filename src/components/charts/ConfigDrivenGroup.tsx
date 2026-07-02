@@ -840,13 +840,13 @@ export function ConfigDrivenGroup({
   // -------------------------------------------------------------------------
 
   function handleCsvExport(): void {
-    const title = group.title ?? 'Chart';
+    const title = group.title ?? t('chartFallbackTitle');
     if (hasRangeChart) {
-      const fieldLabel = rangeField ?? 'Value';
+      const fieldLabel = rangeField ?? t('configDriven.value');
       const columns = [
         { key: 'timestamp', label: t('tableColumnTime') },
-        { key: 'high', label: `${fieldLabel} High` },
-        { key: 'low', label: `${fieldLabel} Low` },
+        { key: 'high', label: t('configDriven.high', { field: fieldLabel }) },
+        { key: 'low', label: t('configDriven.low', { field: fieldLabel }) },
       ];
       exportChartAsCsv(
         rangeTableData as Record<string, unknown>[],
@@ -869,7 +869,7 @@ export function ConfigDrivenGroup({
   function handlePngExport(): void {
     const container = chartContainerRef.current;
     if (!container) return;
-    const title = group.title ?? 'Chart';
+    const title = group.title ?? t('chartFallbackTitle');
     // exportChartAsPng is async but we don't need to await it here —
     // errors are swallowed silently (download either starts or it doesn't).
     void exportChartAsPng(container, buildExportFilename(title, 'png'));
@@ -1082,10 +1082,10 @@ export function ConfigDrivenGroup({
                         {t('tableColumnTime')}
                       </th>
                       <th scope="col" className="py-2 px-3 text-right font-semibold text-muted-foreground">
-                        {(rangeField ?? 'Value') + ' High'}
+                        {t('configDriven.high', { field: rangeField ?? t('configDriven.value') })}
                       </th>
                       <th scope="col" className="py-2 px-3 text-right font-semibold text-muted-foreground">
-                        {(rangeField ?? 'Value') + ' Low'}
+                        {t('configDriven.low', { field: rangeField ?? t('configDriven.value') })}
                       </th>
                     </tr>
                   </thead>
@@ -1397,7 +1397,9 @@ export function ConfigDrivenGroup({
         onClose={() => setFullscreenChart(null)}
         aria-label={(() => {
           const fc = group.charts.find(c => c.chartId === fullscreenChart);
-          return fc?.title ? `${fc.title} — fullscreen` : 'Chart fullscreen view';
+          return fc?.title
+            ? t('configDriven.fullscreenWithTitle', { title: fc.title })
+            : t('configDriven.fullscreen');
         })()}
       >
         <div className="h-full overflow-y-auto py-2">

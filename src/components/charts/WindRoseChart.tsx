@@ -15,7 +15,9 @@
 // Gridlines use var(--border); labels use var(--foreground).
 
 import { useState, useId, useCallback, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { WindRoseData } from '../../api/types';
+import { formatNumber } from '../../utils/format-number';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -182,6 +184,7 @@ function WindRoseSvg({
   reducedMotion,
   titleId,
 }: WindRoseSvgProps) {
+  const { t, i18n } = useTranslation('charts');
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const [focusedKey, setFocusedKey] = useState<string | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -297,7 +300,11 @@ function WindRoseSvg({
           strokeWidth={0.5}
           tabIndex={0}
           role="img"
-          aria-label={`${direction}: ${category.label} ${pct.toFixed(1)}%`}
+          aria-label={t('windRose.segmentAriaLabel', {
+            direction,
+            category: category.label,
+            percentage: formatNumber(pct, 1, i18n.language),
+          })}
           // Do NOT suppress outline globally — browser outline is suppressed only via
           // CSS :focus-visible is not available on SVG paths, so we render a custom
           // focus ring path in the focusRing layer below.
@@ -357,7 +364,7 @@ function WindRoseSvg({
           fill="var(--muted-foreground)"
           aria-hidden="true"
         >
-          {Math.round(pct)}%
+          {t('windRose.percentValue', { value: formatNumber(Math.round(pct), 0, i18n.language) })}
         </text>
       </g>
     );
@@ -470,7 +477,7 @@ function WindRoseSvg({
           fill="var(--foreground)"
           aria-hidden="true"
         >
-          {data.calmPercentage.toFixed(1)}%
+          {t('windRose.percentValue', { value: formatNumber(data.calmPercentage, 1, i18n.language) })}
         </text>
         <text
           x={cx}
@@ -480,7 +487,7 @@ function WindRoseSvg({
           fill="var(--muted-foreground)"
           aria-hidden="true"
         >
-          Calm
+          {t('windRose.calm')}
         </text>
 
         {/* Direction labels around perimeter */}
@@ -502,7 +509,7 @@ function WindRoseSvg({
         >
           <div className="font-semibold">{tooltip.direction}</div>
           <div>{tooltip.categoryLabel}</div>
-          <div>{tooltip.percentage.toFixed(1)}%</div>
+          <div>{t('windRose.percentValue', { value: formatNumber(tooltip.percentage, 1, i18n.language) })}</div>
         </div>
       )}
     </div>
@@ -520,6 +527,7 @@ export function WindRoseChart({
   reducedMotion = false,
   title,
 }: WindRoseChartProps) {
+  const { t, i18n } = useTranslation('charts');
   const id = useId();
   const titleId = `wind-rose-title-${id}`;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -539,7 +547,7 @@ export function WindRoseChart({
   }
 
   // Resolved display title — operator config.title if provided, else "Wind Rose".
-  const displayTitle = title ?? 'Wind Rose';
+  const displayTitle = title ?? t('windRose.title');
 
   return (
     <div className="flex flex-col gap-4">
@@ -553,11 +561,10 @@ export function WindRoseChart({
 
       {/* Visually-hidden extended title consumed by the SVG's aria-labelledby */}
       <span id={titleId} className="sr-only">
-        Wind Rose chart showing wind direction frequency by Beaufort category.
-        {' '}
-        Calm percentage: {data.calmPercentage.toFixed(1)}%.
-        Total records: {data.totalRecords}.
-        See the accessible data table below for full values.
+        {t('windRose.srDescription', {
+          calm: formatNumber(data.calmPercentage, 1, i18n.language),
+          total: data.totalRecords,
+        })}
       </span>
 
       {/* Responsive container div — ResizeObserver reads its width */}
@@ -576,7 +583,7 @@ export function WindRoseChart({
       {/* Legend: colored square + label. Not color-only. */}
       <div
         className="flex flex-wrap gap-x-4 gap-y-1 justify-center"
-        aria-label="Wind speed legend by Beaufort scale"
+        aria-label={t('windRose.ariaLegend')}
       >
         {data.categories.map((category) => {
           const color = resolveColor(category.beaufort, beaufortColors);
@@ -600,18 +607,19 @@ export function WindRoseChart({
       {/* Screen-reader data table — wrapped in sr-only div because
           sr-only directly on <table> fails (table display overrides clip) */}
       <div className="sr-only">
-      <table aria-label="Wind Rose Data">
+      <table aria-label={t('windRose.ariaData')}>
         <caption>
-          Wind Rose Data — percentage of time wind came from each direction at
-          each Beaufort level. Calm: {data.calmPercentage.toFixed(1)}% of{' '}
-          {data.totalRecords} records.
+          {t('windRose.tableCaption', {
+            calm: formatNumber(data.calmPercentage, 1, i18n.language),
+            total: data.totalRecords,
+          })}
         </caption>
         <thead>
           <tr>
-            <th scope="col">Direction</th>
+            <th scope="col">{t('windRose.columnDirection')}</th>
             {data.categories.map((cat) => (
               <th key={cat.beaufort} scope="col">
-                {cat.label} (Beaufort {cat.beaufort})
+                {t('windRose.columnCategory', { label: cat.label, beaufort: cat.beaufort })}
               </th>
             ))}
           </tr>
@@ -622,15 +630,17 @@ export function WindRoseChart({
               <th scope="row">{direction}</th>
               {data.categories.map((cat, catIndex) => (
                 <td key={cat.beaufort}>
-                  {(data.bins[dirIndex]?.[catIndex] ?? 0).toFixed(1)}%
+                  {t('windRose.percentValue', {
+                    value: formatNumber(data.bins[dirIndex]?.[catIndex] ?? 0, 1, i18n.language),
+                  })}
                 </td>
               ))}
             </tr>
           ))}
           <tr>
-            <th scope="row">Calm (all directions)</th>
+            <th scope="row">{t('windRose.calmAllDirections')}</th>
             <td colSpan={data.categories.length}>
-              {data.calmPercentage.toFixed(1)}%
+              {t('windRose.percentValue', { value: formatNumber(data.calmPercentage, 1, i18n.language) })}
             </td>
           </tr>
         </tbody>

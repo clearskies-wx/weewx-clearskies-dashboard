@@ -500,7 +500,7 @@ function GeoFeaturesLayer() {
 }
 
 export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBounds, opacity, colorScheme, showAlerts, alertUrl, showWind, caddyPrefix, showSatellite, showRadar }: RadarMapProps) {
-  const { t } = useTranslation('radar');
+  const { t } = useTranslation(['radar', 'common']);
   const { resolved: resolvedTheme } = useTheme();
 
   // --- Capabilities fetch to discover radar provider ---
@@ -1095,7 +1095,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
                 const title = (props.title as string | undefined)
                   || (props.headline as string | undefined)
                   || (props.event as string | undefined)
-                  || 'Weather Alert';
+                  || t('radar.weatherAlert', { ns: 'common' });
                 const severity = props.severity as string | undefined;
                 const description = props.description as string | undefined;
                 const regions = props.regions as string[] | undefined;

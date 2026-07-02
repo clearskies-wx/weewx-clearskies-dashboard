@@ -136,7 +136,7 @@ export function Footer() {
   const { t } = useTranslation('common');
   const branding = useBranding();
 
-  const copyrightName = branding.copyrightEntity || station?.name || 'Clear Skies Weather';
+  const copyrightName = branding.copyrightEntity || station?.name || t('footer.defaultStationName');
 
   return (
     <footer
@@ -166,7 +166,7 @@ export function Footer() {
           {/* Always use the light logo — footer background is always dark glass */}
           <img
             src={poweredLight}
-            alt="Powered by Clear Skies"
+            alt={t('footer.poweredBy')}
             height={32}
             className="h-[32px] w-auto"
           />
@@ -210,7 +210,7 @@ export function Footer() {
           {/* Always use the light logo — footer background is always dark glass */}
           <img
             src={poweredLight}
-            alt="Powered by Clear Skies"
+            alt={t('footer.poweredBy')}
             height={32}
             className="h-[32px] w-auto"
           />

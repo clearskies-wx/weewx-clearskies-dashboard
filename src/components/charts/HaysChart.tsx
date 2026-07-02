@@ -19,6 +19,8 @@
 //   - Color is paired with position (not color-only signal — WCAG 1.4.1)
 
 import { useState, useId, useCallback, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import { formatNumber } from '../../utils/format-number';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -137,14 +139,14 @@ function useContainerWidth(ref: React.RefObject<HTMLDivElement | null>): number 
  *
  * ADR-075 T3.8: stationTz added so labels render in the station's local timezone.
  */
-function periodLabel(dateTime: number, totalCount: number, stationTz: string): string {
+function periodLabel(dateTime: number, totalCount: number, stationTz: string, locale: string): string {
   const d = new Date(dateTime * 1000);
   if (totalCount <= 12) {
-    return d.toLocaleString('default', { month: 'short', timeZone: stationTz });
+    return d.toLocaleString(locale, { month: 'short', timeZone: stationTz });
   }
   return String(
     parseInt(
-      new Intl.DateTimeFormat('en-US', { day: 'numeric', timeZone: stationTz }).format(d),
+      new Intl.DateTimeFormat(locale, { day: 'numeric', timeZone: stationTz }).format(d),
       10,
     ),
   );
@@ -155,12 +157,12 @@ function periodLabel(dateTime: number, totalCount: number, stationTz: string): s
  *
  * ADR-075 T3.8: stationTz added so labels render in the station's local timezone.
  */
-function fullDateLabel(dateTime: number, totalCount: number, stationTz: string): string {
+function fullDateLabel(dateTime: number, totalCount: number, stationTz: string, locale: string): string {
   const d = new Date(dateTime * 1000);
   if (totalCount <= 12) {
-    return d.toLocaleString('default', { month: 'long', year: 'numeric', timeZone: stationTz });
+    return d.toLocaleString(locale, { month: 'long', year: 'numeric', timeZone: stationTz });
   }
-  return d.toLocaleDateString('default', { year: 'numeric', month: 'short', day: 'numeric', timeZone: stationTz });
+  return d.toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric', timeZone: stationTz });
 }
 
 // ---------------------------------------------------------------------------
@@ -200,6 +202,7 @@ function HaysChartSvg({
   titleId,
   stationTz,
 }: HaysChartSvgProps) {
+  const { t, i18n } = useTranslation('charts');
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -284,7 +287,7 @@ function HaysChartSvg({
     const pathD = radialBandPath(cx, cy, innerR, outerR, startAngle, endAngle);
     if (!pathD) continue;
 
-    const label = fullDateLabel(highPoint.dateTime, totalCount, stationTz);
+    const label = fullDateLabel(highPoint.dateTime, totalCount, stationTz, i18n.language);
 
     if (focusedIndex === i) {
       focusedPathD = pathD;
@@ -300,7 +303,11 @@ function HaysChartSvg({
         stroke="var(--background)"
         strokeWidth={0.5}
         tabIndex={0}
-        aria-label={`${label}: high ${highVal.toFixed(1)}${unit}, low ${lowVal.toFixed(1)}${unit}`}
+        aria-label={t('haysChart.bandAriaLabel', {
+          label,
+          high: `${formatNumber(highVal, 1, i18n.language)}${unit}`,
+          low: `${formatNumber(lowVal, 1, i18n.language)}${unit}`,
+        })}
         style={{
           cursor: 'pointer',
           // outline:none is replaced by the explicit SVG focus ring below (WCAG 2.4.7)
@@ -366,7 +373,7 @@ function HaysChartSvg({
           fill="var(--muted-foreground)"
           aria-hidden="true"
         >
-          {val.toFixed(0)}{unit}
+          {formatNumber(val, 0, i18n.language)}{unit}
         </text>
       </g>
     );
@@ -406,7 +413,7 @@ function HaysChartSvg({
         fill="var(--foreground)"
         aria-hidden="true"
       >
-        {periodLabel(d.dateTime, totalCount, stationTz)}
+        {periodLabel(d.dateTime, totalCount, stationTz, i18n.language)}
       </text>
     );
   });
@@ -460,7 +467,7 @@ function HaysChartSvg({
           fill="var(--foreground)"
           aria-hidden="true"
         >
-          {dataMax.toFixed(0)}{unit}
+          {formatNumber(dataMax, 0, i18n.language)}{unit}
         </text>
         <text
           x={cx}
@@ -470,7 +477,7 @@ function HaysChartSvg({
           fill="var(--muted-foreground)"
           aria-hidden="true"
         >
-          peak
+          {t('haysChart.peakLabel')}
         </text>
 
         {/* Period labels */}
@@ -492,10 +499,10 @@ function HaysChartSvg({
         >
           <div className="font-semibold">{tooltip.label}</div>
           {tooltip.high !== null && (
-            <div>High: {tooltip.high.toFixed(1)}{unit}</div>
+            <div>{t('haysChart.high', { value: `${formatNumber(tooltip.high, 1, i18n.language)}${unit}` })}</div>
           )}
           {tooltip.low !== null && (
-            <div>Low: {tooltip.low.toFixed(1)}{unit}</div>
+            <div>{t('haysChart.low', { value: `${formatNumber(tooltip.low, 1, i18n.language)}${unit}` })}</div>
           )}
         </div>
       )}
@@ -517,6 +524,7 @@ export function HaysChart({
   reducedMotion = false,
   stationTz = 'UTC',
 }: HaysChartProps) {
+  const { t, i18n } = useTranslation('charts');
   const id = useId();
   const titleId = `hays-chart-title-${id}`;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -542,10 +550,7 @@ export function HaysChart({
     <div className="flex flex-col gap-4">
       {/* Visually-hidden title consumed by the SVG's aria-labelledby (WCAG 1.1.1) */}
       <span id={titleId} className="sr-only">
-        Polar arearange chart for {field}.
-        Each position around the circle represents a time period.
-        Each band spans from the low value to the high value for that period.
-        See the accessible data table below for all values.
+        {t('haysChart.srDescription', { field })}
       </span>
 
       {/* Responsive container — ResizeObserver reads its width */}
@@ -568,36 +573,36 @@ export function HaysChart({
       <div
         className="flex items-center gap-2 justify-center text-muted-foreground"
         style={{ fontSize: 'var(--text-label)' }}
-        aria-label={`Color legend for ${field} chart`}
+        aria-label={t('haysChart.legendAriaLabel', { field: field || t('configDriven.value') })}
       >
         <span
           aria-hidden="true"
           className="inline-block w-3 h-3 rounded-sm flex-shrink-0"
           style={{ backgroundColor: 'var(--primary)', opacity: 0.75 }}
         />
-        <span>{field || 'Value'} range (low to high)</span>
+        <span>{t('haysChart.legendLabel', { field: field || t('configDriven.value') })}</span>
       </div>
 
       {/* Screen-reader data table — wrapped in sr-only div because
           sr-only directly on <table> fails (table display overrides clip) */}
       <div className="sr-only">
-      <table aria-label={`${field} range data`}>
+      <table aria-label={t('haysChart.tableAriaLabel', { field })}>
         <caption>
-          {field} high and low values for each period.
+          {t('haysChart.tableCaption', { field })}
         </caption>
         <thead>
           <tr>
-            <th scope="col">Period</th>
-            <th scope="col">High{unit ? ` (${unit})` : ''}</th>
-            <th scope="col">Low{unit ? ` (${unit})` : ''}</th>
+            <th scope="col">{t('haysChart.columnPeriod')}</th>
+            <th scope="col">{unit ? t('haysChart.columnHighUnit', { unit }) : t('haysChart.columnHigh')}</th>
+            <th scope="col">{unit ? t('haysChart.columnLowUnit', { unit }) : t('haysChart.columnLow')}</th>
           </tr>
         </thead>
         <tbody>
           {tableRows.map((row, i) => (
             <tr key={i}>
-              <th scope="row">{fullDateLabel(row.dateTime, totalCount, stationTz)}</th>
-              <td>{row.high !== null ? row.high.toFixed(1) : '—'}</td>
-              <td>{row.low !== null ? row.low.toFixed(1) : '—'}</td>
+              <th scope="row">{fullDateLabel(row.dateTime, totalCount, stationTz, i18n.language)}</th>
+              <td>{row.high !== null ? formatNumber(row.high, 1, i18n.language) : '—'}</td>
+              <td>{row.low !== null ? formatNumber(row.low, 1, i18n.language) : '—'}</td>
             </tr>
           ))}
         </tbody>

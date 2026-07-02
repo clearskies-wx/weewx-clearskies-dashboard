@@ -18,6 +18,7 @@
 //     (e.g. viewport resize or dynamic content insertion).
 
 import * as React from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
@@ -61,10 +62,12 @@ export interface ScrollFadeContainerProps {
  */
 export function ScrollFadeContainer({
   children,
-  "aria-label": ariaLabel = "Scrollable content",
+  "aria-label": ariaLabelProp,
   className,
   fadeWidth = 40,
 }: ScrollFadeContainerProps) {
+  const { t } = useTranslation('common');
+  const ariaLabel = ariaLabelProp ?? t('aria.scrollableContent');
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const [showFade, setShowFade] = React.useState(false);
 

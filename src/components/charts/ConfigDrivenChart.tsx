@@ -12,6 +12,7 @@
 // Intentionally unwired: yAxisMinorTicks, states, connectEnds, polar (see CHARTS-REWRITE-PLAN.md §5)
 
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import {
   ComposedChart,
@@ -347,6 +348,7 @@ export function ConfigDrivenChart({
   height = 300,
   reducedMotion = false,
 }: ConfigDrivenChartProps) {
+  const { t } = useTranslation('charts');
   const { resolved: resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
   const isMobile = useIsMobile();
@@ -364,7 +366,7 @@ export function ConfigDrivenChart({
   const rightAxisNeeded = needsRightAxis(config.series);
   const { left: leftAxisCfg, right: rightAxisCfg } = collectAxisConfigs(config.series);
 
-  const chartTitle = config.title ?? 'Chart';
+  const chartTitle = config.title ?? t('chartFallbackTitle');
 
   // Detect if the right axis is displaying wind direction.
   // Used to apply compass tick labels instead of raw degree numbers (T2.3).

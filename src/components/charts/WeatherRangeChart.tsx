@@ -12,8 +12,10 @@ import {
   CartesianGrid,
   Tooltip,
 } from 'recharts';
+import { useTranslation } from 'react-i18next';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { ChartContainer } from './chart-container';
+import { formatNumber } from '../../utils/format-number';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -170,15 +172,15 @@ function computeYDomain(highs: number[], lows: number[]): {
  * ADR-075 T3.8: stationTz is threaded from the chart component so all date
  * labels render in the station's local timezone rather than the browser's.
  */
-function formatXAxisTick(timestamp: number, stationTz: string): string {
+function formatXAxisTick(timestamp: number, stationTz: string, locale: string): string {
   const d = new Date(timestamp * 1000);
-  return d.toLocaleDateString('default', { day: 'numeric', month: 'short', timeZone: stationTz });
+  return d.toLocaleDateString(locale, { day: 'numeric', month: 'short', timeZone: stationTz });
 }
 
-function formatFullDate(timestamp: number, totalCount: number, stationTz: string): string {
+function formatFullDate(timestamp: number, totalCount: number, stationTz: string, locale: string): string {
   const d = new Date(timestamp * 1000);
-  if (totalCount <= 12) return d.toLocaleString('default', { month: 'long', year: 'numeric', timeZone: stationTz });
-  return d.toLocaleDateString('default', { year: 'numeric', month: 'short', day: 'numeric', timeZone: stationTz });
+  if (totalCount <= 12) return d.toLocaleString(locale, { month: 'long', year: 'numeric', timeZone: stationTz });
+  return d.toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric', timeZone: stationTz });
 }
 
 // ---------------------------------------------------------------------------
@@ -194,6 +196,7 @@ function CustomTooltip(props: any) {
     totalCount: number;
     stationTz: string;
   };
+  const { t, i18n } = useTranslation('charts');
   if (!active || !payload || payload.length === 0) return null;
   const row = payload[0]?.payload ?? null;
   if (!row) return null;
@@ -201,23 +204,23 @@ function CustomTooltip(props: any) {
 
   return (
     <div role="tooltip" className="rounded-md border border-border bg-popover px-2 py-1.5 text-xs text-popover-foreground shadow-md">
-      <div className="font-semibold mb-1">{formatFullDate(timestamp, totalCount, stationTz)}</div>
+      <div className="font-semibold mb-1">{formatFullDate(timestamp, totalCount, stationTz, i18n.language)}</div>
       {high !== null && (
         <div className="flex items-center gap-1.5">
           <span aria-hidden="true" className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: getOutTempColor(high, unit) }} />
-          <span>High: {high.toFixed(1)}{unit}</span>
+          <span>{t('tooltip.high', { value: `${formatNumber(high, 1, i18n.language)}${unit}` })}</span>
         </div>
       )}
       {low !== null && (
         <div className="flex items-center gap-1.5">
           <span aria-hidden="true" className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: getOutTempColor(low, unit) }} />
-          <span>Low: {low.toFixed(1)}{unit}</span>
+          <span>{t('tooltip.low', { value: `${formatNumber(low, 1, i18n.language)}${unit}` })}</span>
         </div>
       )}
       {avg !== null && (
         <div className="flex items-center gap-1.5">
           <span aria-hidden="true" className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: getOutTempColor(avg, unit) }} />
-          <span>Avg: {avg.toFixed(1)}{unit}</span>
+          <span>{t('tooltip.avg', { value: `${formatNumber(avg, 1, i18n.language)}${unit}` })}</span>
         </div>
       )}
     </div>
@@ -243,6 +246,7 @@ export function WeatherRangeChart({
   reducedMotion: _reducedMotion = false,
   stationTz = 'UTC',
 }: WeatherRangeChartProps) {
+  const { t, i18n } = useTranslation('charts');
   const isMobile = useIsMobile();
   if (highData.length === 0) return null;
 
@@ -265,7 +269,7 @@ export function WeatherRangeChart({
   const mergedData = buildZoneBandData(highData, lowData, zones, visibleZoneIndices);
   const totalCount = mergedData.length;
 
-  const yAxisLabel = isTemp ? 'Outside Temperature' : field;
+  const yAxisLabel = isTemp ? t('weatherRangeChart.outsideTemperature') : field;
 
   const chartMargin = isMobile
     ? { top: 4, right: 4, bottom: 4, left: 4 }
@@ -275,30 +279,37 @@ export function WeatherRangeChart({
   return (
     <div className="flex flex-col gap-2">
       <div className="sr-only">
-        <table aria-label={`${field} range data`}>
-          <caption>{field} high and low values for each period.</caption>
+        <table aria-label={t('weatherRangeChart.tableAriaLabel', { field })}>
+          <caption>{t('weatherRangeChart.tableCaption', { field })}</caption>
           <thead>
             <tr>
-              <th scope="col">Date</th>
-              <th scope="col">High</th>
-              <th scope="col">Low</th>
-              <th scope="col">Average</th>
+              <th scope="col">{t('weatherRangeChart.columnDate')}</th>
+              <th scope="col">{t('weatherRangeChart.columnHigh')}</th>
+              <th scope="col">{t('weatherRangeChart.columnLow')}</th>
+              <th scope="col">{t('weatherRangeChart.columnAverage')}</th>
             </tr>
           </thead>
           <tbody>
             {mergedData.map((row, i) => (
               <tr key={i}>
-                <th scope="row">{formatFullDate(row.timestamp, totalCount, stationTz)}</th>
-                <td>{row.high?.toFixed(1) ?? '—'}</td>
-                <td>{row.low?.toFixed(1) ?? '—'}</td>
-                <td>{row.avg?.toFixed(1) ?? '—'}</td>
+                <th scope="row">{formatFullDate(row.timestamp, totalCount, stationTz, i18n.language)}</th>
+                <td>{row.high !== null ? formatNumber(row.high, 1, i18n.language) : '—'}</td>
+                <td>{row.low !== null ? formatNumber(row.low, 1, i18n.language) : '—'}</td>
+                <td>{row.avg !== null ? formatNumber(row.avg, 1, i18n.language) : '—'}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <ChartContainer height={height} ariaLabel={`${field} daily high and low range chart${unit ? ` in ${unit}` : ''}`}>
+      <ChartContainer
+        height={height}
+        ariaLabel={
+          unit
+            ? t('weatherRangeChart.ariaLabelWithUnit', { field, unit })
+            : t('weatherRangeChart.ariaLabel', { field })
+        }
+      >
           <ComposedChart data={mergedData} margin={chartMargin}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
 
@@ -307,7 +318,7 @@ export function WeatherRangeChart({
               type="number"
               scale="time"
               domain={['dataMin', 'dataMax']}
-              tickFormatter={(v: number) => formatXAxisTick(v, stationTz)}
+              tickFormatter={(v: number) => formatXAxisTick(v, stationTz, i18n.language)}
               minTickGap={isMobile ? 20 : 50}
               height={XAXIS_HEIGHT}
               tick={{ fontSize: 14, fontFamily: CHART_FONT }}
