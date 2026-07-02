@@ -37,7 +37,28 @@
     "domain": {
       "baseMaps": "Basiskaarten",
       "seismicData": "Seismische gegevens",
-      "astronomical": "Astronomische referentie"
+      "astronomical": "Astronomische referentie",
+      "alerts": "Waarschuwingen",
+      "almanac": "Astronomie",
+      "aqi": "Luchtkwaliteit",
+      "earthquakes": "Aardbevingen",
+      "forecast": "Voorspelling",
+      "radar": "Radar",
+      "seeing": "Astronomisch zicht"
+    },
+    "cardTitle": "Gegevensleveranciers",
+    "empty": "Geen gegevensleveranciers geconfigureerd."
+  },
+  "photoCredits": {
+    "builtIn": "Ingebouwd",
+    "cardTitle": "Fotocredits",
+    "scene": {
+      "clear-day": "Heldere hemel, overdag",
+      "clear-night": "Heldere hemel, 's nachts",
+      "cloudy-day": "Bewolkt, overdag",
+      "cloudy-night": "Bewolkt, 's nachts",
+      "storm-day": "Storm, overdag",
+      "storm-night": "Storm, 's nachts"
     }
   }
 }

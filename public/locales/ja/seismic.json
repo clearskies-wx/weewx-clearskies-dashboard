@@ -18,5 +18,12 @@
   "magnitude": "マグニチュード",
   "depthLabel": "深さ",
   "listCardTitle": "地震リスト",
-  "rowAriaLabel": "マグニチュード {{mag}}、{{place}}"
+  "rowAriaLabel": "マグニチュード {{mag}}、{{place}}",
+  "configAriaLabel": "地震情報の設定概要",
+  "configSummary": "プロバイダー: {{provider}} | 範囲: {{radiusKm}} km | 最小マグニチュード: {{minMagnitude}} | 過去{{days}}日間",
+  "showFaults": "断層線を表示",
+  "showFaultsAriaLabel": "マップ上の断層線オーバーレイの表示を切り替え",
+  "slipType": "すべりの種類",
+  "unknownFault": "不明な断層",
+  "unknownSlipType": "不明"
 }

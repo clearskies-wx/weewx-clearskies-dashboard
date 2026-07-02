@@ -1,10 +1,8 @@
 {
   "pageTitle": "Almanac",
-
   "loading": "Naglo-load ng datos ng almanac…",
   "error": "Hindi ma-load ang datos ng almanac",
   "noData": "Walang available na datos ng almanac.",
-
   "sun": {
     "title": "Araw",
     "sunrise": "Pagsikat ng Araw",
@@ -16,7 +14,6 @@
     "nextSolstice": "Susunod na Solstice",
     "nextEquinox": "Susunod na Equinox"
   },
-
   "moon": {
     "title": "Buwan",
     "phase": "Yugto",
@@ -26,7 +23,6 @@
     "nextFullMoon": "Susunod na Buong Buwan",
     "nextNewMoon": "Susunod na Bagong Buwan"
   },
-
   "positional": {
     "title": "Positional na Datos",
     "note": "Ang positional na datos ay nangangailangan ng Skyfield computation sa server.",
@@ -35,6 +31,128 @@
     "moonAzimuth": "Azimuth ng Buwan",
     "moonAltitude": "Altitude ng Buwan"
   },
-
-  "daylightDelta": "({{delta}}m kumpara kahapon)"
+  "daylightDelta": "({{delta}}m kumpara kahapon)",
+  "today": "Ngayon",
+  "moonNames": {
+    "blueMoon": "Blue Moon",
+    "harvestMoon": "Harvest Moon",
+    "huntersMoon": "Hunter's Moon",
+    "supermoon": "Supermoon",
+    "traditionalNameSuffix": "{{name}} Moon"
+  },
+  "climatology": {
+    "chartAriaLabel": "Average monthly high, low, dewpoint, and rainfall chart",
+    "error": "Unable to load climatology data.",
+    "loading": "Loading climatology data…",
+    "noData": "No climatology data available.",
+    "series": {
+      "avgDewpoint": "Average Dewpoint",
+      "avgHigh": "Average High Temperature",
+      "avgLow": "Average Low Temperature",
+      "avgRainfall": "Avg Monthly Rain Total"
+    },
+    "table": {
+      "avgDewpoint": "Average Dewpoint",
+      "avgHigh": "Average High",
+      "avgLow": "Average Low",
+      "avgRainfall": "Average Rainfall",
+      "month": "Month"
+    },
+    "tableAriaLabel": "Average climatological values by month",
+    "title": "Average Climatological Values by Month",
+    "yAxisRain": "Avg Monthly Rain (in)",
+    "yAxisTemp": "Average Temperature (°F)"
+  },
+  "lunarEclipses": {
+    "barelyVisible": "Barely Visible",
+    "closeModal": "Close eclipse type description",
+    "descPartial": "Partial lunar eclipse. Part of the Moon will pass through Earth's umbra.",
+    "descPenumbral": "Penumbral lunar eclipse. A subtle dimming as the Moon passes through Earth's penumbra.",
+    "descTotal": "Total lunar eclipse. The entire Moon will pass through Earth's umbra.",
+    "footNote": "Eclipse visibility can vary based on weather and your exact location.",
+    "imageAlt": "{{type}} lunar eclipse",
+    "listLabel": "Upcoming lunar eclipses",
+    "lowInSky": "Low in Sky",
+    "modalTitlePartial": "Partial Lunar Eclipse",
+    "modalTitlePenumbral": "Penumbral Lunar Eclipse",
+    "modalTitleTotal": "Total Lunar Eclipse",
+    "mostlyVisible": "Mostly Visible",
+    "noEclipses": "No lunar eclipses visible from your location in the next several years.",
+    "notVisible": "Not Visible",
+    "subtitle": "The next lunar eclipses visible from your location.",
+    "timeRangeAriaLabel": "Eclipse time range: {{range}}",
+    "timesLocal": "All times local",
+    "title": "Lunar Eclipses",
+    "typeBadgeAriaLabel": "{{type}} — learn more about this eclipse type",
+    "typePartial": "Partial",
+    "typePenumbral": "Penumbral",
+    "typeTotal": "Total",
+    "visibilityAriaLabel": "Visibility: {{label}}",
+    "visibleAllNight": "Visible All Night"
+  },
+  "meteorShowers": {
+    "empty": "No meteor showers in the next year.",
+    "footNote": "Rates shown are predicted zenith hourly rate (ZHR) under ideal conditions.",
+    "peak": "Peak",
+    "peakNight": "Peak Night",
+    "peakPeriod": "Peak period",
+    "qualityExcellent": "Excellent",
+    "qualityFair": "Fair",
+    "qualityGood": "Good",
+    "qualityNotVisible": "Not Visible",
+    "qualityPoor": "Poor",
+    "rate": "Rate",
+    "rateValue": "Up to {{zhr}} meteors/hr",
+    "scrollLeft": "Scroll showers left",
+    "scrollRegionLabel": "Meteor shower list",
+    "scrollRight": "Scroll showers right",
+    "subtitle": "Upcoming meteor showers visible from your location over the next year.",
+    "timesLocal": "All times local",
+    "title": "Meteor Showers",
+    "visibility": "Visibility"
+  },
+  "planets": {
+    "bestTime": "Best viewing time",
+    "conditionsExcellent": "Excellent Viewing Conditions",
+    "conditionsFair": "Fair Viewing Conditions",
+    "conditionsGood": "Good Viewing Conditions",
+    "conditionsPoor": "Poor Viewing Conditions",
+    "conjunctionsLabel": "Planetary conjunctions",
+    "empty": "No planets visible tonight.",
+    "footNote": "Times shown are local time. Planets rise and set at different times throughout the week.",
+    "listLabel": "Planet list",
+    "overallConditions": "Viewing Conditions",
+    "qualityExcellent": "Excellent View",
+    "qualityFair": "Fair View",
+    "qualityGood": "Good View",
+    "qualityNotVisible": "Not Visible",
+    "qualityPoor": "Poor View",
+    "subtitle": "Clear skies make for great viewing. Here's when each planet will be at its best.",
+    "sunrise": "Sunrise",
+    "sunset": "Sunset",
+    "timelineLabel": "Planet visibility timeline",
+    "title": "Tonight's Planet Outlook",
+    "viewingQuality": "Viewing quality"
+  },
+  "solarEclipses": {
+    "barelyVisible": "Low on the horizon",
+    "begins": "Begins",
+    "descAnnular": "The Moon will pass in front of the Sun, leaving a brilliant ring of sunlight visible.",
+    "descPartial": "The Moon will pass in front of the Sun, covering a portion of its disk.",
+    "descTotal": "Total solar eclipse. The Sun will be completely covered by the Moon.",
+    "ends": "Ends",
+    "footNote": "Visibility can vary based on cloud cover and your exact location.",
+    "fullyVisible": "Within the path of totality",
+    "listLabel": "Upcoming solar eclipses",
+    "maximum": "Maximum",
+    "mostlyVisible": "Well placed in your location",
+    "noEclipses": "No solar eclipses visible from your location in the next several years.",
+    "notVisible": "Not Visible",
+    "partiallyVisible": "Partially visible from your location",
+    "subtitle": "The next solar eclipses visible from your location.",
+    "timesLocal": "All times local",
+    "title": "Solar Eclipses",
+    "totality": "Totality",
+    "visible": "Visible"
+  }
 }

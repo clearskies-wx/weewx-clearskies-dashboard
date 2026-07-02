@@ -1,7 +1,12 @@
 {
   "loading": "Laden…",
   "loadingPage": "{{title}} laden",
-  "error": "Er is een fout opgetreden",
+  "error": {
+    "generic": "Er is een fout opgetreden",
+    "reloadPage": "Pagina herladen",
+    "somethingWentWrong": "Er is iets misgegaan",
+    "unexpectedError": "Er is een onverwachte fout opgetreden."
+  },
   "retry": "Opnieuw proberen",
   "noData": "Geen gegevens beschikbaar",
   "skipToContent": "Naar hoofdinhoud",
@@ -14,7 +19,9 @@
     "shareFacebook": "Delen op Facebook",
     "sharePinterest": "Pinnen op Pinterest",
     "copyLink": "Link kopiëren",
-    "linkCopied": "Link gekopieerd!"
+    "linkCopied": "Link gekopieerd!",
+    "cookieSettings": "Cookie-instellingen",
+    "defaultStationName": "Clear Skies Weer"
   },
   "theme": {
     "ariaAuto": "Thema: systeemvoorkeur — klik om over te schakelen naar licht thema",
@@ -22,21 +29,58 @@
     "ariaDark": "Thema: donker — klik om over te schakelen naar systeemvoorkeur"
   },
   "directions": {
-    "N":   "N",
+    "N": "N",
     "NNE": "NNO",
-    "NE":  "NO",
+    "NE": "NO",
     "ENE": "ONO",
-    "E":   "O",
+    "E": "O",
     "ESE": "OZO",
-    "SE":  "ZO",
+    "SE": "ZO",
     "SSE": "ZZO",
-    "S":   "Z",
+    "S": "Z",
     "SSW": "ZZW",
-    "SW":  "ZW",
+    "SW": "ZW",
     "WSW": "WZW",
-    "W":   "W",
+    "W": "W",
     "WNW": "WNW",
-    "NW":  "NW",
+    "NW": "NW",
     "NNW": "NNW"
+  },
+  "aria": {
+    "scrollableContent": "Scrollbare inhoud"
+  },
+  "backToNow": "Terug naar Nu",
+  "cookie": {
+    "accept": "Accepteren",
+    "consentMessage": "Deze website gebruikt cookies om verkeer te analyseren via Google Analytics. Er worden geen persoonsgegevens verzameld.",
+    "learnMore": "Meer informatie",
+    "reject": "Weigeren"
+  },
+  "customPageLoading": "Pagina laden...",
+  "customPageNoContent": "Deze pagina heeft nog geen inhoud.",
+  "layout": {
+    "heroAriaLabelWithLocation": "{{name}} — {{location}}",
+    "myWeatherStation": "Mijn weerstation"
+  },
+  "notFound": {
+    "puns": [
+      "Het lijkt erop dat deze pagina is weggewaaid.",
+      "Deze pagina is verdwaald in de mist.",
+      "We konden die pagina niet vinden — hij moet zijn verdampt.",
+      "De voorspelling voorziet een 404.",
+      "Half bewolkt met kans op ontbrekende pagina's.",
+      "Deze pagina is weggedreven als een weerballon.",
+      "Geen gegevens op dit station.",
+      "Deze pagina ligt ergens onder een deken sneeuw.",
+      "De barometer geeft aan: pagina niet gevonden.",
+      "Het lijkt erop dat deze pagina het lot van het weer van gisteren heeft gedeeld."
+    ]
+  },
+  "radar": {
+    "weatherAlert": "Weerwaarschuwing"
+  },
+  "setup": {
+    "apiNotResponding": "De API van het weerstation reageert nog niet. Deze wordt mogelijk nog geïnitialiseerd.",
+    "startingUp": "Clear Skies wordt gestart..."
   }
 }

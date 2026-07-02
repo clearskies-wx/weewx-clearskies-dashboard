@@ -20,5 +20,8 @@
   "layers": "Capas",
   "weatherAlerts": "Alertas meteorológicas",
   "windArrows": "Flechas de viento",
-  "stationMarker": "Tu estación"
+  "stationMarker": "Tu estación",
+  "legendHeavy": "Intensa",
+  "legendLight": "Ligera",
+  "satelliteImagery": "Imágenes de satélite"
 }

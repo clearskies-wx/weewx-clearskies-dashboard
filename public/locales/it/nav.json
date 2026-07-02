@@ -27,5 +27,9 @@
   "ariaMain": "Navigazione principale",
   "ariaPrimary": "Navigazione primaria",
   "ariaAdditional": "Navigazione aggiuntiva",
-  "ariaAdditionalPages": "Pagine aggiuntive"
+  "ariaAdditionalPages": "Pagine aggiuntive",
+  "hideNav": "Nascondi la navigazione",
+  "pinNav": "Blocca la navigazione",
+  "showNav": "Mostra la navigazione",
+  "unpinNav": "Sblocca la navigazione"
 }

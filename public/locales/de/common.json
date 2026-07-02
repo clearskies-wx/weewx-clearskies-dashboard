@@ -1,7 +1,12 @@
 {
   "loading": "Wird geladen…",
   "loadingPage": "{{title}} wird geladen",
-  "error": "Ein Fehler ist aufgetreten",
+  "error": {
+    "generic": "Ein Fehler ist aufgetreten",
+    "reloadPage": "Seite neu laden",
+    "somethingWentWrong": "Etwas ist schiefgelaufen",
+    "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten."
+  },
   "retry": "Erneut versuchen",
   "noData": "Keine Daten verfügbar",
   "skipToContent": "Zum Hauptinhalt springen",
@@ -14,7 +19,9 @@
     "shareFacebook": "Auf Facebook teilen",
     "sharePinterest": "Auf Pinterest pinnen",
     "copyLink": "Link kopieren",
-    "linkCopied": "Link kopiert!"
+    "linkCopied": "Link kopiert!",
+    "cookieSettings": "Cookie-Einstellungen",
+    "defaultStationName": "Clear Skies Wetter"
   },
   "theme": {
     "ariaAuto": "Design: Systemeinstellung wird verwendet – klicken, um zum hellen Design zu wechseln",
@@ -22,21 +29,58 @@
     "ariaDark": "Design: Dunkel – klicken, um zur Systemeinstellung zu wechseln"
   },
   "directions": {
-    "N":   "N",
+    "N": "N",
     "NNE": "NNO",
-    "NE":  "NO",
+    "NE": "NO",
     "ENE": "ONO",
-    "E":   "O",
+    "E": "O",
     "ESE": "OSO",
-    "SE":  "SO",
+    "SE": "SO",
     "SSE": "SSO",
-    "S":   "S",
+    "S": "S",
     "SSW": "SSW",
-    "SW":  "SW",
+    "SW": "SW",
     "WSW": "WSW",
-    "W":   "W",
+    "W": "W",
     "WNW": "WNW",
-    "NW":  "NW",
+    "NW": "NW",
     "NNW": "NNW"
+  },
+  "aria": {
+    "scrollableContent": "Scrollbarer Inhalt"
+  },
+  "backToNow": "Zurück zu Jetzt",
+  "cookie": {
+    "accept": "Akzeptieren",
+    "consentMessage": "Diese Website verwendet Cookies, um den Datenverkehr über Google Analytics zu analysieren. Es werden keine personenbezogenen Daten erfasst.",
+    "learnMore": "Mehr erfahren",
+    "reject": "Ablehnen"
+  },
+  "customPageLoading": "Seite wird geladen…",
+  "customPageNoContent": "Diese Seite hat noch keinen Inhalt.",
+  "layout": {
+    "heroAriaLabelWithLocation": "{{name}} — {{location}}",
+    "myWeatherStation": "Meine Wetterstation"
+  },
+  "notFound": {
+    "puns": [
+      "Sieht so aus, als wäre diese Seite weggeweht.",
+      "Diese Seite hat sich im Nebel verirrt.",
+      "Diese Seite war nicht zu finden — sie muss verdunstet sein.",
+      "Die Vorhersage sagt: 404.",
+      "Teils bewölkt mit Aussicht auf fehlende Seiten.",
+      "Diese Seite ist wie ein Wetterballon davongetrieben.",
+      "Keine Daten an dieser Station.",
+      "Diese Seite liegt irgendwo unter einer Schneedecke begraben.",
+      "Das Barometer zeigt: Seite nicht gefunden.",
+      "Sieht so aus, als hätte diese Seite das Schicksal des gestrigen Wetters geteilt."
+    ]
+  },
+  "radar": {
+    "weatherAlert": "Wetterwarnung"
+  },
+  "setup": {
+    "apiNotResponding": "Die API der Wetterstation reagiert noch nicht. Sie wird möglicherweise noch initialisiert.",
+    "startingUp": "Clear Skies wird gestartet…"
   }
 }

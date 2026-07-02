@@ -27,5 +27,9 @@
   "ariaMain": "Hoofdnavigatie",
   "ariaPrimary": "Primaire navigatie",
   "ariaAdditional": "Aanvullende navigatie",
-  "ariaAdditionalPages": "Aanvullende pagina's"
+  "ariaAdditionalPages": "Aanvullende pagina's",
+  "hideNav": "Navigatie verbergen",
+  "pinNav": "Navigatie vastzetten",
+  "showNav": "Navigatie tonen",
+  "unpinNav": "Navigatie losmaken"
 }

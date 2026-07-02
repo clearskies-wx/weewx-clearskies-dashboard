@@ -18,7 +18,11 @@
     "airQuality": "大気質データを読み込み中…",
     "lightning": "雷データを読み込み中…",
     "earthquake": "地震データを読み込み中…",
-    "forecast": "予報を読み込み中…"
+    "forecast": "予報を読み込み中…",
+    "barometer": "気圧計データを読み込み中…",
+    "precipBarometer": "降水量・気圧データを読み込み中…",
+    "precipitation": "降水量データを読み込み中…",
+    "solarUv": "日射・UVデータを読み込み中…"
   },
   "error": {
     "currentConditions": "現在の状況を読み込めません",
@@ -27,7 +31,12 @@
     "almanac": "暦データを読み込めません",
     "airQuality": "大気質データを読み込めません",
     "earthquake": "地震データを読み込めません",
-    "forecast": "予報を読み込めません"
+    "forecast": "予報を読み込めません",
+    "barometer": "気圧計データを読み込めません",
+    "lightning": "雷データを読み込めません",
+    "precipBarometer": "降水量・気圧データを読み込めません",
+    "precipitation": "降水量データを読み込めません",
+    "solarUv": "日射・UVデータを読み込めません"
   },
   "noData": {
     "observation": "観測データがありません。",
@@ -36,7 +45,8 @@
     "lightning": "雷センサーが設定されていません。",
     "earthquake": "設定された範囲内に最近の地震はありません。",
     "airQuality": "大気質プロバイダーが設定されていません。",
-    "forecast": "予報データがありません。"
+    "forecast": "予報データがありません。",
+    "timelapse": "タイムラプスがありません"
   },
   "highlights": {
     "todaysHigh": "本日の最高気温",
@@ -44,7 +54,8 @@
     "peakGust": "最大瞬間風速",
     "rainToday": "本日の降水量",
     "peakAqi": "最大AQI",
-    "recordsBroken": "更新された記録"
+    "recordsBroken": "更新された記録",
+    "wind": "平均風速"
   },
   "observations": {
     "barometer": "気圧計",
@@ -59,7 +70,9 @@
   "sunMoon": {
     "sunrise": "日の出",
     "sunset": "日の入り",
-    "moon": "月"
+    "moon": "月",
+    "moonrise": "月の出",
+    "moonset": "月の入り"
   },
   "feelsLike": "体感",
   "windCompass": {
@@ -109,11 +122,21 @@
     "nearest": "最近距離: {{distance}} km",
     "lastStrike": "最終落雷: {{time}}",
     "lastStrikeUnknown": "不明",
-    "noActivity": "No activity detected"
+    "noActivity": "No activity detected",
+    "chartAriaLabel_one": "落雷履歴: 過去24時間で{{count}}回",
+    "chartAriaLabel_other": "落雷履歴: 過去24時間で{{count}}回",
+    "distanceColumn": "距離",
+    "nearestLabel": "最近距離:",
+    "per24h": "/24時間",
+    "perHour": "/時",
+    "tableCaption": "落雷履歴 — 過去24時間",
+    "timeColumn": "時刻"
   },
   "earthquake": {
     "magnitude": "M{{magnitude}} — {{place}}",
-    "depth": "深さ: {{depth}} km"
+    "depth": "深さ: {{depth}} km",
+    "eventsAriaLabel": "最近の地震情報",
+    "unknownLocation": "不明な場所"
   },
   "forecast": {
     "hiLo": "最高 {{high}}° / 最低 {{low}}°",
@@ -145,5 +168,91 @@
     "title": "大気質"
   },
   "webcam": "ウェブカメラ",
-  "webcamAlt": "ライブウェブカメラ映像"
+  "webcamAlt": "ライブウェブカメラ映像",
+  "alertBanner": {
+    "alertN": "警報 {{n}} / {{total}}",
+    "alertSystem": "警報システム",
+    "andMore": "他{{count}}件",
+    "certainty": "確実性",
+    "collapse": "警報の詳細を非表示",
+    "effective": "発効",
+    "expand": "警報の詳細を表示",
+    "expires": "失効",
+    "issuedBy": "発表機関",
+    "nextAlert": "次の警報",
+    "of": "/",
+    "ongoing": "継続中",
+    "previousAlert": "前の警報",
+    "until": "{{time}}まで",
+    "urgency": "緊急度"
+  },
+  "barometerCard": {
+    "gaugeHigh": "高",
+    "gaugeLow": "低",
+    "title": "気圧計"
+  },
+  "chartNowLabel": "現在",
+  "feelsLikeHero": "体感温度 {{temp}}°",
+  "heroLabel": "現在の状況",
+  "hiAria": "本日の最高気温 {{temp}}",
+  "hiLabel": "最高",
+  "loAria": "本日の最低気温 {{temp}}",
+  "loLabel": "最低",
+  "noCurrentData": "現在のデータがありません",
+  "precipBarometer": {
+    "barometer": "気圧計",
+    "rainRate": "降水強度",
+    "rainToday": "本日の降水量",
+    "title": "降水量・気圧",
+    "trend": {
+      "falling": "下降中",
+      "rising": "上昇中",
+      "steady": "安定"
+    },
+    "trendAriaLabel": "気圧の傾向: {{trend}}"
+  },
+  "precipitationCard": {
+    "dewpointLabel": "露点",
+    "humidityLabel": "湿度",
+    "rainRateLabel": "降水強度",
+    "rainTodayLabel": "本日の降水量",
+    "title": "降水量・湿度"
+  },
+  "solarRadiationCard": {
+    "chartAriaLabel": "過去24時間の日射量と快晴時最大値のチャート",
+    "noData": "日射データがありません",
+    "srCaption": "本日の日射量データ",
+    "title": "日射量"
+  },
+  "sunMoonCard": {
+    "svgTitleMoon": "月: {{rise}}に出て、{{set}}に沈む",
+    "svgTitlePhase": "月相: {{phase}}、輝面比{{illumination}}",
+    "svgTitleSun": "太陽: {{rise}}に出て、{{set}}に沈む"
+  },
+  "tempCurveAriaLabel": "本日の気温チャート（0時から24時まで）。過去のデータは塗りつぶしの領域、予報は破線で表示されます。",
+  "tempCurveSrCaption": "本日の時間別気温",
+  "tempCurveTable": {
+    "actual": "実測値",
+    "forecast": "予報値",
+    "time": "時刻",
+    "type": "種別"
+  },
+  "todaysTemperature": "本日の気温",
+  "uvIndexCard": {
+    "chartAriaLabel": "本日のUV指数チャート",
+    "noData": "UVデータがありません",
+    "nowLabel": "現在",
+    "peakLabel": "最高値",
+    "srCaption": "本日のUV指数データ",
+    "title": "UV指数"
+  },
+  "webcamTabLive": "ライブ",
+  "webcamTabTimelapse": "タイムラプス",
+  "windCard": {
+    "maxGust": "最大瞬間風速",
+    "svgTitle": "風向{{cardinal}}（{{degrees}}度）、風速{{speed}}。10分間平均{{avg}}、最大瞬間風速{{gust}}。",
+    "svgTitleNoAvg": "風向{{cardinal}}（{{degrees}}度）、風速{{speed}}。",
+    "tenMinAvg": "10分間平均",
+    "title": "現在の風"
+  }
 }

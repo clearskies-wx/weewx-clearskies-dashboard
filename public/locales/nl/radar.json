@@ -20,5 +20,8 @@
   "layers": "Lagen",
   "weatherAlerts": "Weerwaarschuwingen",
   "windArrows": "Windpijlen",
-  "stationMarker": "Uw station"
+  "stationMarker": "Uw station",
+  "legendHeavy": "Zwaar",
+  "legendLight": "Licht",
+  "satelliteImagery": "Satellietbeelden"
 }

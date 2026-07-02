@@ -20,5 +20,8 @@
   "layers": "Ebenen",
   "weatherAlerts": "Wetterwarnungen",
   "windArrows": "Windpfeile",
-  "stationMarker": "Ihre Station"
+  "stationMarker": "Ihre Station",
+  "legendHeavy": "Stark",
+  "legendLight": "Leicht",
+  "satelliteImagery": "Satellitenbilder"
 }

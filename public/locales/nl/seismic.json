@@ -18,5 +18,12 @@
   "magnitude": "Magnitude",
   "depthLabel": "Diepte",
   "listCardTitle": "Aardbevingen",
-  "rowAriaLabel": "Magnitude {{mag}}, {{place}}"
+  "rowAriaLabel": "Magnitude {{mag}}, {{place}}",
+  "configAriaLabel": "Samenvatting seismische configuratie",
+  "configSummary": "Provider: {{provider}} | Straal: {{radiusKm}} km | Min. magnitude: {{minMagnitude}} | Laatste {{days}} dagen",
+  "showFaults": "Breuklijnen tonen",
+  "showFaultsAriaLabel": "Breuklijnenlaag op de kaart in-/uitschakelen",
+  "slipType": "Verschuivingstype",
+  "unknownFault": "Onbekende breuk",
+  "unknownSlipType": "Onbekend"
 }

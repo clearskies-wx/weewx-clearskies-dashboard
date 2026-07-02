@@ -18,7 +18,11 @@
     "airQuality": "Luchtkwaliteitsgegevens laden…",
     "lightning": "Bliksemgegevens laden…",
     "earthquake": "Aardbevingsgegevens laden…",
-    "forecast": "Verwachting laden…"
+    "forecast": "Verwachting laden…",
+    "barometer": "Barometergegevens laden…",
+    "precipBarometer": "Neerslag- en luchtdrukgegevens laden…",
+    "precipitation": "Neerslaggegevens laden…",
+    "solarUv": "Zonnestralings- en UV-gegevens laden…"
   },
   "error": {
     "currentConditions": "Kan huidige omstandigheden niet laden",
@@ -27,7 +31,12 @@
     "almanac": "Kan almanak-gegevens niet laden",
     "airQuality": "Kan luchtkwaliteitsgegevens niet laden",
     "earthquake": "Kan aardbevingsgegevens niet laden",
-    "forecast": "Kan verwachting niet laden"
+    "forecast": "Kan verwachting niet laden",
+    "barometer": "Kan barometergegevens niet laden",
+    "lightning": "Kan bliksemgegevens niet laden",
+    "precipBarometer": "Kan neerslag- en luchtdrukgegevens niet laden",
+    "precipitation": "Kan neerslaggegevens niet laden",
+    "solarUv": "Kan zonnestralings- en UV-gegevens niet laden"
   },
   "noData": {
     "observation": "Geen waarnemingsgegevens beschikbaar.",
@@ -36,7 +45,8 @@
     "lightning": "Geen bliksemdetector geconfigureerd.",
     "earthquake": "Geen recente aardbevingen binnen de ingestelde straal.",
     "airQuality": "Geen luchtkwaliteitsprovider geconfigureerd.",
-    "forecast": "Geen verwachtingsgegevens beschikbaar."
+    "forecast": "Geen verwachtingsgegevens beschikbaar.",
+    "timelapse": "Geen timelapse beschikbaar"
   },
   "highlights": {
     "todaysHigh": "Maximum vandaag",
@@ -44,7 +54,8 @@
     "peakGust": "Maximale windstoot",
     "rainToday": "Neerslag vandaag",
     "peakAqi": "Maximale LKI",
-    "recordsBroken": "Gebroken records"
+    "recordsBroken": "Gebroken records",
+    "wind": "Gemiddelde windsnelheid"
   },
   "observations": {
     "barometer": "Barometer",
@@ -59,7 +70,9 @@
   "sunMoon": {
     "sunrise": "Zonsopgang",
     "sunset": "Zonsondergang",
-    "moon": "Maan"
+    "moon": "Maan",
+    "moonrise": "Maanopgang",
+    "moonset": "Maanondergang"
   },
   "feelsLike": "Voelt als",
   "windCompass": {
@@ -109,11 +122,21 @@
     "nearest": "Dichtstbij: {{distance}} km",
     "lastStrike": "Laatste inslag: {{time}}",
     "lastStrikeUnknown": "Onbekend",
-    "noActivity": "No activity detected"
+    "noActivity": "No activity detected",
+    "chartAriaLabel_one": "Bliksemgeschiedenis: {{count}} inslag in de afgelopen 24 uur",
+    "chartAriaLabel_other": "Bliksemgeschiedenis: {{count}} inslagen in de afgelopen 24 uur",
+    "distanceColumn": "Afstand",
+    "nearestLabel": "Dichtstbij:",
+    "per24h": "/24u",
+    "perHour": "/uur",
+    "tableCaption": "Bliksemgeschiedenis — afgelopen 24 uur",
+    "timeColumn": "Tijd"
   },
   "earthquake": {
     "magnitude": "M{{magnitude}} — {{place}}",
-    "depth": "Diepte: {{depth}} km"
+    "depth": "Diepte: {{depth}} km",
+    "eventsAriaLabel": "Recente aardbevingen",
+    "unknownLocation": "Onbekende locatie"
   },
   "forecast": {
     "hiLo": "Max {{high}}° / Min {{low}}°",
@@ -145,5 +168,91 @@
     "title": "Luchtkwaliteit"
   },
   "webcam": "Webcam",
-  "webcamAlt": "Live webcamweergave"
+  "webcamAlt": "Live webcamweergave",
+  "alertBanner": {
+    "alertN": "Waarschuwing {{n}} van {{total}}",
+    "alertSystem": "Waarschuwingssysteem",
+    "andMore": "+{{count}} meer",
+    "certainty": "Zekerheid",
+    "collapse": "Waarschuwingsdetails verbergen",
+    "effective": "Van kracht vanaf",
+    "expand": "Waarschuwingsdetails tonen",
+    "expires": "Verloopt",
+    "issuedBy": "Uitgegeven door",
+    "nextAlert": "Volgende waarschuwing",
+    "of": "van",
+    "ongoing": "lopend",
+    "previousAlert": "Vorige waarschuwing",
+    "until": "tot {{time}}",
+    "urgency": "Urgentie"
+  },
+  "barometerCard": {
+    "gaugeHigh": "Hoog",
+    "gaugeLow": "Laag",
+    "title": "Barometer"
+  },
+  "chartNowLabel": "Nu",
+  "feelsLikeHero": "Voelt als {{temp}}°",
+  "heroLabel": "Huidige omstandigheden",
+  "hiAria": "Maximum vandaag {{temp}}",
+  "hiLabel": "Max",
+  "loAria": "Minimum vandaag {{temp}}",
+  "loLabel": "Min",
+  "noCurrentData": "Geen actuele gegevens beschikbaar",
+  "precipBarometer": {
+    "barometer": "Barometer",
+    "rainRate": "Neerslagintensiteit",
+    "rainToday": "Neerslag vandaag",
+    "title": "Neerslag & Luchtdruk",
+    "trend": {
+      "falling": "Dalend",
+      "rising": "Stijgend",
+      "steady": "Stabiel"
+    },
+    "trendAriaLabel": "Luchtdruktrend: {{trend}}"
+  },
+  "precipitationCard": {
+    "dewpointLabel": "Dauwpunt",
+    "humidityLabel": "Luchtvochtigheid",
+    "rainRateLabel": "Neerslagintensiteit",
+    "rainTodayLabel": "Neerslag vandaag",
+    "title": "Neerslag & Luchtvochtigheid"
+  },
+  "solarRadiationCard": {
+    "chartAriaLabel": "Grafiek van zonnestraling en heldere-hemel-maximum voor de afgelopen 24 uur",
+    "noData": "Geen zonnestralingsgegevens beschikbaar",
+    "srCaption": "Metingen van zonnestraling van vandaag",
+    "title": "Zonnestraling"
+  },
+  "sunMoonCard": {
+    "svgTitleMoon": "Maan: opkomst {{rise}}, ondergang {{set}}",
+    "svgTitlePhase": "Fase: {{phase}}, {{illumination}} verlicht",
+    "svgTitleSun": "Zon: opkomst {{rise}}, ondergang {{set}}"
+  },
+  "tempCurveAriaLabel": "Temperatuurgrafiek van vandaag, van middernacht tot middernacht. Verleden weergegeven als gevuld gebied, voorspelling als gestippelde lijn.",
+  "tempCurveSrCaption": "Uurlijkse temperatuur van vandaag",
+  "tempCurveTable": {
+    "actual": "Werkelijk",
+    "forecast": "Voorspelling",
+    "time": "Tijd",
+    "type": "Type"
+  },
+  "todaysTemperature": "Temperatuur van vandaag",
+  "uvIndexCard": {
+    "chartAriaLabel": "UV-indexgrafiek voor vandaag",
+    "noData": "Geen UV-gegevens beschikbaar",
+    "nowLabel": "Nu",
+    "peakLabel": "Piek",
+    "srCaption": "UV-indexmetingen van vandaag",
+    "title": "UV-index"
+  },
+  "webcamTabLive": "Live",
+  "webcamTabTimelapse": "Timelapse",
+  "windCard": {
+    "maxGust": "Max. windstoot",
+    "svgTitle": "Wind {{speed}} uit {{cardinal}} bij {{degrees}} graden. 10-minutengemiddelde {{avg}}, maximale windstoot {{gust}}.",
+    "svgTitleNoAvg": "Wind {{speed}} uit {{cardinal}} bij {{degrees}} graden.",
+    "tenMinAvg": "10-min. gemiddelde",
+    "title": "Huidige wind"
+  }
 }

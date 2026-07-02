@@ -1,10 +1,8 @@
 {
   "pageTitle": "Almanach",
-
   "loading": "Almanach-Daten werden geladen…",
   "error": "Almanach-Daten konnten nicht geladen werden",
   "noData": "Keine Almanach-Daten verfügbar.",
-
   "sun": {
     "title": "Sonne",
     "sunrise": "Sonnenaufgang",
@@ -16,7 +14,6 @@
     "nextSolstice": "Nächste Sonnenwende",
     "nextEquinox": "Nächste Tagundnachtgleiche"
   },
-
   "moon": {
     "title": "Mond",
     "phase": "Mondphase",
@@ -26,7 +23,6 @@
     "nextFullMoon": "Nächster Vollmond",
     "nextNewMoon": "Nächster Neumond"
   },
-
   "positional": {
     "title": "Positionsdaten",
     "note": "Positionsdaten erfordern eine Skyfield-Berechnung auf dem Server.",
@@ -35,6 +31,128 @@
     "moonAzimuth": "Mondazimut",
     "moonAltitude": "Mondhöhe"
   },
-
-  "daylightDelta": "({{delta}}m gegenüber gestern)"
+  "daylightDelta": "({{delta}}m gegenüber gestern)",
+  "climatology": {
+    "chartAriaLabel": "Diagramm der monatlichen Durchschnittswerte für Höchst-, Tiefsttemperatur, Taupunkt und Niederschlag",
+    "error": "Klimatologiedaten konnten nicht geladen werden.",
+    "loading": "Klimatologiedaten werden geladen…",
+    "noData": "Keine Klimatologiedaten verfügbar.",
+    "series": {
+      "avgDewpoint": "Durchschnittlicher Taupunkt",
+      "avgHigh": "Durchschnittliche Höchsttemperatur",
+      "avgLow": "Durchschnittliche Tiefsttemperatur",
+      "avgRainfall": "Durchschnittliche monatliche Niederschlagsmenge"
+    },
+    "table": {
+      "avgDewpoint": "Durchschnittlicher Taupunkt",
+      "avgHigh": "Durchschnittliches Maximum",
+      "avgLow": "Durchschnittliches Minimum",
+      "avgRainfall": "Durchschnittlicher Niederschlag",
+      "month": "Monat"
+    },
+    "tableAriaLabel": "Durchschnittliche klimatologische Werte nach Monat",
+    "title": "Durchschnittliche klimatologische Werte nach Monat",
+    "yAxisRain": "Ø monatlicher Niederschlag (mm)",
+    "yAxisTemp": "Durchschnittstemperatur (°C)"
+  },
+  "lunarEclipses": {
+    "barelyVisible": "Kaum sichtbar",
+    "closeModal": "Beschreibung des Finsternistyps schließen",
+    "descPartial": "Partielle Mondfinsternis. Ein Teil des Mondes durchläuft den Kernschatten der Erde.",
+    "descPenumbral": "Halbschattenfinsternis. Eine leichte Verdunkelung, während der Mond den Halbschatten der Erde durchläuft.",
+    "descTotal": "Totale Mondfinsternis. Der gesamte Mond durchläuft den Kernschatten der Erde.",
+    "footNote": "Die Sichtbarkeit einer Finsternis kann je nach Wetter und genauem Standort variieren.",
+    "imageAlt": "{{type}} Mondfinsternis",
+    "listLabel": "Bevorstehende Mondfinsternisse",
+    "lowInSky": "Tief am Himmel",
+    "modalTitlePartial": "Partielle Mondfinsternis",
+    "modalTitlePenumbral": "Halbschattenfinsternis",
+    "modalTitleTotal": "Totale Mondfinsternis",
+    "mostlyVisible": "Größtenteils sichtbar",
+    "noEclipses": "In den nächsten Jahren sind von Ihrem Standort aus keine Mondfinsternisse sichtbar.",
+    "notVisible": "Nicht sichtbar",
+    "subtitle": "Die nächsten von Ihrem Standort aus sichtbaren Mondfinsternisse.",
+    "timeRangeAriaLabel": "Zeitraum der Finsternis: {{range}}",
+    "timesLocal": "Alle Zeiten in Ortszeit",
+    "title": "Mondfinsternisse",
+    "typeBadgeAriaLabel": "{{type}} — mehr über diesen Finsternistyp erfahren",
+    "typePartial": "Partiell",
+    "typePenumbral": "Halbschatten",
+    "typeTotal": "Total",
+    "visibilityAriaLabel": "Sichtbarkeit: {{label}}",
+    "visibleAllNight": "Die ganze Nacht sichtbar"
+  },
+  "meteorShowers": {
+    "empty": "Im nächsten Jahr sind keine Meteorschauer zu erwarten.",
+    "footNote": "Die angegebenen Raten sind die vorhergesagte zenitale Stundenrate (ZHR) unter idealen Bedingungen.",
+    "peak": "Höhepunkt",
+    "peakNight": "Nacht des Höhepunkts",
+    "peakPeriod": "Zeitraum des Höhepunkts",
+    "qualityExcellent": "Ausgezeichnet",
+    "qualityFair": "Mäßig",
+    "qualityGood": "Gut",
+    "qualityNotVisible": "Nicht sichtbar",
+    "qualityPoor": "Schlecht",
+    "rate": "Rate",
+    "rateValue": "Bis zu {{zhr}} Meteore/Std.",
+    "scrollLeft": "Schauer nach links scrollen",
+    "scrollRegionLabel": "Liste der Meteorschauer",
+    "scrollRight": "Schauer nach rechts scrollen",
+    "subtitle": "Bevorstehende Meteorschauer, die im kommenden Jahr von Ihrem Standort aus sichtbar sind.",
+    "timesLocal": "Alle Zeiten in Ortszeit",
+    "title": "Meteorschauer",
+    "visibility": "Sichtbarkeit"
+  },
+  "moonNames": {
+    "blueMoon": "Blauer Mond",
+    "harvestMoon": "Erntemond",
+    "huntersMoon": "Jägermond",
+    "supermoon": "Supermond",
+    "traditionalNameSuffix": "{{name}}-Mond"
+  },
+  "planets": {
+    "bestTime": "Beste Beobachtungszeit",
+    "conditionsExcellent": "Ausgezeichnete Sichtbedingungen",
+    "conditionsFair": "Mäßige Sichtbedingungen",
+    "conditionsGood": "Gute Sichtbedingungen",
+    "conditionsPoor": "Schlechte Sichtbedingungen",
+    "conjunctionsLabel": "Planetenkonjunktionen",
+    "empty": "Heute Nacht sind keine Planeten sichtbar.",
+    "footNote": "Die angegebenen Zeiten sind Ortszeiten. Planeten gehen im Laufe der Woche zu unterschiedlichen Zeiten auf und unter.",
+    "listLabel": "Planetenliste",
+    "overallConditions": "Sichtbedingungen",
+    "qualityExcellent": "Ausgezeichnete Sicht",
+    "qualityFair": "Mäßige Sicht",
+    "qualityGood": "Gute Sicht",
+    "qualityNotVisible": "Nicht sichtbar",
+    "qualityPoor": "Schlechte Sicht",
+    "subtitle": "Klarer Himmel sorgt für gute Sicht. Hier erfahren Sie, wann jeder Planet am besten zu beobachten ist.",
+    "sunrise": "Sonnenaufgang",
+    "sunset": "Sonnenuntergang",
+    "timelineLabel": "Zeitleiste der Planetensichtbarkeit",
+    "title": "Planetenausblick für heute Nacht",
+    "viewingQuality": "Beobachtungsqualität"
+  },
+  "solarEclipses": {
+    "barelyVisible": "Tief am Horizont",
+    "begins": "Beginn",
+    "descAnnular": "Der Mond zieht vor der Sonne vorbei, sodass ein strahlender Ring aus Sonnenlicht sichtbar bleibt.",
+    "descPartial": "Der Mond zieht vor der Sonne vorbei und verdeckt einen Teil ihrer Scheibe.",
+    "descTotal": "Totale Sonnenfinsternis. Die Sonne wird vollständig vom Mond verdeckt.",
+    "ends": "Ende",
+    "footNote": "Die Sichtbarkeit kann je nach Bewölkung und genauem Standort variieren.",
+    "fullyVisible": "Innerhalb des Totalitätspfads",
+    "listLabel": "Bevorstehende Sonnenfinsternisse",
+    "maximum": "Maximum",
+    "mostlyVisible": "Gut sichtbar von Ihrem Standort",
+    "noEclipses": "In den nächsten Jahren sind von Ihrem Standort aus keine Sonnenfinsternisse sichtbar.",
+    "notVisible": "Nicht sichtbar",
+    "partiallyVisible": "Teilweise sichtbar von Ihrem Standort",
+    "subtitle": "Die nächsten von Ihrem Standort aus sichtbaren Sonnenfinsternisse.",
+    "timesLocal": "Alle Zeiten in Ortszeit",
+    "title": "Sonnenfinsternisse",
+    "totality": "Totalität",
+    "visible": "Sichtbar"
+  },
+  "today": "Heute"
 }

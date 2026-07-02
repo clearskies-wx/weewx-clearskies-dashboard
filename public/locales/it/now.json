@@ -12,7 +12,15 @@
     "nearest": "Più vicino: {{distance}} km",
     "lastStrike": "Ultimo fulmine: {{time}}",
     "lastStrikeUnknown": "Sconosciuto",
-    "noActivity": "No activity detected"
+    "noActivity": "No activity detected",
+    "chartAriaLabel_one": "Cronologia fulmini: {{count}} scarica nelle ultime 24 ore",
+    "chartAriaLabel_other": "Cronologia fulmini: {{count}} scariche nelle ultime 24 ore",
+    "distanceColumn": "Distanza",
+    "nearestLabel": "Più vicino:",
+    "per24h": "/24h",
+    "perHour": "/h",
+    "tableCaption": "Cronologia fulmini — ultime 24 ore",
+    "timeColumn": "Ora"
   },
   "recentEarthquake": "Terremoto recente",
   "todaysForecast": "Previsioni di oggi",
@@ -27,7 +35,11 @@
     "airQuality": "Caricamento dati qualità dell’aria…",
     "lightning": "Caricamento dati fulmini…",
     "earthquake": "Caricamento dati sismici…",
-    "forecast": "Caricamento previsioni…"
+    "forecast": "Caricamento previsioni…",
+    "barometer": "Caricamento dei dati del barometro…",
+    "precipBarometer": "Caricamento dei dati di precipitazione e pressione…",
+    "precipitation": "Caricamento dei dati di precipitazione…",
+    "solarUv": "Caricamento dei dati solari e UV…"
   },
   "error": {
     "currentConditions": "Impossibile caricare le condizioni attuali",
@@ -36,7 +48,12 @@
     "almanac": "Impossibile caricare i dati dell’almanacco",
     "airQuality": "Impossibile caricare i dati sulla qualità dell’aria",
     "earthquake": "Impossibile caricare i dati sismici",
-    "forecast": "Impossibile caricare le previsioni"
+    "forecast": "Impossibile caricare le previsioni",
+    "barometer": "Impossibile caricare i dati del barometro",
+    "lightning": "Impossibile caricare i dati sui fulmini",
+    "precipBarometer": "Impossibile caricare i dati di precipitazione e pressione",
+    "precipitation": "Impossibile caricare i dati di precipitazione",
+    "solarUv": "Impossibile caricare i dati solari e UV"
   },
   "noData": {
     "observation": "Nessun dato di osservazione disponibile.",
@@ -45,7 +62,8 @@
     "lightning": "Nessun sensore di fulmini configurato.",
     "earthquake": "Nessun terremoto recente nel raggio configurato.",
     "airQuality": "Nessun fornitore di qualità dell’aria configurato.",
-    "forecast": "Nessun dato di previsione disponibile."
+    "forecast": "Nessun dato di previsione disponibile.",
+    "timelapse": "Nessun timelapse disponibile"
   },
   "highlights": {
     "todaysHigh": "Massima di oggi",
@@ -53,7 +71,8 @@
     "peakGust": "Raffica massima",
     "rainToday": "Pioggia di oggi",
     "peakAqi": "IQA massimo",
-    "recordsBroken": "Record superati"
+    "recordsBroken": "Record superati",
+    "wind": "VENTO MEDIO"
   },
   "observations": {
     "barometer": "Barometro",
@@ -68,7 +87,9 @@
   "sunMoon": {
     "sunrise": "Alba",
     "sunset": "Tramonto",
-    "moon": "Luna"
+    "moon": "Luna",
+    "moonrise": "Levata della luna",
+    "moonset": "Tramonto della luna"
   },
   "feelsLike": "Percepita",
   "windCompass": {
@@ -113,7 +134,9 @@
   },
   "earthquake": {
     "magnitude": "M{{magnitude}} — {{place}}",
-    "depth": "Profondità: {{depth}} km"
+    "depth": "Profondità: {{depth}} km",
+    "eventsAriaLabel": "Terremoti recenti",
+    "unknownLocation": "Posizione sconosciuta"
   },
   "forecast": {
     "hiLo": "Max {{high}}° / Min {{low}}°",
@@ -145,5 +168,91 @@
     "title": "Qualità dell'aria"
   },
   "webcam": "Webcam",
-  "webcamAlt": "Vista webcam in diretta"
+  "webcamAlt": "Vista webcam in diretta",
+  "alertBanner": {
+    "alertN": "Allerta {{n}} di {{total}}",
+    "alertSystem": "Sistema di allerta",
+    "andMore": "+{{count}} altre",
+    "certainty": "Certezza",
+    "collapse": "Nascondi i dettagli dell'allerta",
+    "effective": "In vigore",
+    "expand": "Mostra i dettagli dell'allerta",
+    "expires": "Scade",
+    "issuedBy": "Emessa da",
+    "nextAlert": "Allerta successiva",
+    "of": "di",
+    "ongoing": "in corso",
+    "previousAlert": "Allerta precedente",
+    "until": "fino alle {{time}}",
+    "urgency": "Urgenza"
+  },
+  "barometerCard": {
+    "gaugeHigh": "Massima",
+    "gaugeLow": "Minima",
+    "title": "Barometro"
+  },
+  "chartNowLabel": "Ora",
+  "feelsLikeHero": "Percepita {{temp}}°",
+  "heroLabel": "Condizioni attuali",
+  "hiAria": "Massima di oggi {{temp}}",
+  "hiLabel": "Max",
+  "loAria": "Minima di oggi {{temp}}",
+  "loLabel": "Min",
+  "noCurrentData": "Nessun dato attuale disponibile",
+  "precipBarometer": {
+    "barometer": "Barometro",
+    "rainRate": "Intensità di pioggia",
+    "rainToday": "Pioggia oggi",
+    "title": "Precipitazioni e pressione",
+    "trend": {
+      "falling": "In calo",
+      "rising": "In aumento",
+      "steady": "Stabile"
+    },
+    "trendAriaLabel": "Tendenza della pressione: {{trend}}"
+  },
+  "precipitationCard": {
+    "dewpointLabel": "Punto di rugiada",
+    "humidityLabel": "Umidità",
+    "rainRateLabel": "Intensità di pioggia",
+    "rainTodayLabel": "Pioggia oggi",
+    "title": "Precipitazioni e umidità"
+  },
+  "solarRadiationCard": {
+    "chartAriaLabel": "Grafico della radiazione solare e del massimo teorico a cielo sereno nelle ultime 24 ore",
+    "noData": "Nessun dato solare disponibile",
+    "srCaption": "Rilevazioni odierne della radiazione solare",
+    "title": "Radiazione solare"
+  },
+  "sunMoonCard": {
+    "svgTitleMoon": "Luna: sorge alle {{rise}}, tramonta alle {{set}}",
+    "svgTitlePhase": "Fase: {{phase}}, {{illumination}} illuminata",
+    "svgTitleSun": "Sole: sorge alle {{rise}}, tramonta alle {{set}}"
+  },
+  "tempCurveAriaLabel": "Grafico della temperatura odierna, da mezzanotte a mezzanotte. Il passato è mostrato come area piena, le previsioni come linea tratteggiata.",
+  "tempCurveSrCaption": "Temperatura oraria di oggi",
+  "tempCurveTable": {
+    "actual": "Effettiva",
+    "forecast": "Prevista",
+    "time": "Ora",
+    "type": "Tipo"
+  },
+  "todaysTemperature": "Temperatura odierna",
+  "uvIndexCard": {
+    "chartAriaLabel": "Grafico dell'indice UV per oggi",
+    "noData": "Nessun dato UV disponibile",
+    "nowLabel": "Ora",
+    "peakLabel": "Picco",
+    "srCaption": "Rilevazioni odierne dell'indice UV",
+    "title": "Indice UV"
+  },
+  "webcamTabLive": "Diretta",
+  "webcamTabTimelapse": "Timelapse",
+  "windCard": {
+    "maxGust": "Raffica massima",
+    "svgTitle": "Vento {{speed}} da {{cardinal}} a {{degrees}} gradi. Media su 10 minuti {{avg}}, raffica massima {{gust}}.",
+    "svgTitleNoAvg": "Vento {{speed}} da {{cardinal}} a {{degrees}} gradi.",
+    "tenMinAvg": "Media 10 min",
+    "title": "Vento attuale"
+  }
 }

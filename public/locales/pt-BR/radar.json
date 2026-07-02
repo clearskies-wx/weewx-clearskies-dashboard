@@ -20,5 +20,8 @@
   "layers": "Camadas",
   "weatherAlerts": "Alertas meteorológicos",
   "windArrows": "Setas de vento",
-  "stationMarker": "Sua estação"
+  "stationMarker": "Sua estação",
+  "legendHeavy": "Forte",
+  "legendLight": "Fraca",
+  "satelliteImagery": "Imagens de satélite"
 }

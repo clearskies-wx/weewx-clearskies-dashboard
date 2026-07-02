@@ -1,10 +1,8 @@
 {
   "pageTitle": "天文暦",
-
   "loading": "天文暦データを読み込み中…",
   "error": "天文暦データを読み込めません",
   "noData": "天文暦データがありません。",
-
   "sun": {
     "title": "太陽",
     "sunrise": "日の出",
@@ -16,7 +14,6 @@
     "nextSolstice": "次の至点",
     "nextEquinox": "次の分点"
   },
-
   "moon": {
     "title": "月",
     "phase": "月相",
@@ -26,7 +23,6 @@
     "nextFullMoon": "次の満月",
     "nextNewMoon": "次の新月"
   },
-
   "positional": {
     "title": "位置データ",
     "note": "位置データはサーバー上でのSkyfield計算が必要です。",
@@ -35,6 +31,128 @@
     "moonAzimuth": "月方位角",
     "moonAltitude": "月高度角"
   },
-
-  "daylightDelta": "(昨日比 {{delta}}分)"
+  "daylightDelta": "(昨日比 {{delta}}分)",
+  "today": "今日",
+  "climatology": {
+    "chartAriaLabel": "月別平均最高気温・最低気温・露点・降水量チャート",
+    "error": "気候データを読み込めません。",
+    "loading": "気候データを読み込み中…",
+    "noData": "利用可能な気候データがありません。",
+    "series": {
+      "avgDewpoint": "平均露点",
+      "avgHigh": "平均最高気温",
+      "avgLow": "平均最低気温",
+      "avgRainfall": "月間平均降水量"
+    },
+    "table": {
+      "avgDewpoint": "平均露点",
+      "avgHigh": "平均最高気温",
+      "avgLow": "平均最低気温",
+      "avgRainfall": "平均降水量",
+      "month": "月"
+    },
+    "tableAriaLabel": "月別の平均気候値",
+    "title": "月別平均気候値",
+    "yAxisRain": "月間平均降水量 (in)",
+    "yAxisTemp": "平均気温 (°F)"
+  },
+  "lunarEclipses": {
+    "barelyVisible": "わずかに見える",
+    "closeModal": "食の種類の説明を閉じる",
+    "descPartial": "部分月食です。月の一部が地球の本影を通過します。",
+    "descPenumbral": "半影月食です。月が地球の半影を通過することで、わずかに暗く見えます。",
+    "descTotal": "皆既月食です。月全体が地球の本影を通過します。",
+    "footNote": "食の見え方は天候や正確な観測地点によって異なる場合があります。",
+    "imageAlt": "{{type}}月食",
+    "listLabel": "今後の月食",
+    "lowInSky": "低い高度",
+    "modalTitlePartial": "部分月食",
+    "modalTitlePenumbral": "半影月食",
+    "modalTitleTotal": "皆既月食",
+    "mostlyVisible": "ほぼ見える",
+    "noEclipses": "今後数年間、あなたの場所から見える月食はありません。",
+    "notVisible": "見えません",
+    "subtitle": "あなたの場所から次に見える月食です。",
+    "timeRangeAriaLabel": "食の時間帯: {{range}}",
+    "timesLocal": "すべて現地時間",
+    "title": "月食",
+    "typeBadgeAriaLabel": "{{type}} — この食の種類について詳しく見る",
+    "typePartial": "部分食",
+    "typePenumbral": "半影食",
+    "typeTotal": "皆既食",
+    "visibilityAriaLabel": "見え方: {{label}}",
+    "visibleAllNight": "一晩中見える"
+  },
+  "meteorShowers": {
+    "empty": "今後1年間、流星群の予定はありません。",
+    "footNote": "表示されている出現率は、理想的な条件下での予測天頂出現数（ZHR）です。",
+    "peak": "極大",
+    "peakNight": "極大夜",
+    "peakPeriod": "極大期間",
+    "qualityExcellent": "非常に良い",
+    "qualityFair": "普通",
+    "qualityGood": "良い",
+    "qualityNotVisible": "観測不可",
+    "qualityPoor": "不良",
+    "rate": "出現率",
+    "rateValue": "最大{{zhr}}個/時",
+    "scrollLeft": "流星群リストを左にスクロール",
+    "scrollRegionLabel": "流星群リスト",
+    "scrollRight": "流星群リストを右にスクロール",
+    "subtitle": "今後1年間にあなたの場所から見える流星群です。",
+    "timesLocal": "すべて現地時間",
+    "title": "流星群",
+    "visibility": "見え方"
+  },
+  "moonNames": {
+    "blueMoon": "ブルームーン",
+    "harvestMoon": "ハーベストムーン",
+    "huntersMoon": "ハンターズムーン",
+    "supermoon": "スーパームーン",
+    "traditionalNameSuffix": "{{name}}ムーン"
+  },
+  "planets": {
+    "bestTime": "観測に最適な時間",
+    "conditionsExcellent": "非常に良い観測条件",
+    "conditionsFair": "普通の観測条件",
+    "conditionsGood": "良好な観測条件",
+    "conditionsPoor": "不良な観測条件",
+    "conjunctionsLabel": "惑星の会合",
+    "empty": "今夜見える惑星はありません。",
+    "footNote": "表示されている時刻は現地時間です。惑星の出没時刻は週を通して変化します。",
+    "listLabel": "惑星リスト",
+    "overallConditions": "観測条件",
+    "qualityExcellent": "非常に良い",
+    "qualityFair": "普通",
+    "qualityGood": "良い",
+    "qualityNotVisible": "観測不可",
+    "qualityPoor": "不良",
+    "subtitle": "晴天は絶好の観測チャンスです。各惑星が最も見やすい時間帯をご紹介します。",
+    "sunrise": "日の出",
+    "sunset": "日の入り",
+    "timelineLabel": "惑星の見え方タイムライン",
+    "title": "今夜の惑星観測情報",
+    "viewingQuality": "観測条件"
+  },
+  "solarEclipses": {
+    "barelyVisible": "地平線近くに低く見える",
+    "begins": "開始",
+    "descAnnular": "月が太陽の前を通過し、輝く光の環（金環）が見られます。",
+    "descPartial": "月が太陽の前を通過し、太陽の一部が欠けて見えます。",
+    "descTotal": "皆既日食です。太陽が月によって完全に覆われます。",
+    "ends": "終了",
+    "footNote": "見え方は雲量や正確な観測地点によって異なる場合があります。",
+    "fullyVisible": "皆既帯の範囲内",
+    "listLabel": "今後の日食",
+    "maximum": "食の最大",
+    "mostlyVisible": "観測に適した位置",
+    "noEclipses": "今後数年間、あなたの場所から見える日食はありません。",
+    "notVisible": "見えません",
+    "partiallyVisible": "あなたの場所から部分的に見える",
+    "subtitle": "あなたの場所から次に見える日食です。",
+    "timesLocal": "すべて現地時間",
+    "title": "日食",
+    "totality": "皆既",
+    "visible": "見える"
+  }
 }

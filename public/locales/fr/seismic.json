@@ -18,5 +18,12 @@
   "magnitude": "Magnitude",
   "depthLabel": "Profondeur",
   "listCardTitle": "Séismes",
-  "rowAriaLabel": "Magnitude {{mag}}, {{place}}"
+  "rowAriaLabel": "Magnitude {{mag}}, {{place}}",
+  "configAriaLabel": "Résumé de la configuration sismique",
+  "configSummary": "Fournisseur : {{provider}} | Rayon : {{radiusKm}} km | Magnitude min. : {{minMagnitude}} | {{days}} derniers jours",
+  "showFaults": "Afficher les failles",
+  "showFaultsAriaLabel": "Activer/désactiver la superposition des lignes de faille sur la carte",
+  "slipType": "Type de glissement",
+  "unknownFault": "Faille inconnue",
+  "unknownSlipType": "Inconnu"
 }

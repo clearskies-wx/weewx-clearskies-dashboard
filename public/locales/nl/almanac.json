@@ -1,10 +1,8 @@
 {
   "pageTitle": "Almanak",
-
   "loading": "Almanak-gegevens laden…",
   "error": "Kan almanak-gegevens niet laden",
   "noData": "Geen almanak-gegevens beschikbaar.",
-
   "sun": {
     "title": "Zon",
     "sunrise": "Zonsopgang",
@@ -16,7 +14,6 @@
     "nextSolstice": "Volgende zonnewende",
     "nextEquinox": "Volgende dag-en-nachtevening"
   },
-
   "moon": {
     "title": "Maan",
     "phase": "Fase",
@@ -26,7 +23,6 @@
     "nextFullMoon": "Volgende volle maan",
     "nextNewMoon": "Volgende nieuwe maan"
   },
-
   "positional": {
     "title": "Positiegegevens",
     "note": "Positiegegevens vereisen Skyfield-berekening op de server.",
@@ -35,6 +31,128 @@
     "moonAzimuth": "Maan azimut",
     "moonAltitude": "Maan hoogte"
   },
-
-  "daylightDelta": "({{delta}}m t.o.v. gisteren)"
+  "daylightDelta": "({{delta}}m t.o.v. gisteren)",
+  "climatology": {
+    "chartAriaLabel": "Diagram met gemiddelde maandelijkse maximum- en minimumtemperatuur, dauwpunt en neerslag",
+    "error": "Kan klimatologiegegevens niet laden.",
+    "loading": "Klimatologiegegevens laden…",
+    "noData": "Geen klimatologiegegevens beschikbaar.",
+    "series": {
+      "avgDewpoint": "Gemiddeld dauwpunt",
+      "avgHigh": "Gemiddelde maximumtemperatuur",
+      "avgLow": "Gemiddelde minimumtemperatuur",
+      "avgRainfall": "Gem. maandelijkse neerslag"
+    },
+    "table": {
+      "avgDewpoint": "Gemiddeld dauwpunt",
+      "avgHigh": "Gemiddeld maximum",
+      "avgLow": "Gemiddeld minimum",
+      "avgRainfall": "Gemiddelde neerslag",
+      "month": "Maand"
+    },
+    "tableAriaLabel": "Gemiddelde klimatologische waarden per maand",
+    "title": "Gemiddelde klimatologische waarden per maand",
+    "yAxisRain": "Gem. maandelijkse neerslag (mm)",
+    "yAxisTemp": "Gemiddelde temperatuur (°C)"
+  },
+  "lunarEclipses": {
+    "barelyVisible": "Nauwelijks zichtbaar",
+    "closeModal": "Beschrijving van eclipstype sluiten",
+    "descPartial": "Gedeeltelijke maansverduistering. Een deel van de maan gaat door de kernschaduw van de aarde.",
+    "descPenumbral": "Halfschaduw-maansverduistering. Een subtiele verduistering terwijl de maan door de halfschaduw van de aarde gaat.",
+    "descTotal": "Totale maansverduistering. De volledige maan gaat door de kernschaduw van de aarde.",
+    "footNote": "De zichtbaarheid van een eclips kan variëren afhankelijk van het weer en uw exacte locatie.",
+    "imageAlt": "{{type}} maansverduistering",
+    "listLabel": "Aankomende maansverduisteringen",
+    "lowInSky": "Laag aan de hemel",
+    "modalTitlePartial": "Gedeeltelijke maansverduistering",
+    "modalTitlePenumbral": "Halfschaduw-maansverduistering",
+    "modalTitleTotal": "Totale maansverduistering",
+    "mostlyVisible": "Grotendeels zichtbaar",
+    "noEclipses": "De komende jaren zijn er geen maansverduisteringen zichtbaar vanaf uw locatie.",
+    "notVisible": "Niet zichtbaar",
+    "subtitle": "De eerstvolgende maansverduisteringen die zichtbaar zijn vanaf uw locatie.",
+    "timeRangeAriaLabel": "Tijdsbereik van de eclips: {{range}}",
+    "timesLocal": "Alle tijden in lokale tijd",
+    "title": "Maansverduisteringen",
+    "typeBadgeAriaLabel": "{{type}} — meer informatie over dit eclipstype",
+    "typePartial": "Gedeeltelijk",
+    "typePenumbral": "Halfschaduw",
+    "typeTotal": "Totaal",
+    "visibilityAriaLabel": "Zichtbaarheid: {{label}}",
+    "visibleAllNight": "De hele nacht zichtbaar"
+  },
+  "meteorShowers": {
+    "empty": "Geen meteorenzwermen in het komende jaar.",
+    "footNote": "De weergegeven cijfers zijn de voorspelde zenithoogte-uurrate (ZHR) onder ideale omstandigheden.",
+    "peak": "Piek",
+    "peakNight": "Pieknacht",
+    "peakPeriod": "Piekperiode",
+    "qualityExcellent": "Uitstekend",
+    "qualityFair": "Redelijk",
+    "qualityGood": "Goed",
+    "qualityNotVisible": "Niet zichtbaar",
+    "qualityPoor": "Slecht",
+    "rate": "Frequentie",
+    "rateValue": "Tot {{zhr}} meteoren/uur",
+    "scrollLeft": "Zwermen naar links scrollen",
+    "scrollRegionLabel": "Lijst met meteorenzwermen",
+    "scrollRight": "Zwermen naar rechts scrollen",
+    "subtitle": "Aankomende meteorenzwermen die het komende jaar zichtbaar zijn vanaf uw locatie.",
+    "timesLocal": "Alle tijden in lokale tijd",
+    "title": "Meteorenzwermen",
+    "visibility": "Zichtbaarheid"
+  },
+  "moonNames": {
+    "blueMoon": "Blauwe maan",
+    "harvestMoon": "Oogstmaan",
+    "huntersMoon": "Jagersmaan",
+    "supermoon": "Supermaan",
+    "traditionalNameSuffix": "{{name}}maan"
+  },
+  "planets": {
+    "bestTime": "Beste kijktijd",
+    "conditionsExcellent": "Uitstekende zichtomstandigheden",
+    "conditionsFair": "Redelijke zichtomstandigheden",
+    "conditionsGood": "Goede zichtomstandigheden",
+    "conditionsPoor": "Slechte zichtomstandigheden",
+    "conjunctionsLabel": "Planetaire conjuncties",
+    "empty": "Vannacht zijn er geen planeten zichtbaar.",
+    "footNote": "De weergegeven tijden zijn lokale tijden. Planeten komen gedurende de week op verschillende tijden op en gaan onder.",
+    "listLabel": "Planetenlijst",
+    "overallConditions": "Zichtomstandigheden",
+    "qualityExcellent": "Uitstekend zicht",
+    "qualityFair": "Redelijk zicht",
+    "qualityGood": "Goed zicht",
+    "qualityNotVisible": "Niet zichtbaar",
+    "qualityPoor": "Slecht zicht",
+    "subtitle": "Een heldere hemel zorgt voor goed zicht. Hier ziet u wanneer elke planeet het best te zien is.",
+    "sunrise": "Zonsopgang",
+    "sunset": "Zonsondergang",
+    "timelineLabel": "Tijdlijn zichtbaarheid planeten",
+    "title": "Planeetvooruitzicht voor vannacht",
+    "viewingQuality": "Kijkkwaliteit"
+  },
+  "solarEclipses": {
+    "barelyVisible": "Laag aan de horizon",
+    "begins": "Begin",
+    "descAnnular": "De maan schuift voor de zon langs, waardoor een schitterende ring van zonlicht zichtbaar blijft.",
+    "descPartial": "De maan schuift voor de zon langs en bedekt een deel van de zonneschijf.",
+    "descTotal": "Totale zonsverduistering. De zon wordt volledig door de maan bedekt.",
+    "ends": "Einde",
+    "footNote": "De zichtbaarheid kan variëren afhankelijk van bewolking en uw exacte locatie.",
+    "fullyVisible": "Binnen het pad van totaliteit",
+    "listLabel": "Aankomende zonsverduisteringen",
+    "maximum": "Maximum",
+    "mostlyVisible": "Goed gepositioneerd vanaf uw locatie",
+    "noEclipses": "De komende jaren zijn er geen zonsverduisteringen zichtbaar vanaf uw locatie.",
+    "notVisible": "Niet zichtbaar",
+    "partiallyVisible": "Gedeeltelijk zichtbaar vanaf uw locatie",
+    "subtitle": "De eerstvolgende zonsverduisteringen die zichtbaar zijn vanaf uw locatie.",
+    "timesLocal": "Alle tijden in lokale tijd",
+    "title": "Zonsverduisteringen",
+    "totality": "Totaliteit",
+    "visible": "Zichtbaar"
+  },
+  "today": "Vandaag"
 }

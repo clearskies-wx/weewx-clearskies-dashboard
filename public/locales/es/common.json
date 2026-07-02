@@ -1,7 +1,12 @@
 {
   "loading": "Cargando…",
   "loadingPage": "Cargando {{title}}",
-  "error": "Se produjo un error",
+  "error": {
+    "generic": "Se produjo un error",
+    "reloadPage": "Recargar página",
+    "somethingWentWrong": "Algo salió mal",
+    "unexpectedError": "Se produjo un error inesperado."
+  },
   "retry": "Reintentar",
   "noData": "No hay datos disponibles",
   "skipToContent": "Ir al contenido principal",
@@ -14,7 +19,9 @@
     "shareFacebook": "Compartir en Facebook",
     "sharePinterest": "Pinear en Pinterest",
     "copyLink": "Copiar enlace",
-    "linkCopied": "¡Enlace copiado!"
+    "linkCopied": "¡Enlace copiado!",
+    "cookieSettings": "Configuración de cookies",
+    "defaultStationName": "Clear Skies Weather"
   },
   "theme": {
     "ariaAuto": "Tema: siguiendo la preferencia del sistema — haz clic para cambiar al modo claro",
@@ -22,21 +29,58 @@
     "ariaDark": "Tema: oscuro — haz clic para usar la preferencia del sistema"
   },
   "directions": {
-    "N":   "N",
+    "N": "N",
     "NNE": "NNE",
-    "NE":  "NE",
+    "NE": "NE",
     "ENE": "ENE",
-    "E":   "E",
+    "E": "E",
     "ESE": "ESE",
-    "SE":  "SE",
+    "SE": "SE",
     "SSE": "SSE",
-    "S":   "S",
+    "S": "S",
     "SSW": "SSO",
-    "SW":  "SO",
+    "SW": "SO",
     "WSW": "OSO",
-    "W":   "O",
+    "W": "O",
     "WNW": "ONO",
-    "NW":  "NO",
+    "NW": "NO",
     "NNW": "NNO"
+  },
+  "aria": {
+    "scrollableContent": "Contenido desplazable"
+  },
+  "backToNow": "Volver a Ahora",
+  "cookie": {
+    "accept": "Aceptar",
+    "consentMessage": "Este sitio web utiliza cookies para analizar el tráfico mediante Google Analytics. No se recopilan datos personales.",
+    "learnMore": "Más información",
+    "reject": "Rechazar"
+  },
+  "customPageLoading": "Cargando página...",
+  "customPageNoContent": "Esta página aún no tiene contenido.",
+  "layout": {
+    "heroAriaLabelWithLocation": "{{name}} — {{location}}",
+    "myWeatherStation": "Mi estación meteorológica"
+  },
+  "notFound": {
+    "puns": [
+      "Parece que esta página se la llevó el viento.",
+      "Esta página está perdida entre la niebla.",
+      "No encontramos esa página… debe haberse evaporado.",
+      "El pronóstico de hoy anuncia un error 404.",
+      "Parcialmente nublado con posibilidad de páginas perdidas.",
+      "Esta página se fue flotando como un globo meteorológico.",
+      "No hay datos en esta estación.",
+      "Esta página está bajo un manto de nieve… en algún lugar.",
+      "El barómetro marca: página no encontrada.",
+      "Parece que esta página corrió la misma suerte que el clima de ayer."
+    ]
+  },
+  "radar": {
+    "weatherAlert": "Alerta meteorológica"
+  },
+  "setup": {
+    "apiNotResponding": "La API de la estación meteorológica aún no responde. Puede que todavía se esté inicializando.",
+    "startingUp": "Clear Skies se está iniciando..."
   }
 }

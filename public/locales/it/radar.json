@@ -20,5 +20,8 @@
   "layers": "Livelli",
   "weatherAlerts": "Allerte meteo",
   "windArrows": "Frecce del vento",
-  "stationMarker": "La tua stazione"
+  "stationMarker": "La tua stazione",
+  "legendHeavy": "Intenso",
+  "legendLight": "Debole",
+  "satelliteImagery": "Immagini satellitari"
 }

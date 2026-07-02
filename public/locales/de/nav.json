@@ -27,5 +27,9 @@
   "ariaMain": "Hauptnavigation",
   "ariaPrimary": "Primäre Navigation",
   "ariaAdditional": "Weitere Navigation",
-  "ariaAdditionalPages": "Weitere Seiten"
+  "ariaAdditionalPages": "Weitere Seiten",
+  "hideNav": "Navigation ausblenden",
+  "pinNav": "Navigation anheften",
+  "showNav": "Navigation einblenden",
+  "unpinNav": "Navigation lösen"
 }

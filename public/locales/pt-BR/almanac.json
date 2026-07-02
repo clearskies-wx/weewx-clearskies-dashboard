@@ -1,10 +1,8 @@
 {
   "pageTitle": "Almanaque",
-
   "loading": "Carregando dados do almanaque…",
   "error": "Não foi possível carregar os dados do almanaque",
   "noData": "Sem dados do almanaque disponíveis.",
-
   "sun": {
     "title": "Sol",
     "sunrise": "Nascer do Sol",
@@ -16,7 +14,6 @@
     "nextSolstice": "Próximo Solstício",
     "nextEquinox": "Próximo Equinócio"
   },
-
   "moon": {
     "title": "Lua",
     "phase": "Fase",
@@ -26,7 +23,6 @@
     "nextFullMoon": "Próxima Lua Cheia",
     "nextNewMoon": "Próxima Lua Nova"
   },
-
   "positional": {
     "title": "Dados Posicionais",
     "note": "Os dados posicionais requerem computação Skyfield no servidor.",
@@ -35,6 +31,128 @@
     "moonAzimuth": "Azimute da Lua",
     "moonAltitude": "Altitude da Lua"
   },
-
-  "daylightDelta": "({{delta}}m em relação a ontem)"
+  "daylightDelta": "({{delta}}m em relação a ontem)",
+  "climatology": {
+    "chartAriaLabel": "Gráfico de máximas, mínimas, ponto de orvalho e precipitação médios mensais",
+    "error": "Não foi possível carregar os dados climatológicos.",
+    "loading": "Carregando dados climatológicos…",
+    "noData": "Sem dados climatológicos disponíveis.",
+    "series": {
+      "avgDewpoint": "Ponto de Orvalho Médio",
+      "avgHigh": "Temperatura Máxima Média",
+      "avgLow": "Temperatura Mínima Média",
+      "avgRainfall": "Total de Chuva Mensal Médio"
+    },
+    "table": {
+      "avgDewpoint": "Ponto de Orvalho Médio",
+      "avgHigh": "Máxima Média",
+      "avgLow": "Mínima Média",
+      "avgRainfall": "Precipitação Média",
+      "month": "Mês"
+    },
+    "tableAriaLabel": "Valores climatológicos médios por mês",
+    "title": "Valores Climatológicos Médios por Mês",
+    "yAxisRain": "Chuva Mensal Média (in)",
+    "yAxisTemp": "Temperatura Média (°F)"
+  },
+  "lunarEclipses": {
+    "barelyVisible": "Pouco Visível",
+    "closeModal": "Fechar descrição do tipo de eclipse",
+    "descPartial": "Eclipse lunar parcial. Parte da Lua passará pela umbra da Terra.",
+    "descPenumbral": "Eclipse lunar penumbral. Um leve escurecimento conforme a Lua passa pela penumbra da Terra.",
+    "descTotal": "Eclipse lunar total. A Lua inteira passará pela umbra da Terra.",
+    "footNote": "A visibilidade do eclipse pode variar de acordo com o tempo e sua localização exata.",
+    "imageAlt": "Eclipse lunar {{type}}",
+    "listLabel": "Próximos eclipses lunares",
+    "lowInSky": "Baixo no Céu",
+    "modalTitlePartial": "Eclipse Lunar Parcial",
+    "modalTitlePenumbral": "Eclipse Lunar Penumbral",
+    "modalTitleTotal": "Eclipse Lunar Total",
+    "mostlyVisible": "Majoritariamente Visível",
+    "noEclipses": "Nenhum eclipse lunar visível a partir da sua localização nos próximos anos.",
+    "notVisible": "Não Visível",
+    "subtitle": "Os próximos eclipses lunares visíveis a partir da sua localização.",
+    "timeRangeAriaLabel": "Intervalo de tempo do eclipse: {{range}}",
+    "timesLocal": "Todos os horários são locais",
+    "title": "Eclipses Lunares",
+    "typeBadgeAriaLabel": "{{type}} — saiba mais sobre este tipo de eclipse",
+    "typePartial": "Parcial",
+    "typePenumbral": "Penumbral",
+    "typeTotal": "Total",
+    "visibilityAriaLabel": "Visibilidade: {{label}}",
+    "visibleAllNight": "Visível a Noite Toda"
+  },
+  "meteorShowers": {
+    "empty": "Nenhuma chuva de meteoros no próximo ano.",
+    "footNote": "As taxas mostradas são a taxa horária zenital (ZHR) prevista em condições ideais.",
+    "peak": "Pico",
+    "peakNight": "Noite de Pico",
+    "peakPeriod": "Período de pico",
+    "qualityExcellent": "Excelente",
+    "qualityFair": "Razoável",
+    "qualityGood": "Boa",
+    "qualityNotVisible": "Não Visível",
+    "qualityPoor": "Ruim",
+    "rate": "Taxa",
+    "rateValue": "Até {{zhr}} meteoros/h",
+    "scrollLeft": "Rolar chuvas de meteoros para a esquerda",
+    "scrollRegionLabel": "Lista de chuvas de meteoros",
+    "scrollRight": "Rolar chuvas de meteoros para a direita",
+    "subtitle": "Chuvas de meteoros visíveis a partir da sua localização no próximo ano.",
+    "timesLocal": "Todos os horários são locais",
+    "title": "Chuvas de Meteoros",
+    "visibility": "Visibilidade"
+  },
+  "moonNames": {
+    "blueMoon": "Lua Azul",
+    "harvestMoon": "Lua da Colheita",
+    "huntersMoon": "Lua do Caçador",
+    "supermoon": "Superlua",
+    "traditionalNameSuffix": "Lua de {{name}}"
+  },
+  "planets": {
+    "bestTime": "Melhor horário de observação",
+    "conditionsExcellent": "Condições de Observação Excelentes",
+    "conditionsFair": "Condições de Observação Razoáveis",
+    "conditionsGood": "Boas Condições de Observação",
+    "conditionsPoor": "Condições de Observação Ruins",
+    "conjunctionsLabel": "Conjunções planetárias",
+    "empty": "Nenhum planeta visível esta noite.",
+    "footNote": "Os horários mostrados são horário local. Os planetas nascem e se põem em horários diferentes ao longo da semana.",
+    "listLabel": "Lista de planetas",
+    "overallConditions": "Condições de Observação",
+    "qualityExcellent": "Visão Excelente",
+    "qualityFair": "Visão Razoável",
+    "qualityGood": "Boa Visão",
+    "qualityNotVisible": "Não Visível",
+    "qualityPoor": "Visão Ruim",
+    "subtitle": "Céu limpo é ótimo para observação. Veja quando cada planeta estará em seu melhor momento.",
+    "sunrise": "Nascer do Sol",
+    "sunset": "Pôr do Sol",
+    "timelineLabel": "Linha do tempo de visibilidade dos planetas",
+    "title": "Panorama dos Planetas Desta Noite",
+    "viewingQuality": "Qualidade de observação"
+  },
+  "solarEclipses": {
+    "barelyVisible": "Baixo no horizonte",
+    "begins": "Início",
+    "descAnnular": "A Lua passará em frente ao Sol, deixando visível um brilhante anel de luz solar.",
+    "descPartial": "A Lua passará em frente ao Sol, cobrindo parte de seu disco.",
+    "descTotal": "Eclipse solar total. O Sol será completamente encoberto pela Lua.",
+    "ends": "Fim",
+    "footNote": "A visibilidade pode variar de acordo com a cobertura de nuvens e sua localização exata.",
+    "fullyVisible": "Dentro da faixa de totalidade",
+    "listLabel": "Próximos eclipses solares",
+    "maximum": "Máximo",
+    "mostlyVisible": "Bem posicionado na sua localização",
+    "noEclipses": "Nenhum eclipse solar visível a partir da sua localização nos próximos anos.",
+    "notVisible": "Não Visível",
+    "partiallyVisible": "Parcialmente visível a partir da sua localização",
+    "subtitle": "Os próximos eclipses solares visíveis a partir da sua localização.",
+    "timesLocal": "Todos os horários são locais",
+    "title": "Eclipses Solares",
+    "totality": "Totalidade",
+    "visible": "Visível"
+  },
+  "today": "Hoje"
 }

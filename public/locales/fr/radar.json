@@ -20,5 +20,8 @@
   "layers": "Couches",
   "weatherAlerts": "Alertes météo",
   "windArrows": "Flèches de vent",
-  "stationMarker": "Votre station"
+  "stationMarker": "Votre station",
+  "legendHeavy": "Fort",
+  "legendLight": "Faible",
+  "satelliteImagery": "Imagerie satellite"
 }

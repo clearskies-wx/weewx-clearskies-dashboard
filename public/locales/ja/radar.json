@@ -20,5 +20,8 @@
   "layers": "レイヤー",
   "weatherAlerts": "気象警報",
   "windArrows": "風向矢印",
-  "stationMarker": "あなたの観測所"
+  "stationMarker": "あなたの観測所",
+  "legendHeavy": "強",
+  "legendLight": "弱",
+  "satelliteImagery": "衛星画像"
 }

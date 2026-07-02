@@ -18,5 +18,12 @@
   "magnitude": "Magnitude",
   "depthLabel": "Profundidade",
   "listCardTitle": "Terremotos",
-  "rowAriaLabel": "Magnitude {{mag}}, {{place}}"
+  "rowAriaLabel": "Magnitude {{mag}}, {{place}}",
+  "configAriaLabel": "Resumo da configuração sísmica",
+  "configSummary": "Provedor: {{provider}} | Raio: {{radiusKm}} km | Magnitude mínima: {{minMagnitude}} | Últimos {{days}} dias",
+  "showFaults": "Mostrar linhas de falha",
+  "showFaultsAriaLabel": "Ativar ou desativar a sobreposição de linhas de falha no mapa",
+  "slipType": "Tipo de deslizamento",
+  "unknownFault": "Falha desconhecida",
+  "unknownSlipType": "Desconhecido"
 }

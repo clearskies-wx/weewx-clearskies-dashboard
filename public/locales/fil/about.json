@@ -37,7 +37,28 @@
     "domain": {
       "baseMaps": "Mga Base Map",
       "seismicData": "Datos Seismiko",
-      "astronomical": "Reperensyang Astronomikal"
+      "astronomical": "Reperensyang Astronomikal",
+      "alerts": "Mga Alerto",
+      "almanac": "Astronomiya",
+      "aqi": "Kalidad ng Hangin",
+      "earthquakes": "Mga Lindol",
+      "forecast": "Pagtataya",
+      "radar": "Radar",
+      "seeing": "Astronomical Seeing"
+    },
+    "cardTitle": "Mga Tagapagbigay ng Datos",
+    "empty": "Walang naka-configure na tagapagbigay ng datos."
+  },
+  "photoCredits": {
+    "builtIn": "Built-in",
+    "cardTitle": "Mga Credit sa Larawan",
+    "scene": {
+      "clear-day": "Clear sky, daytime",
+      "clear-night": "Clear sky, nighttime",
+      "cloudy-day": "Cloudy, daytime",
+      "cloudy-night": "Cloudy, nighttime",
+      "storm-day": "Storm, daytime",
+      "storm-night": "Storm, nighttime"
     }
   }
 }

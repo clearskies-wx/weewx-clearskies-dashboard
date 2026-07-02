@@ -37,7 +37,28 @@
     "domain": {
       "baseMaps": "ベースマップ",
       "seismicData": "地震データ",
-      "astronomical": "天文参照"
+      "astronomical": "天文参照",
+      "alerts": "警報",
+      "almanac": "天文",
+      "aqi": "大気質",
+      "earthquakes": "地震",
+      "forecast": "予報",
+      "radar": "レーダー",
+      "seeing": "天体観測条件"
+    },
+    "cardTitle": "データプロバイダー",
+    "empty": "データプロバイダーが設定されていません。"
+  },
+  "photoCredits": {
+    "builtIn": "内蔵",
+    "cardTitle": "写真クレジット",
+    "scene": {
+      "clear-day": "快晴・昼間",
+      "clear-night": "快晴・夜間",
+      "cloudy-day": "曇り・昼間",
+      "cloudy-night": "曇り・夜間",
+      "storm-day": "嵐・昼間",
+      "storm-night": "嵐・夜間"
     }
   }
 }

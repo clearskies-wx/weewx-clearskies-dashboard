@@ -37,7 +37,28 @@
     "domain": {
       "baseMaps": "Mapas de Base",
       "seismicData": "Dados Sísmicos",
-      "astronomical": "Referência Astronómica"
+      "astronomical": "Referência Astronómica",
+      "alerts": "Alertas",
+      "almanac": "Astronomia",
+      "aqi": "Qualidade do Ar",
+      "earthquakes": "Sismos",
+      "forecast": "Previsão",
+      "radar": "Radar",
+      "seeing": "Seeing Astronómico"
+    },
+    "cardTitle": "Fornecedores de Dados",
+    "empty": "Nenhum fornecedor de dados configurado."
+  },
+  "photoCredits": {
+    "builtIn": "Incorporado",
+    "cardTitle": "Créditos Fotográficos",
+    "scene": {
+      "clear-day": "Céu limpo, dia",
+      "clear-night": "Céu limpo, noite",
+      "cloudy-day": "Nublado, dia",
+      "cloudy-night": "Nublado, noite",
+      "storm-day": "Tempestade, dia",
+      "storm-night": "Tempestade, noite"
     }
   }
 }
