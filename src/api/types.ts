@@ -609,6 +609,7 @@ export interface CapabilityDeclaration {
   alertsAvailable?: boolean | null;
   satelliteAvailable?: boolean | null;
   satelliteTileUrlTemplate?: string | null;
+  isObservedSource?: boolean;
   attribution?: ProviderAttributionData | null;
 }
 
