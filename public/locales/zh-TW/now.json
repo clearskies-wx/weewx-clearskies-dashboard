@@ -18,7 +18,11 @@
     "airQuality": "正在載入空氣品質資料…",
     "lightning": "正在載入閃電資料…",
     "earthquake": "正在載入地震資料…",
-    "forecast": "正在載入天氣預報…"
+    "forecast": "正在載入天氣預報…",
+    "solarUv": "正在載入太陽輻射與紫外線資料…",
+    "precipBarometer": "正在載入降雨與氣壓資料…",
+    "precipitation": "正在載入降雨資料…",
+    "barometer": "正在載入氣壓資料…"
   },
   "error": {
     "currentConditions": "無法載入目前狀況",
@@ -27,7 +31,12 @@
     "almanac": "無法載入曆書資料",
     "airQuality": "無法載入空氣品質資料",
     "earthquake": "無法載入地震資料",
-    "forecast": "無法載入天氣預報"
+    "lightning": "無法載入閃電資料",
+    "forecast": "無法載入天氣預報",
+    "solarUv": "無法載入太陽輻射與紫外線資料",
+    "precipBarometer": "無法載入降雨與氣壓資料",
+    "precipitation": "無法載入降雨資料",
+    "barometer": "無法載入氣壓資料"
   },
   "noData": {
     "observation": "暫無觀測資料。",
@@ -36,12 +45,14 @@
     "lightning": "未設定閃電感應器。",
     "earthquake": "設定範圍內近期無地震。",
     "airQuality": "未設定空氣品質提供商。",
-    "forecast": "暫無天氣預報資料。"
+    "forecast": "暫無天氣預報資料。",
+    "timelapse": "暫無縮時攝影"
   },
   "highlights": {
     "todaysHigh": "今日最高氣溫",
     "todaysLow": "今日最低氣溫",
     "peakGust": "最大陣風",
+    "wind": "平均風速",
     "rainToday": "今日降雨量",
     "peakAqi": "最高AQI",
     "recordsBroken": "打破紀錄"
@@ -59,7 +70,14 @@
   "sunMoon": {
     "sunrise": "日出",
     "sunset": "日落",
+    "moonrise": "月出",
+    "moonset": "月落",
     "moon": "月亮"
+  },
+  "sunMoonCard": {
+    "svgTitleSun": "太陽：{{rise}} 升起，{{set}} 落下",
+    "svgTitleMoon": "月亮：{{rise}} 升起，{{set}} 落下",
+    "svgTitlePhase": "月相：{{phase}}，照明度 {{illumination}}"
   },
   "feelsLike": "體感溫度",
   "windCompass": {
@@ -67,6 +85,13 @@
     "gusts": "陣風：{{gust}}{{unit}}",
     "ariaLabel": "來自 {{direction}} 方向 {{degrees}} 度的風",
     "directionLabel": "來自{{direction}} {{degrees}}°"
+  },
+  "windCard": {
+    "title": "目前風力",
+    "tenMinAvg": "10分鐘平均",
+    "maxGust": "最大陣風",
+    "svgTitle": "風來自{{cardinal}}方向，{{degrees}}度，風速 {{speed}}。10分鐘平均 {{avg}}，最大陣風 {{gust}}。",
+    "svgTitleNoAvg": "風來自{{cardinal}}方向，{{degrees}}度，風速 {{speed}}。"
   },
   "barometer": {
     "trend": {
@@ -107,13 +132,23 @@
     "strikesLastHour": "過去一小時雷擊 {{count}} 次",
     "strikesLast24h": "過去24小時 {{count}} 次",
     "nearest": "最近距離：{{distance}} km",
+    "nearestLabel": "最近：",
     "lastStrike": "最近雷擊：{{time}}",
     "lastStrikeUnknown": "未知",
-    "noActivity": "No activity detected"
+    "noActivity": "未偵測到閃電活動",
+    "chartAriaLabel_one": "雷擊歷史：過去24小時內 {{count}} 次雷擊",
+    "chartAriaLabel_other": "雷擊歷史：過去24小時內 {{count}} 次雷擊",
+    "tableCaption": "雷擊歷史 — 過去24小時",
+    "timeColumn": "時間",
+    "distanceColumn": "距離",
+    "perHour": "/小時",
+    "per24h": "/24小時"
   },
   "earthquake": {
     "magnitude": "M{{magnitude}} — {{place}}",
-    "depth": "深度：{{depth}} km"
+    "depth": "深度：{{depth}} km",
+    "unknownLocation": "位置不明",
+    "eventsAriaLabel": "近期地震事件"
   },
   "forecast": {
     "hiLo": "最高 {{high}}° / 最低 {{low}}°",
@@ -123,6 +158,23 @@
   "temperature": {
     "ariaLabel": "目前氣溫：{{temp}} 度 {{unit}}"
   },
+  "heroLabel": "目前狀況",
+  "feelsLikeHero": "體感溫度 {{temp}}°",
+  "noCurrentData": "暫無目前資料",
+  "todaysTemperature": "今日氣溫",
+  "tempCurveAriaLabel": "今日氣溫圖表，從午夜到午夜。已過去的時段以填色區域顯示，預報時段以虛線顯示。",
+  "tempCurveSrCaption": "今日逐時氣溫",
+  "tempCurveTable": {
+    "time": "時間",
+    "type": "類型",
+    "forecast": "預報",
+    "actual": "實測"
+  },
+  "hiLabel": "最高",
+  "loLabel": "最低",
+  "hiAria": "今日最高氣溫 {{temp}}",
+  "loAria": "今日最低氣溫 {{temp}}",
+  "chartNowLabel": "現在",
   "solarUv": {
     "title": "太陽輻射與紫外線",
     "solarRadiation": "太陽輻射",
@@ -141,9 +193,66 @@
       "uvIndex": "紫外線指數"
     }
   },
+  "precipBarometer": {
+    "title": "降雨與氣壓",
+    "rainToday": "今日降雨量",
+    "rainRate": "降雨強度",
+    "barometer": "氣壓計",
+    "trend": {
+      "rising": "上升",
+      "falling": "下降",
+      "steady": "平穩"
+    },
+    "trendAriaLabel": "氣壓趨勢：{{trend}}"
+  },
+  "webcam": "網路攝影機",
+  "webcamAlt": "即時網路攝影機畫面",
+  "webcamTabLive": "即時",
+  "webcamTabTimelapse": "縮時攝影",
+  "precipitationCard": {
+    "title": "降雨與濕度",
+    "rainTodayLabel": "今日降雨量",
+    "rainRateLabel": "降雨強度",
+    "humidityLabel": "濕度",
+    "dewpointLabel": "露點"
+  },
+  "barometerCard": {
+    "title": "氣壓計",
+    "gaugeLow": "最低",
+    "gaugeHigh": "最高"
+  },
+  "solarRadiationCard": {
+    "title": "太陽輻射",
+    "noData": "暫無太陽輻射資料",
+    "chartAriaLabel": "過去24小時太陽輻射與晴空最大值圖表",
+    "srCaption": "今日太陽輻射讀數"
+  },
+  "uvIndexCard": {
+    "title": "紫外線指數",
+    "noData": "暫無紫外線資料",
+    "chartAriaLabel": "今日紫外線指數圖表",
+    "srCaption": "今日紫外線指數讀數",
+    "nowLabel": "現在",
+    "peakLabel": "峰值"
+  },
   "aqiCard": {
     "title": "空氣品質"
   },
-  "webcam": "網路攝影機",
-  "webcamAlt": "即時網路攝影機畫面"
+  "alertBanner": {
+    "andMore": "另有 {{count}} 則",
+    "of": "共",
+    "previousAlert": "上一則預警",
+    "nextAlert": "下一則預警",
+    "expand": "顯示預警詳情",
+    "collapse": "隱藏預警詳情",
+    "ongoing": "持續中",
+    "until": "至 {{time}}",
+    "effective": "生效時間",
+    "expires": "失效時間",
+    "urgency": "緊急程度",
+    "certainty": "確定性",
+    "issuedBy": "發布機構",
+    "alertSystem": "預警系統",
+    "alertN": "第 {{n}} 則預警，共 {{total}} 則"
+  }
 }

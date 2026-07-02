@@ -34,10 +34,31 @@
     "defaultAlt": "氣象測站"
   },
   "dataProviders": {
+    "cardTitle": "資料提供方",
+    "empty": "尚未設定資料提供方。",
     "domain": {
       "baseMaps": "基礎地圖",
       "seismicData": "地震資料",
-      "astronomical": "天文參考"
+      "astronomical": "天文參考",
+      "alerts": "預警",
+      "almanac": "天文",
+      "aqi": "空氣品質",
+      "earthquakes": "地震",
+      "forecast": "預報",
+      "radar": "雷達",
+      "seeing": "天文視寧度"
+    }
+  },
+  "photoCredits": {
+    "cardTitle": "圖片來源",
+    "builtIn": "內建",
+    "scene": {
+      "clear-day": "晴天，白天",
+      "clear-night": "晴天，夜間",
+      "cloudy-day": "多雲，白天",
+      "cloudy-night": "多雲，夜間",
+      "storm-day": "風暴，白天",
+      "storm-night": "風暴，夜間"
     }
   }
 }

@@ -18,5 +18,12 @@
   "magnitude": "Магнитуда",
   "depthLabel": "Глубина",
   "listCardTitle": "Землетрясения",
-  "rowAriaLabel": "Магнитуда {{mag}}, {{place}}"
+  "rowAriaLabel": "Магнитуда {{mag}}, {{place}}",
+  "showFaults": "Показать линии разломов",
+  "showFaultsAriaLabel": "Показать/скрыть слой линий разломов на карте",
+  "unknownFault": "Неизвестный разлом",
+  "unknownSlipType": "Неизвестно",
+  "slipType": "Тип подвижки",
+  "configSummary": "Поставщик: {{provider}} | Радиус: {{radiusKm}} км | Мин. магнитуда: {{minMagnitude}} | Последние {{days}} дн.",
+  "configAriaLabel": "Сводка настроек сейсмики"
 }

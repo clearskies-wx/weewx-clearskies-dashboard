@@ -1,25 +1,85 @@
 {
   "loading": "載入中…",
   "loadingPage": "正在載入 {{title}}",
-  "error": "發生錯誤",
   "retry": "重試",
   "noData": "暫無資料",
   "skipToContent": "跳至主要內容",
   "pageNotFound": "找不到頁面。",
+  "backToNow": "返回即時頁面",
+  "customPageLoading": "正在載入頁面…",
+  "customPageNoContent": "此頁面暫無內容。",
+  "notFound": {
+    "puns": [
+      "看起來這個頁面被風吹走了。",
+      "這個頁面消失在霧中了。",
+      "我們找不到這個頁面——它可能已經蒸發了。",
+      "本次預報顯示：404。",
+      "多雲，有一定機率出現頁面缺失。",
+      "這個頁面像氣象氣球一樣飄走了。",
+      "本站沒有相關資料。",
+      "這個頁面被埋在了不知何處的積雪之下。",
+      "氣壓計顯示：找不到頁面。",
+      "看起來這個頁面已經和昨天的天氣一樣消散了。"
+    ]
+  },
+  "setup": {
+    "startingUp": "Clear Skies 正在啟動…",
+    "apiNotResponding": "氣象站 API 尚未回應，可能仍在初始化中。"
+  },
+  "cookie": {
+    "consentMessage": "本網站透過 Google Analytics 使用 Cookie 分析造訪流量，不會收集任何個人資料。",
+    "learnMore": "了解更多",
+    "reject": "拒絕",
+    "accept": "接受"
+  },
   "footer": {
     "legal": "法律 / 隱私",
+    "cookieSettings": "Cookie 設定",
     "poweredBy": "由 Clear Skies 驅動",
     "shareReddit": "分享至 Reddit",
     "shareX": "分享至 X",
     "shareFacebook": "分享至 Facebook",
     "sharePinterest": "釘選至 Pinterest",
     "copyLink": "複製連結",
-    "linkCopied": "連結已複製！"
+    "linkCopied": "連結已複製！",
+    "defaultStationName": "Clear Skies Weather"
+  },
+  "error": {
+    "generic": "發生錯誤",
+    "somethingWentWrong": "發生了一些問題",
+    "reloadPage": "重新載入頁面",
+    "unexpectedError": "發生了非預期的錯誤。"
+  },
+  "aria": {
+    "scrollableContent": "可捲動內容"
+  },
+  "layout": {
+    "myWeatherStation": "我的氣象站",
+    "heroAriaLabelWithLocation": "{{name}} — {{location}}"
+  },
+  "radar": {
+    "weatherAlert": "天氣預警"
   },
   "theme": {
     "ariaAuto": "主題：跟隨系統設定 — 點擊切換至淺色模式",
     "ariaLight": "主題：淺色 — 點擊切換至深色模式",
     "ariaDark": "主題：深色 — 點擊切換至系統設定"
+  },
+  "cards": {
+    "currentConditions": "目前狀況",
+    "todaysForecast": "今日天氣預報",
+    "wind": "風",
+    "todaysHighlights": "今日重點",
+    "precipitation": "降雨",
+    "barometer": "氣壓計",
+    "solarRadiation": "太陽輻射",
+    "uvIndex": "紫外線指數",
+    "airQualityIndex": "空氣品質指數",
+    "sunAndMoon": "日月",
+    "lightning": "閃電",
+    "earthquakes": "地震",
+    "radar": "雷達",
+    "webcam": "網路攝影機"
   },
   "directions": {
     "N":   "北",

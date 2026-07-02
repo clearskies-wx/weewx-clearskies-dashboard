@@ -1,25 +1,85 @@
 {
   "loading": "加载中…",
   "loadingPage": "正在加载 {{title}}",
-  "error": "发生错误",
   "retry": "重试",
   "noData": "暂无数据",
   "skipToContent": "跳至主要内容",
   "pageNotFound": "页面未找到。",
+  "backToNow": "返回实时页面",
+  "customPageLoading": "正在加载页面…",
+  "customPageNoContent": "此页面暂无内容。",
+  "notFound": {
+    "puns": [
+      "看起来这个页面被风吹走了。",
+      "这个页面消失在雾中了。",
+      "我们找不到这个页面——它可能已经蒸发了。",
+      "本次预报显示：404。",
+      "多云，有一定概率出现页面缺失。",
+      "这个页面像气象气球一样飘走了。",
+      "本站没有相关数据。",
+      "这个页面被埋在了不知何处的积雪之下。",
+      "气压计显示：页面未找到。",
+      "看起来这个页面已经和昨天的天气一样消散了。"
+    ]
+  },
+  "setup": {
+    "startingUp": "Clear Skies 正在启动…",
+    "apiNotResponding": "气象站 API 尚未响应，可能仍在初始化中。"
+  },
+  "cookie": {
+    "consentMessage": "本网站通过 Google Analytics 使用 Cookie 分析访问流量，不会收集任何个人数据。",
+    "learnMore": "了解更多",
+    "reject": "拒绝",
+    "accept": "接受"
+  },
   "footer": {
     "legal": "法律 / 隐私",
+    "cookieSettings": "Cookie 设置",
     "poweredBy": "由 Clear Skies 驱动",
     "shareReddit": "分享到 Reddit",
     "shareX": "分享到 X",
     "shareFacebook": "分享到 Facebook",
     "sharePinterest": "固定到 Pinterest",
     "copyLink": "复制链接",
-    "linkCopied": "链接已复制！"
+    "linkCopied": "链接已复制！",
+    "defaultStationName": "Clear Skies Weather"
+  },
+  "error": {
+    "generic": "发生错误",
+    "somethingWentWrong": "出了点问题",
+    "reloadPage": "重新加载页面",
+    "unexpectedError": "发生了意外错误。"
+  },
+  "aria": {
+    "scrollableContent": "可滚动内容"
+  },
+  "layout": {
+    "myWeatherStation": "我的气象站",
+    "heroAriaLabelWithLocation": "{{name}} — {{location}}"
+  },
+  "radar": {
+    "weatherAlert": "天气预警"
   },
   "theme": {
     "ariaAuto": "主题：跟随系统设置 — 点击切换至浅色模式",
     "ariaLight": "主题：浅色 — 点击切换至深色模式",
     "ariaDark": "主题：深色 — 点击切换至系统设置"
+  },
+  "cards": {
+    "currentConditions": "当前状况",
+    "todaysForecast": "今日预报",
+    "wind": "风",
+    "todaysHighlights": "今日要点",
+    "precipitation": "降水",
+    "barometer": "气压计",
+    "solarRadiation": "太阳辐射",
+    "uvIndex": "紫外线指数",
+    "airQualityIndex": "空气质量指数",
+    "sunAndMoon": "日月",
+    "lightning": "闪电",
+    "earthquakes": "地震",
+    "radar": "雷达",
+    "webcam": "网络摄像头"
   },
   "directions": {
     "N":   "北",

@@ -8,6 +8,8 @@
   "noFrames": "暂无雷达数据。",
   "loading": "正在加载雷达数据…",
   "frameOf": "第 {{current}} 帧，共 {{total}} 帧",
+  "legendLight": "小",
+  "legendHeavy": "大",
   "nowcastLabel": "预报",
   "expandRadar": "展开雷达",
   "closeRadar": "关闭雷达",
@@ -20,5 +22,6 @@
   "layers": "图层",
   "weatherAlerts": "天气预警",
   "windArrows": "风向箭头",
-  "stationMarker": "您的气象站"
+  "stationMarker": "您的气象站",
+  "satelliteImagery": "卫星云图"
 }

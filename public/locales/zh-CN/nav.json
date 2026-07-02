@@ -27,5 +27,9 @@
   "ariaMain": "主导航",
   "ariaPrimary": "主要导航",
   "ariaAdditional": "附加导航",
-  "ariaAdditionalPages": "附加页面"
+  "ariaAdditionalPages": "附加页面",
+  "pinNav": "固定导航",
+  "unpinNav": "取消固定导航",
+  "showNav": "显示导航",
+  "hideNav": "隐藏导航"
 }

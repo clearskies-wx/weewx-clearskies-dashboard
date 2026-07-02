@@ -1,25 +1,85 @@
 {
   "loading": "Naglo-load…",
   "loadingPage": "Naglo-load ng {{title}}",
-  "error": "May naganap na error",
   "retry": "Subukan muli",
   "noData": "Walang available na data",
   "skipToContent": "Lumaktaw sa pangunahing nilalaman",
   "pageNotFound": "Hindi mahanap ang pahina.",
+  "backToNow": "Bumalik sa Ngayon",
+  "customPageLoading": "Naglo-load ng pahina...",
+  "customPageNoContent": "Wala pang laman ang pahinang ito.",
+  "notFound": {
+    "puns": [
+      "Mukhang natangay ng hangin ang pahinang ito.",
+      "Naligaw ang pahinang ito sa fog.",
+      "Hindi namin mahanap ang pahinang iyon — baka na-evaporate na.",
+      "Ang forecast ngayon: 404.",
+      "Medyo maulap na may tsansang mawala ang pahina.",
+      "Lumipad ang pahinang ito tulad ng weather balloon.",
+      "Walang datos sa istasyong ito.",
+      "Nakatabon ang pahinang ito ng snow… kung saan.",
+      "Ang barometer ay nagbabasa: hindi mahanap ang pahina.",
+      "Mukhang naglaho ang pahinang ito tulad ng panahon kahapon."
+    ]
+  },
+  "setup": {
+    "startingUp": "Nagsisimula na ang Clear Skies...",
+    "apiNotResponding": "Hindi pa tumutugon ang API ng weather station. Maaaring nagsisimula pa ito."
+  },
+  "cookie": {
+    "consentMessage": "Gumagamit ang website na ito ng cookies para suriin ang traffic sa pamamagitan ng Google Analytics. Walang personal na data na kinokolekta.",
+    "learnMore": "Alamin pa",
+    "reject": "Tanggihan",
+    "accept": "Tanggapin"
+  },
   "footer": {
     "legal": "Legal / Privacy",
+    "cookieSettings": "Mga Setting ng Cookie",
     "poweredBy": "Pinapagana ng Clear Skies",
     "shareReddit": "Ibahagi sa Reddit",
     "shareX": "Ibahagi sa X",
     "shareFacebook": "Ibahagi sa Facebook",
     "sharePinterest": "I-pin sa Pinterest",
     "copyLink": "Kopyahin ang link",
-    "linkCopied": "Nakopya ang link!"
+    "linkCopied": "Nakopya ang link!",
+    "defaultStationName": "Clear Skies Weather"
+  },
+  "error": {
+    "generic": "May naganap na error",
+    "somethingWentWrong": "May nagkamali",
+    "reloadPage": "I-reload ang pahina",
+    "unexpectedError": "May naganap na hindi inaasahang error."
+  },
+  "aria": {
+    "scrollableContent": "Nagagalaw na nilalaman"
+  },
+  "layout": {
+    "myWeatherStation": "Ang Aking Weather Station",
+    "heroAriaLabelWithLocation": "{{name}} — {{location}}"
+  },
+  "radar": {
+    "weatherAlert": "Babala sa Panahon"
   },
   "theme": {
     "ariaAuto": "Tema: sumusunod sa kagustuhan ng system — i-click para lumipat sa light mode",
     "ariaLight": "Tema: maliwanag — i-click para lumipat sa dark mode",
     "ariaDark": "Tema: madilim — i-click para lumipat sa kagustuhan ng system"
+  },
+  "cards": {
+    "currentConditions": "Kasalukuyang Kondisyon",
+    "todaysForecast": "Forecast Ngayong Araw",
+    "wind": "Hangin",
+    "todaysHighlights": "Mga Highlight Ngayong Araw",
+    "precipitation": "Precipitation",
+    "barometer": "Barometer",
+    "solarRadiation": "Solar Radiation",
+    "uvIndex": "UV Index",
+    "airQualityIndex": "Air Quality Index",
+    "sunAndMoon": "Araw at Buwan",
+    "lightning": "Kidlat",
+    "earthquakes": "Mga Lindol",
+    "radar": "Radar",
+    "webcam": "Webcam"
   },
   "directions": {
     "N":   "N",

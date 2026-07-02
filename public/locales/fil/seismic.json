@@ -18,5 +18,12 @@
   "magnitude": "Lakas",
   "depthLabel": "Lalim",
   "listCardTitle": "Mga Lindol",
-  "rowAriaLabel": "Lakas {{mag}}, {{place}}"
+  "rowAriaLabel": "Lakas {{mag}}, {{place}}",
+  "showFaults": "Ipakita ang mga fault line",
+  "showFaultsAriaLabel": "I-toggle ang fault line overlay sa mapa",
+  "unknownFault": "Hindi kilalang fault",
+  "unknownSlipType": "Hindi kilala",
+  "slipType": "Uri ng slip",
+  "configSummary": "Provider: {{provider}} | Radius: {{radiusKm}} km | Pinakamababang magnitude: {{minMagnitude}} | Huling {{days}} araw",
+  "configAriaLabel": "Buod ng seismic configuration"
 }

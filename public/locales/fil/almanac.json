@@ -3,12 +3,53 @@
   "loading": "Naglo-load ng datos ng almanac…",
   "error": "Hindi ma-load ang datos ng almanac",
   "noData": "Walang available na datos ng almanac.",
+  "today": "Ngayon",
+  "cardTitle": "Araw at Buwan",
+  "loadingStatus": "Naglo-load ng datos ng araw at buwan",
+  "azimuth": "Azimuth",
+  "altitude": "Altitude",
+  "hoursAbbrev": "oras",
+  "minutesAbbrev": "min",
+  "illuminatedPercent": "{{illumination}} naiilawan",
+  "phaseIllumination": "{{phase}}, {{illumination}} naiilawan",
+  "moonPhases": {
+    "new": "New Moon",
+    "waxing-crescent": "Waxing Crescent",
+    "first-quarter": "First Quarter",
+    "waxing-gibbous": "Waxing Gibbous",
+    "full": "Full Moon",
+    "waning-gibbous": "Waning Gibbous",
+    "last-quarter": "Last Quarter",
+    "waning-crescent": "Waning Crescent"
+  },
+  "moonPhasesAbbrev": {
+    "new": "New Moon",
+    "waxing-crescent": "Wax. Crescent",
+    "first-quarter": "First Quarter",
+    "waxing-gibbous": "Wax. Gibbous",
+    "full": "Full Moon",
+    "waning-gibbous": "Wan. Gibbous",
+    "last-quarter": "Last Quarter",
+    "waning-crescent": "Wan. Crescent"
+  },
+  "svgTitle": {
+    "sun": "Araw: sumisikat {{rise}}, lumulubog {{set}}",
+    "sunAltitude": "kasalukuyang altitude {{altitude}}",
+    "moon": "Buwan: sumisikat {{rise}}, lumulubog {{set}}",
+    "moonAltitude": "kasalukuyang altitude {{altitude}}",
+    "phase": "Yugto: {{phase}}, {{illumination}} naiilawan"
+  },
+  "arcLabels": {
+    "rise": "Sumisikat {{time}}",
+    "set": "Lumulubog {{time}}"
+  },
   "sun": {
     "title": "Araw",
     "sunrise": "Pagsikat ng Araw",
     "sunset": "Paglubog ng Araw",
     "civilDawn": "Civil Dawn",
     "civilDusk": "Civil Dusk",
+    "daylight": "Liwanag ng Araw",
     "totalDaylight": "Kabuuang Liwanag ng Araw",
     "solarNoon": "Solar Noon",
     "nextSolstice": "Susunod na Solstice",
@@ -20,6 +61,8 @@
     "illumination": "Liwanag",
     "moonrise": "Pagsikat ng Buwan",
     "moonset": "Paglubog ng Buwan",
+    "fullMoon": "Full Moon",
+    "newMoon": "New Moon",
     "nextFullMoon": "Susunod na Buong Buwan",
     "nextNewMoon": "Susunod na Bagong Buwan"
   },

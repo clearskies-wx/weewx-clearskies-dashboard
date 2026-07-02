@@ -27,5 +27,9 @@
   "ariaMain": "主導覽",
   "ariaPrimary": "主要導覽",
   "ariaAdditional": "附加導覽",
-  "ariaAdditionalPages": "附加頁面"
+  "ariaAdditionalPages": "附加頁面",
+  "pinNav": "固定導覽",
+  "unpinNav": "取消固定導覽",
+  "showNav": "顯示導覽",
+  "hideNav": "隱藏導覽"
 }

@@ -18,7 +18,11 @@
     "airQuality": "Naglo-load ng datos ng kalidad ng hangin…",
     "lightning": "Naglo-load ng datos ng kidlat…",
     "earthquake": "Naglo-load ng datos ng lindol…",
-    "forecast": "Naglo-load ng hula…"
+    "forecast": "Naglo-load ng hula…",
+    "solarUv": "Naglo-load ng datos ng solar at UV…",
+    "precipBarometer": "Naglo-load ng datos ng ulan at presyon…",
+    "precipitation": "Naglo-load ng datos ng ulan…",
+    "barometer": "Naglo-load ng datos ng barometer…"
   },
   "error": {
     "currentConditions": "Hindi ma-load ang kasalukuyang kondisyon",
@@ -27,7 +31,12 @@
     "almanac": "Hindi ma-load ang datos ng almanac",
     "airQuality": "Hindi ma-load ang datos ng kalidad ng hangin",
     "earthquake": "Hindi ma-load ang datos ng lindol",
-    "forecast": "Hindi ma-load ang hula"
+    "lightning": "Hindi ma-load ang datos ng kidlat",
+    "forecast": "Hindi ma-load ang hula",
+    "solarUv": "Hindi ma-load ang datos ng solar at UV",
+    "precipBarometer": "Hindi ma-load ang datos ng ulan at presyon",
+    "precipitation": "Hindi ma-load ang datos ng ulan",
+    "barometer": "Hindi ma-load ang datos ng barometer"
   },
   "noData": {
     "observation": "Walang available na datos ng obserbasyon.",
@@ -36,12 +45,14 @@
     "lightning": "Walang naka-configure na sensor ng kidlat.",
     "earthquake": "Walang kamakailang lindol sa loob ng naka-configure na radius.",
     "airQuality": "Walang naka-configure na provider ng kalidad ng hangin.",
-    "forecast": "Walang available na datos ng hula."
+    "forecast": "Walang available na datos ng hula.",
+    "timelapse": "Walang available na timelapse"
   },
   "highlights": {
     "todaysHigh": "Pinakamataas Ngayon",
     "todaysLow": "Pinakamababa Ngayon",
     "peakGust": "Pinakamalakas na Hangin",
+    "wind": "AVG NA HANGIN",
     "rainToday": "Ulan Ngayon",
     "peakAqi": "Pinakamataas na AQI",
     "recordsBroken": "Mga Rekord na Nabali"
@@ -59,7 +70,14 @@
   "sunMoon": {
     "sunrise": "Pagsikat ng Araw",
     "sunset": "Paglubog ng Araw",
+    "moonrise": "Pagsikat ng Buwan",
+    "moonset": "Paglubog ng Buwan",
     "moon": "Buwan"
+  },
+  "sunMoonCard": {
+    "svgTitleSun": "Araw: sumisikat {{rise}}, lumulubog {{set}}",
+    "svgTitleMoon": "Buwan: sumisikat {{rise}}, lumulubog {{set}}",
+    "svgTitlePhase": "Phase: {{phase}}, {{illumination}} naiilawan"
   },
   "feelsLike": "Pakiramdam",
   "windCompass": {
@@ -67,6 +85,13 @@
     "gusts": "Hangin: {{gust}}{{unit}}",
     "ariaLabel": "Hangin mula sa {{direction}} sa {{degrees}} degrees",
     "directionLabel": "Mula sa {{direction}} {{degrees}}°"
+  },
+  "windCard": {
+    "title": "Kasalukuyang Hangin",
+    "tenMinAvg": "10-min avg",
+    "maxGust": "Pinakamalakas na hangin",
+    "svgTitle": "Hangin {{speed}} mula sa {{cardinal}} sa {{degrees}} degrees. 10-minutong average {{avg}}, pinakamalakas na hangin {{gust}}.",
+    "svgTitleNoAvg": "Hangin {{speed}} mula sa {{cardinal}} sa {{degrees}} degrees."
   },
   "barometer": {
     "trend": {
@@ -107,13 +132,23 @@
     "strikesLastHour": "{{count}} kidlat sa nakaraang isang oras",
     "strikesLast24h": "{{count}} sa nakaraang 24 oras",
     "nearest": "Pinakamalapit: {{distance}} km",
+    "nearestLabel": "Pinakamalapit:",
     "lastStrike": "Huling kidlat: {{time}}",
     "lastStrikeUnknown": "Hindi Kilala",
-    "noActivity": "No activity detected"
+    "noActivity": "Walang natukoy na aktibidad",
+    "chartAriaLabel_one": "Kasaysayan ng kidlat: {{count}} kidlat sa nakaraang 24 oras",
+    "chartAriaLabel_other": "Kasaysayan ng kidlat: {{count}} na kidlat sa nakaraang 24 oras",
+    "tableCaption": "Kasaysayan ng kidlat — nakaraang 24 oras",
+    "timeColumn": "Oras",
+    "distanceColumn": "Distansya",
+    "perHour": "/oras",
+    "per24h": "/24h"
   },
   "earthquake": {
     "magnitude": "M{{magnitude}} — {{place}}",
-    "depth": "Lalim: {{depth}} km"
+    "depth": "Lalim: {{depth}} km",
+    "unknownLocation": "Hindi kilalang lokasyon",
+    "eventsAriaLabel": "Mga kamakailang pangyayari ng lindol"
   },
   "forecast": {
     "hiLo": "Mataas {{high}}° / Mababa {{low}}°",
@@ -123,6 +158,23 @@
   "temperature": {
     "ariaLabel": "Kasalukuyang temperatura: {{temp}} degrees {{unit}}"
   },
+  "heroLabel": "Kasalukuyang Kondisyon",
+  "feelsLikeHero": "Pakiramdam {{temp}}°",
+  "noCurrentData": "Walang available na kasalukuyang datos",
+  "todaysTemperature": "Temperatura Ngayon",
+  "tempCurveAriaLabel": "Tsart ng temperatura ngayon, mula hatinggabi hanggang hatinggabi. Ang nakaraan ay ipinapakita bilang filled area, ang forecast bilang dashed line.",
+  "tempCurveSrCaption": "Oras-oras na temperatura ngayon",
+  "tempCurveTable": {
+    "time": "Oras",
+    "type": "Uri",
+    "forecast": "Forecast",
+    "actual": "Aktwal"
+  },
+  "hiLabel": "Mataas",
+  "loLabel": "Mababa",
+  "hiAria": "Pinakamataas ngayon {{temp}}",
+  "loAria": "Pinakamababa ngayon {{temp}}",
+  "chartNowLabel": "Ngayon",
   "solarUv": {
     "title": "Solar at UV",
     "solarRadiation": "Radyasyon Solar",
@@ -141,9 +193,66 @@
       "uvIndex": "UV Index"
     }
   },
+  "precipBarometer": {
+    "title": "Ulan at Presyon",
+    "rainToday": "Ulan Ngayon",
+    "rainRate": "Bilis ng Ulan",
+    "barometer": "Barometro",
+    "trend": {
+      "rising": "Tumataas",
+      "falling": "Bumababa",
+      "steady": "Matatag"
+    },
+    "trendAriaLabel": "Takbo ng presyon: {{trend}}"
+  },
+  "webcam": "Webcam",
+  "webcamAlt": "Tanawin ng live na webcam",
+  "webcamTabLive": "Live",
+  "webcamTabTimelapse": "Timelapse",
+  "precipitationCard": {
+    "title": "Ulan at Halumigmig",
+    "rainTodayLabel": "Ulan ngayon",
+    "rainRateLabel": "Bilis ng ulan",
+    "humidityLabel": "Halumigmig",
+    "dewpointLabel": "Punto ng hamog"
+  },
+  "barometerCard": {
+    "title": "Barometro",
+    "gaugeLow": "Mababa",
+    "gaugeHigh": "Mataas"
+  },
+  "solarRadiationCard": {
+    "title": "Radyasyon Solar",
+    "noData": "Walang available na datos ng solar",
+    "chartAriaLabel": "Tsart ng radyasyon solar at clear-sky maximum para sa nakaraang 24 oras",
+    "srCaption": "Mga pagbasa ng radyasyon solar ngayon"
+  },
+  "uvIndexCard": {
+    "title": "UV Index",
+    "noData": "Walang available na datos ng UV",
+    "chartAriaLabel": "Tsart ng UV index ngayon",
+    "srCaption": "Mga pagbasa ng UV index ngayon",
+    "nowLabel": "Ngayon",
+    "peakLabel": "Peak"
+  },
   "aqiCard": {
     "title": "Kalidad ng Hangin"
   },
-  "webcam": "Webcam",
-  "webcamAlt": "Tanawin ng live na webcam"
+  "alertBanner": {
+    "andMore": "+{{count}} pa",
+    "of": "ng",
+    "previousAlert": "Nakaraang babala",
+    "nextAlert": "Susunod na babala",
+    "expand": "Ipakita ang detalye ng babala",
+    "collapse": "Itago ang detalye ng babala",
+    "ongoing": "kasalukuyang umiiral",
+    "until": "hanggang {{time}}",
+    "effective": "Epektibo",
+    "expires": "Mag-e-expire",
+    "urgency": "Pagkaagaran",
+    "certainty": "Katiyakan",
+    "issuedBy": "Inilabas ni",
+    "alertSystem": "Sistema ng babala",
+    "alertN": "Babala {{n}} ng {{total}}"
+  }
 }

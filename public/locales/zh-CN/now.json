@@ -18,7 +18,11 @@
     "airQuality": "正在加载空气质量数据…",
     "lightning": "正在加载闪电数据…",
     "earthquake": "正在加载地震数据…",
-    "forecast": "正在加载预报…"
+    "forecast": "正在加载预报…",
+    "solarUv": "正在加载太阳辐射与紫外线数据…",
+    "precipBarometer": "正在加载降水与气压数据…",
+    "precipitation": "正在加载降水数据…",
+    "barometer": "正在加载气压数据…"
   },
   "error": {
     "currentConditions": "无法加载当前状况",
@@ -27,7 +31,12 @@
     "almanac": "无法加载历书数据",
     "airQuality": "无法加载空气质量数据",
     "earthquake": "无法加载地震数据",
-    "forecast": "无法加载预报"
+    "lightning": "无法加载闪电数据",
+    "forecast": "无法加载预报",
+    "solarUv": "无法加载太阳辐射与紫外线数据",
+    "precipBarometer": "无法加载降水与气压数据",
+    "precipitation": "无法加载降水数据",
+    "barometer": "无法加载气压数据"
   },
   "noData": {
     "observation": "暂无观测数据。",
@@ -36,12 +45,14 @@
     "lightning": "未配置闪电传感器。",
     "earthquake": "配置范围内近期无地震。",
     "airQuality": "未配置空气质量提供商。",
-    "forecast": "暂无预报数据。"
+    "forecast": "暂无预报数据。",
+    "timelapse": "暂无延时摄影"
   },
   "highlights": {
     "todaysHigh": "今日最高气温",
     "todaysLow": "今日最低气温",
     "peakGust": "最大阵风",
+    "wind": "平均风速",
     "rainToday": "今日降水量",
     "peakAqi": "最高AQI",
     "recordsBroken": "打破记录"
@@ -59,7 +70,14 @@
   "sunMoon": {
     "sunrise": "日出",
     "sunset": "日落",
+    "moonrise": "月出",
+    "moonset": "月落",
     "moon": "月亮"
+  },
+  "sunMoonCard": {
+    "svgTitleSun": "太阳：{{rise}} 升起，{{set}} 落下",
+    "svgTitleMoon": "月亮：{{rise}} 升起，{{set}} 落下",
+    "svgTitlePhase": "月相：{{phase}}，照明度 {{illumination}}"
   },
   "feelsLike": "体感温度",
   "windCompass": {
@@ -67,6 +85,13 @@
     "gusts": "阵风：{{gust}}{{unit}}",
     "ariaLabel": "来自 {{direction}} 方向 {{degrees}} 度的风",
     "directionLabel": "来自{{direction}} {{degrees}}°"
+  },
+  "windCard": {
+    "title": "当前风力",
+    "tenMinAvg": "10分钟平均",
+    "maxGust": "最大阵风",
+    "svgTitle": "风来自{{cardinal}}方向，{{degrees}}度，风速 {{speed}}。10分钟平均 {{avg}}，最大阵风 {{gust}}。",
+    "svgTitleNoAvg": "风来自{{cardinal}}方向，{{degrees}}度，风速 {{speed}}。"
   },
   "barometer": {
     "trend": {
@@ -107,13 +132,23 @@
     "strikesLastHour": "过去一小时雷击 {{count}} 次",
     "strikesLast24h": "过去24小时 {{count}} 次",
     "nearest": "最近距离：{{distance}} km",
+    "nearestLabel": "最近：",
     "lastStrike": "最近雷击：{{time}}",
     "lastStrikeUnknown": "未知",
-    "noActivity": "No activity detected"
+    "noActivity": "未检测到闪电活动",
+    "chartAriaLabel_one": "雷击历史：过去24小时内 {{count}} 次雷击",
+    "chartAriaLabel_other": "雷击历史：过去24小时内 {{count}} 次雷击",
+    "tableCaption": "雷击历史 — 过去24小时",
+    "timeColumn": "时间",
+    "distanceColumn": "距离",
+    "perHour": "/小时",
+    "per24h": "/24小时"
   },
   "earthquake": {
     "magnitude": "M{{magnitude}} — {{place}}",
-    "depth": "深度：{{depth}} km"
+    "depth": "深度：{{depth}} km",
+    "unknownLocation": "位置未知",
+    "eventsAriaLabel": "近期地震事件"
   },
   "forecast": {
     "hiLo": "最高 {{high}}° / 最低 {{low}}°",
@@ -123,6 +158,23 @@
   "temperature": {
     "ariaLabel": "当前气温：{{temp}} 度 {{unit}}"
   },
+  "heroLabel": "当前状况",
+  "feelsLikeHero": "体感温度 {{temp}}°",
+  "noCurrentData": "暂无当前数据",
+  "todaysTemperature": "今日气温",
+  "tempCurveAriaLabel": "今日气温图表，从零时到零时。已过去的时段以填充区域显示，预报时段以虚线显示。",
+  "tempCurveSrCaption": "今日逐小时气温",
+  "tempCurveTable": {
+    "time": "时间",
+    "type": "类型",
+    "forecast": "预报",
+    "actual": "实测"
+  },
+  "hiLabel": "最高",
+  "loLabel": "最低",
+  "hiAria": "今日最高气温 {{temp}}",
+  "loAria": "今日最低气温 {{temp}}",
+  "chartNowLabel": "现在",
   "solarUv": {
     "title": "太阳辐射与紫外线",
     "solarRadiation": "太阳辐射",
@@ -141,9 +193,66 @@
       "uvIndex": "紫外线指数"
     }
   },
+  "precipBarometer": {
+    "title": "降水与气压",
+    "rainToday": "今日降水量",
+    "rainRate": "降水强度",
+    "barometer": "气压计",
+    "trend": {
+      "rising": "上升",
+      "falling": "下降",
+      "steady": "平稳"
+    },
+    "trendAriaLabel": "气压趋势：{{trend}}"
+  },
+  "webcam": "网络摄像头",
+  "webcamAlt": "实时网络摄像头画面",
+  "webcamTabLive": "实时",
+  "webcamTabTimelapse": "延时摄影",
+  "precipitationCard": {
+    "title": "降水与湿度",
+    "rainTodayLabel": "今日降水量",
+    "rainRateLabel": "降水强度",
+    "humidityLabel": "湿度",
+    "dewpointLabel": "露点"
+  },
+  "barometerCard": {
+    "title": "气压计",
+    "gaugeLow": "最低",
+    "gaugeHigh": "最高"
+  },
+  "solarRadiationCard": {
+    "title": "太阳辐射",
+    "noData": "暂无太阳辐射数据",
+    "chartAriaLabel": "过去24小时太阳辐射与晴空最大值图表",
+    "srCaption": "今日太阳辐射读数"
+  },
+  "uvIndexCard": {
+    "title": "紫外线指数",
+    "noData": "暂无紫外线数据",
+    "chartAriaLabel": "今日紫外线指数图表",
+    "srCaption": "今日紫外线指数读数",
+    "nowLabel": "现在",
+    "peakLabel": "峰值"
+  },
   "aqiCard": {
     "title": "空气质量"
   },
-  "webcam": "网络摄像头",
-  "webcamAlt": "实时网络摄像头画面"
+  "alertBanner": {
+    "andMore": "另有 {{count}} 条",
+    "of": "共",
+    "previousAlert": "上一条预警",
+    "nextAlert": "下一条预警",
+    "expand": "显示预警详情",
+    "collapse": "隐藏预警详情",
+    "ongoing": "持续中",
+    "until": "至 {{time}}",
+    "effective": "生效时间",
+    "expires": "失效时间",
+    "urgency": "紧急程度",
+    "certainty": "确定性",
+    "issuedBy": "发布机构",
+    "alertSystem": "预警系统",
+    "alertN": "第 {{n}} 条预警，共 {{total}} 条"
+  }
 }

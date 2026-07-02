@@ -34,10 +34,31 @@
     "defaultAlt": "气象站"
   },
   "dataProviders": {
+    "cardTitle": "数据提供方",
+    "empty": "未配置数据提供方。",
     "domain": {
       "baseMaps": "基础地图",
       "seismicData": "地震数据",
-      "astronomical": "天文参考"
+      "astronomical": "天文参考",
+      "alerts": "预警",
+      "almanac": "天文",
+      "aqi": "空气质量",
+      "earthquakes": "地震",
+      "forecast": "预报",
+      "radar": "雷达",
+      "seeing": "天文视宁度"
+    }
+  },
+  "photoCredits": {
+    "cardTitle": "图片来源",
+    "builtIn": "内置",
+    "scene": {
+      "clear-day": "晴天，白天",
+      "clear-night": "晴天，夜间",
+      "cloudy-day": "多云，白天",
+      "cloudy-night": "多云，夜间",
+      "storm-day": "风暴，白天",
+      "storm-night": "风暴，夜间"
     }
   }
 }

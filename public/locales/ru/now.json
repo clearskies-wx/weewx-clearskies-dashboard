@@ -18,7 +18,11 @@
     "airQuality": "Загрузка данных о качестве воздуха…",
     "lightning": "Загрузка данных о грозовой активности…",
     "earthquake": "Загрузка данных о землетрясениях…",
-    "forecast": "Загрузка прогноза…"
+    "forecast": "Загрузка прогноза…",
+    "solarUv": "Загрузка данных о солнечном излучении и УФ…",
+    "precipBarometer": "Загрузка данных об осадках и давлении…",
+    "precipitation": "Загрузка данных об осадках…",
+    "barometer": "Загрузка данных давления…"
   },
   "error": {
     "currentConditions": "Не удалось загрузить текущие условия",
@@ -27,7 +31,12 @@
     "almanac": "Не удалось загрузить данные альманаха",
     "airQuality": "Не удалось загрузить данные о качестве воздуха",
     "earthquake": "Не удалось загрузить данные о землетрясениях",
-    "forecast": "Не удалось загрузить прогноз"
+    "lightning": "Не удалось загрузить данные о грозовой активности",
+    "forecast": "Не удалось загрузить прогноз",
+    "solarUv": "Не удалось загрузить данные о солнечном излучении и УФ",
+    "precipBarometer": "Не удалось загрузить данные об осадках и давлении",
+    "precipitation": "Не удалось загрузить данные об осадках",
+    "barometer": "Не удалось загрузить данные давления"
   },
   "noData": {
     "observation": "Данные наблюдений отсутствуют.",
@@ -36,12 +45,14 @@
     "lightning": "Датчик молний не настроен.",
     "earthquake": "Землетрясений в заданном радиусе не зафиксировано.",
     "airQuality": "Источник данных о качестве воздуха не настроен.",
-    "forecast": "Данные прогноза отсутствуют."
+    "forecast": "Данные прогноза отсутствуют.",
+    "timelapse": "Таймлапс недоступен"
   },
   "highlights": {
     "todaysHigh": "Максимум за день",
     "todaysLow": "Минимум за день",
     "peakGust": "Порыв ветра",
+    "wind": "СРЕДНИЙ ВЕТЕР",
     "rainToday": "Осадки за день",
     "peakAqi": "Макс. ИКВ",
     "recordsBroken": "Побито рекордов"
@@ -59,7 +70,14 @@
   "sunMoon": {
     "sunrise": "Восход",
     "sunset": "Закат",
+    "moonrise": "Восход луны",
+    "moonset": "Заход луны",
     "moon": "Луна"
+  },
+  "sunMoonCard": {
+    "svgTitleSun": "Солнце: восход {{rise}}, закат {{set}}",
+    "svgTitleMoon": "Луна: восход {{rise}}, заход {{set}}",
+    "svgTitlePhase": "Фаза: {{phase}}, освещённость {{illumination}}"
   },
   "feelsLike": "Ощущается как",
   "windCompass": {
@@ -67,6 +85,13 @@
     "gusts": "Порывы: {{gust}}{{unit}}",
     "ariaLabel": "Ветер с {{direction}} со скоростью {{degrees}} градусов",
     "directionLabel": "С {{direction}} {{degrees}}°"
+  },
+  "windCard": {
+    "title": "Текущий ветер",
+    "tenMinAvg": "Ср. за 10 мин",
+    "maxGust": "Макс. порыв",
+    "svgTitle": "Ветер {{speed}} с {{cardinal}}, {{degrees}} градусов. Средний за 10 минут {{avg}}, максимальный порыв {{gust}}.",
+    "svgTitleNoAvg": "Ветер {{speed}} с {{cardinal}}, {{degrees}} градусов."
   },
   "barometer": {
     "trend": {
@@ -107,13 +132,23 @@
     "strikesLastHour": "{{count}} разрядов за последний час",
     "strikesLast24h": "{{count}} за последние 24 ч",
     "nearest": "Ближайший: {{distance}} км",
+    "nearestLabel": "Ближайший:",
     "lastStrike": "Последний разряд: {{time}}",
     "lastStrikeUnknown": "Неизвестно",
-    "noActivity": "No activity detected"
+    "noActivity": "Активность не обнаружена",
+    "chartAriaLabel_one": "История разрядов молний: {{count}} разряд за последние 24 часа",
+    "chartAriaLabel_other": "История разрядов молний: {{count}} разрядов за последние 24 часа",
+    "tableCaption": "История разрядов молний — последние 24 часа",
+    "timeColumn": "Время",
+    "distanceColumn": "Расстояние",
+    "perHour": "/ч",
+    "per24h": "/24ч"
   },
   "earthquake": {
     "magnitude": "M{{magnitude}} — {{place}}",
-    "depth": "Глубина: {{depth}} км"
+    "depth": "Глубина: {{depth}} км",
+    "unknownLocation": "Местоположение неизвестно",
+    "eventsAriaLabel": "Последние сейсмические события"
   },
   "forecast": {
     "hiLo": "Макс. {{high}}° / Мин. {{low}}°",
@@ -123,6 +158,23 @@
   "temperature": {
     "ariaLabel": "Текущая температура: {{temp}} градусов {{unit}}"
   },
+  "heroLabel": "Текущие условия",
+  "feelsLikeHero": "Ощущается как {{temp}}°",
+  "noCurrentData": "Текущие данные недоступны",
+  "todaysTemperature": "Температура сегодня",
+  "tempCurveAriaLabel": "График температуры за сегодня, от полуночи до полуночи. Прошедшее время показано заливкой, прогноз — пунктиром.",
+  "tempCurveSrCaption": "Почасовая температура за сегодня",
+  "tempCurveTable": {
+    "time": "Время",
+    "type": "Тип",
+    "forecast": "Прогноз",
+    "actual": "Факт"
+  },
+  "hiLabel": "Максимум",
+  "loLabel": "Минимум",
+  "hiAria": "Сегодняшний максимум {{temp}}",
+  "loAria": "Сегодняшний минимум {{temp}}",
+  "chartNowLabel": "Сейчас",
   "solarUv": {
     "title": "Солнечное излучение и УФ",
     "solarRadiation": "Солнечная радиация",
@@ -141,9 +193,66 @@
       "uvIndex": "Индекс УФ"
     }
   },
+  "precipBarometer": {
+    "title": "Осадки и давление",
+    "rainToday": "Осадки за день",
+    "rainRate": "Интенсивность осадков",
+    "barometer": "Давление",
+    "trend": {
+      "rising": "Повышается",
+      "falling": "Понижается",
+      "steady": "Устойчиво"
+    },
+    "trendAriaLabel": "Тенденция давления: {{trend}}"
+  },
+  "webcam": "Веб-камера",
+  "webcamAlt": "Вид с веб-камеры в прямом эфире",
+  "webcamTabLive": "Прямой эфир",
+  "webcamTabTimelapse": "Таймлапс",
+  "precipitationCard": {
+    "title": "Осадки и влажность",
+    "rainTodayLabel": "Осадки за день",
+    "rainRateLabel": "Интенсивность осадков",
+    "humidityLabel": "Влажность",
+    "dewpointLabel": "Точка росы"
+  },
+  "barometerCard": {
+    "title": "Давление",
+    "gaugeLow": "Минимум",
+    "gaugeHigh": "Максимум"
+  },
+  "solarRadiationCard": {
+    "title": "Солнечная радиация",
+    "noData": "Данные солнечной радиации недоступны",
+    "chartAriaLabel": "График солнечной радиации и максимума ясного неба за последние 24 часа",
+    "srCaption": "Показания солнечной радиации за сегодня"
+  },
+  "uvIndexCard": {
+    "title": "Индекс УФ",
+    "noData": "Данные УФ-индекса недоступны",
+    "chartAriaLabel": "График УФ-индекса за сегодня",
+    "srCaption": "Показания УФ-индекса за сегодня",
+    "nowLabel": "Сейчас",
+    "peakLabel": "Пик"
+  },
   "aqiCard": {
     "title": "Качество воздуха"
   },
-  "webcam": "Веб-камера",
-  "webcamAlt": "Вид с веб-камеры в прямом эфире"
+  "alertBanner": {
+    "andMore": "+{{count}} ещё",
+    "of": "из",
+    "previousAlert": "Предыдущее предупреждение",
+    "nextAlert": "Следующее предупреждение",
+    "expand": "Показать подробности предупреждения",
+    "collapse": "Скрыть подробности предупреждения",
+    "ongoing": "действует",
+    "until": "до {{time}}",
+    "effective": "Действует с",
+    "expires": "Истекает",
+    "urgency": "Срочность",
+    "certainty": "Достоверность",
+    "issuedBy": "Выпущено",
+    "alertSystem": "Система оповещений",
+    "alertN": "Предупреждение {{n}} из {{total}}"
+  }
 }

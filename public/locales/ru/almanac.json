@@ -3,12 +3,52 @@
   "loading": "Загрузка данных альманаха…",
   "error": "Не удалось загрузить данные альманаха",
   "noData": "Данные альманаха отсутствуют.",
+  "cardTitle": "Солнце и Луна",
+  "loadingStatus": "Загрузка данных о Солнце и Луне",
+  "azimuth": "Азимут",
+  "altitude": "Высота",
+  "hoursAbbrev": "ч",
+  "minutesAbbrev": "мин",
+  "illuminatedPercent": "освещённость {{illumination}}",
+  "phaseIllumination": "{{phase}}, освещённость {{illumination}}",
+  "moonPhases": {
+    "new": "Новолуние",
+    "waxing-crescent": "Растущий серп",
+    "first-quarter": "Первая четверть",
+    "waxing-gibbous": "Растущая Луна",
+    "full": "Полнолуние",
+    "waning-gibbous": "Убывающая Луна",
+    "last-quarter": "Последняя четверть",
+    "waning-crescent": "Убывающий серп"
+  },
+  "moonPhasesAbbrev": {
+    "new": "Новолуние",
+    "waxing-crescent": "Раст. серп",
+    "first-quarter": "Первая четв.",
+    "waxing-gibbous": "Раст. Луна",
+    "full": "Полнолуние",
+    "waning-gibbous": "Убыв. Луна",
+    "last-quarter": "Посл. четв.",
+    "waning-crescent": "Убыв. серп"
+  },
+  "svgTitle": {
+    "sun": "Солнце: восход {{rise}}, закат {{set}}",
+    "sunAltitude": "текущая высота {{altitude}}",
+    "moon": "Луна: восход {{rise}}, заход {{set}}",
+    "moonAltitude": "текущая высота {{altitude}}",
+    "phase": "Фаза: {{phase}}, освещённость {{illumination}}"
+  },
+  "arcLabels": {
+    "rise": "Восход {{time}}",
+    "set": "Заход {{time}}"
+  },
   "sun": {
     "title": "Солнце",
     "sunrise": "Восход",
     "sunset": "Закат",
     "civilDawn": "Гражданские сумерки (утро)",
     "civilDusk": "Гражданские сумерки (вечер)",
+    "daylight": "Световой день",
     "totalDaylight": "Продолжительность светового дня",
     "solarNoon": "Солнечный полдень",
     "nextSolstice": "Следующее солнцестояние",
@@ -20,6 +60,8 @@
     "illumination": "Освещённость",
     "moonrise": "Восход Луны",
     "moonset": "Заход Луны",
+    "fullMoon": "Полнолуние",
+    "newMoon": "Новолуние",
     "nextFullMoon": "Следующее полнолуние",
     "nextNewMoon": "Следующее новолуние"
   },

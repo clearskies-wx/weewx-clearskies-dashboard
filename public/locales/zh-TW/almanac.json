@@ -4,6 +4,58 @@
   "loading": "正在載入天文曆資料…",
   "error": "無法載入天文曆資料",
   "noData": "暫無天文曆資料。",
+  "today": "今天",
+  "cardTitle": "日月",
+  "loadingStatus": "正在載入日月資料",
+  "azimuth": "方位角",
+  "altitude": "仰角",
+  "hoursAbbrev": "時",
+  "minutesAbbrev": "分",
+  "illuminatedPercent": "照明度 {{illumination}}",
+  "phaseIllumination": "{{phase}}，照明度 {{illumination}}",
+
+  "moonNames": {
+    "harvestMoon": "豐收月",
+    "huntersMoon": "獵人月",
+    "blueMoon": "藍月",
+    "supermoon": "超級月亮",
+    "traditionalNameSuffix": "{{name}}月"
+  },
+
+  "moonPhases": {
+    "new": "新月",
+    "waxing-crescent": "眉月",
+    "first-quarter": "上弦月",
+    "waxing-gibbous": "盈凸月",
+    "full": "滿月",
+    "waning-gibbous": "虧凸月",
+    "last-quarter": "下弦月",
+    "waning-crescent": "殘月"
+  },
+
+  "moonPhasesAbbrev": {
+    "new": "新月",
+    "waxing-crescent": "眉月",
+    "first-quarter": "上弦月",
+    "waxing-gibbous": "盈凸月",
+    "full": "滿月",
+    "waning-gibbous": "虧凸月",
+    "last-quarter": "下弦月",
+    "waning-crescent": "殘月"
+  },
+
+  "svgTitle": {
+    "sun": "太陽：{{rise}} 升起，{{set}} 落下",
+    "sunAltitude": "目前仰角 {{altitude}}",
+    "moon": "月亮：{{rise}} 升起，{{set}} 落下",
+    "moonAltitude": "目前仰角 {{altitude}}",
+    "phase": "月相：{{phase}}，照明度 {{illumination}}"
+  },
+
+  "arcLabels": {
+    "rise": "升起 {{time}}",
+    "set": "落下 {{time}}"
+  },
 
   "sun": {
     "title": "太陽",
@@ -11,6 +63,7 @@
     "sunset": "日落",
     "civilDawn": "民用黎明",
     "civilDusk": "民用黃昏",
+    "daylight": "日照",
     "totalDaylight": "日照時長",
     "solarNoon": "正午",
     "nextSolstice": "下一個至日",
@@ -23,6 +76,8 @@
     "illumination": "照明度",
     "moonrise": "月出",
     "moonset": "月落",
+    "fullMoon": "滿月",
+    "newMoon": "新月",
     "nextFullMoon": "下一個滿月",
     "nextNewMoon": "下一個新月"
   },
@@ -36,5 +91,125 @@
     "moonAltitude": "月亮仰角"
   },
 
-  "daylightDelta": "（與昨日相差 {{delta}} 分鐘）"
+  "daylightDelta": "（與昨日相差 {{delta}} 分鐘）",
+
+  "planets": {
+    "title": "今晚行星展望",
+    "subtitle": "晴朗的天空最適合觀測。以下是各行星達到最佳觀測狀態的時間。",
+    "overallConditions": "觀測條件",
+    "empty": "今晚沒有可見行星。",
+    "listLabel": "行星列表",
+    "timelineLabel": "行星可見時間軸",
+    "conjunctionsLabel": "行星合",
+    "viewingQuality": "觀測品質",
+    "bestTime": "最佳觀測時間",
+    "sunrise": "日出",
+    "sunset": "日落",
+    "qualityExcellent": "極佳視野",
+    "qualityGood": "良好視野",
+    "qualityFair": "普通視野",
+    "qualityPoor": "較差視野",
+    "qualityNotVisible": "不可見",
+    "conditionsExcellent": "極佳觀測條件",
+    "conditionsGood": "良好觀測條件",
+    "conditionsFair": "普通觀測條件",
+    "conditionsPoor": "較差觀測條件",
+    "footNote": "所示時間為當地時間。各行星每週的升落時間有所不同。"
+  },
+
+  "meteorShowers": {
+    "title": "流星雨",
+    "timesLocal": "均為當地時間",
+    "subtitle": "未來一年內在您所在位置可見的流星雨。",
+    "empty": "未來一年內沒有流星雨。",
+    "scrollRegionLabel": "流星雨列表",
+    "scrollLeft": "向左捲動流星雨列表",
+    "scrollRight": "向右捲動流星雨列表",
+    "footNote": "所示流量為理想條件下的天頂每小時流量（ZHR）預測值。",
+    "peakNight": "極大夜",
+    "rate": "流量",
+    "rateValue": "最高可達每小時 {{zhr}} 顆",
+    "visibility": "可見度",
+    "peak": "極大期",
+    "peakPeriod": "極大期區間",
+    "qualityExcellent": "極佳",
+    "qualityGood": "良好",
+    "qualityFair": "普通",
+    "qualityPoor": "較差",
+    "qualityNotVisible": "不可見"
+  },
+
+  "climatology": {
+    "title": "月平均氣候值",
+    "loading": "正在載入氣候資料…",
+    "error": "無法載入氣候資料。",
+    "noData": "暫無氣候資料。",
+    "series": {
+      "avgHigh": "平均最高氣溫",
+      "avgLow": "平均最低氣溫",
+      "avgDewpoint": "平均露點",
+      "avgRainfall": "月平均降雨總量"
+    },
+    "yAxisTemp": "平均氣溫 (°F)",
+    "yAxisRain": "月平均降雨量 (in)",
+    "tableAriaLabel": "按月平均氣候值",
+    "chartAriaLabel": "月平均最高、最低氣溫、露點及降雨量圖表",
+    "table": {
+      "month": "月份",
+      "avgHigh": "平均最高氣溫",
+      "avgLow": "平均最低氣溫",
+      "avgDewpoint": "平均露點",
+      "avgRainfall": "平均降雨量"
+    }
+  },
+
+  "solarEclipses": {
+    "title": "日食",
+    "timesLocal": "均為當地時間",
+    "subtitle": "您所在位置即將發生的下一次日食。",
+    "noEclipses": "未來幾年內您所在位置看不到日食。",
+    "listLabel": "即將發生的日食",
+    "footNote": "可見度可能因雲量和您的確切位置而異。",
+    "begins": "開始",
+    "maximum": "食甚",
+    "totality": "全食",
+    "ends": "結束",
+    "visible": "可見",
+    "notVisible": "不可見",
+    "fullyVisible": "位於全食帶內",
+    "mostlyVisible": "在您所在位置觀測條件良好",
+    "partiallyVisible": "在您所在位置部分可見",
+    "barelyVisible": "接近地平線",
+    "descTotal": "日全食。太陽將被月球完全遮蔽。",
+    "descAnnular": "月球將從太陽前方經過，留下一圈明亮的日光，即日環食。",
+    "descPartial": "月球將從太陽前方經過，遮蔽部分太陽圓面。"
+  },
+
+  "lunarEclipses": {
+    "title": "月食",
+    "timesLocal": "均為當地時間",
+    "subtitle": "您所在位置即將發生的下一次月食。",
+    "noEclipses": "未來幾年內您所在位置看不到月食。",
+    "listLabel": "即將發生的月食",
+    "footNote": "月食可見度可能因天氣和您的確切位置而異。",
+    "visibleAllNight": "整夜可見",
+    "mostlyVisible": "大部分可見",
+    "lowInSky": "接近地平線",
+    "barelyVisible": "幾乎不可見",
+    "notVisible": "不可見",
+    "descTotal": "月全食。整個月球將經過地球本影。",
+    "descPartial": "月偏食。部分月球將經過地球本影。",
+    "descPenumbral": "半影月食。月球經過地球半影時會出現輕微變暗。",
+    "typeTotal": "全食",
+    "typePartial": "偏食",
+    "typePenumbral": "半影食",
+    "modalTitleTotal": "月全食",
+    "modalTitlePartial": "月偏食",
+    "modalTitlePenumbral": "半影月食",
+    "closeModal": "關閉食相類型說明",
+    "imageAlt": "{{type}}月食",
+    "typeBadgeAriaLabel": "{{type}} — 了解更多此食相類型資訊",
+    "timeRangeAriaLabel": "食相時間範圍：{{range}}",
+    "visibilityAriaLabel": "可見度：{{label}}"
+  }
 }

@@ -18,5 +18,12 @@
   "magnitude": "震级",
   "depthLabel": "深度",
   "listCardTitle": "地震列表",
-  "rowAriaLabel": "震级 {{mag}}，{{place}}"
+  "rowAriaLabel": "震级 {{mag}}，{{place}}",
+  "showFaults": "显示断层线",
+  "showFaultsAriaLabel": "在地图上切换断层线图层",
+  "unknownFault": "未知断层",
+  "unknownSlipType": "未知",
+  "slipType": "滑动类型",
+  "configSummary": "数据源：{{provider}} | 半径：{{radiusKm}} km | 最小震级：{{minMagnitude}} | 最近 {{days}} 天",
+  "configAriaLabel": "地震配置摘要"
 }

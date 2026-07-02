@@ -18,5 +18,12 @@
   "magnitude": "規模",
   "depthLabel": "深度",
   "listCardTitle": "地震列表",
-  "rowAriaLabel": "規模 {{mag}}，{{place}}"
+  "rowAriaLabel": "規模 {{mag}}，{{place}}",
+  "showFaults": "顯示斷層線",
+  "showFaultsAriaLabel": "在地圖上切換斷層線圖層",
+  "unknownFault": "未知斷層",
+  "unknownSlipType": "未知",
+  "slipType": "滑動類型",
+  "configSummary": "資料來源：{{provider}} | 半徑：{{radiusKm}} km | 最小規模：{{minMagnitude}} | 最近 {{days}} 天",
+  "configAriaLabel": "地震設定摘要"
 }

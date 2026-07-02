@@ -8,6 +8,8 @@
   "noFrames": "Радарные данные недоступны.",
   "loading": "Загрузка радарных данных…",
   "frameOf": "Кадр {{current}} из {{total}}",
+  "legendLight": "Слабый",
+  "legendHeavy": "Сильный",
   "nowcastLabel": "Прогноз",
   "expandRadar": "Развернуть радар",
   "closeRadar": "Закрыть радар",
@@ -20,5 +22,6 @@
   "layers": "Слои",
   "weatherAlerts": "Погодные предупреждения",
   "windArrows": "Стрелки ветра",
-  "stationMarker": "Ваша станция"
+  "stationMarker": "Ваша станция",
+  "satelliteImagery": "Спутниковые снимки"
 }

@@ -8,6 +8,8 @@
   "noFrames": "Walang available na datos ng radar.",
   "loading": "Naglo-load ng datos ng radar…",
   "frameOf": "Frame {{current}} ng {{total}}",
+  "legendLight": "Mahina",
+  "legendHeavy": "Malakas",
   "nowcastLabel": "Forecast",
   "expandRadar": "Palawakin ang radar",
   "closeRadar": "Isara ang radar",
@@ -20,5 +22,6 @@
   "layers": "Mga Layer",
   "weatherAlerts": "Mga babala sa panahon",
   "windArrows": "Mga palaso ng hangin",
-  "stationMarker": "Iyong istasyon"
+  "stationMarker": "Iyong istasyon",
+  "satelliteImagery": "Larawan ng satellite"
 }
