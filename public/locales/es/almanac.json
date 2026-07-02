@@ -12,7 +12,8 @@
     "totalDaylight": "Luz del día total",
     "solarNoon": "Mediodía solar",
     "nextSolstice": "Próximo solsticio",
-    "nextEquinox": "Próximo equinoccio"
+    "nextEquinox": "Próximo equinoccio",
+    "daylight": "Luz del día"
   },
   "moon": {
     "title": "Luna",
@@ -21,7 +22,9 @@
     "moonrise": "Salida de la luna",
     "moonset": "Puesta de la luna",
     "nextFullMoon": "Próxima luna llena",
-    "nextNewMoon": "Próxima luna nueva"
+    "nextNewMoon": "Próxima luna nueva",
+    "fullMoon": "Luna llena",
+    "newMoon": "Luna nueva"
   },
   "positional": {
     "title": "Datos posicionales",
@@ -154,5 +157,44 @@
     "title": "Eclipses solares",
     "totality": "Totalidad",
     "visible": "Visible"
+  },
+  "cardTitle": "Sol y Luna",
+  "loadingStatus": "Cargando datos del Sol y la Luna",
+  "azimuth": "Acimut",
+  "altitude": "Altitud",
+  "hoursAbbrev": "h",
+  "minutesAbbrev": "min",
+  "illuminatedPercent": "{{illumination}} iluminada",
+  "phaseIllumination": "{{phase}}, {{illumination}} iluminada",
+  "moonPhases": {
+    "new": "Luna nueva",
+    "waxing-crescent": "Creciente",
+    "first-quarter": "Cuarto creciente",
+    "waxing-gibbous": "Gibosa creciente",
+    "full": "Luna llena",
+    "waning-gibbous": "Gibosa menguante",
+    "last-quarter": "Cuarto menguante",
+    "waning-crescent": "Menguante"
+  },
+  "moonPhasesAbbrev": {
+    "new": "Luna nueva",
+    "waxing-crescent": "Creciente",
+    "first-quarter": "C. creciente",
+    "waxing-gibbous": "Gib. creciente",
+    "full": "Luna llena",
+    "waning-gibbous": "Gib. menguante",
+    "last-quarter": "C. menguante",
+    "waning-crescent": "Menguante"
+  },
+  "svgTitle": {
+    "sun": "Sol: sale {{rise}}, se pone {{set}}",
+    "sunAltitude": "altitud actual {{altitude}}",
+    "moon": "Luna: sale {{rise}}, se pone {{set}}",
+    "moonAltitude": "altitud actual {{altitude}}",
+    "phase": "Fase: {{phase}}, {{illumination}} iluminada"
+  },
+  "arcLabels": {
+    "rise": "Salida {{time}}",
+    "set": "Puesta {{time}}"
   }
 }

@@ -82,5 +82,21 @@
   "setup": {
     "apiNotResponding": "De API van het weerstation reageert nog niet. Deze wordt mogelijk nog geïnitialiseerd.",
     "startingUp": "Clear Skies wordt gestart..."
+  },
+  "cards": {
+    "currentConditions": "Huidige omstandigheden",
+    "todaysForecast": "Verwachting van vandaag",
+    "wind": "Wind",
+    "todaysHighlights": "Hoogtepunten van vandaag",
+    "precipitation": "Neerslag",
+    "barometer": "Barometer",
+    "solarRadiation": "Zonnestraling",
+    "uvIndex": "UV-index",
+    "airQualityIndex": "Luchtkwaliteitsindex",
+    "sunAndMoon": "Zon & Maan",
+    "lightning": "Bliksem",
+    "earthquakes": "Aardbevingen",
+    "radar": "Radar",
+    "webcam": "Webcam"
   }
 }

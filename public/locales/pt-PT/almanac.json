@@ -12,7 +12,8 @@
     "totalDaylight": "Total de Luz do Dia",
     "solarNoon": "Meio-Dia Solar",
     "nextSolstice": "Próximo Solstício",
-    "nextEquinox": "Próximo Equinócio"
+    "nextEquinox": "Próximo Equinócio",
+    "daylight": "Luz do Dia"
   },
   "moon": {
     "title": "Lua",
@@ -21,7 +22,9 @@
     "moonrise": "Nascer da Lua",
     "moonset": "Pôr da Lua",
     "nextFullMoon": "Próxima Lua Cheia",
-    "nextNewMoon": "Próxima Lua Nova"
+    "nextNewMoon": "Próxima Lua Nova",
+    "fullMoon": "Lua Cheia",
+    "newMoon": "Lua Nova"
   },
   "positional": {
     "title": "Dados Posicionais",
@@ -154,5 +157,44 @@
     "totality": "Totalidade",
     "visible": "Visível"
   },
-  "today": "Hoje"
+  "today": "Hoje",
+  "cardTitle": "Sol e Lua",
+  "loadingStatus": "A carregar dados do Sol e da Lua",
+  "azimuth": "Azimute",
+  "altitude": "Altitude",
+  "hoursAbbrev": "h",
+  "minutesAbbrev": "min",
+  "illuminatedPercent": "{{illumination}} iluminada",
+  "phaseIllumination": "{{phase}}, {{illumination}} iluminada",
+  "moonPhases": {
+    "new": "Lua Nova",
+    "waxing-crescent": "Crescente",
+    "first-quarter": "Quarto Crescente",
+    "waxing-gibbous": "Gibosa Crescente",
+    "full": "Lua Cheia",
+    "waning-gibbous": "Gibosa Minguante",
+    "last-quarter": "Quarto Minguante",
+    "waning-crescent": "Minguante"
+  },
+  "moonPhasesAbbrev": {
+    "new": "Lua Nova",
+    "waxing-crescent": "Crescente",
+    "first-quarter": "Q. Crescente",
+    "waxing-gibbous": "Gib. Crescente",
+    "full": "Lua Cheia",
+    "waning-gibbous": "Gib. Minguante",
+    "last-quarter": "Q. Minguante",
+    "waning-crescent": "Minguante"
+  },
+  "svgTitle": {
+    "sun": "Sol: nasce às {{rise}}, põe-se às {{set}}",
+    "sunAltitude": "altitude actual {{altitude}}",
+    "moon": "Lua: nasce às {{rise}}, põe-se às {{set}}",
+    "moonAltitude": "altitude actual {{altitude}}",
+    "phase": "Fase: {{phase}}, {{illumination}} iluminada"
+  },
+  "arcLabels": {
+    "rise": "Nascer {{time}}",
+    "set": "Pôr {{time}}"
+  }
 }

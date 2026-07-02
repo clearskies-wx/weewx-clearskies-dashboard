@@ -12,7 +12,8 @@
     "totalDaylight": "Durée totale du jour",
     "solarNoon": "Midi solaire",
     "nextSolstice": "Prochain solstice",
-    "nextEquinox": "Prochain équinoxe"
+    "nextEquinox": "Prochain équinoxe",
+    "daylight": "Durée du jour"
   },
   "moon": {
     "title": "Lune",
@@ -21,7 +22,9 @@
     "moonrise": "Lever de lune",
     "moonset": "Coucher de lune",
     "nextFullMoon": "Prochaine pleine lune",
-    "nextNewMoon": "Prochaine nouvelle lune"
+    "nextNewMoon": "Prochaine nouvelle lune",
+    "fullMoon": "Pleine lune",
+    "newMoon": "Nouvelle lune"
   },
   "positional": {
     "title": "Données positionnelles",
@@ -154,5 +157,44 @@
     "totality": "Totalité",
     "visible": "Visible"
   },
-  "today": "Aujourd'hui"
+  "today": "Aujourd'hui",
+  "cardTitle": "Soleil et Lune",
+  "loadingStatus": "Chargement des données du Soleil et de la Lune",
+  "azimuth": "Azimut",
+  "altitude": "Altitude",
+  "hoursAbbrev": "h",
+  "minutesAbbrev": "min",
+  "illuminatedPercent": "{{illumination}} illuminée",
+  "phaseIllumination": "{{phase}}, {{illumination}} illuminée",
+  "moonPhases": {
+    "new": "Nouvelle lune",
+    "waxing-crescent": "Premier croissant",
+    "first-quarter": "Premier quartier",
+    "waxing-gibbous": "Lune gibbeuse croissante",
+    "full": "Pleine lune",
+    "waning-gibbous": "Lune gibbeuse décroissante",
+    "last-quarter": "Dernier quartier",
+    "waning-crescent": "Dernier croissant"
+  },
+  "moonPhasesAbbrev": {
+    "new": "Nouvelle lune",
+    "waxing-crescent": "Prem. croissant",
+    "first-quarter": "1er quartier",
+    "waxing-gibbous": "Gibb. croissante",
+    "full": "Pleine lune",
+    "waning-gibbous": "Gibb. décroissante",
+    "last-quarter": "Dern. quartier",
+    "waning-crescent": "Dern. croissant"
+  },
+  "svgTitle": {
+    "sun": "Soleil : lever {{rise}}, coucher {{set}}",
+    "sunAltitude": "altitude actuelle {{altitude}}",
+    "moon": "Lune : lever {{rise}}, coucher {{set}}",
+    "moonAltitude": "altitude actuelle {{altitude}}",
+    "phase": "Phase : {{phase}}, {{illumination}} illuminée"
+  },
+  "arcLabels": {
+    "rise": "Lever {{time}}",
+    "set": "Coucher {{time}}"
+  }
 }

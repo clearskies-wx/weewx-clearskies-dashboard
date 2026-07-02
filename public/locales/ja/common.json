@@ -82,5 +82,21 @@
   "setup": {
     "apiNotResponding": "気象観測所のAPIがまだ応答していません。初期化中の可能性があります。",
     "startingUp": "Clear Skiesを起動しています…"
+  },
+  "cards": {
+    "currentConditions": "現在の状況",
+    "todaysForecast": "本日の予報",
+    "wind": "風",
+    "todaysHighlights": "本日のハイライト",
+    "precipitation": "降水量",
+    "barometer": "気圧計",
+    "solarRadiation": "日射量",
+    "uvIndex": "UV指数",
+    "airQualityIndex": "大気質指数",
+    "sunAndMoon": "太陽と月",
+    "lightning": "雷",
+    "earthquakes": "地震",
+    "radar": "レーダー",
+    "webcam": "ウェブカメラ"
   }
 }

@@ -12,7 +12,8 @@
     "totalDaylight": "Tageslichtdauer",
     "solarNoon": "Sonnenhöchststand",
     "nextSolstice": "Nächste Sonnenwende",
-    "nextEquinox": "Nächste Tagundnachtgleiche"
+    "nextEquinox": "Nächste Tagundnachtgleiche",
+    "daylight": "Tageslicht"
   },
   "moon": {
     "title": "Mond",
@@ -21,7 +22,9 @@
     "moonrise": "Mondaufgang",
     "moonset": "Monduntergang",
     "nextFullMoon": "Nächster Vollmond",
-    "nextNewMoon": "Nächster Neumond"
+    "nextNewMoon": "Nächster Neumond",
+    "fullMoon": "Vollmond",
+    "newMoon": "Neumond"
   },
   "positional": {
     "title": "Positionsdaten",
@@ -154,5 +157,44 @@
     "totality": "Totalität",
     "visible": "Sichtbar"
   },
-  "today": "Heute"
+  "today": "Heute",
+  "cardTitle": "Sonne & Mond",
+  "loadingStatus": "Sonnen- und Monddaten werden geladen",
+  "azimuth": "Azimut",
+  "altitude": "Höhe",
+  "hoursAbbrev": "Std.",
+  "minutesAbbrev": "Min.",
+  "illuminatedPercent": "{{illumination}} beleuchtet",
+  "phaseIllumination": "{{phase}}, {{illumination}} beleuchtet",
+  "moonPhases": {
+    "new": "Neumond",
+    "waxing-crescent": "Zunehmende Sichel",
+    "first-quarter": "Erstes Viertel",
+    "waxing-gibbous": "Zunehmender Mond",
+    "full": "Vollmond",
+    "waning-gibbous": "Abnehmender Mond",
+    "last-quarter": "Letztes Viertel",
+    "waning-crescent": "Abnehmende Sichel"
+  },
+  "moonPhasesAbbrev": {
+    "new": "Neumond",
+    "waxing-crescent": "Zun. Sichel",
+    "first-quarter": "1. Viertel",
+    "waxing-gibbous": "Zun. Mond",
+    "full": "Vollmond",
+    "waning-gibbous": "Abn. Mond",
+    "last-quarter": "Letzt. Viertel",
+    "waning-crescent": "Abn. Sichel"
+  },
+  "svgTitle": {
+    "sun": "Sonne: Aufgang {{rise}}, Untergang {{set}}",
+    "sunAltitude": "aktuelle Höhe {{altitude}}",
+    "moon": "Mond: Aufgang {{rise}}, Untergang {{set}}",
+    "moonAltitude": "aktuelle Höhe {{altitude}}",
+    "phase": "Phase: {{phase}}, {{illumination}} beleuchtet"
+  },
+  "arcLabels": {
+    "rise": "Aufgang {{time}}",
+    "set": "Untergang {{time}}"
+  }
 }

@@ -12,7 +12,8 @@
     "totalDaylight": "日照時間",
     "solarNoon": "南中時刻",
     "nextSolstice": "次の至点",
-    "nextEquinox": "次の分点"
+    "nextEquinox": "次の分点",
+    "daylight": "日照"
   },
   "moon": {
     "title": "月",
@@ -21,7 +22,9 @@
     "moonrise": "月の出",
     "moonset": "月の入り",
     "nextFullMoon": "次の満月",
-    "nextNewMoon": "次の新月"
+    "nextNewMoon": "次の新月",
+    "fullMoon": "満月",
+    "newMoon": "新月"
   },
   "positional": {
     "title": "位置データ",
@@ -154,5 +157,44 @@
     "title": "日食",
     "totality": "皆既",
     "visible": "見える"
+  },
+  "cardTitle": "太陽と月",
+  "loadingStatus": "太陽と月のデータを読み込み中",
+  "azimuth": "方位角",
+  "altitude": "高度",
+  "hoursAbbrev": "時間",
+  "minutesAbbrev": "分",
+  "illuminatedPercent": "輝面比 {{illumination}}",
+  "phaseIllumination": "{{phase}}、輝面比 {{illumination}}",
+  "moonPhases": {
+    "new": "新月",
+    "waxing-crescent": "三日月",
+    "first-quarter": "上弦の月",
+    "waxing-gibbous": "十三夜月",
+    "full": "満月",
+    "waning-gibbous": "十六夜月",
+    "last-quarter": "下弦の月",
+    "waning-crescent": "有明月"
+  },
+  "moonPhasesAbbrev": {
+    "new": "新月",
+    "waxing-crescent": "三日月",
+    "first-quarter": "上弦",
+    "waxing-gibbous": "十三夜",
+    "full": "満月",
+    "waning-gibbous": "十六夜",
+    "last-quarter": "下弦",
+    "waning-crescent": "有明月"
+  },
+  "svgTitle": {
+    "sun": "太陽: 日の出 {{rise}}、日の入り {{set}}",
+    "sunAltitude": "現在の高度 {{altitude}}",
+    "moon": "月: 月の出 {{rise}}、月の入り {{set}}",
+    "moonAltitude": "現在の高度 {{altitude}}",
+    "phase": "月相: {{phase}}、輝面比 {{illumination}}"
+  },
+  "arcLabels": {
+    "rise": "出 {{time}}",
+    "set": "入 {{time}}"
   }
 }

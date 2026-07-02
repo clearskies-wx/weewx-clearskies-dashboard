@@ -82,5 +82,21 @@
   "setup": {
     "apiNotResponding": "Die API der Wetterstation reagiert noch nicht. Sie wird möglicherweise noch initialisiert.",
     "startingUp": "Clear Skies wird gestartet…"
+  },
+  "cards": {
+    "currentConditions": "Aktuelle Wetterlage",
+    "todaysForecast": "Heutige Vorhersage",
+    "wind": "Wind",
+    "todaysHighlights": "Heutige Highlights",
+    "precipitation": "Niederschlag",
+    "barometer": "Barometer",
+    "solarRadiation": "Sonneneinstrahlung",
+    "uvIndex": "UV-Index",
+    "airQualityIndex": "Luftqualitätsindex",
+    "sunAndMoon": "Sonne & Mond",
+    "lightning": "Blitze",
+    "earthquakes": "Erdbeben",
+    "radar": "Radar",
+    "webcam": "Webcam"
   }
 }

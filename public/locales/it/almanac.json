@@ -12,7 +12,8 @@
     "totalDaylight": "Ore di luce totali",
     "solarNoon": "Mezzogiorno solare",
     "nextSolstice": "Prossimo solstizio",
-    "nextEquinox": "Prossimo equinozio"
+    "nextEquinox": "Prossimo equinozio",
+    "daylight": "Ore di luce"
   },
   "moon": {
     "title": "Luna",
@@ -21,7 +22,9 @@
     "moonrise": "Sorgere della luna",
     "moonset": "Tramonto della luna",
     "nextFullMoon": "Prossima luna piena",
-    "nextNewMoon": "Prossima luna nuova"
+    "nextNewMoon": "Prossima luna nuova",
+    "fullMoon": "Luna piena",
+    "newMoon": "Luna nuova"
   },
   "positional": {
     "title": "Dati posizionali",
@@ -154,5 +157,44 @@
     "totality": "Totalità",
     "visible": "Visibile"
   },
-  "today": "Oggi"
+  "today": "Oggi",
+  "cardTitle": "Sole e Luna",
+  "loadingStatus": "Caricamento dei dati del Sole e della Luna",
+  "azimuth": "Azimut",
+  "altitude": "Altitudine",
+  "hoursAbbrev": "h",
+  "minutesAbbrev": "min",
+  "illuminatedPercent": "{{illumination}} illuminata",
+  "phaseIllumination": "{{phase}}, {{illumination}} illuminata",
+  "moonPhases": {
+    "new": "Luna nuova",
+    "waxing-crescent": "Crescente",
+    "first-quarter": "Primo quarto",
+    "waxing-gibbous": "Gibbosa crescente",
+    "full": "Luna piena",
+    "waning-gibbous": "Gibbosa calante",
+    "last-quarter": "Ultimo quarto",
+    "waning-crescent": "Calante"
+  },
+  "moonPhasesAbbrev": {
+    "new": "Luna nuova",
+    "waxing-crescent": "Crescente",
+    "first-quarter": "1° quarto",
+    "waxing-gibbous": "Gibb. crescente",
+    "full": "Luna piena",
+    "waning-gibbous": "Gibb. calante",
+    "last-quarter": "Ultimo quarto",
+    "waning-crescent": "Calante"
+  },
+  "svgTitle": {
+    "sun": "Sole: sorge {{rise}}, tramonta {{set}}",
+    "sunAltitude": "altitudine attuale {{altitude}}",
+    "moon": "Luna: sorge {{rise}}, tramonta {{set}}",
+    "moonAltitude": "altitudine attuale {{altitude}}",
+    "phase": "Fase: {{phase}}, {{illumination}} illuminata"
+  },
+  "arcLabels": {
+    "rise": "Sorge {{time}}",
+    "set": "Tramonta {{time}}"
+  }
 }

@@ -12,7 +12,8 @@
     "totalDaylight": "Totale daglengte",
     "solarNoon": "Zonnige middag",
     "nextSolstice": "Volgende zonnewende",
-    "nextEquinox": "Volgende dag-en-nachtevening"
+    "nextEquinox": "Volgende dag-en-nachtevening",
+    "daylight": "Daglengte"
   },
   "moon": {
     "title": "Maan",
@@ -21,7 +22,9 @@
     "moonrise": "Maanopgang",
     "moonset": "Maanondergang",
     "nextFullMoon": "Volgende volle maan",
-    "nextNewMoon": "Volgende nieuwe maan"
+    "nextNewMoon": "Volgende nieuwe maan",
+    "fullMoon": "Volle maan",
+    "newMoon": "Nieuwe maan"
   },
   "positional": {
     "title": "Positiegegevens",
@@ -154,5 +157,44 @@
     "totality": "Totaliteit",
     "visible": "Zichtbaar"
   },
-  "today": "Vandaag"
+  "today": "Vandaag",
+  "cardTitle": "Zon & Maan",
+  "loadingStatus": "Zon- en maangegevens laden",
+  "azimuth": "Azimut",
+  "altitude": "Hoogte",
+  "hoursAbbrev": "u",
+  "minutesAbbrev": "min",
+  "illuminatedPercent": "{{illumination}} verlicht",
+  "phaseIllumination": "{{phase}}, {{illumination}} verlicht",
+  "moonPhases": {
+    "new": "Nieuwe maan",
+    "waxing-crescent": "Wassende sikkel",
+    "first-quarter": "Eerste kwartier",
+    "waxing-gibbous": "Wassende maan",
+    "full": "Volle maan",
+    "waning-gibbous": "Afnemende maan",
+    "last-quarter": "Laatste kwartier",
+    "waning-crescent": "Afnemende sikkel"
+  },
+  "moonPhasesAbbrev": {
+    "new": "Nieuwe maan",
+    "waxing-crescent": "Was. sikkel",
+    "first-quarter": "1e kwartier",
+    "waxing-gibbous": "Was. maan",
+    "full": "Volle maan",
+    "waning-gibbous": "Afn. maan",
+    "last-quarter": "Laatst. kwartier",
+    "waning-crescent": "Afn. sikkel"
+  },
+  "svgTitle": {
+    "sun": "Zon: komt op {{rise}}, gaat onder {{set}}",
+    "sunAltitude": "huidige hoogte {{altitude}}",
+    "moon": "Maan: komt op {{rise}}, gaat onder {{set}}",
+    "moonAltitude": "huidige hoogte {{altitude}}",
+    "phase": "Fase: {{phase}}, {{illumination}} verlicht"
+  },
+  "arcLabels": {
+    "rise": "Opkomst {{time}}",
+    "set": "Ondergang {{time}}"
+  }
 }
