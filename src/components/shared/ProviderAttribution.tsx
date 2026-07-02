@@ -60,7 +60,6 @@ export function ProviderAttribution({
   attributionText,
   textPrefix,
   textProviderName,
-  displayName,
   doNotUseLogo,
   textTranslatable,
   compact,
