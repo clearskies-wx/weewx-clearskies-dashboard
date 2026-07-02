@@ -6,7 +6,13 @@
  * translation layer).
  *
  * Returns '--' for null inputs so components never need to guard separately.
+ *
+ * Pass `locale` (i18n.language) for locale-aware decimal separators — see
+ * rules/coding.md §6. Omitting `locale` preserves the legacy `.toFixed()`
+ * behavior for callers not yet migrated to pass a locale (Phase 2).
  */
+
+import { formatNumber } from './format-number';
 
 const DECIMALS: Record<string, number> = {
   temperature:     1,
@@ -24,8 +30,11 @@ const DECIMALS: Record<string, number> = {
   default:         1,
 };
 
-export function formatValue(value: number | null | undefined, type: string): string {
+export function formatValue(value: number | null | undefined, type: string, locale?: string): string {
   if (value == null || typeof value !== 'number' || !isFinite(value)) return '--';
   const decimals = DECIMALS[type] ?? DECIMALS['default'];
+  if (locale) {
+    return formatNumber(value, decimals, locale);
+  }
   return value.toFixed(decimals);
 }
