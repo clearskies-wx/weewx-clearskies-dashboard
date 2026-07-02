@@ -29,6 +29,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import type { AlmanacSnapshot, MoonNameData, PositionsSnapshot } from '../../api/types';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { MoonPhaseG, MoonPhaseIcon } from '../moon-phase-icon';
@@ -137,36 +138,54 @@ function arcProgress(
 // ---------------------------------------------------------------------------
 
 /**
- * Convert a dash-separated phase name to title case.
- * "waxing-gibbous" → "Waxing Gibbous"
+ * Translate a dash-separated API phase name ("waxing-gibbous") via the
+ * `moonPhases` locale table. Falls back to a title-cased rendering of the
+ * raw API value if the locale is missing the key (e.g. an unexpected phase
+ * name from the API), never to a hardcoded English string.
  */
-function formatPhaseName(name: string | null | undefined): string {
+function formatPhaseName(t: TFunction, name: string | null | undefined): string {
   if (!name) return '—';
-  return name
+  const fallback = name
     .split('-')
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
+  return t(`moonPhases.${name}`, fallback);
 }
 
 /**
- * Format daylightMinutes as "Xh Ym" string.
- * 862 → "14h 22m"
+ * Translate a dash-separated API phase name into its abbreviated form via
+ * the `moonPhasesAbbrev` locale table (e.g. "Wax. Gibbous"). Abbreviation
+ * style varies by language, so this resolves through its own locale table
+ * rather than string-replacing an English prefix. Falls back to the
+ * unabbreviated translated name if no abbreviation is defined for the locale.
  */
-function formatDaylight(minutes: number | null): string {
+function abbrevPhaseName(t: TFunction, name: string | null | undefined): string {
+  if (!name) return '—';
+  return t(`moonPhasesAbbrev.${name}`, formatPhaseName(t, name));
+}
+
+/**
+ * Format daylightMinutes as a localized "Xh Ym" string using the locale's
+ * hour/minute abbreviations (`hoursAbbrev` / `minutesAbbrev` keys).
+ * 862 → "14h 22m" in English; abbreviations vary per locale.
+ */
+function formatDaylight(t: TFunction, minutes: number | null): string {
   if (minutes === null) return '—';
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  return `${h}h ${m}m`;
+  return `${h}${t('hoursAbbrev')} ${m}${t('minutesAbbrev')}`;
 }
 
 /**
- * Format a daylight delta in minutes as "+Xm" or "−Xm".
+ * Format a daylight delta in minutes as "+Xm" or "−Xm" using the locale's
+ * minute abbreviation.
  * Positive = more daylight than yesterday.
  */
-function formatDelta(delta: number | null): string | null {
+function formatDelta(t: TFunction, delta: number | null): string | null {
   if (delta === null) return null;
-  if (delta >= 0) return `+${delta}m`;
-  return `−${Math.abs(delta)}m`;
+  const abbrev = t('minutesAbbrev');
+  if (delta >= 0) return `+${delta}${abbrev}`;
+  return `−${Math.abs(delta)}${abbrev}`;
 }
 
 /**
@@ -281,7 +300,7 @@ interface ArcPanelProps {
 }
 
 function ArcPanel({ almanac, positions, moonNames, tz }: ArcPanelProps) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation('almanac');
   const locale = i18n.language;
   const isMobile = useIsMobile();
   const [nowMs, setNowMs] = useState(Date.now());
@@ -304,7 +323,7 @@ function ArcPanel({ almanac, positions, moonNames, tz }: ArcPanelProps) {
 
   // Moon phase
   const illumination = almanac.moon.illuminationPercent;
-  const phaseName = formatPhaseName(almanac.moon.phaseName);
+  const phaseName = formatPhaseName(t, almanac.moon.phaseName);
   const illumText =
     illumination !== null ? `${Math.round(illumination)}%` : '—';
 
@@ -322,11 +341,11 @@ function ArcPanel({ almanac, positions, moonNames, tz }: ArcPanelProps) {
 
   // SVG accessible title for screen readers
   const svgTitle = [
-    `Sun: rises ${sunriseText}, sets ${sunsetText}`,
-    sunAltText ? `current altitude ${sunAltText}` : null,
-    `Moon: rises ${moonriseText}, sets ${moonsetText}`,
-    moonAltText ? `current altitude ${moonAltText}` : null,
-    `Phase: ${phaseName}, ${illumText} illuminated`,
+    t('svgTitle.sun', { rise: sunriseText, set: sunsetText }),
+    sunAltText ? t('svgTitle.sunAltitude', { altitude: sunAltText }) : null,
+    t('svgTitle.moon', { rise: moonriseText, set: moonsetText }),
+    moonAltText ? t('svgTitle.moonAltitude', { altitude: moonAltText }) : null,
+    t('svgTitle.phase', { phase: phaseName, illumination: illumText }),
   ]
     .filter(Boolean)
     .join('. ');
@@ -591,7 +610,7 @@ function ArcPanel({ almanac, positions, moonNames, tz }: ArcPanelProps) {
           fill={MOON_COLOR}
           aria-hidden="true"
         >
-          Rise {moonriseText}
+          {t('arcLabels.rise', { time: moonriseText })}
         </text>
         <text
           x={CX + MOON_RX}
@@ -602,18 +621,21 @@ function ArcPanel({ almanac, positions, moonNames, tz }: ArcPanelProps) {
           fill={MOON_COLOR}
           aria-hidden="true"
         >
-          Set {moonsetText}
+          {t('arcLabels.set', { time: moonsetText })}
         </text>
       </svg>
 
       {/* ── Moon phase row ──────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-3" aria-label={`${phaseName}, ${illumText} illuminated`}>
+      <div
+        className="flex items-center gap-3"
+        aria-label={t('phaseIllumination', { phase: phaseName, illumination: illumText })}
+      >
         {/* Moon phase SVG icon — elliptical terminator rendering */}
         <MoonPhaseIcon
           size={isMobile ? 48 : 40}
           illuminationPercent={illumination ?? 50}
           phaseName={almanac.moon.phaseName}
-          ariaLabel={`${phaseName} ${illumText} illuminated`}
+          ariaLabel={t('phaseIllumination', { phase: phaseName, illumination: illumText })}
         />
 
         <div>
@@ -630,7 +652,7 @@ function ArcPanel({ almanac, positions, moonNames, tz }: ArcPanelProps) {
             className="text-muted-foreground"
             style={{ fontSize: 'var(--text-label, 0.75rem)' }}
           >
-            {illumText} illuminated
+            {t('illuminatedPercent', { illumination: illumText })}
           </div>
         </div>
       </div>
@@ -709,10 +731,10 @@ function SunPanel({ almanac, tomorrow, positions, tz, locale }: SunPanelProps) {
   const tomorrowLabel = tomorrow ? formatShortDate(tomorrow.date, tz, locale, t('today')) : null;
   const hasTomorrow = tomorrow !== null;
 
-  const daylightText = formatDaylight(almanac.sun.daylightMinutes);
-  const deltaText = formatDelta(almanac.sun.daylightDeltaVsYesterdayMinutes);
-  const daylightTextTmw = tomorrow ? formatDaylight(tomorrow.sun.daylightMinutes) : null;
-  const deltaTextTmw = tomorrow ? formatDelta(tomorrow.sun.daylightDeltaVsYesterdayMinutes) : null;
+  const daylightText = formatDaylight(t, almanac.sun.daylightMinutes);
+  const deltaText = formatDelta(t, almanac.sun.daylightDeltaVsYesterdayMinutes);
+  const daylightTextTmw = tomorrow ? formatDaylight(t, tomorrow.sun.daylightMinutes) : null;
+  const deltaTextTmw = tomorrow ? formatDelta(t, tomorrow.sun.daylightDeltaVsYesterdayMinutes) : null;
 
   const liveAz = positions?.sun.azimuth ?? null;
   const liveAlt = positions?.sun.altitude ?? null;
@@ -743,7 +765,7 @@ function SunPanel({ almanac, tomorrow, positions, tz, locale }: SunPanelProps) {
         >
           <path d="M120,40V16a8,8,0,0,1,16,0V40a8,8,0,0,1-16,0Zm72,88a64,64,0,1,1-64-64A64.07,64.07,0,0,1,192,128Zm-16,0a48,48,0,1,0-48,48A48.05,48.05,0,0,0,176,128ZM58.34,69.66A8,8,0,0,0,69.66,58.34l-16-16A8,8,0,0,0,42.34,53.66Zm0,116.68-16,16a8,8,0,0,0,11.32,11.32l16-16a8,8,0,0,0-11.32-11.32ZM192,72a8,8,0,0,0,5.66-2.34l16-16a8,8,0,0,0-11.32-11.32l-16,16A8,8,0,0,0,192,72Zm5.66,114.34a8,8,0,0,0-11.32,11.32l16,16a8,8,0,0,0,11.32-11.32ZM48,128a8,8,0,0,0-8-8H16a8,8,0,0,0,0,16H40A8,8,0,0,0,48,128Zm80,80a8,8,0,0,0-8,8v24a8,8,0,0,0,16,0V216A8,8,0,0,0,128,208Zm112-88H216a8,8,0,0,0,0,16h24a8,8,0,0,0,0-16Z" />
         </svg>
-        Sun
+        {t('sun.title')}
       </h3>
 
       <table
@@ -767,32 +789,32 @@ function SunPanel({ almanac, tomorrow, positions, tz, locale }: SunPanelProps) {
         </thead>
         <tbody>
           <tr>
-            <td style={labelStyle}>Sunrise</td>
+            <td style={labelStyle}>{t('sun.sunrise')}</td>
             <td style={valueStyle}>{fmtTime(almanac.sun.rise, tz, locale)}</td>
             {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.sun.rise, tz, locale)}</td>}
           </tr>
           <tr>
-            <td style={labelStyle}>Sunset</td>
+            <td style={labelStyle}>{t('sun.sunset')}</td>
             <td style={valueStyle}>{fmtTime(almanac.sun.set, tz, locale)}</td>
             {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.sun.set, tz, locale)}</td>}
           </tr>
           <tr>
-            <td style={labelStyle}>Civil Dawn</td>
+            <td style={labelStyle}>{t('sun.civilDawn')}</td>
             <td style={valueStyle}>{fmtTime(almanac.sun.civilTwilightDawn, tz, locale)}</td>
             {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.sun.civilTwilightDawn, tz, locale)}</td>}
           </tr>
           <tr>
-            <td style={labelStyle}>Civil Dusk</td>
+            <td style={labelStyle}>{t('sun.civilDusk')}</td>
             <td style={valueStyle}>{fmtTime(almanac.sun.civilTwilightDusk, tz, locale)}</td>
             {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.sun.civilTwilightDusk, tz, locale)}</td>}
           </tr>
           <tr>
-            <td style={labelStyle}>Solar Noon</td>
+            <td style={labelStyle}>{t('sun.solarNoon')}</td>
             <td style={valueStyle}>{fmtTime(almanac.sun.transit, tz, locale)}</td>
             {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.sun.transit, tz, locale)}</td>}
           </tr>
           <tr>
-            <td style={labelStyle}>Daylight</td>
+            <td style={labelStyle}>{t('sun.daylight')}</td>
             <td style={valueStyle}>
               {daylightText}
               {deltaText && (
@@ -813,11 +835,11 @@ function SunPanel({ almanac, tomorrow, positions, tz, locale }: SunPanelProps) {
             )}
           </tr>
           <tr>
-            <td style={labelStyle}>Azimuth</td>
+            <td style={labelStyle}>{t('azimuth')}</td>
             <td colSpan={hasTomorrow ? 2 : 1} style={{ ...valueStyle, textAlign: hasTomorrow ? 'center' : 'right' }}>{azimuthText}</td>
           </tr>
           <tr>
-            <td style={labelStyle}>Altitude</td>
+            <td style={labelStyle}>{t('altitude')}</td>
             <td colSpan={hasTomorrow ? 2 : 1} style={{ ...valueStyle, textAlign: hasTomorrow ? 'center' : 'right' }}>{altitudeText}</td>
           </tr>
         </tbody>
@@ -844,8 +866,7 @@ function MoonPanel({ almanac, tomorrow, positions, tz, locale }: MoonPanelProps)
   const tomorrowLabel = tomorrow ? formatShortDate(tomorrow.date, tz, locale, t('today')) : null;
   const hasTomorrow = tomorrow !== null;
 
-  const phaseName = formatPhaseName(almanac.moon.phaseName);
-  const phaseNameTmw = tomorrow ? formatPhaseName(tomorrow.moon.phaseName) : null;
+  const phaseName = formatPhaseName(t, almanac.moon.phaseName);
 
   const fmtIllum = (pct: number | null) =>
     pct !== null ? `${Math.round(pct)}%` : '—';
@@ -857,9 +878,10 @@ function MoonPanel({ almanac, tomorrow, positions, tz, locale }: MoonPanelProps)
   const fullMoonText = fmtEventDate(almanac.moon.nextFullMoon, tz, locale);
   const newMoonText = fmtEventDate(almanac.moon.nextNewMoon, tz, locale);
 
-  // Abbreviate phase names when showing two columns to save space
-  const abbrevPhase = (name: string) =>
-    name.replace('Waxing ', 'Wax. ').replace('Waning ', 'Wan. ');
+  // Abbreviate phase names when showing two columns to save space. Resolves
+  // through the locale's moonPhasesAbbrev table (not an English-prefix
+  // string replace) since abbreviation conventions vary by language.
+  const abbrevPhase = (name: string | null | undefined) => abbrevPhaseName(t, name);
 
   const colHeaderStyle: React.CSSProperties = {
     textAlign: 'right',
@@ -885,7 +907,7 @@ function MoonPanel({ almanac, tomorrow, positions, tz, locale }: MoonPanelProps)
         >
           <path d="M233.54,142.23a8,8,0,0,0-8-2,88.08,88.08,0,0,1-109.8-109.8,8,8,0,0,0-10-10,104.84,104.84,0,0,0-52.91,37A104,104,0,0,0,136,224a103.09,103.09,0,0,0,62.52-20.88,104.84,104.84,0,0,0,37-52.91A8,8,0,0,0,233.54,142.23ZM188.9,190.34A88,88,0,0,1,65.66,67.11a89,89,0,0,1,31.4-26A106,106,0,0,0,96,56,104.11,104.11,0,0,0,200,160a106,106,0,0,0,14.92-1.06A89,89,0,0,1,188.9,190.34Z" />
         </svg>
-        Moon
+        {t('moon.title')}
       </h3>
 
       <table
@@ -909,39 +931,39 @@ function MoonPanel({ almanac, tomorrow, positions, tz, locale }: MoonPanelProps)
         </thead>
         <tbody>
           <tr>
-            <td style={labelStyle}>Phase</td>
-            <td style={valueStyle}>{hasTomorrow ? abbrevPhase(phaseName) : phaseName}</td>
-            {hasTomorrow && <td style={valueStyle}>{abbrevPhase(phaseNameTmw!)}</td>}
+            <td style={labelStyle}>{t('moon.phase')}</td>
+            <td style={valueStyle}>{hasTomorrow ? abbrevPhase(almanac.moon.phaseName) : phaseName}</td>
+            {hasTomorrow && <td style={valueStyle}>{abbrevPhase(tomorrow.moon.phaseName)}</td>}
           </tr>
           <tr>
-            <td style={labelStyle}>Illumination</td>
+            <td style={labelStyle}>{t('moon.illumination')}</td>
             <td style={valueStyle}>{fmtIllum(almanac.moon.illuminationPercent)}</td>
             {hasTomorrow && <td style={valueStyle}>{fmtIllum(tomorrow.moon.illuminationPercent)}</td>}
           </tr>
           <tr>
-            <td style={labelStyle}>Moonrise</td>
+            <td style={labelStyle}>{t('moon.moonrise')}</td>
             <td style={valueStyle}>{fmtTime(almanac.moon.rise, tz, locale)}</td>
             {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.moon.rise, tz, locale)}</td>}
           </tr>
           <tr>
-            <td style={labelStyle}>Moonset</td>
+            <td style={labelStyle}>{t('moon.moonset')}</td>
             <td style={valueStyle}>{fmtTime(almanac.moon.set, tz, locale)}</td>
             {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.moon.set, tz, locale)}</td>}
           </tr>
           <tr>
-            <td style={labelStyle}>Full Moon</td>
+            <td style={labelStyle}>{t('moon.fullMoon')}</td>
             <td colSpan={hasTomorrow ? 2 : 1} style={{ ...valueStyle, textAlign: hasTomorrow ? 'center' : 'right' }}>{fullMoonText}</td>
           </tr>
           <tr>
-            <td style={labelStyle}>New Moon</td>
+            <td style={labelStyle}>{t('moon.newMoon')}</td>
             <td colSpan={hasTomorrow ? 2 : 1} style={{ ...valueStyle, textAlign: hasTomorrow ? 'center' : 'right' }}>{newMoonText}</td>
           </tr>
           <tr>
-            <td style={labelStyle}>Azimuth</td>
+            <td style={labelStyle}>{t('azimuth')}</td>
             <td colSpan={hasTomorrow ? 2 : 1} style={{ ...valueStyle, textAlign: hasTomorrow ? 'center' : 'right' }}>{azimuthText}</td>
           </tr>
           <tr>
-            <td style={labelStyle}>Altitude</td>
+            <td style={labelStyle}>{t('altitude')}</td>
             <td colSpan={hasTomorrow ? 2 : 1} style={{ ...valueStyle, textAlign: hasTomorrow ? 'center' : 'right' }}>{altitudeText}</td>
           </tr>
         </tbody>
@@ -996,20 +1018,20 @@ export function SunMoonDetailCard({
   loading,
   error,
 }: SunMoonDetailCardProps) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation('almanac');
   const locale = i18n.language;
 
   return (
     <Card footprint="full" aria-busy={loading}>
       <CardHeader>
-        <CardTitle as="h2">Sun &amp; Moon</CardTitle>
+        <CardTitle as="h2">{t('cardTitle')}</CardTitle>
       </CardHeader>
 
       <CardContent>
         {loading ? (
           <>
             <span className="sr-only" role="status">
-              Loading sun and moon data
+              {t('loadingStatus')}
             </span>
             <SunMoonDetailSkeleton />
           </>
@@ -1056,7 +1078,7 @@ export function SunMoonDetailCard({
               >
                 {almanac.sun.nextSolstice && (
                   <span>
-                    Next Solstice:{' '}
+                    {t('sun.nextSolstice')}:{' '}
                     <strong
                       style={{
                         color: 'var(--foreground)',
@@ -1070,7 +1092,7 @@ export function SunMoonDetailCard({
                 )}
                 {almanac.sun.nextEquinox && (
                   <span>
-                    Next Equinox:{' '}
+                    {t('sun.nextEquinox')}:{' '}
                     <strong
                       style={{
                         color: 'var(--foreground)',
@@ -1087,7 +1109,7 @@ export function SunMoonDetailCard({
           </div>
         ) : (
           <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
-            No almanac data available.
+            {t('noData')}
           </p>
         )}
       </CardContent>

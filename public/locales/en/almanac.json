@@ -5,6 +5,14 @@
   "error": "Unable to load almanac data",
   "noData": "No almanac data available.",
   "today": "Today",
+  "cardTitle": "Sun & Moon",
+  "loadingStatus": "Loading sun and moon data",
+  "azimuth": "Azimuth",
+  "altitude": "Altitude",
+  "hoursAbbrev": "h",
+  "minutesAbbrev": "m",
+  "illuminatedPercent": "{{illumination}} illuminated",
+  "phaseIllumination": "{{phase}}, {{illumination}} illuminated",
 
   "moonNames": {
     "harvestMoon": "Harvest Moon",
@@ -14,12 +22,48 @@
     "traditionalNameSuffix": "{{name}} Moon"
   },
 
+  "moonPhases": {
+    "new": "New Moon",
+    "waxing-crescent": "Waxing Crescent",
+    "first-quarter": "First Quarter",
+    "waxing-gibbous": "Waxing Gibbous",
+    "full": "Full Moon",
+    "waning-gibbous": "Waning Gibbous",
+    "last-quarter": "Last Quarter",
+    "waning-crescent": "Waning Crescent"
+  },
+
+  "moonPhasesAbbrev": {
+    "new": "New Moon",
+    "waxing-crescent": "Wax. Crescent",
+    "first-quarter": "First Quarter",
+    "waxing-gibbous": "Wax. Gibbous",
+    "full": "Full Moon",
+    "waning-gibbous": "Wan. Gibbous",
+    "last-quarter": "Last Quarter",
+    "waning-crescent": "Wan. Crescent"
+  },
+
+  "svgTitle": {
+    "sun": "Sun: rises {{rise}}, sets {{set}}",
+    "sunAltitude": "current altitude {{altitude}}",
+    "moon": "Moon: rises {{rise}}, sets {{set}}",
+    "moonAltitude": "current altitude {{altitude}}",
+    "phase": "Phase: {{phase}}, {{illumination}} illuminated"
+  },
+
+  "arcLabels": {
+    "rise": "Rise {{time}}",
+    "set": "Set {{time}}"
+  },
+
   "sun": {
     "title": "Sun",
     "sunrise": "Sunrise",
     "sunset": "Sunset",
     "civilDawn": "Civil Dawn",
     "civilDusk": "Civil Dusk",
+    "daylight": "Daylight",
     "totalDaylight": "Total Daylight",
     "solarNoon": "Solar Noon",
     "nextSolstice": "Next Solstice",
@@ -32,6 +76,8 @@
     "illumination": "Illumination",
     "moonrise": "Moonrise",
     "moonset": "Moonset",
+    "fullMoon": "Full Moon",
+    "newMoon": "New Moon",
     "nextFullMoon": "Next Full Moon",
     "nextNewMoon": "Next New Moon"
   },
