@@ -9,6 +9,7 @@ import { PMTiles } from 'pmtiles';
 import { useCapabilities, useRadarFrames } from '../../hooks/useWeatherData';
 import type { CapabilityDeclaration, RadarFrame } from '../../api/types';
 import { useTheme } from '../../lib/theme-provider';
+import { OSM_ATTRIBUTION, CARTO_OSM_ATTRIBUTION, OSM_ODBL_ATTRIBUTION } from '../../lib/map-attribution';
 import type { FeatureCollection } from 'geojson';
 
 interface RadarMapProps {
@@ -320,16 +321,15 @@ function FrameProgressBar({
 const TILE_CONFIG = {
   light: {
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    attribution: OSM_ATTRIBUTION,
   },
   dark: {
     url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    attribution: CARTO_OSM_ATTRIBUTION,
   },
 } as const;
 
-const SATELLITE_OVERLAY_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+const SATELLITE_OVERLAY_ATTRIBUTION = CARTO_OSM_ATTRIBUTION;
 const SATELLITE_LABELS_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png';
 
 /**
@@ -477,7 +477,7 @@ function GeoFeaturesLayer() {
           url: pmtiles as any,  // eslint-disable-line @typescript-eslint/no-explicit-any
           paintRules: GEO_FEATURES_PAINT_RULES,
           labelRules: [],
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors (ODbL)',
+          attribution: OSM_ODBL_ATTRIBUTION,
           pane: 'geoFeaturesPane',
         });
         layer.addTo(map);
@@ -1072,6 +1072,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
               url={`${caddyPrefix}/v2/wind/{z}/{x}/{y}/arrows.png`}
               opacity={0.6}
               zIndex={500}
+              attribution={radarFrameList?.attribution ?? undefined}
             />
           )}
 

@@ -21,6 +21,7 @@ import {
   useMap,
 } from 'react-leaflet';
 import { useTheme } from '../lib/theme-provider';
+import { OSM_ATTRIBUTION, CARTO_OSM_ATTRIBUTION } from '../lib/map-attribution';
 import type { PathOptions, LatLngBoundsExpression } from 'leaflet';
 import type { GeoJsonObject } from 'geojson';
 import {
@@ -129,12 +130,11 @@ function MapFlyTo({ earthquakes, selectedId }: MapFlyToProps) {
 const TILE_CONFIG = {
   light: {
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    attribution: OSM_ATTRIBUTION,
   },
   dark: {
     url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    attribution: CARTO_OSM_ATTRIBUTION,
   },
 } as const;
 
