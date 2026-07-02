@@ -17,10 +17,16 @@ const STATIC_PROVIDERS: Array<{ domain: string; name: string; url: string }> = [
   { domain: 'baseMaps',     name: 'OpenStreetMap',                              url: 'https://www.openstreetmap.org/copyright' },
   { domain: 'baseMaps',     name: 'CARTO',                                     url: 'https://carto.com/attributions' },
   { domain: 'baseMaps',     name: 'Protomaps',                                 url: 'https://protomaps.com' },
-  { domain: 'seismicData',  name: 'GEM Global Active Faults Database',         url: 'https://github.com/GEMScienceTools/gem-global-active-faults' },
+  { domain: 'earthquakes',  name: 'GEM Global Active Faults Database',         url: 'https://github.com/GEMScienceTools/gem-global-active-faults' },
   { domain: 'astronomical', name: 'Skyfield + NASA JPL Ephemerides',           url: 'https://rhodesmill.org/skyfield/' },
   { domain: 'astronomical', name: 'International Meteor Organization (IMO)',   url: 'https://www.imo.net' },
 ];
+
+const DOMAIN_GROUP: Record<string, string> = {
+  seeing: 'astronomical',
+  almanac: 'astronomical',
+  seismicData: 'earthquakes',
+};
 
 function formatLongDate(isoString: string | null, locale: string): string {
   if (!isoString) return '—';
@@ -198,70 +204,49 @@ export function AboutPage() {
             <CardTitle as="h2">{t('dataProviders.cardTitle')}</CardTitle>
           </CardHeader>
           <CardContent>
-            {capabilities && capabilities.providers.length > 0 ? (
-              <dl className="grid grid-cols-1 gap-y-3 text-sm sm:grid-cols-2">
-                {Object.entries(
-                  capabilities.providers.reduce<Record<string, typeof capabilities.providers>>((acc, p) => {
-                    if (!acc[p.domain]) acc[p.domain] = [];
-                    if (!acc[p.domain].some(existing => existing.providerId === p.providerId)) acc[p.domain].push(p);
-                    return acc;
-                  }, {}),
-                ).map(([domain, providers]) => (
-                  <div key={domain}>
-                    <dt className="text-muted-foreground uppercase font-semibold" style={{ fontSize: 'var(--text-label)' }}>
-                      {t(`dataProviders.domain.${domain}`, { defaultValue: domain })}
-                    </dt>
-                    <dd className="mt-0.5 space-y-0.5">
-                      {providers.map(provider => {
-                        const info = provider.attribution
-                          ? { name: provider.attribution.displayName, url: provider.attribution.url }
-                          : null;
-                        return info ? (
-                          <div key={provider.providerId}>
+            {capabilities && capabilities.providers.length > 0 ? (() => {
+              const grouped: Record<string, Array<{ name: string; url: string; id: string }>> = {};
+              for (const p of capabilities.providers) {
+                const domain = DOMAIN_GROUP[p.domain] ?? p.domain;
+                if (!grouped[domain]) grouped[domain] = [];
+                const info = p.attribution
+                  ? { name: p.attribution.displayName, url: p.attribution.url, id: p.providerId }
+                  : { name: p.providerId, url: '', id: p.providerId };
+                if (!grouped[domain].some(e => e.id === info.id)) grouped[domain].push(info);
+              }
+              for (const sp of STATIC_PROVIDERS) {
+                const domain = DOMAIN_GROUP[sp.domain] ?? sp.domain;
+                if (!grouped[domain]) grouped[domain] = [];
+                grouped[domain].push({ name: sp.name, url: sp.url, id: sp.name });
+              }
+              return (
+                <dl className="grid grid-cols-1 gap-y-3 text-sm sm:grid-cols-2">
+                  {Object.entries(grouped).map(([domain, providers]) => (
+                    <div key={domain}>
+                      <dt className="text-muted-foreground uppercase font-semibold" style={{ fontSize: 'var(--text-label)' }}>
+                        {t(`dataProviders.domain.${domain}`, { defaultValue: domain })}
+                      </dt>
+                      <dd className="mt-0.5 space-y-0.5">
+                        {providers.map(p => p.url ? (
+                          <div key={p.id}>
                             <a
-                              href={info.url}
+                              href={p.url}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-foreground hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
                             >
-                              {info.name}
+                              {p.name}
                             </a>
                           </div>
                         ) : (
-                          <div key={provider.providerId} className="text-foreground capitalize">{provider.providerId}</div>
-                        );
-                      })}
-                    </dd>
-                  </div>
-                ))}
-                {Object.entries(
-                  STATIC_PROVIDERS.reduce<Record<string, typeof STATIC_PROVIDERS>>((acc, p) => {
-                    if (!acc[p.domain]) acc[p.domain] = [];
-                    acc[p.domain].push(p);
-                    return acc;
-                  }, {}),
-                ).map(([domain, providers]) => (
-                  <div key={domain}>
-                    <dt className="text-muted-foreground uppercase font-semibold" style={{ fontSize: 'var(--text-label)' }}>
-                      {t(`dataProviders.domain.${domain}`, { defaultValue: domain })}
-                    </dt>
-                    <dd className="mt-0.5 space-y-0.5">
-                      {providers.map(p => (
-                        <div key={p.name}>
-                          <a
-                            href={p.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-foreground hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
-                          >
-                            {p.name}
-                          </a>
-                        </div>
-                      ))}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
+                          <div key={p.id} className="text-foreground capitalize">{p.name}</div>
+                        ))}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              );
+            })()
             ) : (
               <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>{t('dataProviders.empty')}</p>
             )}

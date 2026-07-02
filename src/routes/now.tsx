@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, Suspense } from 'react';
 import type { WebcamConfig } from '../api/types';
 import { Grid } from '../components/layout/grid';
 import { NowHeroCard } from '../components/layout/now-hero-card';
-import { footprintColSpan } from '../components/ui/card';
+import { footprintColSpan, rowSpanClass } from '../components/ui/card';
 import { ProviderAttribution } from '../components/shared/ProviderAttribution';
 import {
   useForecast,
@@ -249,7 +249,7 @@ export function NowPage() {
             if (!attribution) return cardElement;
 
             return (
-              <div key={entry.type} className={footprintColSpan[entry.footprint]}>
+              <div key={entry.type} className={`${footprintColSpan[entry.footprint]} ${rowSpanClass(entry.rowSpan)}`}>
                 {cardElement}
                 <ProviderAttribution
                   attributionText={attribution.attributionText}
