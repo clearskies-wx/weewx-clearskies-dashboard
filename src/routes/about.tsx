@@ -246,8 +246,7 @@ export function AboutPage() {
                   ))}
                 </dl>
               );
-            })()
-            ) : (
+            })()) : (
               <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>{t('dataProviders.empty')}</p>
             )}
           </CardContent>
