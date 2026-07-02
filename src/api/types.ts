@@ -582,6 +582,8 @@ export interface ProviderAttributionData {
   attributionRequired: boolean;
   displayName: string;
   attributionText: string;
+  textPrefix: string;
+  textProviderName: string;
   url: string;
   textTranslatable: boolean;
   textLanguage: string;

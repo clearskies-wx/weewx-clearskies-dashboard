@@ -53,6 +53,8 @@ export function ForecastPage() {
         footer={showForecastAttribution && forecast?.source && forecastAttribution ? (
           <ProviderAttribution
             attributionText={forecastAttribution.attributionText}
+            textPrefix={forecastAttribution.textPrefix}
+            textProviderName={forecastAttribution.textProviderName}
             displayName={forecastAttribution.displayName}
             logoRequired={forecastAttribution.logoRequired}
             doNotUseLogo={forecastAttribution.doNotUseLogo}
@@ -73,6 +75,8 @@ export function ForecastPage() {
         footer={showForecastAttribution && forecast?.source && forecastAttribution ? (
           <ProviderAttribution
             attributionText={forecastAttribution.attributionText}
+            textPrefix={forecastAttribution.textPrefix}
+            textProviderName={forecastAttribution.textProviderName}
             displayName={forecastAttribution.displayName}
             logoRequired={forecastAttribution.logoRequired}
             doNotUseLogo={forecastAttribution.doNotUseLogo}

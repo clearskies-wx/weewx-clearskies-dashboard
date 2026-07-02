@@ -39,6 +39,8 @@ const LOGO_ASSETS: Record<string, LogoAsset> = {
 
 interface ProviderAttributionProps {
   attributionText: string;
+  textPrefix: string;
+  textProviderName: string;
   displayName: string;
   logoRequired: boolean;
   doNotUseLogo: boolean;
@@ -56,6 +58,8 @@ const textStyle: React.CSSProperties = {
 
 export function ProviderAttribution({
   attributionText,
+  textPrefix,
+  textProviderName,
   displayName,
   doNotUseLogo,
   textTranslatable,
@@ -67,20 +71,24 @@ export function ProviderAttribution({
   const logoH = compact ? LOGO_HEIGHT_COMPACT : LOGO_HEIGHT;
   const footerPad = compact ? '0.1875rem var(--card-pad)' : '0.625rem var(--card-pad)';
   const marginLeft = compact ? 6 : 8;
-  const renderedText = textTranslatable ? t(`attribution.${providerId}`, attributionText) : attributionText;
+
+  const resolvedPrefix = textTranslatable
+    ? t(`attribution.${providerId}.prefix`, textPrefix)
+    : textPrefix;
+  const resolvedName = textTranslatable
+    ? t(`attribution.${providerId}.name`, textProviderName)
+    : textProviderName;
 
   return (
     <CardFooter className={ATTRIBUTION_FOOTER_CLASS} style={{ padding: footerPad }}>
       {logoAsset ? (
         <>
-          <span style={textStyle}>
-            {renderedText.endsWith(displayName) ? renderedText.slice(0, -displayName.length).trimEnd() : renderedText}
-          </span>
+          {resolvedPrefix && <span style={textStyle}>{resolvedPrefix}</span>}
           <img
             src={`/providers/${providerId}.${logoAsset.ext}`}
-            alt={displayName}
+            alt={attributionText}
             className={logoAsset.hasDarkVariant ? 'dark:hidden' : undefined}
-            style={{ height: logoH, width: 'auto', marginLeft }}
+            style={{ height: logoH, width: 'auto', marginLeft: resolvedPrefix ? marginLeft : 0 }}
             onError={(e) => {
               e.currentTarget.style.display = 'none';
             }}
@@ -88,9 +96,9 @@ export function ProviderAttribution({
           {logoAsset.hasDarkVariant && (
             <img
               src={`/providers/${providerId}-dark.${logoAsset.ext}`}
-              alt={displayName}
+              alt={attributionText}
               className="hidden dark:block"
-              style={{ height: logoH, width: 'auto', marginLeft }}
+              style={{ height: logoH, width: 'auto', marginLeft: resolvedPrefix ? marginLeft : 0 }}
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
               }}
@@ -98,7 +106,9 @@ export function ProviderAttribution({
           )}
         </>
       ) : (
-        <span style={textStyle}>{renderedText}</span>
+        <span style={textStyle}>
+          {resolvedPrefix}{resolvedPrefix ? ' ' : ''}{resolvedName}
+        </span>
       )}
     </CardFooter>
   );

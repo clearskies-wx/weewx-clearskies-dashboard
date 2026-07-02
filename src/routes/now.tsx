@@ -239,6 +239,8 @@ export function NowPage() {
                 footer={attribution ? (
                   <ProviderAttribution
                     attributionText={attribution.attributionText}
+                    textPrefix={attribution.textPrefix}
+                    textProviderName={attribution.textProviderName}
                     displayName={attribution.displayName}
                     logoRequired={attribution.logoRequired}
                     doNotUseLogo={attribution.doNotUseLogo}
