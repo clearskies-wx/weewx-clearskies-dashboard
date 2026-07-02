@@ -172,7 +172,7 @@ function formatDelta(delta: number | null): string | null {
  * Format a UTC ISO date string as a short local date for a column header,
  * e.g. "Jun 3". Falls back to "Today" when formatting fails.
  */
-function formatShortDate(iso: string, _tz: string, locale: string): string {
+function formatShortDate(iso: string, _tz: string, locale: string, todayFallback: string): string {
   try {
     // Date-only strings (YYYY-MM-DD) are parsed as midnight UTC by Date().
     // Formatting with a negative-offset timezone shifts the date backward
@@ -185,7 +185,7 @@ function formatShortDate(iso: string, _tz: string, locale: string): string {
       timeZone: 'UTC',
     }).format(d);
   } catch {
-    return 'Today';
+    return todayFallback;
   }
 }
 
@@ -193,10 +193,10 @@ function formatShortDate(iso: string, _tz: string, locale: string): string {
  * Compact time formatter for SVG labels — "5:24 AM" (no zone suffix, smaller).
  * Uses Intl directly to avoid the full timezone abbreviation from formatLocalTime.
  */
-function fmtCompact(iso: string | null, tz: string): string {
+function fmtCompact(iso: string | null, tz: string, locale: string): string {
   if (!iso) return '—';
   try {
-    const parts = new Intl.DateTimeFormat('en-US', {
+    const parts = new Intl.DateTimeFormat(locale, {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
@@ -280,6 +280,8 @@ interface ArcPanelProps {
 }
 
 function ArcPanel({ almanac, positions, moonNames, tz }: ArcPanelProps) {
+  const { i18n } = useTranslation();
+  const locale = i18n.language;
   const isMobile = useIsMobile();
   const [nowMs, setNowMs] = useState(Date.now());
   useEffect(() => {
@@ -306,10 +308,10 @@ function ArcPanel({ almanac, positions, moonNames, tz }: ArcPanelProps) {
     illumination !== null ? `${Math.round(illumination)}%` : '—';
 
   // Arc labels use transit-paired values from arcAlmanac (via useSmartAlmanac).
-  const sunriseText = fmtCompact(almanac.sun.rise, tz);
-  const sunsetText = fmtCompact(almanac.sun.set, tz);
-  const moonriseText = fmtCompact(almanac.moon.rise, tz);
-  const moonsetText = fmtCompact(almanac.moon.set, tz);
+  const sunriseText = fmtCompact(almanac.sun.rise, tz, locale);
+  const sunsetText = fmtCompact(almanac.sun.set, tz, locale);
+  const moonriseText = fmtCompact(almanac.moon.rise, tz, locale);
+  const moonsetText = fmtCompact(almanac.moon.set, tz, locale);
 
   // Sun/moon altitude from live positions (polled every 60s), not static daily snapshot
   const sunAlt = positions?.sun.altitude ?? null;
@@ -686,10 +688,10 @@ interface SunPanelProps {
   locale: string;
 }
 
-function fmtTime(iso: string | null, tz: string): string {
+function fmtTime(iso: string | null, tz: string, locale: string): string {
   if (!iso) return '—';
   try {
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat(locale, {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
@@ -701,8 +703,9 @@ function fmtTime(iso: string | null, tz: string): string {
 }
 
 function SunPanel({ almanac, tomorrow, positions, tz, locale }: SunPanelProps) {
-  const todayLabel = formatShortDate(almanac.date, tz, locale);
-  const tomorrowLabel = tomorrow ? formatShortDate(tomorrow.date, tz, locale) : null;
+  const { t } = useTranslation('almanac');
+  const todayLabel = formatShortDate(almanac.date, tz, locale, t('today'));
+  const tomorrowLabel = tomorrow ? formatShortDate(tomorrow.date, tz, locale, t('today')) : null;
   const hasTomorrow = tomorrow !== null;
 
   const daylightText = formatDaylight(almanac.sun.daylightMinutes);
@@ -764,28 +767,28 @@ function SunPanel({ almanac, tomorrow, positions, tz, locale }: SunPanelProps) {
         <tbody>
           <tr>
             <td style={labelStyle}>Sunrise</td>
-            <td style={valueStyle}>{fmtTime(almanac.sun.rise, tz)}</td>
-            {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.sun.rise, tz)}</td>}
+            <td style={valueStyle}>{fmtTime(almanac.sun.rise, tz, locale)}</td>
+            {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.sun.rise, tz, locale)}</td>}
           </tr>
           <tr>
             <td style={labelStyle}>Sunset</td>
-            <td style={valueStyle}>{fmtTime(almanac.sun.set, tz)}</td>
-            {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.sun.set, tz)}</td>}
+            <td style={valueStyle}>{fmtTime(almanac.sun.set, tz, locale)}</td>
+            {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.sun.set, tz, locale)}</td>}
           </tr>
           <tr>
             <td style={labelStyle}>Civil Dawn</td>
-            <td style={valueStyle}>{fmtTime(almanac.sun.civilTwilightDawn, tz)}</td>
-            {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.sun.civilTwilightDawn, tz)}</td>}
+            <td style={valueStyle}>{fmtTime(almanac.sun.civilTwilightDawn, tz, locale)}</td>
+            {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.sun.civilTwilightDawn, tz, locale)}</td>}
           </tr>
           <tr>
             <td style={labelStyle}>Civil Dusk</td>
-            <td style={valueStyle}>{fmtTime(almanac.sun.civilTwilightDusk, tz)}</td>
-            {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.sun.civilTwilightDusk, tz)}</td>}
+            <td style={valueStyle}>{fmtTime(almanac.sun.civilTwilightDusk, tz, locale)}</td>
+            {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.sun.civilTwilightDusk, tz, locale)}</td>}
           </tr>
           <tr>
             <td style={labelStyle}>Solar Noon</td>
-            <td style={valueStyle}>{fmtTime(almanac.sun.transit, tz)}</td>
-            {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.sun.transit, tz)}</td>}
+            <td style={valueStyle}>{fmtTime(almanac.sun.transit, tz, locale)}</td>
+            {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.sun.transit, tz, locale)}</td>}
           </tr>
           <tr>
             <td style={labelStyle}>Daylight</td>
@@ -835,8 +838,9 @@ interface MoonPanelProps {
 }
 
 function MoonPanel({ almanac, tomorrow, positions, tz, locale }: MoonPanelProps) {
-  const todayLabel = formatShortDate(almanac.date, tz, locale);
-  const tomorrowLabel = tomorrow ? formatShortDate(tomorrow.date, tz, locale) : null;
+  const { t } = useTranslation('almanac');
+  const todayLabel = formatShortDate(almanac.date, tz, locale, t('today'));
+  const tomorrowLabel = tomorrow ? formatShortDate(tomorrow.date, tz, locale, t('today')) : null;
   const hasTomorrow = tomorrow !== null;
 
   const phaseName = formatPhaseName(almanac.moon.phaseName);
@@ -915,13 +919,13 @@ function MoonPanel({ almanac, tomorrow, positions, tz, locale }: MoonPanelProps)
           </tr>
           <tr>
             <td style={labelStyle}>Moonrise</td>
-            <td style={valueStyle}>{fmtTime(almanac.moon.rise, tz)}</td>
-            {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.moon.rise, tz)}</td>}
+            <td style={valueStyle}>{fmtTime(almanac.moon.rise, tz, locale)}</td>
+            {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.moon.rise, tz, locale)}</td>}
           </tr>
           <tr>
             <td style={labelStyle}>Moonset</td>
-            <td style={valueStyle}>{fmtTime(almanac.moon.set, tz)}</td>
-            {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.moon.set, tz)}</td>}
+            <td style={valueStyle}>{fmtTime(almanac.moon.set, tz, locale)}</td>
+            {hasTomorrow && <td style={valueStyle}>{fmtTime(tomorrow.moon.set, tz, locale)}</td>}
           </tr>
           <tr>
             <td style={labelStyle}>Full Moon</td>

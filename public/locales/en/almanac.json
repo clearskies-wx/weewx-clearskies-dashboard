@@ -4,6 +4,15 @@
   "loading": "Loading almanac data…",
   "error": "Unable to load almanac data",
   "noData": "No almanac data available.",
+  "today": "Today",
+
+  "moonNames": {
+    "harvestMoon": "Harvest Moon",
+    "huntersMoon": "Hunter's Moon",
+    "blueMoon": "Blue Moon",
+    "supermoon": "Supermoon",
+    "traditionalNameSuffix": "{{name}} Moon"
+  },
 
   "sun": {
     "title": "Sun",
@@ -74,7 +83,14 @@
     "peakNight": "Peak Night",
     "rate": "Rate",
     "rateValue": "Up to {{zhr}} meteors/hr",
-    "visibility": "Visibility"
+    "visibility": "Visibility",
+    "peak": "Peak",
+    "peakPeriod": "Peak period",
+    "qualityExcellent": "Excellent",
+    "qualityGood": "Good",
+    "qualityFair": "Fair",
+    "qualityPoor": "Poor",
+    "qualityNotVisible": "Not Visible"
   },
 
   "climatology": {
@@ -89,7 +105,16 @@
       "avgRainfall": "Avg Monthly Rain Total"
     },
     "yAxisTemp": "Average Temperature (°F)",
-    "yAxisRain": "Avg Monthly Rain (in)"
+    "yAxisRain": "Avg Monthly Rain (in)",
+    "tableAriaLabel": "Average climatological values by month",
+    "chartAriaLabel": "Average monthly high, low, dewpoint, and rainfall chart",
+    "table": {
+      "month": "Month",
+      "avgHigh": "Average High",
+      "avgLow": "Average Low",
+      "avgDewpoint": "Average Dewpoint",
+      "avgRainfall": "Average Rainfall"
+    }
   },
 
   "solarEclipses": {
@@ -128,6 +153,17 @@
     "notVisible": "Not Visible",
     "descTotal": "Total lunar eclipse. The entire Moon will pass through Earth's umbra.",
     "descPartial": "Partial lunar eclipse. Part of the Moon will pass through Earth's umbra.",
-    "descPenumbral": "Penumbral lunar eclipse. A subtle dimming as the Moon passes through Earth's penumbra."
+    "descPenumbral": "Penumbral lunar eclipse. A subtle dimming as the Moon passes through Earth's penumbra.",
+    "typeTotal": "Total",
+    "typePartial": "Partial",
+    "typePenumbral": "Penumbral",
+    "modalTitleTotal": "Total Lunar Eclipse",
+    "modalTitlePartial": "Partial Lunar Eclipse",
+    "modalTitlePenumbral": "Penumbral Lunar Eclipse",
+    "closeModal": "Close eclipse type description",
+    "imageAlt": "{{type}} lunar eclipse",
+    "typeBadgeAriaLabel": "{{type}} — learn more about this eclipse type",
+    "timeRangeAriaLabel": "Eclipse time range: {{range}}",
+    "visibilityAriaLabel": "Visibility: {{label}}"
   }
 }

@@ -53,5 +53,20 @@
   "yearlyPrecip": "Precipitation",
   "yearlyWind": "Wind Speed",
   "noReportSelected": "Select a year and month to view a report.",
-  "tableCaption": "NOAA climate report for {{period}}"
+  "tableCaption": "NOAA climate report for {{period}}",
+  "csvHeaders": {
+    "day": "Day",
+    "meanTemp": "Mean Temp",
+    "highTemp": "High Temp",
+    "highTempTime": "High Time",
+    "lowTemp": "Low Temp",
+    "lowTempTime": "Low Time",
+    "heatDegDays": "Heat Deg Days",
+    "coolDegDays": "Cool Deg Days",
+    "rain": "Rain",
+    "avgWindSpeed": "Avg Wind Speed",
+    "highWindSpeed": "High Wind Speed",
+    "highWindTime": "High Wind Time",
+    "domWindDir": "Dom Wind Dir"
+  }
 }

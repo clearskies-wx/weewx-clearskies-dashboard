@@ -69,35 +69,35 @@ interface VisibilityStyle {
   textClass: string;
   /** Raw CSS color for the Phosphor icon fill (currentColor won't cross themed Tailwind boundaries) */
   iconColor: string;
-  /** Aria-label suffix for screen readers — matches label text, so this is the label */
-  label: string;
+  /** i18n key (within the 'almanac' namespace) for the translated label */
+  labelKey: string;
 }
 
 const VISIBILITY_STYLE: Record<LunarVisibility, VisibilityStyle> = {
   'Visible All Night': {
     textClass: 'text-green-600 dark:text-green-400',
     iconColor: '#22c55e',
-    label: 'Visible All Night',
+    labelKey: 'lunarEclipses.visibleAllNight',
   },
   'Mostly Visible': {
     textClass: 'text-lime-700 dark:text-lime-400',
     iconColor: '#84cc16',
-    label: 'Mostly Visible',
+    labelKey: 'lunarEclipses.mostlyVisible',
   },
   'Low in Sky': {
     textClass: 'text-amber-700 dark:text-amber-400',
     iconColor: '#eab308',
-    label: 'Low in Sky',
+    labelKey: 'lunarEclipses.lowInSky',
   },
   'Barely Visible': {
     textClass: 'text-orange-700 dark:text-orange-400',
     iconColor: '#f97316',
-    label: 'Barely Visible',
+    labelKey: 'lunarEclipses.barelyVisible',
   },
   'Not Visible': {
     textClass: 'text-muted-foreground',
     iconColor: 'currentColor',
-    label: 'Not Visible',
+    labelKey: 'lunarEclipses.notVisible',
   },
 };
 
@@ -127,10 +127,11 @@ const TYPE_BADGE_CLASS: Record<LunarEclipseType, string> = {
     'bg-zinc-100 text-zinc-600 dark:bg-zinc-800/40 dark:text-zinc-400',
 };
 
-const TYPE_LABEL: Record<LunarEclipseType, string> = {
-  total: 'Total',
-  partial: 'Partial',
-  penumbral: 'Penumbral',
+/** i18n keys (within the 'almanac' namespace) for the short type badge labels. */
+const TYPE_LABEL_KEY: Record<LunarEclipseType, string> = {
+  total: 'lunarEclipses.typeTotal',
+  partial: 'lunarEclipses.typePartial',
+  penumbral: 'lunarEclipses.typePenumbral',
 };
 
 // ---------------------------------------------------------------------------
@@ -147,26 +148,17 @@ const TYPE_IMAGE: Record<LunarEclipseType, string> = {
 // Modal content per type
 // ---------------------------------------------------------------------------
 
-interface ModalContent {
-  title: string;
-  description: string;
+interface ModalContentKeys {
+  titleKey: string;
+  descriptionKey: string;
 }
 
-const MODAL_CONTENT: Record<LunarEclipseType, ModalContent> = {
-  total: {
-    title: 'Total Lunar Eclipse',
-    description:
-      "The Moon passes completely through Earth's umbra, often turning deep red — a Blood Moon.",
-  },
-  partial: {
-    title: 'Partial Lunar Eclipse',
-    description: "Only a portion of the Moon enters Earth's umbra.",
-  },
-  penumbral: {
-    title: 'Penumbral Lunar Eclipse',
-    description:
-      "The Moon passes through Earth's penumbra. A subtle dimming difficult to notice.",
-  },
+/** i18n keys — descriptionKey reuses the same lunarEclipses.desc* keys the
+ *  per-column description text uses, so the modal and column stay in sync. */
+const MODAL_CONTENT_KEY: Record<LunarEclipseType, ModalContentKeys> = {
+  total: { titleKey: 'lunarEclipses.modalTitleTotal', descriptionKey: 'lunarEclipses.descTotal' },
+  partial: { titleKey: 'lunarEclipses.modalTitlePartial', descriptionKey: 'lunarEclipses.descPartial' },
+  penumbral: { titleKey: 'lunarEclipses.modalTitlePenumbral', descriptionKey: 'lunarEclipses.descPenumbral' },
 };
 
 // ---------------------------------------------------------------------------
@@ -257,7 +249,10 @@ interface EclipseTypeModalProps {
 }
 
 function EclipseTypeModal({ type, onClose }: EclipseTypeModalProps) {
-  const content = MODAL_CONTENT[type];
+  const { t } = useTranslation('almanac');
+  const contentKeys = MODAL_CONTENT_KEY[type];
+  const title = t(contentKeys.titleKey);
+  const description = t(contentKeys.descriptionKey);
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -325,7 +320,7 @@ function EclipseTypeModal({ type, onClose }: EclipseTypeModalProps) {
         <button
           ref={closeButtonRef}
           type="button"
-          aria-label="Close eclipse type description"
+          aria-label={t('lunarEclipses.closeModal')}
           onClick={onClose}
           className="absolute top-3 right-3 text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded p-0.5"
         >
@@ -347,10 +342,10 @@ function EclipseTypeModal({ type, onClose }: EclipseTypeModalProps) {
           className="text-base font-semibold mb-2"
           style={{ color: TYPE_BADGE_CLASS[type].includes('red') ? '#ef4444' : undefined }}
         >
-          {content.title}
+          {title}
         </h3>
         <p className="text-muted-foreground leading-relaxed" style={{ fontSize: 'var(--text-body)' }}>
-          {content.description}
+          {description}
         </p>
       </div>
     </div>
@@ -368,14 +363,15 @@ interface EclipseColumnProps {
 }
 
 function EclipseColumn({ eclipse, stationTz, locale }: EclipseColumnProps) {
+  const { t } = useTranslation('almanac');
   const [modalOpen, setModalOpen] = useState(false);
   const badgeButtonRef = useRef<HTMLButtonElement>(null);
 
   const type = eclipse.type as LunarEclipseType;
   const badgeClass = TYPE_BADGE_CLASS[type];
-  const typeLabel = TYPE_LABEL[type];
+  const typeLabel = t(TYPE_LABEL_KEY[type]);
   const imageSrc = TYPE_IMAGE[type];
-  const imageAlt = `${typeLabel} lunar eclipse`;
+  const imageAlt = t('lunarEclipses.imageAlt', { type: typeLabel });
 
   // Time range — extracted from contactTimes; shown when at least one timestamp exists.
   const { start, end } = extractTimeRange(eclipse);
@@ -402,13 +398,9 @@ function EclipseColumn({ eclipse, stationTz, locale }: EclipseColumnProps) {
     setTimeout(() => badgeButtonRef.current?.focus(), 0);
   }
 
-  // Description text per type — matches the mockup wording.
-  const descriptionMap: Record<LunarEclipseType, string> = {
-    total: "Total lunar eclipse. The entire Moon will pass through Earth's umbra.",
-    partial: "Partial lunar eclipse. Part of the Moon will pass through Earth's umbra.",
-    penumbral:
-      "Penumbral lunar eclipse. A subtle dimming as the Moon passes through Earth's penumbra.",
-  };
+  // Description text per type — reuses the same lunarEclipses.desc* keys as
+  // the type-badge modal (MODAL_CONTENT_KEY) so the two surfaces stay in sync.
+  const description = t(MODAL_CONTENT_KEY[type].descriptionKey);
 
   return (
     <div className="flex flex-col items-center gap-1.5 flex-1 min-w-[200px]">
@@ -440,7 +432,7 @@ function EclipseColumn({ eclipse, stationTz, locale }: EclipseColumnProps) {
           type="button"
           onClick={() => setModalOpen(true)}
           aria-haspopup="dialog"
-          aria-label={`${typeLabel} — learn more about this eclipse type`}
+          aria-label={t('lunarEclipses.typeBadgeAriaLabel', { type: typeLabel })}
           style={{ fontSize: 'var(--text-label)' }}
           className={`
             inline-flex items-center shrink-0 px-2.5 py-0.5 rounded-full
@@ -474,7 +466,7 @@ function EclipseColumn({ eclipse, stationTz, locale }: EclipseColumnProps) {
             fontSize: 'var(--text-secondary, 0.85rem)',
             fontFamily: 'var(--font-display, system-ui)',
           }}
-          aria-label={`Eclipse time range: ${timeRangeText}`}
+          aria-label={t('lunarEclipses.timeRangeAriaLabel', { range: timeRangeText })}
         >
           {timeRangeText}
         </span>
@@ -486,28 +478,31 @@ function EclipseColumn({ eclipse, stationTz, locale }: EclipseColumnProps) {
         Icon is aria-hidden; label carries the information (WCAG 1.4.1).
         Uses Phosphor Eye icon (matching SolarEclipseCard).
       */}
-      {visibility && visStyle && (
-        <div
-          className={`flex items-center justify-center gap-1.5 w-full font-semibold ${visStyle.textClass}`}
-          style={{ fontSize: 'var(--text-secondary, 0.85rem)' }}
-          aria-label={`Visibility: ${visStyle.label}`}
-        >
-          <Eye
-            size={16}
-            weight="regular"
-            aria-hidden="true"
-            color={visStyle.iconColor}
-          />
-          <span>{visStyle.label}</span>
-        </div>
-      )}
+      {visibility && visStyle && (() => {
+        const visLabel = t(visStyle.labelKey);
+        return (
+          <div
+            className={`flex items-center justify-center gap-1.5 w-full font-semibold ${visStyle.textClass}`}
+            style={{ fontSize: 'var(--text-secondary, 0.85rem)' }}
+            aria-label={t('lunarEclipses.visibilityAriaLabel', { label: visLabel })}
+          >
+            <Eye
+              size={16}
+              weight="regular"
+              aria-hidden="true"
+              color={visStyle.iconColor}
+            />
+            <span>{visLabel}</span>
+          </div>
+        );
+      })()}
 
       {/* Description */}
       <p
         className="text-center text-muted-foreground leading-snug"
         style={{ fontSize: 'var(--text-secondary, 0.85rem)' }}
       >
-        {descriptionMap[type]}
+        {description}
       </p>
 
       {/* Modal — rendered via portal-like conditional; unmounts when closed */}

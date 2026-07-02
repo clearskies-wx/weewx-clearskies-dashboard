@@ -29,48 +29,51 @@ import { WindSymbol } from './WindSymbol';
 import { TempTrendLine } from './TempTrendLine';
 import { toWmoCode } from '../../utils/weather-code';
 import { addDays, isStationToday } from '../../utils/station-clock';
+import { formatNumber } from '../../utils/format-number';
 import type { DailyForecastPoint, UnitsBlock } from '../../api/types';
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
 
-function getDayName(validDate: string, stationDate?: string): string {
+type TFn = (key: string) => string;
+
+function getDayName(validDate: string, stationDate: string | undefined, t: TFn, locale: string): string {
   if (stationDate) {
-    if (isStationToday(validDate, stationDate)) return 'Today';
-    if (validDate === addDays(stationDate, 1)) return 'Tomorrow';
+    if (isStationToday(validDate, stationDate)) return t('today');
+    if (validDate === addDays(stationDate, 1)) return t('tabTomorrow');
   }
   // Parse as UTC noon to avoid DST/timezone date shifting
   const d = new Date(validDate + 'T12:00:00Z');
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(locale, {
     weekday: 'long',
     timeZone: 'UTC',
   }).format(d);
 }
 
-function getShortDayName(validDate: string, stationDate?: string): string {
+function getShortDayName(validDate: string, stationDate: string | undefined, t: TFn, locale: string): string {
   if (stationDate) {
-    if (isStationToday(validDate, stationDate)) return 'Today';
-    if (validDate === addDays(stationDate, 1)) return 'Tmrw';
+    if (isStationToday(validDate, stationDate)) return t('today');
+    if (validDate === addDays(stationDate, 1)) return t('tmrw');
   }
   const d = new Date(validDate + 'T12:00:00Z');
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(locale, {
     weekday: 'short',
     timeZone: 'UTC',
   }).format(d);
 }
 
-function getDateLabel(validDate: string): string {
+function getDateLabel(validDate: string, locale: string): string {
   const d = new Date(validDate + 'T12:00:00Z');
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(locale, {
     month: 'short',
     day: 'numeric',
     timeZone: 'UTC',
   }).format(d);
 }
 
-function formatSunTime(isoString: string | null, tz: string): string {
+function formatSunTime(isoString: string | null, tz: string, locale: string): string {
   if (!isoString) return '—';
   try {
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat(locale, {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
@@ -105,7 +108,8 @@ export function DailyColumns({
   units,
   stationDate,
 }: DailyColumnsProps) {
-  const { t } = useTranslation('forecast');
+  const { t, i18n } = useTranslation('forecast');
+  const locale = i18n.language;
   // Auto-select first column when expandable so users discover the detail panel.
   const [expandedIdx, setExpandedIdx] = useState<number | null>(expandable ? 0 : null);
 
@@ -171,10 +175,10 @@ export function DailyColumns({
         // expandable=false (now card): always short names (unchanged)
         // expandable=true (forecast page): short on mobile, full on desktop
         const dayName = expandable
-          ? getDayName(day.validDate, stationDate)
-          : getShortDayName(day.validDate, stationDate);
-        const shortDayName = expandable ? getShortDayName(day.validDate, stationDate) : null;
-        const dateLabel = expandable ? getDateLabel(day.validDate) : null;
+          ? getDayName(day.validDate, stationDate, t, locale)
+          : getShortDayName(day.validDate, stationDate, t, locale);
+        const shortDayName = expandable ? getShortDayName(day.validDate, stationDate, t, locale) : null;
+        const dateLabel = expandable ? getDateLabel(day.validDate, locale) : null;
 
         return (
           <div
@@ -418,7 +422,7 @@ export function DailyColumns({
                   opacity: 0.8,
                 }}
               >
-                {day.precipAmount.toFixed(2)} {precipSuffix}
+                {formatNumber(day.precipAmount, 2, locale)} {precipSuffix}
               </span>
             )}
             {/* Snow amount — only when > 0, with snowflake icon */}
@@ -435,7 +439,7 @@ export function DailyColumns({
                 }}
               >
                 <Snowflake aria-hidden="true" size={7} />
-                {day.snowAmount.toFixed(1)} {snowSuffix}
+                {formatNumber(day.snowAmount, 1, locale)} {snowSuffix}
               </span>
             )}
           </div>
@@ -479,10 +483,10 @@ export function DailyColumns({
   // ── Expansion detail panel ───────────────────────────────────────────────
   const detailPanel = expandable && expandedIdx !== null ? (() => {
     const day = days[expandedIdx];
-    const dayName = getDayName(day.validDate, stationDate);
-    const dateLabel = getDateLabel(day.validDate);
-    const sunrise = formatSunTime(day.sunrise, stationTz);
-    const sunset = formatSunTime(day.sunset, stationTz);
+    const dayName = getDayName(day.validDate, stationDate, t, locale);
+    const dateLabel = getDateLabel(day.validDate, locale);
+    const sunrise = formatSunTime(day.sunrise, stationTz, locale);
+    const sunset = formatSunTime(day.sunset, stationTz, locale);
 
     const selLeft = `${(expandedIdx / N) * 100}%`;
     const selRight = `${((expandedIdx + 1) / N) * 100}%`;

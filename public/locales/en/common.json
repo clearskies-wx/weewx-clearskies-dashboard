@@ -5,8 +5,23 @@
   "noData": "No data available",
   "skipToContent": "Skip to main content",
   "pageNotFound": "Page not found.",
+  "backToNow": "Back to Now",
   "customPageLoading": "Loading page...",
   "customPageNoContent": "This page has no content yet.",
+  "notFound": {
+    "puns": [
+      "Looks like this page has blown away.",
+      "This page is lost in the fog.",
+      "We couldn't find that page — it must have evaporated.",
+      "This forecast calls for a 404.",
+      "Partly cloudy with a chance of missing pages.",
+      "This page has drifted off like a weather balloon.",
+      "No data at this station.",
+      "This page is under a blanket of snow… somewhere.",
+      "The barometer reads: page not found.",
+      "Looks like this page went the way of yesterday's weather."
+    ]
+  },
   "setup": {
     "startingUp": "Clear Skies is starting up...",
     "apiNotResponding": "The weather station API is not responding yet. It may still be initialising."

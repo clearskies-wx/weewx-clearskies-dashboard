@@ -46,6 +46,18 @@ function viewingQualityClass(quality: MeteorShowerEntry['viewingQuality']): stri
   }
 }
 
+/** i18n key (within the 'almanac' namespace) for the API's English viewingQuality enum. */
+function viewingQualityLabelKey(quality: MeteorShowerEntry['viewingQuality']): string | null {
+  switch (quality) {
+    case 'Excellent':    return 'meteorShowers.qualityExcellent';
+    case 'Good':         return 'meteorShowers.qualityGood';
+    case 'Fair':         return 'meteorShowers.qualityFair';
+    case 'Poor':         return 'meteorShowers.qualityPoor';
+    case 'Not Visible':  return 'meteorShowers.qualityNotVisible';
+    default:             return null;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Date formatting
 // ---------------------------------------------------------------------------
@@ -57,11 +69,11 @@ function viewingQualityClass(quality: MeteorShowerEntry['viewingQuality']): stri
  * ADR-075 T3.8: stationTz is passed explicitly so the displayed date reflects
  * the station's local timezone rather than the browser's.
  */
-function formatShortDate(isoDate: string | null | undefined, stationTz: string): string {
+function formatShortDate(isoDate: string | null | undefined, stationTz: string, locale: string): string {
   if (!isoDate) return '—';
   try {
     const d = new Date(isoDate);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: stationTz });
+    return d.toLocaleDateString(locale, { month: 'short', day: 'numeric', timeZone: stationTz });
   } catch {
     return isoDate;
   }
@@ -73,11 +85,11 @@ function formatShortDate(isoDate: string | null | undefined, stationTz: string):
  *
  * ADR-075 T3.8: stationTz added for timezone-correct display.
  */
-function formatDateWithYear(isoDate: string | null | undefined, stationTz: string): string {
+function formatDateWithYear(isoDate: string | null | undefined, stationTz: string, locale: string): string {
   if (!isoDate) return '—';
   try {
     const d = new Date(isoDate);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: stationTz });
+    return d.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric', timeZone: stationTz });
   } catch {
     return isoDate;
   }
@@ -89,11 +101,11 @@ function formatDateWithYear(isoDate: string | null | undefined, stationTz: strin
  *
  * ADR-075 T3.8: stationTz threaded to all date formatters.
  */
-function formatActiveRange(shower: MeteorShowerEntry, stationTz: string): string {
+function formatActiveRange(shower: MeteorShowerEntry, stationTz: string, locale: string): string {
   if (shower.activeStart && shower.activeEnd) {
-    return `${formatShortDate(shower.activeStart, stationTz)} – ${formatShortDate(shower.activeEnd, stationTz)}`;
+    return `${formatShortDate(shower.activeStart, stationTz, locale)} – ${formatShortDate(shower.activeEnd, stationTz, locale)}`;
   }
-  return formatShortDate(shower.peakDate, stationTz);
+  return formatShortDate(shower.peakDate, stationTz, locale);
 }
 
 /**
@@ -102,17 +114,17 @@ function formatActiveRange(shower: MeteorShowerEntry, stationTz: string): string
  *
  * ADR-075 T3.8: stationTz added for timezone-correct date-part extraction.
  */
-function formatPeakNight(isoDate: string | null | undefined, stationTz: string): string {
+function formatPeakNight(isoDate: string | null | undefined, stationTz: string, locale: string): string {
   if (!isoDate) return '—';
   try {
     const peak = new Date(isoDate);
     const nextDay = new Date(peak);
     nextDay.setDate(peak.getDate() + 1);
-    const month = peak.toLocaleDateString('en-US', { month: 'short', timeZone: stationTz });
+    const month = peak.toLocaleDateString(locale, { month: 'short', timeZone: stationTz });
     // Extract numeric day and year in station timezone.
-    const dtfDay  = new Intl.DateTimeFormat('en-US', { day: 'numeric', timeZone: stationTz });
-    const dtfYear = new Intl.DateTimeFormat('en-US', { year: 'numeric', timeZone: stationTz });
-    const dtfMon  = new Intl.DateTimeFormat('en-US', { month: 'numeric', timeZone: stationTz });
+    const dtfDay  = new Intl.DateTimeFormat(locale, { day: 'numeric', timeZone: stationTz });
+    const dtfYear = new Intl.DateTimeFormat(locale, { year: 'numeric', timeZone: stationTz });
+    const dtfMon  = new Intl.DateTimeFormat(locale, { month: 'numeric', timeZone: stationTz });
     const day1 = parseInt(dtfDay.format(peak), 10);
     const day2 = parseInt(dtfDay.format(nextDay), 10);
     const year = parseInt(dtfYear.format(peak), 10);
@@ -123,9 +135,9 @@ function formatPeakNight(isoDate: string | null | undefined, stationTz: string):
     if (mon1 === mon2) {
       return `${month} ${day1} – ${day2}, ${year}`;
     }
-    return `${formatDateWithYear(isoDate, stationTz)} – ${formatShortDate(nextDay.toISOString(), stationTz)}`;
+    return `${formatDateWithYear(isoDate, stationTz, locale)} – ${formatShortDate(nextDay.toISOString(), stationTz, locale)}`;
   } catch {
-    return formatDateWithYear(isoDate, stationTz);
+    return formatDateWithYear(isoDate, stationTz, locale);
   }
 }
 
@@ -196,11 +208,15 @@ interface ShowerColumnProps {
 }
 
 function ShowerColumn({ shower, stationTz }: ShowerColumnProps) {
+  const { t, i18n } = useTranslation('almanac');
+  const locale = i18n.language;
   const qClass = viewingQualityClass(shower.viewingQuality ?? null);
   const isNotVisible = shower.viewingQuality === 'Not Visible';
   const imageSrc = shower.image
     ? `/images/meteors/${shower.image}`
     : null;
+  const qualityKey = viewingQualityLabelKey(shower.viewingQuality ?? null);
+  const qualityLabel = qualityKey ? t(qualityKey) : '—';
 
   return (
     /*
@@ -222,16 +238,16 @@ function ShowerColumn({ shower, stationTz }: ShowerColumnProps) {
             {shower.name}
           </span>
           <span className="text-[0.75rem] text-muted-foreground leading-tight mt-0.5">
-            {formatActiveRange(shower, stationTz)}
+            {formatActiveRange(shower, stationTz, locale)}
           </span>
         </div>
         {/* Red "Peak" pill badge — matches .peak-badge in mockup */}
         <span
           className="flex-shrink-0 px-[0.4rem] py-[0.1rem] rounded-full text-[0.7rem] font-bold uppercase"
           style={{ background: 'rgba(239,68,68,0.18)', color: '#ef4444' }}
-          aria-label="Peak period"
+          aria-label={t('meteorShowers.peakPeriod')}
         >
-          Peak
+          {t('meteorShowers.peak')}
         </span>
       </div>
 
@@ -264,13 +280,13 @@ function ShowerColumn({ shower, stationTz }: ShowerColumnProps) {
         <CalendarIcon className="flex-shrink-0 text-muted-foreground" />
         <div className="flex flex-col gap-0 leading-none">
           <span className="text-[0.7rem] uppercase tracking-wide text-muted-foreground font-semibold leading-[1.2]">
-            Peak Night
+            {t('meteorShowers.peakNight')}
           </span>
           <span
             className="text-[0.75rem] font-semibold leading-[1.3]"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            {formatPeakNight(shower.peakDate, stationTz)}
+            {formatPeakNight(shower.peakDate, stationTz, locale)}
           </span>
         </div>
       </div>
@@ -280,14 +296,14 @@ function ShowerColumn({ shower, stationTz }: ShowerColumnProps) {
         <ShootingStarIcon className="flex-shrink-0 text-muted-foreground" />
         <div className="flex flex-col gap-0 leading-none">
           <span className="text-[0.7rem] uppercase tracking-wide text-muted-foreground font-semibold leading-[1.2]">
-            Rate
+            {t('meteorShowers.rate')}
           </span>
           <span
             className="text-[0.75rem] font-semibold leading-[1.3]"
             style={{ fontFamily: 'var(--font-display)' }}
           >
             {shower.zhr !== null && shower.zhr !== undefined
-              ? `Up to ${shower.zhr} meteors/hr`
+              ? t('meteorShowers.rateValue', { zhr: shower.zhr })
               : '—'}
           </span>
         </div>
@@ -306,13 +322,13 @@ function ShowerColumn({ shower, stationTz }: ShowerColumnProps) {
         }
         <div className="flex flex-col gap-0 leading-none">
           <span className="text-[0.7rem] uppercase tracking-wide text-muted-foreground font-semibold leading-[1.2]">
-            Visibility
+            {t('meteorShowers.visibility')}
           </span>
           <span
             className={`text-[0.75rem] font-semibold leading-[1.3] ${qClass}`}
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            {shower.viewingQuality ?? '—'}
+            {qualityLabel}
           </span>
         </div>
       </div>

@@ -312,13 +312,13 @@ function getScaleConfig(aqiScale: AQIScale): AQIScaleConfig {
 // widely understood AQI range.
 // ---------------------------------------------------------------------------
 
-export function aqiCategoryLabel(aqi: number): string {
-  if (aqi <= 50)  return 'Good';
-  if (aqi <= 100) return 'Moderate';
-  if (aqi <= 150) return 'Unhealthy for Sensitive Groups';
-  if (aqi <= 200) return 'Unhealthy';
-  if (aqi <= 300) return 'Very Unhealthy';
-  return 'Hazardous';
+export function aqiCategoryLabel(aqi: number, t: (key: string) => string): string {
+  if (aqi <= 50)  return t('aqi.good');
+  if (aqi <= 100) return t('aqi.moderate');
+  if (aqi <= 150) return t('aqi.unhealthySensitive');
+  if (aqi <= 200) return t('aqi.unhealthy');
+  if (aqi <= 300) return t('aqi.veryUnhealthy');
+  return t('aqi.hazardous');
 }
 
 // ---------------------------------------------------------------------------

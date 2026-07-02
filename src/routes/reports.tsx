@@ -55,12 +55,24 @@ function csvRow(cells: (string | number | null)[]): string {
 /**
  * Build CSV text from a parsed monthly report.
  * Includes a header row, one data row per day, and the summary row if present.
+ *
+ * i18n decision: CSV headers ARE translated (not left English-only for
+ * "data interoperability") for consistency with every other export in the
+ * dashboard (chart CSV export in ConfigDrivenGroup already translates its
+ * headers — see T2.2). The exported file's decimal separator and numeric
+ * formatting still come from formatValue()/Intl, which are already
+ * locale-aware, so a translated header row does not introduce a new
+ * machine-readability inconsistency — the whole file is locale-flavored
+ * either way. Column order and CSV structure are unchanged, so re-import
+ * tooling keyed on column position (not header text) is unaffected.
  */
-function buildMonthlyCsv(parsed: ParsedMonthlyReport): string {
+function buildMonthlyCsv(parsed: ParsedMonthlyReport, t: (key: string) => string): string {
   const header = csvRow([
-    'Day', 'Mean Temp', 'High Temp', 'High Time', 'Low Temp', 'Low Time',
-    'Heat Deg Days', 'Cool Deg Days', 'Rain', 'Avg Wind Speed',
-    'High Wind Speed', 'High Wind Time', 'Dom Wind Dir',
+    t('csvHeaders.day'), t('csvHeaders.meanTemp'), t('csvHeaders.highTemp'),
+    t('csvHeaders.highTempTime'), t('csvHeaders.lowTemp'), t('csvHeaders.lowTempTime'),
+    t('csvHeaders.heatDegDays'), t('csvHeaders.coolDegDays'), t('csvHeaders.rain'),
+    t('csvHeaders.avgWindSpeed'), t('csvHeaders.highWindSpeed'), t('csvHeaders.highWindTime'),
+    t('csvHeaders.domWindDir'),
   ]);
 
   const dataRows = parsed.rows.map((row) =>
@@ -87,7 +99,7 @@ function buildMonthlyCsv(parsed: ParsedMonthlyReport): string {
     const s = parsed.summary;
     lines.push(
       csvRow([
-        'Summary',
+        t('summary'),
         s.meanTemp,
         s.highTemp,
         s.highTempTime || '',
@@ -112,7 +124,7 @@ function buildMonthlyCsv(parsed: ParsedMonthlyReport): string {
  * Emits three sections (Temperature, Precipitation, Wind) separated by
  * a blank line and a section-header row.
  */
-function buildYearlyCsv(parsed: ParsedYearlyReport): string {
+function buildYearlyCsv(parsed: ParsedYearlyReport, t: (key: string) => string): string {
   function sectionCsv(label: string, table: YearlyTable): string {
     const sectionLines: string[] = [
       // Section label in the first cell, rest empty
@@ -121,17 +133,19 @@ function buildYearlyCsv(parsed: ParsedYearlyReport): string {
       ...table.rows.map((row) => csvRow(row)),
     ];
     if (table.summary) {
-      sectionLines.push(csvRow(['Summary', ...table.summary.slice(1)]));
+      sectionLines.push(csvRow([t('summary'), ...table.summary.slice(1)]));
     }
     return sectionLines.join('\n');
   }
 
+  // Section labels reuse the same yearlyTemp/yearlyPrecip/yearlyWind keys
+  // used for the on-screen section headings, so the CSV matches the visible UI.
   return [
-    sectionCsv('Temperature', parsed.temperature),
+    sectionCsv(t('yearlyTemp'), parsed.temperature),
     '',
-    sectionCsv('Precipitation', parsed.precipitation),
+    sectionCsv(t('yearlyPrecip'), parsed.precipitation),
     '',
-    sectionCsv('Wind', parsed.wind),
+    sectionCsv(t('yearlyWind'), parsed.wind),
   ].join('\n');
 }
 
@@ -934,12 +948,12 @@ export function ReportsPage() {
                           if (isAnnual) {
                             const parsed = parseYearlyReport(activeReport.rawText);
                             if (parsed) {
-                              triggerDownload(buildYearlyCsv(parsed), 'text/csv;charset=utf-8', csvFilename);
+                              triggerDownload(buildYearlyCsv(parsed, t), 'text/csv;charset=utf-8', csvFilename);
                             }
                           } else {
                             const parsed = parseMonthlyReport(activeReport.rawText);
                             if (parsed) {
-                              triggerDownload(buildMonthlyCsv(parsed), 'text/csv;charset=utf-8', csvFilename);
+                              triggerDownload(buildMonthlyCsv(parsed, t), 'text/csv;charset=utf-8', csvFilename);
                             }
                           }
                         }}

@@ -16,6 +16,7 @@
 //   Wind:    WindSymbol size=24 in threeHourWindows, size=20 in scroll
 
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Drop, Snowflake } from '@phosphor-icons/react';
 import { WeatherIcon } from '../weather-icon';
 import { WindSymbol } from './WindSymbol';
@@ -26,9 +27,9 @@ import type { HourlyForecastPoint, UnitsBlock } from '../../api/types';
 
 // ── Time formatting ──────────────────────────────────────────────────────────
 
-function formatHourLabel(isoString: string, tz: string): string {
+function formatHourLabel(isoString: string, tz: string, locale: string): string {
   try {
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat(locale, {
       hour: 'numeric',
       hour12: true,
       timeZone: tz,
@@ -120,6 +121,7 @@ export function HourlyStrip({
   units,
   dailyForecasts,
 }: HourlyStripProps) {
+  const { t, i18n } = useTranslation('forecast');
   const tempSuffix = units?.outTemp ?? '°';
   const sunEvents = useMemo(() => buildSunEvents(dailyForecasts ?? []), [dailyForecasts]);
 
@@ -188,7 +190,7 @@ export function HourlyStrip({
           whiteSpace: 'nowrap',
         }}
       >
-        {formatHourLabel(hour.validTime, stationTz)}
+        {formatHourLabel(hour.validTime, stationTz, i18n.language)}
       </span>
     </div>
   ));
@@ -309,7 +311,7 @@ export function HourlyStrip({
 
   if (isScrollMode) {
     return (
-      <HorizontalScrollNav ariaLabel="Hourly forecast — scroll to see more">
+      <HorizontalScrollNav ariaLabel={t('ariaHourlyScroll')}>
         {tableContent}
       </HorizontalScrollNav>
     );
@@ -322,7 +324,7 @@ export function HourlyStrip({
   return (
     <div
       role="list"
-      aria-label="Hourly forecast"
+      aria-label={t('ariaHourlyList')}
       style={{
         display: 'flex',
         flexDirection: 'column',

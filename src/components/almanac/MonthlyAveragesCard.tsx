@@ -83,21 +83,28 @@ interface ChartRow {
   avgRainfall: number | null;
 }
 
-/** Month number strings "01"–"12" mapped to short month names. */
-const MONTH_LABELS: Record<string, string> = {
-  '01': 'Jan', '02': 'Feb', '03': 'Mar', '04': 'Apr',
-  '05': 'May', '06': 'Jun', '07': 'Jul', '08': 'Aug',
-  '09': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Dec',
-};
+/**
+ * Convert a month-number string "01"–"12" to a locale-correct short month
+ * name via Intl.DateTimeFormat. Falls back to the raw label for unrecognised
+ * input (e.g. non-numeric group-by labels from a differently-shaped response).
+ */
+function monthAbbrev(label: string, locale: string): string {
+  const monthNum = parseInt(label, 10);
+  if (isNaN(monthNum) || monthNum < 1 || monthNum > 12) return label;
+  // Date.UTC + timeZone: 'UTC' — a stable reference date for month-name
+  // generation, not a station timestamp (ADR-075 exception: label formatting).
+  const d = new Date(Date.UTC(2000, monthNum - 1, 15));
+  return new Intl.DateTimeFormat(locale, { month: 'short', timeZone: 'UTC' }).format(d);
+}
 
-function buildChartData(groupedData: GroupedArchiveData): ChartRow[] {
+function buildChartData(groupedData: GroupedArchiveData, locale: string): ChartRow[] {
   const avgHigh = groupedData.series['outTemp:avg:max'] ?? [];
   const avgLow  = groupedData.series['outTemp:avg:min'] ?? [];
   const avgDewp = groupedData.series['dewpoint:avg']    ?? [];
   const avgRain = groupedData.series['rain:avg:sum']    ?? [];
 
   return groupedData.labels.map((label, i) => ({
-    month: MONTH_LABELS[label] ?? label,
+    month: monthAbbrev(label, locale),
     avgHigh:    avgHigh[i] ?? null,
     avgLow:     avgLow[i]  ?? null,
     avgDewpoint: avgDewp[i] ?? null,
@@ -167,7 +174,7 @@ export function MonthlyAveragesCard({
   loading,
   error,
 }: MonthlyAveragesCardProps) {
-  const { t } = useTranslation('almanac');
+  const { t, i18n } = useTranslation('almanac');
   const { resolved: resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
   const isMobile = useIsMobile();
@@ -196,7 +203,7 @@ export function MonthlyAveragesCard({
     );
   }
 
-  const chartData = buildChartData(groupedData);
+  const chartData = buildChartData(groupedData, i18n.language);
 
   return (
     <Card footprint="full">

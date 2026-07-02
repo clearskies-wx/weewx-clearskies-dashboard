@@ -213,7 +213,7 @@ function TodaysHighlightsCardContent({
             {todayStats.peakAQI > 0 && (
               <StatItem
                 icon={<Leaf size={18} weight="regular" />}
-                value={`${formatValue(todayStats.peakAQI, 'uv')} ${aqiCategoryLabel(todayStats.peakAQI)}`}
+                value={`${formatValue(todayStats.peakAQI, 'uv')} ${aqiCategoryLabel(todayStats.peakAQI, t)}`}
                 microLabel={t('highlights.peakAqi')}
               />
             )}

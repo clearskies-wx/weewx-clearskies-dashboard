@@ -3,6 +3,7 @@
 // Otherwise it delegates to useApiQuery with the appropriate endpoint function.
 
 import { useMemo, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useApiQuery } from './useApiQuery';
 import { isMockMode, ApiError } from '../api/client';
 import {
@@ -873,7 +874,10 @@ export function useAlmanacPlanets(): HookResult<PlanetsVisible> {
 // useAlmanacMoonNames — /almanac/moon-names
 // ---------------------------------------------------------------------------
 
-function _toMoonNameData(cal: ApiMoonNamesCalendar): MoonNameData | null {
+function _toMoonNameData(
+  cal: ApiMoonNamesCalendar,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): MoonNameData | null {
   const now = Date.now();
   let closest: ApiSpecialMoonEntry | null = null;
   let closestDist = Infinity;
@@ -886,17 +890,20 @@ function _toMoonNameData(cal: ApiMoonNamesCalendar): MoonNameData | null {
   }
   if (!closest) return null;
   const designations: string[] = [];
-  if (closest.isHarvestMoon) designations.push('Harvest Moon');
-  if (closest.isHuntersMoon) designations.push("Hunter's Moon");
-  if (closest.isBlueMoon) designations.push('Blue Moon');
-  if (closest.isSupermoon) designations.push('Supermoon');
+  if (closest.isHarvestMoon) designations.push(t('moonNames.harvestMoon'));
+  if (closest.isHuntersMoon) designations.push(t('moonNames.huntersMoon'));
+  if (closest.isBlueMoon) designations.push(t('moonNames.blueMoon'));
+  if (closest.isSupermoon) designations.push(t('moonNames.supermoon'));
   return {
-    name: `${closest.traditionalName} Moon`,
+    // closest.traditionalName is API-sourced and already locale-resolved
+    // (rules/coding.md §6.2) — only the "Moon" suffix word needs translation.
+    name: t('moonNames.traditionalNameSuffix', { name: closest.traditionalName }),
     specialDesignations: designations,
   };
 }
 
 export function useAlmanacMoonNames(): HookResult<MoonNameData> {
+  const { t } = useTranslation('almanac');
   const { data, loading, error, refetch } = useApiQuery<{ data: ApiMoonNamesCalendar }>(
     (signal) => getAlmanacMoonNames(signal),
     { skip: isMockMode() },
@@ -906,7 +913,7 @@ export function useAlmanacMoonNames(): HookResult<MoonNameData> {
     return mockResult<MoonNameData>(mockMoonNames);
   }
 
-  const transformed = data?.data ? _toMoonNameData(data.data) : null;
+  const transformed = data?.data ? _toMoonNameData(data.data, t) : null;
 
   return {
     data: transformed,
