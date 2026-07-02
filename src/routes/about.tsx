@@ -14,24 +14,25 @@ import { useBranding } from '../lib/branding-provider';
 import { SCENE_ASSET_MAP } from '../components/background/scene-background-types';
 
 const PROVIDER_INFO: Record<string, { name: string; url: string }> = {
-  nws:            { name: 'US National Weather Service / NOAA',       url: 'https://www.weather.gov' },
-  aeris:          { name: 'Aeris Weather (DTN)',                      url: 'https://www.aerisweather.com' },
+  nws:            { name: 'National Weather Service / NOAA',          url: 'https://www.weather.gov' },
+  aeris:          { name: 'Xweather (Vaisala)',                       url: 'https://www.xweather.com' },
   openmeteo:      { name: 'Open-Meteo',                              url: 'https://open-meteo.com' },
-  openweathermap: { name: 'OpenWeatherMap',                          url: 'https://openweathermap.org' },
-  wunderground:   { name: 'Weather Underground (IBM)',                url: 'https://www.wunderground.com' },
+  owm:            { name: 'OpenWeatherMap',                           url: 'https://openweathermap.org' },
   iqair:          { name: 'IQAir',                                   url: 'https://www.iqair.com' },
-  usgs:           { name: 'US Geological Survey / US Dept. of the Interior', url: 'https://earthquake.usgs.gov' },
-  geonet:         { name: 'GeoNet (GNS Science, New Zealand)',       url: 'https://www.geonet.org.nz' },
-  emsc:           { name: 'European-Mediterranean Seismological Centre', url: 'https://www.emsc-csem.org' },
-  renass:         { name: 'Réseau National de Surveillance Sismique (France)', url: 'https://renass.unistra.fr' },
+  usgs:           { name: 'US Geological Survey',                    url: 'https://earthquake.usgs.gov' },
   seven_timer:    { name: '7Timer! Astronomical Seeing Forecast',    url: 'https://www.7timer.info' },
   rainviewer:     { name: 'RainViewer',                              url: 'https://www.rainviewer.com' },
-  iem_nexrad:     { name: 'Iowa Environmental Mesonet NEXRAD',       url: 'https://mesonet.agron.iastate.edu' },
-  noaa_mrms:      { name: 'NOAA Multi-Radar Multi-Sensor (MRMS)',    url: 'https://www.nssl.noaa.gov/projects/mrms/' },
-  msc_geomet:     { name: 'Meteorological Service of Canada GeoMet', url: 'https://eccc-msc.github.io/open-data/' },
-  dwd_radolan:    { name: 'Deutscher Wetterdienst RADOLAN',          url: 'https://www.dwd.de' },
+  librewxr:       { name: 'LibreWxR',                                url: 'https://librewxr.net/' },
   astronomyapi:   { name: 'Astronomy API',                          url: 'https://astronomyapi.com' },
 };
+
+const STATIC_PROVIDERS: Array<{ domain: string; name: string; url: string }> = [
+  { domain: 'baseMaps',     name: 'OpenStreetMap',                              url: 'https://www.openstreetmap.org/copyright' },
+  { domain: 'baseMaps',     name: 'CARTO',                                     url: 'https://carto.com/attributions' },
+  { domain: 'seismicData',  name: 'GEM Global Active Faults Database',         url: 'https://github.com/GEMScienceTools/gem-global-active-faults' },
+  { domain: 'astronomical', name: 'Skyfield + NASA JPL Ephemerides',           url: 'https://rhodesmill.org/skyfield/' },
+  { domain: 'astronomical', name: 'International Meteor Organization (IMO)',   url: 'https://www.imo.net' },
+];
 
 function formatLongDate(isoString: string | null, locale: string): string {
   if (!isoString) return '—';
@@ -240,6 +241,33 @@ export function AboutPage() {
                           <div key={id} className="text-foreground capitalize">{id}</div>
                         );
                       })}
+                    </dd>
+                  </div>
+                ))}
+                {Object.entries(
+                  STATIC_PROVIDERS.reduce<Record<string, typeof STATIC_PROVIDERS>>((acc, p) => {
+                    if (!acc[p.domain]) acc[p.domain] = [];
+                    acc[p.domain].push(p);
+                    return acc;
+                  }, {}),
+                ).map(([domain, providers]) => (
+                  <div key={domain}>
+                    <dt className="text-muted-foreground uppercase font-semibold" style={{ fontSize: 'var(--text-label)' }}>
+                      {t(`dataProviders.domain.${domain}`, { defaultValue: domain })}
+                    </dt>
+                    <dd className="mt-0.5 space-y-0.5">
+                      {providers.map(p => (
+                        <div key={p.name}>
+                          <a
+                            href={p.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-foreground hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                          >
+                            {p.name}
+                          </a>
+                        </div>
+                      ))}
                     </dd>
                   </div>
                 ))}

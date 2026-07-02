@@ -43,7 +43,10 @@
       "earthquakes": "Earthquakes",
       "radar": "Radar",
       "seeing": "Astronomical Seeing",
-      "almanac": "Astronomy"
+      "almanac": "Astronomy",
+      "baseMaps": "Base Maps",
+      "seismicData": "Seismic Data",
+      "astronomical": "Astronomical Reference"
     }
   },
   "photoCredits": {
