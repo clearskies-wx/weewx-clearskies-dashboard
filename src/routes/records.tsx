@@ -136,14 +136,14 @@ export function RecordsPage() {
     if (!stationClock) return '0';
     const nowMs = new Date(stationClock.time).getTime();
     const tzForCalc = stationClock.timezone;
-    const parts = new Intl.DateTimeFormat('en-US', {
+    const parts = new Intl.DateTimeFormat(locale, {
       timeZone: tzForCalc,
       hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
     }).formatToParts(new Date(stationClock.time));
     const get = (type: string) => parseInt(parts.find(p => p.type === type)?.value ?? '0', 10);
     const elapsed = get('hour') * 3600 + get('minute') * 60 + get('second');
     return String(Math.floor(nowMs / 1000) - elapsed);
-  }, [stationClock]);
+  }, [stationClock, locale]);
 
   const { data: todayArchive } = useArchive({ from: todayFromEpoch }, { skip: todayFromEpoch === '0' });
 

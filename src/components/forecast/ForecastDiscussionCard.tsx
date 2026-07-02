@@ -12,10 +12,10 @@ import type { ForecastDiscussion } from '../../api/types';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatIssuedTime(isoString: string | null, tz: string): string {
+function formatIssuedTime(isoString: string | null, tz: string, locale: string): string {
   if (!isoString) return '';
   try {
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat(locale, {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
@@ -56,14 +56,14 @@ export function ForecastDiscussionCard({
   discussion,
   stationTz = 'UTC',
 }: ForecastDiscussionCardProps) {
-  const { t } = useTranslation('forecast');
+  const { t, i18n } = useTranslation('forecast');
 
   const { text, issuedAt } = normalise(discussion);
 
   // Self-hide when no text
   if (!text) return null;
 
-  const issuedTime = issuedAt ? formatIssuedTime(issuedAt, stationTz) : null;
+  const issuedTime = issuedAt ? formatIssuedTime(issuedAt, stationTz, i18n.language) : null;
 
   return (
     <Card footprint="full">

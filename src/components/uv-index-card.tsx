@@ -86,15 +86,18 @@ interface UvChartPoint {
  * probing what local time UTC midnight corresponds to. Station midnight is UTC
  * midnight adjusted by the offset.
  */
-function stationMidnightMs(stationTz: string): number {
+function stationMidnightMs(stationTz: string, locale: string): number {
   const now = Date.now();
+  // en-CA is intentional here (not the visitor locale): it's the only stable
+  // way to get an unambiguous YYYY-MM-DD string for date-boundary arithmetic,
+  // not display text. See rules/coding.md §6 exception list.
   const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: stationTz }).format(now);
   const [y, m, d] = todayStr.split('-').map(Number);
   const utcMidnight = Date.UTC(y, m - 1, d);
 
   // What local date+time is it in stationTz at UTC midnight?
   const localDateAtUtc = new Intl.DateTimeFormat('en-CA', { timeZone: stationTz }).format(utcMidnight);
-  const timeParts = new Intl.DateTimeFormat('en-US', {
+  const timeParts = new Intl.DateTimeFormat(locale, {
     timeZone: stationTz,
     hour12: false,
     hour: '2-digit',
@@ -132,6 +135,7 @@ function buildUvBellCurve(
   sunriseIso: string | null,
   sunsetIso: string | null,
   stationTz: string,
+  locale: string,
 ): UvChartPoint[] {
   const peak = uvIndexMax ?? 0;
 
@@ -143,7 +147,7 @@ function buildUvBellCurve(
   // so this flat baseline is the correct fallback when observation data may exist.
   if (peak <= 0) {
     // ADR-075 T3.8: midnight is station-local, not browser-local.
-    const midnightFlatMs = stationMidnightMs(stationTz);
+    const midnightFlatMs = stationMidnightMs(stationTz, locale);
     const endFlatMs = midnightFlatMs + 24 * 60 * 60 * 1000;
     const FLAT_INTERVAL_MS = 15 * 60 * 1000;
     const flatPoints: UvChartPoint[] = [];
@@ -154,7 +158,7 @@ function buildUvBellCurve(
   }
 
   // ADR-075 T3.8: midnight is station-local, not browser-local.
-  const midnightMs = stationMidnightMs(stationTz);
+  const midnightMs = stationMidnightMs(stationTz, locale);
   const endMs = midnightMs + 24 * 60 * 60 * 1000;
 
   // Parse sunrise/sunset — fall back to 06:00/20:00 local when unavailable
@@ -197,8 +201,8 @@ function buildUvBellCurve(
  * Returns the daily-window domain and ticks (midnight to next midnight).
  * ADR-075 T3.8: midnight is computed in station timezone, not browser timezone.
  */
-function buildDailyDomainAndTicks(stationTz: string): { domain: [number, number]; ticks: number[] } {
-  const midnightMs = stationMidnightMs(stationTz);
+function buildDailyDomainAndTicks(stationTz: string, locale: string): { domain: [number, number]; ticks: number[] } {
+  const midnightMs = stationMidnightMs(stationTz, locale);
   const endMs = midnightMs + 24 * 60 * 60 * 1000;
 
   return {
@@ -207,8 +211,8 @@ function buildDailyDomainAndTicks(stationTz: string): { domain: [number, number]
   };
 }
 
-function fmtDailyAxisTime(ts: number, stationTz: string): string {
-  const parts = new Intl.DateTimeFormat('en-US', {
+function fmtDailyAxisTime(ts: number, stationTz: string, locale: string): string {
+  const parts = new Intl.DateTimeFormat(locale, {
     timeZone: stationTz,
     hour12: false,
     hour: '2-digit',
@@ -430,8 +434,11 @@ interface UvChartProps {
 }
 
 function UvChart({ data, currentUv, gradientId, peakUv, stationTz }: UvChartProps) {
-  const { t } = useTranslation('now');
-  const { domain, ticks } = useMemo(() => buildDailyDomainAndTicks(stationTz), [stationTz]);
+  const { t, i18n } = useTranslation('now');
+  const { domain, ticks } = useMemo(
+    () => buildDailyDomainAndTicks(stationTz, i18n.language),
+    [stationTz, i18n.language],
+  );
 
   // Dynamic Y-axis: one unit above the forecast peak, minimum ceiling of 4.
   // e.g. peakUv=9 → yMax=10, ticks=[0,2,4,6,8,10]
@@ -514,7 +521,7 @@ function UvChart({ data, currentUv, gradientId, peakUv, stationTz }: UvChartProp
               type="number"
               domain={domain}
               ticks={ticks}
-              tickFormatter={(ts: number) => fmtDailyAxisTime(ts, stationTz)}
+              tickFormatter={(ts: number) => fmtDailyAxisTime(ts, stationTz, i18n.language)}
               tickLine={false}
               axisLine={false}
               tick={{
@@ -639,7 +646,7 @@ function UvIndexCardContent({
   error = null,
   stationTz = 'UTC',
 }: Omit<UvIndexCardProps, 'onRetry'>) {
-  const { t } = useTranslation('now');
+  const { t, i18n } = useTranslation('now');
 
   // Stable gradient ID — avoids SVG ID collisions if multiple instances on page.
   // useId() returns a stable server/client-consistent identifier (React 18+).
@@ -662,8 +669,8 @@ function UvIndexCardContent({
   const forecastAbbr = forecastSegment?.label ?? '';
 
   const chartData = useMemo(
-    () => buildUvBellCurve(forecastUv, sunrise, sunset, stationTz),
-    [forecastUv, sunrise, sunset, stationTz],
+    () => buildUvBellCurve(forecastUv, sunrise, sunset, stationTz, i18n.language),
+    [forecastUv, sunrise, sunset, stationTz, i18n.language],
   );
 
   return (

@@ -180,9 +180,9 @@ function parseISO(iso: string | null | undefined): Date | null {
  * Return a 12-hour time string for an SVG tick label, e.g. "8 PM" / "12 AM".
  * Rendered relative to a UTC-based Date so we just compute hours in the TZ.
  */
-function svgTickLabel(date: Date, tz: string): string {
+function svgTickLabel(date: Date, tz: string, locale: string): string {
   try {
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat(locale, {
       hour: 'numeric',
       hour12: true,
       timeZone: tz,
@@ -474,6 +474,7 @@ interface GanttTimelineProps {
   planets: PlanetEntry[];
   almanac: AlmanacSnapshot;
   stationTz: string;
+  locale: string;
 }
 
 /** viewBox constants — Gantt chart coordinate space */
@@ -488,7 +489,7 @@ const BAR_HEIGHT   = 16;   // px height of each planet bar
 const BAR_GAP      = 40;   // px between bar rows (center-to-center)
 const FIRST_BAR_Y  = 58;   // Y of the first bar's top edge
 
-function GanttTimeline({ planets, almanac, stationTz }: GanttTimelineProps) {
+function GanttTimeline({ planets, almanac, stationTz, locale }: GanttTimelineProps) {
   const isMobile = useIsMobile();
   const S = isMobile ? 2.5 : 1;
   const barH = BAR_HEIGHT * S;
@@ -533,7 +534,7 @@ function GanttTimeline({ planets, almanac, stationTz }: GanttTimelineProps) {
   {
     let cursor = new Date(sunsetNN.getTime() + ONE_HOUR_MS);
     while (cursor < sunriseDate) {
-      const localHourStr = new Intl.DateTimeFormat('en-US', {
+      const localHourStr = new Intl.DateTimeFormat(locale, {
         hour: 'numeric', hour12: false, timeZone: stationTz,
       }).format(cursor);
       const localHour = parseInt(localHourStr, 10);
@@ -756,7 +757,7 @@ function GanttTimeline({ planets, almanac, stationTz }: GanttTimelineProps) {
         fontSize={13 * S}
         fontWeight="600"
       >
-        {svgTickLabel(sunsetNN, stationTz)}
+        {svgTickLabel(sunsetNN, stationTz, locale)}
       </text>
 
       {/* Intermediate ticks at even local 2-hour intervals */}
@@ -781,7 +782,7 @@ function GanttTimeline({ planets, almanac, stationTz }: GanttTimelineProps) {
               fontFamily="var(--font-chart)"
               fontSize={12 * S}
             >
-              {svgTickLabel(td, stationTz)}
+              {svgTickLabel(td, stationTz, locale)}
             </text>
           </g>
         );
@@ -849,7 +850,7 @@ export function PlanetTimelineCard({
   error,
 }: PlanetTimelineCardProps) {
   const { t, i18n } = useTranslation('almanac');
-  const locale = i18n.language || 'en-US';
+  const locale = i18n.language || 'en';
   const [timelineFullscreen, setTimelineFullscreen] = useState(false);
 
   // Loading state
@@ -992,6 +993,7 @@ export function PlanetTimelineCard({
               planets={planetList}
               almanac={almanac}
               stationTz={stationTz}
+              locale={locale}
             />
             <ChartFullscreenOverlay
               isOpen={timelineFullscreen}
@@ -1002,6 +1004,7 @@ export function PlanetTimelineCard({
                 planets={planetList}
                 almanac={almanac}
                 stationTz={stationTz}
+                locale={locale}
               />
             </ChartFullscreenOverlay>
           </div>
