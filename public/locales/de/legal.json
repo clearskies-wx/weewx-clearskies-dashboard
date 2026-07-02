@@ -26,7 +26,7 @@
       },
       "thirdPartyServices": {
         "title": "Dienste von Drittanbietern",
-        "body": "Diese Website kann Daten von Drittanbietern anzeigen, darunter unter anderem: Aeris Weather, der National Weather Service (NWS), OpenWeatherMap, der U.S. Geological Survey (USGS) sowie verschiedene Kartenkachelanbieter. Diese Daten werden gemäß den jeweiligen Nutzungsbedingungen und Genauigkeitsstandards des Anbieters bereitgestellt. Der Betreiber der Website hat keinen Einfluss auf die Genauigkeit oder Verfügbarkeit von Drittanbieterdaten und übernimmt hierfür keine Verantwortung."
+        "body": "Diese Website kann Daten von Drittanbietern anzeigen, darunter unter anderem: Xweather (Vaisala), der National Weather Service (NWS), OpenWeatherMap, der U.S. Geological Survey (USGS) sowie verschiedene Kartenkachelanbieter. Diese Daten werden gemäß den jeweiligen Nutzungsbedingungen und Genauigkeitsstandards des Anbieters bereitgestellt. Der Betreiber der Website hat keinen Einfluss auf die Genauigkeit oder Verfügbarkeit von Drittanbieterdaten und übernimmt hierfür keine Verantwortung."
       },
       "prohibitedConduct": {
         "title": "Verbotene Handlungen",

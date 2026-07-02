@@ -32,5 +32,12 @@
     "cardTitle": "Stationsfoto",
     "placeholder": "Laden Sie ein Stationsfoto über die Clear-Skies-Konfigurationsoberfläche hoch.",
     "defaultAlt": "Wetterstation"
+  },
+  "dataProviders": {
+    "domain": {
+      "baseMaps": "Basiskarten",
+      "seismicData": "Seismische Daten",
+      "astronomical": "Astronomische Referenz"
+    }
   }
 }

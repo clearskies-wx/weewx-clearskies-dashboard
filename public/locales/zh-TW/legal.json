@@ -26,7 +26,7 @@
       },
       "thirdPartyServices": {
         "title": "第三方服務",
-        "body": "本網站可能展示來自第三方來源的資料，包括但不限於：Aeris Weather、美國國家氣象局（NWS）、OpenWeatherMap、美國地質調查局（USGS）及各地圖圖磚提供商。這些資料依據各提供商自身的服務條款和精確度標準提供。網站營運者對第三方資料的準確性或可用性不承擔控制責任。"
+        "body": "本網站可能展示來自第三方來源的資料，包括但不限於：Xweather (Vaisala)、美國國家氣象局（NWS）、OpenWeatherMap、美國地質調查局（USGS）及各地圖圖磚提供商。這些資料依據各提供商自身的服務條款和精確度標準提供。網站營運者對第三方資料的準確性或可用性不承擔控制責任。"
       },
       "prohibitedConduct": {
         "title": "禁止行為",

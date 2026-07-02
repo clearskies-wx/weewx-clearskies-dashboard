@@ -32,6 +32,12 @@
     "cardTitle": "Larawan ng Istasyon",
     "placeholder": "Mag-upload ng larawan ng istasyon sa pamamagitan ng Clear Skies configuration UI.",
     "defaultAlt": "Weather station"
+  },
+  "dataProviders": {
+    "domain": {
+      "baseMaps": "Mga Base Map",
+      "seismicData": "Datos Seismiko",
+      "astronomical": "Reperensyang Astronomikal"
+    }
   }
-}
 }

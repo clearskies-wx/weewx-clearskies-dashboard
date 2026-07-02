@@ -32,5 +32,12 @@
     "cardTitle": "站点照片",
     "placeholder": "请通过 Clear Skies 配置界面上传站点照片。",
     "defaultAlt": "气象站"
+  },
+  "dataProviders": {
+    "domain": {
+      "baseMaps": "基础地图",
+      "seismicData": "地震数据",
+      "astronomical": "天文参考"
+    }
   }
 }

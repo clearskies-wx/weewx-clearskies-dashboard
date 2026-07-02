@@ -32,5 +32,12 @@
     "cardTitle": "Foto della stazione",
     "placeholder": "Carica una foto della stazione tramite l’interfaccia di configurazione di Clear Skies.",
     "defaultAlt": "Stazione meteorologica"
+  },
+  "dataProviders": {
+    "domain": {
+      "baseMaps": "Mappe di base",
+      "seismicData": "Dati sismici",
+      "astronomical": "Riferimento astronomico"
+    }
   }
 }

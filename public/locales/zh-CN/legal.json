@@ -26,7 +26,7 @@
       },
       "thirdPartyServices": {
         "title": "第三方服务",
-        "body": "本网站可能展示来自第三方来源的数据，包括但不限于：Aeris Weather、美国国家气象局（NWS）、OpenWeatherMap、美国地质调查局（USGS）及各地图切片提供商。这些数据依据各提供商自身的服务条款和精确度标准提供。网站运营者对第三方数据的准确性或可用性不承担控制责任。"
+        "body": "本网站可能展示来自第三方来源的数据，包括但不限于：Xweather (Vaisala)、美国国家气象局（NWS）、OpenWeatherMap、美国地质调查局（USGS）及各地图切片提供商。这些数据依据各提供商自身的服务条款和精确度标准提供。网站运营者对第三方数据的准确性或可用性不承担控制责任。"
       },
       "prohibitedConduct": {
         "title": "禁止行为",

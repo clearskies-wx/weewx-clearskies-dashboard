@@ -26,7 +26,7 @@
       },
       "thirdPartyServices": {
         "title": "Mga Serbisyo ng Third Party",
-        "body": "Maaaring ipakita ng site na ito ang datos mula sa mga third-party na pinagkukunan kabilang ngunit hindi limitado sa: Aeris Weather, ang National Weather Service (NWS), OpenWeatherMap, ang U.S. Geological Survey (USGS), at iba't ibang provider ng tile ng mapa. Ang datos na ito ay ibinibigay alinsunod sa mga sariling tuntunin ng serbisyo at pamantayan ng katumpakan ng bawat provider. Hindi kontrolado ng operator ng site at hindi siya responsable sa katumpakan o pagkakaroon ng datos ng third party."
+        "body": "Maaaring ipakita ng site na ito ang datos mula sa mga third-party na pinagkukunan kabilang ngunit hindi limitado sa: Xweather (Vaisala), ang National Weather Service (NWS), OpenWeatherMap, ang U.S. Geological Survey (USGS), at iba't ibang provider ng tile ng mapa. Ang datos na ito ay ibinibigay alinsunod sa mga sariling tuntunin ng serbisyo at pamantayan ng katumpakan ng bawat provider. Hindi kontrolado ng operator ng site at hindi siya responsable sa katumpakan o pagkakaroon ng datos ng third party."
       },
       "prohibitedConduct": {
         "title": "Ipinagbabawal na Kilos",

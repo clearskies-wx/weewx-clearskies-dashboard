@@ -32,5 +32,12 @@
     "cardTitle": "Фото станции",
     "placeholder": "Загрузите фото станции через интерфейс настройки Clear Skies.",
     "defaultAlt": "Метеостанция"
+  },
+  "dataProviders": {
+    "domain": {
+      "baseMaps": "Базовые карты",
+      "seismicData": "Сейсмические данные",
+      "astronomical": "Астрономический справочник"
+    }
   }
 }

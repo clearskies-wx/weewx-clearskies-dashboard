@@ -32,5 +32,12 @@
     "cardTitle": "Stationfoto",
     "placeholder": "Upload een stationfoto via de Clear Skies configuratie-UI.",
     "defaultAlt": "Weerstation"
+  },
+  "dataProviders": {
+    "domain": {
+      "baseMaps": "Basiskaarten",
+      "seismicData": "Seismische gegevens",
+      "astronomical": "Astronomische referentie"
+    }
   }
 }
