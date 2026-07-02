@@ -456,6 +456,13 @@ export function AlertBanner({ alerts, stationTz }: AlertBannerProps) {
               </dl>
             )}
 
+            {/* Provider attribution — text only, not needed for NWS */}
+            {alert.source && alert.source !== 'nws' && (
+              <p className="mt-2 font-heading text-[length:var(--text-micro)] text-muted-foreground">
+                Powered by {alert.source === 'aeris' ? 'Xweather' : alert.source === 'owm' ? 'OpenWeather' : alert.source}
+              </p>
+            )}}
+
           </div>
         </div>
       </div>
