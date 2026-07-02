@@ -817,6 +817,7 @@ function GanttTimeline({ planets, almanac, stationTz, locale }: GanttTimelinePro
 // ---------------------------------------------------------------------------
 
 function CardSkeleton() {
+  const { t } = useTranslation('almanac');
   return (
     <div
       className="animate-pulse rounded-lg bg-muted"
