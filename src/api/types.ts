@@ -578,6 +578,17 @@ export interface StationMetadata {
   idleRefreshFactor?: number;     // divisor for poll interval when idle, default 10
 }
 
+export interface ProviderAttributionData {
+  attributionRequired: boolean;
+  displayName: string;
+  attributionText: string;
+  url: string;
+  textTranslatable: boolean;
+  textLanguage: string;
+  logoRequired: boolean;
+  doNotUseLogo: boolean;
+}
+
 export interface CapabilityDeclaration {
   providerId: string;
   domain: 'forecast' | 'alerts' | 'aqi' | 'earthquakes' | 'radar' | 'seeing' | 'almanac';
@@ -598,6 +609,7 @@ export interface CapabilityDeclaration {
   alertsAvailable?: boolean | null;
   satelliteAvailable?: boolean | null;
   satelliteTileUrlTemplate?: string | null;
+  attribution?: ProviderAttributionData | null;
 }
 
 export interface CapabilityRegistry {
