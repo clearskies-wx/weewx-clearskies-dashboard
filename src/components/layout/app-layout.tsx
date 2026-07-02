@@ -16,6 +16,7 @@
 
 import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { SkipLink } from './skip-link';
 import { NavRail } from './nav-rail';
 import { Footer } from './footer';
@@ -26,6 +27,7 @@ import { AlertBanner } from '../shared/alert-banner';
 import { CookieConsentBanner } from '../shared/cookie-consent-banner';
 import { trackPageView } from '../../lib/analytics';
 import { dismissSplash } from '../../lib/dismiss-splash';
+import { SUPPORTED_LOCALES } from '../../i18n';
 import type { SceneDescriptor } from '../../api/types';
 
 export function AppLayout() {
@@ -33,6 +35,7 @@ export function AppLayout() {
   const { data: alerts, loading: alertLoading } = useAlerts();
   const { data: station } = useStation();
   const { preference, setDaytime, cacheScene } = useTheme();
+  const { i18n } = useTranslation();
   const location = useLocation();
 
   useEffect(() => {
@@ -42,6 +45,22 @@ export function AppLayout() {
       dismissSplash();
     }
   }, [scene.daytime, scene.sky, scene.overlay, sceneLoaded, setDaytime, cacheScene]);
+
+  // T2.6 / DASHBOARD-MANUAL §3: the dashboard does not detect the visitor's
+  // browser locale. It starts at the safe default 'en' (src/i18n/index.ts)
+  // and switches to the operator's configured StationMetadata.defaultLocale
+  // once station data loads. Validated against SUPPORTED_LOCALES since the
+  // value originates from operator config on the API side (trust boundary).
+  useEffect(() => {
+    const defaultLocale = station?.defaultLocale;
+    if (
+      defaultLocale &&
+      (SUPPORTED_LOCALES as readonly string[]).includes(defaultLocale) &&
+      defaultLocale !== i18n.language
+    ) {
+      void i18n.changeLanguage(defaultLocale);
+    }
+  }, [station?.defaultLocale, i18n]);
 
   // GA page view tracking — fires on every route change.
   // trackPageView() is a no-op when GA has not been initialised (consent not given),

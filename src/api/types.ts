@@ -576,6 +576,7 @@ export interface StationMetadata {
   weekStartDay: number;
   idleTimeout?: number;           // minutes, default 30. 0 = disabled (kiosk mode)
   idleRefreshFactor?: number;     // divisor for poll interval when idle, default 10
+  defaultLocale?: string;         // operator-chosen locale (ADR-021); one of the 13 supported codes
 }
 
 export interface ProviderAttributionData {

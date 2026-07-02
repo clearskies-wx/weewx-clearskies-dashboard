@@ -2,11 +2,18 @@
 // Import this module ONCE in main.tsx before React renders.
 // Namespace-per-page strategy keeps JSON files small and enables per-page
 // lazy loading via i18next-http-backend.
+//
+// Locale source (T2.6, DASHBOARD-MANUAL §3): the dashboard does NOT detect
+// the visitor's browser/OS locale or read a `?lang=` query param. It starts
+// at the safe default `en`, then AppLayout switches to the operator's
+// configured `defaultLocale` (from StationMetadata) once station data loads
+// via `i18n.changeLanguage()`. All visitors of a given station therefore see
+// the same operator-chosen language — consistent with how the rest of the
+// dashboard (units, timezone) is operator-configured, not visitor-detected.
 
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import HttpBackend from "i18next-http-backend";
-import LanguageDetector from "i18next-browser-languagedetector";
 
 export const SUPPORTED_LOCALES = [
   "en",
@@ -28,9 +35,9 @@ export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 
 i18n
   .use(HttpBackend)
-  .use(LanguageDetector)
   .use(initReactI18next)
   .init({
+    lng: "en", // safe default on cold start; AppLayout switches to StationMetadata.defaultLocale
     supportedLngs: [...SUPPORTED_LOCALES],
     fallbackLng: "en",
     defaultNS: "common",
@@ -56,14 +63,6 @@ i18n
     },
     backend: {
       loadPath: "/locales/{{lng}}/{{ns}}.json",
-    },
-    detection: {
-      // Preference order: explicit ?lang= override → persisted user choice →
-      // browser's Accept-Language preference.
-      order: ["querystring", "localStorage", "navigator"],
-      lookupQuerystring: "lang",
-      lookupLocalStorage: "clearskies-locale",
-      caches: ["localStorage"],
     },
     react: {
       // Suspense handles loading state; components can use useTranslation()
