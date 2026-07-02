@@ -822,7 +822,7 @@ function CardSkeleton() {
       className="animate-pulse rounded-lg bg-muted"
       style={{ height: '20rem' }}
       role="status"
-      aria-label="Loading planet outlook"
+      aria-label={t('planets.loadingOutlook', 'Loading planet outlook')}
       aria-busy="true"
     />
   );
@@ -998,7 +998,7 @@ export function PlanetTimelineCard({
             <ChartFullscreenOverlay
               isOpen={timelineFullscreen}
               onClose={() => setTimelineFullscreen(false)}
-              aria-label="Planet visibility timeline fullscreen"
+              aria-label={t('planets.timelineFullscreen', 'Planet visibility timeline fullscreen')}
             >
               <GanttTimeline
                 planets={planetList}

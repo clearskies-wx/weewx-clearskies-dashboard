@@ -1,6 +1,5 @@
 {
   "pageTitle": "Almanac",
-
   "loading": "Loading almanac data…",
   "error": "Unable to load almanac data",
   "noData": "No almanac data available.",
@@ -13,7 +12,6 @@
   "minutesAbbrev": "m",
   "illuminatedPercent": "{{illumination}} illuminated",
   "phaseIllumination": "{{phase}}, {{illumination}} illuminated",
-
   "moonNames": {
     "harvestMoon": "Harvest Moon",
     "huntersMoon": "Hunter's Moon",
@@ -21,7 +19,6 @@
     "supermoon": "Supermoon",
     "traditionalNameSuffix": "{{name}} Moon"
   },
-
   "moonPhases": {
     "new": "New Moon",
     "waxing-crescent": "Waxing Crescent",
@@ -32,7 +29,6 @@
     "last-quarter": "Last Quarter",
     "waning-crescent": "Waning Crescent"
   },
-
   "moonPhasesAbbrev": {
     "new": "New Moon",
     "waxing-crescent": "Wax. Crescent",
@@ -43,7 +39,6 @@
     "last-quarter": "Last Quarter",
     "waning-crescent": "Wan. Crescent"
   },
-
   "svgTitle": {
     "sun": "Sun: rises {{rise}}, sets {{set}}",
     "sunAltitude": "current altitude {{altitude}}",
@@ -51,12 +46,10 @@
     "moonAltitude": "current altitude {{altitude}}",
     "phase": "Phase: {{phase}}, {{illumination}} illuminated"
   },
-
   "arcLabels": {
     "rise": "Rise {{time}}",
     "set": "Set {{time}}"
   },
-
   "sun": {
     "title": "Sun",
     "sunrise": "Sunrise",
@@ -69,7 +62,6 @@
     "nextSolstice": "Next Solstice",
     "nextEquinox": "Next Equinox"
   },
-
   "moon": {
     "title": "Moon",
     "phase": "Phase",
@@ -81,7 +73,6 @@
     "nextFullMoon": "Next Full Moon",
     "nextNewMoon": "Next New Moon"
   },
-
   "positional": {
     "title": "Positional Data",
     "note": "Positional data requires Skyfield computation on the server.",
@@ -90,9 +81,7 @@
     "moonAzimuth": "Moon Azimuth",
     "moonAltitude": "Moon Altitude"
   },
-
   "daylightDelta": "({{delta}}m vs yesterday)",
-
   "planets": {
     "title": "Tonight's Planet Outlook",
     "subtitle": "Clear skies make for great viewing. Here's when each planet will be at its best.",
@@ -114,9 +103,10 @@
     "conditionsGood": "Good Viewing Conditions",
     "conditionsFair": "Fair Viewing Conditions",
     "conditionsPoor": "Poor Viewing Conditions",
-    "footNote": "Times shown are local time. Planets rise and set at different times throughout the week."
+    "footNote": "Times shown are local time. Planets rise and set at different times throughout the week.",
+    "loadingOutlook": "Loading planet outlook",
+    "timelineFullscreen": "Planet visibility timeline fullscreen"
   },
-
   "meteorShowers": {
     "title": "Meteor Showers",
     "timesLocal": "All times local",
@@ -138,7 +128,6 @@
     "qualityPoor": "Poor",
     "qualityNotVisible": "Not Visible"
   },
-
   "climatology": {
     "title": "Average Climatological Values by Month",
     "loading": "Loading climatology data…",
@@ -162,7 +151,6 @@
       "avgRainfall": "Average Rainfall"
     }
   },
-
   "solarEclipses": {
     "title": "Solar Eclipses",
     "timesLocal": "All times local",
@@ -184,7 +172,6 @@
     "descAnnular": "The Moon will pass in front of the Sun, leaving a brilliant ring of sunlight visible.",
     "descPartial": "The Moon will pass in front of the Sun, covering a portion of its disk."
   },
-
   "lunarEclipses": {
     "title": "Lunar Eclipses",
     "timesLocal": "All times local",

@@ -540,11 +540,12 @@ function GaugeContent({ aqiValue, category, mainPollutant, qualitative }: GaugeC
 // ---------------------------------------------------------------------------
 
 function WeewxBadge() {
+  const { t } = useTranslation('now');
   return (
     <span
       role="img"
-      aria-label="from local station"
-      title="Value from local weather station"
+      aria-label={t('aqi.fromLocalStation', 'from local station')}
+      title={t('aqi.localStationValue', 'Value from local weather station')}
       style={{
         display: 'inline-flex',
         alignItems: 'center',

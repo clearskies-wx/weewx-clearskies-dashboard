@@ -110,7 +110,9 @@
     "hazardous": "Hazardous",
     "gaugeAriaLabel": "Air Quality Index: {{aqi}}, {{category}}. Main pollutant: {{pollutant}}",
     "unknownPollutant": "Unknown",
-    "mainPollutant": "Main pollutant: {{pollutant}}"
+    "mainPollutant": "Main pollutant: {{pollutant}}",
+    "fromLocalStation": "from local station",
+    "localStationValue": "Value from local weather station"
   },
   "beaufort": {
     "calm": "Calm",
