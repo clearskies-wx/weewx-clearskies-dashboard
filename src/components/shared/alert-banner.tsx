@@ -319,16 +319,25 @@ export function AlertBanner({ alerts, stationTz }: AlertBannerProps) {
         {/* Text body — card-glass neutral surface, grows to fill */}
         <div className="card-glass min-w-0 flex-1 px-3 py-2.5">
 
-          <p className="line-clamp-2 md:truncate uppercase font-heading text-[length:var(--text-card-title)] font-semibold leading-snug text-card-foreground">
+          <p
+            className="line-clamp-2 md:truncate uppercase font-heading text-[length:var(--text-card-title)] font-semibold leading-snug text-card-foreground"
+            title={alert.event}
+          >
             {alert.event}
           </p>
 
-          <p className="mt-0.5 truncate font-heading text-[length:var(--text-body)] leading-snug text-muted-foreground">
+          <p
+            className="mt-0.5 truncate font-heading text-[length:var(--text-body)] leading-snug text-muted-foreground"
+            title={detailLine}
+          >
             {detailLine}
           </p>
 
           {summaryText && !expanded && (
-            <p className="text-fade-right mt-1 overflow-hidden whitespace-nowrap font-heading text-[length:var(--text-body)] leading-snug text-muted-foreground">
+            <p
+              className="text-fade-right mt-1 overflow-hidden whitespace-nowrap font-heading text-[length:var(--text-body)] leading-snug text-muted-foreground"
+              title={summaryText}
+            >
               {summaryText}
             </p>
           )}
