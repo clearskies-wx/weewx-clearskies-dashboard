@@ -13,22 +13,10 @@ import { useStation, useCapabilities } from '../hooks/useWeatherData';
 import { useBranding } from '../lib/branding-provider';
 import { SCENE_ASSET_MAP } from '../components/background/scene-background-types';
 
-const PROVIDER_INFO: Record<string, { name: string; url: string }> = {
-  nws:            { name: 'National Weather Service / NOAA',          url: 'https://www.weather.gov' },
-  aeris:          { name: 'Xweather (Vaisala)',                       url: 'https://www.xweather.com' },
-  openmeteo:      { name: 'Open-Meteo',                              url: 'https://open-meteo.com' },
-  owm:            { name: 'OpenWeatherMap',                           url: 'https://openweathermap.org' },
-  iqair:          { name: 'IQAir',                                   url: 'https://www.iqair.com' },
-  usgs:           { name: 'US Geological Survey',                    url: 'https://earthquake.usgs.gov' },
-  seven_timer:    { name: '7Timer! Astronomical Seeing Forecast',    url: 'https://www.7timer.info' },
-  rainviewer:     { name: 'RainViewer',                              url: 'https://www.rainviewer.com' },
-  librewxr:       { name: 'LibreWxR',                                url: 'https://librewxr.net/' },
-  astronomyapi:   { name: 'Astronomy API',                          url: 'https://astronomyapi.com' },
-};
-
 const STATIC_PROVIDERS: Array<{ domain: string; name: string; url: string }> = [
   { domain: 'baseMaps',     name: 'OpenStreetMap',                              url: 'https://www.openstreetmap.org/copyright' },
   { domain: 'baseMaps',     name: 'CARTO',                                     url: 'https://carto.com/attributions' },
+  { domain: 'baseMaps',     name: 'Protomaps',                                 url: 'https://protomaps.com' },
   { domain: 'seismicData',  name: 'GEM Global Active Faults Database',         url: 'https://github.com/GEMScienceTools/gem-global-active-faults' },
   { domain: 'astronomical', name: 'Skyfield + NASA JPL Ephemerides',           url: 'https://rhodesmill.org/skyfield/' },
   { domain: 'astronomical', name: 'International Meteor Organization (IMO)',   url: 'https://www.imo.net' },
@@ -213,21 +201,23 @@ export function AboutPage() {
             {capabilities && capabilities.providers.length > 0 ? (
               <dl className="grid grid-cols-1 gap-y-3 text-sm sm:grid-cols-2">
                 {Object.entries(
-                  capabilities.providers.reduce<Record<string, string[]>>((acc, p) => {
+                  capabilities.providers.reduce<Record<string, typeof capabilities.providers>>((acc, p) => {
                     if (!acc[p.domain]) acc[p.domain] = [];
-                    if (!acc[p.domain].includes(p.providerId)) acc[p.domain].push(p.providerId);
+                    if (!acc[p.domain].some(existing => existing.providerId === p.providerId)) acc[p.domain].push(p);
                     return acc;
                   }, {}),
-                ).map(([domain, providerIds]) => (
+                ).map(([domain, providers]) => (
                   <div key={domain}>
                     <dt className="text-muted-foreground uppercase font-semibold" style={{ fontSize: 'var(--text-label)' }}>
                       {t(`dataProviders.domain.${domain}`, { defaultValue: domain })}
                     </dt>
                     <dd className="mt-0.5 space-y-0.5">
-                      {providerIds.map(id => {
-                        const info = PROVIDER_INFO[id];
+                      {providers.map(provider => {
+                        const info = provider.attribution
+                          ? { name: provider.attribution.displayName, url: provider.attribution.url }
+                          : null;
                         return info ? (
-                          <div key={id}>
+                          <div key={provider.providerId}>
                             <a
                               href={info.url}
                               target="_blank"
@@ -238,7 +228,7 @@ export function AboutPage() {
                             </a>
                           </div>
                         ) : (
-                          <div key={id} className="text-foreground capitalize">{id}</div>
+                          <div key={provider.providerId} className="text-foreground capitalize">{provider.providerId}</div>
                         );
                       })}
                     </dd>
