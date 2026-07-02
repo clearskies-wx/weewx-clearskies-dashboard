@@ -16,7 +16,9 @@ import { PageLayout } from '../components/layout/page-layout';
 import { ForecastHourlyCard } from '../components/forecast/ForecastHourlyCard';
 import { ForecastDailyCard } from '../components/forecast/ForecastDailyCard';
 import { ForecastDiscussionCard } from '../components/forecast/ForecastDiscussionCard';
-import { useForecast, useStation } from '../hooks/useWeatherData';
+import { footprintColSpan } from '../components/ui/card';
+import { ProviderAttribution } from '../components/shared/ProviderAttribution';
+import { useForecast, useStation, useCapabilities } from '../hooks/useWeatherData';
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
@@ -26,29 +28,62 @@ export function ForecastPage() {
   // Request 48h of hourly data so the Tomorrow tab is populated.
   const { data: forecast, units: fcUnits, loading: fcLoading, error: fcError, stationClock } = useForecast({ hours: 48 });
   const { data: station } = useStation();
+  const { data: capabilities } = useCapabilities();
 
   const tz = station?.timezone ?? 'UTC';
+
+  // Host-rendered provider attribution (ADR-080, DASHBOARD-MANUAL §8).
+  // ForecastHourlyCard and ForecastDailyCard share one data source
+  // (forecast?.source) — a single lookup covers both. ForecastDiscussionCard
+  // does not get its own attribution line: same provider, and it self-hides
+  // when empty, so one attribution per page data source is sufficient.
+  const forecastAttribution = capabilities?.providers.find(
+    (p) => p.providerId === forecast?.source,
+  )?.attribution;
+  const showForecastAttribution = forecastAttribution?.attributionRequired ?? false;
 
   return (
     <PageLayout title={t('title')} icon={<CloudSun weight="duotone" />}>
       {/* ── Surface B: Hourly ─────────────────────────────────────────── */}
-      <ForecastHourlyCard
-        forecast={forecast}
-        loading={fcLoading}
-        error={fcError}
-        stationTz={tz}
-        units={fcUnits}
-      />
+      <div className={footprintColSpan.full}>
+        <ForecastHourlyCard
+          forecast={forecast}
+          loading={fcLoading}
+          error={fcError}
+          stationTz={tz}
+          units={fcUnits}
+        />
+        {showForecastAttribution && forecast?.source && forecastAttribution && (
+          <ProviderAttribution
+            attributionText={forecastAttribution.attributionText}
+            displayName={forecastAttribution.displayName}
+            logoRequired={forecastAttribution.logoRequired}
+            doNotUseLogo={forecastAttribution.doNotUseLogo}
+            providerId={forecast.source}
+          />
+        )}
+      </div>
 
       {/* ── Surface C: 7-Day ──────────────────────────────────────────── */}
-      <ForecastDailyCard
-        forecast={forecast}
-        loading={fcLoading}
-        error={fcError}
-        stationTz={tz}
-        units={fcUnits}
-        stationDate={stationClock?.date}
-      />
+      <div className={footprintColSpan.full}>
+        <ForecastDailyCard
+          forecast={forecast}
+          loading={fcLoading}
+          error={fcError}
+          stationTz={tz}
+          units={fcUnits}
+          stationDate={stationClock?.date}
+        />
+        {showForecastAttribution && forecast?.source && forecastAttribution && (
+          <ProviderAttribution
+            attributionText={forecastAttribution.attributionText}
+            displayName={forecastAttribution.displayName}
+            logoRequired={forecastAttribution.logoRequired}
+            doNotUseLogo={forecastAttribution.doNotUseLogo}
+            providerId={forecast.source}
+          />
+        )}
+      </div>
 
       {/* ── Surface D: Discussion (self-hides when empty) ─────────────── */}
       <ForecastDiscussionCard
