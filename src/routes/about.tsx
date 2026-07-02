@@ -225,9 +225,9 @@ export function AboutPage() {
           </CardHeader>
           <CardContent>
             {groupedProviders ? (
-              <dl className="grid grid-cols-1 gap-y-3 text-sm sm:grid-cols-2">
+              <dl className="flex flex-col gap-y-4 text-sm sm:flex-row sm:flex-wrap">
                 {Object.entries(groupedProviders).map(([domain, providers]) => (
-                  <div key={domain}>
+                  <div key={domain} className="sm:w-1/2">
                     <dt className="text-muted-foreground uppercase font-semibold" style={{ fontSize: 'var(--text-label)' }}>
                       {t(`dataProviders.domain.${domain}`, { defaultValue: domain })}
                     </dt>
