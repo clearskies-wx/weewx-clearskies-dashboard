@@ -1,5 +1,6 @@
 // about.tsx — About page (/about)
 
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Info } from '@phosphor-icons/react';
 import {
@@ -78,6 +79,25 @@ export function AboutPage() {
   const { data: station, loading: stationLoading } = useStation();
   const { data: capabilities } = useCapabilities();
   const branding = useBranding();
+
+  const groupedProviders = useMemo(() => {
+    if (!capabilities || capabilities.providers.length === 0) return null;
+    const grouped: Record<string, Array<{ name: string; url: string; id: string }>> = {};
+    for (const p of capabilities.providers) {
+      const domain = DOMAIN_GROUP[p.domain] ?? p.domain;
+      if (!grouped[domain]) grouped[domain] = [];
+      const info = p.attribution
+        ? { name: p.attribution.displayName, url: p.attribution.url, id: p.providerId }
+        : { name: p.providerId, url: '', id: p.providerId };
+      if (!grouped[domain].some(e => e.id === info.id)) grouped[domain].push(info);
+    }
+    for (const sp of STATIC_PROVIDERS) {
+      const domain = DOMAIN_GROUP[sp.domain] ?? sp.domain;
+      if (!grouped[domain]) grouped[domain] = [];
+      grouped[domain].push({ name: sp.name, url: sp.url, id: sp.name });
+    }
+    return grouped;
+  }, [capabilities]);
 
   return (
     <PageLayout title={t('title')} icon={<Info weight="duotone" />}>
@@ -204,49 +224,33 @@ export function AboutPage() {
             <CardTitle as="h2">{t('dataProviders.cardTitle')}</CardTitle>
           </CardHeader>
           <CardContent>
-            {capabilities && capabilities.providers.length > 0 ? (() => {
-              const grouped: Record<string, Array<{ name: string; url: string; id: string }>> = {};
-              for (const p of capabilities.providers) {
-                const domain = DOMAIN_GROUP[p.domain] ?? p.domain;
-                if (!grouped[domain]) grouped[domain] = [];
-                const info = p.attribution
-                  ? { name: p.attribution.displayName, url: p.attribution.url, id: p.providerId }
-                  : { name: p.providerId, url: '', id: p.providerId };
-                if (!grouped[domain].some(e => e.id === info.id)) grouped[domain].push(info);
-              }
-              for (const sp of STATIC_PROVIDERS) {
-                const domain = DOMAIN_GROUP[sp.domain] ?? sp.domain;
-                if (!grouped[domain]) grouped[domain] = [];
-                grouped[domain].push({ name: sp.name, url: sp.url, id: sp.name });
-              }
-              return (
-                <dl className="grid grid-cols-1 gap-y-3 text-sm sm:grid-cols-2">
-                  {Object.entries(grouped).map(([domain, providers]) => (
-                    <div key={domain}>
-                      <dt className="text-muted-foreground uppercase font-semibold" style={{ fontSize: 'var(--text-label)' }}>
-                        {t(`dataProviders.domain.${domain}`, { defaultValue: domain })}
-                      </dt>
-                      <dd className="mt-0.5 space-y-0.5">
-                        {providers.map(p => p.url ? (
-                          <div key={p.id}>
-                            <a
-                              href={p.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-foreground hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
-                            >
-                              {p.name}
-                            </a>
-                          </div>
-                        ) : (
-                          <div key={p.id} className="text-foreground capitalize">{p.name}</div>
-                        ))}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              );
-            })()) : (
+            {groupedProviders ? (
+              <dl className="grid grid-cols-1 gap-y-3 text-sm sm:grid-cols-2">
+                {Object.entries(groupedProviders).map(([domain, providers]) => (
+                  <div key={domain}>
+                    <dt className="text-muted-foreground uppercase font-semibold" style={{ fontSize: 'var(--text-label)' }}>
+                      {t(`dataProviders.domain.${domain}`, { defaultValue: domain })}
+                    </dt>
+                    <dd className="mt-0.5 space-y-0.5">
+                      {providers.map(p => p.url ? (
+                        <div key={p.id}>
+                          <a
+                            href={p.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-foreground hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                          >
+                            {p.name}
+                          </a>
+                        </div>
+                      ) : (
+                        <div key={p.id} className="text-foreground capitalize">{p.name}</div>
+                      ))}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            ) : (
               <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>{t('dataProviders.empty')}</p>
             )}
           </CardContent>
