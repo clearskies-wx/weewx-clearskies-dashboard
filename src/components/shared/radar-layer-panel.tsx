@@ -78,19 +78,19 @@ export function RadarLayerPanel({
 
   return (
     <aside
-      className="w-72 flex-shrink-0 border-l bg-background flex flex-col overflow-hidden"
+      className="fixed inset-0 z-[60] bg-background flex flex-col overflow-hidden lg:static lg:z-auto lg:w-72 lg:flex-shrink-0 lg:border-l"
       aria-label={t('layerSettings')}
     >
       {/* Panel header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b flex-shrink-0">
+      <div className="flex items-center justify-between px-4 py-3 lg:px-3 lg:py-2 border-b flex-shrink-0">
         <h2 className="text-sm font-semibold">{t('layerSettings')}</h2>
         <button
           type="button"
           onClick={onToggle}
           aria-label={t('closePanel')}
-          className="rounded p-1 text-muted-foreground hover:text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="rounded p-3 lg:p-1 text-muted-foreground hover:text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          <X className="h-4 w-4" aria-hidden="true" />
+          <X className="h-5 w-5 lg:h-4 lg:w-4" aria-hidden="true" />
         </button>
       </div>
 

@@ -185,7 +185,7 @@ export default function RadarPage() {
             onClick={() => setPanelOpen((p) => !p)}
             aria-label={t('layerSettings')}
             aria-expanded={panelOpen}
-            className="rounded p-1 text-muted-foreground hover:text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="rounded p-3 lg:p-1 text-muted-foreground hover:text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <Sliders className="h-5 w-5" aria-hidden="true" />
           </button>
@@ -195,7 +195,7 @@ export default function RadarPage() {
             type="button"
             onClick={() => navigate(-1)}
             aria-label={t('closeRadar')}
-            className="rounded p-1 text-muted-foreground hover:text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="rounded p-3 lg:p-1 text-muted-foreground hover:text-foreground hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <X className="h-5 w-5" aria-hidden="true" />
           </button>
