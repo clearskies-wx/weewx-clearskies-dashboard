@@ -28,6 +28,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import type { AlmanacSnapshot } from '../api/types';
 import { formatNumber } from '../utils/format-number';
 import { MoonPhaseG } from './moon-phase-icon';
@@ -101,15 +102,19 @@ function ellipsePath(cx: number, cy: number, rx: number, ry: number): string {
 }
 
 /**
- * Convert a dash-separated phase name to title case.
- * "waxing-gibbous" → "Waxing Gibbous"
+ * Translate a dash-separated API phase name ("waxing-gibbous") via the
+ * `almanac:moonPhases` locale table (shared with SunMoonDetailCard.tsx).
+ * Falls back to a title-cased rendering of the raw API value if the locale
+ * is missing the key (e.g. an unexpected phase name from the API), never to
+ * a hardcoded English string.
  */
-function formatPhaseName(name: string | null): string {
+function formatPhaseName(t: TFunction, name: string | null | undefined): string {
   if (!name) return '—';
-  return name
+  const fallback = name
     .split('-')
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
+  return t(`moonPhases.${name}`, { ns: 'almanac', defaultValue: fallback });
 }
 
 /**
@@ -175,12 +180,16 @@ function SunMoonError({
 interface ArcVisualizationProps {
   almanac: AlmanacSnapshot;
   svgTitle: string;
+  /** Already-translated moon phase name (see formatPhaseName), split into
+   *  words for the stacked SVG <text> label. */
+  phaseName: string;
 }
 
 /** Renders the nested-arc SVG (sun + moon arcs, position markers, horizon). */
 function ArcVisualization({
   almanac,
   svgTitle,
+  phaseName,
 }: ArcVisualizationProps) {
   const [nowMs, setNowMs] = useState(Date.now());
   useEffect(() => {
@@ -206,7 +215,7 @@ function ArcVisualization({
       : null;
 
   const illumination = almanac.moon.illuminationPercent;
-  const phaseWords = formatPhaseName(almanac.moon.phaseName).split(' ');
+  const phaseWords = phaseName.split(' ');
 
   // Traveled-arc: Ramanujan semi-perimeter approximation for a semi-ellipse.
   function semiPerimeter(rx: number, ry: number): number {
@@ -376,7 +385,10 @@ const LABEL_STYLE: React.CSSProperties = {
 };
 
 function SunMoonContent({ almanac, stationTz }: SunMoonContentProps) {
-  const { t, i18n } = useTranslation('now');
+  // 'almanac' ns is also loaded here (not just 'now') so moon phase names
+  // can resolve through the shared `moonPhases` locale table used by
+  // SunMoonDetailCard.tsx — see formatPhaseName().
+  const { t, i18n } = useTranslation(['now', 'almanac']);
   const locale = i18n.language;
 
   const fmtCompact = (iso: string | null): string => {
@@ -398,7 +410,7 @@ function SunMoonContent({ almanac, stationTz }: SunMoonContentProps) {
   const sunsetText = fmtCompact(almanac.sun.set);
   const moonriseText = fmtCompact(almanac.moon.rise);
   const moonsetText = fmtCompact(almanac.moon.set);
-  const phaseName = formatPhaseName(almanac.moon.phaseName);
+  const phaseName = formatPhaseName(t, almanac.moon.phaseName);
   const illumination = almanac.moon.illuminationPercent;
   const illumText = illumination !== null ? formatNumber(Math.round(illumination), 0, locale) + '%' : '—';
   const svgTitle = [
@@ -411,7 +423,7 @@ function SunMoonContent({ almanac, stationTz }: SunMoonContentProps) {
     <div aria-live="polite" style={{ width: '100%', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
       {/* Arc SVG — fills remaining space above labels */}
       <div style={{ flex: 1, minHeight: 0 }}>
-        <ArcVisualization almanac={almanac} svgTitle={svgTitle} />
+        <ArcVisualization almanac={almanac} svgTitle={svgTitle} phaseName={phaseName} />
       </div>
       {/* Labels — flex spacers track arc geometry so moon labels align
            with the wider moon arc endpoints (MOON_RX-derived). */}
