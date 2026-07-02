@@ -59,6 +59,7 @@ export function ForecastPage() {
             displayName={forecastAttribution.displayName}
             logoRequired={forecastAttribution.logoRequired}
             doNotUseLogo={forecastAttribution.doNotUseLogo}
+            textTranslatable={forecastAttribution.textTranslatable}
             providerId={forecast.source}
           />
         )}
@@ -80,6 +81,7 @@ export function ForecastPage() {
             displayName={forecastAttribution.displayName}
             logoRequired={forecastAttribution.logoRequired}
             doNotUseLogo={forecastAttribution.doNotUseLogo}
+            textTranslatable={forecastAttribution.textTranslatable}
             providerId={forecast.source}
           />
         )}

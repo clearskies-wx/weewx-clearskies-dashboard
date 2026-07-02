@@ -256,6 +256,7 @@ export function NowPage() {
                   displayName={attribution.displayName}
                   logoRequired={attribution.logoRequired}
                   doNotUseLogo={attribution.doNotUseLogo}
+                  textTranslatable={attribution.textTranslatable}
                   compact={entry.footprint === 'tile'}
                   providerId={attribution.providerId}
                 />

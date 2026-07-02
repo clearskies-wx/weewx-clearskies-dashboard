@@ -12,6 +12,7 @@
 // Only providers with a known logo file render a logo; everyone else (and
 // any provider with doNotUseLogo=true) falls back to text-only attribution.
 
+import { useTranslation } from 'react-i18next';
 import { CardFooter } from '../ui/card';
 
 const LOGO_HEIGHT = 32;
@@ -39,6 +40,7 @@ interface ProviderAttributionProps {
   displayName: string;
   logoRequired: boolean;
   doNotUseLogo: boolean;
+  textTranslatable: boolean;
   compact?: boolean;
   providerId: string;
 }
@@ -54,18 +56,20 @@ export function ProviderAttribution({
   attributionText,
   displayName,
   doNotUseLogo,
+  textTranslatable,
   compact,
   providerId,
 }: ProviderAttributionProps) {
+  const { t } = useTranslation('common');
   const logoAsset = doNotUseLogo ? undefined : LOGO_ASSETS[providerId];
   const logoH = compact ? LOGO_HEIGHT_COMPACT : LOGO_HEIGHT;
   const footerPad = compact ? '0.1875rem var(--card-pad)' : '0.625rem var(--card-pad)';
   const marginLeft = compact ? 6 : 8;
+  const renderedText = textTranslatable ? t(`attribution.${providerId}`, attributionText) : attributionText;
 
   return (
     <CardFooter style={{ padding: footerPad }}>
-      {/* attributionText is ToS-mandated, provider-supplied copy — render verbatim, never through t(). */}
-      <span style={textStyle}>{attributionText}</span>
+      <span style={textStyle}>{renderedText}</span>
       {logoAsset ? (
         <>
           <img
