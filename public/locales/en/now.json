@@ -31,6 +31,7 @@
     "almanac": "Unable to load almanac data",
     "airQuality": "Unable to load air quality data",
     "earthquake": "Unable to load earthquake data",
+    "lightning": "Unable to load lightning data",
     "forecast": "Unable to load forecast",
     "solarUv": "Unable to load solar and UV data",
     "precipBarometer": "Unable to load precipitation and pressure data",
@@ -69,7 +70,14 @@
   "sunMoon": {
     "sunrise": "Sunrise",
     "sunset": "Sunset",
+    "moonrise": "Moonrise",
+    "moonset": "Moonset",
     "moon": "Moon"
+  },
+  "sunMoonCard": {
+    "svgTitleSun": "Sun: rises {{rise}}, sets {{set}}",
+    "svgTitleMoon": "Moon: rises {{rise}}, sets {{set}}",
+    "svgTitlePhase": "Phase: {{phase}}, {{illumination}} illuminated"
   },
   "feelsLike": "Feels like",
   "windCompass": {
@@ -124,13 +132,23 @@
     "strikesLastHour": "{{count}} strikes in last hour",
     "strikesLast24h": "{{count}} in last 24h",
     "nearest": "Nearest: {{distance}} km",
+    "nearestLabel": "Nearest:",
     "lastStrike": "Last strike: {{time}}",
     "lastStrikeUnknown": "Unknown",
-    "noActivity": "No activity detected"
+    "noActivity": "No activity detected",
+    "chartAriaLabel_one": "Lightning strike history: {{count}} strike in the last 24 hours",
+    "chartAriaLabel_other": "Lightning strike history: {{count}} strikes in the last 24 hours",
+    "tableCaption": "Lightning strike history — last 24 hours",
+    "timeColumn": "Time",
+    "distanceColumn": "Distance",
+    "perHour": "/hr",
+    "per24h": "/24h"
   },
   "earthquake": {
     "magnitude": "M{{magnitude}} — {{place}}",
-    "depth": "Depth: {{depth}} km"
+    "depth": "Depth: {{depth}} km",
+    "unknownLocation": "Unknown location",
+    "eventsAriaLabel": "Recent earthquake events"
   },
   "forecast": {
     "hiLo": "Hi {{high}}° / Lo {{low}}°",
@@ -146,10 +164,17 @@
   "todaysTemperature": "Today's Temperature",
   "tempCurveAriaLabel": "Today's temperature chart, midnight to midnight. Past shown as a filled area, forecast as a dashed line.",
   "tempCurveSrCaption": "Today's hourly temperature",
+  "tempCurveTable": {
+    "time": "Time",
+    "type": "Type",
+    "forecast": "Forecast",
+    "actual": "Actual"
+  },
   "hiLabel": "High",
   "loLabel": "Low",
   "hiAria": "Today's high {{temp}}",
   "loAria": "Today's low {{temp}}",
+  "chartNowLabel": "Now",
   "solarUv": {
     "title": "Solar & UV",
     "solarRadiation": "Solar Radiation",
@@ -192,7 +217,9 @@
     "dewpointLabel": "Dewpoint"
   },
   "barometerCard": {
-    "title": "Barometer"
+    "title": "Barometer",
+    "gaugeLow": "Low",
+    "gaugeHigh": "High"
   },
   "solarRadiationCard": {
     "title": "Solar Radiation",

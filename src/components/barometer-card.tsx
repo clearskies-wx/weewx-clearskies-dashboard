@@ -218,7 +218,7 @@ function BarometerCardContent({
             max={gaugeMax}
             colorMode="uniform"
             thresholds={THRESHOLDS}
-            endpointLabels={['Low', 'High']}
+            endpointLabels={[t('barometerCard.gaugeLow'), t('barometerCard.gaugeHigh')]}
             svgTitle={svgTitle}
           >
             {/* Children: value / unit / trend — rendered centered inside the arc.

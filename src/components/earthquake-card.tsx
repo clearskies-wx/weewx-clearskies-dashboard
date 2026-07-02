@@ -30,6 +30,8 @@
 //   1–24 h    → hours 1dp      ("2.3 hrs ago")
 //   > 24 h    → days 1dp       ("1.5 days ago")
 
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import {
   Card,
   CardHeader,
@@ -37,6 +39,8 @@ import {
   CardContent,
 } from './ui/card';
 import { magnitudeClasses } from '../utils/earthquake';
+import { formatRelativeTime } from '../utils/format-date';
+import { formatNumber } from '../utils/format-number';
 import type { EarthquakeRecord } from '../api/types';
 import type { CardComponentProps } from '../lib/card-registry';
 
@@ -45,27 +49,15 @@ import type { CardComponentProps } from '../lib/card-registry';
 // ---------------------------------------------------------------------------
 
 /**
- * Format the age of an earthquake relative to the current time.
- *
- * Thresholds per spec:
- *   < 1 hour  → "N min ago"
- *   1–24 h    → "N.N hrs ago"
- *   > 24 h    → "N.N days ago"
+ * Format the age of an earthquake relative to the current time as a
+ * locale-correct relative time string (e.g. "3 minutes ago", "vor 3
+ * Minuten"). Delegates unit selection (minutes/hours/days) to
+ * formatRelativeTime — see utils/format-date.ts.
  */
-function formatEqAge(isoTime: string): string {
-  const diffMs = Date.now() - new Date(isoTime).getTime();
-  if (!isFinite(diffMs) || diffMs < 0) return '—';
-
-  const minutes = diffMs / 60_000;
-  if (minutes < 60) {
-    return `${Math.round(minutes)} min ago`;
-  }
-  const hours = diffMs / 3_600_000;
-  if (hours < 24) {
-    return `${hours.toFixed(1)} hrs ago`;
-  }
-  const days = diffMs / 86_400_000;
-  return `${days.toFixed(1)} days ago`;
+function formatEqAge(isoTime: string, locale: string): string {
+  const offsetMs = new Date(isoTime).getTime() - Date.now();
+  if (!isFinite(offsetMs) || offsetMs > 0) return '—';
+  return formatRelativeTime(offsetMs, locale);
 }
 
 // ---------------------------------------------------------------------------
@@ -88,6 +80,7 @@ function EarthquakeError({
   message: string;
   onRetry?: () => void;
 }) {
+  const { t } = useTranslation('common');
   return (
     <div role="alert" className="flex flex-col gap-2 items-start" style={{ fontSize: 'var(--text-body)' }}>
       <p className="text-destructive">{message}</p>
@@ -98,7 +91,7 @@ function EarthquakeError({
           className="text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
           style={{ fontSize: 'var(--text-label)' }}
         >
-          Retry
+          {t('retry')}
         </button>
       )}
     </div>
@@ -111,11 +104,11 @@ function EarthquakeError({
  * badge is aria-hidden; the li provides full context for screen readers via
  * the visible text (place + age + depth + source).
  */
-function EarthquakeRow({ quake }: { quake: EarthquakeRecord }) {
+function EarthquakeRow({ quake, t, locale }: { quake: EarthquakeRecord; t: TFunction; locale: string }) {
   const { bg, text } = magnitudeClasses(quake.magnitude);
-  const magDisplay = quake.magnitude.toFixed(1);
-  const ageDisplay = formatEqAge(quake.time);
-  const place = quake.place ?? 'Unknown location';
+  const magDisplay = formatNumber(quake.magnitude, 1, locale);
+  const ageDisplay = formatEqAge(quake.time, locale);
+  const place = quake.place ?? t('earthquake.unknownLocation');
 
   return (
     <li style={{ listStyle: 'none' }}>
@@ -217,7 +210,7 @@ function EarthquakeRow({ quake }: { quake: EarthquakeRecord }) {
               lineHeight: 1.3,
             }}
           >
-            {quake.depth !== null && `Depth ${quake.depth.toFixed(0)} km`}
+            {quake.depth !== null && t('earthquake.depth', { depth: formatNumber(quake.depth, 0, locale) })}
             {quake.depth !== null && quake.source && ' · '}
             {quake.source && quake.source.toUpperCase()}
           </p>
@@ -248,6 +241,9 @@ function EarthquakeCardContent({
   error = null,
   onRetry,
 }: EarthquakeCardProps) {
+  const { t, i18n } = useTranslation('now');
+  const locale = i18n.language;
+
   // Show the first two events.
   const visibleQuakes = earthquakes?.slice(0, 2) ?? [];
   const hasData = visibleQuakes.length > 0;
@@ -256,21 +252,21 @@ function EarthquakeCardContent({
     <Card footprint="tile" aria-busy={loading}>
       <CardHeader>
         {/* Title: text-only per spec. Manrope 600 via font-heading. */}
-        <CardTitle as="h2">Recent Earthquake</CardTitle>
+        <CardTitle as="h2">{t('recentEarthquake')}</CardTitle>
       </CardHeader>
 
       <CardContent>
         {loading ? (
           <>
-            <span className="sr-only" role="status">Loading earthquake data</span>
+            <span className="sr-only" role="status">{t('loading.earthquake')}</span>
             <EarthquakeSkeleton />
           </>
         ) : error ? (
           onRetry ? (
-            <EarthquakeError message={error} onRetry={onRetry} />
+            <EarthquakeError message={t('error.earthquake')} onRetry={onRetry} />
           ) : (
             <p role="alert" className="text-muted-foreground" style={{ fontFamily: 'var(--font-sans, system-ui, sans-serif)', fontSize: 'var(--text-secondary)' }}>
-              {error}
+              {t('error.earthquake')}
             </p>
           )
         ) : !hasData ? (
@@ -283,17 +279,17 @@ function EarthquakeCardContent({
               margin: 0,
             }}
           >
-            No recent earthquakes
+            {t('noData.earthquake')}
           </p>
         ) : (
           /* aria-live="polite": announces new events as SSE pushes them (ADR-041). */
           <ul
             aria-live="polite"
-            aria-label="Recent earthquake events"
+            aria-label={t('earthquake.eventsAriaLabel')}
             style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1, justifyContent: 'center' }}
           >
             {visibleQuakes.map((quake) => (
-              <EarthquakeRow key={quake.id} quake={quake} />
+              <EarthquakeRow key={quake.id} quake={quake} t={t} locale={locale} />
             ))}
           </ul>
         )}
@@ -321,7 +317,7 @@ export function EarthquakeCard(props: CardComponentProps | EarthquakeCardProps):
       <EarthquakeCardContent
         earthquakes={eqData?.data ?? null}
         loading={eqData?.loading ?? true}
-        error={eqData?.error ? 'Data unavailable' : null}
+        error={eqData?.error ? 'error' : null}
         stationTz={props.stationTz}
         // omit onRetry → renders muted text instead of retry button
       />

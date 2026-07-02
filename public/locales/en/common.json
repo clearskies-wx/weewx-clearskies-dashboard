@@ -8,6 +8,16 @@
   "pageNotFound": "Page not found.",
   "customPageLoading": "Loading page...",
   "customPageNoContent": "This page has no content yet.",
+  "setup": {
+    "startingUp": "Clear Skies is starting up...",
+    "apiNotResponding": "The weather station API is not responding yet. It may still be initialising."
+  },
+  "cookie": {
+    "consentMessage": "This website uses cookies to analyze traffic via Google Analytics. No personal data is collected.",
+    "learnMore": "Learn more",
+    "reject": "Reject",
+    "accept": "Accept"
+  },
   "footer": {
     "legal": "Legal / Privacy",
     "cookieSettings": "Cookie Settings",

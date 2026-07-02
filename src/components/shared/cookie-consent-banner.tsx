@@ -19,6 +19,7 @@
 // Value shape: { consent: "accepted" | "rejected", timestamp: "<ISO-8601>" }
 
 import { useEffect, useRef, useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useBranding } from '../../lib/branding-provider';
 import { initGoogleAnalytics, removeGoogleAnalytics } from '../../lib/analytics';
@@ -103,6 +104,7 @@ function getFocusableElements(container: HTMLElement): HTMLElement[] {
 // ---------------------------------------------------------------------------
 
 export function CookieConsentBanner() {
+  const { t } = useTranslation('common');
   const branding = useBranding();
   const measurementId = branding.googleAnalyticsId ?? '';
 
@@ -285,8 +287,7 @@ export function CookieConsentBanner() {
           className="leading-relaxed"
           style={{ fontSize: 'var(--text-body)', color: 'rgba(255, 255, 255, 0.9)' }}
         >
-          This website uses cookies to analyze traffic via Google Analytics. No personal
-          data is collected.{' '}
+          {t('cookie.consentMessage')}{' '}
           <Link
             to="/legal"
             className={[
@@ -296,7 +297,7 @@ export function CookieConsentBanner() {
             ].join(' ')}
             style={{ color: 'rgba(255, 255, 255, 0.9)' }}
           >
-            Learn more
+            {t('cookie.learnMore')}
           </Link>
           .
         </p>
@@ -325,7 +326,7 @@ export function CookieConsentBanner() {
               background: 'rgba(255, 255, 255, 0.08)',
             }}
           >
-            Reject
+            {t('cookie.reject')}
           </button>
 
           <button
@@ -345,7 +346,7 @@ export function CookieConsentBanner() {
               background: 'rgba(255, 255, 255, 0.08)',
             }}
           >
-            Accept
+            {t('cookie.accept')}
           </button>
         </div>
       </div>

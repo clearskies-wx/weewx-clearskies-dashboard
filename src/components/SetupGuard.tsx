@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { isMockMode } from '../api/client';
 
 const CACHE_KEY = 'clearskies.setup.configured';
@@ -13,6 +14,7 @@ interface SetupGuardProps {
 }
 
 export function SetupGuard({ children }: SetupGuardProps) {
+  const { t } = useTranslation('common');
   const [state, setState] = useState<GuardState>(() => {
     if (isMockMode()) return 'ok';
     if (sessionStorage.getItem(CACHE_KEY) === 'true') return 'ok';
@@ -63,10 +65,10 @@ export function SetupGuard({ children }: SetupGuardProps) {
             id="setup-guard-heading"
             className="text-2xl font-semibold tracking-tight"
           >
-            Clear Skies is starting up...
+            {t('setup.startingUp')}
           </h1>
           <p className="text-muted-foreground text-center max-w-sm">
-            The weather station API is not responding yet. It may still be initialising.
+            {t('setup.apiNotResponding')}
           </p>
           <button
             type="button"
@@ -74,7 +76,7 @@ export function SetupGuard({ children }: SetupGuardProps) {
             style={{ fontSize: 'var(--text-label)' }}
             onClick={() => setState('checking')}
           >
-            Retry
+            {t('retry')}
           </button>
         </main>
       </div>

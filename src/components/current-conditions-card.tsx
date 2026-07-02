@@ -37,6 +37,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { asConverted } from '../api/types';
+import { formatTime } from '../utils/format-date';
 import {
   Card,
   CardHeader,
@@ -132,7 +133,8 @@ interface TempCurveProps {
 }
 
 function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit, stationClock, stationTz }: TempCurveProps) {
-  const { t } = useTranslation('now');
+  const { t, i18n } = useTranslation('now');
+  const locale = i18n.language;
 
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
@@ -228,7 +230,7 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit, statio
               strokeWidth={1.25}
               strokeDasharray="2 2"
               label={{
-                value: 'Now',
+                value: t('chartNowLabel'),
                 position: (now - todayMidnight) / (24 * 3600 * 1000) > 0.85
                   ? 'insideTopRight'
                   : 'insideTopLeft',
@@ -286,21 +288,22 @@ function TempCurve({ todayArchive, hourlyForecast, currentTemp, tempUnit, statio
           <caption>{t('tempCurveSrCaption')}</caption>
           <thead>
             <tr>
-              <th scope="col">Time</th>
+              <th scope="col">{t('tempCurveTable.time')}</th>
               <th scope="col">{tempUnit || '°'}</th>
-              <th scope="col">Type</th>
+              <th scope="col">{t('tempCurveTable.type')}</th>
             </tr>
           </thead>
           <tbody>
             {srRows.map((row) => {
-              const timeStr = new Intl.DateTimeFormat(undefined, {
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true,
-                timeZone: stationTz ?? undefined,
-              }).format(new Date(row.ts));
+              const timeStr = stationTz
+                ? formatTime(row.ts, locale, stationTz)
+                : new Intl.DateTimeFormat(locale, {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true,
+                  }).format(new Date(row.ts));
               const temp = (row.past ?? row.future);
-              const type = row.future !== null ? 'Forecast' : 'Actual';
+              const type = row.future !== null ? t('tempCurveTable.forecast') : t('tempCurveTable.actual');
               return (
                 <tr key={row.ts}>
                   <td>{timeStr}</td>

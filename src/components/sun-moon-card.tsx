@@ -29,6 +29,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AlmanacSnapshot } from '../api/types';
+import { formatNumber } from '../utils/format-number';
 import { MoonPhaseG } from './moon-phase-icon';
 import {
   Card,
@@ -375,10 +376,13 @@ const LABEL_STYLE: React.CSSProperties = {
 };
 
 function SunMoonContent({ almanac, stationTz }: SunMoonContentProps) {
+  const { t, i18n } = useTranslation('now');
+  const locale = i18n.language;
+
   const fmtCompact = (iso: string | null): string => {
     if (!iso) return '—';
     const d = new Date(iso);
-    const parts = new Intl.DateTimeFormat('en-US', {
+    const parts = new Intl.DateTimeFormat(locale, {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
@@ -396,11 +400,11 @@ function SunMoonContent({ almanac, stationTz }: SunMoonContentProps) {
   const moonsetText = fmtCompact(almanac.moon.set);
   const phaseName = formatPhaseName(almanac.moon.phaseName);
   const illumination = almanac.moon.illuminationPercent;
-  const illumText = illumination !== null ? `${Math.round(illumination)}%` : '—';
+  const illumText = illumination !== null ? formatNumber(Math.round(illumination), 0, locale) + '%' : '—';
   const svgTitle = [
-    `Sun: rises ${sunriseText}, sets ${sunsetText}`,
-    `Moon: rises ${moonriseText}, sets ${moonsetText}`,
-    `Phase: ${phaseName}, ${illumText} illuminated`,
+    t('sunMoonCard.svgTitleSun', { rise: sunriseText, set: sunsetText }),
+    t('sunMoonCard.svgTitleMoon', { rise: moonriseText, set: moonsetText }),
+    t('sunMoonCard.svgTitlePhase', { phase: phaseName, illumination: illumText }),
   ].join('. ');
 
   return (
@@ -417,22 +421,22 @@ function SunMoonContent({ almanac, stationTz }: SunMoonContentProps) {
       >
         <div style={{ textAlign: 'left', flexShrink: 0 }}>
           <div style={{ ...LABEL_STYLE, fontWeight: 600, color: 'var(--foreground)' }}>{sunriseText}</div>
-          <div style={{ ...LABEL_STYLE, fontWeight: 400, color: 'var(--muted-foreground)' }}>Sunrise</div>
+          <div style={{ ...LABEL_STYLE, fontWeight: 400, color: 'var(--muted-foreground)' }}>{t('sunMoon.sunrise')}</div>
         </div>
         <div style={{ flex: CX - MOON_RX }} />
         <div style={{ textAlign: 'center', flexShrink: 0 }}>
           <div style={{ ...LABEL_STYLE, fontWeight: 600, color: 'var(--foreground)' }}>{moonriseText}</div>
-          <div style={{ ...LABEL_STYLE, fontWeight: 400, color: 'var(--muted-foreground)' }}>Moonrise</div>
+          <div style={{ ...LABEL_STYLE, fontWeight: 400, color: 'var(--muted-foreground)' }}>{t('sunMoon.moonrise')}</div>
         </div>
         <div style={{ flex: MOON_RX * 2 }} />
         <div style={{ textAlign: 'center', flexShrink: 0 }}>
           <div style={{ ...LABEL_STYLE, fontWeight: 600, color: 'var(--foreground)' }}>{moonsetText}</div>
-          <div style={{ ...LABEL_STYLE, fontWeight: 400, color: 'var(--muted-foreground)' }}>Moonset</div>
+          <div style={{ ...LABEL_STYLE, fontWeight: 400, color: 'var(--muted-foreground)' }}>{t('sunMoon.moonset')}</div>
         </div>
         <div style={{ flex: SVG_W - CX - MOON_RX }} />
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
           <div style={{ ...LABEL_STYLE, fontWeight: 600, color: 'var(--foreground)' }}>{sunsetText}</div>
-          <div style={{ ...LABEL_STYLE, fontWeight: 400, color: 'var(--muted-foreground)' }}>Sunset</div>
+          <div style={{ ...LABEL_STYLE, fontWeight: 400, color: 'var(--muted-foreground)' }}>{t('sunMoon.sunset')}</div>
         </div>
       </div>
     </div>

@@ -25,6 +25,7 @@
 // and dataBag["lightning"].
 
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ResponsiveContainer,
   ScatterChart,
@@ -42,6 +43,8 @@ import {
 import type { Observation, LightningData } from '../api/types';
 import { asConverted } from '../api/types';
 import type { CardComponentProps } from '../lib/card-registry';
+import { formatTime } from '../utils/format-date';
+import { formatNumber } from '../utils/format-number';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -117,6 +120,9 @@ function LightningCardContent({
   error = null,
   stationTz = 'UTC',
 }: LightningCardProps) {
+  const { t, i18n } = useTranslation('now');
+  const locale = i18n.language;
+
   const now = Date.now();
   const windowStart = now - WINDOW_MS;
 
@@ -140,14 +146,11 @@ function LightningCardContent({
   // Nearest distance display: unit comes from ConvertedValue label.
   const nearestDisplay =
     lightning?.nearestDistanceKm != null
-      ? `${lightning.nearestDistanceKm.toFixed(1)} ${distanceUnit}`
+      ? `${formatNumber(lightning.nearestDistanceKm, 1, locale)} ${distanceUnit}`
       : null;
 
   // Accessible chart summary for aria-label.
-  const chartAriaLabel =
-    strikePoints.length > 0
-      ? `Lightning strike history: ${strikePoints.length} strikes in the last 24 hours`
-      : 'Lightning strike history: no strikes in the last 24 hours';
+  const chartAriaLabel = t('lightning.chartAriaLabel', { count: strikePoints.length });
 
   // X-axis domain: [windowStart, now] keeps the right edge pinned to current time.
   const xDomain: [number, number] = [windowStart, now];
@@ -160,17 +163,17 @@ function LightningCardContent({
     <Card footprint="tile" aria-busy={loading}>
       <CardHeader>
         {/* Title: text-only per spec. Manrope 600 via font-heading. */}
-        <CardTitle as="h2">Lightning</CardTitle>
+        <CardTitle as="h2">{t('lightning.title')}</CardTitle>
       </CardHeader>
 
       <CardContent>
         {loading ? (
           <>
-            <span className="sr-only" role="status">Loading lightning data</span>
+            <span className="sr-only" role="status">{t('loading.lightning')}</span>
             <LightningSkeleton />
           </>
         ) : error ? (
-          <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>{error}</p>
+          <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>{t('error.lightning')}</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1, minHeight: 0, maxHeight: 'var(--card-content-max)' }}>
 
@@ -198,7 +201,7 @@ function LightningCardContent({
                       color: 'var(--muted-foreground)',
                     }}
                   >
-                    No activity
+                    {t('lightning.noActivity')}
                   </span>
                 </div>
               ) : (
@@ -211,13 +214,7 @@ function LightningCardContent({
                       type="number"
                       domain={xDomain}
                       tickCount={4}
-                      tickFormatter={(v: number) =>
-                        new Date(v).toLocaleTimeString(undefined, {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          timeZone: stationTz,
-                        })
-                      }
+                      tickFormatter={(v: number) => formatTime(v, locale, stationTz)}
                       tick={{
                         fontFamily: 'var(--font-chart, system-ui, sans-serif)',
                         fontSize: 11,
@@ -254,9 +251,11 @@ function LightningCardContent({
                         padding: '4px 8px',
                       }}
                       formatter={(value, name) =>
-                        name === 'd' ? [`${Number(value).toFixed(1)} ${distanceUnit}`, 'Distance'] : [value, name]
+                        name === 'd'
+                          ? [`${formatNumber(Number(value), 1, locale)} ${distanceUnit}`, t('lightning.distanceColumn')]
+                          : [value, name]
                       }
-                      labelFormatter={(label) => new Date(Number(label)).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', timeZone: stationTz })}
+                      labelFormatter={(label) => formatTime(Number(label), locale, stationTz)}
                     />
                     <Scatter
                       data={strikePoints}
@@ -276,18 +275,18 @@ function LightningCardContent({
             {strikePoints.length > 0 && (
               <div style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', clipPath: 'inset(50%)', whiteSpace: 'nowrap', margin: '-1px', padding: 0, border: 0 }}>
                 <table>
-                  <caption>Lightning strike history — last 24 hours</caption>
+                  <caption>{t('lightning.tableCaption')}</caption>
                   <thead>
                     <tr>
-                      <th scope="col">Time</th>
-                      <th scope="col">Distance ({distanceUnit})</th>
+                      <th scope="col">{t('lightning.timeColumn')}</th>
+                      <th scope="col">{t('lightning.distanceColumn')} ({distanceUnit})</th>
                     </tr>
                   </thead>
                   <tbody>
                     {strikePoints.map((s) => (
                       <tr key={s.timeIso}>
-                        <td>{new Date(s.timeIso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', timeZone: stationTz })}</td>
-                        <td>{s.d.toFixed(1)}</td>
+                        <td>{formatTime(new Date(s.timeIso), locale, stationTz)}</td>
+                        <td>{formatNumber(s.d, 1, locale)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -331,7 +330,7 @@ function LightningCardContent({
                   >
                     {lightning?.count1h ?? 0}
                   </span>
-                  <span style={{ color: 'var(--muted-foreground)' }}> /hr</span>
+                  <span style={{ color: 'var(--muted-foreground)' }}> {t('lightning.perHour')}</span>
                   <span style={{ color: 'var(--muted-foreground)' }}> · </span>
                   <span
                     style={{
@@ -342,7 +341,7 @@ function LightningCardContent({
                   >
                     {lightning?.count24h ?? 0}
                   </span>
-                  <span style={{ color: 'var(--muted-foreground)' }}> /24h</span>
+                  <span style={{ color: 'var(--muted-foreground)' }}> {t('lightning.per24h')}</span>
                 </span>
               </div>
 
@@ -355,7 +354,7 @@ function LightningCardContent({
                     color: 'var(--muted-foreground)',
                   }}
                 >
-                  Nearest: {nearestDisplay}
+                  {t('lightning.nearestLabel')} {nearestDisplay}
                 </span>
               )}
             </div>
