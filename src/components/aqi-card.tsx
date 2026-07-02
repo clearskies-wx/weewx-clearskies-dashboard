@@ -50,7 +50,6 @@ import {
   CardTitle,
   CardContent,
 } from './ui/card';
-import { ForecastAttribution } from './forecast/ForecastAttribution';
 import type { AQIReading, AQIScale } from '../api/types';
 import type { CardComponentProps } from '../lib/card-registry';
 
@@ -844,7 +843,6 @@ function AqiCardContent({
           )
         )}
       </CardContent>
-      <ForecastAttribution source={aqi?.source} compact />
     </Card>
   );
 }

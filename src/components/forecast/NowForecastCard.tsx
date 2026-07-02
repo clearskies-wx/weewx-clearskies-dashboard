@@ -17,7 +17,6 @@ import { Card, CardHeader, CardContent, CardTitle } from '../ui/card';
 import { HeaderTabs } from '../ui/header-controls';
 import { HourlyStrip } from './HourlyStrip';
 import { DailyColumns } from './DailyColumns';
-import { ForecastAttribution } from './ForecastAttribution';
 import type { ForecastBundle, StationClock } from '../../api/types';
 import type { CardComponentProps } from '../../lib/card-registry';
 
@@ -155,7 +154,6 @@ function NowForecastCardContent({
           </>
         )}
       </CardContent>
-      <ForecastAttribution source={forecast?.source} />
     </Card>
   );
 }

@@ -12,7 +12,6 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardHeader, CardContent, CardTitle } from '../ui/card';
 import { HeaderTabs } from '../ui/header-controls';
 import { HourlyStrip } from './HourlyStrip';
-import { ForecastAttribution } from './ForecastAttribution';
 import type { ForecastBundle, UnitsBlock } from '../../api/types';
 
 // ── Skeleton ─────────────────────────────────────────────────────────────────
@@ -121,7 +120,6 @@ export function ForecastHourlyCard({
           </>
         )}
       </CardContent>
-      <ForecastAttribution source={forecast?.source} />
     </Card>
   );
 }
