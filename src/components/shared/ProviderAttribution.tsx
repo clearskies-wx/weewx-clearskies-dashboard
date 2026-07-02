@@ -15,6 +15,8 @@
 import { useTranslation } from 'react-i18next';
 import { CardFooter } from '../ui/card';
 
+const ATTRIBUTION_FOOTER_CLASS = 'border-t-0 bg-transparent';
+
 const LOGO_HEIGHT = 32;
 const LOGO_HEIGHT_COMPACT = 16;
 
@@ -68,7 +70,7 @@ export function ProviderAttribution({
   const renderedText = textTranslatable ? t(`attribution.${providerId}`, attributionText) : attributionText;
 
   return (
-    <CardFooter style={{ padding: footerPad }}>
+    <CardFooter className={ATTRIBUTION_FOOTER_CLASS} style={{ padding: footerPad }}>
       <span style={textStyle}>{renderedText}</span>
       {logoAsset ? (
         <>
