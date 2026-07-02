@@ -2,20 +2,64 @@ import { useState, useEffect, useMemo, Suspense } from 'react';
 import type { WebcamConfig } from '../api/types';
 import { Grid } from '../components/layout/grid';
 import { NowHeroCard } from '../components/layout/now-hero-card';
+import { footprintColSpan } from '../components/ui/card';
+import { ProviderAttribution } from '../components/shared/ProviderAttribution';
 import {
   useForecast,
   useEarthquakes,
   useAqi,
   useStation,
   useLightning,
+  useCapabilities,
 } from '../hooks/useWeatherData';
 import { useSmartAlmanac } from '../hooks/useSmartAlmanac';
 import { useRealtimeObservation } from '../hooks/useRealtimeObservation';
 import { useBranding } from '../lib/branding-provider';
 import type { DataBag } from '../lib/card-registry';
 import { getCard } from '../lib/card-registry';
+import type { CardType } from '../lib/card-metadata';
 import { fetchNowLayout, DEFAULT_NOW_LAYOUT } from '../lib/now-layout';
 import type { NowLayoutConfig } from '../lib/now-layout';
+import type { CapabilityDeclaration, ProviderAttributionData } from '../api/types';
+
+/**
+ * Now-page card types that show in-context provider attribution, and the
+ * dataBag endpoint each one sources its `source` field from. Per
+ * DASHBOARD-MANUAL.md §1 "In-context provider attribution", only the
+ * Today's Forecast card and the AQI card carry a footer — not every card
+ * that happens to reference the forecast endpoint (e.g. uv-index also reads
+ * /api/v1/forecast for its daily max, but does not show attribution).
+ */
+const ATTRIBUTABLE_CARD_ENDPOINTS: Partial<Record<CardType, string>> = {
+  'now-forecast': '/api/v1/forecast',
+  aqi: '/api/v1/aqi/current',
+};
+
+/**
+ * Resolve the ProviderAttributionData (plus providerId) for a Now-page card,
+ * or null when the card isn't attributable, has no data source yet, the
+ * provider isn't found in the capabilities registry, or attribution isn't
+ * required for that provider.
+ */
+function findCardAttribution(
+  type: CardType,
+  dataBag: DataBag,
+  providers: CapabilityDeclaration[] | undefined,
+): (ProviderAttributionData & { providerId: string }) | null {
+  if (!providers) return null;
+  const endpoint = ATTRIBUTABLE_CARD_ENDPOINTS[type];
+  if (!endpoint) return null;
+
+  const entry = dataBag[endpoint] as { data?: { source?: string } } | undefined;
+  const source = entry?.data?.source;
+  if (!source) return null;
+
+  const provider = providers.find((p) => p.providerId === source);
+  const attribution = provider?.attribution;
+  if (!attribution?.attributionRequired) return null;
+
+  return { ...attribution, providerId: source };
+}
 
 export function NowPage() {
   const branding = useBranding();
@@ -28,6 +72,7 @@ export function NowPage() {
   const { data: earthquakes, loading: eqLoading, error: eqError } = useEarthquakes();
   const { data: aqi, loading: aqiLoading, error: aqiError } = useAqi();
   const { data: station, loading: stationLoading } = useStation();
+  const { data: capabilities } = useCapabilities();
 
   const lightning = useLightning(observation);
 
@@ -184,13 +229,37 @@ export function NowPage() {
             if (entry.type === 'webcam' && !webcamEnabled) return null;
 
             const CardComponent = reg.component;
-            return (
+            const cardElement = (
               <CardComponent
                 key={entry.type}
                 dataBag={dataBag}
                 layout={{ footprint: entry.footprint, rowSpan: entry.rowSpan }}
                 stationTz={tz}
               />
+            );
+
+            // ── Host-rendered provider attribution (ADR-080, DASHBOARD-MANUAL §8) ──
+            // Cards must not import ProviderAttribution themselves. The host reads
+            // `source` from the card's own dataBag response(s), matches it against
+            // the capabilities registry, and renders attribution as a sibling when
+            // attributionRequired is true. Wrapped in a div carrying the same
+            // grid column-span classes as the card's own footprint so the pair
+            // occupies a single grid cell and the page grid layout is undisturbed.
+            const attribution = findCardAttribution(entry.type, dataBag, capabilities?.providers);
+            if (!attribution) return cardElement;
+
+            return (
+              <div key={entry.type} className={footprintColSpan[entry.footprint]}>
+                {cardElement}
+                <ProviderAttribution
+                  attributionText={attribution.attributionText}
+                  displayName={attribution.displayName}
+                  logoRequired={attribution.logoRequired}
+                  doNotUseLogo={attribution.doNotUseLogo}
+                  compact={entry.footprint === 'tile'}
+                  providerId={attribution.providerId}
+                />
+              </div>
             );
           })}
         </Suspense>

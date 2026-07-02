@@ -24,8 +24,11 @@ type CardProps = React.ComponentProps<"div"> & {
 
 /** Column-span classes for each footprint value (ADR-051).
  *  Grid is 1â†’2â†’4 columns (<768px / â‰¥768px / â‰¥1024px).
- *  Column spans are enforced now; row heights use --card-row (13rem) track at md+. */
-const footprintColSpan: Record<CardFootprint, string> = {
+ *  Column spans are enforced now; row heights use --card-row (13rem) track at md+.
+ *  Exported so host pages (e.g. now.tsx) can apply the same column span to a
+ *  wrapper element when they need to group a Card with a sibling element
+ *  (e.g. a host-rendered ProviderAttribution footer) in the same grid cell. */
+export const footprintColSpan: Record<CardFootprint, string> = {
   tile:  "col-span-1",
   wide:  "col-span-1 md:col-span-2",
   panel: "col-span-1 md:col-span-2 lg:col-span-3",
