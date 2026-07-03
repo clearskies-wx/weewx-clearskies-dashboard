@@ -1,4 +1,5 @@
 {
+  "legalDisclaimer": "Questa è una traduzione fornita per comodità. La versione inglese è l'unico documento giuridicamente vincolante. In caso di conflitto tra questa traduzione e l'originale inglese, prevale la versione inglese.",
   "title": "Note legali e privacy",
   "loadingAria": "Caricamento contenuto legale…",
   "operatorCard": {
@@ -18,11 +19,11 @@
       },
       "dataAccuracy": {
         "title": "Esclusione di responsabilità per l'accuratezza dei dati",
-        "body": "I dati meteorologici sono forniti COSÌ COME SONO, senza alcuna garanzia di alcun tipo. Le letture dei sensori possono essere imprecise, ritardate o temporaneamente non disponibili a causa di limitazioni dell'attrezzatura, manutenzione o problemi tecnici. Questi dati NON sono adatti ad applicazioni critiche per la sicurezza, incluse, a titolo esemplificativo, aviazione, navigazione marittima, gestione delle emergenze o qualsiasi decisione in cui informazioni meteorologiche imprecise potrebbero causare lesioni, morte o danni materiali. Per decisioni critiche per la sicurezza consultare sempre i servizi meteorologici governativi ufficiali. Ai sensi degli articoli 15–16 della GNU General Public License v3, questo software e i suoi risultati sono forniti senza alcuna garanzia, espressa o implicita."
+        "body": "I dati meteorologici sono forniti COSÌ COME SONO, senza alcuna garanzia di alcun tipo. Le letture dei sensori possono essere imprecise, ritardate o temporaneamente non disponibili a causa di limitazioni dell'attrezzatura, manutenzione o problemi tecnici. Questi dati NON sono adatti ad applicazioni critiche per la sicurezza, incluse, a titolo esemplificativo, aviazione, navigazione marittima, gestione delle emergenze o qualsiasi decisione in cui informazioni meteorologiche imprecise potrebbero causare lesioni, morte o danni materiali. Per decisioni critiche per la sicurezza consultare sempre i servizi meteorologici governativi ufficiali. Ai sensi della PolyForm Noncommercial License 1.0.0, questo software e i suoi risultati sono forniti senza alcuna garanzia, espressa o implicita."
       },
       "intellectualProperty": {
         "title": "Proprietà intellettuale",
-        "body": "Il software del dashboard Clear Skies è software libero distribuito con licenza GNU General Public License v3.0. I dati di osservazione meteorologica di natura fattuale (temperatura, umidità, velocità del vento, ecc.) costituiscono misurazioni scientifiche e non sono soggetti a protezione del diritto d'autore. I dati di previsione meteorologica, le tile di mappe e altri contenuti di terze parti rimangono di proprietà dei rispettivi titolari e sono soggetti alle proprie condizioni d'uso e licenze."
+        "body": "Il software del dashboard Clear Skies è distribuito con licenza PolyForm Noncommercial License 1.0.0. È gratuito per uso personale, educativo, senza scopo di lucro, governativo e comunitario. L'uso commerciale richiede una licenza separata — consultare il documento ADDITIONAL-USES.md per i dettagli. I dati di osservazione meteorologica di natura fattuale (temperatura, umidità, velocità del vento, ecc.) costituiscono misurazioni scientifiche e non sono soggetti a protezione del diritto d'autore. I dati di previsione meteorologica, le tile di mappe e altri contenuti di terze parti rimangono di proprietà dei rispettivi titolari e sono soggetti alle proprie condizioni d'uso e licenze."
       },
       "thirdPartyServices": {
         "title": "Servizi di terze parti",
@@ -34,7 +35,7 @@
       },
       "limitationOfLiability": {
         "title": "Limitazione di responsabilità",
-        "body": "Ai sensi dell'articolo 16 della GNU General Public License v3, e nella misura massima consentita dalla legge applicabile, il gestore del sito non sarà responsabile per eventuali danni derivanti dall'utilizzo o dall'impossibilità di utilizzare questo sito, inclusi, senza limitazione, danni derivanti da imprecisioni dei dati, interruzioni del servizio o decisioni adottate sulla base dei dati meteorologici qui visualizzati. Poiché questo servizio è fornito gratuitamente, la responsabilità massima del gestore del sito è pari a € 0,00."
+        "body": "Ai sensi della PolyForm Noncommercial License 1.0.0, e nella misura massima consentita dalla legge applicabile, il gestore del sito non sarà responsabile per eventuali danni derivanti dall'utilizzo o dall'impossibilità di utilizzare questo sito, inclusi, senza limitazione, danni derivanti da imprecisioni dei dati, interruzioni del servizio o decisioni adottate sulla base dei dati meteorologici qui visualizzati. Poiché questo servizio è fornito gratuitamente per uso non commerciale, la responsabilità massima del gestore del sito è pari a € 0,00."
       },
       "modifications": {
         "title": "Modifiche",
@@ -290,8 +291,8 @@
     "astronomical": "Dati astronomici: Calcoli di effemeridi Skyfield",
     "note": "Le fonti di dati effettive dipendono dai fornitori configurati."
   },
-  "openSource": {
-    "title": "Licenze open source",
-    "body": "Clear Skies è software libero con licenza GNU General Public License v3.0. È sviluppato con tecnologie open source, tra cui React, Vite, Tailwind CSS, Recharts e icone Lucide. Il testo completo della licenza e le attribuzioni di terze parti sono disponibili nel repository del progetto."
+  "license": {
+    "title": "Licenza",
+    "body": "Clear Skies è distribuito con licenza PolyForm Noncommercial License 1.0.0. È gratuito per uso non commerciale, incluso l'uso personale, educativo, senza scopo di lucro, governativo e comunitario. Ulteriori usi consentiti — come la condivisione comunitaria dei dati meteorologici, le aziende agricole a conduzione familiare, le stazioni radioamatoriali, le cooperative agricole e le organizzazioni esenti da imposte — sono documentati in ADDITIONAL-USES.md. L'uso commerciale (pubblicità, accesso a pagamento, hosting gestito o utilizzo da parte di grandi organizzazioni a scopo di lucro) richiede una licenza a pagamento separata. Il software è sviluppato con tecnologie open source, tra cui React, Vite, Tailwind CSS, Recharts e icone Phosphor. Il testo completo della licenza e le attribuzioni di terze parti sono disponibili nel repository del progetto."
   }
 }

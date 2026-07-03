@@ -1,4 +1,5 @@
 {
+  "legalDisclaimer": "La présente est une traduction fournie à titre indicatif. La version anglaise est l'unique document juridiquement contraignant. En cas de divergence entre cette traduction et l'original anglais, la version anglaise prévaut.",
   "title": "Mentions légales et confidentialité",
   "loadingAria": "Chargement du contenu légal…",
   "operatorCard": {
@@ -18,11 +19,11 @@
       },
       "dataAccuracy": {
         "title": "Clause de non-responsabilité relative à la précision des données",
-        "body": "Les données météorologiques sont fournies EN L'ÉTAT, sans garantie d'aucune sorte. Les relevés des capteurs peuvent être inexacts, retardés ou temporairement indisponibles en raison des limitations de l'équipement, de la maintenance ou de problèmes techniques. Ces données NE SONT PAS adaptées aux applications critiques pour la sécurité, notamment l'aviation, la navigation maritime, la gestion des urgences ou toute décision pour laquelle des informations météorologiques inexactes pourraient entraîner des blessures, la mort ou des dommages matériels. Consultez toujours les services météorologiques gouvernementaux officiels pour les décisions critiques. Conformément aux articles 15 à 16 de la GNU General Public License v3, ce logiciel et ses résultats sont fournis sans aucune garantie, expresse ou implicite."
+        "body": "Les données météorologiques sont fournies EN L'ÉTAT, sans garantie d'aucune sorte. Les relevés des capteurs peuvent être inexacts, retardés ou temporairement indisponibles en raison des limitations de l'équipement, de la maintenance ou de problèmes techniques. Ces données NE SONT PAS adaptées aux applications critiques pour la sécurité, notamment l'aviation, la navigation maritime, la gestion des urgences ou toute décision pour laquelle des informations météorologiques inexactes pourraient entraîner des blessures, la mort ou des dommages matériels. Consultez toujours les services météorologiques gouvernementaux officiels pour les décisions critiques. Conformément à la PolyForm Noncommercial License 1.0.0, ce logiciel et ses résultats sont fournis sans aucune garantie, expresse ou implicite."
       },
       "intellectualProperty": {
         "title": "Propriété intellectuelle",
-        "body": "Le logiciel du tableau de bord Clear Skies est un logiciel libre sous licence GNU General Public License v3.0. Les données d'observation météorologique factuelles (température, humidité, vitesse du vent, etc.) constituent des mesures scientifiques et ne sont pas protégées par le droit d'auteur. Les données de prévision météorologique, les tuiles de cartes et autres contenus de tiers restent la propriété de leurs titulaires respectifs et sont soumis à leurs propres conditions d'utilisation et licences."
+        "body": "Le logiciel du tableau de bord Clear Skies est sous licence PolyForm Noncommercial License 1.0.0. Il est gratuit pour un usage personnel, éducatif, associatif, gouvernemental et communautaire. Toute utilisation commerciale nécessite une licence distincte — voir le document ADDITIONAL-USES.md pour plus de détails. Les données d'observation météorologique factuelles (température, humidité, vitesse du vent, etc.) constituent des mesures scientifiques et ne sont pas protégées par le droit d'auteur. Les données de prévision météorologique, les tuiles de cartes et autres contenus de tiers restent la propriété de leurs titulaires respectifs et sont soumis à leurs propres conditions d'utilisation et licences."
       },
       "thirdPartyServices": {
         "title": "Services tiers",
@@ -34,7 +35,7 @@
       },
       "limitationOfLiability": {
         "title": "Limitation de responsabilité",
-        "body": "Conformément à l'article 16 de la GNU General Public License v3, et dans toute la mesure permise par la loi applicable, l'opérateur du site ne saurait être tenu responsable de tout dommage résultant de l'utilisation ou de l'impossibilité d'utiliser ce site, y compris, sans limitation, les dommages résultant d'une inexactitude des données, d'interruptions de service ou de décisions prises sur la base des données météorologiques affichées ici. Ce service étant fourni gratuitement, la responsabilité maximale de l'opérateur du site est de 0,00 €."
+        "body": "Conformément à la PolyForm Noncommercial License 1.0.0, et dans toute la mesure permise par la loi applicable, l'opérateur du site ne saurait être tenu responsable de tout dommage résultant de l'utilisation ou de l'impossibilité d'utiliser ce site, y compris, sans limitation, les dommages résultant d'une inexactitude des données, d'interruptions de service ou de décisions prises sur la base des données météorologiques affichées ici. Ce service étant fourni gratuitement pour un usage non commercial, la responsabilité maximale de l'opérateur du site est de 0,00 €."
       },
       "modifications": {
         "title": "Modifications",
@@ -290,8 +291,8 @@
     "astronomical": "Données astronomiques : Calculs d'éphémérides Skyfield",
     "note": "Les sources de données réelles dépendent des fournisseurs configurés."
   },
-  "openSource": {
-    "title": "Licences open source",
-    "body": "Clear Skies est un logiciel libre sous licence GNU General Public License v3.0. Il est développé avec des technologies open source, notamment React, Vite, Tailwind CSS, Recharts et les icônes Lucide. Le texte complet de la licence et les attributions de tiers sont disponibles dans le dépôt du projet."
+  "license": {
+    "title": "Licence",
+    "body": "Clear Skies est sous licence PolyForm Noncommercial License 1.0.0. Il est gratuit pour un usage non commercial, notamment personnel, éducatif, associatif, gouvernemental et communautaire. Des usages supplémentaires autorisés — tels que le partage communautaire de données météorologiques, les exploitations agricoles familiales, les stations de radioamateur, les coopératives agricoles et les organismes exonérés d'impôts — sont documentés dans ADDITIONAL-USES.md. Toute utilisation commerciale (publicité, accès payant, hébergement géré ou utilisation par de grandes organisations à but lucratif) nécessite une licence payante distincte. Le logiciel est développé avec des technologies open source, notamment React, Vite, Tailwind CSS, Recharts et les icônes Phosphor. Le texte intégral de la licence et les attributions de tiers sont disponibles dans le dépôt du projet."
   }
 }

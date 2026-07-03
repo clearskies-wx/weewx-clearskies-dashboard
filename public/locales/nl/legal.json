@@ -1,4 +1,5 @@
 {
+  "legalDisclaimer": "Dit is een vertaling die voor uw gemak wordt aangeboden. De Engelse versie is het enige juridisch bindende document. Bij enige tegenstrijdigheid tussen deze vertaling en het Engelse origineel prevaleert de Engelse versie.",
   "title": "Juridisch & Privacy",
   "loadingAria": "Juridische inhoud laden…",
   "operatorCard": {
@@ -18,11 +19,11 @@
       },
       "dataAccuracy": {
         "title": "Disclaimer nauwkeurigheid gegevens",
-        "body": "Weergegevens worden verstrekt ZOALS ZE ZIJN, zonder enige garantie. Sensormetingen kunnen onnauwkeurig, vertraagd of tijdelijk niet beschikbaar zijn als gevolg van apparaatbeperkingen, onderhoud of technische problemen. Deze gegevens zijn NIET geschikt voor veiligheidskritische toepassingen, waaronder maar niet beperkt tot luchtvaart, zeevaartnavigatie, rampenbeheersing of beslissingen waarbij onjuiste weersinformatie kan leiden tot letsel, overlijden of materiële schade. Raadpleeg voor veiligheidskritische beslissingen altijd officiële overheidsweerkundige diensten. Ingevolge de GNU General Public License v3 §15–16 worden deze software en de resultaten ervan verstrekt zonder enige garantie, expliciet of impliciet."
+        "body": "Weergegevens worden verstrekt ZOALS ZE ZIJN, zonder enige garantie. Sensormetingen kunnen onnauwkeurig, vertraagd of tijdelijk niet beschikbaar zijn als gevolg van apparaatbeperkingen, onderhoud of technische problemen. Deze gegevens zijn NIET geschikt voor veiligheidskritische toepassingen, waaronder maar niet beperkt tot luchtvaart, zeevaartnavigatie, rampenbeheersing of beslissingen waarbij onjuiste weersinformatie kan leiden tot letsel, overlijden of materiële schade. Raadpleeg voor veiligheidskritische beslissingen altijd officiële overheidsweerkundige diensten. Ingevolge de PolyForm Noncommercial License 1.0.0 worden deze software en de resultaten ervan verstrekt zonder enige garantie, expliciet of impliciet."
       },
       "intellectualProperty": {
         "title": "Intellectueel eigendom",
-        "body": "De Clear Skies dashboard-software is vrije software, gelicentieerd onder de GNU General Public License v3.0. Feitelijke weersinformatiegegevens (temperatuur, vochtigheid, windsnelheid enz.) vormen wetenschappelijke metingen en zijn niet onderworpen aan auteursrechtelijke bescherming. Weersvoorspellingsgegevens, kaarttegels en andere inhoud van derden blijven eigendom van hun respectievelijke rechthebbenden en zijn onderworpen aan hun eigen gebruiksvoorwaarden en licenties."
+        "body": "De Clear Skies dashboard-software is gelicentieerd onder de PolyForm Noncommercial License 1.0.0. Deze is gratis te gebruiken voor persoonlijke, educatieve, non-profit, overheids- en gemeenschapsdoeleinden. Commercieel gebruik vereist een aparte licentie — zie het document ADDITIONAL-USES.md voor details. Feitelijke weersinformatiegegevens (temperatuur, vochtigheid, windsnelheid enz.) vormen wetenschappelijke metingen en zijn niet onderworpen aan auteursrechtelijke bescherming. Weersvoorspellingsgegevens, kaarttegels en andere inhoud van derden blijven eigendom van hun respectievelijke rechthebbenden en zijn onderworpen aan hun eigen gebruiksvoorwaarden en licenties."
       },
       "thirdPartyServices": {
         "title": "Diensten van derden",
@@ -34,7 +35,7 @@
       },
       "limitationOfLiability": {
         "title": "Beperking van aansprakelijkheid",
-        "body": "Ingevolge de GNU General Public License v3 §16 en voor zover maximaal toegestaan door toepasselijk recht, is de beheerder van de website niet aansprakelijk voor enige schade die voortvloeit uit het gebruik van of de onmogelijkheid tot gebruik van deze website, met inbegrip van maar niet beperkt tot schade als gevolg van gegevensonnauwkeurigheden, onderbrekingen van de dienstverlening of beslissingen genomen op basis van de hier weergegeven weergegevens. Aangezien deze dienst kosteloos wordt aangeboden, bedraagt de maximale aansprakelijkheid van de beheerder € 0,00."
+        "body": "Ingevolge de PolyForm Noncommercial License 1.0.0 en voor zover maximaal toegestaan door toepasselijk recht, is de beheerder van de website niet aansprakelijk voor enige schade die voortvloeit uit het gebruik van of de onmogelijkheid tot gebruik van deze website, met inbegrip van maar niet beperkt tot schade als gevolg van gegevensonnauwkeurigheden, onderbrekingen van de dienstverlening of beslissingen genomen op basis van de hier weergegeven weergegevens. Aangezien deze dienst kosteloos wordt aangeboden voor niet-commercieel gebruik, bedraagt de maximale aansprakelijkheid van de beheerder € 0,00."
       },
       "modifications": {
         "title": "Wijzigingen",
@@ -290,8 +291,8 @@
     "astronomical": "Astronomische gegevens: Skyfield-efemeridenberekeningen",
     "note": "De feitelijke gegevensbronnen zijn afhankelijk van de geconfigureerde aanbieders."
   },
-  "openSource": {
-    "title": "Open-source-licenties",
-    "body": "Clear Skies is vrije software met een licentie onder de GNU General Public License v3.0. Het is ontwikkeld met open-source-technologieën, waaronder React, Vite, Tailwind CSS, Recharts en Lucide-iconen. De volledige licentietekst en toeschrijvingen van derden zijn beschikbaar in de projectrepository."
+  "license": {
+    "title": "Licentie",
+    "body": "Clear Skies is gelicentieerd onder de PolyForm Noncommercial License 1.0.0. Het is gratis te gebruiken voor niet-commerciële doeleinden, waaronder persoonlijke, educatieve, non-profit-, overheids- en gemeenschapsdoeleinden. Aanvullend toegestaan gebruik — zoals het delen van weergegevens binnen de gemeenschap, familiebedrijven in de landbouw, radioamateurstations, landbouwcoöperaties en organisaties met belastingvrijstelling — is gedocumenteerd in ADDITIONAL-USES.md. Commercieel gebruik (advertenties, betaalde toegang, beheerde hosting of gebruik door grote winstgerichte organisaties) vereist een aparte betaalde licentie. De software is gebouwd met open-source-technologieën, waaronder React, Vite, Tailwind CSS, Recharts en Phosphor-iconen. De volledige licentietekst en toeschrijvingen van derden zijn beschikbaar in de projectrepository."
   }
 }

@@ -1,4 +1,5 @@
 {
+  "legalDisclaimer": "Ito ay isang salin na ibinibigay para sa inyong kaginhawaan. Ang bersyong Ingles ang tanging legal na bisang dokumento. Kung sakaling magkaroon ng hindi pagkakatugma sa pagitan ng saling ito at ng orihinal na Ingles, ang bersyong Ingles ang mananaig.",
   "title": "Legal at Privacy",
   "loadingAria": "Naglo-load ng legal na nilalaman…",
   "operatorCard": {
@@ -18,11 +19,11 @@
       },
       "dataAccuracy": {
         "title": "Disclaimer sa Katumpakan ng Datos",
-        "body": "Ang datos ng panahon ay ibinibigay NANG WALANG ANUMANG GARANTIYA. Ang mga pagbabasa ng sensor ay maaaring hindi tumpak, maantala, o pansamantalang hindi magagamit dahil sa mga limitasyon ng kagamitan, pagpapanatili, o mga teknikal na isyu. Ang datos na ito ay HINDI angkop para sa mga kritikal na aplikasyon sa kaligtasan kabilang ngunit hindi limitado sa: paglipad, nabigasyon sa dagat, pamamahala ng emergency, o anumang desisyon kung saan ang hindi tamang impormasyon ng panahon ay maaaring magresulta sa pinsala, kamatayan, o pinsala sa ari-arian. Palaging kumonsulta sa mga opisyal na serbisyo ng panahon ng pamahalaan para sa mga kritikal na desisyon sa kaligtasan. Ayon sa GNU General Public License v3 §15–16, ang software na ito at ang mga resulta nito ay ibinibigay nang walang anumang garantiya, hayagan man o ipinahiwatig."
+        "body": "Ang datos ng panahon ay ibinibigay NANG WALANG ANUMANG GARANTIYA. Ang mga pagbabasa ng sensor ay maaaring hindi tumpak, maantala, o pansamantalang hindi magagamit dahil sa mga limitasyon ng kagamitan, pagpapanatili, o mga teknikal na isyu. Ang datos na ito ay HINDI angkop para sa mga kritikal na aplikasyon sa kaligtasan kabilang ngunit hindi limitado sa: paglipad, nabigasyon sa dagat, pamamahala ng emergency, o anumang desisyon kung saan ang hindi tamang impormasyon ng panahon ay maaaring magresulta sa pinsala, kamatayan, o pinsala sa ari-arian. Palaging kumonsulta sa mga opisyal na serbisyo ng panahon ng pamahalaan para sa mga kritikal na desisyon sa kaligtasan. Ayon sa PolyForm Noncommercial License 1.0.0, ang software na ito at ang mga resulta nito ay ibinibigay nang walang anumang garantiya, hayagan man o ipinahiwatig."
       },
       "intellectualProperty": {
         "title": "Intelektwal na Ari-arian",
-        "body": "Ang software ng Clear Skies dashboard ay libreng software na lisensyado sa ilalim ng GNU General Public License v3.0. Ang mga katotohanang datos ng pagmamasid sa panahon (temperatura, halumigmig, bilis ng hangin, atbp.) ay binubuo ng mga siyentipikong pagsukat at hindi protektado ng copyright. Ang datos ng pagtataya ng panahon, mga tile ng mapa, at iba pang nilalaman mula sa mga third-party provider ay nananatiling ari-arian ng kani-kanilang mga may-ari at napapailalim sa kanilang sariling mga tuntunin ng serbisyo at mga lisensya."
+        "body": "Ang software ng Clear Skies dashboard ay lisensyado sa ilalim ng PolyForm Noncommercial License 1.0.0. Libre itong gamitin para sa personal, edukasyonal, non-profit, pampamahalaan, at pangkomunidad na layunin. Ang komersyal na paggamit ay nangangailangan ng hiwalay na lisensya — tingnan ang dokumentong ADDITIONAL-USES.md para sa detalye. Ang mga katotohanang datos ng pagmamasid sa panahon (temperatura, halumigmig, bilis ng hangin, atbp.) ay binubuo ng mga siyentipikong pagsukat at hindi protektado ng copyright. Ang datos ng pagtataya ng panahon, mga tile ng mapa, at iba pang nilalaman mula sa mga third-party provider ay nananatiling ari-arian ng kani-kanilang mga may-ari at napapailalim sa kanilang sariling mga tuntunin ng serbisyo at mga lisensya."
       },
       "thirdPartyServices": {
         "title": "Mga Serbisyo ng Third Party",
@@ -34,7 +35,7 @@
       },
       "limitationOfLiability": {
         "title": "Limitasyon ng Pananagutan",
-        "body": "Ayon sa GNU General Public License v3 §16, at sa pinakamalawak na lawak na pinahihintulutan ng naaangkop na batas, ang operator ng site ay hindi mananagot para sa anumang pinsala na nagmumula sa paggamit o kawalan ng kakayahang gamitin ang site na ito, kabilang ngunit hindi limitado sa pinsala na nagreresulta mula sa hindi katumpakan ng datos, mga pagkaantala ng serbisyo, o mga desisyon na ginawa batay sa datos ng panahon na ipinakita dito. Dahil ang serbisyong ito ay ibinibigay nang libre, ang pinakamataas na pananagutan ng operator ng site ay ₱0.00."
+        "body": "Ayon sa PolyForm Noncommercial License 1.0.0, at sa pinakamalawak na lawak na pinahihintulutan ng naaangkop na batas, ang operator ng site ay hindi mananagot para sa anumang pinsala na nagmumula sa paggamit o kawalan ng kakayahang gamitin ang site na ito, kabilang ngunit hindi limitado sa pinsala na nagreresulta mula sa hindi katumpakan ng datos, mga pagkaantala ng serbisyo, o mga desisyon na ginawa batay sa datos ng panahon na ipinakita dito. Dahil ang serbisyong ito ay ibinibigay nang libre para sa hindi komersyal na paggamit, ang pinakamataas na pananagutan ng operator ng site ay ₱0.00."
       },
       "modifications": {
         "title": "Mga Pagbabago",
@@ -290,8 +291,8 @@
     "astronomical": "Datos ng astronomiya: Mga kalkulasyon ng ephemeris ng Skyfield",
     "note": "Ang aktwal na mga pinagkukunan ng datos ay nakasalalay sa mga na-configure na provider."
   },
-  "openSource": {
-    "title": "Mga Lisensya ng Open-Source",
-    "body": "Ang Clear Skies ay libreng software na lisensyado sa ilalim ng GNU General Public License v3.0. Ito ay binuo gamit ang mga open-source na teknolohiya kabilang ang React, Vite, Tailwind CSS, Recharts, at mga icon ng Lucide. Ang buong teksto ng lisensya at third-party na pagkilala ay makikita sa repositoryo ng proyekto."
+  "license": {
+    "title": "Lisensya",
+    "body": "Ang Clear Skies ay lisensyado sa ilalim ng PolyForm Noncommercial License 1.0.0. Libre itong gamitin para sa hindi komersyal na paggamit, kabilang ang personal, edukasyonal, non-profit, pampamahalaan, at pangkomunidad na mga layunin. Ang mga karagdagang pinapayagang paggamit — tulad ng pagbabahagi ng datos ng panahon sa komunidad, mga sakahang pag-aari ng pamilya, mga istasyon ng amateur radio, mga kooperatiba sa agrikultura, at mga organisasyong exempted sa buwis — ay nakadokumento sa ADDITIONAL-USES.md. Ang komersyal na paggamit (advertising, bayad na access, managed hosting, o paggamit ng malalaking for-profit na organisasyon) ay nangangailangan ng hiwalay na bayad na lisensya. Ang software ay binuo gamit ang mga open-source na teknolohiya kabilang ang React, Vite, Tailwind CSS, Recharts, at mga icon ng Phosphor. Makikita ang buong teksto ng lisensya at third-party attribution sa repositoryo ng proyekto."
   }
 }
