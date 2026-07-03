@@ -117,7 +117,7 @@ import { useTheme } from '@/lib/theme-provider';
 Before adding a package:
 
 1. Check whether the need is already covered by an existing dependency.
-2. Verify the license is GPL-3.0-or-later compatible (see ADR-003).
+2. Verify the license is compatible with PolyForm Noncommercial 1.0.0 (see ADR-081).
 3. Run `npm audit` after install and resolve any high-severity findings before committing.
 
 ---
