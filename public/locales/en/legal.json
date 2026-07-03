@@ -18,11 +18,11 @@
       },
       "dataAccuracy": {
         "title": "Data Accuracy Disclaimer",
-        "body": "Weather data is provided AS-IS without warranty of any kind. Sensor readings may be inaccurate, delayed, or temporarily unavailable due to equipment limitations, maintenance, or technical issues. This data is NOT suitable for safety-critical applications including but not limited to aviation, marine navigation, emergency management, or any decision where inaccurate weather information could result in injury, death, or property damage. Always consult official government weather services for safety-critical decisions. Per the GNU General Public License v3 §15–16, this software and its outputs are provided without any warranty, express or implied."
+        "body": "Weather data is provided AS-IS without warranty of any kind. Sensor readings may be inaccurate, delayed, or temporarily unavailable due to equipment limitations, maintenance, or technical issues. This data is NOT suitable for safety-critical applications including but not limited to aviation, marine navigation, emergency management, or any decision where inaccurate weather information could result in injury, death, or property damage. Always consult official government weather services for safety-critical decisions. Per the PolyForm Noncommercial License 1.0.0, this software and its outputs are provided without any warranty or condition."
       },
       "intellectualProperty": {
         "title": "Intellectual Property",
-        "body": "The Clear Skies dashboard software is free software licensed under the GNU General Public License v3.0. Factual weather observation data (temperature, humidity, wind speed, etc.) consists of scientific measurements and is not subject to copyright protection. Third-party forecast data, map tiles, and other content from external providers remain the property of their respective owners and are subject to those providers' own terms of service and licenses."
+        "body": "The Clear Skies dashboard software is licensed under the PolyForm Noncommercial License 1.0.0. It is free for personal, educational, nonprofit, government, and community use. Commercial use requires a separate license — see the ADDITIONAL-USES.md document for details. Factual weather observation data (temperature, humidity, wind speed, etc.) consists of scientific measurements and is not subject to copyright protection. Third-party forecast data, map tiles, and other content from external providers remain the property of their respective owners and are subject to those providers' own terms of service and licenses."
       },
       "thirdPartyServices": {
         "title": "Third-Party Services",
@@ -34,7 +34,7 @@
       },
       "limitationOfLiability": {
         "title": "Limitation of Liability",
-        "body": "Per the GNU General Public License v3 §16, and to the maximum extent permitted by applicable law, the site operator shall not be liable for any damages arising from the use of or inability to use this site, including without limitation damages resulting from data inaccuracy, service interruptions, or decisions made based on weather data displayed here. As this service is provided free of charge, the maximum liability of the site operator is $0.00."
+        "body": "Per the PolyForm Noncommercial License 1.0.0, and to the maximum extent permitted by applicable law, the site operator shall not be liable for any damages arising from the use of or inability to use this site, including without limitation damages resulting from data inaccuracy, service interruptions, or decisions made based on weather data displayed here. As this service is provided free of charge for noncommercial use, the maximum liability of the site operator is $0.00."
       },
       "modifications": {
         "title": "Modifications",
@@ -290,8 +290,8 @@
     "astronomical": "Astronomical data: Skyfield ephemeris calculations",
     "note": "Actual data sources depend on configured providers."
   },
-  "openSource": {
-    "title": "Open-Source Licenses",
-    "body": "Clear Skies is free software licensed under the GNU General Public License v3.0. It is built with open-source technologies including React, Vite, Tailwind CSS, Recharts, and Lucide icons. Full license text and third-party attribution are available in the project repository."
+  "license": {
+    "title": "License",
+    "body": "Clear Skies is licensed under the PolyForm Noncommercial License 1.0.0. It is free for noncommercial use, including personal, educational, nonprofit, government, and community purposes. Additional permitted uses — such as community weather sharing, family-owned farms, amateur radio stations, agricultural cooperatives, and tax-exempt organizations — are documented in ADDITIONAL-USES.md. Commercial use (advertising, paid access, managed hosting, or use by large for-profit organizations) requires a separate paid license. The software is built with open-source technologies including React, Vite, Tailwind CSS, Recharts, and Phosphor icons. Full license text and third-party attribution are available in the project repository."
   }
 }

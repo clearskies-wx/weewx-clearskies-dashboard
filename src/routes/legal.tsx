@@ -362,8 +362,8 @@ export function LegalPage() {
         <BodySmall>{t('accessibility.operatorDisclaimer')}</BodySmall>
       </CollapsibleCard>
 
-      <CollapsibleCard title={t('openSource.title')}>
-        <Body>{t('openSource.body')}</Body>
+      <CollapsibleCard title={t('license.title')}>
+        <Body>{t('license.body')}</Body>
         <p className="mt-2">
           <a
             href="https://github.com/clearskies-wx/weewx-clearskies-stack"
