@@ -23,8 +23,9 @@
     ]
   },
   "setup": {
-    "startingUp": "Clear Skies is starting up...",
-    "apiNotResponding": "The weather station API is not responding yet. It may still be initialising."
+    "notConfigured": "Clear Skies is not yet configured",
+    "notConfiguredBody": "Open the setup wizard to get started.",
+    "openWizardLink": "Open the setup wizard: {{url}}"
   },
   "cookie": {
     "consentMessage": "This website uses cookies to analyze traffic via Google Analytics. No personal data is collected.",

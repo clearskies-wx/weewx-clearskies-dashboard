@@ -46,6 +46,48 @@ export function isMockMode(): boolean {
 }
 
 // ---------------------------------------------------------------------------
+// GET /status — life-support-mode health check (ARCHITECTURE.md gap #2/#3).
+// Not part of the OpenAPI v1 contract: the API must serve this endpoint even
+// before api.conf exists (life-support mode), so it lives outside the typed
+// contract generated from openapi-v1.yaml.
+// ---------------------------------------------------------------------------
+
+export interface StatusResponse {
+  configured: boolean;
+}
+
+/**
+ * Checks whether the API has a working api.conf. Used once on initial app
+ * load (see SetupGuard) to decide whether to show the first-run
+ * "not configured" message instead of the normal app routes.
+ *
+ * Network errors and non-2xx responses are treated as `configured: true` —
+ * if the API is completely unreachable, that is a different failure mode
+ * (API down / network issue) than "not yet configured", and is left to the
+ * global ErrorBoundary / per-tile error states to surface instead of being
+ * misreported as a first-run state.
+ */
+export async function checkConfigured(signal?: AbortSignal): Promise<StatusResponse> {
+  try {
+    const url = new URL(
+      `${API_BASE_URL}/status`,
+      typeof window !== 'undefined' ? window.location.origin : 'http://localhost',
+    );
+    const response = await fetch(url.toString(), {
+      headers: { Accept: 'application/json' },
+      signal,
+    });
+    if (!response.ok) {
+      return { configured: true };
+    }
+    const body = (await response.json()) as Partial<StatusResponse>;
+    return { configured: body.configured !== false };
+  } catch {
+    return { configured: true };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Base fetch helper
 // ---------------------------------------------------------------------------
 

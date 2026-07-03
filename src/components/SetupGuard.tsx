@@ -1,20 +1,29 @@
 import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { isMockMode } from '../api/client';
+import { checkConfigured, isMockMode } from '../api/client';
+import { NotConfigured } from '../routes/not-configured';
 
 const CACHE_KEY = 'clearskies.setup.configured';
 
-const STATUS_URL: string =
-  `${(import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api/v1'}/status`;
-
-type GuardState = 'checking' | 'ok' | 'unreachable';
+type GuardState = 'checking' | 'ok' | 'notConfigured';
 
 interface SetupGuardProps {
   children: React.ReactNode;
 }
 
+/**
+ * Checks GET /api/v1/status once per session (see checkConfigured in
+ * api/client.ts) before rendering the app. If the API reports
+ * `configured: false` (life-support mode, ARCHITECTURE.md gap #2/#3), renders
+ * NotConfigured instead of the app routes — a link to the setup wizard, not
+ * an automatic redirect (the wizard may not yet be reachable at the
+ * dashboard's own origin during first-run, before Caddy is configured).
+ *
+ * A network error or unreachable API is NOT treated as "not configured" —
+ * checkConfigured() reports `configured: true` in that case, and the app
+ * proceeds to render normally, leaving the global ErrorBoundary / per-tile
+ * error states to surface the actual failure.
+ */
 export function SetupGuard({ children }: SetupGuardProps) {
-  const { t } = useTranslation('common');
   const [state, setState] = useState<GuardState>(() => {
     if (isMockMode()) return 'ok';
     if (sessionStorage.getItem(CACHE_KEY) === 'true') return 'ok';
@@ -27,25 +36,16 @@ export function SetupGuard({ children }: SetupGuardProps) {
     let cancelled = false;
 
     async function check() {
-      try {
-        const res = await fetch(STATUS_URL, {
-          headers: { Accept: 'application/json' },
-        });
-        if (cancelled) return;
+      const { configured } = await checkConfigured();
+      if (cancelled) return;
 
-        const body = (await res.json()) as { configured: boolean };
-        if (cancelled) return;
-
-        if (body.configured === false) {
-          window.location.href = '/wizard';
-          return;
-        }
-
-        sessionStorage.setItem(CACHE_KEY, 'true');
-        setState('ok');
-      } catch {
-        if (!cancelled) setState('unreachable');
+      if (configured === false) {
+        setState('notConfigured');
+        return;
       }
+
+      sessionStorage.setItem(CACHE_KEY, 'true');
+      setState('ok');
     }
 
     void check();
@@ -54,34 +54,7 @@ export function SetupGuard({ children }: SetupGuardProps) {
 
   if (state === 'ok') return <>{children}</>;
 
-  if (state === 'unreachable') {
-    return (
-      <div className="min-h-screen flex flex-col bg-background text-foreground">
-        <main
-          className="flex flex-1 flex-col items-center justify-center gap-6 px-4"
-          aria-labelledby="setup-guard-heading"
-        >
-          <h1
-            id="setup-guard-heading"
-            className="text-2xl font-semibold tracking-tight"
-          >
-            {t('setup.startingUp')}
-          </h1>
-          <p className="text-muted-foreground text-center max-w-sm">
-            {t('setup.apiNotResponding')}
-          </p>
-          <button
-            type="button"
-            className="rounded-md bg-primary px-5 py-2.5 font-semibold text-primary-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary hover:opacity-90 transition-opacity"
-            style={{ fontSize: 'var(--text-label)' }}
-            onClick={() => setState('checking')}
-          >
-            {t('retry')}
-          </button>
-        </main>
-      </div>
-    );
-  }
+  if (state === 'notConfigured') return <NotConfigured />;
 
   return null;
 }
