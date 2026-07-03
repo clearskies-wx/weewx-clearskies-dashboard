@@ -205,7 +205,7 @@ export default function RadarPage() {
       {/* Content area: map + optional layer panel side by side */}
       <div className="flex-1 min-h-0 flex">
         {/* Map area */}
-        <div className="flex-1 min-h-0 p-3">
+        <div className="flex-1 min-h-0 p-3 relative z-0">
           {stationLoading || station === null ? (
             <div
               className="h-full rounded-lg bg-muted animate-pulse"
