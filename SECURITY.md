@@ -1,6 +1,6 @@
 # Security — weewx-clearskies-dashboard
 
-This repository is part of [Clear Skies](https://github.com/inguy24/weewx-clearskies-stack), distributed AS-IS under [GPL v3](LICENSE). There is no support window, no LTS, and no security backport policy — only the current release is available.
+This repository is part of [Clear Skies](https://github.com/clearskies-wx/weewx-clearskies-stack), distributed AS-IS under [GPL v3](LICENSE). There is no support window, no LTS, and no security backport policy — only the current release is available.
 
 ---
 
@@ -33,7 +33,7 @@ All weather data is fetched from clearskies-api at runtime over HTTPS (via the r
 
 The dashboard has no user login, no session tokens, and no authentication credentials of any kind. It is a public-facing weather display.
 
-Access control (password-protecting the site) is added at the reverse proxy layer. See [weewx-clearskies-stack INSTALL.md](https://github.com/inguy24/weewx-clearskies-stack/blob/main/INSTALL.md) for Caddy and Apache examples.
+Access control (password-protecting the site) is added at the reverse proxy layer. See [weewx-clearskies-stack INSTALL.md](https://github.com/clearskies-wx/weewx-clearskies-stack/blob/main/INSTALL.md) for Caddy and Apache examples.
 
 ---
 
