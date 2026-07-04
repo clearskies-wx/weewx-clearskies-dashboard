@@ -192,8 +192,10 @@ export function AlertBanner({ alerts, stationTz }: AlertBannerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
 
-  // useApiQuery caches by endpoint, so this does not trigger a redundant
-  // fetch — capabilities is already loaded by the Now page / other callers.
+  // useApiQuery's module-level cache (Phase 5 T5.1) is keyed by call-site +
+  // deps, so this useCapabilities() call shares the same cache entry as any
+  // other component requesting /api/v1/capabilities — it reads the cached
+  // response instantly rather than firing a redundant network request.
   // Must be called unconditionally before the early-return guard below
   // (React rules of hooks; DASHBOARD-MANUAL §9).
   const { data: capabilities } = useCapabilities();

@@ -80,16 +80,22 @@ function App() {
       <PageVisibilityProvider>
         <BrowserRouter>
           <Routes>
-            {/* /radar — full-viewport expanded radar overlay, outside AppLayout */}
-            <Route
-              path="radar"
-              element={
-                <Suspense fallback={<PageLoader title="Radar" />}>
-                  <RadarPage />
-                </Suspense>
-              }
-            />
             <Route element={<AppLayout />}>
+              {/* /radar — full-viewport expanded radar overlay. Rendered as a
+                  child route (not a sibling) so navigating to/from radar no
+                  longer unmounts AppLayout and its shared observation/station/
+                  alerts state (Phase 5 T5.1). The page itself still renders as
+                  a `fixed inset-0 z-50` overlay (src/routes/radar.tsx), which
+                  sits above NavRail's highest z-index (z-40), so it still
+                  covers the full viewport regardless of DOM nesting. */}
+              <Route
+                path="radar"
+                element={
+                  <Suspense fallback={<PageLoader title="Radar" />}>
+                    <RadarPage />
+                  </Suspense>
+                }
+              />
               <Route
                 index
                 element={
