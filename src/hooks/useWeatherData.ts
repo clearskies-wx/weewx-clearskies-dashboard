@@ -6,6 +6,7 @@ import { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApiQuery } from './useApiQuery';
 import { isMockMode, ApiError } from '../api/client';
+import { getCachedScene } from '../lib/scene-cache';
 import {
   getCurrent,
   getArchive,
@@ -159,23 +160,6 @@ interface ObservationHookResult extends HookResult<Observation> {
   sceneLoaded: boolean;
 }
 
-/** Reads the cached scene from localStorage (written by ThemeProvider.cacheScene
- *  on every /current response). Falls back to clear/false/null on first-ever visit
- *  — the splash screen covers the page until real data arrives anyway. */
-function getCachedScene(): SceneDescriptor {
-  if (typeof window === 'undefined') return { sky: 'clear', daytime: false, overlay: null };
-  const sky = localStorage.getItem('clearskies.scene.sky');
-  const daytime = localStorage.getItem('clearskies.scene.daytime');
-  const overlay = localStorage.getItem('clearskies.scene.overlay');
-  return {
-    sky: (sky === 'clear' || sky === 'cloudy' || sky === 'storm') ? sky : 'clear',
-    daytime: daytime === 'true',
-    overlay: overlay === 'rain' ? 'rain' : overlay === 'snow' ? 'snow' : null,
-  };
-}
-
-const SCENE_DEFAULT: SceneDescriptor = getCachedScene();
-
 export function useObservation(): ObservationHookResult {
   // Re-fetch /current every 60 seconds to pick up envelope fields
   // (windSpeedAvg10m, windGustMax10m, barometerTrendDirection, scene)
@@ -185,6 +169,11 @@ export function useObservation(): ObservationHookResult {
     (signal) => getCurrent(signal),
     { skip: isMockMode(), pollInterval: 60 },
   );
+
+  // Lazy-init from the localStorage scene cache at mount time (not module import
+  // time — see T5.2). Read once via useState's initializer; the real scene from
+  // the API replaces this the moment data.scene is populated.
+  const [cachedScene] = useState<SceneDescriptor>(() => getCachedScene());
 
   if (isMockMode()) {
     return {
@@ -209,7 +198,7 @@ export function useObservation(): ObservationHookResult {
     barometerTrendDirection: data?.barometerTrendDirection ?? null,
     windSpeedAvg10m: data?.windSpeedAvg10m ?? null,
     windGustMax10m: data?.windGustMax10m ?? null,
-    scene: data?.scene ?? SCENE_DEFAULT,
+    scene: data?.scene ?? cachedScene,
     sceneLoaded: data?.scene != null,
   };
 }

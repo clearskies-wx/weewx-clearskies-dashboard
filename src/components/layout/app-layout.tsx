@@ -88,7 +88,7 @@ export function AppLayout() {
           aria-hidden / role="presentation" are set inside the component.
           visible=false until the first /current response arrives to avoid a
           flash of the wrong (default) scene before real data loads. */}
-      <SceneBackground scene={resolvedScene} />
+      <SceneBackground scene={resolvedScene} visible={sceneLoaded} />
 
       {/* Cookie consent banner (T3.4) — self-manages visibility.
           Renders nothing when googleAnalyticsId is absent or consent is stored. */}

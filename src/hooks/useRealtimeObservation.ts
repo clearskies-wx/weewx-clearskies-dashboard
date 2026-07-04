@@ -39,6 +39,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useObservation } from './useWeatherData';
 import { useSSE } from './useSSE';
 import { isMockMode } from '../api/client';
+import { getCachedScene } from '../lib/scene-cache';
 import type { Observation, UnitsBlock, ConvertedValue, CurrentResponse, SceneDescriptor } from '../api/types';
 
 // ---------------------------------------------------------------------------
@@ -221,24 +222,11 @@ interface RealtimeObservationResult {
    * ADR-047 background scene descriptor.  Sourced from the REST /current envelope
    * via useObservation().  Scene changes on weather-condition timescales (minutes),
    * not loop-packet timescales, so REST polling is sufficient.
-   * Falls back to SCENE_DEFAULT (clear / daytime / no overlay) when absent.
+   * Falls back to the cached scene (src/lib/scene-cache.ts getCachedScene(),
+   * clear / night / no overlay by default) when useObservation() has none.
    */
   scene: SceneDescriptor;
 }
-
-function getCachedScene(): SceneDescriptor {
-  if (typeof window === 'undefined') return { sky: 'clear', daytime: true, overlay: null };
-  const sky = localStorage.getItem('clearskies.scene.sky');
-  const daytime = localStorage.getItem('clearskies.scene.daytime');
-  const overlay = localStorage.getItem('clearskies.scene.overlay');
-  return {
-    sky: (sky === 'clear' || sky === 'cloudy' || sky === 'storm') ? sky : 'clear',
-    daytime: daytime !== 'false',
-    overlay: overlay === 'rain' ? 'rain' : overlay === 'snow' ? 'snow' : null,
-  };
-}
-
-const SCENE_DEFAULT: SceneDescriptor = getCachedScene();
 
 // ---------------------------------------------------------------------------
 // useRealtimeObservation
@@ -267,6 +255,12 @@ export function useRealtimeObservation(): RealtimeObservationResult {
     windGustMax10m,
     scene: restScene,
   } = useObservation();
+
+  // Lazy-init from the localStorage scene cache at mount time (not module
+  // import time — see T5.2). useObservation() always returns a populated
+  // `scene` in practice, so this is a defensive fallback rather than the
+  // common path.
+  const [cachedSceneFallback] = useState<SceneDescriptor>(() => getCachedScene());
 
   // Accumulate SSE overlay patches on top of the REST base observation.
   // We keep a mutable ref for the patches so we can merge without triggering
@@ -299,7 +293,7 @@ export function useRealtimeObservation(): RealtimeObservationResult {
   // Scene: sourced from the REST /current envelope (useObservation).
   // The scene changes on weather-condition timescales (minutes), not loop-packet
   // timescales (seconds), so REST polling is sufficient — no SSE tracking needed.
-  const scene = restScene ?? SCENE_DEFAULT;
+  const scene = restScene ?? cachedSceneFallback;
 
   return {
     data,
