@@ -70,6 +70,10 @@ function filterByContinent<T extends { continent: string }>(
   regions: string | undefined,
 ): Array<[string, T]> {
   const entries = Object.entries(items);
+  if (regions && regions.trim() === 'none') {
+    // Privacy disabled by operator — no jurisdiction-specific disclosures.
+    return [];
+  }
   if (!regions || regions.trim() === '' || regions.trim() === 'global') {
     return entries;
   }

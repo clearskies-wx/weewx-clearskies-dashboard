@@ -7,6 +7,9 @@
 //   - Accept: stores consent + calls initGoogleAnalytics(); banner disappears.
 //   - Reject: stores rejection + calls removeGoogleAnalytics(); banner disappears.
 //   - Escape key = reject (dismiss without accepting).
+//   - Exception: when branding.privacyRegions === "none", the operator has disabled
+//     privacy handling entirely. GA (if configured) loads immediately with no banner
+//     and no consent record — the operator accepts compliance responsibility.
 //
 // Accessibility:
 //   - role="dialog" + aria-modal="true" + aria-labelledby on the container.
@@ -107,6 +110,7 @@ export function CookieConsentBanner() {
   const { t } = useTranslation('common');
   const branding = useBranding();
   const measurementId = branding.googleAnalyticsId ?? '';
+  const privacyRegions = branding.privacyRegions;
 
   // Controlled visibility: null = "not yet determined" (suppresses flash-of-content).
   const [visible, setVisible] = useState<boolean | null>(null);
@@ -123,6 +127,14 @@ export function CookieConsentBanner() {
   const evaluateConsent = useCallback(() => {
     // No GA ID configured → never show banner.
     if (!measurementId) {
+      setVisible(false);
+      return;
+    }
+
+    // Privacy disabled by operator: load GA directly, skip consent entirely.
+    // No localStorage record is written — there is no decision to remember.
+    if (privacyRegions === 'none') {
+      initGoogleAnalytics(measurementId);
       setVisible(false);
       return;
     }
@@ -149,7 +161,7 @@ export function CookieConsentBanner() {
 
     // No prior decision → show the banner.
     setVisible(true);
-  }, [measurementId]);
+  }, [measurementId, privacyRegions]);
 
   useEffect(() => {
     evaluateConsent();
