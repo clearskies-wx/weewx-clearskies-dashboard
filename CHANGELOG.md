@@ -7,6 +7,15 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **Custom background image** — when the operator uploads a background photo
+  via the setup wizard (`branding.json` → `customBackgroundUrl`), the dashboard
+  renders it as the background for every sky condition instead of the 6
+  built-in scene-keyed photos. No precipitation overlay or photographer
+  attribution applies to a custom background. Falls back to the built-in scene
+  system when unset.
+
 ### Removed
 
 - **Custom CSS URL loading** — the operator-supplied `custom.css` file-loading

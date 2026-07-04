@@ -16,8 +16,9 @@
 //   - Background layers are presentational (aria-hidden="true").
 //   - No interactive elements in this file.
 
-import { type CSSProperties, useEffect, useRef, useState } from 'react';
+import { type CSSProperties, useContext, useEffect, useRef, useState } from 'react';
 import type { SceneDescriptor } from '../../api/types';
+import { BrandingContext } from '../../lib/branding-provider';
 import {
   SCENE_ASSET_MAP,
   OVERLAY_MAP,
@@ -54,9 +55,29 @@ interface SceneBackgroundProps {
  * All layers are presentational / aria-hidden — no content for AT.
  */
 export function SceneBackground({ scene, visible = true }: SceneBackgroundProps) {
+  // Read via useContext (not the throwing useBranding() hook) so this component
+  // stays usable standalone (e.g. tests, Storybook) without a BrandingProvider
+  // ancestor — same pattern ThemeProvider uses for defaultThemeMode.
+  const branding = useContext(BrandingContext);
+  // Empty string counts as "not set" — only a non-empty string opts into the
+  // custom-background path (BrandingConfig.customBackgroundUrl).
+  const rawCustomBg = branding?.customBackgroundUrl;
+  const customBg = rawCustomBg && rawCustomBg.trim().length > 0 ? rawCustomBg : null;
+
   const key = sceneKey(scene);
   const asset = SCENE_ASSET_MAP[key] ?? SCENE_ASSET_MAP['clear-day'];
-  const overlayConfig = scene.overlay !== null ? OVERLAY_MAP[scene.overlay] : null;
+
+  // An operator's custom background (set via the setup wizard, written to
+  // branding.json) replaces the scene-keyed photo for every sky condition —
+  // the 6 built-in scene lookups are bypassed entirely. Custom backgrounds are
+  // static: no precipitation overlay (the on-glass rain/snow assets are designed
+  // for the built-in photos, not arbitrary operator images) and no photographer
+  // attribution (it's the operator's own image — DESIGN-MANUAL §8). If a future
+  // consumer needs "what attribution applies to the current background," it must
+  // check customBg first and treat it as null attribution — sceneAttribution()
+  // in scene-background-types.ts only knows about the 6 built-in scenes.
+  const bgUrl = customBg ?? asset.url;
+  const overlayConfig = !customBg && scene.overlay !== null ? OVERLAY_MAP[scene.overlay] : null;
   const hasOverlay = overlayConfig !== null;
 
   // 3px base blur only when a precipitation overlay is active (ADR-047 §Decision 1).
@@ -64,21 +85,23 @@ export function SceneBackground({ scene, visible = true }: SceneBackgroundProps)
     ? 'blur(3px) brightness(0.93) saturate(1.05)'
     : 'brightness(1) saturate(1.05)';
 
-  // Cross-fade: old scene on top fading out reveals new scene underneath.
-  // Bottom layer: current scene at full opacity (always visible).
-  // Top layer: outgoing (old) scene, starts at opacity 1, fades to 0, then removed.
-  // The new scene is hidden behind the old until the fade reveals it — no flash.
-  const prevKeyRef = useRef(key);
+  // Cross-fade: old background on top fading out reveals the new one underneath.
+  // Bottom layer: current background at full opacity (always visible).
+  // Top layer: outgoing (old) background, starts at opacity 1, fades to 0, then removed.
+  // Keyed on the resolved image URL (not the raw scene key) so a constant custom
+  // background never re-triggers a fade when the underlying scene changes underneath
+  // it, while scene-to-scene changes still cross-fade normally when no custom
+  // background is set.
+  const prevUrlRef = useRef(bgUrl);
   const [outgoingUrl, setOutgoingUrl] = useState<string | null>(null);
   const [fadeOut, setFadeOut] = useState(false);
 
   useEffect(() => {
-    if (key !== prevKeyRef.current) {
-      const oldKey = prevKeyRef.current;
-      const oldAsset = SCENE_ASSET_MAP[oldKey] ?? SCENE_ASSET_MAP['clear-day'];
-      setOutgoingUrl(oldAsset.url);
+    if (bgUrl !== prevUrlRef.current) {
+      const oldUrl = prevUrlRef.current;
+      setOutgoingUrl(oldUrl);
       setFadeOut(false);
-      prevKeyRef.current = key;
+      prevUrlRef.current = bgUrl;
 
       // Start fade on next frame so the outgoing layer renders at opacity 1 first.
       const rAF = requestAnimationFrame(() => {
@@ -96,7 +119,7 @@ export function SceneBackground({ scene, visible = true }: SceneBackgroundProps)
         clearTimeout(timer);
       };
     }
-  }, [key]);
+  }, [bgUrl]);
 
   const photoStyle: CSSProperties = {
     position: 'absolute',
@@ -127,15 +150,15 @@ export function SceneBackground({ scene, visible = true }: SceneBackgroundProps)
           opacity: visible ? 1 : 0,
         }}
       >
-        {/* Bottom layer: current scene, always full opacity */}
+        {/* Bottom layer: current background, always full opacity */}
         <div
           style={{
             ...photoStyle,
-            backgroundImage: `url(${asset.url})`,
+            backgroundImage: `url(${bgUrl})`,
           }}
         />
 
-        {/* Top layer: outgoing scene, fades from opacity 1 → 0 then unmounted */}
+        {/* Top layer: outgoing background, fades from opacity 1 → 0 then unmounted */}
         {outgoingUrl !== null && (
           <div
             style={{

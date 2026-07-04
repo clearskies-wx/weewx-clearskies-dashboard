@@ -39,6 +39,13 @@ export interface BrandingConfig {
   customTermsMd?: string;
   /** Custom Privacy Policy markdown (replaces default if non-empty). */
   customPrivacyMd?: string;
+  /**
+   * URL of an operator-uploaded custom background image (set via the setup wizard).
+   * When set (non-empty), the dashboard renders this image as the background for
+   * all sky conditions instead of the 6 built-in scene-keyed backgrounds, and skips
+   * the precipitation overlay and photo attribution credit — see scene-background.tsx.
+   */
+  customBackgroundUrl?: string | null;
 }
 
 // Curated palette — all light values verified ≥4.5:1 on white (oklch(1 0 0));

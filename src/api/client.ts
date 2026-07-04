@@ -341,6 +341,8 @@ export interface ApiBrandingConfig {
   aboutContent?: string;
   customTermsMd?: string;
   customPrivacyMd?: string;
+  /** Operator-uploaded custom background image URL, or null/absent when unset. */
+  customBackgroundUrl?: string | null;
 }
 
 export function getBranding(signal?: AbortSignal): Promise<ApiResponse<ApiBrandingConfig>> {

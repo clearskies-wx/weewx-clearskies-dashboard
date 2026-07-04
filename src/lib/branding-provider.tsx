@@ -59,6 +59,7 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
       aboutContent: apiData.aboutContent,
       customTermsMd: apiData.customTermsMd,
       customPrivacyMd: apiData.customPrivacyMd,
+      customBackgroundUrl: apiData.customBackgroundUrl ?? null,
     };
   }, [apiData]);
 
