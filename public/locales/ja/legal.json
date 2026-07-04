@@ -27,7 +27,7 @@
       },
       "thirdPartyServices": {
         "title": "第三者サービス",
-        "body": "本サイトは、Xweather (Vaisala)、National Weather Service（NWS）、OpenWeatherMap、米国地質調査所（USGS）、および各種地図タイルプロバイダーを含む第三者のデータを表示する場合があります。これらのデータは各プロバイダー独自の利用規約および精度基準に従って提供されます。サイト運営者は第三者データの精度や可用性を管理しておらず、責任を負いません。"
+        "body": "本サイトは、Vaisala Xweather、National Weather Service（NWS）、OpenWeatherMap、米国地質調査所（USGS）、および各種地図タイルプロバイダーを含む第三者のデータを表示する場合があります。これらのデータは各プロバイダー独自の利用規約および精度基準に従って提供されます。サイト運営者は第三者データの精度や可用性を管理しておらず、責任を負いません。"
       },
       "prohibitedConduct": {
         "title": "禁止行為",

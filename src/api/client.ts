@@ -314,7 +314,6 @@ export interface ApiBrandingConfig {
     darkUrl?: string;
     alt: string;
   } | null;
-  customCssUrl: string | null;
   siteTitle?: string;
   faviconUrl?: string;
   /** Copyright entity name; the API may use camelCase or snake_case. */

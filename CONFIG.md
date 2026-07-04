@@ -76,17 +76,9 @@ The user's choice is stored in `localStorage` under the key `clearskies.theme.us
 
 ---
 
-## Custom CSS
-
-When the `/branding` endpoint is implemented, place a file named `custom.css` in the clearskies-api configuration directory. It will be served by the API and loaded by the dashboard last, after all built-in styles. Rules in `custom.css` will override everything else. This feature is not available in v0.1.
-
-**Stability warning:** CSS variable names used internally by the dashboard are not guaranteed to remain stable across versions. Minor version releases may rename, add, or remove variables. If you use internal CSS variables in `custom.css`, check the changelog before upgrading.
-
-The variables listed in the next section are the officially injected brand variables. These are stable for the v0.x series. All other variables are internal.
-
----
-
 ## CSS variable reference
+
+Custom CSS URL loading (an operator-supplied `custom.css` file served by the API) was removed — it is not a supported customization path. The variables below are the officially injected brand variables. These are stable for the v0.x series. All other variables are internal.
 
 ### Brand-injected variables
 

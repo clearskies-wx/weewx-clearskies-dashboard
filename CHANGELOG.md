@@ -5,6 +5,16 @@ All notable changes to weewx-clearskies-dashboard are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Removed
+
+- **Custom CSS URL loading** — the operator-supplied `custom.css` file-loading
+  mechanism (branding `customCssUrl` field, `<link>` injection in `App.tsx`)
+  has been eliminated. Brand color customization remains available only
+  through the curated accent palette selection (see THEMING.md) — there is
+  no longer a mechanism to load an arbitrary external stylesheet.
+
 ## [0.1.0] — 2026-05-19
 
 First public release — a modern, mobile-first weather dashboard SPA for weewx.

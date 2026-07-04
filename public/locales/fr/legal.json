@@ -27,7 +27,7 @@
       },
       "thirdPartyServices": {
         "title": "Services tiers",
-        "body": "Ce site peut afficher des données provenant de sources tierces, notamment : Xweather (Vaisala), le National Weather Service (NWS), OpenWeatherMap, l'U.S. Geological Survey (USGS) et divers fournisseurs de tuiles de cartes. Ces données sont fournies selon les conditions d'utilisation et les normes de précision propres à chaque fournisseur. L'opérateur du site ne contrôle pas et n'est pas responsable de l'exactitude ou de la disponibilité des données tierces."
+        "body": "Ce site peut afficher des données provenant de sources tierces, notamment : Vaisala Xweather, le National Weather Service (NWS), OpenWeatherMap, l'U.S. Geological Survey (USGS) et divers fournisseurs de tuiles de cartes. Ces données sont fournies selon les conditions d'utilisation et les normes de précision propres à chaque fournisseur. L'opérateur du site ne contrôle pas et n'est pas responsable de l'exactitude ou de la disponibilité des données tierces."
       },
       "prohibitedConduct": {
         "title": "Comportements interdits",

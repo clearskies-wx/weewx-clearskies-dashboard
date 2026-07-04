@@ -1,6 +1,6 @@
 # Theming and branding — weewx-clearskies-dashboard
 
-This document covers the accent palette system, logo configuration, theme mode behavior, custom CSS, and the internal implementation for contributors.
+This document covers the accent palette system, logo configuration, theme mode behavior, and the internal implementation for contributors.
 
 For operator-facing configuration steps, see [CONFIG.md](../CONFIG.md). For the setup wizard that writes the initial branding configuration, see [weewx-clearskies-stack](https://github.com/inguy24/weewx-clearskies-stack).
 
@@ -119,41 +119,6 @@ A classic (non-module) inline `<script>` in `index.html` runs synchronously duri
 This sets `data-theme` on `<html>` before the first paint. Because the Tailwind/shadcn color tokens are defined under `[data-theme="light"]` and `[data-theme="dark"]` selectors, the correct colors are applied in the very first rendered frame. Without this script, there would be a visible flash from the default (light) colors to the visitor's actual preference.
 
 The script is intentionally simple and does not attempt to read the operator default — that requires an API fetch. Visitors in `system` mode fall back to OS preference for the initial paint; React reconciles the full priority chain once it mounts and the `/branding` response arrives.
-
----
-
-## Custom CSS
-
-### Where to place it
-
-Place a file named `custom.css` in the clearskies-api configuration directory. The API serves it, and the dashboard loads it as the last stylesheet, after all built-in styles. Any valid CSS is accepted.
-
-### What to target
-
-To override accent colors globally, set the brand variables on `:root` and `[data-theme="dark"]`:
-
-```css
-/* Override the injected brand variables directly. */
-:root {
-  --brand-primary-light: oklch(0.45 0.18 15);    /* your custom light primary */
-  --brand-primary-fg-light: oklch(1 0 0);
-}
-
-[data-theme="dark"] {
-  --brand-primary-dark: oklch(0.68 0.14 15);     /* your custom dark primary */
-  --brand-primary-fg-dark: oklch(0.15 0 0);
-}
-```
-
-Note that doing this bypasses the curated palette system and WCAG verification. Verify contrast ratios manually if you override the brand variables.
-
-To override component-level colors, target the Tailwind/shadcn semantic tokens (`--primary`, `--ring`, `--sidebar-primary`, etc.).
-
-### Stability warning
-
-The semantic token names (`--primary`, `--sidebar-ring`, etc.) are stable within the v0.x series. All other CSS variable names are internal implementation details and may change in any release. Do not depend on variable names that are not documented here.
-
-Check [CHANGELOG.md](../CHANGELOG.md) before upgrading if you use custom CSS.
 
 ---
 

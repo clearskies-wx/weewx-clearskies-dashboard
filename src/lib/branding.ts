@@ -11,8 +11,6 @@ export interface BrandingConfig {
   accent: AccentName;
   defaultThemeMode: 'light' | 'dark' | 'auto-os' | 'auto-sunrise-sunset';
   logo?: { light: string; dark?: string; alt: string };
-  /** URL of an operator-supplied custom.css file, or null if not configured. */
-  customCssUrl?: string | null;
   /** Optional page title to set on document.title. */
   siteTitle?: string;
   /** URL for the site favicon, applied to <link rel="icon">. */

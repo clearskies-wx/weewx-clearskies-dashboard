@@ -26,7 +26,7 @@
       },
       "thirdPartyServices": {
         "title": "Third-Party Services",
-        "body": "This site may display data from third-party sources including but not limited to: Xweather (Vaisala), the National Weather Service (NWS), OpenWeatherMap, the U.S. Geological Survey (USGS), and various map tile providers. This data is provided subject to each provider's own terms of service and accuracy standards. The site operator does not control and is not responsible for the accuracy or availability of third-party data."
+        "body": "This site may display data from third-party sources including but not limited to: Vaisala Xweather, the National Weather Service (NWS), OpenWeatherMap, the U.S. Geological Survey (USGS), and various map tile providers. This data is provided subject to each provider's own terms of service and accuracy standards. The site operator does not control and is not responsible for the accuracy or availability of third-party data."
       },
       "prohibitedConduct": {
         "title": "Prohibited Conduct",

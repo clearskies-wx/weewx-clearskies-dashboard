@@ -49,7 +49,6 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
             alt: apiData.logo.alt,
           }
         : undefined,
-      customCssUrl: apiData.customCssUrl ?? null,
       siteTitle: apiData.siteTitle,
       faviconUrl: apiData.faviconUrl,
       copyrightEntity: apiData.copyrightEntity ?? apiData.copyright_entity,
