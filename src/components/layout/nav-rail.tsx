@@ -320,7 +320,22 @@ function MoreSheet({ isOpen, onClose, triggerRef, overflowItems }: MoreSheetProp
 const LS_KEY = 'clearskies.nav.pinned';
 const AUTO_HIDE_MS = 4_000;
 
-export function NavRail() {
+interface NavRailProps {
+  /**
+   * When true, the entire nav rail (grab handle, desktop rail, mobile bottom
+   * bar) is marked `inert` + `aria-hidden` regardless of its own visible
+   * state. Used when a full-viewport modal route (e.g. `/radar`) is open:
+   * the modal visually covers the rail via z-index, but z-index stacking
+   * alone does not remove background content from the keyboard tab order or
+   * the accessibility tree — `inert`/`aria-hidden` are required so AT users
+   * and keyboard-only users can't reach navigation "behind" an open dialog
+   * (Phase 5 T5.1; mirrors the existing `inert={!visible}` pattern already
+   * used below for the auto-hide rail).
+   */
+  hidden?: boolean;
+}
+
+export function NavRail({ hidden = false }: NavRailProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
   const location = useLocation();
@@ -445,6 +460,8 @@ export function NavRail() {
         type="button"
         aria-label={visible ? t('hideNav') : t('showNav')}
         aria-expanded={visible}
+        aria-hidden={hidden}
+        inert={hidden ? true : undefined}
         onMouseEnter={!visible ? handleGrabBarActivate : undefined}
         onClick={visible ? () => { setPinned(false); try { localStorage.setItem(LS_KEY, 'false'); } catch {} setVisible(false); } : handleGrabBarActivate}
         className={[
@@ -500,8 +517,10 @@ export function NavRail() {
         // Pattern mirrors the MoreSheet inert={!isOpen} usage in this file.
         // inert={false} is omitted (undefined) so the attribute is absent from the DOM
         // when the rail is visible — browsers treat absent inert as interactive.
-        inert={!visible ? true : undefined}
-        aria-hidden={!visible}
+        // Also forced inert when a full-viewport modal route (e.g. /radar) is open —
+        // see the `hidden` prop doc comment above.
+        inert={(!visible || hidden) ? true : undefined}
+        aria-hidden={!visible || hidden}
         onMouseEnter={handleRailMouseEnter}
         onMouseLeave={handleRailMouseLeave}
         className={[
@@ -587,6 +606,8 @@ export function NavRail() {
           visible at a time via responsive Tailwind classes. */}
       <nav
         aria-label={t('ariaPrimary')}
+        aria-hidden={hidden}
+        inert={hidden ? true : undefined}
         className="md:hidden fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-background"
       >
         <ul

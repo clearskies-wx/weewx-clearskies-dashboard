@@ -131,7 +131,18 @@ function ShareRow() {
 // Footer
 // ---------------------------------------------------------------------------
 
-export function Footer() {
+interface FooterProps {
+  /**
+   * When true, the footer is marked `inert` + `aria-hidden` — used when a
+   * full-viewport modal route (e.g. `/radar`) is open so its links/buttons
+   * aren't reachable to keyboard/AT users "behind" the open dialog (Phase 5
+   * T5.1). z-index stacking alone only affects pointer/visual layering, not
+   * tab order or the accessibility tree.
+   */
+  hidden?: boolean;
+}
+
+export function Footer({ hidden = false }: FooterProps) {
   const { data: station } = useStation();
   const { t } = useTranslation('common');
   const branding = useBranding();
@@ -140,6 +151,8 @@ export function Footer() {
 
   return (
     <footer
+      aria-hidden={hidden}
+      inert={hidden ? true : undefined}
       className={[
         'mt-auto px-4 py-2 pb-20 md:pb-2 text-xs',
       ].join(' ')}

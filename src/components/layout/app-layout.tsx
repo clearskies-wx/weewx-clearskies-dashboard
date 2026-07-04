@@ -38,6 +38,15 @@ export function AppLayout() {
   const { i18n } = useTranslation();
   const location = useLocation();
 
+  // /radar renders a full-viewport `role="dialog" aria-modal="true"` overlay
+  // as a child route of AppLayout (Phase 5 T5.1). The overlay visually covers
+  // NavRail/Footer/AlertBanner/SkipLink via z-index, but z-index stacking does
+  // not remove them from the keyboard tab order or the accessibility tree —
+  // without this, a keyboard or screen-reader user could reach navigation
+  // "behind" the open dialog. Mark those regions inert + aria-hidden while
+  // radar is open instead.
+  const isRadarOpen = location.pathname === '/radar';
+
   useEffect(() => {
     if (sceneLoaded) {
       setDaytime(scene.daytime);
@@ -99,10 +108,10 @@ export function AppLayout() {
       {/* NavRail OUTSIDE the overflow-hidden wrapper. All NavRail elements
           are position:fixed — they must not be descendants of overflow:hidden
           or mobile browsers clip/hide them. */}
-      <NavRail />
+      <NavRail hidden={isRadarOpen} />
 
       <div className="h-[100dvh] flex flex-col text-foreground overflow-hidden relative z-0">
-        <SkipLink />
+        <SkipLink hidden={isRadarOpen} />
 
         <div className="flex flex-1 min-h-0">
           {/* Content column — full width on desktop since rail is fixed overlay.
@@ -129,14 +138,18 @@ export function AppLayout() {
               tabIndex={-1}
             >
               {!alertLoading && alerts && alerts.length > 0 && (
-                <div className="mb-4">
+                <div
+                  className="mb-4"
+                  aria-hidden={isRadarOpen}
+                  inert={isRadarOpen ? true : undefined}
+                >
                   <AlertBanner alerts={alerts} stationTz={station?.timezone ?? 'UTC'} />
                 </div>
               )}
               <Outlet />
             </main>
 
-            <Footer />
+            <Footer hidden={isRadarOpen} />
           </div>
         </div>
       </div>

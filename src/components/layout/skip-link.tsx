@@ -3,12 +3,23 @@
 
 import { useTranslation } from 'react-i18next';
 
-export function SkipLink() {
+interface SkipLinkProps {
+  /**
+   * When true, the skip link is marked `inert` + `aria-hidden` — used when a
+   * full-viewport modal route (e.g. `/radar`) is open, since "#main-content"
+   * isn't the relevant target while a dialog covers the page (Phase 5 T5.1).
+   */
+  hidden?: boolean;
+}
+
+export function SkipLink({ hidden = false }: SkipLinkProps) {
   const { t } = useTranslation('common');
 
   return (
     <a
       href="#main-content"
+      aria-hidden={hidden}
+      inert={hidden ? true : undefined}
       className={[
         // Visually hidden when not focused
         'sr-only focus:not-sr-only',
