@@ -26,9 +26,9 @@ import type { EarthquakeRecord } from '../api/types';
 // apply them to the badge container and its text children independently.
 export function magnitudeClasses(mag: number): { bg: string; text: string } {
   if (mag < 3)   return { bg: 'bg-sky-800 dark:bg-sky-200',             text: 'text-sky-100 dark:text-sky-900' };
-  if (mag < 4)   return { bg: 'bg-green-500 dark:bg-green-600',       text: 'text-white dark:text-white' };
+  if (mag < 4)   return { bg: 'bg-green-700 dark:bg-green-700',       text: 'text-white dark:text-white' };
   if (mag < 5)   return { bg: 'bg-yellow-400 dark:bg-yellow-500',     text: 'text-yellow-900 dark:text-yellow-950' };
-  if (mag < 7)   return { bg: 'bg-orange-500 dark:bg-red-600',        text: 'text-white dark:text-white' };
+  if (mag < 7)   return { bg: 'bg-orange-700 dark:bg-red-600',        text: 'text-white dark:text-white' };
   return           { bg: 'bg-red-800 dark:bg-red-900',                text: 'text-white dark:text-red-100' };
 }
 
