@@ -693,19 +693,41 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
     });
   }, [satelliteFrameCount, effectiveMaxOpacity]);
 
+  const findNearestSatFrame = useCallback((radarIdx: number): number => {
+    if (satelliteFrameCount === 0 || radarIdx < 0 || radarIdx >= activeFrames.length) return 0;
+    const targetMs = new Date(activeFrames[radarIdx].time).getTime();
+    let bestIdx = 0;
+    let bestDiff = Infinity;
+    for (let i = 0; i < satelliteFrames.length; i++) {
+      const diff = Math.abs(new Date(satelliteFrames[i].time).getTime() - targetMs);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestIdx = i;
+      }
+    }
+    return bestIdx;
+  }, [activeFrames, satelliteFrames, satelliteFrameCount]);
+
+  const seekToRadarFrame = useCallback((radarIdx: number) => {
+    applyRadarStep(radarIdx * SUBSTEPS);
+    if (satelliteActive) {
+      applySatStep(findNearestSatFrame(radarIdx) * SUBSTEPS);
+    }
+  }, [applyRadarStep, applySatStep, satelliteActive, findNearestSatFrame]);
+
   const goNext = useCallback(() => {
     if (frameCount > 0) {
       const currentKey = Math.floor(animationStepRef.current / SUBSTEPS);
-      applyRadarStep(((currentKey + 1) % frameCount) * SUBSTEPS);
+      seekToRadarFrame((currentKey + 1) % frameCount);
     }
-  }, [frameCount, applyRadarStep]);
+  }, [frameCount, seekToRadarFrame]);
 
   const goPrev = useCallback(() => {
     if (frameCount > 0) {
       const currentKey = Math.floor(animationStepRef.current / SUBSTEPS);
-      applyRadarStep(((currentKey - 1 + frameCount) % frameCount) * SUBSTEPS);
+      seekToRadarFrame((currentKey - 1 + frameCount) % frameCount);
     }
-  }, [frameCount, applyRadarStep]);
+  }, [frameCount, seekToRadarFrame]);
 
   // Clamp animationStep when frames change; start the preload delay when a new
   // frame list arrives so the browser has time to fetch tiles before animation starts.
@@ -1181,7 +1203,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
               frameCount={frameCount}
               displayFrameIndex={displayFrameIndex}
               nowcastStartIndex={nowcastStartIndex}
-              onSeek={(idx) => applyRadarStep(idx * SUBSTEPS)}
+              onSeek={(idx) => seekToRadarFrame(idx)}
               ariaLabel={t('timeSlider')}
             />
 
@@ -1271,7 +1293,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
               frameCount={frameCount}
               displayFrameIndex={displayFrameIndex}
               nowcastStartIndex={nowcastStartIndex}
-              onSeek={(idx) => applyRadarStep(idx * SUBSTEPS)}
+              onSeek={(idx) => seekToRadarFrame(idx)}
               ariaLabel={t('timeSlider')}
             />
 
