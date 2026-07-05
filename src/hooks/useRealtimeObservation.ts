@@ -91,7 +91,7 @@ export const WEEWX_TO_OBSERVATION: Readonly<Record<string, ObservationKey>> = {
   rain:         'rain',
   barometerTrend: 'barometerTrend',
   radiation:    'radiation',
-  UV:           'UV',
+  // UV excluded — card reads the hysteresis-filtered value from REST only.
   inTemp:       'inTemp',
   inHumidity:   'inHumidity',
   appTemp:      'appTemp',
