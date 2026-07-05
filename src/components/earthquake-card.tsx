@@ -32,6 +32,7 @@
 
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
+import { Link } from 'react-router-dom';
 import {
   Card,
   CardHeader,
@@ -41,7 +42,7 @@ import {
 import { magnitudeClasses } from '../utils/earthquake';
 import { formatRelativeTime } from '../utils/format-date';
 import { formatNumber } from '../utils/format-number';
-import type { EarthquakeRecord } from '../api/types';
+import type { EarthquakeRecord, UnitsBlock } from '../api/types';
 import type { CardComponentProps } from '../lib/card-registry';
 
 // ---------------------------------------------------------------------------
@@ -104,7 +105,19 @@ function EarthquakeError({
  * badge is aria-hidden; the li provides full context for screen readers via
  * the visible text (place + age + depth + source).
  */
-function EarthquakeRow({ quake, t, locale }: { quake: EarthquakeRecord; t: TFunction; locale: string }) {
+function EarthquakeRow({
+  quake,
+  t,
+  locale,
+  depthUnit,
+  distanceUnit,
+}: {
+  quake: EarthquakeRecord;
+  t: TFunction;
+  locale: string;
+  depthUnit: string;
+  distanceUnit: string;
+}) {
   const { bg, text } = magnitudeClasses(quake.magnitude);
   const magDisplay = formatNumber(quake.magnitude, 1, locale);
   const ageDisplay = formatEqAge(quake.time, locale);
@@ -158,12 +171,17 @@ function EarthquakeRow({ quake, t, locale }: { quake: EarthquakeRecord; t: TFunc
           </span>
         </div>
 
-        {/* Info block */}
+        {/* Info block. Line-height is tightened to 1.15 (from 1.3) on this
+            3-line text stack specifically to keep 2 rows + the "View all"
+            link (added below, T7.4) within the tile's fixed rigid-mode
+            content box (DESIGN-MANUAL §5) — the box does not grow, so the
+            new link has to be paid for out of existing whitespace rather
+            than pushed off (which `overflow: hidden` would silently clip). */}
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: '0.1rem',
+            gap: '0.05rem',
             minWidth: 0,
             flex: 1,
           }}
@@ -178,7 +196,7 @@ function EarthquakeRow({ quake, t, locale }: { quake: EarthquakeRecord; t: TFunc
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
-              lineHeight: 1.3,
+              lineHeight: 1.15,
               margin: 0,
             }}
             title={place}
@@ -193,13 +211,13 @@ function EarthquakeRow({ quake, t, locale }: { quake: EarthquakeRecord; t: TFunc
               fontSize: 'var(--text-label)',
               color: 'var(--muted-foreground)',
               margin: 0,
-              lineHeight: 1.3,
+              lineHeight: 1.15,
             }}
           >
             {ageDisplay}
           </p>
 
-          {/* Metadata: depth + source — dim */}
+          {/* Metadata: depth + distance from station — dim */}
           <p
             style={{
               fontFamily: 'var(--font-sans, system-ui, sans-serif)',
@@ -207,12 +225,12 @@ function EarthquakeRow({ quake, t, locale }: { quake: EarthquakeRecord; t: TFunc
               color: 'var(--muted-foreground)',
               opacity: 0.75,
               margin: 0,
-              lineHeight: 1.3,
+              lineHeight: 1.15,
             }}
           >
-            {quake.depth !== null && t('earthquake.depth', { depth: formatNumber(quake.depth, 0, locale) })}
-            {quake.depth !== null && quake.source && ' · '}
-            {quake.source && quake.source.toUpperCase()}
+            {quake.depth !== null && t('earthquake.depth', { depth: formatNumber(quake.depth, 0, locale), unit: depthUnit })}
+            {quake.depth !== null && quake.distance !== null && ' · '}
+            {quake.distance !== null && t('earthquake.distanceAway', { distance: formatNumber(quake.distance, 0, locale), unit: distanceUnit })}
           </p>
         </div>
       </div>
@@ -233,6 +251,8 @@ export interface EarthquakeCardProps {
    *  relative-time display but passed through for future absolute-time
    *  formatting if the card switches from relative to wall-clock display. */
   stationTz: string;
+  /** Response envelope's `units` block (depth/distance unit labels). */
+  units?: UnitsBlock;
 }
 
 function EarthquakeCardContent({
@@ -240,9 +260,12 @@ function EarthquakeCardContent({
   loading = false,
   error = null,
   onRetry,
+  units,
 }: EarthquakeCardProps) {
-  const { t, i18n } = useTranslation('now');
+  const { t, i18n } = useTranslation(['now', 'seismic']);
   const locale = i18n.language;
+  const depthUnit = units?.depth ?? 'km';
+  const distanceUnit = units?.distance ?? 'km';
 
   // Show the first two events.
   const visibleQuakes = earthquakes?.slice(0, 2) ?? [];
@@ -282,16 +305,32 @@ function EarthquakeCardContent({
             {t('noData.earthquake')}
           </p>
         ) : (
-          /* aria-live="polite": announces new events as SSE pushes them (ADR-041). */
-          <ul
-            aria-live="polite"
-            aria-label={t('earthquake.eventsAriaLabel')}
-            style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1, justifyContent: 'center' }}
-          >
-            {visibleQuakes.map((quake) => (
-              <EarthquakeRow key={quake.id} quake={quake} t={t} locale={locale} />
-            ))}
-          </ul>
+          <>
+            {/* aria-live="polite": announces new events as SSE pushes them (ADR-041). */}
+            <ul
+              aria-live="polite"
+              aria-label={t('earthquake.eventsAriaLabel')}
+              style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '0.375rem' }}
+            >
+              {visibleQuakes.map((quake) => (
+                <EarthquakeRow
+                  key={quake.id}
+                  quake={quake}
+                  t={t}
+                  locale={locale}
+                  depthUnit={depthUnit}
+                  distanceUnit={distanceUnit}
+                />
+              ))}
+            </ul>
+            <Link
+              to="/seismic"
+              className="text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded self-start"
+              style={{ fontSize: 'var(--text-micro)', marginTop: '0.125rem' }}
+            >
+              {t('viewAll', { ns: 'seismic' })} →
+            </Link>
+          </>
         )}
       </CardContent>
     </Card>
@@ -311,6 +350,7 @@ export function EarthquakeCard(props: CardComponentProps | EarthquakeCardProps):
       data?: EarthquakeRecord[] | null;
       loading?: boolean;
       error?: unknown;
+      units?: UnitsBlock;
     } | undefined;
 
     return (
@@ -319,6 +359,7 @@ export function EarthquakeCard(props: CardComponentProps | EarthquakeCardProps):
         loading={eqData?.loading ?? true}
         error={eqData?.error ? 'error' : null}
         stationTz={props.stationTz}
+        units={eqData?.units}
         // omit onRetry → renders muted text instead of retry button
       />
     );
@@ -331,6 +372,7 @@ export function EarthquakeCard(props: CardComponentProps | EarthquakeCardProps):
       error={props.error}
       onRetry={props.onRetry}
       stationTz={props.stationTz}
+      units={props.units}
     />
   );
 }

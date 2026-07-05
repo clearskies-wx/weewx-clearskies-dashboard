@@ -25,5 +25,20 @@
   "showFaultsAriaLabel": "マップ上の断層線オーバーレイの表示を切り替え",
   "slipType": "すべりの種類",
   "unknownFault": "不明な断層",
-  "unknownSlipType": "不明"
+  "unknownSlipType": "不明",
+  "viewAll": "View all earthquakes",
+  "distanceAway": "{{distance}} {{unit}} away",
+  "mmiValue": "{{roman}} ({{description}})",
+  "mmiDescription": {
+    "1": "Not Felt",
+    "2": "Weak Shaking",
+    "3": "Weak Shaking",
+    "4": "Light Shaking",
+    "5": "Moderate Shaking",
+    "6": "Strong Shaking",
+    "7": "Very Strong Shaking",
+    "8": "Severe Shaking",
+    "9": "Violent Shaking",
+    "10": "Extreme Shaking"
+  }
 }

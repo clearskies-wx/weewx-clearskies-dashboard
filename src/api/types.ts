@@ -419,6 +419,9 @@ export interface EarthquakeRecord {
   magnitude: number;
   magnitudeType: string | null;
   depth: number | null;
+  /** Distance from the operator's station, in the operator's preferred unit
+   *  (see the response envelope's `units.distance` field — "km" or "mi"). */
+  distance: number | null;
   place: string | null;
   url: string | null;
   tsunami: boolean | null;

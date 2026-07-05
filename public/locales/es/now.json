@@ -134,9 +134,10 @@
   },
   "earthquake": {
     "magnitude": "M{{magnitude}} — {{place}}",
-    "depth": "Profundidad: {{depth}} km",
+    "depth": "Profundidad: {{depth}} {{unit}}",
     "eventsAriaLabel": "Sismos recientes",
-    "unknownLocation": "Ubicación desconocida"
+    "unknownLocation": "Ubicación desconocida",
+    "distanceAway": "{{distance}} {{unit}} away"
   },
   "forecast": {
     "hiLo": "Máx {{high}}° / Mín {{low}}°",

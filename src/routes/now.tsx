@@ -68,7 +68,7 @@ export function NowPage() {
   const { data: observation, units, loading: obsLoading, error: obsError, barometerTrendDirection, windSpeedAvg10m, windGustMax10m, scene } = useRealtimeObservation();
   const { data: forecast, loading: fcLoading, error: fcError } = useForecast();
   const { data: almanac, loading: almLoading, error: almError } = useSmartAlmanac();
-  const { data: earthquakes, loading: eqLoading, error: eqError } = useEarthquakes();
+  const { data: earthquakes, units: eqUnits, loading: eqLoading, error: eqError } = useEarthquakes();
   const { data: aqi, loading: aqiLoading, error: aqiError } = useAqi();
   const { data: station, loading: stationLoading } = useStation();
   const { data: capabilities } = useCapabilities();
@@ -147,6 +147,7 @@ export function NowPage() {
     // /api/v1/earthquakes — earthquake records
     '/api/v1/earthquakes': {
       data: earthquakes,
+      units: eqUnits,
       loading: eqLoading,
       error: eqError,
     },
@@ -176,7 +177,7 @@ export function NowPage() {
     barometerTrendDirection, windSpeedAvg10m, windGustMax10m, scene,
     forecast, fcLoading, fcError,
     almanac, almLoading, almError,
-    earthquakes, eqLoading, eqError,
+    earthquakes, eqUnits, eqLoading, eqError,
     aqi, aqiLoading, aqiError,
     station, stationLoading,
     lightning,

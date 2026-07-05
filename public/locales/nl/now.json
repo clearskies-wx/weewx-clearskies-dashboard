@@ -134,9 +134,10 @@
   },
   "earthquake": {
     "magnitude": "M{{magnitude}} — {{place}}",
-    "depth": "Diepte: {{depth}} km",
+    "depth": "Diepte: {{depth}} {{unit}}",
     "eventsAriaLabel": "Recente aardbevingen",
-    "unknownLocation": "Onbekende locatie"
+    "unknownLocation": "Onbekende locatie",
+    "distanceAway": "{{distance}} {{unit}} away"
   },
   "forecast": {
     "hiLo": "Max {{high}}° / Min {{low}}°",

@@ -146,9 +146,10 @@
   },
   "earthquake": {
     "magnitude": "M{{magnitude}} — {{place}}",
-    "depth": "Lalim: {{depth}} km",
+    "depth": "Lalim: {{depth}} {{unit}}",
     "unknownLocation": "Hindi kilalang lokasyon",
-    "eventsAriaLabel": "Mga kamakailang pangyayari ng lindol"
+    "eventsAriaLabel": "Mga kamakailang pangyayari ng lindol",
+    "distanceAway": "{{distance}} {{unit}} away"
   },
   "forecast": {
     "hiLo": "Mataas {{high}}° / Mababa {{low}}°",

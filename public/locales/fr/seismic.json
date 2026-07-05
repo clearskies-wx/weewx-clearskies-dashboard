@@ -25,5 +25,20 @@
   "showFaultsAriaLabel": "Activer/désactiver la superposition des lignes de faille sur la carte",
   "slipType": "Type de glissement",
   "unknownFault": "Faille inconnue",
-  "unknownSlipType": "Inconnu"
+  "unknownSlipType": "Inconnu",
+  "viewAll": "View all earthquakes",
+  "distanceAway": "{{distance}} {{unit}} away",
+  "mmiValue": "{{roman}} ({{description}})",
+  "mmiDescription": {
+    "1": "Not Felt",
+    "2": "Weak Shaking",
+    "3": "Weak Shaking",
+    "4": "Light Shaking",
+    "5": "Moderate Shaking",
+    "6": "Strong Shaking",
+    "7": "Very Strong Shaking",
+    "8": "Severe Shaking",
+    "9": "Violent Shaking",
+    "10": "Extreme Shaking"
+  }
 }

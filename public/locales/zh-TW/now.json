@@ -146,9 +146,10 @@
   },
   "earthquake": {
     "magnitude": "M{{magnitude}} — {{place}}",
-    "depth": "深度：{{depth}} km",
+    "depth": "深度：{{depth}} {{unit}}",
     "unknownLocation": "位置不明",
-    "eventsAriaLabel": "近期地震事件"
+    "eventsAriaLabel": "近期地震事件",
+    "distanceAway": "{{distance}} {{unit}} away"
   },
   "forecast": {
     "hiLo": "最高 {{high}}° / 最低 {{low}}°",

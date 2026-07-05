@@ -134,9 +134,10 @@
   },
   "earthquake": {
     "magnitude": "M{{magnitude}} — {{place}}",
-    "depth": "深さ: {{depth}} km",
+    "depth": "深さ: {{depth}} {{unit}}",
     "eventsAriaLabel": "最近の地震情報",
-    "unknownLocation": "不明な場所"
+    "unknownLocation": "不明な場所",
+    "distanceAway": "{{distance}} {{unit}} away"
   },
   "forecast": {
     "hiLo": "最高 {{high}}° / 最低 {{low}}°",

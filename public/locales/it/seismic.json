@@ -25,5 +25,20 @@
   "showFaultsAriaLabel": "Attiva/disattiva la sovrapposizione delle linee di faglia sulla mappa",
   "slipType": "Tipo di movimento",
   "unknownFault": "Faglia sconosciuta",
-  "unknownSlipType": "Sconosciuto"
+  "unknownSlipType": "Sconosciuto",
+  "viewAll": "View all earthquakes",
+  "distanceAway": "{{distance}} {{unit}} away",
+  "mmiValue": "{{roman}} ({{description}})",
+  "mmiDescription": {
+    "1": "Not Felt",
+    "2": "Weak Shaking",
+    "3": "Weak Shaking",
+    "4": "Light Shaking",
+    "5": "Moderate Shaking",
+    "6": "Strong Shaking",
+    "7": "Very Strong Shaking",
+    "8": "Severe Shaking",
+    "9": "Violent Shaking",
+    "10": "Extreme Shaking"
+  }
 }

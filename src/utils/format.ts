@@ -15,19 +15,20 @@
 import { formatNumber } from './format-number';
 
 const DECIMALS: Record<string, number> = {
-  temperature:     1,
-  barometer:       2,
-  wind:            0,
-  humidity:        0,
-  rain:            2,
-  rainRate:        2,
-  uv:              0,
-  solar:           0,
-  earthquakeMag:   1,
-  earthquakeDepth: 1,
-  percent:         0,
-  degrees:         0,
-  default:         1,
+  temperature:        1,
+  barometer:          2,
+  wind:               0,
+  humidity:           0,
+  rain:               2,
+  rainRate:           2,
+  uv:                 0,
+  solar:              0,
+  earthquakeMag:      1,
+  earthquakeDepth:    1,
+  earthquakeDistance: 0,
+  percent:            0,
+  degrees:            0,
+  default:            1,
 };
 
 export function formatValue(value: number | null | undefined, type: string, locale?: string): string {

@@ -25,5 +25,20 @@
   "unknownSlipType": "Unbekannt",
   "slipType": "Bewegungstyp",
   "configSummary": "Anbieter: {{provider}} | Radius: {{radiusKm}} km | Min. Magnitude: {{minMagnitude}} | Letzte {{days}} Tage",
-  "configAriaLabel": "Seismische Konfigurationsübersicht"
+  "configAriaLabel": "Seismische Konfigurationsübersicht",
+  "viewAll": "View all earthquakes",
+  "distanceAway": "{{distance}} {{unit}} away",
+  "mmiValue": "{{roman}} ({{description}})",
+  "mmiDescription": {
+    "1": "Not Felt",
+    "2": "Weak Shaking",
+    "3": "Weak Shaking",
+    "4": "Light Shaking",
+    "5": "Moderate Shaking",
+    "6": "Strong Shaking",
+    "7": "Very Strong Shaking",
+    "8": "Severe Shaking",
+    "9": "Violent Shaking",
+    "10": "Extreme Shaking"
+  }
 }

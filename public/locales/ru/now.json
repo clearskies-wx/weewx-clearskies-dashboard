@@ -146,9 +146,10 @@
   },
   "earthquake": {
     "magnitude": "M{{magnitude}} — {{place}}",
-    "depth": "Глубина: {{depth}} км",
+    "depth": "Глубина: {{depth}} {{unit}}",
     "unknownLocation": "Местоположение неизвестно",
-    "eventsAriaLabel": "Последние сейсмические события"
+    "eventsAriaLabel": "Последние сейсмические события",
+    "distanceAway": "{{distance}} {{unit}} away"
   },
   "forecast": {
     "hiLo": "Макс. {{high}}° / Мин. {{low}}°",

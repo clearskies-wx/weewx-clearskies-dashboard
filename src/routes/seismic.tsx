@@ -35,7 +35,7 @@ import { Earthquake } from '../components/icons/earthquake';
 import type { EarthquakeRecord } from '../api/types';
 import { useEarthquakes, useStation, useEarthquakeConfig, useEarthquakeFaults } from '../hooks/useWeatherData';
 import { formatValue } from '../utils/format';
-import { magnitudeClasses, alertClasses } from '../utils/earthquake';
+import { magnitudeClasses, alertClasses, formatMmi } from '../utils/earthquake';
 
 // ---------------------------------------------------------------------------
 // Helper utilities
@@ -161,6 +161,7 @@ export function SeismicPage() {
   const { data: earthquakes, units: eqUnits, loading, error, refetch } = useEarthquakes();
   const { data: station } = useStation();
   const depthUnit = eqUnits?.depth ?? 'km';
+  const distanceUnit = eqUnits?.distance ?? 'km';
   const { data: config } = useEarthquakeConfig();
   const { data: faults } = useEarthquakeFaults();
 
@@ -328,6 +329,8 @@ export function SeismicPage() {
                             <strong>{eq.place ?? t('unknownLocation')}</strong><br />
                             {t('magnitude')}: {formatValue(eq.magnitude, 'earthquakeMag')}{eq.magnitudeType ? ` ${eq.magnitudeType}` : ''}<br />
                             {eq.depth !== null ? <>{t('depthLabel')}: {formatValue(eq.depth, 'earthquakeDepth')} {depthUnit}<br /></> : null}
+                            {eq.distance !== null ? <>{t('distanceAway', { distance: formatValue(eq.distance, 'earthquakeDistance', locale), unit: distanceUnit })}<br /></> : null}
+                            {eq.mmi !== null ? <>{t('mmi', { mmi: formatMmi(eq.mmi, t) })}<br /></> : null}
                             {eq.alert !== null ? <>{t('pager', { level: eq.alert })}<br /></> : null}
                             {/* ADR-020: use station-local time, matching the list panel below */}
                             {formatTime(eq.time, station?.timezone ?? 'UTC', locale)}
@@ -430,6 +433,9 @@ export function SeismicPage() {
                                 <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-muted-foreground mt-0.5" style={{ fontSize: 'var(--text-label)' }}>
                                   {quake.depth !== null && (
                                     <span>{t('depthLabel')}: {formatValue(quake.depth, 'earthquakeDepth')} {depthUnit}</span>
+                                  )}
+                                  {quake.distance !== null && (
+                                    <span>{t('distanceAway', { distance: formatValue(quake.distance, 'earthquakeDistance', locale), unit: distanceUnit })}</span>
                                   )}
                                   {quake.tsunami && (
                                     <span className="font-semibold text-amber-700 dark:text-amber-400">

@@ -8,6 +8,7 @@
 // the colour class with a numeric value (magnitude badge) or a text label
 // (PAGER alert pill) so the meaning is conveyed without colour.
 
+import type { TFunction } from 'i18next';
 import type { EarthquakeRecord } from '../api/types';
 
 // ---------------------------------------------------------------------------
@@ -45,4 +46,38 @@ export function alertClasses(level: EarthquakeRecord['alert']): string {
     case 'red':    return 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300';
     default:       return '';
   }
+}
+
+// ---------------------------------------------------------------------------
+// formatMmi
+// ---------------------------------------------------------------------------
+
+// Roman numeral per Modified Mercalli Intensity tier. Tier 10 covers "10+"
+// (USGS/GeoNet MMI values above X are still reported as X on the standard
+// 12-point scale in practice, but the brief's spec calls it "X+").
+const MMI_ROMAN: Record<number, string> = {
+  1: 'I', 2: 'II', 3: 'III', 4: 'IV', 5: 'V',
+  6: 'VI', 7: 'VII', 8: 'VIII', 9: 'IX', 10: 'X+',
+};
+
+/**
+ * Map a numeric Modified Mercalli Intensity value to its tier (1-10),
+ * rounding to the nearest integer and clamping to the supported range.
+ */
+function mmiTier(mmi: number): number {
+  return Math.min(10, Math.max(1, Math.round(mmi)));
+}
+
+/**
+ * Format an MMI value as "{Roman numeral} ({description})", e.g.
+ * "IV (Light Shaking)". The description resolves through the `seismic`
+ * locale namespace (`mmiDescription.<tier>`) so every supported language
+ * gets its own translated intensity description (§6.1) — the Roman
+ * numeral itself is a computed/interpolated value, not translatable text.
+ */
+export function formatMmi(mmi: number, t: TFunction): string {
+  const tier = mmiTier(mmi);
+  const roman = MMI_ROMAN[tier];
+  const description = t(`mmiDescription.${tier}`, { ns: 'seismic' });
+  return t('mmiValue', { ns: 'seismic', roman, description });
 }

@@ -25,5 +25,20 @@
   "unknownSlipType": "Hindi kilala",
   "slipType": "Uri ng slip",
   "configSummary": "Provider: {{provider}} | Radius: {{radiusKm}} km | Pinakamababang magnitude: {{minMagnitude}} | Huling {{days}} araw",
-  "configAriaLabel": "Buod ng seismic configuration"
+  "configAriaLabel": "Buod ng seismic configuration",
+  "viewAll": "View all earthquakes",
+  "distanceAway": "{{distance}} {{unit}} away",
+  "mmiValue": "{{roman}} ({{description}})",
+  "mmiDescription": {
+    "1": "Not Felt",
+    "2": "Weak Shaking",
+    "3": "Weak Shaking",
+    "4": "Light Shaking",
+    "5": "Moderate Shaking",
+    "6": "Strong Shaking",
+    "7": "Very Strong Shaking",
+    "8": "Severe Shaking",
+    "9": "Violent Shaking",
+    "10": "Extreme Shaking"
+  }
 }
