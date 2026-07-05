@@ -26,7 +26,7 @@
   "slipType": "Uri ng slip",
   "configSummary": "Provider: {{provider}} | Radius: {{radiusKm}} km | Pinakamababang magnitude: {{minMagnitude}} | Huling {{days}} araw",
   "configAriaLabel": "Buod ng seismic configuration",
-  "viewAll": "View all earthquakes",
+  "viewAll": "Tingnan lahat ng lindol →",
   "distanceAway": "{{distance}} {{unit}} away",
   "mmiValue": "{{roman}} ({{description}})",
   "mmiDescription": {

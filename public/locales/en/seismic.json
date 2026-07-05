@@ -26,7 +26,7 @@
   "slipType": "Slip type",
   "configSummary": "Provider: {{provider}} | Radius: {{radiusKm}} km | Min magnitude: {{minMagnitude}} | Last {{days}} days",
   "configAriaLabel": "Seismic configuration summary",
-  "viewAll": "View all earthquakes",
+  "viewAll": "View all earthquakes →",
   "distanceAway": "{{distance}} {{unit}} away",
   "mmiValue": "{{roman}} ({{description}})",
   "mmiDescription": {

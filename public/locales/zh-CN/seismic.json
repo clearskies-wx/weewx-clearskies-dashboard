@@ -26,7 +26,7 @@
   "slipType": "滑动类型",
   "configSummary": "数据源：{{provider}} | 半径：{{radiusKm}} km | 最小震级：{{minMagnitude}} | 最近 {{days}} 天",
   "configAriaLabel": "地震配置摘要",
-  "viewAll": "View all earthquakes",
+  "viewAll": "查看所有地震 →",
   "distanceAway": "{{distance}} {{unit}} away",
   "mmiValue": "{{roman}} ({{description}})",
   "mmiDescription": {

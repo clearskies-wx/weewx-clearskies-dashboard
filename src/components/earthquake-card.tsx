@@ -171,22 +171,16 @@ function EarthquakeRow({
           </span>
         </div>
 
-        {/* Info block. Line-height is tightened to 1.15 (from 1.3) on this
-            3-line text stack specifically to keep 2 rows + the "View all"
-            link (added below, T7.4) within the tile's fixed rigid-mode
-            content box (DESIGN-MANUAL §5) — the box does not grow, so the
-            new link has to be paid for out of existing whitespace rather
-            than pushed off (which `overflow: hidden` would silently clip). */}
+        {/* Info block */}
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: '0.05rem',
+            gap: '0.1rem',
             minWidth: 0,
             flex: 1,
           }}
         >
-          {/* Place — Manrope 600, truncated */}
           <p
             style={{
               fontFamily: 'var(--font-heading, system-ui, sans-serif)',
@@ -196,7 +190,7 @@ function EarthquakeRow({
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
-              lineHeight: 1.15,
+              lineHeight: 1.3,
               margin: 0,
             }}
             title={place}
@@ -204,20 +198,18 @@ function EarthquakeRow({
             {place}
           </p>
 
-          {/* Age — muted */}
           <p
             style={{
               fontFamily: 'var(--font-sans, system-ui, sans-serif)',
               fontSize: 'var(--text-label)',
               color: 'var(--muted-foreground)',
               margin: 0,
-              lineHeight: 1.15,
+              lineHeight: 1.3,
             }}
           >
             {ageDisplay}
           </p>
 
-          {/* Metadata: depth + distance from station — dim */}
           <p
             style={{
               fontFamily: 'var(--font-sans, system-ui, sans-serif)',
@@ -225,7 +217,7 @@ function EarthquakeRow({
               color: 'var(--muted-foreground)',
               opacity: 0.75,
               margin: 0,
-              lineHeight: 1.15,
+              lineHeight: 1.3,
             }}
           >
             {quake.depth !== null && t('earthquake.depth', { depth: formatNumber(quake.depth, 0, locale), unit: depthUnit })}
@@ -306,11 +298,10 @@ function EarthquakeCardContent({
           </p>
         ) : (
           <>
-            {/* aria-live="polite": announces new events as SSE pushes them (ADR-041). */}
             <ul
               aria-live="polite"
               aria-label={t('earthquake.eventsAriaLabel')}
-              style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '0.375rem' }}
+              style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}
             >
               {visibleQuakes.map((quake) => (
                 <EarthquakeRow
@@ -325,10 +316,10 @@ function EarthquakeCardContent({
             </ul>
             <Link
               to="/seismic"
-              className="text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded self-start"
-              style={{ fontSize: 'var(--text-micro)', marginTop: '0.125rem' }}
+              className="text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+              style={{ fontSize: 'var(--text-micro)', marginTop: 'auto', alignSelf: 'flex-end' }}
             >
-              {t('viewAll', { ns: 'seismic' })} →
+              {t('viewAll', { ns: 'seismic' })}
             </Link>
           </>
         )}

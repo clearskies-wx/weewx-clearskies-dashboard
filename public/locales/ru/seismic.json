@@ -26,7 +26,7 @@
   "slipType": "Тип подвижки",
   "configSummary": "Поставщик: {{provider}} | Радиус: {{radiusKm}} км | Мин. магнитуда: {{minMagnitude}} | Последние {{days}} дн.",
   "configAriaLabel": "Сводка настроек сейсмики",
-  "viewAll": "View all earthquakes",
+  "viewAll": "Все землетрясения →",
   "distanceAway": "{{distance}} {{unit}} away",
   "mmiValue": "{{roman}} ({{description}})",
   "mmiDescription": {

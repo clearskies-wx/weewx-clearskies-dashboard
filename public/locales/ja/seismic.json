@@ -26,7 +26,7 @@
   "slipType": "すべりの種類",
   "unknownFault": "不明な断層",
   "unknownSlipType": "不明",
-  "viewAll": "View all earthquakes",
+  "viewAll": "すべての地震を表示 →",
   "distanceAway": "{{distance}} {{unit}} away",
   "mmiValue": "{{roman}} ({{description}})",
   "mmiDescription": {

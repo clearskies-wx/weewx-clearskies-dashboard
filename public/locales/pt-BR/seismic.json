@@ -26,7 +26,7 @@
   "slipType": "Tipo de deslizamento",
   "unknownFault": "Falha desconhecida",
   "unknownSlipType": "Desconhecido",
-  "viewAll": "View all earthquakes",
+  "viewAll": "Ver todos os terremotos →",
   "distanceAway": "{{distance}} {{unit}} away",
   "mmiValue": "{{roman}} ({{description}})",
   "mmiDescription": {
