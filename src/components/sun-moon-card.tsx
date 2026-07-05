@@ -200,19 +200,16 @@ function ArcVisualization({
   // useSmartAlmanac already returns valid transit pairs (rise → set for
   // the same passage), so no ref-based pinning is needed here.
 
-  // Sun arc progress
+  // Sun arc progress — arcPoint clamps to [0,1] so the marker pins to the
+  // rise/set endpoint when the body is below the horizon (matches almanac page).
   const sunPct = arcProgress(almanac.sun.rise, almanac.sun.set, nowMs);
   const sunMarker =
-    sunPct !== null && sunPct >= 0 && sunPct <= 1
-      ? arcPoint(sunPct, CX, CY, SUN_RX, SUN_RY)
-      : null;
+    sunPct !== null ? arcPoint(sunPct, CX, CY, SUN_RX, SUN_RY) : null;
 
   // Moon arc progress
   const moonPct = arcProgress(almanac.moon.rise, almanac.moon.set, nowMs);
   const moonMarker =
-    moonPct !== null && moonPct >= 0 && moonPct <= 1
-      ? arcPoint(moonPct, CX, CY, MOON_RX, MOON_RY)
-      : null;
+    moonPct !== null ? arcPoint(moonPct, CX, CY, MOON_RX, MOON_RY) : null;
 
   const illumination = almanac.moon.illuminationPercent;
   const phaseWords = phaseName.split(' ');
