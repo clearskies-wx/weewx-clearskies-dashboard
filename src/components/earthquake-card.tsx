@@ -270,7 +270,7 @@ function EarthquakeCardContent({
         <CardTitle as="h2">{t('recentEarthquake')}</CardTitle>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="!overflow-visible pb-2">
         {loading ? (
           <>
             <span className="sr-only" role="status">{t('loading.earthquake')}</span>
