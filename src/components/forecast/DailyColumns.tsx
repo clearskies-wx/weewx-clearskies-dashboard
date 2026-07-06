@@ -580,47 +580,35 @@ export function DailyColumns({
             fontSize: 'var(--text-card-title)',
             color: 'var(--muted-foreground)',
             lineHeight: 1.55,
-            margin: '0 0 0.5rem',
+            margin: 0,
           } as const;
-          const labelStyle = {
-            fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-            fontSize: '0.7rem',
-            fontWeight: 600,
-            textTransform: 'uppercase' as const,
-            letterSpacing: '0.04em',
-            color: 'var(--muted-foreground)',
-            opacity: 0.7,
-            marginBottom: '0.15rem',
-          };
           if (day.forecastText) {
             const parts = day.forecastText.split('\n').filter(Boolean);
             const dayText = parts[0] || null;
             const nightText = parts[1] || null;
             return (
-              <div style={{ margin: '0 0 0.5rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <div style={{ margin: '0 0 0.5rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                 {dayText && (
-                  <div>
-                    <div style={labelStyle}>
-                      <span aria-hidden="true" style={{ marginRight: '0.3rem' }}>☀</span>
-                      {t('dayPeriod')}
-                    </div>
-                    <p style={{ ...textStyle, margin: 0 }}>{dayText}</p>
-                  </div>
+                  <p style={textStyle}>
+                    <span style={{ fontWeight: 600, color: 'var(--foreground)', opacity: 0.85 }}>
+                      <span aria-hidden="true">☀ </span>{t('dayPeriod')}:
+                    </span>{' '}
+                    {dayText}
+                  </p>
                 )}
                 {nightText && (
-                  <div>
-                    <div style={labelStyle}>
-                      <span aria-hidden="true" style={{ marginRight: '0.3rem' }}>☾</span>
-                      {t('nightPeriod')}
-                    </div>
-                    <p style={{ ...textStyle, margin: 0 }}>{nightText}</p>
-                  </div>
+                  <p style={textStyle}>
+                    <span style={{ fontWeight: 600, color: 'var(--foreground)', opacity: 0.85 }}>
+                      <span aria-hidden="true">☾ </span>{t('nightPeriod')}:
+                    </span>{' '}
+                    {nightText}
+                  </p>
                 )}
               </div>
             );
           }
           if (day.narrative) {
-            return <p style={{ ...textStyle, fontStyle: 'italic' }}>{day.narrative}</p>;
+            return <p style={{ ...textStyle, fontStyle: 'italic', margin: '0 0 0.5rem' }}>{day.narrative}</p>;
           }
           return null;
         })()}
