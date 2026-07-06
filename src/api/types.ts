@@ -302,6 +302,7 @@ export interface DailyForecastPoint {
   weatherCode: string | null;
   weatherText: string | null;
   narrative: string | null;
+  forecastText: string | null;
   dewpointMax: number | null;
   dewpointMin: number | null;
   humidityMax: number | null;

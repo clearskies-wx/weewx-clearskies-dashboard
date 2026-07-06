@@ -41,5 +41,7 @@
   "thunder": "Thunder",
   "tornado": "Tornado",
   "hail": "Hail",
-  "windRisk": "Wind Risk"
+  "windRisk": "Wind Risk",
+  "dayPeriod": "Day",
+  "nightPeriod": "Night"
 }

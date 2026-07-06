@@ -69,6 +69,15 @@ const DAILY_NARRATIVES = [
   null,
   null,
 ];
+const DAILY_FORECAST_TEXTS = [
+  'Partly Cloudy. Highs in the lower 80s. S winds 5 to 10 mph.\nPartly Cloudy. Lows in the upper 50s. Light winds.',
+  'Mostly Sunny. Highs in the upper 70s. SW winds up to 12 mph.\nMostly Clear. Lows in the lower 60s. Light winds.',
+  'Partly Cloudy. Highs in the lower 80s. Chance of showers. S winds 10 to 15 mph.\nMostly Cloudy. Lows in the mid 60s. Chance of thunderstorms.',
+  'Mostly Cloudy. Highs in the mid 80s. Thunderstorms likely. SW winds 15 to 20 mph with gusts to around 35 mph.\nPartly Cloudy. Lows in the upper 60s. Chance of thunderstorms.',
+  null,
+  null,
+  null,
+];
 
 // Starting 2026-05-19 for 7 days
 function buildDaily(): DailyForecastPoint[] {
@@ -91,6 +100,7 @@ function buildDaily(): DailyForecastPoint[] {
       weatherCode: String(DAILY_CODES[i]),
       weatherText: DAILY_TEXTS[i],
       narrative: DAILY_NARRATIVES[i],
+      forecastText: DAILY_FORECAST_TEXTS[i],
       dewpointMax: null,
       dewpointMin: null,
       humidityMax: null,

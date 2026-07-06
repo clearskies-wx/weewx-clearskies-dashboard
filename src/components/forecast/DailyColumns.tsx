@@ -573,21 +573,57 @@ export function DailyColumns({
           {dayName}, {dateLabel}
         </div>
 
-        {/* Narrative — full width, sits above the chip row */}
-        {day.narrative && (
-          <p
-            style={{
-              fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-              fontSize: 'var(--text-card-title)',
-              color: 'var(--muted-foreground)',
-              lineHeight: 1.55,
-              fontStyle: 'italic',
-              margin: '0 0 0.5rem',
-            }}
-          >
-            {day.narrative}
-          </p>
-        )}
+        {/* Forecast text — day/night split from GFE engine, or narrative fallback */}
+        {(() => {
+          const textStyle = {
+            fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+            fontSize: 'var(--text-card-title)',
+            color: 'var(--muted-foreground)',
+            lineHeight: 1.55,
+            margin: '0 0 0.5rem',
+          } as const;
+          const labelStyle = {
+            fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+            fontSize: '0.7rem',
+            fontWeight: 600,
+            textTransform: 'uppercase' as const,
+            letterSpacing: '0.04em',
+            color: 'var(--muted-foreground)',
+            opacity: 0.7,
+            marginBottom: '0.15rem',
+          };
+          if (day.forecastText) {
+            const parts = day.forecastText.split('\n').filter(Boolean);
+            const dayText = parts[0] || null;
+            const nightText = parts[1] || null;
+            return (
+              <div style={{ margin: '0 0 0.5rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                {dayText && (
+                  <div>
+                    <div style={labelStyle}>
+                      <span aria-hidden="true" style={{ marginRight: '0.3rem' }}>☀</span>
+                      {t('dayPeriod')}
+                    </div>
+                    <p style={{ ...textStyle, margin: 0 }}>{dayText}</p>
+                  </div>
+                )}
+                {nightText && (
+                  <div>
+                    <div style={labelStyle}>
+                      <span aria-hidden="true" style={{ marginRight: '0.3rem' }}>☾</span>
+                      {t('nightPeriod')}
+                    </div>
+                    <p style={{ ...textStyle, margin: 0 }}>{nightText}</p>
+                  </div>
+                )}
+              </div>
+            );
+          }
+          if (day.narrative) {
+            return <p style={{ ...textStyle, fontStyle: 'italic' }}>{day.narrative}</p>;
+          }
+          return null;
+        })()}
 
         {/* Chip grid — wrapping flex row of label/value pairs */}
         <div style={{ display: 'flex', flexDirection: 'row', columnGap: '1.5rem', rowGap: '0.35rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
