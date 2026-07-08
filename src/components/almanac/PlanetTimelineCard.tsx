@@ -294,6 +294,7 @@ function buildPlanetList(
   sunsetIso: string | null,
 ): PlanetEntry[] {
   const seen = new Set<string>();
+  const morningKeys = new Set(planets.morning.map((p) => p.name.toLowerCase()));
   const all: PlanetEntry[] = [];
 
   for (const p of [...planets.evening, ...planets.allNight, ...planets.morning]) {
@@ -306,7 +307,11 @@ function buildPlanetList(
 
   const sunsetMs = sunsetIso ? new Date(sunsetIso).getTime() : null;
 
+  // Morning planets are visible pre-dawn; they normally set during
+  // daytime (before the next sunset), so the sunset filter must not
+  // apply to them.
   const visible = all.filter((p) => {
+    if (morningKeys.has(p.name.toLowerCase())) return true;
     if (p.set && sunsetMs !== null) {
       const setMs = new Date(p.set).getTime();
       if (setMs <= sunsetMs) return false;
