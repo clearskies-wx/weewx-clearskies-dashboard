@@ -203,6 +203,9 @@ export interface Observation {
   inTemp: ConvertedValue | number | null;
   inHumidity: ConvertedValue | number | null;
   appTemp: ConvertedValue | number | null;
+  feelsLike?: ConvertedValue | number | null;
+  windchillSustained?: ConvertedValue | number | null;
+  sustainedWindSpeed?: ConvertedValue | number | null;
   /** Lightning fields — present only when lightning sensor configured. */
   lightning_strike_count?: number | null;
   lightning_strike_count_1h?: number | null;

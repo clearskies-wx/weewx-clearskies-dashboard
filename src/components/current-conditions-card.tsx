@@ -398,8 +398,10 @@ function CurrentConditionsCardContent({
   // Raw float for the chart reference dot
   const currentTempRaw = outTempCV?.value ?? null;
 
-  // Feels-like: best available — appTemp > windchill > heatindex (ADR-050)
+  // Feels-like: best available — feelsLike (sustained wind) > appTemp > windchill > heatindex
   const feelsLikeCV = useMemo(() => {
+    const fl = asConverted(observation?.feelsLike ?? null);
+    if (fl !== null && fl.value !== null) return fl;
     const app = asConverted(observation?.appTemp ?? null);
     if (app !== null && app.value !== null) return app;
     const chill = asConverted(observation?.windchill ?? null);
