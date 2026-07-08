@@ -592,6 +592,7 @@ function GanttTimeline({ planets, almanac, stationTz, locale }: GanttTimelinePro
     gradId: string;
   }
 
+  const SIDEREAL_DAY_MS = 23 * 3_600_000 + 56 * 60_000;
   const candidates: BarCandidate[] = [];
   for (const planet of planets) {
     const rise   = parseISO(planet.rise);
@@ -599,12 +600,23 @@ function GanttTimeline({ planets, almanac, stationTz, locale }: GanttTimelinePro
     const color  = getPlanetColor(planet.name);
     const gradId = `plt-bar-${planet.name.toLowerCase()}`;
 
-    const barStart = rise
+    let barStart = rise
       ? new Date(Math.max(rise.getTime(), sunsetNN.getTime()))
       : sunsetNN;
-    const barEnd = set
+    let barEnd = set
       ? new Date(Math.min(set.getTime(), sunriseDate.getTime()))
       : sunriseDate;
+
+    // Morning planets whose last transit ended before tonight will
+    // rise again roughly one sidereal day later.  Estimate the next
+    // rise and draw the bar from there to sunrise.
+    if (barEnd <= barStart && rise && set && set.getTime() < sunsetNN.getTime()) {
+      const nextRise = new Date(rise.getTime() + SIDEREAL_DAY_MS);
+      if (nextRise < sunriseDate) {
+        barStart = new Date(Math.max(nextRise.getTime(), sunsetNN.getTime()));
+        barEnd = sunriseDate;
+      }
+    }
 
     if (barEnd <= barStart) continue;
 
