@@ -1137,14 +1137,38 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
                 const expires = props.expires as number | undefined;
                 let html = `<strong>${title}</strong>`;
                 if (severity) html += `<br/><em>${severity}</em>`;
-                if (description && description !== title) html += `<br/>${description}`;
-                if (regions?.length) html += `<br/>${regions.join(', ')}`;
+                if (description && description !== title) {
+                  const MAX_DESC = 180;
+                  if (description.length > MAX_DESC) {
+                    const uid = `ad${Math.random().toString(36).slice(2, 8)}`;
+                    const truncated = description.slice(0, MAX_DESC).replace(/\s+\S*$/, '');
+                    html += `<div id="${uid}-wrap" style="position:relative">`
+                      + `<div id="${uid}-short" style="max-height:5.5em;overflow:hidden">${description}</div>`
+                      + `<div id="${uid}-fade" style="position:absolute;bottom:0;left:0;right:0;height:2em;`
+                      + `background:linear-gradient(transparent,white);pointer-events:none"></div>`
+                      + `</div>`
+                      + `<a href="#" id="${uid}-btn" onclick="`
+                      + `var w=document.getElementById('${uid}-wrap'),s=w.firstChild,f=document.getElementById('${uid}-fade'),b=this;`
+                      + `if(s.style.maxHeight){s.style.maxHeight='';f.style.display='none';b.textContent='▴'}`
+                      + `else{s.style.maxHeight='5.5em';f.style.display='';b.textContent='▾'}`
+                      + `;return false" style="display:inline-block;margin-top:2px;color:#3b82f6;cursor:pointer;`
+                      + `text-decoration:none;font-size:1.1em;line-height:1">▾</a>`;
+                  } else {
+                    html += `<br/>${description}`;
+                  }
+                }
+                if (regions?.length) html += `<br/><small>${regions.join(', ')}</small>`;
                 if (expires) {
                   const exp = new Date(expires * 1000);
-                  // ADR-020/ADR-075: always format in station-local time zone.
-                  html += `<br/>Expires: ${exp.toLocaleString(undefined, { timeZone: stationTz ?? 'UTC' })}`;
+                  html += `<br/><small>Expires: ${exp.toLocaleString(undefined, { timeZone: stationTz ?? 'UTC' })}</small>`;
                 }
-                layer.bindPopup(html, { maxWidth: 300 });
+                layer.bindPopup(html, {
+                  maxWidth: 350,
+                  maxHeight: 350,
+                  autoPan: true,
+                  autoPanPaddingTopLeft: L.point(40, 40),
+                  autoPanPaddingBottomRight: L.point(40, 80),
+                });
               }}
             />
           )}
