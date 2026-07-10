@@ -1168,11 +1168,14 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
                   const containerPt = map.latLngToContainerPoint(e.latlng);
                   const mapSize = map.getSize();
                   const nearTop = containerPt.y < mapSize.y * 0.35;
+                  const nearLeft = containerPt.x < 200;
+                  const nearRight = containerPt.x > mapSize.x - 200;
+                  const offsetX = nearLeft ? 120 : nearRight ? -120 : 0;
+                  const offsetY = nearTop ? 10 : -10;
                   const popup = L.popup({
                     maxWidth: 360,
                     autoPan: false,
-                    offset: nearTop ? L.point(0, 10) : L.point(0, -10),
-                    className: nearTop ? 'leaflet-popup-below' : '',
+                    offset: L.point(offsetX, offsetY),
                   })
                     .setLatLng(e.latlng)
                     .setContent(html)
