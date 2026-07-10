@@ -316,7 +316,6 @@ function buildPlanetList(
   // daytime (before the next sunset), so the sunset filter must not
   // apply to them.
   const visible = all.filter((p) => {
-    if (effectiveQuality(p) === 'not_visible') return false;
     if (morningKeys.has(p.name.toLowerCase())) return true;
     if (p.set && sunsetMs !== null) {
       const setMs = new Date(p.set).getTime();
@@ -603,6 +602,7 @@ function GanttTimeline({ planets, almanac, stationTz, locale }: GanttTimelinePro
   const SIDEREAL_DAY_MS = 23 * 3_600_000 + 56 * 60_000;
   const candidates: BarCandidate[] = [];
   for (const planet of planets) {
+    if (effectiveQuality(planet) === 'not_visible') continue;
     const rise   = parseISO(planet.rise);
     const set    = parseISO(planet.set);
     const color  = getPlanetColor(planet.name);
