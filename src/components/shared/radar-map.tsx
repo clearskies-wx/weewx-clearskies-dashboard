@@ -1138,10 +1138,8 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
                 let html = `<strong>${title}</strong>`;
                 if (severity) html += `<br/><em>${severity}</em>`;
                 if (description && description !== title) {
-                  const MAX_DESC = 180;
-                  if (description.length > MAX_DESC) {
+                  if (description.length > 180) {
                     const uid = `ad${Math.random().toString(36).slice(2, 8)}`;
-                    const truncated = description.slice(0, MAX_DESC).replace(/\s+\S*$/, '');
                     html += `<div id="${uid}-wrap" style="position:relative">`
                       + `<div id="${uid}-short" style="max-height:5.5em;overflow:hidden">${description}</div>`
                       + `<div id="${uid}-fade" style="position:absolute;bottom:0;left:0;right:0;height:2em;`
