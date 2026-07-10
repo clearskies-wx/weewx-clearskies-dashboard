@@ -1137,7 +1137,6 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
                 const expires = props.expires as number | undefined;
                 const uid = `ap${Math.random().toString(36).slice(2, 8)}`;
 
-                // Build detail section (hidden by default)
                 let detail = '';
                 if (severity) detail += `<em>${severity}</em><br/>`;
                 if (description && description !== title) detail += `${description}<br/>`;
@@ -1163,11 +1162,27 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
                     + `</div></div>` : '')
                   + `</div>`;
 
-                layer.bindPopup(html, {
-                  maxWidth: 360,
-                  autoPan: true,
-                  autoPanPaddingTopLeft: L.point(20, 20),
-                  autoPanPaddingBottomRight: L.point(20, 60),
+                layer.on('click', (e: L.LeafletMouseEvent) => {
+                  const map = e.target._map ?? (layer as unknown as { _map: L.Map })._map;
+                  if (!map) return;
+                  const containerPt = map.latLngToContainerPoint(e.latlng);
+                  const mapSize = map.getSize();
+                  const nearTop = containerPt.y < mapSize.y * 0.35;
+                  const popup = L.popup({
+                    maxWidth: 360,
+                    autoPan: false,
+                    offset: nearTop ? L.point(0, 10) : L.point(0, -10),
+                    className: nearTop ? 'leaflet-popup-below' : '',
+                  })
+                    .setLatLng(e.latlng)
+                    .setContent(html)
+                    .openOn(map);
+                  if (nearTop) {
+                    const tip = popup.getElement()?.querySelector('.leaflet-popup-tip-container') as HTMLElement | null;
+                    const wrapper = popup.getElement()?.querySelector('.leaflet-popup-content-wrapper') as HTMLElement | null;
+                    if (tip) { tip.style.top = '-11px'; tip.style.transform = 'rotate(180deg)'; }
+                    if (wrapper) wrapper.style.marginTop = '12px';
+                  }
                 });
               }}
             />
