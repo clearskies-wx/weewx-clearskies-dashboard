@@ -1164,13 +1164,10 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
                     + `</div></div>` : '')
                   + `</div>`;
 
-                layer.bindPopup(
-                  (L as unknown as { responsivePopup: typeof L.popup }).responsivePopup({
-                    maxWidth: 360,
-                    autoPan: false,
-                    hasTip: true,
-                  }).setContent(html),
-                );
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const rp = (L as any).responsivePopup({ maxWidth: 360, autoPan: false, hasTip: true });
+                rp.setContent(html);
+                layer.bindPopup(rp as L.Popup);
               }}
             />
           )}
