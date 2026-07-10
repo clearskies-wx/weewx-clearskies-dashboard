@@ -1135,37 +1135,39 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
                 const description = props.description as string | undefined;
                 const regions = props.regions as string[] | undefined;
                 const expires = props.expires as number | undefined;
-                let html = `<strong>${title}</strong>`;
-                if (severity) html += `<br/><em>${severity}</em>`;
-                if (description && description !== title) {
-                  if (description.length > 180) {
-                    const uid = `ad${Math.random().toString(36).slice(2, 8)}`;
-                    html += `<div id="${uid}-wrap" style="position:relative">`
-                      + `<div id="${uid}-short" style="max-height:5.5em;overflow:hidden">${description}</div>`
-                      + `<div id="${uid}-fade" style="position:absolute;bottom:0;left:0;right:0;height:2em;`
-                      + `background:linear-gradient(transparent,white);pointer-events:none"></div>`
-                      + `</div>`
-                      + `<a href="#" id="${uid}-btn" onclick="`
-                      + `var w=document.getElementById('${uid}-wrap'),s=w.firstChild,f=document.getElementById('${uid}-fade'),b=this;`
-                      + `if(s.style.maxHeight){s.style.maxHeight='';f.style.display='none';b.textContent='▴'}`
-                      + `else{s.style.maxHeight='5.5em';f.style.display='';b.textContent='▾'}`
-                      + `;return false" style="display:inline-block;margin-top:2px;color:#3b82f6;cursor:pointer;`
-                      + `text-decoration:none;font-size:1.1em;line-height:1">▾</a>`;
-                  } else {
-                    html += `<br/>${description}`;
-                  }
-                }
-                if (regions?.length) html += `<br/><small>${regions.join(', ')}</small>`;
+                const uid = `ap${Math.random().toString(36).slice(2, 8)}`;
+
+                // Build detail section (hidden by default)
+                let detail = '';
+                if (severity) detail += `<em>${severity}</em><br/>`;
+                if (description && description !== title) detail += `${description}<br/>`;
+                if (regions?.length) detail += `${regions.join('; ')}<br/>`;
                 if (expires) {
                   const exp = new Date(expires * 1000);
-                  html += `<br/><small>Expires: ${exp.toLocaleString(undefined, { timeZone: stationTz ?? 'UTC' })}</small>`;
+                  detail += `Expires: ${exp.toLocaleString(undefined, { timeZone: stationTz ?? 'UTC' })}`;
                 }
+
+                const html = `<div style="font-size:13px;line-height:1.4">`
+                  + `<strong>${title}</strong>`
+                  + (detail ? `<div style="margin-top:6px">`
+                    + `<a href="#" id="${uid}-tog" onclick="`
+                    + `var d=document.getElementById('${uid}-det'),a=this;`
+                    + `if(d.style.display==='none'){d.style.display='block';a.textContent='▲'}`
+                    + `else{d.style.display='none';a.textContent='▼'}`
+                    + `;return false" style="display:inline-block;width:24px;height:24px;line-height:24px;`
+                    + `text-align:center;border-radius:4px;background:#e5e7eb;color:#374151;`
+                    + `text-decoration:none;font-size:11px;vertical-align:middle;cursor:pointer">▼</a>`
+                    + `<div id="${uid}-det" style="display:none;margin-top:8px;padding-top:8px;`
+                    + `border-top:1px solid #e5e7eb;max-height:250px;overflow-y:auto">`
+                    + detail
+                    + `</div></div>` : '')
+                  + `</div>`;
+
                 layer.bindPopup(html, {
-                  maxWidth: 350,
-                  maxHeight: 350,
+                  maxWidth: 360,
                   autoPan: true,
-                  autoPanPaddingTopLeft: L.point(40, 40),
-                  autoPanPaddingBottomRight: L.point(40, 80),
+                  autoPanPaddingTopLeft: L.point(20, 20),
+                  autoPanPaddingBottomRight: L.point(20, 60),
                 });
               }}
             />
