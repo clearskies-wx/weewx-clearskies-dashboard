@@ -1148,7 +1148,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
                   detail += `Expires: ${exp.toLocaleString(undefined, { timeZone: stationTz ?? 'UTC' })}`;
                 }
 
-                const html = `<div style="font-size:13px;line-height:1.4">`
+                const html = `<div style="font-size:13px;line-height:1.4;overflow-wrap:break-word">`
                   + `<strong>${title}</strong>`
                   + (detail ? `<div style="margin-top:6px">`
                     + `<a href="#" id="${uid}-tog" onclick="`
@@ -1165,7 +1165,8 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
                   + `</div>`;
 
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const rp = (L as any).responsivePopup({ maxWidth: 360, autoPan: false, hasTip: true });
+                const popupMaxW = Math.min(280, window.innerWidth - 48);
+                const rp = (L as any).responsivePopup({ maxWidth: popupMaxW, autoPan: false, hasTip: true });
                 rp.setContent(html);
                 layer.bindPopup(rp as L.Popup);
               }}

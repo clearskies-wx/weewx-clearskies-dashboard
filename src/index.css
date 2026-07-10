@@ -389,3 +389,15 @@
   }
 
 }
+
+/* ── Leaflet alert popup containment ─────────────────────────────────────────
+   Prevents alert popups from clipping outside the viewport on narrow screens
+   (mobile radar card and expanded radar view).  maxWidth is also capped in JS
+   (radar-map.tsx) but CSS provides a safety net.                              */
+.leaflet-popup-content-wrapper {
+  max-width: calc(100vw - 3rem);
+}
+.leaflet-popup-content {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
