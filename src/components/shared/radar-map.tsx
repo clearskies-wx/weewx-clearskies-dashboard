@@ -108,6 +108,7 @@ function buildTileUrl(
   capability: CapabilityDeclaration,
   tileHost: string | null,
   colorScheme: number = RAINVIEWER_COLOR,
+  arrowStyle: 'light' | 'dark' | null = null,
 ): string | null {
   const template = capability.tileUrlTemplate;
 
@@ -122,6 +123,12 @@ function buildTileUrl(
     url = url.replace('{size}', String(RAINVIEWER_TILE_SIZE));
     url = url.replace('{color}', String(colorScheme));
     url = url.replace('{options}', RAINVIEWER_OPTIONS);
+    // Wind arrows via ?arrows= query parameter (LibreWxR only).
+    // LibreWxR renders directional wind barbs directly onto radar tiles when
+    // this param is present. RainViewer tiles don't support it.
+    if (arrowStyle && capability.caddyPrefix) {
+      url += `?arrows=${arrowStyle}`;
+    }
     return url;
   }
 
@@ -554,6 +561,12 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
     ? frames.filter((f) => f.kind !== 'nowcast')
     : frames;
 
+  // Wind arrow style for LibreWxR's ?arrows= query parameter on radar tiles.
+  // Picks light arrows on dark backgrounds (satellite or dark theme) and dark
+  // arrows on light backgrounds so the barbs stay visible against any basemap.
+  const arrowStyle: 'light' | 'dark' | null = !showWind ? null
+    : (satelliteActive || resolvedTheme === 'dark') ? 'light' : 'dark';
+
   const baseTile = TILE_CONFIG[resolvedTheme];
 
   const tileHost = radarFrameList?.tileHost ?? null;
@@ -637,7 +650,14 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
 
     async function fetchAlerts() {
       try {
-        const resp = await fetch(alertUrl!);
+        // Pass BBOX so LibreWxR filters to alerts within the provider's
+        // coverage area.  Format: west,south,east,north.
+        let url = alertUrl!;
+        if (maxBounds) {
+          const [[south, west], [north, east]] = maxBounds;
+          url += `?bbox=${west},${south},${east},${north}`;
+        }
+        const resp = await fetch(url);
         if (!resp.ok) return;
         const data = await resp.json() as FeatureCollection;
         if (!cancelled) setAlertData(data);
@@ -654,7 +674,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
       cancelled = true;
       clearInterval(id);
     };
-  }, [showAlerts, alertUrl]);
+  }, [showAlerts, alertUrl, maxBounds]);
 
   const frameCount = activeFrames.length;
 
@@ -1058,7 +1078,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
           })}
           {showRadar !== false && radarCapability !== null && activeFrames.map((frame, i) => {
             const cap = radarCapability;
-            const url = buildTileUrl(frame, cap, tileHost, effectiveColorScheme);
+            const url = buildTileUrl(frame, cap, tileHost, effectiveColorScheme, arrowStyle);
             if (!url) return null;
             return (
               <TileLayer
@@ -1088,15 +1108,8 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
               Rendered below alert polygons and wind arrows. Only active in satellite view
               (basemap already includes roads/boundaries; no overlay needed). */}
           {satelliteActive && <GeoFeaturesLayer />}
-          {/* Wind arrow tile overlay (T4.7) — LibreWxR only; best-effort */}
-          {showWind && caddyPrefix && (
-            <TileLayer
-              url={`${caddyPrefix}/v2/wind/{z}/{x}/{y}/arrows.png`}
-              opacity={0.6}
-              zIndex={500}
-              attribution={radarFrameList?.attribution ?? undefined}
-            />
-          )}
+          {/* Wind arrows (T4.7) — rendered via ?arrows=light|dark query param on
+              radar tiles (see buildTileUrl). No separate layer needed. */}
 
           {/* Alert polygon overlay (T4.6) — GeoJSON polygons from LibreWxR */}
           {showAlerts && alertData && (
