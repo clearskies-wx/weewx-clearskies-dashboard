@@ -316,6 +316,7 @@ function buildPlanetList(
   // daytime (before the next sunset), so the sunset filter must not
   // apply to them.
   const visible = all.filter((p) => {
+    if (effectiveQuality(p) === 'not_visible') return false;
     if (morningKeys.has(p.name.toLowerCase())) return true;
     if (p.set && sunsetMs !== null) {
       const setMs = new Date(p.set).getTime();
