@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import L from 'leaflet';
+import 'leaflet-responsive-popup';
+import 'leaflet-responsive-popup/leaflet.responsive.popup.css';
 import { MapContainer, TileLayer, CircleMarker, Tooltip, GeoJSON, ScaleControl, useMap } from 'react-leaflet';
 import { Play, Pause, CaretLeft, CaretRight } from '@phosphor-icons/react';
 import { leafletLayer, LineSymbolizer } from 'protomaps-leaflet';
@@ -1162,31 +1164,13 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
                     + `</div></div>` : '')
                   + `</div>`;
 
-                layer.on('click', (e: L.LeafletMouseEvent) => {
-                  const map = e.target._map ?? (layer as unknown as { _map: L.Map })._map;
-                  if (!map) return;
-                  const containerPt = map.latLngToContainerPoint(e.latlng);
-                  const mapSize = map.getSize();
-                  const nearTop = containerPt.y < mapSize.y * 0.35;
-                  const nearLeft = containerPt.x < 200;
-                  const nearRight = containerPt.x > mapSize.x - 200;
-                  const offsetX = nearLeft ? 120 : nearRight ? -120 : 0;
-                  const offsetY = nearTop ? 10 : -10;
-                  const popup = L.popup({
+                layer.bindPopup(
+                  (L as unknown as { responsivePopup: typeof L.popup }).responsivePopup({
                     maxWidth: 360,
                     autoPan: false,
-                    offset: L.point(offsetX, offsetY),
-                  })
-                    .setLatLng(e.latlng)
-                    .setContent(html)
-                    .openOn(map);
-                  if (nearTop) {
-                    const tip = popup.getElement()?.querySelector('.leaflet-popup-tip-container') as HTMLElement | null;
-                    const wrapper = popup.getElement()?.querySelector('.leaflet-popup-content-wrapper') as HTMLElement | null;
-                    if (tip) { tip.style.top = '-11px'; tip.style.transform = 'rotate(180deg)'; }
-                    if (wrapper) wrapper.style.marginTop = '12px';
-                  }
-                });
+                    hasTip: true,
+                  }).setContent(html),
+                );
               }}
             />
           )}
