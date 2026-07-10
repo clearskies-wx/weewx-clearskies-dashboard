@@ -27,7 +27,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Eye, EyeSlash } from '@phosphor-icons/react';
+import { Binoculars, Eye, EyeSlash } from '@phosphor-icons/react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import {
   Card,
@@ -202,8 +202,13 @@ function qualityFromMagnitude(mag: number | null): PlanetViewingQuality {
   if (mag < 0)   return 'excellent';
   if (mag < 1.5) return 'good';
   if (mag < 3.5) return 'fair';
-  if (mag < 5.5) return 'poor';
-  return 'not_visible';
+  return 'poor';
+}
+
+const NAKED_EYE_MAG_LIMIT = 5.5;
+
+function needsOptics(mag: number | null): boolean {
+  return mag !== null && mag >= NAKED_EYE_MAG_LIMIT;
 }
 
 function effectiveQuality(planet: PlanetEntry): PlanetViewingQuality {
@@ -440,7 +445,9 @@ function PlanetColumn({ planet, stationTz, sunsetIso, sunriseIso, locale, t }: P
           >
             {quality === 'not_visible'
               ? <EyeSlash size={14} weight="bold" aria-hidden="true" />
-              : <Eye size={14} weight="bold" aria-hidden="true" />
+              : needsOptics(planet.magnitude)
+                ? <Binoculars size={14} weight="bold" aria-hidden="true" />
+                : <Eye size={14} weight="bold" aria-hidden="true" />
             }
             {qLabel}
           </span>
