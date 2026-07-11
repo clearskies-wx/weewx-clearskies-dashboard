@@ -146,7 +146,15 @@ export function MarinePage() {
   }
 
   function buildActivities(location: MarineLocationSummary): ActivityDef[] {
-    const enabled = new Set<ActivityId>(location.activities as ActivityId[]);
+    const API_TO_DASHBOARD: Record<string, ActivityId> = {
+      marine: 'boating',
+      surf: 'surfing',
+      fishing: 'fishing',
+      beach_safety: 'beachSafety',
+    };
+    const enabled = new Set<ActivityId>(
+      location.activities.map((a) => API_TO_DASHBOARD[a] ?? (a as ActivityId)),
+    );
     const defs: ActivityDef[] = [];
 
     if (enabled.has('boating')) {
