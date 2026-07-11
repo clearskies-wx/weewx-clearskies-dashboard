@@ -36,6 +36,12 @@ import {
   getAlmanacPositions,
   getChartsConfig,
   getCustomQuery,
+  getMarineLocations,
+  getMarineDetail,
+  getTideDetail,
+  getSurfDetail,
+  getFishingDetail,
+  getBeachSafetyDetail,
 } from '../api/client';
 import type { ArchiveParams, ApiBrandingConfig } from '../api/client';
 import { asConverted } from '../api/types';
@@ -96,6 +102,12 @@ import type {
   ChartsConfigData,
   StationClock,
   FreshnessInfo,
+  MarineLocationSummary,
+  MarineBundle,
+  TideBundle,
+  SurfDetailData,
+  FishingDetailData,
+  BeachSafetyDetailData,
 } from '../api/types';
 
 // ---------------------------------------------------------------------------
@@ -1151,5 +1163,162 @@ export function useCustomQueries(
   }, [key]);
 
   return { data, loading, error };
+}
+
+// ---------------------------------------------------------------------------
+// Marine Activities (DASHBOARD-MANUAL §12) — Phase 7 T7.1
+//
+// No mock fixtures: per T7.1 scope, the marine feature is only exercised
+// against the live API. In mock mode these hooks skip fetching and return
+// an empty/null result so the marine page renders its "not configured"
+// empty state rather than fabricating fixture data.
+// ---------------------------------------------------------------------------
+
+// useMarineLocations — /marine
+// A 404 means no marine locations are configured on the API; treat as an
+// empty list (same pattern as useReports' 404 handling) so the page shows
+// the "no locations configured" empty state instead of an error.
+export function useMarineLocations(): HookResult<MarineLocationSummary[]> {
+  const { data, loading, error, refetch } = useApiQuery<{ data: MarineLocationSummary[] } | null>(
+    async (signal) => {
+      try {
+        return await getMarineLocations(signal);
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404) {
+          return null;
+        }
+        throw err;
+      }
+    },
+    { skip: isMockMode() },
+  );
+
+  if (isMockMode()) {
+    return mockResult<MarineLocationSummary[]>([]);
+  }
+
+  return {
+    data: data === null && !loading && !error ? [] : (data?.data ?? null),
+    loading,
+    error,
+    refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
+  };
+}
+
+// useMarineDetail — /marine/{locationId}
+export function useMarineDetail(locationId: string | null): HookResult<MarineBundle> {
+  const skip = isMockMode() || locationId === null;
+
+  const { data, loading, error, refetch } = useApiQuery<{ data: MarineBundle }>(
+    (signal) => getMarineDetail(locationId as string, signal),
+    { skip, deps: [locationId] },
+  );
+
+  if (isMockMode()) {
+    return mockResult<MarineBundle | null>(null) as HookResult<MarineBundle>;
+  }
+
+  return {
+    data: data?.data ?? null,
+    loading,
+    error,
+    refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
+  };
+}
+
+// useTideDetail — /tides/{locationId}
+export function useTideDetail(locationId: string | null): HookResult<TideBundle> {
+  const skip = isMockMode() || locationId === null;
+
+  const { data, loading, error, refetch } = useApiQuery<{ data: TideBundle }>(
+    (signal) => getTideDetail(locationId as string, signal),
+    { skip, deps: [locationId] },
+  );
+
+  if (isMockMode()) {
+    return mockResult<TideBundle | null>(null) as HookResult<TideBundle>;
+  }
+
+  return {
+    data: data?.data ?? null,
+    loading,
+    error,
+    refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
+  };
+}
+
+// useSurfDetail — /surf/{locationId}
+export function useSurfDetail(locationId: string | null): HookResult<SurfDetailData> {
+  const skip = isMockMode() || locationId === null;
+
+  const { data, loading, error, refetch } = useApiQuery<{ data: SurfDetailData }>(
+    (signal) => getSurfDetail(locationId as string, signal),
+    { skip, deps: [locationId] },
+  );
+
+  if (isMockMode()) {
+    return mockResult<SurfDetailData | null>(null) as HookResult<SurfDetailData>;
+  }
+
+  return {
+    data: data?.data ?? null,
+    loading,
+    error,
+    refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
+  };
+}
+
+// useFishingDetail — /fishing/{locationId}
+export function useFishingDetail(locationId: string | null): HookResult<FishingDetailData> {
+  const skip = isMockMode() || locationId === null;
+
+  const { data, loading, error, refetch } = useApiQuery<{ data: FishingDetailData }>(
+    (signal) => getFishingDetail(locationId as string, signal),
+    { skip, deps: [locationId] },
+  );
+
+  if (isMockMode()) {
+    return mockResult<FishingDetailData | null>(null) as HookResult<FishingDetailData>;
+  }
+
+  return {
+    data: data?.data ?? null,
+    loading,
+    error,
+    refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
+  };
+}
+
+// useBeachSafetyDetail — /beach-safety/{locationId}
+export function useBeachSafetyDetail(locationId: string | null): HookResult<BeachSafetyDetailData> {
+  const skip = isMockMode() || locationId === null;
+
+  const { data, loading, error, refetch } = useApiQuery<{ data: BeachSafetyDetailData }>(
+    (signal) => getBeachSafetyDetail(locationId as string, signal),
+    { skip, deps: [locationId] },
+  );
+
+  if (isMockMode()) {
+    return mockResult<BeachSafetyDetailData | null>(null) as HookResult<BeachSafetyDetailData>;
+  }
+
+  return {
+    data: data?.data ?? null,
+    loading,
+    error,
+    refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
+  };
 }
 

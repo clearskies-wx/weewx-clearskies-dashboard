@@ -1150,3 +1150,235 @@ export interface LightningData {
   nearestDistanceKm: number | null;
   lastStrikeTime: string | null;
 }
+
+// ---------------------------------------------------------------------------
+// Marine Activities (DASHBOARD-MANUAL §12) — Phase 7 T7.1
+// Hand-written to match the deployed clearskies-api marine/tides/surf/
+// fishing/beach-safety/almanac-solunar endpoints. Not yet reflected in
+// docs/contracts/openapi-v1.yaml (Phase 5 doc-code sync gap, tracked for
+// reconciliation in Phase 8) — every other type in this file is likewise
+// hand-maintained rather than generated, so this follows existing practice.
+// ---------------------------------------------------------------------------
+
+export interface SpectralWaveComponent {
+  height: number;
+  period: number;
+  direction: number;
+  energy: number;
+  frequencyRange: number[];
+  classification: string;
+}
+
+export interface MarineObservation {
+  windSpeed: number | null;
+  windDirection: number | null;
+  windGust: number | null;
+  waveHeight: number | null;
+  dominantPeriod: number | null;
+  averagePeriod: number | null;
+  meanWaveDirection: number | null;
+  pressure: number | null;
+  airTemp: number | null;
+  waterTemp: number | null;
+  dewpoint: number | null;
+  visibility: number | null;
+  pressureTendency: number | null;
+  tideLevel: number | null;
+  stationId: string;
+  time: string;
+  spectralComponents: SpectralWaveComponent[] | null;
+}
+
+export interface TidePrediction {
+  time: string;
+  height: number;
+  type: string | null;
+}
+
+export interface WaterLevel {
+  time: string;
+  height: number;
+  datum: string;
+  quality: string | null;
+}
+
+export interface MarineForecastPoint {
+  time: string;
+  waveHeight: number | null;
+  wavePeriod: number | null;
+  waveDirection: number | null;
+  windSpeed: number | null;
+  windDirection: number | null;
+  swellHeight: number | null;
+  swellPeriod: number | null;
+  swellDirection: number | null;
+  windWaveHeight: number | null;
+  windWavePeriod: number | null;
+  windWaveDirection: number | null;
+}
+
+export interface MarineTextForecast {
+  periodName: string;
+  text: string;
+  wind: string | null;
+  seas: string | null;
+  visibility: string | null;
+  weather: string | null;
+}
+
+export interface SurfForecast {
+  time: string;
+  waveHeightAtBreak: number;
+  period: number;
+  direction: number;
+  qualityStars: number;
+  qualityLabel: string;
+  conditionsText: string;
+  windQuality: string;
+  swellDominance: number;
+  multiSwell: SpectralWaveComponent[] | null;
+}
+
+export interface FishingForecast {
+  periodStart: string;
+  periodEnd: string;
+  periodLabel: string;
+  overallScore: number;
+  pressureScore: number;
+  tideScore: number;
+  solunarScore: number;
+  waterTempScore: number;
+  timeofdayScore: number;
+  speciesScores: Array<Record<string, unknown>> | null;
+  conditionsText: string;
+  windSpeed: number | null;
+  windDirection: number | null;
+  windGust: number | null;
+  swellHeight: number | null;
+  swellPeriod: number | null;
+}
+
+export interface SolunarTimes {
+  date: string;
+  moonPhase: string;
+  moonIllumination: number;
+  moonrise: string | null;
+  moonset: string | null;
+  moonTransit: string;
+  moonUnderfoot: string;
+  majorPeriods: Array<{ start: string; end: string }>;
+  minorPeriods: Array<{ start: string; end: string }>;
+  intensity: number;
+}
+
+export interface SurfZoneForecast {
+  date: string;
+  countyZone: string;
+  ripCurrentRisk: string;
+  surfHeightMin: number | null;
+  surfHeightMax: number | null;
+  uvIndex: number | null;
+  waterTemp: number | null;
+  windText: string | null;
+  hazardsText: string | null;
+}
+
+export interface BeachSafetyAssessment {
+  safetyLevel: string;
+  waveHeight: number | null;
+  wavePeriod: number | null;
+  ripCurrentRisk: string | null;
+  waterTemp: number | null;
+  comfortLevel: string | null;
+  uvIndex: number | null;
+  visibility: number | null;
+  windSpeed: number | null;
+  windDirection: number | null;
+  activeAlerts: string[];
+}
+
+export interface MarineLocationSummary {
+  locationId: string;
+  name: string;
+  coordinates: { lat: number; lon: number };
+  activities: string[];
+  currentConditions: MarineObservation | null;
+  currentTide: { type: string; time: string; height: number } | null;
+  activeAlerts: string[] | null;
+  surfRating: number | null;
+  beachSafetyLevel: string | null;
+}
+
+/** Marine bundle — returned by GET /marine/{locationId}. */
+export interface MarineBundle {
+  locationId: string;
+  locationName: string;
+  coordinates: { lat: number; lon: number };
+  observation: MarineObservation | null;
+  forecast: MarineForecastPoint[];
+  textForecast: MarineTextForecast[];
+  source: string;
+  generatedAt: string;
+}
+
+/** Tide bundle — returned by GET /tides/{locationId}. */
+export interface TideBundle {
+  locationId: string;
+  locationName: string;
+  coordinates: { lat: number; lon: number };
+  predictions: TidePrediction[];
+  waterLevels: WaterLevel[];
+  source: string;
+  generatedAt: string;
+}
+
+/** Surf detail — returned by GET /surf/{locationId}. */
+export interface SurfDetailData {
+  locationId: string;
+  locationName: string;
+  coordinates: { lat: number; lon: number };
+  forecast: SurfForecast[];
+  zoneForecast: SurfZoneForecast | null;
+  spectralComponents: SpectralWaveComponent[];
+  tidePredictions: TidePrediction[];
+  source: string;
+  generatedAt: string;
+}
+
+export interface FishingDay {
+  date: string;
+  periods: FishingForecast[];
+  solunar: SolunarTimes;
+}
+
+/** Fishing detail — returned by GET /fishing/{locationId}. */
+export interface FishingDetailData {
+  locationId: string;
+  locationName: string;
+  coordinates: { lat: number; lon: number };
+  days: FishingDay[];
+  species: string[];
+  targetCategory: string;
+  habitatFeatures: string[];
+  tidePredictions: TidePrediction[];
+  source: string;
+  generatedAt: string;
+}
+
+/** Beach safety detail — returned by GET /beach-safety/{locationId}. */
+export interface BeachSafetyDetailData {
+  locationId: string;
+  locationName: string;
+  coordinates: { lat: number; lon: number };
+  assessment: BeachSafetyAssessment;
+  nwpsV15: {
+    ripCurrentProbability: number | null;
+    totalWaterLevel: number | null;
+    waveRunup: number | null;
+  } | null;
+  tidePredictions: TidePrediction[];
+  waterLevels: WaterLevel[];
+  externalLinks: Array<{ label: string; url: string }>;
+  source: string;
+  generatedAt: string;
+}

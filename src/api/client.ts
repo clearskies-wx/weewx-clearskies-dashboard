@@ -33,6 +33,13 @@ import type {
   MeteorShowerData,
   PositionsSnapshot,
   ChartsConfigData,
+  MarineLocationSummary,
+  MarineBundle,
+  TideBundle,
+  SurfDetailData,
+  FishingDetailData,
+  BeachSafetyDetailData,
+  SolunarTimes,
 } from './types';
 // ---------------------------------------------------------------------------
 // Config
@@ -436,5 +443,73 @@ export function getAlmanacPositions(
   signal?: AbortSignal,
 ): Promise<ApiResponse<PositionsSnapshot>> {
   return fetchApi<ApiResponse<PositionsSnapshot>>('/almanac/positions', {}, signal);
+}
+
+// ---------------------------------------------------------------------------
+// Marine Activities (DASHBOARD-MANUAL §12) — Phase 7 T7.1
+// ---------------------------------------------------------------------------
+
+export function getMarineLocations(
+  signal?: AbortSignal,
+): Promise<ApiResponse<MarineLocationSummary[]>> {
+  return fetchApi<ApiResponse<MarineLocationSummary[]>>('/marine', undefined, signal);
+}
+
+export function getMarineDetail(
+  locationId: string,
+  signal?: AbortSignal,
+): Promise<ApiResponse<MarineBundle>> {
+  return fetchApi<ApiResponse<MarineBundle>>(`/marine/${encodeURIComponent(locationId)}`, undefined, signal);
+}
+
+export function getTideDetail(
+  locationId: string,
+  signal?: AbortSignal,
+): Promise<ApiResponse<TideBundle>> {
+  return fetchApi<ApiResponse<TideBundle>>(`/tides/${encodeURIComponent(locationId)}`, undefined, signal);
+}
+
+export function getSurfDetail(
+  locationId: string,
+  signal?: AbortSignal,
+): Promise<ApiResponse<SurfDetailData>> {
+  return fetchApi<ApiResponse<SurfDetailData>>(`/surf/${encodeURIComponent(locationId)}`, undefined, signal);
+}
+
+export function getFishingDetail(
+  locationId: string,
+  signal?: AbortSignal,
+): Promise<ApiResponse<FishingDetailData>> {
+  return fetchApi<ApiResponse<FishingDetailData>>(`/fishing/${encodeURIComponent(locationId)}`, undefined, signal);
+}
+
+export function getBeachSafetyDetail(
+  locationId: string,
+  signal?: AbortSignal,
+): Promise<ApiResponse<BeachSafetyDetailData>> {
+  return fetchApi<ApiResponse<BeachSafetyDetailData>>(`/beach-safety/${encodeURIComponent(locationId)}`, undefined, signal);
+}
+
+export interface SolunarParams {
+  date?: string;
+  lat?: number;
+  lon?: number;
+  days?: number;
+}
+
+export function getSolunar(
+  params?: SolunarParams,
+  signal?: AbortSignal,
+): Promise<ApiResponse<SolunarTimes | SolunarTimes[]>> {
+  const p: Record<string, string> = {};
+  if (params?.date) p['date'] = params.date;
+  if (params?.lat !== undefined) p['lat'] = String(params.lat);
+  if (params?.lon !== undefined) p['lon'] = String(params.lon);
+  if (params?.days !== undefined) p['days'] = String(params.days);
+  return fetchApi<ApiResponse<SolunarTimes | SolunarTimes[]>>(
+    '/almanac/solunar',
+    Object.keys(p).length ? p : undefined,
+    signal,
+  );
 }
 
