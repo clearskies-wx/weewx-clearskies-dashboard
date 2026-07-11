@@ -169,8 +169,8 @@ function WindForecastChart({ forecast, locale, stationTz, ariaLabel, windUnit }:
           <Area
             type="monotone"
             dataKey="windSpeed"
-            stroke="var(--chart-1)"
-            fill="var(--chart-1)"
+            stroke="var(--chart-2)"
+            fill="var(--chart-2)"
             fillOpacity={0.25}
             strokeWidth={2}
             dot={false}
@@ -286,8 +286,8 @@ function WaveForecastChart({ forecast, locale, stationTz, ariaLabel, heightUnit 
             type="monotone"
             dataKey="waveHeight"
             name={t('waveHeight')}
-            stroke="var(--chart-1)"
-            fill="var(--chart-1)"
+            stroke="var(--chart-2)"
+            fill="var(--chart-2)"
             fillOpacity={0.25}
             strokeWidth={2}
             dot={false}

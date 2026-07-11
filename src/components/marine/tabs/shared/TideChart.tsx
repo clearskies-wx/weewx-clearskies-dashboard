@@ -156,8 +156,8 @@ export function TideChart({
             type="monotone"
             dataKey="height"
             name={t('tide.predictedTide')}
-            stroke="var(--chart-1)"
-            fill="var(--chart-1)"
+            stroke="var(--chart-2)"
+            fill="var(--chart-2)"
             fillOpacity={0.25}
             strokeWidth={2}
             dot={false}

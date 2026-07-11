@@ -10,6 +10,7 @@ import {
   useStation,
   useLightning,
   useCapabilities,
+  useMarineLocations,
 } from '../hooks/useWeatherData';
 import { useSmartAlmanac } from '../hooks/useSmartAlmanac';
 import { useRealtimeObservation } from '../hooks/useRealtimeObservation';
@@ -72,6 +73,7 @@ export function NowPage() {
   const { data: aqi, loading: aqiLoading, error: aqiError } = useAqi();
   const { data: station, loading: stationLoading } = useStation();
   const { data: capabilities } = useCapabilities();
+  const { data: marineLocations, units: marineUnits, loading: marineLoading, error: marineError } = useMarineLocations();
 
   const lightning = useLightning(observation);
 
@@ -172,6 +174,13 @@ export function NowPage() {
       refreshTs,
       videoRefreshTs,
     },
+    // /api/v1/marine — marine location summaries (for marine-summary card)
+    '/api/v1/marine': {
+      data: marineLocations,
+      units: marineUnits,
+      loading: marineLoading,
+      error: marineError,
+    },
   }), [
     observation, units, obsLoading, obsError,
     barometerTrendDirection, windSpeedAvg10m, windGustMax10m, scene,
@@ -182,6 +191,7 @@ export function NowPage() {
     station, stationLoading,
     lightning,
     webcamConfig, refreshTs, videoRefreshTs,
+    marineLocations, marineUnits, marineLoading, marineError,
   ]);
 
   // ── Derived values ──────────────────────────────────────────────────────────
