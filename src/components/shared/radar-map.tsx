@@ -608,15 +608,22 @@ function buildAlertPopupHtml(features: Feature[], index: number, stationTz: stri
       })
       .join('');
 
+    const atFirst = index === 0;
+    const atLast = index === features.length - 1;
+    const prevColor = atFirst ? '#d1d5db' : '#374151';
+    const nextColor = atLast ? '#d1d5db' : '#374151';
+    const prevCursor = atFirst ? 'default' : 'pointer';
+    const nextCursor = atLast ? 'default' : 'pointer';
+
     navigatorHtml = `<div style="display:flex;align-items:center;justify-content:center;gap:6px;`
       + `margin-top:8px;padding-top:8px;border-top:1px solid #e5e7eb">`
-      + `<button type="button" onclick="window.__alertNav?.prev();return false" `
-      + `aria-label="${t('alertPopup.previousAlert')}" style="border:none;background:none;cursor:pointer;`
-      + `font-size:14px;padding:2px 4px;line-height:1;color:#374151">&#9664;</button>`
+      + `<button type="button" onclick="event.stopPropagation();window.__alertNav?.prev();return false" `
+      + `aria-label="${t('alertPopup.previousAlert')}"${atFirst ? ' disabled' : ''} style="border:none;background:none;`
+      + `cursor:${prevCursor};font-size:14px;padding:2px 4px;line-height:1;color:${prevColor}">&#9664;</button>`
       + `<span style="display:inline-flex;align-items:center">${pips}</span>`
-      + `<button type="button" onclick="window.__alertNav?.next();return false" `
-      + `aria-label="${t('alertPopup.nextAlert')}" style="border:none;background:none;cursor:pointer;`
-      + `font-size:14px;padding:2px 4px;line-height:1;color:#374151">&#9654;</button>`
+      + `<button type="button" onclick="event.stopPropagation();window.__alertNav?.next();return false" `
+      + `aria-label="${t('alertPopup.nextAlert')}"${atLast ? ' disabled' : ''} style="border:none;background:none;`
+      + `cursor:${nextCursor};font-size:14px;padding:2px 4px;line-height:1;color:${nextColor}">&#9654;</button>`
       + `<span style="font-size:11px;color:#6b7280;margin-left:4px">`
       + `${index + 1} ${t('alertPopup.of')} ${features.length}</span>`
       + `</div>`;
@@ -627,6 +634,7 @@ function buildAlertPopupHtml(features: Feature[], index: number, stationTz: stri
     + `<strong>${title}</strong>`
     + (detail ? `<div style="margin-top:6px">`
       + `<a href="#" id="${uid}-tog" onclick="`
+      + `event.stopPropagation();`
       + `var d=document.getElementById('${uid}-det'),a=this;`
       + `if(d.style.display==='none'){d.style.display='block';a.textContent='▲'}`
       + `else{d.style.display='none';a.textContent='▼'}`
@@ -701,13 +709,13 @@ function AlertClickHandler({ alertData, stationTz }: AlertClickHandlerProps) {
           navState.popup.update();
         },
         prev() {
-          const len = navState.features.length;
-          navState.index = (navState.index - 1 + len) % len;
+          if (navState.index <= 0) return;
+          navState.index -= 1;
           navState.update();
         },
         next() {
-          const len = navState.features.length;
-          navState.index = (navState.index + 1) % len;
+          if (navState.index >= navState.features.length - 1) return;
+          navState.index += 1;
           navState.update();
         },
       };
