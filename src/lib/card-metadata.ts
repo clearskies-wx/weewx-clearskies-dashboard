@@ -17,7 +17,8 @@ export type CardType =
   | "lightning"
   | "earthquake"
   | "radar"
-  | "webcam";
+  | "webcam"
+  | "marine-summary";
 
 export type CardFootprint = "tile" | "wide" | "panel" | "full";
 
@@ -153,6 +154,13 @@ export const CARD_METADATA: Record<CardType, CardMetadata> = {
     apiEndpoints: [],
     allowedLayouts: [{ footprint: "wide", rowSpan: 2.5 }],
     thumbnail: "/card-thumbnails/webcam.png",
+  },
+  "marine-summary": {
+    type: "marine-summary",
+    displayNameKey: "cards.marineSummary",
+    apiEndpoints: ["/api/v1/marine"],
+    allowedLayouts: [{ footprint: "tile", rowSpan: 1 }],
+    thumbnail: "/card-thumbnails/marine-summary.png",
   },
 };
 

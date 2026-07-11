@@ -113,6 +113,10 @@ const WebcamLazy = lazyCard(
   () => import('../components/webcam-card')
 );
 
+const MarineSummaryLazy = lazyCard(
+  () => import('../components/marine-summary-card')
+);
+
 // ---------------------------------------------------------------------------
 // Registry map — populated at module load time.
 // ---------------------------------------------------------------------------
@@ -137,6 +141,7 @@ register("lightning", LightningLazy);
 register("earthquake", EarthquakeLazy);
 register("radar", RadarLazy);
 register("webcam", WebcamLazy);
+register("marine-summary", MarineSummaryLazy);
 
 // ---------------------------------------------------------------------------
 // Public API

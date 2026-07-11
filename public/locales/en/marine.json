@@ -44,6 +44,13 @@
   "placeholder": {
     "fishing": "Fishing content loading…"
   },
+  "nowCard": {
+    "title": "Marine",
+    "viewMarine": "View Marine →",
+    "nextTide": "Next Tide",
+    "tideAt": "{{type}} {{time}}",
+    "noData": "No marine data"
+  },
   "tide": {
     "noTideData": "No tide data available",
     "predictedTide": "Predicted Tide",

@@ -80,7 +80,8 @@
     "lightning": "Lightning",
     "earthquakes": "Earthquakes",
     "radar": "Radar",
-    "webcam": "Webcam"
+    "webcam": "Webcam",
+    "marineSummary": "Marine"
   },
   "directions": {
     "N":   "N",
