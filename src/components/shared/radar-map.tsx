@@ -1165,10 +1165,26 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
                   + `</div>`;
 
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const popupMaxW = Math.min(280, window.innerWidth - 48);
-                const rp = (L as any).responsivePopup({ maxWidth: popupMaxW, autoPan: false, hasTip: true });
+                const rp = (L as any).responsivePopup({ maxWidth: 280, autoPan: false, hasTip: true });
                 rp.setContent(html);
                 layer.bindPopup(rp as L.Popup);
+
+                // Size the popup to the actual Leaflet container, not
+                // the browser window. Fires each time the popup opens so
+                // it adapts to card vs expanded vs orientation changes.
+                layer.on('popupopen', () => {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  const m = (layer as any)._map as L.Map | undefined;
+                  if (!m) return;
+                  const el = m.getContainer();
+                  const maxW = Math.min(280, Math.max(180, Math.floor(el.clientWidth * 0.85) - 24));
+                  const maxH = Math.max(120, Math.floor(el.clientHeight * 0.6));
+                  const p = layer.getPopup();
+                  if (!p) return;
+                  p.options.maxWidth = maxW;
+                  p.options.maxHeight = maxH;
+                  p.update();
+                });
               }}
             />
           )}
