@@ -26,6 +26,7 @@ const AlmanacPage = lazyWithReload(() => import('./routes/almanac'));
 const SeismicPage = lazyWithReload(() => import('./routes/seismic'));
 const RecordsPage = lazyWithReload(() => import('./routes/records'));
 const ReportsPage = lazyWithReload(() => import('./routes/reports'));
+const MarinePage = lazyWithReload(() => import('./routes/marine'));
 const AboutPage = lazyWithReload(() => import('./routes/about'));
 const LegalPage = lazyWithReload(() => import('./routes/legal'));
 const CustomPage = lazyWithReload(() => import('./routes/custom-page'));
@@ -160,6 +161,16 @@ function App() {
                   <VisibilityGuard pageKey="reports">
                     <Suspense fallback={<PageLoader title={tNav('pages.reports')} />}>
                       <ReportsPage />
+                    </Suspense>
+                  </VisibilityGuard>
+                }
+              />
+              <Route
+                path="marine"
+                element={
+                  <VisibilityGuard pageKey="marine">
+                    <Suspense fallback={<PageLoader title={tNav('pages.marine')} />}>
+                      <MarinePage />
                     </Suspense>
                   </VisibilityGuard>
                 }

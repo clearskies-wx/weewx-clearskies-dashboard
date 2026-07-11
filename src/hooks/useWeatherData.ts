@@ -1179,7 +1179,7 @@ export function useCustomQueries(
 // empty list (same pattern as useReports' 404 handling) so the page shows
 // the "no locations configured" empty state instead of an error.
 export function useMarineLocations(): HookResult<MarineLocationSummary[]> {
-  const { data, loading, error, refetch } = useApiQuery<{ data: MarineLocationSummary[] } | null>(
+  const { data, loading, error, refetch } = useApiQuery<{ data: MarineLocationSummary[]; units?: UnitsBlock } | null>(
     async (signal) => {
       try {
         return await getMarineLocations(signal);
@@ -1199,6 +1199,7 @@ export function useMarineLocations(): HookResult<MarineLocationSummary[]> {
 
   return {
     data: data === null && !loading && !error ? [] : (data?.data ?? null),
+    units: data?.units ?? undefined,
     loading,
     error,
     refetch,
@@ -1211,7 +1212,7 @@ export function useMarineLocations(): HookResult<MarineLocationSummary[]> {
 export function useMarineDetail(locationId: string | null): HookResult<MarineBundle> {
   const skip = isMockMode() || locationId === null;
 
-  const { data, loading, error, refetch } = useApiQuery<{ data: MarineBundle }>(
+  const { data, loading, error, refetch } = useApiQuery<{ data: MarineBundle; units?: UnitsBlock }>(
     (signal) => getMarineDetail(locationId as string, signal),
     { skip, deps: [locationId] },
   );
@@ -1222,6 +1223,7 @@ export function useMarineDetail(locationId: string | null): HookResult<MarineBun
 
   return {
     data: data?.data ?? null,
+    units: data?.units ?? undefined,
     loading,
     error,
     refetch,
@@ -1234,7 +1236,7 @@ export function useMarineDetail(locationId: string | null): HookResult<MarineBun
 export function useTideDetail(locationId: string | null): HookResult<TideBundle> {
   const skip = isMockMode() || locationId === null;
 
-  const { data, loading, error, refetch } = useApiQuery<{ data: TideBundle }>(
+  const { data, loading, error, refetch } = useApiQuery<{ data: TideBundle; units?: UnitsBlock }>(
     (signal) => getTideDetail(locationId as string, signal),
     { skip, deps: [locationId] },
   );
@@ -1245,6 +1247,7 @@ export function useTideDetail(locationId: string | null): HookResult<TideBundle>
 
   return {
     data: data?.data ?? null,
+    units: data?.units ?? undefined,
     loading,
     error,
     refetch,
@@ -1257,7 +1260,7 @@ export function useTideDetail(locationId: string | null): HookResult<TideBundle>
 export function useSurfDetail(locationId: string | null): HookResult<SurfDetailData> {
   const skip = isMockMode() || locationId === null;
 
-  const { data, loading, error, refetch } = useApiQuery<{ data: SurfDetailData }>(
+  const { data, loading, error, refetch } = useApiQuery<{ data: SurfDetailData; units?: UnitsBlock }>(
     (signal) => getSurfDetail(locationId as string, signal),
     { skip, deps: [locationId] },
   );
@@ -1268,6 +1271,7 @@ export function useSurfDetail(locationId: string | null): HookResult<SurfDetailD
 
   return {
     data: data?.data ?? null,
+    units: data?.units ?? undefined,
     loading,
     error,
     refetch,
@@ -1280,7 +1284,7 @@ export function useSurfDetail(locationId: string | null): HookResult<SurfDetailD
 export function useFishingDetail(locationId: string | null): HookResult<FishingDetailData> {
   const skip = isMockMode() || locationId === null;
 
-  const { data, loading, error, refetch } = useApiQuery<{ data: FishingDetailData }>(
+  const { data, loading, error, refetch } = useApiQuery<{ data: FishingDetailData; units?: UnitsBlock }>(
     (signal) => getFishingDetail(locationId as string, signal),
     { skip, deps: [locationId] },
   );
@@ -1291,6 +1295,7 @@ export function useFishingDetail(locationId: string | null): HookResult<FishingD
 
   return {
     data: data?.data ?? null,
+    units: data?.units ?? undefined,
     loading,
     error,
     refetch,
@@ -1303,7 +1308,7 @@ export function useFishingDetail(locationId: string | null): HookResult<FishingD
 export function useBeachSafetyDetail(locationId: string | null): HookResult<BeachSafetyDetailData> {
   const skip = isMockMode() || locationId === null;
 
-  const { data, loading, error, refetch } = useApiQuery<{ data: BeachSafetyDetailData }>(
+  const { data, loading, error, refetch } = useApiQuery<{ data: BeachSafetyDetailData; units?: UnitsBlock }>(
     (signal) => getBeachSafetyDetail(locationId as string, signal),
     { skip, deps: [locationId] },
   );
@@ -1314,6 +1319,7 @@ export function useBeachSafetyDetail(locationId: string | null): HookResult<Beac
 
   return {
     data: data?.data ?? null,
+    units: data?.units ?? undefined,
     loading,
     error,
     refetch,
