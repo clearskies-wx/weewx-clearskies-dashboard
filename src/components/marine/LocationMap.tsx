@@ -21,6 +21,10 @@ import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
+// Side-effect import already runs once globally from src/main.tsx; re-imported
+// here defensively so this component has no implicit ordering dependency on
+// main.tsx having run first (module evaluation is cached, so this is a no-op
+// when main.tsx already imported it).
 import '../../lib/leaflet-setup';
 import { useTheme } from '../../lib/theme-provider';
 import { OSM_ATTRIBUTION, CARTO_OSM_ATTRIBUTION } from '../../lib/map-attribution';
@@ -49,6 +53,17 @@ const alertIcon = L.divIcon({
   iconAnchor: [10, 20],
   popupAnchor: [0, -20],
 });
+
+// Explicit default-blue-pin icon for locations without an active alert.
+// react-leaflet's <Marker icon={...}> passes `icon: undefined` straight
+// through to the underlying L.Marker options when the prop is explicitly
+// `undefined` — L.extend()'s merge treats an own property with value
+// `undefined` as present, so it clobbers L.Marker.prototype.options.icon
+// (set by leaflet-setup.ts) instead of falling back to it. That crashes
+// Leaflet's _initIcon() with "Cannot read properties of undefined (reading
+// 'createIcon')". Always pass a concrete icon — never rely on the prop
+// being omitted to mean "use the default."
+const defaultIcon = new L.Icon.Default();
 
 interface LocationMapProps {
   locations: MarineLocationSummary[];
@@ -138,7 +153,16 @@ export function LocationMap({
             <Marker
               key={loc.locationId}
               position={[loc.coordinates.lat, loc.coordinates.lon]}
-              icon={hasAlerts ? alertIcon : undefined}
+              icon={hasAlerts ? alertIcon : defaultIcon}
+              // Leaflet auto-assigns role="button" + tabindex to marker icons
+              // when keyboard=true (Marker's own option, independent of the
+              // map's keyboard option), but gives them no accessible name —
+              // axe-core aria-command-name violation. Markers here are a
+              // supplementary visual affordance, not the primary keyboard
+              // path (see file header comment); LocationCard's real <button>
+              // elements are. Same precedent as the Seismic page, whose
+              // CircleMarker layers are not keyboard-focusable either.
+              keyboard={false}
               eventHandlers={{
                 click: () => onSelectLocation(loc.locationId),
               }}

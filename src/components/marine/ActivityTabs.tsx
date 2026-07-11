@@ -70,7 +70,14 @@ export function ActivityTabs({ activities, ariaLabel }: ActivityTabsProps) {
               <span>{activity.label}</span>
               {activity.qualitativeLabel && (
                 <span
-                  className={isActive ? 'text-primary-foreground/80' : 'text-muted-foreground'}
+                  // DESIGN-MANUAL §4: never apply opacity modifiers to text
+                  // color tokens. text-muted-foreground on the inactive tab's
+                  // bg-muted fill also failed AA contrast (axe color-contrast,
+                  // both are "muted" surfaces not designed to pair as
+                  // text-on-fill) — text-foreground/text-primary-foreground
+                  // match the tab label's own color and are the audited pairs
+                  // for bg-muted/bg-primary respectively.
+                  className={isActive ? 'text-primary-foreground' : 'text-foreground'}
                   style={{ fontSize: 'var(--text-micro)' }}
                 >
                   {activity.qualitativeLabel}
