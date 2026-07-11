@@ -62,6 +62,7 @@ export default function MarineSummaryCard({ dataBag, stationTz }: CardComponentP
 
   const windUnit = units?.windSpeed ?? 'kn';
   const heightUnit = units?.waveHeight ?? 'ft';
+  const tempUnit = units?.temperature ?? '';
 
   const waveHeightDisplay = conditions?.waveHeight != null
     ? `${formatValue(conditions.waveHeight, 'default', locale)} ${heightUnit}`
@@ -75,7 +76,7 @@ export default function MarineSummaryCard({ dataBag, stationTz }: CardComponentP
     : '—';
 
   const waterTempDisplay = conditions?.waterTemp != null
-    ? `${formatValue(conditions.waterTemp, 'temperature', locale)}°`
+    ? `${formatValue(conditions.waterTemp, 'temperature', locale)}${tempUnit}`
     : '—';
 
   const tideDisplay = tide

@@ -62,7 +62,7 @@ export function LocationCard({ location, units, locale, onSelect }: LocationCard
             className="shrink-0 font-semibold text-foreground"
             style={{ fontSize: 'var(--text-stat-tile)', fontFeatureSettings: '"tnum"' }}
           >
-            {formatValue(airTemp, 'temperature', locale)}°
+            {formatValue(airTemp, 'temperature', locale)}{units?.temperature ?? ''}
           </span>
         )}
       </div>
@@ -83,7 +83,7 @@ export function LocationCard({ location, units, locale, onSelect }: LocationCard
         <div className="flex flex-col">
           <dt>{t('waterTemp')}</dt>
           <dd className="text-foreground font-semibold" style={{ fontFeatureSettings: '"tnum"' }}>
-            {waterTemp !== null ? `${formatValue(waterTemp, 'temperature', locale)}°` : '—'}
+            {waterTemp !== null ? `${formatValue(waterTemp, 'temperature', locale)}${units?.temperature ?? ''}` : '—'}
           </dd>
         </div>
       </dl>

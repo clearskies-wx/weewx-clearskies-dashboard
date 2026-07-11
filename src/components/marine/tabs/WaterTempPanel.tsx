@@ -9,6 +9,7 @@ interface WaterTempPanelProps {
   waterTemp: number | null;
   comfortLevel: string | null;
   locale: string;
+  tempUnit?: string;
   t: TFunction;
 }
 
@@ -19,7 +20,7 @@ const COMFORT_CONFIG: Record<string, { text: string; labelKey: string }> = {
   dangerous: { text: 'text-red-700 dark:text-red-300', labelKey: 'beachSafety.hypothermia' },
 };
 
-export function WaterTempPanel({ waterTemp, comfortLevel, locale, t }: WaterTempPanelProps) {
+export function WaterTempPanel({ waterTemp, comfortLevel, locale, tempUnit = '', t }: WaterTempPanelProps) {
   const key = comfortLevel?.toLowerCase() ?? null;
   const config = key !== null ? COMFORT_CONFIG[key] : undefined;
 
@@ -30,7 +31,7 @@ export function WaterTempPanel({ waterTemp, comfortLevel, locale, t }: WaterTemp
           className="font-semibold text-foreground"
           style={{ fontSize: 'var(--text-stat-tile)', fontFeatureSettings: '"tnum"' }}
         >
-          {waterTemp !== null ? `${formatValue(waterTemp, 'temperature', locale)}°` : '—'}
+          {waterTemp !== null ? `${formatValue(waterTemp, 'temperature', locale)}${tempUnit}` : '—'}
         </span>
       </div>
       {config ? (

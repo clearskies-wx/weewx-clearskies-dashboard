@@ -499,6 +499,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
 
   const heightUnit = units?.waveHeightAtBreak ?? units?.waveHeight ?? units?.height ?? 'ft';
   const periodUnit = units?.period ?? t('surfing.secondsAbbr');
+  const tempUnit = units?.waterTemp ?? units?.temperature ?? '';
 
   const currentWindQuality = forecast[0]?.windQuality ?? null;
 
@@ -582,7 +583,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
               <div className="flex flex-col gap-0.5">
                 <dt className="text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>{t('waterTemp')}</dt>
                 <dd className="text-foreground font-semibold" style={{ fontSize: 'var(--text-stat-tile)', fontFeatureSettings: '"tnum"' }}>
-                  {formatValue(zoneForecast.waterTemp, 'temperature', locale)}°
+                  {formatValue(zoneForecast.waterTemp, 'temperature', locale)}{tempUnit}
                 </dd>
               </div>
             )}

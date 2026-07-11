@@ -388,6 +388,7 @@ export function BoatingTab({ locationId, alerts = [] }: BoatingTabProps) {
   const heightUnit = marineUnits?.waveHeight ?? 'ft';
   const pressureUnit = marineUnits?.pressure ?? 'mb';
   const visibilityUnit = marineUnits?.visibility ?? 'nm';
+  const tempUnit = marineUnits?.temperature ?? '';
   const tideHeightUnit = tideUnits?.height ?? heightUnit;
 
   const windDirCardinal = cardinalFromDegrees(observation?.windDirection ?? null);
@@ -489,12 +490,12 @@ export function BoatingTab({ locationId, alerts = [] }: BoatingTabProps) {
               <StatTile
                 label={t('airTemp')}
                 value={formatValue(observation.airTemp, 'temperature', locale)}
-                unit="°"
+                unit={tempUnit}
               />
               <StatTile
                 label={t('waterTemp')}
                 value={formatValue(observation.waterTemp, 'temperature', locale)}
-                unit="°"
+                unit={tempUnit}
               />
               <StatTile
                 label={t('boating.visibility')}
@@ -625,7 +626,7 @@ export function BoatingTab({ locationId, alerts = [] }: BoatingTabProps) {
           >
             {formatValue(observation?.airTemp ?? null, 'temperature', locale)}
             <span className="text-muted-foreground font-normal ml-1" style={{ fontSize: 'var(--text-label)' }}>
-              °
+              {tempUnit}
             </span>
           </span>
           <span className="text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>

@@ -122,6 +122,7 @@ export function BeachSafetyTab({ locationId }: BeachSafetyTabProps) {
   const waveHeightUnit = units?.waveHeight ?? 'ft';
   const windSpeedUnit = units?.windSpeed ?? 'kn';
   const visibilityUnit = units?.visibility ?? 'nm';
+  const tempUnit = units?.waterTemp ?? units?.temperature ?? '';
 
   const windDirCardinal = cardinalFromDegrees(assessment.windDirection);
   const windDirLabel = windDirCardinal ? tCommon(`directions.${windDirCardinal}`) : null;
@@ -190,6 +191,7 @@ export function BeachSafetyTab({ locationId }: BeachSafetyTabProps) {
           waterTemp={assessment.waterTemp}
           comfortLevel={assessment.comfortLevel}
           locale={locale}
+          tempUnit={tempUnit}
           t={t}
         />
       </Panel>
