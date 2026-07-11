@@ -55,6 +55,7 @@ i18n
       "nav",
       "radar",
       "weather",
+      "marine",
     ],
     interpolation: {
       // React already escapes values in JSX; double-escaping would corrupt

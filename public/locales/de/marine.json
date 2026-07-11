@@ -1,0 +1,37 @@
+{
+  "title": "Marine Activities",
+  "useMyLocation": "Use my location",
+  "selectLocation": "Select a location to view details",
+  "noLocations": "No marine locations configured",
+  "lastUpdated": "Updated {{time}}",
+  "waveHeight": "Wave Height",
+  "windSpeed": "Wind",
+  "waterTemp": "Water Temp",
+  "airTemp": "Air Temp",
+  "alerts": "Alerts",
+  "alertCount_one": "{{count}} alert",
+  "alertCount_other": "{{count}} alerts",
+  "activities": {
+    "boating": "Boating",
+    "surfing": "Surfing",
+    "fishing": "Fishing",
+    "beachSafety": "Beach Safety"
+  },
+  "qualitative": {
+    "excellent": "Excellent",
+    "good": "Good",
+    "fair": "Fair",
+    "poor": "Poor",
+    "dangerous": "Dangerous",
+    "safe": "Safe",
+    "caution": "Use Caution",
+    "stars": "{{count}} of 5 stars"
+  },
+  "map": {
+    "viewDetails": "View details",
+    "ariaLabel": "Map of marine activity locations",
+    "selectedAriaLabel": "Selected location map"
+  },
+  "backToMap": "Back to map",
+  "viewFullMap": "View full map"
+}

@@ -16,6 +16,7 @@ import {
   Scales,       // ADR-050: ph:scales — legal nav (Lucide Scale → Phosphor Scales)
   DotsThree,    // ADR-050: ph:dots-three — "more" menu (Lucide Ellipsis → Phosphor DotsThree)
   CloudSun,     // ADR-050: not enumerated; nearest Phosphor match for weather/Now nav (Lucide CloudSunRain → CloudSun)
+  Compass,      // DASHBOARD-MANUAL §12: Marine Activities nav icon
   PushPin,
   PushPinSlash,
 } from '@phosphor-icons/react';
@@ -33,7 +34,7 @@ interface NavItemDef {
   icon: React.ReactNode;
 }
 
-// All 9 navigation items in default order per ADR-024.
+// All 10 navigation items in default order per ADR-024.
 // Labels are resolved via t(`pages.${pageKey}`) inside the component.
 const NAV_ITEMS: NavItemDef[] = [
   { to: '/', pageKey: 'now', icon: <House aria-hidden="true" className="h-5 w-5" /> },
@@ -43,6 +44,7 @@ const NAV_ITEMS: NavItemDef[] = [
   { to: '/seismic', pageKey: 'seismic', icon: <Activity aria-hidden="true" className="h-5 w-5" /> /* TODO(ADR-050 deferred: seismic) — seismic ADR */ },
   { to: '/records', pageKey: 'records', icon: <Trophy aria-hidden="true" className="h-5 w-5" /> },
   { to: '/reports', pageKey: 'reports', icon: <FileText aria-hidden="true" className="h-5 w-5" /> },
+  { to: '/marine', pageKey: 'marine', icon: <Compass aria-hidden="true" className="h-5 w-5" /> },
   { to: '/about', pageKey: 'about', icon: <Info aria-hidden="true" className="h-5 w-5" /> },
   { to: '/legal', pageKey: 'legal', icon: <Scales aria-hidden="true" className="h-5 w-5" /> },
 ];
