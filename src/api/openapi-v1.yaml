@@ -70,6 +70,14 @@ tags:
     description: Recent earthquakes from the configured earthquake provider per ADR-040.
   - name: Almanac
     description: Sun and moon ephemeris computed locally with skyfield per ADR-014.
+  - name: Marine
+    description: |
+      Marine (boating), surf, fishing, and beach-safety conditions for
+      operator-configured coastal `[marine]` locations, per ADR-083.
+      Entirely absent (no routes, no nav item) when no `[marine]` locations
+      are configured — zero impact on non-marine installations.
+  - name: Tides
+    description: CO-OPS tide predictions and observed water levels for `[marine]` locations with a configured CO-OPS station, per ADR-083.
   - name: Records
     description: Highs and lows per ADR-024 cat 11.
   - name: Reports
@@ -611,6 +619,271 @@ paths:
               schema:
                 $ref: '#/components/schemas/PositionsResponse'
 
+  /almanac/solunar:
+    get:
+      tags: [Almanac]
+      summary: Solunar major/minor feeding periods
+      description: |
+        Skyfield-computed locally (enrichment/solunar.py) — no external API
+        call. **Not gated by the marine feature** — useful for fishing,
+        hunting, wildlife photography, and general outdoor planning;
+        available even when no `[marine]` locations are configured.
+      operationId: getSolunar
+      parameters:
+        - name: date
+          in: query
+          required: false
+          description: ISO date (YYYY-MM-DD). Default = station-local today.
+          schema: { type: string, format: date }
+        - name: lat
+          in: query
+          required: false
+          description: Latitude. Default = station latitude.
+          schema: { type: number, minimum: -90, maximum: 90 }
+        - name: lon
+          in: query
+          required: false
+          description: Longitude. Default = station longitude.
+          schema: { type: number, minimum: -180, maximum: 180 }
+        - name: days
+          in: query
+          required: false
+          description: Number of consecutive days, starting at `date`.
+          schema: { type: integer, minimum: 1, maximum: 30, default: 1 }
+      responses:
+        '200':
+          description: |
+            One `SolunarTimes` when `days` is omitted or 1; an array of
+            `SolunarTimes` (one per day) when `days` > 1.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SolunarResponse' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  # -------------------------------------------------------------------
+  # Marine & Coastal (ADR-083). All ten routes below are additive and
+  # only appear when the operator has configured at least one [marine]
+  # location with the corresponding activity enabled — see
+  # PROVIDER-MANUAL §14 and API-MANUAL §16-18.
+  # -------------------------------------------------------------------
+
+  /marine:
+    get:
+      tags: [Marine]
+      summary: Configured marine (boating) locations
+      description: |
+        List of configured `[marine]` locations, one summary card each
+        (`MarineLocationSummary`). `currentConditions`/`currentTide`/
+        `activeAlerts`/`surfRating`/`beachSafetyLevel` are always `null`
+        on this list route — full per-location population is deferred
+        until a cache-warmer exists to make it cheap. Use
+        `GET /marine/{locationId}` for live data on one location.
+      operationId: listMarineLocations
+      responses:
+        '200':
+          description: Configured marine locations
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MarineLocationListResponse' }
+        '404':
+          description: Marine features not configured (no `[marine]` section, or zero configured locations)
+        default: { $ref: '#/components/responses/Problem' }
+
+  /marine/{locationId}:
+    get:
+      tags: [Marine]
+      summary: Marine conditions for one location
+      description: |
+        Aggregates NDBC buoy observation (if `ndbc_station_ids` configured),
+        WaveWatch III offshore forecast (always attempted), and NWS marine
+        zone text forecast (if `nws_marine_zone_id` configured). Each
+        provider call is independently best-effort — a single provider
+        outage never fails the whole response. Tide data is NOT included
+        here; see `GET /tides/{locationId}`.
+      operationId: getMarineLocation
+      parameters:
+        - { $ref: '#/components/parameters/LocationId' }
+      responses:
+        '200':
+          description: Marine conditions bundle
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MarineResponse' }
+        '404':
+          description: Location not found among configured `[marine]` locations
+        default: { $ref: '#/components/responses/Problem' }
+
+  /tides:
+    get:
+      tags: [Tides]
+      summary: Tide-capable marine locations
+      description: |
+        List of configured locations that have a `coops_station_ids` entry
+        (per ADR-090, all four activities use tide data — "tide-capable"
+        means "has a CO-OPS station configured," not a specific activity
+        value). Same `MarineLocationSummary` shape as `GET /marine`.
+      operationId: listTideLocations
+      responses:
+        '200':
+          description: Tide-capable locations
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MarineLocationListResponse' }
+        '404':
+          description: Tide features not configured (no `[marine]` section, or no location has a CO-OPS station configured)
+        default: { $ref: '#/components/responses/Problem' }
+
+  /tides/{locationId}:
+    get:
+      tags: [Tides]
+      summary: Tide predictions and water levels for one location
+      description: |
+        CO-OPS harmonic tide predictions (72h) + observed water levels
+        (24h) for one location. 404 when the location doesn't exist or has
+        no `coops_station_ids` configured.
+      operationId: getTideLocation
+      parameters:
+        - { $ref: '#/components/parameters/LocationId' }
+      responses:
+        '200':
+          description: Tide bundle
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TideResponse' }
+        '404':
+          description: Location not found among tide-capable `[marine]` locations
+        default: { $ref: '#/components/responses/Problem' }
+
+  /surf:
+    get:
+      tags: [Marine]
+      summary: Configured surf locations
+      description: |
+        List of locations with `surf` in their configured activities.
+        Card fields are metadata-only (`qualityStars`/`conditionsText` are
+        always `null`) — no live provider fetch on the list route. Use
+        `GET /surf/{locationId}` for a scored forecast.
+      operationId: listSurfLocations
+      responses:
+        '200':
+          description: Configured surf locations
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SurfLocationListResponse' }
+        '404':
+          description: No surf locations configured
+        default: { $ref: '#/components/responses/Problem' }
+
+  /surf/{locationId}:
+    get:
+      tags: [Marine]
+      summary: Surf forecast for a location
+      description: |
+        NWPS nearshore wave data (corrected by the four wave_transform.py
+        supplements), falling back to WaveWatch III offshore data when
+        NWPS is unavailable (no correction applied to the fallback).
+        Scored by enrichment/surf_scorer.py. `forecast` has 0 or 1 entries
+        depending on provider availability. Also returns NDBC spectral
+        swell decomposition, an NWS SRF zone forecast, and a CO-OPS tide
+        overlay (informational, not scored).
+      operationId: getSurfLocation
+      parameters:
+        - { $ref: '#/components/parameters/LocationId' }
+      responses:
+        '200':
+          description: Surf forecast bundle
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SurfResponse' }
+        '404':
+          description: Location not found among `surf`-enabled locations, or has no surf spot configuration
+        default: { $ref: '#/components/responses/Problem' }
+
+  /fishing:
+    get:
+      tags: [Marine]
+      summary: Configured fishing locations
+      description: List of locations with `fishing` in their configured activities.
+      operationId: listFishingLocations
+      responses:
+        '200':
+          description: Configured fishing locations
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FishingLocationListResponse' }
+        '404':
+          description: No fishing locations configured
+        default: { $ref: '#/components/responses/Problem' }
+
+  /fishing/{locationId}:
+    get:
+      tags: [Marine]
+      summary: 3-day fishing forecast for a location
+      description: |
+        3 days × 6 periods/day (dawn/morning/midday/afternoon/evening/night),
+        scored by enrichment/fishing_scorer.py from NDBC pressure trend,
+        CO-OPS tide state, water temperature, and solunar intensity.
+        Species and habitat features come from the location's
+        `FishingSpotConfig` and CUDEM bathymetric profile (reused from the
+        location's `surf` sub-block, if configured).
+      operationId: getFishingLocation
+      parameters:
+        - { $ref: '#/components/parameters/LocationId' }
+      responses:
+        '200':
+          description: Fishing forecast bundle
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FishingResponse' }
+        '404':
+          description: Location not found among `fishing`-enabled locations, or has no fishing spot configuration
+        default: { $ref: '#/components/responses/Problem' }
+
+  /beach-safety:
+    get:
+      tags: [Marine]
+      summary: Configured beach-safety locations
+      description: |
+        List of locations with `beach_safety` in their configured
+        activities. Unlike `/surf` and `/fishing`, this list route DOES
+        live-fetch wave/temperature/rip-current data per card (same
+        best-effort gather as the detail route).
+      operationId: listBeachSafetyLocations
+      responses:
+        '200':
+          description: Configured beach-safety locations
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BeachSafetyLocationListResponse' }
+        '404':
+          description: No beach-safety locations configured
+        default: { $ref: '#/components/responses/Problem' }
+
+  /beach-safety/{locationId}:
+    get:
+      tags: [Marine]
+      summary: Beach safety assessment for a location
+      description: |
+        Sea-state and water-temperature-comfort classification from
+        NWPS/NDBC wave height+period and NDBC/NWS-SRF/CO-OPS water
+        temperature. Rip current risk and UV index from NWS SRF. Active
+        alerts filtered per ADR-090 to beach-safety-relevant event types.
+        `nwpsV15` carries rip current probability / total water level /
+        wave runup only for the ~12 WFOs that supply NWPS v1.5 fields
+        (`null` otherwise, without error).
+      operationId: getBeachSafetyLocation
+      parameters:
+        - { $ref: '#/components/parameters/LocationId' }
+      responses:
+        '200':
+          description: Beach safety assessment bundle
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BeachSafetyResponse' }
+        '404':
+          description: Location not found among `beach_safety`-enabled locations
+        default: { $ref: '#/components/responses/Problem' }
+
   # -------------------------------------------------------------------
   # Climatology
   # -------------------------------------------------------------------
@@ -1069,6 +1342,15 @@ components:
         Useful for direct navigation; cursor is preferred for
         sequential iteration of large archives.
       schema: { type: integer, minimum: 1 }
+    LocationId:
+      name: locationId
+      in: path
+      required: true
+      description: |
+        Location slug from the operator's `[marine]` configuration. Omit
+        the path segment entirely (use the collection route) to get the
+        list of configured locations instead of one location's data.
+      schema: { type: string }
 
   # -------------------------------------------------------------------
   # Reusable responses
@@ -2724,3 +3006,625 @@ components:
         data: { $ref: '#/components/schemas/BrandingConfig' }
         generatedAt: { type: string, format: date-time }
       required: [data, generatedAt]
+
+    # ---------- Marine & Coastal (ADR-083, T8.3) ----------
+    #
+    # StationClock / FreshnessInfo below are genuinely used by every marine
+    # response (`stationClock`/`freshness` per API-MANUAL §2) but were not
+    # previously modeled as reusable components anywhere in this spec —
+    # every existing *Response schema above omits them even though the
+    # implementation includes them on every cacheable response. Added here,
+    # scoped narrowly to the marine schemas that reference them; backfilling
+    # them onto the rest of the spec's existing response schemas is a
+    # separate, larger cleanup (flagged, not done in this pass).
+
+    StationClock:
+      type: object
+      description: Station-local wall clock at response time (ADR-075 §3).
+      properties:
+        date: { type: string, description: "Station-local date, YYYY-MM-DD." }
+        time: { type: string, description: "Station-local ISO-8601 datetime with UTC offset." }
+        timezone: { type: string, description: "IANA timezone identifier." }
+      required: [date, time, timezone]
+
+    FreshnessInfo:
+      type: object
+      description: Data freshness block, present on every cacheable response (ADR-075 §4).
+      properties:
+        generatedAt: { type: string, format: date-time }
+        validUntil: { type: string, format: date-time, description: "When the dashboard should refetch." }
+        refreshInterval: { type: integer, description: "Seconds. Operator-configurable per domain in [freshness]." }
+      required: [generatedAt, validUntil, refreshInterval]
+
+    SpectralWaveComponent:
+      type: object
+      description: One decomposed swell system from NDBC spectral density/direction data.
+      properties:
+        height: { type: number, description: "group_wave_height. Significant wave height of this partition (Hs = 4√m0)." }
+        period: { type: number, description: "group_wave_period. Peak period of this partition." }
+        direction: { type: number, description: "Degrees true north. Energy-weighted circular mean direction." }
+        energy: { type: number, description: "Zeroth spectral moment m0 (m^2)." }
+        frequencyRange:
+          type: array
+          items: { type: number }
+          minItems: 2
+          maxItems: 2
+          description: "[min_hz, max_hz] bounds of this spectral partition."
+        classification:
+          type: string
+          enum: [groundswell, swell, wind_swell]
+      required: [height, period, direction, energy, frequencyRange, classification]
+
+    MarineObservation:
+      type: object
+      description: |
+        Single buoy observation snapshot from NDBC standard met data.
+        Every field except stationId/time may be null (genuinely absent
+        from a given buoy's payload).
+      properties:
+        windSpeed: { type: number, nullable: true, description: "group_ocean_speed" }
+        windDirection: { type: number, nullable: true, description: "Degrees true north" }
+        windGust: { type: number, nullable: true, description: "group_ocean_speed" }
+        waveHeight: { type: number, nullable: true, description: "group_wave_height; significant wave height (Hs)" }
+        dominantPeriod: { type: number, nullable: true, description: "group_wave_period" }
+        averagePeriod: { type: number, nullable: true, description: "group_wave_period" }
+        meanWaveDirection: { type: number, nullable: true, description: "Degrees true north" }
+        pressure: { type: number, nullable: true, description: "group_pressure; sea-level pressure" }
+        airTemp: { type: number, nullable: true, description: "group_temperature" }
+        waterTemp: { type: number, nullable: true, description: "group_temperature; sea surface temperature" }
+        dewpoint: { type: number, nullable: true, description: "group_temperature" }
+        visibility: { type: number, nullable: true, description: "group_visibility" }
+        pressureTendency: { type: number, nullable: true, description: "group_pressure; 3-hour tendency" }
+        tideLevel: { type: number, nullable: true, description: "group_water_level; where reported" }
+        stationId: { type: string }
+        time: { type: string, format: date-time }
+        spectralComponents:
+          type: array
+          nullable: true
+          items: { $ref: '#/components/schemas/SpectralWaveComponent' }
+      required: [stationId, time]
+
+    TidePrediction:
+      type: object
+      description: Predicted tide event from CO-OPS harmonic predictions.
+      properties:
+        time: { type: string, format: date-time }
+        height: { type: number, description: "group_water_level; relative to datum" }
+        type:
+          type: string
+          nullable: true
+          enum: [high, low]
+          description: "null for interpolated points"
+      required: [time, height]
+
+    WaterLevel:
+      type: object
+      description: Observed water level from CO-OPS gauges.
+      properties:
+        time: { type: string, format: date-time }
+        height: { type: number, description: "group_water_level; relative to datum" }
+        datum: { type: string, description: "e.g. MLLW, MSL, NAVD88" }
+        quality: { type: string, nullable: true, description: "CO-OPS quality flag, e.g. v (verified), p (preliminary)" }
+      required: [time, height, datum]
+
+    MarineForecastPoint:
+      type: object
+      description: Single timestep from a WaveWatch III wave forecast.
+      properties:
+        time: { type: string, format: date-time, description: "Forecast valid time" }
+        waveHeight: { type: number, nullable: true, description: "group_wave_height; significant wave height" }
+        wavePeriod: { type: number, nullable: true, description: "group_wave_period; peak wave period" }
+        waveDirection: { type: number, nullable: true, description: "Degrees true north; peak wave direction" }
+        windSpeed: { type: number, nullable: true, description: "group_ocean_speed; 10m wind speed" }
+        windDirection: { type: number, nullable: true }
+        swellHeight: { type: number, nullable: true, description: "group_wave_height; primary swell height" }
+        swellPeriod: { type: number, nullable: true, description: "group_wave_period; primary swell period" }
+        swellDirection: { type: number, nullable: true }
+        windWaveHeight: { type: number, nullable: true, description: "group_wave_height" }
+        windWavePeriod: { type: number, nullable: true, description: "group_wave_period" }
+        windWaveDirection: { type: number, nullable: true }
+      required: [time]
+
+    MarineTextForecast:
+      type: object
+      description: Single period from an NWS marine zone text forecast.
+      properties:
+        periodName: { type: string, description: "e.g. Tonight, Thursday" }
+        text: { type: string, description: "Full forecast narrative" }
+        wind: { type: string, nullable: true }
+        seas: { type: string, nullable: true }
+        visibility: { type: string, nullable: true }
+        weather: { type: string, nullable: true }
+      required: [periodName, text]
+
+    SurfForecast:
+      type: object
+      description: Surf quality forecast for one spot at one timestep (post wave_transform + surf_scorer).
+      properties:
+        time: { type: string, format: date-time }
+        waveHeightAtBreak: { type: number, description: "group_wave_height; after NWPS supplements" }
+        period: { type: number, description: "group_wave_period; dominant period" }
+        direction: { type: number, description: "Degrees true north; dominant swell direction" }
+        qualityStars: { type: integer, minimum: 1, maximum: 5 }
+        qualityLabel:
+          type: string
+          enum: [Poor, Fair, Good, Very Good, Epic]
+        conditionsText: { type: string }
+        windQuality:
+          type: string
+          enum: [offshore, cross_offshore, cross, cross_onshore, onshore]
+        swellDominance: { type: number, minimum: 0, maximum: 1, description: "Ratio of primary swell energy to total energy" }
+        multiSwell:
+          type: array
+          nullable: true
+          items: { $ref: '#/components/schemas/SpectralWaveComponent' }
+      required: [time, waveHeightAtBreak, period, direction, qualityStars, qualityLabel, conditionsText, windQuality, swellDominance]
+
+    FishingForecast:
+      type: object
+      description: Fishing conditions forecast for one spot/period (enrichment/fishing_scorer.py). Wind/swell fields are informational, not inputs to overallScore.
+      properties:
+        periodStart: { type: string, format: date-time }
+        periodEnd: { type: string, format: date-time }
+        periodLabel: { type: string, description: "e.g. Early Morning, Late Afternoon" }
+        overallScore: { type: integer, minimum: 0, maximum: 100 }
+        pressureScore: { type: integer, minimum: 0, maximum: 100 }
+        tideScore: { type: integer, minimum: 0, maximum: 100 }
+        solunarScore: { type: integer, minimum: 0, maximum: 100 }
+        waterTempScore: { type: integer, minimum: 0, maximum: 100 }
+        timeofdayScore: { type: integer, minimum: 0, maximum: 100 }
+        speciesScores:
+          type: array
+          nullable: true
+          items: { type: object, additionalProperties: true }
+        conditionsText: { type: string }
+        windSpeed: { type: number, nullable: true, description: "group_ocean_speed; informational, not scored" }
+        windDirection: { type: number, nullable: true }
+        windGust: { type: number, nullable: true, description: "group_ocean_speed; informational" }
+        swellHeight: { type: number, nullable: true, description: "group_wave_height; informational, not scored" }
+        swellPeriod: { type: number, nullable: true, description: "group_wave_period; informational" }
+      required: [periodStart, periodEnd, periodLabel, overallScore, pressureScore, tideScore, solunarScore, waterTempScore, timeofdayScore, conditionsText]
+
+    SolunarTimes:
+      type: object
+      description: Solunar major/minor feeding periods for one date at one location (Skyfield-computed, enrichment/solunar.py).
+      properties:
+        date: { type: string, format: date }
+        moonPhase:
+          type: string
+          enum: [new, waxing_crescent, first_quarter, waxing_gibbous, full, waning_gibbous, last_quarter, waning_crescent]
+        moonIllumination: { type: number, minimum: 0, maximum: 1 }
+        moonrise: { type: string, format: date-time, nullable: true, description: "null if the moon doesn't rise this day" }
+        moonset: { type: string, format: date-time, nullable: true, description: "null if the moon doesn't set this day" }
+        moonTransit: { type: string, format: date-time, description: "Highest point" }
+        moonUnderfoot: { type: string, format: date-time, description: "Opposite transit" }
+        majorPeriods:
+          type: array
+          description: "2/day, on transit/underfoot"
+          items:
+            type: object
+            properties:
+              start: { type: string, format: date-time }
+              end: { type: string, format: date-time }
+        minorPeriods:
+          type: array
+          description: "2/day, on moonrise/moonset"
+          items:
+            type: object
+            properties:
+              start: { type: string, format: date-time }
+              end: { type: string, format: date-time }
+        intensity: { type: number, minimum: 0, maximum: 1, description: "Driven by moon phase - new/full = 1.0, quarter = 0.7, between = 0.5" }
+      required: [date, moonPhase, moonIllumination, moonTransit, moonUnderfoot, majorPeriods, minorPeriods, intensity]
+
+    SurfZoneForecast:
+      type: object
+      description: NWS Surf Zone Forecast (SRF) per county zone per day.
+      properties:
+        date: { type: string, format: date }
+        countyZone: { type: string, description: "NWS county zone identifier" }
+        ripCurrentRisk:
+          type: string
+          enum: [low, moderate, high]
+        surfHeightMin: { type: number, nullable: true, description: "group_wave_height" }
+        surfHeightMax: { type: number, nullable: true, description: "group_wave_height" }
+        uvIndex: { type: integer, nullable: true, minimum: 1 }
+        waterTemp: { type: number, nullable: true, description: "group_temperature" }
+        windText: { type: string, nullable: true }
+        hazardsText: { type: string, nullable: true }
+      required: [date, countyZone, ripCurrentRisk]
+
+    BeachSafetyAssessment:
+      type: object
+      description: Composite beach safety assessment per location. ripCurrentRisk is sourced from NWS SRF or NWPS v1.5, whichever is configured.
+      properties:
+        safetyLevel:
+          type: string
+          enum: [safe, caution, dangerous]
+        waveHeight: { type: number, nullable: true, description: "group_wave_height; current/forecast" }
+        wavePeriod: { type: number, nullable: true, description: "group_wave_period; current/forecast" }
+        ripCurrentRisk:
+          type: string
+          nullable: true
+          enum: [low, moderate, high]
+        waterTemp: { type: number, nullable: true, description: "group_temperature" }
+        comfortLevel:
+          type: string
+          nullable: true
+          enum: [comfortable, cool, cold, dangerous]
+        uvIndex: { type: integer, nullable: true }
+        visibility: { type: number, nullable: true, description: "group_visibility" }
+        windSpeed: { type: number, nullable: true, description: "group_ocean_speed" }
+        windDirection: { type: number, nullable: true }
+        activeAlerts:
+          type: array
+          items: { type: string }
+          description: "Alert headlines relevant to beach safety (ADR-090 event-type filter)"
+      required: [safetyLevel, activeAlerts]
+
+    MarineLocationSummary:
+      type: object
+      description: Summary snapshot for one marine location (Now page summary card; list route for /marine and /tides).
+      properties:
+        locationId: { type: string }
+        name: { type: string }
+        coordinates:
+          type: object
+          properties:
+            lat: { type: number }
+            lon: { type: number }
+          required: [lat, lon]
+        activities:
+          type: array
+          items: { type: string, enum: [marine, surf, fishing, beach_safety] }
+        currentConditions:
+          nullable: true
+          allOf: [{ $ref: '#/components/schemas/MarineObservation' }]
+          description: "Latest buoy observation, if buoy-capable. Always null on the current list-route implementation (deferred pending a cache warmer)."
+        currentTide:
+          type: object
+          nullable: true
+          description: "Next high/low tide {type, time, height}. Always null on the current list-route implementation."
+          properties:
+            type: { type: string, enum: [high, low] }
+            time: { type: string, format: date-time }
+            height: { type: number }
+        activeAlerts:
+          type: array
+          nullable: true
+          items: { type: string }
+        surfRating: { type: integer, nullable: true, minimum: 1, maximum: 5 }
+        beachSafetyLevel: { type: string, nullable: true, enum: [safe, caution, dangerous] }
+      required: [locationId, name, coordinates, activities]
+
+    MarineBundle:
+      type: object
+      description: Container for GET /marine/{locationId}. Matches models/responses.py exactly.
+      properties:
+        locationId: { type: string }
+        locationName: { type: string }
+        coordinates:
+          type: object
+          properties: { lat: { type: number }, lon: { type: number } }
+        observation:
+          nullable: true
+          allOf: [{ $ref: '#/components/schemas/MarineObservation' }]
+        forecast:
+          type: array
+          items: { $ref: '#/components/schemas/MarineForecastPoint' }
+        textForecast:
+          type: array
+          items: { $ref: '#/components/schemas/MarineTextForecast' }
+        source: { type: string, example: "ndbc+wavewatch+nws_marine" }
+        generatedAt: { type: string, format: date-time }
+      required: [locationId, locationName, coordinates, forecast, textForecast, source, generatedAt]
+
+    TideBundle:
+      type: object
+      description: Container for GET /tides/{locationId}. Matches models/responses.py exactly.
+      properties:
+        locationId: { type: string }
+        locationName: { type: string }
+        coordinates:
+          type: object
+          properties: { lat: { type: number }, lon: { type: number } }
+        predictions:
+          type: array
+          items: { $ref: '#/components/schemas/TidePrediction' }
+        waterLevels:
+          type: array
+          items: { $ref: '#/components/schemas/WaterLevel' }
+        source: { type: string, example: "coops" }
+        generatedAt: { type: string, format: date-time }
+      required: [locationId, locationName, coordinates, predictions, waterLevels, source, generatedAt]
+
+    # ---------- Surf / Fishing / Beach-safety: actual endpoint shapes ----------
+    #
+    # SurfBundle/FishingBundle/BeachSafetyBundle exist as Pydantic classes in
+    # models/responses.py but are NOT constructed by their endpoints (Phase
+    # 0C models written ahead of Phase 5 endpoint implementations - tracked
+    # cleanup item, not a Phase 8 blocker). The schemas below are the actual
+    # ground-truth shapes, read directly from endpoints/surf.py,
+    # endpoints/fishing.py, endpoints/beach_safety.py. See API-MANUAL §16.
+
+    ExternalLink:
+      type: object
+      properties:
+        label: { type: string }
+        url: { type: string }
+      required: [label, url]
+
+    SurfLocationCard:
+      type: object
+      description: Metadata-only list-route card for GET /surf (no live provider fetch).
+      properties:
+        locationId: { type: string }
+        name: { type: string }
+        lat: { type: number }
+        lon: { type: number }
+        qualityStars: { type: integer, nullable: true, minimum: 1, maximum: 5, description: "Always null - no live fetch on the list route" }
+        conditionsText: { type: string, nullable: true, description: "Always null - no live fetch on the list route" }
+      required: [locationId, name, lat, lon]
+
+    SurfData:
+      type: object
+      description: Actual GET /surf/{locationId} data shape (see components/schemas note above).
+      properties:
+        locationId: { type: string }
+        locationName: { type: string }
+        coordinates:
+          type: object
+          properties: { lat: { type: number }, lon: { type: number } }
+        forecast:
+          type: array
+          maxItems: 1
+          items: { $ref: '#/components/schemas/SurfForecast' }
+          description: "0 or 1 entries depending on NWPS/WaveWatch III availability"
+        zoneForecast:
+          nullable: true
+          allOf: [{ $ref: '#/components/schemas/SurfZoneForecast' }]
+        spectralComponents:
+          type: array
+          items: { $ref: '#/components/schemas/SpectralWaveComponent' }
+        tidePredictions:
+          type: array
+          items: { $ref: '#/components/schemas/TidePrediction' }
+          description: "Informational overlay, not scored. Not present on the SurfBundle Pydantic class."
+        source: { type: string, example: "nwps+wavewatch+ndbc+coops+nws_srf" }
+        generatedAt: { type: string, format: date-time }
+      required: [locationId, locationName, coordinates, forecast, spectralComponents, tidePredictions, source, generatedAt]
+
+    FishingDayEntry:
+      type: object
+      properties:
+        date: { type: string, format: date }
+        periods:
+          type: array
+          items: { $ref: '#/components/schemas/FishingForecast' }
+        solunar: { $ref: '#/components/schemas/SolunarTimes' }
+      required: [date, periods, solunar]
+
+    FishingData:
+      type: object
+      description: |
+        Actual GET /fishing/{locationId} data shape (see components/schemas
+        note above). Structurally different from the FishingBundle Pydantic
+        class - no flat top-level forecast list or singular solunar.
+      properties:
+        locationId: { type: string }
+        locationName: { type: string }
+        coordinates:
+          type: object
+          properties: { lat: { type: number }, lon: { type: number } }
+        days:
+          type: array
+          description: "One entry per forecast day (3 days)"
+          items: { $ref: '#/components/schemas/FishingDayEntry' }
+        species:
+          type: array
+          items: { type: string }
+        targetCategory:
+          type: string
+          enum: [saltwater_inshore, bottom_fish, freshwater_sport, salmonids]
+        habitatFeatures:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: "CUDEM-derived habitat annotations; null when no bathymetric profile is configured"
+        tidePredictions:
+          type: array
+          items: { $ref: '#/components/schemas/TidePrediction' }
+        source: { type: string, example: "ndbc+coops+solunar" }
+        generatedAt: { type: string, format: date-time }
+      required: [locationId, locationName, coordinates, days, species, targetCategory, tidePredictions, source, generatedAt]
+
+    FishingLocationCard:
+      type: object
+      description: List-route card for GET /fishing.
+      properties:
+        locationId: { type: string }
+        name: { type: string }
+        lat: { type: number }
+        lon: { type: number }
+      required: [locationId, name, lat, lon]
+
+    BeachSafetyLocationCard:
+      type: object
+      description: List-route card for GET /beach-safety. Unlike surf/fishing, this list route DOES live-fetch data per card.
+      properties:
+        locationId: { type: string }
+        name: { type: string }
+        lat: { type: number }
+        lon: { type: number }
+        safetyLevel: { type: string, nullable: true, enum: [safe, caution, dangerous] }
+        ripCurrentRisk: { type: string, nullable: true, enum: [low, moderate, high] }
+        waterTemp: { type: number, nullable: true, description: "Fahrenheit - informational value, no operator unit conversion" }
+      required: [locationId, name, lat, lon]
+
+    NwpsV15Fields:
+      type: object
+      nullable: true
+      description: |
+        NWPS v1.5 show-when-available fields, present only for the ~12 WFOs
+        that supply them; null (whole object) otherwise, without error.
+      properties:
+        ripCurrentProbability: { type: number, nullable: true }
+        totalWaterLevel: { type: number, nullable: true, description: "group_water_level" }
+        waveRunup: { type: number, nullable: true, description: "group_wave_height" }
+
+    BeachSafetyData:
+      type: object
+      description: |
+        Actual GET /beach-safety/{locationId} data shape (see
+        components/schemas note above). No zoneForecast field exists in
+        the actual response - SRF-sourced rip current risk and UV index are
+        folded into assessment instead.
+      properties:
+        locationId: { type: string }
+        locationName: { type: string }
+        coordinates:
+          type: object
+          properties: { lat: { type: number }, lon: { type: number } }
+        assessment: { $ref: '#/components/schemas/BeachSafetyAssessment' }
+        nwpsV15:
+          nullable: true
+          allOf: [{ $ref: '#/components/schemas/NwpsV15Fields' }]
+        tidePredictions:
+          type: array
+          items: { $ref: '#/components/schemas/TidePrediction' }
+        waterLevels:
+          type: array
+          items: { $ref: '#/components/schemas/WaterLevel' }
+        externalLinks:
+          type: array
+          items: { $ref: '#/components/schemas/ExternalLink' }
+        source: { type: string, example: "nwps+ndbc+nws_srf+coops+nws_alerts" }
+        generatedAt: { type: string, format: date-time }
+      required: [locationId, locationName, coordinates, assessment, tidePredictions, waterLevels, externalLinks, source, generatedAt]
+
+    # ---------- Response envelopes ----------
+
+    MarineLocationListResponse:
+      type: object
+      description: List-route envelope, shared shape for GET /marine and GET /tides.
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/MarineLocationSummary' }
+        units:
+          type: object
+          additionalProperties: { type: string }
+        stationClock: { $ref: '#/components/schemas/StationClock' }
+        freshness: { $ref: '#/components/schemas/FreshnessInfo' }
+        generatedAt: { type: string, format: date-time }
+      required: [data, units, stationClock, freshness, generatedAt]
+
+    MarineResponse:
+      type: object
+      properties:
+        data: { $ref: '#/components/schemas/MarineBundle' }
+        units:
+          type: object
+          additionalProperties: { type: string }
+        stationClock: { $ref: '#/components/schemas/StationClock' }
+        freshness: { $ref: '#/components/schemas/FreshnessInfo' }
+        generatedAt: { type: string, format: date-time }
+      required: [data, units, stationClock, freshness, generatedAt]
+
+    TideResponse:
+      type: object
+      properties:
+        data: { $ref: '#/components/schemas/TideBundle' }
+        units:
+          type: object
+          additionalProperties: { type: string }
+        stationClock: { $ref: '#/components/schemas/StationClock' }
+        freshness: { $ref: '#/components/schemas/FreshnessInfo' }
+        generatedAt: { type: string, format: date-time }
+      required: [data, units, stationClock, freshness, generatedAt]
+
+    SurfLocationListResponse:
+      type: object
+      description: No units key on this list route (surf.py list_surf_locations() omits it)
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/SurfLocationCard' }
+        stationClock: { $ref: '#/components/schemas/StationClock' }
+        freshness: { $ref: '#/components/schemas/FreshnessInfo' }
+        generatedAt: { type: string, format: date-time }
+      required: [data, stationClock, freshness, generatedAt]
+
+    SurfResponse:
+      type: object
+      properties:
+        data: { $ref: '#/components/schemas/SurfData' }
+        stationClock: { $ref: '#/components/schemas/StationClock' }
+        freshness: { $ref: '#/components/schemas/FreshnessInfo' }
+        units:
+          type: object
+          additionalProperties: { type: string }
+        generatedAt: { type: string, format: date-time }
+      required: [data, stationClock, freshness, units, generatedAt]
+
+    FishingLocationListResponse:
+      type: object
+      description: No units key on this list route (fishing.py list_fishing_locations() omits it)
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/FishingLocationCard' }
+        stationClock: { $ref: '#/components/schemas/StationClock' }
+        freshness: { $ref: '#/components/schemas/FreshnessInfo' }
+        generatedAt: { type: string, format: date-time }
+      required: [data, stationClock, freshness, generatedAt]
+
+    FishingResponse:
+      type: object
+      properties:
+        data: { $ref: '#/components/schemas/FishingData' }
+        stationClock: { $ref: '#/components/schemas/StationClock' }
+        freshness: { $ref: '#/components/schemas/FreshnessInfo' }
+        units:
+          type: object
+          additionalProperties: { type: string }
+        generatedAt: { type: string, format: date-time }
+      required: [data, stationClock, freshness, units, generatedAt]
+
+    BeachSafetyLocationListResponse:
+      type: object
+      description: No units key on this list route (beach_safety.py list_beach_safety_locations() omits it)
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/BeachSafetyLocationCard' }
+        stationClock: { $ref: '#/components/schemas/StationClock' }
+        freshness: { $ref: '#/components/schemas/FreshnessInfo' }
+        generatedAt: { type: string, format: date-time }
+      required: [data, stationClock, freshness, generatedAt]
+
+    BeachSafetyResponse:
+      type: object
+      properties:
+        data: { $ref: '#/components/schemas/BeachSafetyData' }
+        stationClock: { $ref: '#/components/schemas/StationClock' }
+        freshness: { $ref: '#/components/schemas/FreshnessInfo' }
+        units:
+          type: object
+          additionalProperties: { type: string }
+        generatedAt: { type: string, format: date-time }
+      required: [data, stationClock, freshness, units, generatedAt]
+
+    SolunarResponse:
+      type: object
+      description: No units key (solunar values are dimensionless/timestamps). data is a single SolunarTimes unless days > 1, then an array.
+      properties:
+        data:
+          oneOf:
+            - { $ref: '#/components/schemas/SolunarTimes' }
+            - type: array
+              items: { $ref: '#/components/schemas/SolunarTimes' }
+        stationClock: { $ref: '#/components/schemas/StationClock' }
+        freshness: { $ref: '#/components/schemas/FreshnessInfo' }
+        generatedAt: { type: string, format: date-time }
+      required: [data, stationClock, freshness, generatedAt]
