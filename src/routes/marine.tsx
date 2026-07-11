@@ -19,6 +19,10 @@ import { LocationCard } from '../components/marine/LocationCard';
 import { ActivityTabs } from '../components/marine/ActivityTabs';
 import { ActivityAccordion } from '../components/marine/ActivityAccordion';
 import { SurfingIcon } from '../components/marine/SurfingIcon';
+import { BoatingTab } from '../components/marine/tabs/BoatingTab';
+import { SurfingTab } from '../components/marine/tabs/SurfingTab';
+import { BeachSafetyTab } from '../components/marine/tabs/BeachSafetyTab';
+import { FishingTab } from '../components/marine/tabs/FishingTab';
 import type { ActivityDef, ActivityId } from '../components/marine/activity-types';
 import { useMarineLocations, useStation } from '../hooks/useWeatherData';
 import type { MarineLocationSummary } from '../api/types';
@@ -150,11 +154,7 @@ export function MarinePage() {
         id: 'boating',
         icon: <Sailboat aria-hidden="true" focusable="false" className={ACTIVITY_ICON_SIZE} />,
         label: t('activities.boating'),
-        content: (
-          <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
-            {t('placeholder.boating')}
-          </p>
-        ),
+        content: <BoatingTab locationId={location.locationId} alerts={location.activeAlerts ?? []} />,
       });
     }
     if (enabled.has('surfing')) {
@@ -163,11 +163,7 @@ export function MarinePage() {
         icon: <SurfingIcon size={16} />,
         label: t('activities.surfing'),
         qualitativeLabel: surfLabel(location.surfRating, t),
-        content: (
-          <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
-            {t('placeholder.surfing')}
-          </p>
-        ),
+        content: <SurfingTab locationId={location.locationId} alerts={location.activeAlerts ?? []} />,
       });
     }
     if (enabled.has('fishing')) {
@@ -175,11 +171,7 @@ export function MarinePage() {
         id: 'fishing',
         icon: <FishSimple aria-hidden="true" focusable="false" className={ACTIVITY_ICON_SIZE} />,
         label: t('activities.fishing'),
-        content: (
-          <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
-            {t('placeholder.fishing')}
-          </p>
-        ),
+        content: <FishingTab locationId={location.locationId} alerts={location.activeAlerts ?? []} />,
       });
     }
     if (enabled.has('beachSafety')) {
@@ -188,11 +180,7 @@ export function MarinePage() {
         icon: <PersonSimpleSwim aria-hidden="true" focusable="false" className={ACTIVITY_ICON_SIZE} />,
         label: t('activities.beachSafety'),
         qualitativeLabel: beachSafetyLabel(location.beachSafetyLevel, t),
-        content: (
-          <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
-            {t('placeholder.beachSafety')}
-          </p>
-        ),
+        content: <BeachSafetyTab locationId={location.locationId} />,
       });
     }
     return defs;
