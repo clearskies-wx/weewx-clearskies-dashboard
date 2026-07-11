@@ -23,5 +23,11 @@
   "stationMarker": "あなたの観測所",
   "legendHeavy": "強",
   "legendLight": "弱",
-  "satelliteImagery": "衛星画像"
+  "satelliteImagery": "衛星画像",
+  "alertPopup": {
+    "previousAlert": "前の警報",
+    "nextAlert": "次の警報",
+    "of": "/",
+    "expires": "有効期限"
+  }
 }

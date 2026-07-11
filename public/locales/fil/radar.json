@@ -23,5 +23,11 @@
   "weatherAlerts": "Mga babala sa panahon",
   "windArrows": "Mga palaso ng hangin",
   "stationMarker": "Iyong istasyon",
-  "satelliteImagery": "Larawan ng satellite"
+  "satelliteImagery": "Larawan ng satellite",
+  "alertPopup": {
+    "previousAlert": "Nakaraang babala",
+    "nextAlert": "Susunod na babala",
+    "of": "ng",
+    "expires": "Mag-e-expire"
+  }
 }

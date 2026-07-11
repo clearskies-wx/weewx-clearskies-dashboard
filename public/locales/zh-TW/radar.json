@@ -23,5 +23,11 @@
   "weatherAlerts": "天氣預警",
   "windArrows": "風向箭頭",
   "stationMarker": "您的氣象站",
-  "satelliteImagery": "衛星雲圖"
+  "satelliteImagery": "衛星雲圖",
+  "alertPopup": {
+    "previousAlert": "上一則警報",
+    "nextAlert": "下一則警報",
+    "of": "共",
+    "expires": "到期時間"
+  }
 }

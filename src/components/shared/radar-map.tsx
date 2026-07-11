@@ -12,7 +12,8 @@ import { useCapabilities, useRadarFrames } from '../../hooks/useWeatherData';
 import type { CapabilityDeclaration, RadarFrame } from '../../api/types';
 import { useTheme } from '../../lib/theme-provider';
 import { OSM_ATTRIBUTION, CARTO_OSM_ATTRIBUTION, OSM_ODBL_ATTRIBUTION } from '../../lib/map-attribution';
-import type { FeatureCollection } from 'geojson';
+import type { FeatureCollection, Feature, Geometry } from 'geojson';
+import type { TFunction } from 'i18next';
 
 interface RadarMapProps {
   center: [number, number];
@@ -93,6 +94,62 @@ const SEVERITY_COLORS: Record<string, string> = {
   Minor: '#339900',     // green
   Unknown: '#888888',   // gray
 };
+
+// Severity rank for sorting overlapping alert features, most severe first.
+const SEVERITY_ORDER: Record<string, number> = {
+  Extreme: 4,
+  Severe: 3,
+  Moderate: 2,
+  Minor: 1,
+  Unknown: 0,
+};
+
+function sortFeaturesBySeverity(features: Feature[]): Feature[] {
+  return [...features].sort((a, b) => {
+    const sevA = (a.properties?.severity as string | undefined) ?? 'Unknown';
+    const sevB = (b.properties?.severity as string | undefined) ?? 'Unknown';
+    return (SEVERITY_ORDER[sevB] ?? 0) - (SEVERITY_ORDER[sevA] ?? 0);
+  });
+}
+
+/**
+ * Ray-casting point-in-polygon test against a single GeoJSON ring.
+ * `ring` is an array of [lon, lat] pairs (GeoJSON coordinate order).
+ * Standard even-odd ray-casting algorithm.
+ */
+function pointInRing(lat: number, lng: number, ring: number[][]): boolean {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [lonI, latI] = ring[i];
+    const [lonJ, latJ] = ring[j];
+    const intersects =
+      (latI > lat) !== (latJ > lat) &&
+      lng < ((lonJ - lonI) * (lat - latI)) / (latJ - latI) + lonI;
+    if (intersects) inside = !inside;
+  }
+  return inside;
+}
+
+/**
+ * Tests whether a lat/lng point falls inside a GeoJSON Polygon or
+ * MultiPolygon geometry. Only the outer ring (index 0) of each polygon is
+ * tested — weather alert polygons from NWS/LibreWxR don't use holes.
+ */
+function pointInGeoJsonPolygon(lat: number, lng: number, geometry: Geometry): boolean {
+  if (geometry.type === 'Polygon') {
+    const outerRing = geometry.coordinates[0];
+    if (!outerRing) return false;
+    return pointInRing(lat, lng, outerRing);
+  }
+  if (geometry.type === 'MultiPolygon') {
+    return geometry.coordinates.some((polygon) => {
+      const outerRing = polygon[0];
+      if (!outerRing) return false;
+      return pointInRing(lat, lng, outerRing);
+    });
+  }
+  return false;
+}
 
 // RainViewer tile defaults.
 // {size}    — tile size in pixels; 512 is the high-DPI option (also valid: 256).
@@ -504,6 +561,190 @@ function GeoFeaturesLayer() {
       }
     };
   }, [map]);
+
+  return null;
+}
+
+/**
+ * Builds the alert popup HTML for `features[index]`.  When more than one
+ * feature is present (overlapping alert polygons at the click point), a
+ * "1 of N" navigator row is appended with prev/next buttons and
+ * severity-colored position pips.  Navigator buttons call the global
+ * `window.__alertNav` controller wired up by AlertClickHandler.
+ */
+function buildAlertPopupHtml(features: Feature[], index: number, stationTz: string, t: TFunction): string {
+  const feature = features[index];
+  const props = feature.properties ?? {};
+  const title = (props.title as string | undefined)
+    || (props.headline as string | undefined)
+    || (props.event as string | undefined)
+    || t('radar.weatherAlert', { ns: 'common' });
+  const severity = (props.severity as string | undefined) ?? 'Unknown';
+  const description = props.description as string | undefined;
+  const regions = props.regions as string[] | undefined;
+  const expires = props.expires as number | undefined;
+  const uid = `ap${Math.random().toString(36).slice(2, 8)}`;
+  const accentColor = SEVERITY_COLORS[severity] ?? SEVERITY_COLORS.Unknown;
+
+  let detail = '';
+  if (severity) detail += `<em>${severity}</em><br/>`;
+  if (description && description !== title) detail += `${description}<br/>`;
+  if (regions?.length) detail += `${regions.join('; ')}<br/>`;
+  if (expires) {
+    const exp = new Date(expires * 1000);
+    detail += `${t('alertPopup.expires')}: ${exp.toLocaleString(undefined, { timeZone: stationTz })}`;
+  }
+
+  let navigatorHtml = '';
+  if (features.length > 1) {
+    const pips = features
+      .map((f, i) => {
+        const sev = (f.properties?.severity as string | undefined) ?? 'Unknown';
+        const color = SEVERITY_COLORS[sev] ?? SEVERITY_COLORS.Unknown;
+        const size = i === index ? 10 : 6;
+        const pipOpacity = i === index ? 1 : 0.6;
+        return `<span style="display:inline-block;width:${size}px;height:${size}px;border-radius:50%;`
+          + `background:${color};opacity:${pipOpacity};margin:0 2px;vertical-align:middle"></span>`;
+      })
+      .join('');
+
+    navigatorHtml = `<div style="display:flex;align-items:center;justify-content:center;gap:6px;`
+      + `margin-top:8px;padding-top:8px;border-top:1px solid #e5e7eb">`
+      + `<button type="button" onclick="window.__alertNav?.prev();return false" `
+      + `aria-label="${t('alertPopup.previousAlert')}" style="border:none;background:none;cursor:pointer;`
+      + `font-size:14px;padding:2px 4px;line-height:1;color:#374151">&#9664;</button>`
+      + `<span style="display:inline-flex;align-items:center">${pips}</span>`
+      + `<button type="button" onclick="window.__alertNav?.next();return false" `
+      + `aria-label="${t('alertPopup.nextAlert')}" style="border:none;background:none;cursor:pointer;`
+      + `font-size:14px;padding:2px 4px;line-height:1;color:#374151">&#9654;</button>`
+      + `<span style="font-size:11px;color:#6b7280;margin-left:4px">`
+      + `${index + 1} ${t('alertPopup.of')} ${features.length}</span>`
+      + `</div>`;
+  }
+
+  return `<div style="font-size:13px;line-height:1.4;overflow-wrap:break-word">`
+    + `<div style="height:3px;margin:-1px -1px 8px -1px;background:${accentColor};border-radius:2px 2px 0 0"></div>`
+    + `<strong>${title}</strong>`
+    + (detail ? `<div style="margin-top:6px">`
+      + `<a href="#" id="${uid}-tog" onclick="`
+      + `var d=document.getElementById('${uid}-det'),a=this;`
+      + `if(d.style.display==='none'){d.style.display='block';a.textContent='▲'}`
+      + `else{d.style.display='none';a.textContent='▼'}`
+      + `;return false" style="display:inline-block;width:24px;height:24px;line-height:24px;`
+      + `text-align:center;border-radius:4px;background:#e5e7eb;color:#374151;`
+      + `text-decoration:none;font-size:11px;vertical-align:middle;cursor:pointer">▼</a>`
+      + `<div id="${uid}-det" style="display:none;margin-top:8px;padding-top:8px;`
+      + `border-top:1px solid #e5e7eb;max-height:250px;overflow-y:auto">`
+      + detail
+      + `</div></div>` : '')
+    + navigatorHtml
+    + `</div>`;
+}
+
+interface AlertNavState {
+  features: Feature[];
+  index: number;
+  popup: L.Popup;
+  prev: () => void;
+  next: () => void;
+  update: () => void;
+}
+
+declare global {
+  interface Window {
+    __alertNav?: AlertNavState;
+  }
+}
+
+interface AlertClickHandlerProps {
+  alertData: FeatureCollection;
+  stationTz: string;
+}
+
+/**
+ * Map-level click handler for alert polygons (replaces per-polygon popup
+ * binding). Ray-casts the click point against every alert feature so
+ * overlapping polygons at the same location all surface — the popup shows
+ * a "1 of N" navigator instead of only the topmost polygon's popup.
+ */
+function AlertClickHandler({ alertData, stationTz }: AlertClickHandlerProps) {
+  const map = useMap();
+  const { t } = useTranslation(['radar', 'common']);
+
+  useEffect(() => {
+    function handleClick(e: L.LeafletMouseEvent) {
+      const { lat, lng } = e.latlng;
+      const matches = alertData.features.filter((feature) => {
+        if (!feature.geometry) return false;
+        return pointInGeoJsonPolygon(lat, lng, feature.geometry);
+      });
+
+      // No matches: do nothing. Leaflet's default click-elsewhere behavior
+      // (closeOnClick: true) already closes any open popup.
+      if (matches.length === 0) return;
+
+      const sorted = sortFeaturesBySeverity(matches);
+      const html = buildAlertPopupHtml(sorted, 0, stationTz, t);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const popup = (L as any).responsivePopup({ maxWidth: 280, autoPan: false, hasTip: true }) as L.Popup;
+      popup.setContent(html);
+      popup.setLatLng(e.latlng).openOn(map);
+
+      const navState: AlertNavState = {
+        features: sorted,
+        index: 0,
+        popup,
+        update() {
+          const html2 = buildAlertPopupHtml(navState.features, navState.index, stationTz, t);
+          navState.popup.setContent(html2);
+          navState.popup.update();
+        },
+        prev() {
+          const len = navState.features.length;
+          navState.index = (navState.index - 1 + len) % len;
+          navState.update();
+        },
+        next() {
+          const len = navState.features.length;
+          navState.index = (navState.index + 1) % len;
+          navState.update();
+        },
+      };
+      window.__alertNav = navState;
+    }
+
+    // Size the popup to the actual Leaflet container, not the browser
+    // window. Fires each time a popup opens so it adapts to card vs
+    // expanded vs orientation changes. Reads e.popup (the popup that just
+    // opened) rather than a closure variable — this listener is attached
+    // once per effect run, not once per click, so it must resolve the
+    // active popup from the event itself.
+    function handlePopupOpen(e: L.PopupEvent) {
+      const el = map.getContainer();
+      const maxW = Math.min(280, Math.max(180, Math.floor(el.clientWidth * 0.85) - 24));
+      const maxH = Math.max(120, Math.floor(el.clientHeight * 0.6));
+      const popup = e.popup;
+      popup.options.maxWidth = maxW;
+      popup.options.maxHeight = maxH;
+      popup.update();
+    }
+
+    function handlePopupClose() {
+      delete window.__alertNav;
+    }
+
+    map.on('click', handleClick);
+    map.on('popupopen', handlePopupOpen);
+    map.on('popupclose', handlePopupClose);
+
+    return () => {
+      map.off('click', handleClick);
+      map.off('popupopen', handlePopupOpen);
+      map.off('popupclose', handlePopupClose);
+      delete window.__alertNav;
+    };
+  }, [map, alertData, stationTz, t]);
 
   return null;
 }
@@ -1113,80 +1354,28 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
           {/* Wind arrows (T4.7) — rendered via ?arrows=light|dark query param on
               radar tiles (see buildTileUrl). No separate layer needed. */}
 
-          {/* Alert polygon overlay (T4.6) — GeoJSON polygons from LibreWxR */}
+          {/* Alert polygon overlay (T4.6) — GeoJSON polygons from LibreWxR.
+              Popup binding is handled by AlertClickHandler (map-level click
+              handler with ray-casting hit testing), not onEachFeature, so
+              overlapping polygons at the same click point all surface via a
+              "1 of N" navigator instead of only the topmost polygon. */}
           {showAlerts && alertData && (
-            <GeoJSON
-              key={JSON.stringify(alertData).slice(0, 100)}
-              data={alertData}
-              style={(feature) => {
-                const severity = feature?.properties?.severity as string | undefined ?? 'Unknown';
-                return {
-                  color: SEVERITY_COLORS[severity] ?? '#888888',
-                  weight: 2,
-                  fillOpacity: 0.15,
-                  opacity: 0.8,
-                };
-              }}
-              onEachFeature={(feature, layer) => {
-                const props = feature.properties ?? {};
-                const title = (props.title as string | undefined)
-                  || (props.headline as string | undefined)
-                  || (props.event as string | undefined)
-                  || t('radar.weatherAlert', { ns: 'common' });
-                const severity = props.severity as string | undefined;
-                const description = props.description as string | undefined;
-                const regions = props.regions as string[] | undefined;
-                const expires = props.expires as number | undefined;
-                const uid = `ap${Math.random().toString(36).slice(2, 8)}`;
-
-                let detail = '';
-                if (severity) detail += `<em>${severity}</em><br/>`;
-                if (description && description !== title) detail += `${description}<br/>`;
-                if (regions?.length) detail += `${regions.join('; ')}<br/>`;
-                if (expires) {
-                  const exp = new Date(expires * 1000);
-                  detail += `Expires: ${exp.toLocaleString(undefined, { timeZone: stationTz ?? 'UTC' })}`;
-                }
-
-                const html = `<div style="font-size:13px;line-height:1.4;overflow-wrap:break-word">`
-                  + `<strong>${title}</strong>`
-                  + (detail ? `<div style="margin-top:6px">`
-                    + `<a href="#" id="${uid}-tog" onclick="`
-                    + `var d=document.getElementById('${uid}-det'),a=this;`
-                    + `if(d.style.display==='none'){d.style.display='block';a.textContent='▲'}`
-                    + `else{d.style.display='none';a.textContent='▼'}`
-                    + `;return false" style="display:inline-block;width:24px;height:24px;line-height:24px;`
-                    + `text-align:center;border-radius:4px;background:#e5e7eb;color:#374151;`
-                    + `text-decoration:none;font-size:11px;vertical-align:middle;cursor:pointer">▼</a>`
-                    + `<div id="${uid}-det" style="display:none;margin-top:8px;padding-top:8px;`
-                    + `border-top:1px solid #e5e7eb;max-height:250px;overflow-y:auto">`
-                    + detail
-                    + `</div></div>` : '')
-                  + `</div>`;
-
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const rp = (L as any).responsivePopup({ maxWidth: 280, autoPan: false, hasTip: true });
-                rp.setContent(html);
-                layer.bindPopup(rp as L.Popup);
-
-                // Size the popup to the actual Leaflet container, not
-                // the browser window. Fires each time the popup opens so
-                // it adapts to card vs expanded vs orientation changes.
-                layer.on('popupopen', () => {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  const m = (layer as any)._map as L.Map | undefined;
-                  if (!m) return;
-                  const el = m.getContainer();
-                  const maxW = Math.min(280, Math.max(180, Math.floor(el.clientWidth * 0.85) - 24));
-                  const maxH = Math.max(120, Math.floor(el.clientHeight * 0.6));
-                  const p = layer.getPopup();
-                  if (!p) return;
-                  p.options.maxWidth = maxW;
-                  p.options.maxHeight = maxH;
-                  p.update();
-                });
-              }}
-            />
+            <>
+              <GeoJSON
+                key={JSON.stringify(alertData).slice(0, 100)}
+                data={alertData}
+                style={(feature) => {
+                  const severity = feature?.properties?.severity as string | undefined ?? 'Unknown';
+                  return {
+                    color: SEVERITY_COLORS[severity] ?? '#888888',
+                    weight: 2,
+                    fillOpacity: 0.15,
+                    opacity: 0.8,
+                  };
+                }}
+              />
+              <AlertClickHandler alertData={alertData} stationTz={stationTz ?? 'UTC'} />
+            </>
           )}
         </MapContainer>
 

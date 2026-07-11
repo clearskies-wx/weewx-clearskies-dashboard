@@ -23,5 +23,11 @@
   "weatherAlerts": "Погодные предупреждения",
   "windArrows": "Стрелки ветра",
   "stationMarker": "Ваша станция",
-  "satelliteImagery": "Спутниковые снимки"
+  "satelliteImagery": "Спутниковые снимки",
+  "alertPopup": {
+    "previousAlert": "Предыдущее предупреждение",
+    "nextAlert": "Следующее предупреждение",
+    "of": "из",
+    "expires": "Истекает"
+  }
 }

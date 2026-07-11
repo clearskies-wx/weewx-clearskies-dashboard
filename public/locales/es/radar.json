@@ -23,5 +23,11 @@
   "stationMarker": "Tu estación",
   "legendHeavy": "Intensa",
   "legendLight": "Ligera",
-  "satelliteImagery": "Imágenes de satélite"
+  "satelliteImagery": "Imágenes de satélite",
+  "alertPopup": {
+    "previousAlert": "Alerta anterior",
+    "nextAlert": "Alerta siguiente",
+    "of": "de",
+    "expires": "Expira"
+  }
 }

@@ -23,5 +23,11 @@
   "weatherAlerts": "Weather alerts",
   "windArrows": "Wind arrows",
   "stationMarker": "Your station",
-  "satelliteImagery": "Satellite imagery"
+  "satelliteImagery": "Satellite imagery",
+  "alertPopup": {
+    "previousAlert": "Previous alert",
+    "nextAlert": "Next alert",
+    "of": "of",
+    "expires": "Expires"
+  }
 }

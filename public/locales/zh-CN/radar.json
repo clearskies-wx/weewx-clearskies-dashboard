@@ -23,5 +23,11 @@
   "weatherAlerts": "天气预警",
   "windArrows": "风向箭头",
   "stationMarker": "您的气象站",
-  "satelliteImagery": "卫星云图"
+  "satelliteImagery": "卫星云图",
+  "alertPopup": {
+    "previousAlert": "上一条预警",
+    "nextAlert": "下一条预警",
+    "of": "共",
+    "expires": "到期时间"
+  }
 }

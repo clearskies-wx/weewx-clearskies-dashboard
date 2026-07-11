@@ -23,5 +23,11 @@
   "stationMarker": "La tua stazione",
   "legendHeavy": "Intenso",
   "legendLight": "Debole",
-  "satelliteImagery": "Immagini satellitari"
+  "satelliteImagery": "Immagini satellitari",
+  "alertPopup": {
+    "previousAlert": "Allerta precedente",
+    "nextAlert": "Allerta successiva",
+    "of": "di",
+    "expires": "Scade"
+  }
 }

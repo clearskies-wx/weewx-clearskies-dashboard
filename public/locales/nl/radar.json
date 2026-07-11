@@ -23,5 +23,11 @@
   "stationMarker": "Uw station",
   "legendHeavy": "Zwaar",
   "legendLight": "Licht",
-  "satelliteImagery": "Satellietbeelden"
+  "satelliteImagery": "Satellietbeelden",
+  "alertPopup": {
+    "previousAlert": "Vorige waarschuwing",
+    "nextAlert": "Volgende waarschuwing",
+    "of": "van",
+    "expires": "Verloopt"
+  }
 }
