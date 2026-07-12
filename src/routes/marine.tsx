@@ -11,7 +11,7 @@
 
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Compass, Crosshair, CaretLeft, Sailboat, FishSimple, PersonSimpleSwim, Warning } from '@phosphor-icons/react';
+import { Waves, Crosshair, CaretLeft, Sailboat, FishSimple, PersonSimpleSwim, Warning } from '@phosphor-icons/react';
 import { PageLayout } from '../components/layout/page-layout';
 import { Button } from '../components/ui/button';
 import { LocationMap } from '../components/marine/LocationMap';
@@ -197,7 +197,7 @@ export function MarinePage() {
   const fallbackCenter: [number, number] = station ? [station.latitude, station.longitude] : [0, 0];
 
   return (
-    <PageLayout title={t('title')} icon={<Compass aria-hidden="true" className="h-7 w-7" />}>
+    <PageLayout title={t('title')} icon={<Waves aria-hidden="true" className="h-7 w-7" />}>
       {loading && (
         <>
           <span className="sr-only" role="status">{t('title')}</span>
