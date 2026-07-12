@@ -71,7 +71,7 @@ export function LocationCard({ location, units, locale, onSelect }: LocationCard
         <div className="flex flex-col">
           <dt>{t('waveHeight')}</dt>
           <dd className="text-foreground font-semibold" style={{ fontFeatureSettings: '"tnum"' }}>
-            {waveHeight !== null ? formatValue(waveHeight, 'default', locale) : '—'}
+            {waveHeight !== null ? `${formatValue(waveHeight, 'default', locale)} ${units?.waveHeight ?? 'ft'}` : '—'}
           </dd>
         </div>
         <div className="flex flex-col">
