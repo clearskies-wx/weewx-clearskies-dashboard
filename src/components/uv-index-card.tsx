@@ -211,6 +211,52 @@ function buildDailyDomainAndTicks(stationTz: string, locale: string): { domain: 
   };
 }
 
+/**
+ * Build dynamic SVG gradient stops that map EPA UV severity band colors to
+ * the actual peak UV value. With objectBoundingBox gradient units the filled
+ * area spans UV 0 (bottom, offset 0%) to UV peak (top, offset 100%), so each
+ * band boundary is placed at uvValue / peak.  When the peak is 8 the top of
+ * the curve renders as red (Very High) instead of always showing purple.
+ */
+function buildUvGradientStops(
+  peak: number,
+): Array<{ offset: string; color: string; opacity: number }> {
+  if (peak <= 0) {
+    return [
+      { offset: '0%', color: '#1A7A1A', opacity: 0.8 },
+      { offset: '100%', color: '#1A7A1A', opacity: 0.8 },
+    ];
+  }
+
+  const transitions: Array<[number, string, number]> = [
+    [0,  '#1A7A1A', 0.8],
+    [2,  '#1A7A1A', 0.8],
+    [3,  '#B8A000', 0.8],
+    [5,  '#B8A000', 0.8],
+    [6,  '#C45E00', 0.85],
+    [7,  '#C45E00', 0.85],
+    [8,  '#CC0000', 0.85],
+    [10, '#CC0000', 0.85],
+    [11, '#6B2D8B', 0.9],
+    [14, '#6B2D8B', 0.9],
+  ];
+
+  const stops: Array<{ offset: string; color: string; opacity: number }> = [];
+
+  for (const [uv, color, opacity] of transitions) {
+    if (uv > peak) break;
+    const pct = Math.min((uv / peak) * 100, 100);
+    stops.push({ offset: `${pct.toFixed(1)}%`, color, opacity });
+  }
+
+  if (stops.length > 0 && stops[stops.length - 1].offset !== '100.0%') {
+    const last = stops[stops.length - 1];
+    stops.push({ offset: '100%', color: last.color, opacity: last.opacity });
+  }
+
+  return stops;
+}
+
 function fmtDailyAxisTime(ts: number, stationTz: string, locale: string): string {
   const parts = new Intl.DateTimeFormat(locale, {
     timeZone: stationTz,
@@ -440,6 +486,11 @@ function UvChart({ data, currentUv, gradientId, peakUv, stationTz }: UvChartProp
     [stationTz, i18n.language],
   );
 
+  const uvGradientStops = useMemo(
+    () => buildUvGradientStops(peakUv ?? 0),
+    [peakUv],
+  );
+
   // Dynamic Y-axis: one unit above the forecast peak, minimum ceiling of 4.
   // e.g. peakUv=9 → yMax=10, ticks=[0,2,4,6,8,10]
   // e.g. peakUv=5 → yMax=6,  ticks=[0,2,4,6]
@@ -483,23 +534,11 @@ function UvChart({ data, currentUv, gradientId, peakUv, stationTz }: UvChartProp
         <ResponsiveContainer width="99%" height="100%">
           <AreaChart data={data} margin={{ top: 2, right: 12, bottom: 0, left: 12 }}>
             <defs>
-              {/*
-                Vertical linearGradient: EPA UV severity colors.
-                y1=1 (bottom, UV=0 → Low green) to y2=0 (top, UV=12 → Extreme purple).
-                Gradient stops correspond to the EPA band edges (0–12 scale mapped to 0–100%).
-              */}
+              {/* EPA UV severity gradient — stops computed dynamically by buildUvGradientStops(). */}
               <linearGradient id={gradientId} x1="0" y1="1" x2="0" y2="0" gradientUnits="objectBoundingBox">
-                {/* Low (0–2): ~0–17% of scale */}
-                <stop offset="0%" stopColor="#1A7A1A" stopOpacity={0.8} />
-                {/* Moderate (3–5): ~25–42% */}
-                <stop offset="25%" stopColor="#B8A000" stopOpacity={0.8} />
-                {/* High (6–7): ~50–58% */}
-                <stop offset="50%" stopColor="#C45E00" stopOpacity={0.85} />
-                {/* Very High (8–10): ~67–83% */}
-                <stop offset="67%" stopColor="#CC0000" stopOpacity={0.85} />
-                {/* Extreme (11+): ~92–100% */}
-                <stop offset="92%" stopColor="#6B2D8B" stopOpacity={0.9} />
-                <stop offset="100%" stopColor="#6B2D8B" stopOpacity={0.9} />
+                {uvGradientStops.map((s, i) => (
+                  <stop key={i} offset={s.offset} stopColor={s.color} stopOpacity={s.opacity} />
+                ))}
               </linearGradient>
             </defs>
 
