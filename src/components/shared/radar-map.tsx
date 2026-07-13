@@ -804,10 +804,9 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
 
   const satelliteActive = showSatellite && satelliteFrameCount > 0;
 
-  // When satellite is active, exclude nowcast frames so radar and satellite
-  // have matching frame counts (both 24) for consistent animation cadence.
-  // The original `frames` variable is kept for reference; downstream code
-  // uses `activeFrames` so the satellite/radar tick rates stay in lock-step.
+  // When satellite is active, exclude nowcast frames — satellite imagery
+  // has no nowcast equivalent.  Radar-satellite sync uses timestamp
+  // correlation (findNearestSatFrame), not matching frame counts.
   const activeFrames: RadarFrame[] = satelliteActive
     ? frames.filter((f) => f.kind !== 'nowcast')
     : frames;
@@ -1104,28 +1103,20 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
       return;
     }
 
-    const satTickMs = satActive
-      ? Math.max(30, Math.round(
-          Math.max(50, Math.floor(TARGET_LOOP_MS / (satelliteFrameCount * SUBSTEPS)))
-          / speedMultiplier))
-      : Infinity;
-
     const radarTotal = frameCount * SUBSTEPS;
-    const satTotal = satelliteFrameCount * SUBSTEPS;
-
-    let satAcc = 0;
 
     function tick() {
       if (radarActive) {
         applyRadarStep((animationStepRef.current + 1) % radarTotal);
       }
 
-      if (satActive) {
-        satAcc += effectiveTickMs;
-        if (satAcc >= satTickMs) {
-          satAcc -= satTickMs;
-          applySatStep((satelliteStepRef.current + 1) % satTotal);
-        }
+      if (satActive && radarActive) {
+        const radarIdx = Math.floor(animationStepRef.current / SUBSTEPS) % frameCount;
+        const nearestSat = findNearestSatFrame(radarIdx);
+        applySatStep(nearestSat * SUBSTEPS);
+      } else if (satActive) {
+        const satTotal = satelliteFrameCount * SUBSTEPS;
+        applySatStep((satelliteStepRef.current + 1) % satTotal);
       }
 
       animTimerRef.current = setTimeout(tick, effectiveTickMs);
@@ -1138,7 +1129,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
         animTimerRef.current = null;
       }
     };
-  }, [isPlaying, frameCount, effectiveTickMs, satelliteReady, showSatellite, satelliteFrameCount, speedMultiplier, applyRadarStep, applySatStep]);
+  }, [isPlaying, frameCount, effectiveTickMs, satelliteReady, showSatellite, satelliteFrameCount, speedMultiplier, applyRadarStep, applySatStep, findNearestSatFrame]);
 
   // Live refresh — re-fetch frame metadata at the provider's configured interval.
   // ADR-075: refreshIntervalMs derives from radarCapability?.refreshInterval (provider-
