@@ -25,7 +25,7 @@
 // matching the same "configured but no data" reasoning field-by-field.
 //
 // A11y (WCAG 2.1 AA):
-//   - Compass title icon is aria-hidden; the adjacent text carries the
+//   - Waves title icon is aria-hidden; the adjacent text carries the
 //     accessible name (§5.1: icons never the only signal).
 //   - Alert badge pairs a Warning icon + numeric label text — never color
 //     alone (§5.1, DESIGN-MANUAL.md "Alert Banner" anti-pattern).
@@ -47,7 +47,7 @@
 //   - All user-visible strings resolve via t() from useTranslation('marine')
 //     (rules/coding.md §6.1).
 
-import { CheckCircle, Compass, Warning, XCircle } from '@phosphor-icons/react';
+import { CheckCircle, Warning, Waves, XCircle } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
@@ -161,7 +161,7 @@ export default function MarineSummaryCard({ dataBag, stationTz }: CardComponentP
     <Card footprint="tile" rowSpan={1}>
       <CardHeader>
         <CardTitle as="h2" className="flex items-center gap-1.5">
-          <Compass aria-hidden="true" focusable="false" className="shrink-0" size={18} />
+          <Waves aria-hidden="true" focusable="false" className="shrink-0" size={18} />
           {t('nowCard.title')}
         </CardTitle>
       </CardHeader>
