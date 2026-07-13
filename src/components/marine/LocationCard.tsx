@@ -10,8 +10,9 @@ import { Warning } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import type { MarineLocationSummary } from '../../api/types';
 import type { UnitsBlock } from '../../api/types';
+import { useStation } from '../../hooks/useWeatherData';
 import { formatValue } from '../../utils/format';
-import { formatRelativeTime } from '../../utils/format-date';
+import { formatRelativeTime, formatTime } from '../../utils/format-date';
 
 interface LocationCardProps {
   location: MarineLocationSummary;
@@ -22,12 +23,25 @@ interface LocationCardProps {
 
 export function LocationCard({ location, units, locale, onSelect }: LocationCardProps) {
   const { t } = useTranslation('marine');
+  const { data: station } = useStation();
+  const stationTz = station?.timezone ?? 'UTC';
 
   const conditions = location.currentConditions;
   const airTemp = conditions?.airTemp ?? null;
   const waveHeight = conditions?.waveHeight ?? null;
   const windSpeed = conditions?.windSpeed ?? null;
   const waterTemp = conditions?.waterTemp ?? null;
+
+  // currentTide is optional on MarineLocationSummary (some locations have no
+  // configured tide station) — the next-tide line below simply doesn't
+  // render rather than showing a broken "— at —" placeholder.
+  const tide = location.currentTide;
+  const tideDisplay = tide
+    ? t('nowCard.tideAt', {
+        type: tide.type === 'high' ? t('tide.tideHigh') : t('tide.tideLow'),
+        time: formatTime(new Date(tide.time), locale, stationTz),
+      })
+    : null;
 
   const alertCount = location.activeAlerts?.length ?? 0;
 
@@ -87,6 +101,15 @@ export function LocationCard({ location, units, locale, onSelect }: LocationCard
           </dd>
         </div>
       </dl>
+
+      {tideDisplay && (
+        <dl className="flex items-baseline gap-1" style={{ fontSize: 'var(--text-micro)' }}>
+          <dt className="text-muted-foreground">{t('nowCard.nextTide')}</dt>
+          <dd className="text-foreground font-semibold" style={{ fontFeatureSettings: '"tnum"' }}>
+            {tideDisplay}
+          </dd>
+        </dl>
+      )}
 
       <div className="flex items-center justify-between gap-2 mt-1">
         {alertCount > 0 ? (

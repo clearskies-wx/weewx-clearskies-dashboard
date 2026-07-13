@@ -1,8 +1,11 @@
 // SurfingTab.tsx — Full data ensemble for the Surfing activity tab
-// (Phase 7 T7.3, DASHBOARD-MANUAL §12 "Tab content per activity"). Vertical
-// stack: 72h forecast timeline (star ratings) → wave face height chart →
-// swell breakdown (spectral components) → wind quality → tide chart
-// (standalone, 72h, shared component) → beach alignment diagram → general
+// (Phase 7 T7.3, DASHBOARD-MANUAL §12 "Tab content per activity"; consolidated
+// per Phase 1 T1.5/T1.7). Vertical stack: 72h forecast timeline (star
+// ratings; single-point bundles render as one "Current Surf Conditions"
+// card instead) → wave face height chart (hidden for single-point bundles;
+// the value moves into the Conditions panel as a stat) → swell breakdown
+// (spectral components) → Conditions (wind quality + beach alignment,
+// consolidated) → tide chart (standalone, 72h, shared component) → general
 // weather → activity-relevant alerts.
 //
 // Data source: useSurfDetail(locationId) (/surf/{id}) — a single bundle
@@ -65,6 +68,27 @@ function Panel({ title, children }: { title: string; children: ReactNode }) {
       </h3>
       {children}
     </section>
+  );
+}
+
+function StatTile({ label, value, unit }: { label: string; value: string; unit?: string }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <dt className="text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>
+        {label}
+      </dt>
+      <dd
+        className="text-foreground font-semibold"
+        style={{ fontSize: 'var(--text-stat-tile)', fontFeatureSettings: '"tnum"' }}
+      >
+        {value}
+        {unit && (
+          <span className="text-muted-foreground font-normal ml-1" style={{ fontSize: 'var(--text-label)' }}>
+            {unit}
+          </span>
+        )}
+      </dd>
+    </div>
   );
 }
 
@@ -143,6 +167,27 @@ function ForecastTimeline({
       <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
         {t('surfing.noForecastData')}
       </p>
+    );
+  }
+
+  // A single forecast point isn't a "72-hour" timeline — render it as one
+  // conditions card instead of a one-item horizontal scroll strip (the
+  // section title above already switches to "Current Surf Conditions" for
+  // this case; see SurfingTab's forecastSectionTitle).
+  if (forecast.length === 1) {
+    const entry = forecast[0];
+    return (
+      <div
+        className={`flex flex-col items-center gap-1.5 rounded-lg px-4 py-3 w-fit ${qualityColorClasses(entry.qualityStars)}`}
+      >
+        <span className="font-semibold" style={{ fontSize: 'var(--text-label)', fontFeatureSettings: '"tnum"' }}>
+          {formatTime(new Date(entry.time), locale, stationTz)}
+        </span>
+        <StarRating stars={entry.qualityStars} t={t} />
+        <span className="text-center" style={{ fontSize: 'var(--text-body)' }}>
+          {entry.qualityLabel}
+        </span>
+      </div>
     );
   }
 
@@ -512,24 +557,35 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
   const hasHazardsText = !!zoneForecast?.hazardsText;
   const showZoneAlerts = isHighRipRisk || hasHazardsText;
 
+  // A single forecast point isn't a 72h timeline — the section title and the
+  // wave face height chart both change behavior for this case (T1.7.1/T1.7.2).
+  const isSinglePointForecast = forecast.length === 1;
+  const hasMultiPointForecast = forecast.length >= 2;
+  const singlePointWaveFaceHeight = isSinglePointForecast ? forecast[0].waveHeightAtBreak : null;
+
   return (
     <div className="flex flex-col gap-[var(--gap-grid)]">
-      {/* 1. 72-hour forecast timeline */}
-      <Panel title={t('surfing.forecastTimelineTitle')}>
+      {/* 1. 72-hour forecast timeline (or a single "current conditions" card
+          when the bundle only carries one forecast point). */}
+      <Panel title={isSinglePointForecast ? t('surfing.currentConditionsTitle') : t('surfing.forecastTimelineTitle')}>
         <ForecastTimeline forecast={forecast} locale={locale} stationTz={stationTz} t={t} />
       </Panel>
 
-      {/* 2. Wave face height chart */}
-      <Panel title={t('surfing.waveFaceHeightTitle')}>
-        <WaveFaceHeightChart
-          forecast={forecast}
-          locale={locale}
-          stationTz={stationTz}
-          heightUnit={heightUnit}
-          ariaLabel={t('surfing.waveFaceHeightAriaLabel', { location: locationName })}
-          t={t}
-        />
-      </Panel>
+      {/* 2. Wave face height chart — needs at least 2 points to plot a
+          trend; with a single point the value is shown as a stat in the
+          Conditions panel below instead (T1.7.2). */}
+      {hasMultiPointForecast && (
+        <Panel title={t('surfing.waveFaceHeightTitle')}>
+          <WaveFaceHeightChart
+            forecast={forecast}
+            locale={locale}
+            stationTz={stationTz}
+            heightUnit={heightUnit}
+            ariaLabel={t('surfing.waveFaceHeightAriaLabel', { location: locationName })}
+            t={t}
+          />
+        </Panel>
+      )}
 
       {/* 3. Swell breakdown */}
       <Panel title={t('surfing.swellBreakdownTitle')}>
@@ -543,9 +599,23 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
         />
       </Panel>
 
-      {/* 4. Wind quality panel */}
-      <Panel title={t('surfing.windQualityTitle')}>
-        <WindQualityBadge quality={currentWindQuality} t={t} />
+      {/* 4. Conditions panel — wind quality + beach alignment consolidated
+          into one panel (T1.5.3), plus the single-point wave face height
+          stat when there's no chart to show it in (T1.7.2). */}
+      <Panel title={t('surfing.conditionsTitle')}>
+        <div className="flex flex-col gap-3">
+          {singlePointWaveFaceHeight !== null && (
+            <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3">
+              <StatTile
+                label={t('surfing.waveFaceHeightTitle')}
+                value={formatValue(singlePointWaveFaceHeight, 'default', locale)}
+                unit={heightUnit}
+              />
+            </dl>
+          )}
+          <WindQualityBadge quality={currentWindQuality} t={t} />
+          <BeachAlignmentDiagram directionDeg={dominantDirection} t={t} tCommon={tCommon} />
+        </div>
       </Panel>
 
       {/* 5. Tide chart — standalone, 72h (shared component) */}
@@ -559,12 +629,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
         />
       </Panel>
 
-      {/* 6. Beach alignment diagram */}
-      <Panel title={t('surfing.beachAlignmentTitle')}>
-        <BeachAlignmentDiagram directionDeg={dominantDirection} t={t} tCommon={tCommon} />
-      </Panel>
-
-      {/* 7. General weather — SurfZoneForecast carries no air-temperature
+      {/* 6. General weather — SurfZoneForecast carries no air-temperature
           field, so this panel surfaces the two general-conditions fields
           the bundle does provide (UV index, water temperature) rather than
           fabricating data DASHBOARD-MANUAL §12 doesn't back. */}
@@ -591,7 +656,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
         </Panel>
       )}
 
-      {/* 8. Activity-relevant alerts — general marine-zone headlines, plus a
+      {/* 7. Activity-relevant alerts — general marine-zone headlines, plus a
           prominent surf-specific banner when the NWS Surf Zone Forecast
           reports high rip current risk or hazards text. */}
       <AlertsPanel alerts={alerts} />

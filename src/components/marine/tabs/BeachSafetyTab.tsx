@@ -1,9 +1,11 @@
 // BeachSafetyTab.tsx — Full data ensemble for the Beach Safety activity tab
-// (Phase 7 T7.5, DASHBOARD-MANUAL §12 "Tab content per activity"). Vertical
-// stack: safety alerts banner (top, most prominent) → overall safety
-// indicator → sea state → rip current risk → tide chart → water temp →
-// wind → UV index → visibility → NWPS v1.5 coastal risk (show-when-available)
-// → external links (show-when-available).
+// (Phase 7 T7.5, DASHBOARD-MANUAL §12 "Tab content per activity"; consolidated
+// per Phase 1 T1.5/T1.9). Vertical stack: safety alerts banner (top, most
+// prominent) → Current Conditions (overall safety indicator at top, then
+// sea state, water temp, wind, UV index, consolidated into one panel — no
+// standalone visibility section) → rip current risk → tide chart → NWPS
+// v1.5 coastal risk (show-when-available) → external links
+// (show-when-available).
 //
 // Reuses the shared AlertsPanel/TideChart components from T7.2 (checked
 // src/components/marine/tabs/shared/ before writing — see BoatingTab.tsx for
@@ -121,7 +123,6 @@ export function BeachSafetyTab({ locationId }: BeachSafetyTabProps) {
 
   const waveHeightUnit = units?.waveHeight ?? 'ft';
   const windSpeedUnit = units?.windSpeed ?? 'kn';
-  const visibilityUnit = units?.visibility ?? 'nm';
   const tempUnit = units?.waterTemp ?? units?.temperature ?? '';
 
   const windDirCardinal = cardinalFromDegrees(assessment.windDirection);
@@ -137,13 +138,15 @@ export function BeachSafetyTab({ locationId }: BeachSafetyTabProps) {
       {/* 1. Safety alerts banner — top, most prominent */}
       <AlertsPanel alerts={assessment.activeAlerts} />
 
-      {/* 2. Overall safety indicator */}
-      <Panel title={t('beachSafety.overallSafety')}>
+      {/* 2. Current Conditions — safety indicator, sea state, water temp,
+          wind, and UV index consolidated into one panel (T1.5.5) instead of
+          five single-stat panels. The overall SafetyIndicator badge sits at
+          the top since it's the single most important thing on this tab.
+          No standalone visibility section — swimmers don't need nautical
+          mile visibility (T1.5.5). */}
+      <Panel title={t('beachSafety.currentConditions')}>
         <SafetyIndicator level={assessment.safetyLevel} t={t} />
-      </Panel>
 
-      {/* 3. Sea state panel */}
-      <Panel title={t('beachSafety.seaState')}>
         <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3">
           <StatTile
             label={t('waveHeight')}
@@ -155,15 +158,41 @@ export function BeachSafetyTab({ locationId }: BeachSafetyTabProps) {
             value={formatValue(assessment.wavePeriod, 'default', locale)}
             unit={t('beachSafety.secondsAbbr')}
           />
+          <StatTile
+            label={t('windSpeed')}
+            value={formatValue(assessment.windSpeed, 'wind', locale)}
+            unit={windSpeedUnit}
+          />
+          <StatTile label={t('beachSafety.direction')} value={windDirLabel ?? '—'} />
         </dl>
         {seaStateInterpretation && (
           <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
             {seaStateInterpretation}
           </p>
         )}
+
+        <div className="flex flex-col gap-1.5">
+          <p className="text-muted-foreground" style={{ fontSize: 'var(--text-micro)' }}>
+            {t('beachSafety.waterTemp')}
+          </p>
+          <WaterTempPanel
+            waterTemp={assessment.waterTemp}
+            comfortLevel={assessment.comfortLevel}
+            locale={locale}
+            tempUnit={tempUnit}
+            t={t}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <p className="text-muted-foreground" style={{ fontSize: 'var(--text-micro)' }}>
+            {t('beachSafety.uvIndex')}
+          </p>
+          <UVIndexPanel uvIndex={assessment.uvIndex} locale={locale} t={t} />
+        </div>
       </Panel>
 
-      {/* 4. Rip current risk panel */}
+      {/* 3. Rip current risk panel */}
       <Panel title={t('beachSafety.ripCurrent')}>
         <RipCurrentPanel
           ripCurrentRisk={assessment.ripCurrentRisk}
@@ -173,7 +202,7 @@ export function BeachSafetyTab({ locationId }: BeachSafetyTabProps) {
         />
       </Panel>
 
-      {/* 5. Tide chart — standalone, 72h (shared component, T7.2) */}
+      {/* 4. Tide chart — standalone, 72h (shared component, T7.2) */}
       <Panel title={t('beachSafety.tides')}>
         <TideChart
           predictions={tidePredictions}
@@ -185,47 +214,7 @@ export function BeachSafetyTab({ locationId }: BeachSafetyTabProps) {
         />
       </Panel>
 
-      {/* 6. Water temperature panel */}
-      <Panel title={t('beachSafety.waterTemp')}>
-        <WaterTempPanel
-          waterTemp={assessment.waterTemp}
-          comfortLevel={assessment.comfortLevel}
-          locale={locale}
-          tempUnit={tempUnit}
-          t={t}
-        />
-      </Panel>
-
-      {/* 7. Wind panel — speed + cardinal direction only. No offshore/onshore
-          classification: neither BeachSafetyAssessment nor MarineLocationSummary
-          carries a beach-facing bearing, so that judgment can't be computed
-          without fabricating data. */}
-      <Panel title={t('beachSafety.wind')}>
-        <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3">
-          <StatTile
-            label={t('windSpeed')}
-            value={formatValue(assessment.windSpeed, 'wind', locale)}
-            unit={windSpeedUnit}
-          />
-          <StatTile label={t('beachSafety.direction')} value={windDirLabel ?? '—'} />
-        </dl>
-      </Panel>
-
-      {/* 8. UV Index panel */}
-      <Panel title={t('beachSafety.uvIndex')}>
-        <UVIndexPanel uvIndex={assessment.uvIndex} locale={locale} t={t} />
-      </Panel>
-
-      {/* 9. Visibility */}
-      <Panel title={t('beachSafety.visibility')}>
-        <StatTile
-          label={t('beachSafety.visibility')}
-          value={formatValue(assessment.visibility, 'default', locale)}
-          unit={visibilityUnit}
-        />
-      </Panel>
-
-      {/* 10. NWPS v1.5 coastal flooding risk — show-when-available */}
+      {/* 5. NWPS v1.5 coastal flooding risk — show-when-available */}
       {nwpsV15 !== null && (nwpsV15.totalWaterLevel !== null || nwpsV15.waveRunup !== null) && (
         <Panel title={t('beachSafety.coastalRisk')}>
           <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3">
@@ -247,7 +236,7 @@ export function BeachSafetyTab({ locationId }: BeachSafetyTabProps) {
         </Panel>
       )}
 
-      {/* 11. External links — hidden when empty */}
+      {/* 6. External links — hidden when empty */}
       {externalLinks.length > 0 && (
         <Panel title={t('beachSafety.localResources')}>
           <ul className="flex flex-col gap-1.5 list-none m-0 p-0">

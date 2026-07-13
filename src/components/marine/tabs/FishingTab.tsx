@@ -1,9 +1,12 @@
 // FishingTab.tsx — Fishing activity tab content for the Marine Activities
-// page (DASHBOARD-MANUAL §12, T7.4). Full data ensemble for a single
-// location's fishing conditions: activity-relevant alerts, 3-day period
-// grid, solunar calendar, standalone tide chart, barometric pressure
-// panel, species activity table, conditions breakdown (score bars),
-// wind & swell (display-only), and CUDEM habitat features.
+// page (DASHBOARD-MANUAL §12, T7.4; consolidated per Phase 1 T1.5/T1.8).
+// Full data ensemble for a single location's fishing conditions:
+// activity-relevant alerts, 3-day period grid, conditions breakdown (score
+// bars — moved directly after the period grid so the scoring rationale
+// sits next to the forecast it explains), solunar calendar, standalone
+// tide chart, a consolidated Conditions panel (barometric pressure + wind
+// & swell, display-only), species forecast table, and CUDEM habitat
+// features.
 //
 // Follows the same structure as the sibling tabs landed alongside this one
 // (BoatingTab.tsx / BeachSafetyTab.tsx, T7.2/T7.3): a local `Panel` section
@@ -371,7 +374,7 @@ function PeriodGrid({ days, locale, stationTz, t }: { days: FishingDay[]; locale
                                 aria-hidden="true"
                                 focusable="false"
                                 weight={isMajor ? 'fill' : 'regular'}
-                                className="size-3"
+                                className="size-[18px]"
                               />
                               <span className="sr-only">{isMajor ? t('fishing.majorPeriod') : t('fishing.minorPeriod')}</span>
                             </span>
@@ -600,14 +603,16 @@ function ConditionsBreakdown({ period, locale, t }: { period: FishingForecast | 
 }
 
 // ---------------------------------------------------------------------------
-// WindSwellPanel — display-only, NOT scored
+// WindSwellContent — display-only, NOT scored. Renders bare content (no
+// Panel wrapper) so it can be embedded inside the merged Conditions panel
+// alongside the barometric pressure block (T1.5.4).
 // ---------------------------------------------------------------------------
 
-function WindSwellPanel({ period, units, locale, t }: { period: FishingForecast | null; units: UnitsBlock | undefined; locale: string; t: TFn }) {
+function WindSwellContent({ period, units, locale, t }: { period: FishingForecast | null; units: UnitsBlock | undefined; locale: string; t: TFn }) {
   if (!period) return null;
   return (
-    <Panel title={t('fishing.windSwell')}>
-      <p className="text-muted-foreground" style={{ fontSize: 'var(--text-micro)' }}>{t('fishing.currentConditions')}</p>
+    <>
+      <p className="text-muted-foreground" style={{ fontSize: 'var(--text-micro)' }}>{t('fishing.windSwell')}</p>
       <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3">
         <StatTile
           label={t('windSpeed')}
@@ -635,7 +640,7 @@ function WindSwellPanel({ period, units, locale, t }: { period: FishingForecast 
           unit={period.swellPeriod !== null ? (units?.swellPeriod ?? 's') : undefined}
         />
       </dl>
-    </Panel>
+    </>
   );
 }
 
@@ -713,10 +718,16 @@ export function FishingTab({ locationId, alerts = [] }: FishingTabProps) {
       {/* 2. 3-day period grid */}
       {data.days.length > 0 && <PeriodGrid days={data.days} locale={locale} stationTz={stationTz} t={t} />}
 
-      {/* 3. Solunar calendar */}
+      {/* 3. Conditions breakdown — score bars. Moved directly after the
+          period grid (T1.8.2) so anglers see the scoring rationale for the
+          forecast right below the forecast itself, instead of scrolling
+          past the solunar calendar, tide chart, and pressure panel first. */}
+      <ConditionsBreakdown period={currentPeriod} locale={locale} t={t} />
+
+      {/* 4. Solunar calendar */}
       {data.days[0] && <SolunarTimeline day={data.days[0]} locale={locale} stationTz={stationTz} t={t} />}
 
-      {/* 4. Tide chart — standalone, 72h (shared component) */}
+      {/* 5. Tide chart — standalone, 72h (shared component) */}
       <Panel title={t('fishing.tides')}>
         <TideChart
           predictions={data.tidePredictions}
@@ -727,8 +738,9 @@ export function FishingTab({ locationId, alerts = [] }: FishingTabProps) {
         />
       </Panel>
 
-      {/* 5. Barometric pressure panel */}
-      <Panel title={t('fishing.pressure')}>
+      {/* 6. Conditions panel — barometric pressure + wind/swell consolidated
+          into one panel (T1.5.4) instead of two single-purpose panels. */}
+      <Panel title={t('fishing.currentConditions')}>
         {pressureLoading ? (
           <TileSkeleton className="h-12" />
         ) : observation?.pressure === null || observation?.pressure === undefined ? (
@@ -741,18 +753,13 @@ export function FishingTab({ locationId, alerts = [] }: FishingTabProps) {
             <PressureTrend tendency={observation.pressureTendency ?? null} t={t} />
           </div>
         )}
+        <WindSwellContent period={currentPeriod} units={units} locale={locale} t={t} />
       </Panel>
 
-      {/* 6. Species activity table */}
+      {/* 7. Species forecast table */}
       <SpeciesTable period={currentPeriod} species={data.species} locale={locale} t={t} />
 
-      {/* 7. Conditions breakdown — score bars */}
-      <ConditionsBreakdown period={currentPeriod} locale={locale} t={t} />
-
-      {/* 8. Wind & swell — informational, not scored */}
-      <WindSwellPanel period={currentPeriod} units={units} locale={locale} t={t} />
-
-      {/* 9. CUDEM habitat features */}
+      {/* 8. CUDEM habitat features */}
       <HabitatFeatures features={data.habitatFeatures} t={t} />
     </div>
   );

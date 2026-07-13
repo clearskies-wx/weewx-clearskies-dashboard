@@ -28,6 +28,7 @@ import {
 import { ChartContainer } from '../../../charts/chart-container';
 import { formatValue } from '../../../../utils/format';
 import { formatTime } from '../../../../utils/format-date';
+import { formatNumber } from '../../../../utils/format-number';
 import { buildHourTicks } from './hour-ticks';
 import type { TidePrediction, WaterLevel } from '../../../../api/types';
 
@@ -111,15 +112,11 @@ export function TideChart({
   const maxTs = predictionPoints[predictionPoints.length - 1].ts;
   const ticks = buildHourTicks(minTs, maxTs);
 
-  const allHeights = [
-    ...predictionPoints.map((p) => p.height),
-    ...levelPoints.map((p) => p.level),
-  ];
-  const yMin = Math.min(...allHeights);
-  const yMax = Math.max(...allHeights);
-  const yPad = Math.max((yMax - yMin) * 0.1, 0.5);
-
   const tickFormatter = (ts: number) => formatTime(new Date(ts), locale, stationTz);
+  // formatNumber (Intl.NumberFormat), not .toFixed() — tick labels render to
+  // the DOM and must respect the locale's decimal separator (rules/coding.md
+  // §6.1/§6.4: .toFixed() is a FAIL condition for any display text).
+  const yTickFormatter = (v: number | string) => (typeof v === 'number' ? formatNumber(v, 1, locale) : v);
 
   return (
     <>
@@ -137,7 +134,8 @@ export function TideChart({
             height={28}
           />
           <YAxis
-            domain={[yMin - yPad, yMax + yPad]}
+            domain={['auto', 'auto']}
+            tickFormatter={yTickFormatter}
             tickLine={false}
             axisLine={false}
             tick={{ fontFamily: 'var(--font-chart)', fontSize: 14, fill: 'var(--muted-foreground)' }}
@@ -146,7 +144,7 @@ export function TideChart({
               value: heightUnit,
               angle: -90,
               position: 'insideLeft',
-              style: { fontFamily: 'var(--font-chart)', fontSize: 12, fill: 'var(--muted-foreground)' },
+              style: { fontSize: 'var(--text-label)', fill: 'var(--muted-foreground)' },
             }}
           />
           <ReferenceLine y={0} stroke="var(--border)" strokeDasharray="3 3" />
