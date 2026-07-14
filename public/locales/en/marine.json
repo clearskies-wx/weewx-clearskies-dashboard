@@ -1,7 +1,6 @@
 {
   "title": "Marine Activities",
   "unableToLoad": "Unable to load marine data",
-  "useMyLocation": "Use my location",
   "selectLocation": "Select a location to view details",
   "noLocations": "No marine locations configured",
   "lastUpdated": "Updated {{time}}",
@@ -38,9 +37,6 @@
     "selectedAriaLabel": "Selected location map"
   },
   "backToMap": "Back to map",
-  "geolocationUnsupported": "Location services are not available in this browser",
-  "geolocationError": "Unable to determine your location",
-  "geolocationSearching": "Finding your location…",
   "placeholder": {
     "fishing": "Fishing content loading…"
   },
