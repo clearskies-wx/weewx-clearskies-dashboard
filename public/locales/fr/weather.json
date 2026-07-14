@@ -6,6 +6,9 @@
     "3":       "Couvert",
     "4":       "Heavy overcast",
     "5":       "Brume sèche",
+    "6":       "Smoke",
+    "7":       "Dust",
+    "8":       "Volcanic ash",
     "10":      "Brume",
     "45":      "Brouillard",
     "48":      "Brouillard givrant",
@@ -32,6 +35,15 @@
     "95":      "Orage",
     "96":      "Orage avec grêle légère",
     "99":      "Orage avec forte grêle",
+    "100":     "Mostly cloudy",
+    "101":     "Partly cloudy with rain",
+    "102":     "Partly cloudy with snow",
+    "103":     "Partly cloudy with wintry mix",
+    "104":     "Haze, partly cloudy",
+    "105":     "Haze, overcast",
+    "106":     "Smoke, partly cloudy",
+    "107":     "Smoke, overcast",
+    "108":     "Dust, overcast",
     "unknown": "Conditions inconnues"
   }
 }

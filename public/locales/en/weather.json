@@ -6,6 +6,9 @@
     "3":       "Overcast",
     "4":       "Heavy overcast",
     "5":       "Haze",
+    "6":       "Smoke",
+    "7":       "Dust",
+    "8":       "Volcanic ash",
     "10":      "Mist",
     "45":      "Fog",
     "48":      "Depositing rime fog",
@@ -32,6 +35,15 @@
     "95":      "Thunderstorm",
     "96":      "Thunderstorm with slight hail",
     "99":      "Thunderstorm with heavy hail",
+    "100":     "Mostly cloudy",
+    "101":     "Partly cloudy with rain",
+    "102":     "Partly cloudy with snow",
+    "103":     "Partly cloudy with wintry mix",
+    "104":     "Haze, partly cloudy",
+    "105":     "Haze, overcast",
+    "106":     "Smoke, partly cloudy",
+    "107":     "Smoke, overcast",
+    "108":     "Dust, overcast",
     "unknown": "Unknown conditions"
   }
 }

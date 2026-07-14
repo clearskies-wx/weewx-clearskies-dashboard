@@ -6,6 +6,9 @@
     "3":       "Geheel bewolkt",
     "4":       "Heavy overcast",
     "5":       "Nevel",
+    "6":       "Smoke",
+    "7":       "Dust",
+    "8":       "Volcanic ash",
     "10":      "Mist",
     "45":      "Mist",
     "48":      "Aanvriezende mist",
@@ -32,6 +35,15 @@
     "95":      "Onweer",
     "96":      "Onweer met lichte hagel",
     "99":      "Onweer met zware hagel",
+    "100":     "Mostly cloudy",
+    "101":     "Partly cloudy with rain",
+    "102":     "Partly cloudy with snow",
+    "103":     "Partly cloudy with wintry mix",
+    "104":     "Haze, partly cloudy",
+    "105":     "Haze, overcast",
+    "106":     "Smoke, partly cloudy",
+    "107":     "Smoke, overcast",
+    "108":     "Dust, overcast",
     "unknown": "Onbekende omstandigheden"
   }
 }

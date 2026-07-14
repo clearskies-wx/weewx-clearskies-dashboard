@@ -6,6 +6,9 @@
     "3":       "阴天",
     "4":       "Heavy overcast",
     "5":       "霾",
+    "6":       "Smoke",
+    "7":       "Dust",
+    "8":       "Volcanic ash",
     "10":      "薄雾",
     "45":      "雾",
     "48":      "雾凇",
@@ -32,6 +35,15 @@
     "95":      "雷暴",
     "96":      "雷暴伴小冰雹",
     "99":      "雷暴伴大冰雹",
+    "100":     "Mostly cloudy",
+    "101":     "Partly cloudy with rain",
+    "102":     "Partly cloudy with snow",
+    "103":     "Partly cloudy with wintry mix",
+    "104":     "Haze, partly cloudy",
+    "105":     "Haze, overcast",
+    "106":     "Smoke, partly cloudy",
+    "107":     "Smoke, overcast",
+    "108":     "Dust, overcast",
     "unknown": "未知天气状况"
   }
 }

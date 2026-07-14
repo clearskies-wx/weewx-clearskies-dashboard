@@ -6,6 +6,9 @@
     "3":       "Cubierto",
     "4":       "Heavy overcast",
     "5":       "Calima",
+    "6":       "Smoke",
+    "7":       "Dust",
+    "8":       "Volcanic ash",
     "10":      "Neblina",
     "45":      "Niebla",
     "48":      "Niebla con cencellada",
@@ -32,6 +35,15 @@
     "95":      "Tormenta eléctrica",
     "96":      "Tormenta con granizo ligero",
     "99":      "Tormenta con granizo intenso",
+    "100":     "Mostly cloudy",
+    "101":     "Partly cloudy with rain",
+    "102":     "Partly cloudy with snow",
+    "103":     "Partly cloudy with wintry mix",
+    "104":     "Haze, partly cloudy",
+    "105":     "Haze, overcast",
+    "106":     "Smoke, partly cloudy",
+    "107":     "Smoke, overcast",
+    "108":     "Dust, overcast",
     "unknown": "Condiciones desconocidas"
   }
 }

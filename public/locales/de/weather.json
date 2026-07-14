@@ -6,6 +6,9 @@
     "3":       "Bedeckt",
     "4":       "Heavy overcast",
     "5":       "Dunst",
+    "6":       "Smoke",
+    "7":       "Dust",
+    "8":       "Volcanic ash",
     "10":      "Nebel",
     "45":      "Nebel",
     "48":      "Reifnebel",
@@ -32,6 +35,15 @@
     "95":      "Gewitter",
     "96":      "Gewitter mit leichtem Hagel",
     "99":      "Gewitter mit starkem Hagel",
+    "100":     "Mostly cloudy",
+    "101":     "Partly cloudy with rain",
+    "102":     "Partly cloudy with snow",
+    "103":     "Partly cloudy with wintry mix",
+    "104":     "Haze, partly cloudy",
+    "105":     "Haze, overcast",
+    "106":     "Smoke, partly cloudy",
+    "107":     "Smoke, overcast",
+    "108":     "Dust, overcast",
     "unknown": "Unbekannte Bedingungen"
   }
 }
