@@ -25,6 +25,27 @@ import {
   GlyphBedtime,
   GlyphHazy,
   GlyphHazyNight,
+  GlyphMostlyCloudyDay,
+  GlyphMostlyCloudyNight,
+  GlyphDrizzle,
+  GlyphWintryMix,
+  GlyphPartlyCloudyRainDay,
+  GlyphPartlyCloudyRainNight,
+  GlyphPartlyCloudySnowDay,
+  GlyphPartlyCloudySnowNight,
+  GlyphPartlyCloudyWintryMixDay,
+  GlyphPartlyCloudyWintryMixNight,
+  GlyphSmokeDay,
+  GlyphSmokeNight,
+  GlyphSmokePartlyCloudyDay,
+  GlyphSmokePartlyCloudyNight,
+  GlyphSmokeOvercast,
+  GlyphDustDay,
+  GlyphDustNight,
+  GlyphDust,
+  GlyphHazyPartlyCloudyDay,
+  GlyphHazyPartlyCloudyNight,
+  GlyphHazyOvercast,
 } from './weather-icon-glyphs';
 import type { ComponentType } from 'react';
 import type { GlyphProps } from './weather-icon-glyphs';
@@ -64,25 +85,32 @@ const WMO_MAP: Record<number, GlyphEntry> = {
   4:  { day: GlyphCloud,                                  descriptionKey: 'wmo.4'  },
   // Haze
   5:  { day: GlyphHazy,        night: GlyphHazyNight,    descriptionKey: 'wmo.5'  },
+  // Smoke (Clear Skies API extension — WMO extension code)
+  6:  { day: GlyphSmokeDay,    night: GlyphSmokeNight,   descriptionKey: 'wmo.6'  },
+  // Dust (Clear Skies API extension — WMO extension code)
+  7:  { day: GlyphDustDay,     night: GlyphDustNight,    descriptionKey: 'wmo.7'  },
+  // Volcanic ash (Clear Skies API extension — WMO extension code). Ash stays
+  // suspended in the atmosphere like smoke, so it reuses the smoke glyphs.
+  8:  { day: GlyphSmokeDay,    night: GlyphSmokeNight,   descriptionKey: 'wmo.8'  },
   // Mist
   10: { day: GlyphFoggy,                                  descriptionKey: 'wmo.10' },
   // Fog / rime fog
   45: { day: GlyphFoggy,                                  descriptionKey: 'wmo.45' },
   48: { day: GlyphFoggy,                                  descriptionKey: 'wmo.48' },
   // Drizzle — light, moderate, dense
-  51: { day: GlyphRainy,                                  descriptionKey: 'wmo.51' },
-  53: { day: GlyphRainy,                                  descriptionKey: 'wmo.53' },
-  55: { day: GlyphRainy,                                  descriptionKey: 'wmo.55' },
+  51: { day: GlyphDrizzle,                                descriptionKey: 'wmo.51' },
+  53: { day: GlyphDrizzle,                                descriptionKey: 'wmo.53' },
+  55: { day: GlyphDrizzle,                                descriptionKey: 'wmo.55' },
   // Freezing drizzle — light, dense
-  56: { day: GlyphRainy,                                  descriptionKey: 'wmo.56' },
-  57: { day: GlyphRainy,                                  descriptionKey: 'wmo.57' },
+  56: { day: GlyphWintryMix,                              descriptionKey: 'wmo.56' },
+  57: { day: GlyphWintryMix,                              descriptionKey: 'wmo.57' },
   // Rain — slight, moderate, heavy
   61: { day: GlyphRainy,                                  descriptionKey: 'wmo.61' },
   63: { day: GlyphRainy,                                  descriptionKey: 'wmo.63' },
   65: { day: GlyphRainy,                                  descriptionKey: 'wmo.65' },
   // Freezing rain — light, heavy
-  66: { day: GlyphRainy,                                  descriptionKey: 'wmo.66' },
-  67: { day: GlyphRainy,                                  descriptionKey: 'wmo.67' },
+  66: { day: GlyphWintryMix,                              descriptionKey: 'wmo.66' },
+  67: { day: GlyphWintryMix,                              descriptionKey: 'wmo.67' },
   // Snow — slight, moderate, heavy
   71: { day: GlyphSnowy,                                  descriptionKey: 'wmo.71' },
   73: { day: GlyphSnowy,                                  descriptionKey: 'wmo.73' },
@@ -91,7 +119,7 @@ const WMO_MAP: Record<number, GlyphEntry> = {
   77: { day: GlyphSnowy,                                  descriptionKey: 'wmo.77' },
   // Ice pellets / sleet (Clear Skies API extension — _derive_weather_code
   // returns 79 for "Sleet")
-  79: { day: GlyphSnowy,                                  descriptionKey: 'wmo.79' },
+  79: { day: GlyphWintryMix,                              descriptionKey: 'wmo.79' },
   // Rain showers — slight, moderate, violent
   80: { day: GlyphRainy,                                  descriptionKey: 'wmo.80' },
   81: { day: GlyphRainy,                                  descriptionKey: 'wmo.81' },
@@ -104,6 +132,34 @@ const WMO_MAP: Record<number, GlyphEntry> = {
   // Thunderstorm with hail — slight, heavy
   96: { day: GlyphThunderstorm,                           descriptionKey: 'wmo.96' },
   99: { day: GlyphThunderstorm,                           descriptionKey: 'wmo.99' },
+
+  // -------------------------------------------------------------------------
+  // Internal compound codes (100+) — not WMO codes. Returned by
+  // selectWeatherIcon() (src/utils/icon-selection.ts) for the "mostly cloudy"
+  // cloud-cover tier, combined sky+precipitation icons (PoP 20-50% band), and
+  // atmosphere-condition cloud-cover tier variants (ADR-049/050, DESIGN-MANUAL
+  // §7 cloud-cover × atmosphere-condition matrix).
+  // -------------------------------------------------------------------------
+
+  // Mostly cloudy (cloud cover 50-87%) — distinct from Overcast (code 3/4,
+  // cloud cover >= 87%).
+  100: { day: GlyphMostlyCloudyDay, night: GlyphMostlyCloudyNight, descriptionKey: 'wmo.100' },
+
+  // Combined sky + precipitation (PoP 20-50%, cloud cover < 75%)
+  101: { day: GlyphPartlyCloudyRainDay,       night: GlyphPartlyCloudyRainNight,       descriptionKey: 'wmo.101' },
+  102: { day: GlyphPartlyCloudySnowDay,       night: GlyphPartlyCloudySnowNight,       descriptionKey: 'wmo.102' },
+  103: { day: GlyphPartlyCloudyWintryMixDay,  night: GlyphPartlyCloudyWintryMixNight,  descriptionKey: 'wmo.103' },
+
+  // Haze + cloud-cover tiers
+  104: { day: GlyphHazyPartlyCloudyDay, night: GlyphHazyPartlyCloudyNight, descriptionKey: 'wmo.104' },
+  105: { day: GlyphHazyOvercast,                                          descriptionKey: 'wmo.105' },
+
+  // Smoke + cloud-cover tiers (also used for volcanic ash, code 8)
+  106: { day: GlyphSmokePartlyCloudyDay, night: GlyphSmokePartlyCloudyNight, descriptionKey: 'wmo.106' },
+  107: { day: GlyphSmokeOvercast,                                            descriptionKey: 'wmo.107' },
+
+  // Dust + overcast (standalone technique — dust dominant, cloud secondary)
+  108: { day: GlyphDust,                                  descriptionKey: 'wmo.108' },
 };
 
 // ---------------------------------------------------------------------------
