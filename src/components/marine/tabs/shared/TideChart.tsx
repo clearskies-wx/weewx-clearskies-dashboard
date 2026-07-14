@@ -143,7 +143,7 @@ export function TideChart({
   return (
     <>
       <ChartContainer height={250} ariaLabel={ariaLabel}>
-        <ComposedChart margin={{ top: 8, right: 12, bottom: 0, left: 12 }}>
+        <ComposedChart margin={{ top: 8, right: 12, bottom: 0, left: 40 }}>
           <XAxis
             dataKey="ts"
             type="number"

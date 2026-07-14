@@ -76,21 +76,32 @@ export function LocationCard({
 
   const alertCount = location.activeAlerts?.length ?? 0;
 
+  // Location photo (T4.4, DASHBOARD-MANUAL §12): right ~40% of the card when
+  // `photoUrl` is non-null, hidden below `sm` (640px) where a "tile" card is
+  // too narrow to spare 40% of its width to a photo without crowding the
+  // stat row. Text-only layout (unchanged) when `photoUrl` is null — no
+  // empty placeholder.
+  const hasPhoto = Boolean(location.photoUrl);
+
   return (
     <Card
       footprint="tile"
       onMouseEnter={() => onHover?.(location.locationId)}
       onMouseLeave={() => onHover?.(null)}
-      className={isHovered ? 'ring-2 ring-primary bg-foreground/5' : undefined}
+      className={[
+        isHovered ? 'ring-2 ring-primary bg-foreground/5' : '',
+        hasPhoto ? 'py-0 mb-0' : '',
+      ].filter(Boolean).join(' ') || undefined}
     >
-      <CardContent className="p-0">
+      <CardContent className={hasPhoto ? 'p-0 flex-row' : 'p-0'}>
         {/* Click-to-select button inside the Card, not the Card itself (DASHBOARD-MANUAL §12) */}
         <button
           type="button"
           onClick={() => onSelect(location.locationId)}
           aria-label={`${location.name} — ${t('map.viewDetails')}`}
           className={[
-            'text-left w-full h-full rounded-xl',
+            'text-left h-full',
+            hasPhoto ? 'flex-1 min-w-0 rounded-xl sm:rounded-l-xl sm:rounded-r-none' : 'w-full rounded-xl',
             'p-[var(--card-pad)] flex flex-col gap-2',
             'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
           ].join(' ')}
@@ -178,6 +189,25 @@ export function LocationCard({
             </div>
           )}
         </button>
+
+        {location.photoUrl && (
+          // Photo pane — hidden below `sm` (tile cards are too narrow on
+          // mobile to spare 40% of their width). Gradient overlay matches
+          // the card's glass background so text fades into the photo
+          // (DASHBOARD-MANUAL §12).
+          <div className="hidden sm:block relative w-[40%] shrink-0">
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 z-10 pointer-events-none"
+              style={{ background: 'linear-gradient(to right, rgb(var(--card-glass)) 55%, transparent 100%)' }}
+            />
+            <img
+              src={location.photoUrl}
+              alt={location.name}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   );

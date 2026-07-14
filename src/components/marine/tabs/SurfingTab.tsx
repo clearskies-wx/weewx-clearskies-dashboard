@@ -1,12 +1,27 @@
-// SurfingTab.tsx — Full data ensemble for the Surfing activity tab
-// (Phase 7 T7.3, DASHBOARD-MANUAL §12 "Tab content per activity"; consolidated
-// per Phase 1 T1.5/T1.7). Vertical stack: 72h forecast timeline (star
-// ratings; single-point bundles render as one "Current Surf Conditions"
-// card instead) → wave face height chart (hidden for single-point bundles;
-// the value moves into the Conditions panel as a stat) → swell breakdown
-// (spectral components) → Conditions (wind quality + beach alignment,
-// consolidated) → tide chart (standalone, 72h, shared component) → general
-// weather → activity-relevant alerts.
+// SurfingTab.tsx — Surfing activity tab content (Phase 7 T7.1/T7.2/T7.3,
+// DASHBOARD-MANUAL §12 "Tab content — Surfing (F22 redesign)").
+//
+// Surfaces the surf scoring system (enrichment/surf_scorer.py) via a hero
+// conditions summary, a weighted scoring breakdown, the 72h forecast
+// timeline + wave face height chart, a ranked swell-component breakdown,
+// a WindCompassCard-style swell direction compass, and the standalone tide
+// chart. All sections use the shared Card/CardHeader/CardTitle/CardContent
+// system and the shared MarineStatTile — no local Panel/StatTile functions
+// (DESIGN-MANUAL §20).
+//
+// Panel order (top to bottom), matching DASHBOARD-MANUAL §12 exactly:
+//   1. Alerts (AlertsPanel, shared, unchanged)
+//   2. Current Conditions Hero — conditionsText headline, star rating +
+//      qualityLabel, stat grid (wave height at break, period, wind quality
+//      badge, water temp from zoneForecast), rip current risk badge
+//   3. Scoring Breakdown — 4 weighted-factor bars (wave height 35%, wave
+//      period 35%, wind quality 20%, swell dominance 10%). The API does not
+//      return per-factor scores, so these are UI-side approximations
+//      documented inline next to each scoring function.
+//   4. 72-Hour Surf Forecast Timeline — ForecastTimeline + WaveFaceHeightChart
+//   5. Swell Components — ranked by energy, primary swell visually larger
+//   6. Swell Direction Compass — WindCompassCard tick-ring pattern, --chart-2
+//   7. Tide Forecast — TideChart (standalone, shared)
 //
 // Data source: useSurfDetail(locationId) (/surf/{id}) — a single bundle
 // covering forecast, zoneForecast (NWS Surf Zone Forecast), spectral
@@ -14,33 +29,47 @@
 // BoatingTab/BeachSafetyTab) since SurfDetailData already carries
 // tidePredictions.
 //
-// Panel/TileSkeleton/InlineError/StatTile follow the same conventions
-// established by BoatingTab.tsx (T7.2) and BeachSafetyTab.tsx (T7.5) so all
-// four marine activity tabs read as one system.
+// Removed in this redesign (DASHBOARD-MANUAL §12): standalone "Conditions"
+// card (wind quality + beach alignment — consolidated into the hero),
+// standalone rip current alert banner at the bottom (rip current is now a
+// status badge in the hero; zoneForecast.hazardsText, when present, moves
+// into the hero alongside the badge instead of being dropped), the "General
+// Weather" panel (UV index has no home in the redesigned tab per the manual;
+// water temp moves into the hero stat grid).
 //
 // A11y (rules/coding.md §5):
-//   - Every panel heading is a real <h3> (siblings of the tab/accordion h3
-//     header above, not nested — no skipped levels).
+//   - Every Card section heading is a real <h3> (CardTitle as="h3"),
+//     siblings of the tab/accordion h3 header above — no skipped levels.
 //   - Star ratings: Unicode glyphs are aria-hidden; the wrapping element
 //     carries a translated aria-label ("N of 5 stars") — glyphs alone are
 //     not accessible text.
-//   - Color is never the only signal: quality/wind-quality/rip-current
-//     color coding is always paired with a translated text label.
+//   - Color is never the only signal: quality/wind-quality/rip-current/
+//     scoring-bar color coding is always paired with a translated text
+//     label or a visible number.
 //   - Charts: ChartContainer (role="img" + aria-label) + sr-only data table.
-//   - Beach alignment compass: role="img" with a <title> summarizing the
-//     dominant swell direction as text.
+//   - Swell direction compass: role="img" with a <title> summarizing the
+//     dominant swell direction as text; the center overlay's height/period
+//     readouts carry sr-only "Height"/"Period" labels so screen readers
+//     don't hear ambiguous bare numbers.
+//   - Primary swell's larger type size is a sighted-only cue — an sr-only
+//     "primary swell" label on the first list item carries the same
+//     information to screen reader users (coding.md §5: never let a purely
+//     visual differentiator be the only signal).
 //   - Horizontal scroll strip uses the shared HorizontalScrollNav pattern
 //     (DESIGN-MANUAL §11) — round buttons + keyboard-scrollable region.
 
-import { useMemo, type ReactNode } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AreaChart, Area, XAxis, YAxis } from 'recharts';
+import { Waves, Thermometer } from '@phosphor-icons/react';
 import { useSurfDetail, useStation } from '../../../hooks/useWeatherData';
 import { formatValue } from '../../../utils/format';
 import { formatTime } from '../../../utils/format-date';
 import { cardinalFromDegrees } from '../../../utils/wind';
 import { ChartContainer } from '../../charts/chart-container';
 import { HorizontalScrollNav } from '../../ui/horizontal-scroll-nav';
+import { Card, CardHeader, CardTitle, CardContent } from '../../ui/card';
+import { MarineStatTile } from '../shared/MarineStatTile';
 import { AlertsPanel } from './shared/AlertsPanel';
 import { TideChart } from './shared/TideChart';
 import { buildHourTicks } from './shared/hour-ticks';
@@ -56,40 +85,10 @@ export interface SurfingTabProps {
 }
 
 // ---------------------------------------------------------------------------
-// Shared small pieces (same recipe as BoatingTab.tsx / BeachSafetyTab.tsx)
+// Shared small pieces (TileSkeleton/InlineError follow the same conventions
+// established by BoatingTab.tsx / BeachSafetyTab.tsx so all four marine
+// activity tabs read as one system).
 // ---------------------------------------------------------------------------
-
-function Panel({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="card-glass rounded-xl ring-1 ring-foreground/10 p-[var(--card-pad)] flex flex-col gap-3">
-      <h3 className="font-semibold text-foreground" style={{ fontSize: 'var(--text-card-title)' }}>
-        {title}
-      </h3>
-      {children}
-    </section>
-  );
-}
-
-function StatTile({ label, value, unit }: { label: string; value: string; unit?: string }) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <dt className="text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>
-        {label}
-      </dt>
-      <dd
-        className="text-foreground font-semibold"
-        style={{ fontSize: 'var(--text-stat-tile)', fontFeatureSettings: '"tnum"' }}
-      >
-        {value}
-        {unit && (
-          <span className="text-muted-foreground font-normal ml-1" style={{ fontSize: 'var(--text-label)' }}>
-            {unit}
-          </span>
-        )}
-      </dd>
-    </div>
-  );
-}
 
 function TileSkeleton({ className }: { className?: string }) {
   return <div className={`animate-pulse rounded-lg bg-muted ${className ?? 'h-32'}`} aria-hidden="true" />;
@@ -147,7 +146,7 @@ function qualityColorClasses(stars: number): string {
 }
 
 // ---------------------------------------------------------------------------
-// 1. 72-hour forecast timeline — horizontal scroll strip of star-rated cells
+// 72-hour forecast timeline — horizontal scroll strip of star-rated cells
 // ---------------------------------------------------------------------------
 
 function ForecastTimeline({
@@ -172,7 +171,7 @@ function ForecastTimeline({
   // A single forecast point isn't a "72-hour" timeline — render it as one
   // conditions card instead of a one-item horizontal scroll strip (the
   // section title above already switches to "Current Surf Conditions" for
-  // this case; see SurfingTab's forecastSectionTitle).
+  // this case; see SurfingTab's isSinglePointForecast).
   if (forecast.length === 1) {
     const entry = forecast[0];
     return (
@@ -213,7 +212,7 @@ function ForecastTimeline({
 }
 
 // ---------------------------------------------------------------------------
-// 2. Wave face height chart — the post-supplement breaking height (NOT raw
+// Wave face height chart — the post-supplement breaking height (NOT raw
 // offshore Hs), which is the number surfers actually care about.
 // ---------------------------------------------------------------------------
 
@@ -321,7 +320,90 @@ function WaveFaceHeightChart({
 }
 
 // ---------------------------------------------------------------------------
-// 3. Swell breakdown — spectral components, classification color-coded.
+// Scoring breakdown — 4 weighted factors. The API does not return per-factor
+// scores (SurfForecast only carries the composed qualityStars/qualityLabel),
+// so these are UI-side approximations from the fields the API does return.
+// Each function documents its approximation so a future change to the real
+// scorer weights (enrichment/surf_scorer.py) can be reconciled here too.
+// ---------------------------------------------------------------------------
+
+/** offshore (ideal) → cross-offshore → cross-shore → cross-onshore → onshore (worst). */
+function windQualityScore(quality: string | null): number {
+  switch (quality) {
+    case 'offshore': return 100;
+    case 'cross_offshore': return 80;
+    case 'cross': return 50;
+    case 'cross_onshore': return 30;
+    case 'onshore': return 10;
+    default: return 0;
+  }
+}
+
+/** <6s poor, 6-8s short-period wind swell, 8-11s mid, 11-14s good groundswell, 14+ great. */
+function periodScore(period: number | null): number {
+  if (period === null) return 0;
+  if (period < 6) return 20;
+  if (period < 8) return 40;
+  if (period < 11) return 60;
+  if (period < 14) return 80;
+  return 100;
+}
+
+/** waveHeightAtBreak is already in the operator's configured display unit —
+ *  the 2ft/8ft thresholds are surf-culture imperial conventions, so meter
+ *  readings are converted back to feet-equivalent before scoring. Values at
+ *  or below 2ft score 0; 8ft and above cap at 100. */
+function waveHeightScore(height: number | null, unit: string): number {
+  if (height === null) return 0;
+  const feet = unit === 'm' ? height / 0.3048 : height;
+  if (feet <= 2) return 0;
+  const score = ((feet - 2) / (8 - 2)) * 100;
+  return Math.max(0, Math.min(100, score));
+}
+
+/**
+ * Fill color per score tier. NOT a flat bg-green-500/bg-amber-500 pair —
+ * those compute to ~2.0-2.1:1 against this theme's near-white light --muted
+ * track (oklch(0.97 0 0)), below the 3:1 non-text-contrast floor (coding.md
+ * §5.1). -700 (light) / -400 (dark) computes to ~4.7:1 / ~8.2:1 (green) and
+ * ~4.7:1 / ~8.3:1 (amber) against light/dark --muted respectively — verified
+ * by hand via the WCAG relative-luminance formula against this file's actual
+ * oklch(0.97 0 0) / oklch(0.269 0 0) --muted tokens (src/index.css), since no
+ * browser was available in this session to run a live contrast checker.
+ * The <30% "muted" tier is intentionally low-contrast against its own
+ * track — same precedent as this codebase's --gauge-unfill (semi-circular-
+ * gauge.tsx: "rgba(0,0,0,0.22) on white ≈ #c5c5c5; sits at ~1.6:1 —
+ * intentionally [decorative]"). Every bar is aria-hidden and paired with the
+ * visible score number + label text above it, so the fill itself carries no
+ * information a screen reader needs and a low-score "empty-looking" bar is
+ * the correct visual signal, not a defect.
+ */
+function scoreBarFillColor(pct: number): string {
+  if (pct > 60) return 'var(--gauge-fill-good, #16a34a)';
+  if (pct >= 30) return 'var(--gauge-fill-moderate, #d97706)';
+  return 'var(--gauge-unfill)';
+}
+
+function ScoreBar({ label, score }: { label: string; score: number }) {
+  const pct = Math.max(0, Math.min(100, score));
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex justify-between" style={{ fontSize: 'var(--text-label)' }}>
+        <span className="text-muted-foreground">{label}</span>
+        <span className="font-semibold text-foreground" style={{ fontFeatureSettings: '"tnum"' }}>
+          {Math.round(pct)}
+        </span>
+      </div>
+      <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--gauge-unfill)' }} aria-hidden="true">
+        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: scoreBarFillColor(pct) }} />
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Swell breakdown — spectral components ranked by energy (primary first),
+// classification color-coded, primary swell visually larger.
 // ---------------------------------------------------------------------------
 
 const CLASSIFICATION_COLOR: Record<string, string> = {
@@ -329,6 +411,30 @@ const CLASSIFICATION_COLOR: Record<string, string> = {
   swell: 'bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300',
   wind_swell: 'bg-gray-100 text-gray-700 dark:bg-gray-800/60 dark:text-gray-300',
 };
+
+/** <8s: no tier (short-period wind chop). 8-10s normal, 11-13s good, 14+s great. */
+function periodQualityTier(period: number): 'normal' | 'good' | 'great' | null {
+  if (period < 8) return null;
+  if (period <= 10) return 'normal';
+  if (period <= 13) return 'good';
+  return 'great';
+}
+
+function SwellDirectionArrow({ directionDeg }: { directionDeg: number }) {
+  return (
+    <svg
+      width="8"
+      height="8"
+      viewBox="0 0 8 8"
+      aria-hidden="true"
+      focusable="false"
+      className="shrink-0"
+      style={{ transform: `rotate(${directionDeg}deg)` }}
+    >
+      <path d="M4 0 L8 8 L4 6 L0 8 Z" fill="currentColor" />
+    </svg>
+  );
+}
 
 function SwellBreakdown({
   components,
@@ -353,33 +459,68 @@ function SwellBreakdown({
     );
   }
 
+  const ranked = [...components].sort((a, b) => b.energy - a.energy);
+
   return (
-    <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 list-none p-0 m-0">
-      {components.map((c, i) => {
+    <ul className="flex flex-col gap-2 list-none p-0 m-0">
+      {ranked.map((c, i) => {
+        const isPrimary = i === 0;
         const classKey = c.classification in CLASSIFICATION_COLOR ? c.classification : 'swell';
         const cardinal = cardinalFromDegrees(c.direction);
         const cardinalLabel = cardinal ? tCommon(`directions.${cardinal}`) : '—';
+        const periodTier = periodQualityTier(c.period);
+
         return (
-          <li key={i} className={`rounded-lg p-3 flex flex-col gap-1.5 ${CLASSIFICATION_COLOR[classKey]}`}>
-            <span className="font-semibold" style={{ fontSize: 'var(--text-label)' }}>
-              {t(`surfing.classification.${classKey}`)}
-            </span>
-            <dl className="grid grid-cols-3 gap-1" style={{ fontSize: 'var(--text-micro)' }}>
+          <li
+            key={i}
+            className={`rounded-lg flex flex-col gap-2 ${isPrimary ? 'p-4' : 'p-3'} ${CLASSIFICATION_COLOR[classKey]}`}
+          >
+            <div className="flex items-center gap-3 flex-wrap">
+              <span
+                className="font-semibold"
+                style={{ fontSize: isPrimary ? 'var(--text-body)' : 'var(--text-label)' }}
+              >
+                {t(`surfing.classification.${classKey}`)}
+                {isPrimary && <span className="sr-only"> — {t('surfing.primarySwell')}</span>}
+              </span>
+              <span
+                className="inline-flex items-center gap-1"
+                style={{ fontSize: isPrimary ? 'var(--text-body)' : 'var(--text-label)' }}
+              >
+                <SwellDirectionArrow directionDeg={c.direction} />
+                {cardinalLabel}
+              </span>
+            </div>
+            <dl className="grid grid-cols-3 gap-x-4 gap-y-1">
               <div className="flex flex-col">
-                <dt>{t('surfing.height')}</dt>
-                <dd className="font-semibold" style={{ fontFeatureSettings: '"tnum"' }}>
+                <dt className="opacity-80" style={{ fontSize: 'var(--text-micro)' }}>
+                  {t('surfing.height')}
+                </dt>
+                <dd
+                  className="font-semibold"
+                  style={{ fontSize: isPrimary ? 'var(--text-stat-tile)' : 'var(--text-label)', fontFeatureSettings: '"tnum"' }}
+                >
                   {formatValue(c.height, 'default', locale)} {heightUnit}
                 </dd>
               </div>
               <div className="flex flex-col">
-                <dt>{t('surfing.period')}</dt>
-                <dd className="font-semibold" style={{ fontFeatureSettings: '"tnum"' }}>
+                <dt className="opacity-80" style={{ fontSize: 'var(--text-micro)' }}>
+                  {t('surfing.period')}
+                </dt>
+                <dd className="font-semibold" style={{ fontSize: 'var(--text-label)', fontFeatureSettings: '"tnum"' }}>
                   {formatValue(c.period, 'default', locale)} {periodUnit}
+                  {periodTier && (
+                    <span className="font-normal opacity-80"> — {t(`surfing.periodQuality.${periodTier}`)}</span>
+                  )}
                 </dd>
               </div>
               <div className="flex flex-col">
-                <dt>{t('surfing.direction')}</dt>
-                <dd className="font-semibold">{cardinalLabel}</dd>
+                <dt className="opacity-80" style={{ fontSize: 'var(--text-micro)' }}>
+                  {t('surfing.energy')}
+                </dt>
+                <dd className="font-semibold" style={{ fontSize: 'var(--text-label)', fontFeatureSettings: '"tnum"' }}>
+                  {formatValue(c.energy, 'default', locale)}
+                </dd>
               </div>
             </dl>
           </li>
@@ -390,7 +531,7 @@ function SwellBreakdown({
 }
 
 // ---------------------------------------------------------------------------
-// 4. Wind quality panel — offshore (ideal, green) / cross (amber) / onshore
+// Wind quality badge — offshore (ideal, green) / cross (amber) / onshore
 // (poor, red), always paired with the translated label text.
 // ---------------------------------------------------------------------------
 
@@ -405,9 +546,9 @@ const WIND_QUALITY_COLOR: Record<string, string> = {
 function WindQualityBadge({ quality, t }: { quality: string | null; t: (key: string) => string }) {
   if (quality === null) {
     return (
-      <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
+      <span className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
         {t('surfing.noData')}
-      </p>
+      </span>
     );
   }
   const key = quality in WIND_QUALITY_COLOR ? quality : 'cross';
@@ -422,17 +563,66 @@ function WindQualityBadge({ quality, t }: { quality: string | null; t: (key: str
 }
 
 // ---------------------------------------------------------------------------
-// 6. Beach alignment diagram — static compass rose with an arrow overlay
-// pointing at the dominant swell direction (highest-energy spectral
-// component, falling back to the primary forecast direction).
+// Rip current risk badge — low (green) / moderate (amber) / high (red),
+// always paired with the translated risk-level text.
 // ---------------------------------------------------------------------------
 
-function BeachAlignmentDiagram({
+const RIP_RISK_COLOR: Record<string, string> = {
+  low: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
+  moderate: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
+  high: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
+};
+
+function RipCurrentBadge({ riskKey, t }: { riskKey: string; t: (key: string, opts?: Record<string, unknown>) => string }) {
+  const key = riskKey in RIP_RISK_COLOR ? riskKey : 'moderate';
+  return (
+    <span
+      role={key === 'high' ? 'alert' : undefined}
+      className={`inline-flex w-fit items-center rounded px-2.5 py-1 font-semibold ${RIP_RISK_COLOR[key]}`}
+      style={{ fontSize: 'var(--text-label)' }}
+    >
+      {t('surfing.ripCurrentRiskLabel', { level: t(`surfing.ripCurrentRisk.${key}`) })}
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Swell direction compass — WindCompassCard tick-ring pattern (DASHBOARD-
+// MANUAL §20 "Swell direction compass"), lit ticks in --chart-2 (distinct
+// from wind's --primary), rendered ~160px within a "tile" Card.
+// ---------------------------------------------------------------------------
+
+const SWELL_CX = 210;
+const SWELL_CY = 210;
+const SWELL_R_OUTER = 175;
+const SWELL_TICK_LEN = 24;
+const SWELL_TICK_W_DIM = 4.5;
+const SWELL_TICK_W_LIT = 6;
+const SWELL_TICK_COUNT = 72; // every 5 degrees
+const SWELL_LIT_HALF_RANGE = 8; // degrees either side of direction
+
+const SWELL_CARD_LABEL_STYLE: React.CSSProperties = {
+  fontFamily: "'Manrope', var(--font-sans, system-ui, sans-serif)",
+  fontSize: 18,
+  fontWeight: 600,
+};
+
+function SwellDirectionCompass({
   directionDeg,
+  height,
+  period,
+  heightUnit,
+  periodUnit,
+  locale,
   t,
   tCommon,
 }: {
   directionDeg: number | null;
+  height: number | null;
+  period: number | null;
+  heightUnit: string;
+  periodUnit: string;
+  locale: string;
   t: (key: string, opts?: Record<string, unknown>) => string;
   tCommon: (key: string) => string;
 }) {
@@ -446,62 +636,100 @@ function BeachAlignmentDiagram({
 
   const cardinal = cardinalFromDegrees(directionDeg);
   const cardinalLabel = cardinal ? tCommon(`directions.${cardinal}`) : '—';
-  const title = t('surfing.beachAlignmentAriaLabel', { direction: cardinalLabel, degrees: Math.round(directionDeg) });
+  const svgTitle = t('surfing.beachAlignmentAriaLabel', { direction: cardinalLabel, degrees: Math.round(directionDeg) });
 
-  const cx = 60;
-  const cy = 60;
-  const r = 44;
-  const angleRad = (directionDeg * Math.PI) / 180; // 0deg = N (up), clockwise
-  const tipX = cx + r * Math.sin(angleRad);
-  const tipY = cy - r * Math.cos(angleRad);
+  const ticks = Array.from({ length: SWELL_TICK_COUNT }, (_, i) => {
+    const deg = (i / SWELL_TICK_COUNT) * 360;
+    const rad = ((deg - 90) * Math.PI) / 180;
+    const cosA = Math.cos(rad);
+    const sinA = Math.sin(rad);
+    const rInner = SWELL_R_OUTER - SWELL_TICK_LEN;
+    const x1 = SWELL_CX + rInner * cosA;
+    const y1 = SWELL_CY + rInner * sinA;
+    const x2 = SWELL_CX + SWELL_R_OUTER * cosA;
+    const y2 = SWELL_CY + SWELL_R_OUTER * sinA;
 
-  const cardinalTicks: Array<{ deg: number; code: string }> = [
-    { deg: 0, code: 'N' },
-    { deg: 90, code: 'E' },
-    { deg: 180, code: 'S' },
-    { deg: 270, code: 'W' },
-  ];
+    const diff = Math.abs(((deg - directionDeg + 540) % 360) - 180);
+    const lit = diff < SWELL_LIT_HALF_RANGE;
+
+    return (
+      <line
+        key={i}
+        x1={x1}
+        y1={y1}
+        x2={x2}
+        y2={y2}
+        stroke={lit ? 'var(--chart-2)' : 'var(--muted-foreground)'}
+        strokeWidth={lit ? SWELL_TICK_W_LIT : SWELL_TICK_W_DIM}
+        strokeLinecap="round"
+        opacity={lit ? 1 : 0.38}
+      />
+    );
+  });
 
   return (
-    <div className="flex items-center gap-4 flex-wrap">
-      <svg viewBox="0 0 120 120" width={120} height={120} role="img" aria-label={title}>
-        <title>{title}</title>
-        <circle cx={cx} cy={cy} r={r + 8} fill="none" stroke="var(--muted-foreground)" strokeWidth={1} opacity={0.35} />
-        {cardinalTicks.map(({ deg, code }) => {
-          const rad = (deg * Math.PI) / 180;
-          const lx = cx + (r + 16) * Math.sin(rad);
-          const ly = cy - (r + 16) * Math.cos(rad) + 4;
-          return (
-            <text
-              key={code}
-              x={lx}
-              y={ly}
-              textAnchor="middle"
-              style={{ fontFamily: 'var(--font-chart)', fontSize: 11, fill: 'var(--muted-foreground)', fontWeight: 600 }}
-            >
-              {tCommon(`directions.${code}`)}
-            </text>
-          );
-        })}
-        <defs>
-          <marker id="surfingSwellArrowhead" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
-            <path d="M0,0 L8,4 L0,8 z" fill="var(--chart-2)" />
-          </marker>
-        </defs>
-        <line
-          x1={cx}
-          y1={cy}
-          x2={tipX}
-          y2={tipY}
-          stroke="var(--chart-2)"
-          strokeWidth={3}
-          markerEnd="url(#surfingSwellArrowhead)"
-        />
-        <circle cx={cx} cy={cy} r={3} fill="var(--chart-2)" />
+    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+      <svg
+        viewBox="0 0 420 420"
+        role="img"
+        aria-labelledby="swell-compass-title"
+        focusable={false as unknown as boolean}
+        style={{ width: '100%', maxWidth: '10rem', height: 'auto', aspectRatio: '1 / 1', display: 'block' }}
+      >
+        <title id="swell-compass-title">{svgTitle}</title>
+        <g aria-hidden="true">{ticks}</g>
+        <text x={210} y={18} textAnchor="middle" dominantBaseline="middle" fill="var(--muted-foreground)" style={SWELL_CARD_LABEL_STYLE} aria-hidden="true">
+          N
+        </text>
+        <text x={402} y={210} textAnchor="middle" dominantBaseline="middle" fill="var(--muted-foreground)" style={SWELL_CARD_LABEL_STYLE} aria-hidden="true">
+          E
+        </text>
+        <text x={210} y={402} textAnchor="middle" dominantBaseline="middle" fill="var(--muted-foreground)" style={SWELL_CARD_LABEL_STYLE} aria-hidden="true">
+          S
+        </text>
+        <text x={18} y={210} textAnchor="middle" dominantBaseline="middle" fill="var(--muted-foreground)" style={SWELL_CARD_LABEL_STYLE} aria-hidden="true">
+          W
+        </text>
       </svg>
-      <p className="text-foreground" style={{ fontSize: 'var(--text-body)' }}>
-        {title}
-      </p>
+
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+          gap: '0.1rem',
+          pointerEvents: 'none',
+        }}
+      >
+        <div style={{ fontFamily: 'var(--font-sans, system-ui, sans-serif)', fontSize: 'var(--text-label)', color: 'var(--muted-foreground)' }}>
+          {Math.round(directionDeg)}°
+          <span style={{ color: 'var(--foreground)', fontWeight: 600, marginLeft: '0.2rem' }}>{cardinalLabel}</span>
+        </div>
+        {height !== null && (
+          <div
+            style={{
+              fontFamily: 'var(--font-sans, system-ui, sans-serif)',
+              fontSize: 'var(--text-body)',
+              fontWeight: 600,
+              color: 'var(--foreground)',
+              fontFeatureSettings: '"tnum"',
+            }}
+          >
+            <span className="sr-only">{t('surfing.height')}: </span>
+            {formatValue(height, 'default', locale)} {heightUnit}
+          </div>
+        )}
+        {period !== null && (
+          <div style={{ fontFamily: 'var(--font-sans, system-ui, sans-serif)', fontSize: 'var(--text-label)', color: 'var(--muted-foreground)' }}>
+            <span className="sr-only">{t('surfing.period')}: </span>
+            {formatValue(period, 'default', locale)} {periodUnit}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -525,9 +753,9 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
         <span className="sr-only" role="status">
           {t('surfing.loading')}
         </span>
+        <TileSkeleton className="h-32" />
         <TileSkeleton className="h-24" />
         <TileSkeleton className="h-48" />
-        <TileSkeleton className="h-32" />
         <TileSkeleton className="h-48" />
       </div>
     );
@@ -545,142 +773,213 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
   const periodUnit = units?.period ?? t('surfing.secondsAbbr');
   const tempUnit = units?.waterTemp ?? units?.temperature ?? '';
 
-  const currentWindQuality = forecast[0]?.windQuality ?? null;
-
-  // Dominant swell direction: highest-energy spectral component, falling
-  // back to the primary forecast entry's direction field.
-  const dominantDirection = dominantSwellDirection(spectralComponents, forecast);
+  const primary = forecast[0] ?? null;
 
   const ripRiskKey = zoneForecast?.ripCurrentRisk?.toLowerCase() ?? null;
-  const isHighRipRisk = ripRiskKey === 'high';
-  const hasHazardsText = !!zoneForecast?.hazardsText;
-  const showZoneAlerts = isHighRipRisk || hasHazardsText;
+  const hazardsText = zoneForecast?.hazardsText ?? null;
 
   // A single forecast point isn't a 72h timeline — the section title and the
-  // wave face height chart both change behavior for this case (T1.7.1/T1.7.2).
+  // wave face height chart both change behavior for this case.
   const isSinglePointForecast = forecast.length === 1;
   const hasMultiPointForecast = forecast.length >= 2;
-  const singlePointWaveFaceHeight = isSinglePointForecast ? forecast[0].waveHeightAtBreak : null;
+
+  // Dominant swell (highest-energy spectral component, falling back to the
+  // primary forecast entry) drives both the scoring-adjacent hero and the
+  // swell direction compass.
+  const dominantDirection = dominantSwellDirection(spectralComponents, forecast);
+  const dominantStats = dominantSwellStats(spectralComponents, forecast);
+
+  // Scoring breakdown factors — see the score-function comments above for
+  // the approximation each one uses (the API doesn't return per-factor
+  // scores, only the composed qualityStars/qualityLabel).
+  const scoringFactors = primary
+    ? [
+        { key: 'waveHeight', weight: 35, score: waveHeightScore(primary.waveHeightAtBreak, heightUnit) },
+        { key: 'wavePeriod', weight: 35, score: periodScore(primary.period) },
+        { key: 'windQuality', weight: 20, score: windQualityScore(primary.windQuality) },
+        { key: 'swellDominance', weight: 10, score: Math.max(0, Math.min(100, primary.swellDominance * 100)) },
+      ]
+    : [];
 
   return (
     <div className="flex flex-col gap-[var(--gap-grid)]">
-      {/* 1. 72-hour forecast timeline (or a single "current conditions" card
-          when the bundle only carries one forecast point). */}
-      <Panel title={isSinglePointForecast ? t('surfing.currentConditionsTitle') : t('surfing.forecastTimelineTitle')}>
-        <ForecastTimeline forecast={forecast} locale={locale} stationTz={stationTz} t={t} />
-      </Panel>
+      {/* 1. Active advisories — top, prominent */}
+      <AlertsPanel alerts={alerts} />
 
-      {/* 2. Wave face height chart — needs at least 2 points to plot a
-          trend; with a single point the value is shown as a stat in the
-          Conditions panel below instead (T1.7.2). */}
-      {hasMultiPointForecast && (
-        <Panel title={t('surfing.waveFaceHeightTitle')}>
-          <WaveFaceHeightChart
-            forecast={forecast}
+      {/* 2. Current Conditions Hero */}
+      <Card footprint="full">
+        <CardHeader>
+          <CardTitle as="h3">{t('surfing.currentConditionsHeroTitle')}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          {primary === null ? (
+            <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
+              {t('surfing.noForecastData')}
+            </p>
+          ) : (
+            <>
+              <p className="font-semibold text-foreground" style={{ fontSize: 'var(--text-body)' }}>
+                {primary.conditionsText}
+              </p>
+
+              <span
+                className={`inline-flex w-fit items-center gap-2 rounded px-2.5 py-1 font-semibold ${qualityColorClasses(primary.qualityStars)}`}
+                style={{ fontSize: 'var(--text-label)' }}
+              >
+                <StarRating stars={primary.qualityStars} t={t} />
+                {primary.qualityLabel}
+              </span>
+
+              <dl className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-3">
+                <MarineStatTile
+                  icon={<Waves aria-hidden="true" focusable="false" />}
+                  label={t('waveHeight')}
+                  value={formatValue(primary.waveHeightAtBreak, 'default', locale)}
+                  unit={heightUnit}
+                />
+                <MarineStatTile
+                  label={t('surfing.period')}
+                  value={formatValue(primary.period, 'default', locale)}
+                  unit={periodUnit}
+                />
+                <div className="flex flex-col gap-0.5">
+                  <dt className="text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>
+                    {t('surfing.windQualityTitle')}
+                  </dt>
+                  <dd>
+                    <WindQualityBadge quality={primary.windQuality} t={t} />
+                  </dd>
+                </div>
+                <MarineStatTile
+                  icon={<Thermometer aria-hidden="true" focusable="false" />}
+                  label={t('waterTemp')}
+                  value={formatValue(zoneForecast?.waterTemp ?? null, 'temperature', locale)}
+                  unit={tempUnit}
+                />
+              </dl>
+
+              {ripRiskKey !== null && (
+                <div className="flex flex-col gap-2">
+                  <RipCurrentBadge riskKey={ripRiskKey} t={t} />
+                  {hazardsText && (
+                    <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
+                      {hazardsText}
+                    </p>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 3. Scoring Breakdown
+          DEFERRED: beach alignment and directional exposure multipliers
+          (MARINE-COMPLETE-REMEDIATION-PLAN.md T7.1 line 978). The backend
+          surf_scorer.py computes _beach_alignment() but does not expose it
+          on SurfForecast — pending API field addition. */}
+      <Card footprint="full">
+        <CardHeader>
+          <CardTitle as="h3">{t('surfing.scoringBreakdownTitle')}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          {scoringFactors.length === 0 ? (
+            <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
+              {t('surfing.noForecastData')}
+            </p>
+          ) : (
+            scoringFactors.map((factor) => (
+              <ScoreBar
+                key={factor.key}
+                label={t('surfing.scoring.factorLabel', {
+                  label: t(`surfing.scoring.${factor.key}`),
+                  weight: factor.weight,
+                })}
+                score={factor.score}
+              />
+            ))
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 4. 72-Hour Surf Forecast Timeline + wave face height chart */}
+      <Card footprint="full">
+        <CardHeader>
+          <CardTitle as="h3">
+            {isSinglePointForecast ? t('surfing.currentConditionsTitle') : t('surfing.forecastTimelineTitle')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <ForecastTimeline forecast={forecast} locale={locale} stationTz={stationTz} t={t} />
+          {hasMultiPointForecast && (
+            <div className="flex flex-col gap-2">
+              <p className="text-muted-foreground font-semibold" style={{ fontSize: 'var(--text-label)' }}>
+                {t('surfing.waveFaceHeightTitle')}
+              </p>
+              <WaveFaceHeightChart
+                forecast={forecast}
+                locale={locale}
+                stationTz={stationTz}
+                heightUnit={heightUnit}
+                ariaLabel={t('surfing.waveFaceHeightAriaLabel', { location: locationName })}
+                t={t}
+              />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 5. Swell Components — ranked by energy, primary swell larger */}
+      <Card footprint="full">
+        <CardHeader>
+          <CardTitle as="h3">{t('surfing.swellBreakdownTitle')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <SwellBreakdown
+            components={spectralComponents}
+            locale={locale}
+            heightUnit={heightUnit}
+            periodUnit={periodUnit}
+            t={t}
+            tCommon={tCommon}
+          />
+        </CardContent>
+      </Card>
+
+      {/* 6. Swell Direction Compass — WindCompassCard tick-ring pattern */}
+      <Card footprint="tile">
+        <CardHeader>
+          <CardTitle as="h3">{t('surfing.swellCompassTitle')}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center">
+          <SwellDirectionCompass
+            directionDeg={dominantDirection}
+            height={dominantStats.height}
+            period={dominantStats.period}
+            heightUnit={heightUnit}
+            periodUnit={periodUnit}
+            locale={locale}
+            t={t}
+            tCommon={tCommon}
+          />
+        </CardContent>
+      </Card>
+
+      {/* 7. Tide chart — standalone, 72h (shared component) */}
+      <Card footprint="full">
+        <CardHeader>
+          <CardTitle as="h3">{t('surfing.tideForecastTitle')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <TideChart
+            predictions={tidePredictions}
             locale={locale}
             stationTz={stationTz}
             heightUnit={heightUnit}
-            ariaLabel={t('surfing.waveFaceHeightAriaLabel', { location: locationName })}
-            t={t}
+            ariaLabel={t('surfing.tideForecastAriaLabel', { location: locationName })}
           />
-        </Panel>
-      )}
-
-      {/* 3. Swell breakdown */}
-      <Panel title={t('surfing.swellBreakdownTitle')}>
-        <SwellBreakdown
-          components={spectralComponents}
-          locale={locale}
-          heightUnit={heightUnit}
-          periodUnit={periodUnit}
-          t={t}
-          tCommon={tCommon}
-        />
-      </Panel>
-
-      {/* 4. Conditions panel — wind quality + beach alignment consolidated
-          into one panel (T1.5.3), plus the single-point wave face height
-          stat when there's no chart to show it in (T1.7.2). */}
-      <Panel title={t('surfing.conditionsTitle')}>
-        <div className="flex flex-col gap-3">
-          {singlePointWaveFaceHeight !== null && (
-            <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3">
-              <StatTile
-                label={t('surfing.waveFaceHeightTitle')}
-                value={formatValue(singlePointWaveFaceHeight, 'default', locale)}
-                unit={heightUnit}
-              />
-            </dl>
-          )}
-          <WindQualityBadge quality={currentWindQuality} t={t} />
-          <BeachAlignmentDiagram directionDeg={dominantDirection} t={t} tCommon={tCommon} />
-        </div>
-      </Panel>
-
-      {/* 5. Tide chart — standalone, 72h (shared component) */}
-      <Panel title={t('surfing.tideForecastTitle')}>
-        <TideChart
-          predictions={tidePredictions}
-          locale={locale}
-          stationTz={stationTz}
-          heightUnit={heightUnit}
-          ariaLabel={t('surfing.tideForecastAriaLabel', { location: locationName })}
-        />
-      </Panel>
-
-      {/* 6. General weather — SurfZoneForecast carries no air-temperature
-          field, so this panel surfaces the two general-conditions fields
-          the bundle does provide (UV index, water temperature) rather than
-          fabricating data DASHBOARD-MANUAL §12 doesn't back. */}
-      {zoneForecast !== null && (zoneForecast.uvIndex !== null || zoneForecast.waterTemp !== null) && (
-        <Panel title={t('surfing.generalWeatherTitle', { location: locationName })}>
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
-            {zoneForecast.uvIndex !== null && (
-              <div className="flex flex-col gap-0.5">
-                <dt className="text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>{t('surfing.uvIndex')}</dt>
-                <dd className="text-foreground font-semibold" style={{ fontSize: 'var(--text-stat-tile)', fontFeatureSettings: '"tnum"' }}>
-                  {formatValue(zoneForecast.uvIndex, 'uv', locale)}
-                </dd>
-              </div>
-            )}
-            {zoneForecast.waterTemp !== null && (
-              <div className="flex flex-col gap-0.5">
-                <dt className="text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>{t('waterTemp')}</dt>
-                <dd className="text-foreground font-semibold" style={{ fontSize: 'var(--text-stat-tile)', fontFeatureSettings: '"tnum"' }}>
-                  {formatValue(zoneForecast.waterTemp, 'temperature', locale)}{tempUnit}
-                </dd>
-              </div>
-            )}
-          </dl>
-        </Panel>
-      )}
-
-      {/* 7. Activity-relevant alerts — general marine-zone headlines, plus a
-          prominent surf-specific banner when the NWS Surf Zone Forecast
-          reports high rip current risk or hazards text. */}
-      <AlertsPanel alerts={alerts} />
-      {showZoneAlerts && (
-        <div
-          role={isHighRipRisk ? 'alert' : undefined}
-          className="rounded-xl p-[var(--card-pad)] flex flex-col gap-2"
-          style={{
-            background: 'var(--alert-glass)',
-            border: '1px solid var(--alert-border)',
-            color: 'var(--alert-fg)',
-            backdropFilter: 'blur(12px)',
-          }}
-        >
-          <h3 className="font-semibold" style={{ fontSize: 'var(--text-card-title)' }}>
-            {isHighRipRisk ? t('surfing.ripCurrentWarning') : t('alerts')}
-          </h3>
-          {isHighRipRisk && (
-            <p style={{ fontSize: 'var(--text-body)' }}>
-              {t('surfing.ripCurrentRiskLabel', { level: t(`surfing.ripCurrentRisk.${ripRiskKey}`) })}
-            </p>
-          )}
-          {hasHazardsText && <p style={{ fontSize: 'var(--text-body)' }}>{zoneForecast!.hazardsText}</p>}
-        </div>
-      )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -705,6 +1004,23 @@ function dominantSwellDirection(
     return dominant.direction;
   }
   return forecast[0]?.direction ?? null;
+}
+
+/** Same "highest-energy component, else first forecast entry" selection as
+ *  dominantSwellDirection, but returns height/period for the swell direction
+ *  compass's center overlay. Kept as a separate function (rather than
+ *  extending dominantSwellDirection's return shape) so existing callers of
+ *  dominantSwellDirection are unaffected. */
+function dominantSwellStats(
+  spectralComponents: SpectralWaveComponent[],
+  forecast: SurfForecast[],
+): { height: number | null; period: number | null } {
+  if (spectralComponents.length > 0) {
+    const dominant = spectralComponents.reduce((best, c) => (c.energy > best.energy ? c : best), spectralComponents[0]);
+    return { height: dominant.height, period: dominant.period };
+  }
+  const first = forecast[0];
+  return { height: first?.waveHeightAtBreak ?? null, period: first?.period ?? null };
 }
 
 export default SurfingTab;
