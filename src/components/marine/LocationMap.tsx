@@ -2,8 +2,9 @@
 // (DASHBOARD-MANUAL §12). Two variants:
 //   "full" — landing state, full-size interactive map with a numbered pin
 //            per configured location.
-//   "hero" — selected state, compressed strip centered on the selected
-//            location's marker.
+//   "hero" — selected state (Phase 5 T5.2/T5.4 combo card), centered and
+//            zoomed on the selected location only — not a bounds-fit of
+//            every configured location. Renders only the selected marker.
 //
 // Markers are numbered L.divIcon pins (T3.5) rather than Leaflet's default
 // pin or the CircleMarker dots used on the Seismic page — each pin's number
@@ -22,20 +23,30 @@
 // Leaflet markers are a supplementary visual affordance — the primary
 // keyboard-reachable interaction is the LocationCard grid (real <button>
 // elements) rendered alongside the map, not the map markers themselves.
+//
+// OpenSeaMap overlay (T5.3): a second TileLayer renders marine features
+// (buoys, channels, harbors, depth contours) above the basemap, on both
+// variants, at a fixed 0.7 opacity so the basemap and any markers stay
+// legible underneath.
 
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
+import { cn } from '../../lib/utils';
 // Side-effect import already runs once globally from src/main.tsx; re-imported
 // here defensively so this component has no implicit ordering dependency on
 // main.tsx having run first (module evaluation is cached, so this is a no-op
 // when main.tsx already imported it).
 import '../../lib/leaflet-setup';
 import { useTheme } from '../../lib/theme-provider';
-import { OSM_ATTRIBUTION, CARTO_OSM_ATTRIBUTION } from '../../lib/map-attribution';
+import { OSM_ATTRIBUTION, CARTO_OSM_ATTRIBUTION, OPENSEAMAP_ATTRIBUTION } from '../../lib/map-attribution';
 import type { LatLngBoundsExpression } from 'leaflet';
 import type { MarineLocationSummary } from '../../api/types';
+
+/** Hero variant (T5.2): fixed zoom on the selected location — coastal
+ *  features (pier, harbor entrance, breakwater) are visible at this level. */
+const HERO_ZOOM = 14;
 
 // Basemap tile configuration — same OSM/CartoDB pair used by the Seismic
 // and Radar pages (src/routes/seismic.tsx, src/components/shared/radar-map.tsx).
@@ -85,7 +96,10 @@ interface LocationMapProps {
    * Explicit pixel height (T3.9 — the responsive landing-state layout
    * computes this from the configured locations' bounding-box aspect
    * ratio). Falls back to the variant's previous fixed height (400 for
-   * "full", 120 for "hero") when omitted.
+   * "full") when omitted. For "hero", omitting this prop uses a responsive
+   * CSS height instead (180px mobile / 220px desktop, DASHBOARD-MANUAL §12
+   * combo card spec) rather than a single fixed pixel value, since the
+   * combo card's map column is a different height per breakpoint.
    */
   height?: number;
   /** Linked hover (T3.6): id of the location currently hovered via its
@@ -94,28 +108,15 @@ interface LocationMapProps {
   /** Notifies the parent when a pin is hovered/unhovered so the matching
    *  LocationCard can be highlighted. Called with null on mouseout. */
   onHoverLocation?: (locationId: string | null) => void;
-}
-
-// FlyToSelected — re-centers the map on the selected location when it
-// changes (e.g. switching locations, or entering hero mode). Must render
-// inside MapContainer.
-function FlyToSelected({
-  locations,
-  selectedId,
-  zoom,
-}: {
-  locations: MarineLocationSummary[];
-  selectedId: string | null;
-  zoom: number;
-}) {
-  const map = useMap();
-  useEffect(() => {
-    if (!selectedId) return;
-    const loc = locations.find((l) => l.locationId === selectedId);
-    if (!loc) return;
-    map.flyTo([loc.coordinates.lat, loc.coordinates.lon], zoom, { duration: 0.6 });
-  }, [selectedId, locations, map, zoom]);
-  return null;
+  /**
+   * Optional className override merged via `cn()` (tailwind-merge), so a
+   * caller can adjust the outer wrapper's rounding when the map sits flush
+   * against a sibling element — e.g. the T5.4 combo card squares off the
+   * map's right corners (`rounded-r-none`) when a photo occupies the right
+   * ~40% of the card, so the seam between map and photo reads as one card
+   * edge rather than two independently-rounded rectangles.
+   */
+  className?: string;
 }
 
 export function LocationMap({
@@ -127,14 +128,22 @@ export function LocationMap({
   height,
   hoveredId = null,
   onHoverLocation,
+  className,
 }: LocationMapProps) {
   const { t } = useTranslation('marine');
   const { resolved: resolvedTheme } = useTheme();
   const baseTile = TILE_CONFIG[resolvedTheme];
 
-  // Always resolve to a concrete bounds box (never undefined) so MapContainer
-  // only ever needs the `bounds` prop, not a center/zoom-vs-bounds branch —
-  // same approach as the Seismic page's initialBounds (src/routes/seismic.tsx).
+  const isHero = variant === 'hero';
+
+  const selectedLocation = useMemo(
+    () => locations.find((l) => l.locationId === selectedId) ?? null,
+    [locations, selectedId],
+  );
+
+  // Full-variant bounds box (landing state — fits every configured
+  // location). Not used in hero mode, which centers on the selected
+  // location only (T5.2) rather than fitting all locations' bounds.
   const bounds: LatLngBoundsExpression = useMemo(() => {
     if (locations.length === 0) {
       const [lat, lon] = fallbackCenter;
@@ -149,19 +158,35 @@ export function LocationMap({
     ];
   }, [locations, fallbackCenter]);
 
-  const isHero = variant === 'hero';
-  const resolvedHeight = height ?? (isHero ? 120 : 400);
+  // Hero center (T5.2): the selected location's coordinates, falling back
+  // to fallbackCenter only for the (non-visible-in-practice) case where
+  // hero is rendered without a resolvable selection.
+  const heroCenter: [number, number] = selectedLocation
+    ? [selectedLocation.coordinates.lat, selectedLocation.coordinates.lon]
+    : fallbackCenter;
+
+  // Landing state (T3.9) passes an explicit computed height; hero omits it
+  // and uses a responsive CSS height instead (180px mobile / 220px desktop,
+  // DASHBOARD-MANUAL §12 combo card spec) since the map column's height
+  // differs by breakpoint rather than being a single fixed pixel value.
+  const resolvedHeight = height ?? (isHero ? undefined : 400);
   const ariaLabel = isHero ? t('map.selectedAriaLabel') : t('map.ariaLabel');
 
   return (
     <div
-      className="w-full overflow-hidden rounded-xl ring-1 ring-foreground/10"
-      style={{ height: `${resolvedHeight}px` }}
+      className={cn(
+        'w-full overflow-hidden rounded-xl ring-1 ring-foreground/10',
+        resolvedHeight === undefined && 'h-[180px] md:h-[220px]',
+        className,
+      )}
+      style={resolvedHeight !== undefined ? { height: `${resolvedHeight}px` } : undefined}
       role="region"
       aria-label={ariaLabel}
     >
       <MapContainer
-        bounds={bounds}
+        center={isHero ? heroCenter : undefined}
+        zoom={isHero ? HERO_ZOOM : undefined}
+        bounds={isHero ? undefined : bounds}
         className="h-full w-full"
         scrollWheelZoom={!isHero}
         dragging={!isHero}
@@ -173,7 +198,19 @@ export function LocationMap({
       >
         <TileLayer key={baseTile.url} url={baseTile.url} attribution={baseTile.attribution} />
 
-        {locations.map((loc, i) => {
+        {/* OpenSeaMap marine feature overlay (T5.3) — buoys, channels,
+            harbors, depth contours. Rendered above the basemap on both
+            variants. */}
+        <TileLayer
+          url="https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"
+          attribution={OPENSEAMAP_ATTRIBUTION}
+          opacity={0.7}
+        />
+
+        {/* Hero mode renders only the selected location's marker (T5.2) —
+            not every configured location. */}
+        {(isHero ? (selectedLocation ? [selectedLocation] : []) : locations).map((loc) => {
+          const i = locations.findIndex((l) => l.locationId === loc.locationId);
           const hasAlerts = (loc.activeAlerts?.length ?? 0) > 0;
           const isHovered = hoveredId === loc.locationId;
           return (
@@ -210,8 +247,6 @@ export function LocationMap({
             </Marker>
           );
         })}
-
-        <FlyToSelected locations={locations} selectedId={selectedId} zoom={isHero ? 10 : 9} />
       </MapContainer>
     </div>
   );

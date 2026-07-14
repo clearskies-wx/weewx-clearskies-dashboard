@@ -15,3 +15,7 @@ export const CARTO_OSM_ATTRIBUTION =
 /** OpenStreetMap ODbL attribution — used for vector overlays sourced from OSM data (e.g. geographic features). */
 export const OSM_ODBL_ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors (ODbL)';
+
+/** OpenSeaMap attribution — marine feature overlay (buoys, channels, harbors, depth contours) on the Marine Activities page map (DASHBOARD-MANUAL §12, T5.3). */
+export const OPENSEAMAP_ATTRIBUTION =
+  'Map data: &copy; <a href="http://www.openseamap.org">OpenSeaMap</a> contributors';
