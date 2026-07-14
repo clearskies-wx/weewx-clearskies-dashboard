@@ -24,6 +24,7 @@ import {
   XAxis,
   YAxis,
   ReferenceLine,
+  Legend,
 } from 'recharts';
 import { ChartContainer } from '../../../charts/chart-container';
 import { formatValue } from '../../../../utils/format';
@@ -32,9 +33,16 @@ import { formatNumber } from '../../../../utils/format-number';
 import { buildHourTicks } from './hour-ticks';
 import type { TidePrediction, WaterLevel } from '../../../../api/types';
 
+interface TotalWaterLevelPoint {
+  time: string;
+  height: number;
+  residual: number;
+}
+
 export interface TideChartProps {
   predictions: TidePrediction[];
   waterLevels?: WaterLevel[];
+  totalWaterLevelForecast?: TotalWaterLevelPoint[];
   ariaLabel: string;
   /** i18n.language — required for locale-correct number/time formatting. */
   locale: string;
@@ -63,6 +71,7 @@ interface LevelPoint {
 export function TideChart({
   predictions,
   waterLevels = [],
+  totalWaterLevelForecast,
   ariaLabel,
   locale,
   stationTz,
@@ -99,6 +108,19 @@ export function TideChart({
       })),
     [waterLevels],
   );
+
+  const compositePoints = useMemo(
+    () =>
+      (totalWaterLevelForecast ?? []).map((p) => ({
+        ts: new Date(p.time).getTime(),
+        total: p.height,
+      })),
+    [totalWaterLevelForecast],
+  );
+
+  const nowTs = Date.now();
+  const hasComposite = compositePoints.length > 0;
+  const hasObserved = levelPoints.length > 0;
 
   if (predictionPoints.length === 0) {
     return (
@@ -164,19 +186,51 @@ export function TideChart({
             connectNulls
           />
 
-          {levelPoints.length > 0 && (
+          {hasObserved && (
             <Line
               data={levelPoints}
               type="monotone"
               dataKey="level"
               name={t('tide.observedLevel')}
               stroke="var(--chart-3)"
-              strokeWidth={2}
-              strokeDasharray="4 3"
+              strokeWidth={2.5}
               dot={false}
               activeDot={false}
               isAnimationActive={false}
               connectNulls
+            />
+          )}
+
+          {hasComposite && (
+            <Line
+              data={compositePoints}
+              type="monotone"
+              dataKey="total"
+              name={t('tide.totalWaterLevel', { defaultValue: 'Total Water Level' })}
+              stroke="var(--chart-4, var(--chart-1))"
+              strokeWidth={2}
+              strokeDasharray="6 3"
+              dot={false}
+              activeDot={false}
+              isAnimationActive={false}
+              connectNulls
+            />
+          )}
+
+          {nowTs >= minTs && nowTs <= maxTs && (
+            <ReferenceLine
+              x={nowTs}
+              stroke="var(--foreground)"
+              strokeDasharray="2 4"
+              strokeWidth={1}
+              label={{ value: t('tide.now', { defaultValue: 'Now' }), position: 'top', fontSize: 11, fill: 'var(--foreground)' }}
+            />
+          )}
+
+          {(hasObserved || hasComposite) && (
+            <Legend
+              wrapperStyle={{ fontSize: 'var(--text-label)', fontFamily: 'var(--font-chart)' }}
+              iconType="plainline"
             />
           )}
 
