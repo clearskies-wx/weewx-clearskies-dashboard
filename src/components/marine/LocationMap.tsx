@@ -1,16 +1,22 @@
 // LocationMap.tsx — Leaflet map for the Marine Activities page
 // (DASHBOARD-MANUAL §12). Two variants:
-//   "full" — landing state, full-size interactive map with a marker per
-//            configured location.
-//   "hero" — selected state, compressed ~120px strip centered on the
-//            selected location's marker.
+//   "full" — landing state, full-size interactive map with a numbered pin
+//            per configured location.
+//   "hero" — selected state, compressed strip centered on the selected
+//            location's marker.
 //
-// Markers use Leaflet's default pin icon (via leaflet-setup.ts) rather than
-// the CircleMarker dots used on the Seismic page, so marine markers are
-// visually distinct from earthquake markers per the T7.1 spec. Locations
-// with active alerts get a colored pin (amber) instead of the default blue
-// pin — paired with the same text/icon alert badge on LocationCard below,
-// so color is never the only signal (rules/coding.md §5.1).
+// Markers are numbered L.divIcon pins (T3.5) rather than Leaflet's default
+// pin or the CircleMarker dots used on the Seismic page — each pin's number
+// matches the corresponding LocationCard's number badge so the two views
+// stay visually linked. Locations with active alerts get an amber pin
+// instead of the operator-accent (var(--primary)) pin — paired with the
+// same text/icon alert badge on LocationCard, so color is never the only
+// signal (rules/coding.md §5.1).
+//
+// Linked hover (T3.6): hovering a pin highlights the matching LocationCard
+// (via onHoverLocation → parent state → LocationCard's isHovered prop);
+// hovering a LocationCard scales up the matching pin 1.3× (via the
+// hoveredId prop feeding back into the pin's icon here).
 //
 // Keyboard access: as with the Seismic page's map (src/routes/seismic.tsx),
 // Leaflet markers are a supplementary visual affordance — the primary
@@ -44,26 +50,29 @@ const TILE_CONFIG = {
   },
 } as const;
 
-// Amber alert marker — same visual language as the amber alert badge on
-// LocationCard. Built once at module scope (Leaflet icons are immutable).
-const alertIcon = L.divIcon({
-  className: '',
-  html: '<div style="width:20px;height:20px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#f59e0b;border:2px solid #78350f;box-shadow:0 1px 3px rgba(0,0,0,0.4);"></div>',
-  iconSize: [20, 20],
-  iconAnchor: [10, 20],
-  popupAnchor: [0, -20],
-});
+const PIN_BASE_SIZE = 24;
+const PIN_HOVER_SCALE = 1.3;
 
-// Explicit default-blue-pin icon for locations without an active alert.
-// react-leaflet's <Marker icon={...}> passes `icon: undefined` straight
-// through to the underlying L.Marker options when the prop is explicitly
-// `undefined` — L.extend()'s merge treats an own property with value
-// `undefined` as present, so it clobbers L.Marker.prototype.options.icon
-// (set by leaflet-setup.ts) instead of falling back to it. That crashes
-// Leaflet's _initIcon() with "Cannot read properties of undefined (reading
-// 'createIcon')". Always pass a concrete icon — never rely on the prop
-// being omitted to mean "use the default."
-const defaultIcon = new L.Icon.Default();
+/**
+ * Builds a numbered divIcon pin (T3.5): 24×24px circle, operator-accent
+ * background (var(--primary)) or amber (#f59e0b) for locations with active
+ * alerts, white centered number (12px, weight 600). Scales to 1.3× when
+ * hovered (T3.6, via the hoveredId prop on LocationMap). Built fresh per
+ * marker/render since the number, alert state, and hover state all vary —
+ * unlike the previous static module-scope icons, this can't be memoized at
+ * module scope.
+ */
+function buildNumberedIcon(number: number, hasAlerts: boolean, isHovered: boolean): L.DivIcon {
+  const size = isHovered ? Math.round(PIN_BASE_SIZE * PIN_HOVER_SCALE) : PIN_BASE_SIZE;
+  const bg = hasAlerts ? '#f59e0b' : 'var(--primary)';
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,0.4);transition:width 0.15s ease,height 0.15s ease;">${number}</div>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    popupAnchor: [0, -size / 2],
+  });
+}
 
 interface LocationMapProps {
   locations: MarineLocationSummary[];
@@ -72,6 +81,19 @@ interface LocationMapProps {
   variant: 'full' | 'hero';
   /** Fallback center when no locations are configured yet. */
   fallbackCenter?: [number, number];
+  /**
+   * Explicit pixel height (T3.9 — the responsive landing-state layout
+   * computes this from the configured locations' bounding-box aspect
+   * ratio). Falls back to the variant's previous fixed height (400 for
+   * "full", 120 for "hero") when omitted.
+   */
+  height?: number;
+  /** Linked hover (T3.6): id of the location currently hovered via its
+   *  LocationCard, so the matching pin can scale up. */
+  hoveredId?: string | null;
+  /** Notifies the parent when a pin is hovered/unhovered so the matching
+   *  LocationCard can be highlighted. Called with null on mouseout. */
+  onHoverLocation?: (locationId: string | null) => void;
 }
 
 // FlyToSelected — re-centers the map on the selected location when it
@@ -102,6 +124,9 @@ export function LocationMap({
   onSelectLocation,
   variant,
   fallbackCenter = [0, 0],
+  height,
+  hoveredId = null,
+  onHoverLocation,
 }: LocationMapProps) {
   const { t } = useTranslation('marine');
   const { resolved: resolvedTheme } = useTheme();
@@ -125,12 +150,13 @@ export function LocationMap({
   }, [locations, fallbackCenter]);
 
   const isHero = variant === 'hero';
-  const heightClass = isHero ? 'h-[120px]' : 'h-[400px]';
+  const resolvedHeight = height ?? (isHero ? 120 : 400);
   const ariaLabel = isHero ? t('map.selectedAriaLabel') : t('map.ariaLabel');
 
   return (
     <div
-      className={`${heightClass} w-full overflow-hidden rounded-xl ring-1 ring-foreground/10`}
+      className="w-full overflow-hidden rounded-xl ring-1 ring-foreground/10"
+      style={{ height: `${resolvedHeight}px` }}
       role="region"
       aria-label={ariaLabel}
     >
@@ -147,13 +173,14 @@ export function LocationMap({
       >
         <TileLayer key={baseTile.url} url={baseTile.url} attribution={baseTile.attribution} />
 
-        {locations.map((loc) => {
+        {locations.map((loc, i) => {
           const hasAlerts = (loc.activeAlerts?.length ?? 0) > 0;
+          const isHovered = hoveredId === loc.locationId;
           return (
             <Marker
               key={loc.locationId}
               position={[loc.coordinates.lat, loc.coordinates.lon]}
-              icon={hasAlerts ? alertIcon : defaultIcon}
+              icon={buildNumberedIcon(i + 1, hasAlerts, isHovered)}
               // Leaflet auto-assigns role="button" + tabindex to marker icons
               // when keyboard=true (Marker's own option, independent of the
               // map's keyboard option), but gives them no accessible name —
@@ -165,6 +192,8 @@ export function LocationMap({
               keyboard={false}
               eventHandlers={{
                 click: () => onSelectLocation(loc.locationId),
+                mouseover: () => onHoverLocation?.(loc.locationId),
+                mouseout: () => onHoverLocation?.(null),
               }}
             >
               <Popup>
