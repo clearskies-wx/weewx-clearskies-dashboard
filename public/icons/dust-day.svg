@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 96 96">
+  <!-- Generator: Adobe Illustrator 30.4.0, SVG Export Plug-In . SVG Version: 2.1.4 Build 226)  -->
+  <defs>
+    <mask id="mask" x="0" y="0" width="96" height="96" maskUnits="userSpaceOnUse">
+      <g id="dustMask">
+        <path d="M0,0h96L0,96V0Z" style="fill: #fff;"/>
+      </g>
+    </mask>
+    <linearGradient id="linear-gradient" x1="-544.24" y1="360.98" x2="-544.24" y2="359.98" gradientTransform="translate(47941 31770) scale(88 -88)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffd24d"/>
+      <stop offset="1" stop-color="#f5a623"/>
+    </linearGradient>
+    <linearGradient id="linear-gradient1" x1="-458.25" y1="318.97" x2="-458.25" y2="317.97" gradientTransform="translate(2346.76 2496.5784) rotate(11.4958) scale(6 -6)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#d4a574"/>
+      <stop offset="1" stop-color="#a0734a"/>
+    </linearGradient>
+    <linearGradient id="linear-gradient2" x1="-458.25" y1="318.97" x2="-458.25" y2="317.97" gradientTransform="translate(2354.5995 2498.1728) rotate(11.4958) scale(6 -6)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#d4a574"/>
+      <stop offset="1" stop-color="#a0734a"/>
+    </linearGradient>
+    <linearGradient id="linear-gradient3" x1="-458.25" y1="318.97" x2="-458.25" y2="317.97" gradientTransform="translate(2356.9911 2486.4135) rotate(11.4958) scale(6 -6)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#d4a574"/>
+      <stop offset="1" stop-color="#a0734a"/>
+    </linearGradient>
+    <linearGradient id="linear-gradient4" x1="-458.25" y1="318.97" x2="-458.25" y2="317.97" gradientTransform="translate(2364.8306 2488.0079) rotate(11.4958) scale(6 -6)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#d4a574"/>
+      <stop offset="1" stop-color="#a0734a"/>
+    </linearGradient>
+    <linearGradient id="linear-gradient5" x1="-458.25" y1="318.97" x2="-458.25" y2="317.97" gradientTransform="translate(2367.2221 2476.2486) rotate(11.4958) scale(6 -6)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#d4a574"/>
+      <stop offset="1" stop-color="#a0734a"/>
+    </linearGradient>
+    <linearGradient id="linear-gradient6" x1="-458.25" y1="318.97" x2="-458.25" y2="317.97" gradientTransform="translate(2375.0617 2477.843) rotate(11.4958) scale(6 -6)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#d4a574"/>
+      <stop offset="1" stop-color="#a0734a"/>
+    </linearGradient>
+    <linearGradient id="linear-gradient7" x1="-458.25" y1="318.97" x2="-458.25" y2="317.97" gradientTransform="translate(2377.4532 2466.0837) rotate(11.4958) scale(6 -6)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#d4a574"/>
+      <stop offset="1" stop-color="#a0734a"/>
+    </linearGradient>
+    <linearGradient id="linear-gradient8" x1="-458.25" y1="318.97" x2="-458.25" y2="317.97" gradientTransform="translate(2385.2927 2467.678) rotate(11.4958) scale(6 -6)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#d4a574"/>
+      <stop offset="1" stop-color="#a0734a"/>
+    </linearGradient>
+    <linearGradient id="linear-gradient9" x1="-458.25" y1="318.97" x2="-458.25" y2="317.97" gradientTransform="translate(2387.6843 2455.9188) rotate(11.4958) scale(6 -6)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#d4a574"/>
+      <stop offset="1" stop-color="#a0734a"/>
+    </linearGradient>
+    <linearGradient id="linear-gradient10" x1="-458.25" y1="318.97" x2="-458.25" y2="317.97" gradientTransform="translate(2395.5238 2457.5131) rotate(11.4958) scale(6 -6)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#d4a574"/>
+      <stop offset="1" stop-color="#a0734a"/>
+    </linearGradient>
+  </defs>
+  <g id="Layer_1" focusable="false">
+    <g style="mask: url(#mask);">
+      <path d="M44,20V4h8v16h-8ZM70.6,31l-5.5-5.5,11.2-11.5,5.6,5.7-11.3,11.3ZM76,52v-8h16v8h-16ZM44,92v-16h8v16h-8ZM25.4,30.8l-11.4-11.1,5.7-5.6,11.3,11.3-5.6,5.4ZM76.2,82l-11.1-11.5,5.4-5.4,11.4,11-5.7,5.9ZM4,52v-8h16v8H4ZM19.7,82l-5.6-5.7,11.2-11.2,2.9,2.7,2.9,2.8-11.4,11.4ZM31,65c-4.67-4.67-7-10.33-7-17s2.33-12.33,7-17c4.67-4.67,10.33-7,17-7s12.33,2.33,17,7c4.67,4.67,7,10.33,7,17s-2.33,12.33-7,17c-4.67,4.67-10.33,7-17,7s-12.33-2.33-17-7" style="fill: url(#linear-gradient);"/>
+    </g>
+    <circle cx="33.26" cy="76.11" r="3" style="fill: url(#linear-gradient1);"/>
+    <circle cx="41.1" cy="77.7" r="3" style="fill: url(#linear-gradient2);"/>
+    <circle cx="43.49" cy="65.94" r="3" style="fill: url(#linear-gradient3);"/>
+    <circle cx="51.33" cy="67.54" r="3" style="fill: url(#linear-gradient4);"/>
+    <circle cx="53.72" cy="55.78" r="3" style="fill: url(#linear-gradient5);"/>
+    <circle cx="61.56" cy="57.37" r="3" style="fill: url(#linear-gradient6);"/>
+    <circle cx="63.95" cy="45.61" r="3" style="fill: url(#linear-gradient7);"/>
+    <circle cx="71.79" cy="47.21" r="3" style="fill: url(#linear-gradient8);"/>
+    <circle cx="74.18" cy="35.45" r="3" style="fill: url(#linear-gradient9);"/>
+    <circle cx="82.02" cy="37.04" r="3" style="fill: url(#linear-gradient10);"/>
+  </g>
+</svg>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 96 96">
+  <!-- Generator: Adobe Illustrator 30.4.0, SVG Export Plug-In . SVG Version: 2.1.4 Build 226)  -->
+  <defs>
+    <linearGradient id="linear-gradient" x1="-544.24" y1="360.98" x2="-544.24" y2="359.98" gradientTransform="translate(47941 31770) scale(88 -88)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffd24d"/>
+      <stop offset="1" stop-color="#f5a623"/>
+    </linearGradient>
+    <linearGradient id="linear-gradient1" x1="-518.12" y1="348.51" x2="-518.12" y2="347.16" gradientTransform="translate(8731.3996 5913.9997) scale(16.8 -16.8)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9ea5ad"/>
+      <stop offset="1" stop-color="#6b7280"/>
+    </linearGradient>
+    <linearGradient id="linear-gradient2" x1="-504.58" y1="342.47" x2="-504.58" y2="341.12" gradientTransform="translate(6109.4 4161.6) scale(12 -12)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9ea5ad"/>
+      <stop offset="1" stop-color="#6b7280"/>
+    </linearGradient>
+    <linearGradient id="linear-gradient3" x1="-490.96" y1="335.18" x2="-490.96" y2="333.83" gradientTransform="translate(4558.7999 3161.7999) scale(9.2 -9.2)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9ea5ad"/>
+      <stop offset="1" stop-color="#6b7280"/>
+    </linearGradient>
+    <linearGradient id="linear-gradient4" x1="-509.73" y1="344.69" x2="-509.73" y2="343.34" gradientTransform="translate(7000.2002 4756.0001) scale(13.6 -13.6)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9ea5ad"/>
+      <stop offset="1" stop-color="#6b7280"/>
+    </linearGradient>
+  </defs>
+  <g id="Layer_1" focusable="false">
+    <path d="M44,20V4h8v16h-8ZM70.6,31l-5.5-5.5,11.2-11.5,5.6,5.7-11.3,11.3ZM76,52v-8h16v8h-16ZM44,92v-16h8v16h-8ZM25.4,30.8l-11.4-11.1,5.7-5.6,11.3,11.3-5.6,5.4ZM76.2,82l-11.1-11.5,5.4-5.4,11.4,11-5.7,5.9ZM4,52v-8h16v8H4ZM19.7,82l-5.6-5.7,11.2-11.2,2.9,2.7,2.9,2.8-11.4,11.4ZM31,65c-4.67-4.67-7-10.33-7-17s2.33-12.33,7-17c4.67-4.67,10.33-7,17-7s12.33,2.33,17,7c4.67,4.67,7,10.33,7,17s-2.33,12.33-7,17c-4.67,4.67-10.33,7-17,7s-12.33-2.33-17-7" style="fill: url(#linear-gradient);"/>
+    <g>
+      <circle cx="26.91" cy="70.34" r="11.33" style="fill: url(#linear-gradient1); isolation: isolate;"/>
+      <circle cx="54.42" cy="60.09" r="8.09" style="fill: url(#linear-gradient2); isolation: isolate;"/>
+      <circle cx="42.01" cy="84.36" r="6.2" style="fill: url(#linear-gradient3); isolation: isolate;"/>
+      <circle cx="67.9" cy="77.35" r="9.17" style="fill: url(#linear-gradient4); isolation: isolate;"/>
+    </g>
+  </g>
+</svg>

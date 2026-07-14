@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 96 96">
+  <!-- Generator: Adobe Illustrator 30.4.0, SVG Export Plug-In . SVG Version: 2.1.4 Build 226)  -->
+  <defs>
+    <linearGradient id="linear-gradient" x1="-543.61" y1="360.67" x2="-543.61" y2="359.67" gradientTransform="translate(43537 28862) scale(80 -80)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#86c3db"/>
+      <stop offset="1" stop-color="#72b9d5"/>
+    </linearGradient>
+    <linearGradient id="linear-gradient1" x1="-517.92" y1="348.37" x2="-517.92" y2="347.02" gradientTransform="translate(8731.3996 5913.9997) scale(16.8 -16.8)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9ea5ad"/>
+      <stop offset="1" stop-color="#6b7280"/>
+    </linearGradient>
+    <linearGradient id="linear-gradient2" x1="-504.29" y1="342.27" x2="-504.29" y2="340.92" gradientTransform="translate(6109.4 4161.6) scale(12 -12)" xlink:href="#linear-gradient1"/>
+    <linearGradient id="linear-gradient3" x1="-490.58" y1="334.92" x2="-490.58" y2="333.57" gradientTransform="translate(4558.7999 3161.7999) scale(9.2 -9.2)" xlink:href="#linear-gradient1"/>
+    <linearGradient id="linear-gradient4" x1="-509.47" y1="344.52" x2="-509.47" y2="343.17" gradientTransform="translate(7000.2002 4756.0001) scale(13.6 -13.6)" xlink:href="#linear-gradient1"/>
+  </defs>
+  <g id="Layer_1" focusable="false">
+    <path d="M48.4,88c-5.6,0-10.85-1.07-15.75-3.2-4.9-2.13-9.17-5.02-12.8-8.65-3.63-3.63-6.52-7.9-8.65-12.8-2.13-4.9-3.2-10.15-3.2-15.75,0-9.73,3.1-18.32,9.3-25.75,6.2-7.43,14.1-12.05,23.7-13.85-1.2,6.6-.83,13.05,1.1,19.35s5.27,11.82,10,16.55c4.73,4.73,10.25,8.06,16.55,10,6.3,1.94,12.75,2.3,19.35,1.1-1.73,9.6-6.33,17.5-13.8,23.7s-16.07,9.3-25.8,9.3" style="fill: url(#linear-gradient);"/>
+    <g>
+      <circle cx="30.37" cy="72.71" r="11.33" style="fill: url(#linear-gradient1); isolation: isolate;"/>
+      <circle cx="57.88" cy="62.46" r="8.09" style="fill: url(#linear-gradient2); isolation: isolate;"/>
+      <circle cx="45.48" cy="86.74" r="6.2" style="fill: url(#linear-gradient3); isolation: isolate;"/>
+      <circle cx="71.37" cy="79.72" r="9.17" style="fill: url(#linear-gradient4); isolation: isolate;"/>
+    </g>
+  </g>
+</svg>
