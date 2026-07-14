@@ -1187,6 +1187,10 @@ export interface MarineObservation {
   stationId: string;
   time: string;
   spectralComponents: SpectralWaveComponent[] | null;
+  /** WMO weather interpretation code for the hero WeatherIcon on LocationCard (T3.8). Null when unavailable. */
+  weatherCode: number | null;
+  /** Day/night flag for WeatherIcon's night-glyph selection. Null when unavailable. */
+  isDay: boolean | null;
 }
 
 export interface TidePrediction {
@@ -1297,6 +1301,12 @@ export interface BeachSafetyAssessment {
   activeAlerts: string[];
 }
 
+/** A single active marine-zone alert headline (MarineLocationSummary.activeAlerts). */
+export interface MarineAlertSummary {
+  headline: string;
+  alertType: string;
+}
+
 export interface MarineLocationSummary {
   locationId: string;
   name: string;
@@ -1304,7 +1314,7 @@ export interface MarineLocationSummary {
   activities: string[];
   currentConditions: MarineObservation | null;
   currentTide: { type: string; time: string; height: number } | null;
-  activeAlerts: string[] | null;
+  activeAlerts: MarineAlertSummary[] | null;
   surfRating: number | null;
   beachSafetyLevel: string | null;
 }
