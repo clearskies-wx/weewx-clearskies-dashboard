@@ -70,6 +70,16 @@ function GradientDefs({ p }: { p: string }): ReactElement {
         <stop offset="0%"   stopColor="#CDAA6D" />
         <stop offset="100%" stopColor="#A07840" />
       </linearGradient>
+      {/* Smoke gradient: darker grey than clouds — smoke wisps */}
+      <linearGradient id={`${p}smokeGrad`} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"   stopColor="#9EA5AD" />
+        <stop offset="100%" stopColor="#6B7280" />
+      </linearGradient>
+      {/* Dust gradient: earth-tone tan/brown — dust particles */}
+      <linearGradient id={`${p}dustGrad`} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"   stopColor="#D4A574" />
+        <stop offset="100%" stopColor="#A0734A" />
+      </linearGradient>
     </defs>
   );
 }
@@ -340,6 +350,418 @@ export function GlyphHazyNight({ size }: GlyphProps): ReactElement {
         <path fill={`url(#${p}moonGrad)`} d={moonPath} />
       </g>
       {hazePaths.map((d, i) => (
+        <path key={i} fill={`url(#${p}hazeGrad)`} d={d} />
+      ))}
+    </Svg>
+  );
+}
+
+// ===========================================================================
+// Shared path constants — reused across the new glyph functions below.
+// Existing glyph functions define their own local copies; new glyphs
+// reference these module-level constants to avoid ~21x duplication.
+// ===========================================================================
+
+/** Sun path (Material Symbols sunny.svg) — same d as GlyphSunny. */
+const SUN_D =
+  'M11 5V1h2v4zm6.65 2.75l-1.375-1.375l2.8-2.875l1.4 1.425zM19 13v-2h4v2zm-8 10v-4h2v4zM6.35 7.7L3.5 4.925l1.425-1.4L7.75 6.35zm12.7 12.8l-2.775-2.875l1.35-1.35l2.85 2.75zM1 13v-2h4v2zm3.925 7.5l-1.4-1.425l2.8-2.8l.725.675l.725.7zm2.825-4.25Q6 14.5 6 12t1.75-4.25T12 6t4.25 1.75T18 12t-1.75 4.25T12 18t-4.25-1.75';
+
+/** Moon path (Material Symbols bedtime.svg) — same d as GlyphBedtime. */
+const MOON_D =
+  'M12.1 22q-2.1 0-3.937-.8t-3.2-2.162t-2.163-3.2T2 11.9q0-3.65 2.325-6.437T10.25 2q-.45 2.475.275 4.838t2.5 4.137t4.138 2.5T22 13.75q-.65 3.6-3.45 5.925T12.1 22';
+
+/** Overcast cloud path (Material Symbols cloud.svg) — same d as GlyphCloud. */
+const CLOUD_D =
+  'M6.5 20q-2.275 0-3.887-1.575T1 14.575q0-1.95 1.175-3.475T5.25 9.15q.625-2.3 2.5-3.725T12 4q2.925 0 4.963 2.038T19 11q1.725.2 2.863 1.488T23 15.5q0 1.875-1.312 3.188T18.5 20z';
+
+/** Rain cloud path (Material Symbols rainy.svg cloud portion). */
+const RAIN_CLOUD_D =
+  'M7.5 16q-2.275 0-3.887-1.612T2 10.5q0-2.075 1.375-3.625t3.4-1.825q.8-1.425 2.188-2.238T12 2q2.25 0 3.913 1.438t2.012 3.587q1.725.15 2.9 1.425T22 11.5q0 1.875-1.312 3.188T17.5 16z';
+
+/** Partly cloudy day — cloud blob (grey). */
+const PC_CLOUD_D =
+  'M6 20q-1.65 0-2.825-1.175T2 16t1.175-2.825T6 12q1.2 0 2.213.65t1.462 1.775l.25.575h.6q1.05 0 1.763.725T13 17.5t-.725 1.775T10.5 20z';
+
+/** Partly cloudy day — sun body + 5 rays (gold). */
+const PC_SUN_D =
+  'M14.975 17.2q-.1-1.575-1.137-2.725t-2.613-1.425q-.775-1.35-2.087-2.137T6.25 10q.65-1.825 2.225-2.912T12 6q2.5 0 4.25 1.75T18 12q0 1.625-.8 3.013T14.975 17.2M11 5V1h2v4zm6.65 2.75l-1.4-1.4l2.8-2.85l1.425 1.425zM19 13v-2h4v2zm.05 7.5l-2.8-2.85l1.4-1.4l2.85 2.8zM6.35 7.75L3.525 4.925L4.95 3.5l2.8 2.85z';
+
+/** Partly cloudy night — cloud blob (grey). */
+const PCN_CLOUD_D =
+  'M6 13q1.2 0 2.2.65t1.475 1.775l.25.575h.625q1.05 0 1.75.738T13 18.5q0 1.05-.725 1.775T10.5 21H6q-1.65 0-2.825-1.175T2 17q0-1.675 1.175-2.838T6 13';
+
+/** Partly cloudy night — crescent moon (moon gradient). */
+const PCN_MOON_D =
+  'M11.25 2q-.45 2.475.275 4.838t2.5 4.137t4.138 2.5T23 13.75q-.65 3.55-3.375 5.863T13.325 22q.8-.65 1.238-1.562T15 18.5q0-1.7-1.062-2.937t-2.713-1.488q-.8-1.425-2.187-2.25T6 11q-.8 0-1.562.2T3 11.8q.05-3.625 2.363-6.375T11.25 2';
+
+/** Haze stripe paths — fog-bar shapes below the clipped sky element. */
+const HAZE_STRIPE_PATHS = [
+  'M6 19q-.425 0-.712-.288T5 18t.288-.712T6 17h9q.425 0 .713.288T16 18t-.288.713T15 19z',
+  'M18 19q-.425 0-.712-.288T17 18t.288-.712T18 17t.713.288T19 18t-.288.713T18 19',
+  'M10 22q-.425 0-.712-.288T9 21t.288-.712T10 20h7q.425 0 .713.288T18 21t-.288.713T17 22z',
+  'M7 22q-.425 0-.712-.288T6 21t.288-.712T7 20t.713.288T8 21t-.288.713T7 22',
+];
+
+// ---------------------------------------------------------------------------
+// Private helper components — reusable primitive groups for new-icon
+// composition.  Not exported; used only within glyph functions in this file.
+// ---------------------------------------------------------------------------
+
+/** Smoke wisp cluster — 4 circles overlaid on the upper area of the icon. */
+function SmokeBubbles({ p }: { p: string }): ReactElement {
+  return (
+    <>
+      <circle cx={8.5} cy={8.3} r={2.1} opacity={0.88} fill={`url(#${p}smokeGrad)`} />
+      <circle cx={13.6} cy={6.4} r={1.5} opacity={0.82} fill={`url(#${p}smokeGrad)`} />
+      <circle cx={11.3} cy={10.9} r={1.15} opacity={0.78} fill={`url(#${p}smokeGrad)`} />
+      <circle cx={16.1} cy={9.6} r={1.7} opacity={0.82} fill={`url(#${p}smokeGrad)`} />
+    </>
+  );
+}
+
+/** Dust particle cluster — 5 circles + 3 arc strokes. */
+function DustCluster({ p }: { p: string }): ReactElement {
+  return (
+    <>
+      <circle cx={6} cy={15.5} r={1.3} fill={`url(#${p}dustGrad)`} />
+      <circle cx={9} cy={17.9} r={1.7} fill={`url(#${p}dustGrad)`} />
+      <circle cx={12} cy={14.5} r={2.1} fill={`url(#${p}dustGrad)`} />
+      <circle cx={15.5} cy={17.5} r={1.5} fill={`url(#${p}dustGrad)`} />
+      <circle cx={18} cy={15.1} r={1.1} fill={`url(#${p}dustGrad)`} />
+      <path d="M3.5 20 q3 -1.6 6 0" stroke={`url(#${p}dustGrad)`} strokeWidth={1} fill="none" strokeLinecap="round" />
+      <path d="M9.5 21.5 q3 -1.6 6 0" stroke={`url(#${p}dustGrad)`} strokeWidth={1} fill="none" strokeLinecap="round" />
+      <path d="M13.5 22.9 q3 -1.6 6 0" stroke={`url(#${p}dustGrad)`} strokeWidth={0.8} fill="none" strokeLinecap="round" />
+    </>
+  );
+}
+
+// ===========================================================================
+// 12. Mostly cloudy day — sun scaled 55%, tucked behind overcast cloud.
+//     Sun is barely visible — distinguishes from partly cloudy (prominent sun)
+//     and overcast (no celestial body).
+// ===========================================================================
+
+export function GlyphMostlyCloudyDay({ size }: GlyphProps): ReactElement {
+  const p = useId();
+  return (
+    <Svg size={size} p={p}>
+      <g transform="translate(9,-4) scale(0.55)">
+        <path fill={`url(#${p}goldGrad)`} d={SUN_D} />
+      </g>
+      <path fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={CLOUD_D} />
+    </Svg>
+  );
+}
+
+// ===========================================================================
+// 13. Mostly cloudy night — moon scaled 55%, tucked behind overcast cloud.
+// ===========================================================================
+
+export function GlyphMostlyCloudyNight({ size }: GlyphProps): ReactElement {
+  const p = useId();
+  return (
+    <Svg size={size} p={p}>
+      <g transform="translate(9,-4) scale(0.55)">
+        <path fill={`url(#${p}moonGrad)`} d={MOON_D} />
+      </g>
+      <path fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={CLOUD_D} />
+    </Svg>
+  );
+}
+
+// ===========================================================================
+// 14. Drizzle — rain cloud + 4 round dots (lighter than rain streaks).
+//     Uses <circle> elements per the mockup, not <path>.
+// ===========================================================================
+
+export function GlyphDrizzle({ size }: GlyphProps): ReactElement {
+  const p = useId();
+  return (
+    <Svg size={size} p={p}>
+      <path fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={RAIN_CLOUD_D} />
+      <circle cx={7} cy={20} r={0.9} fill={`url(#${p}rainGrad)`} />
+      <circle cx={11} cy={21.5} r={0.9} fill={`url(#${p}rainGrad)`} />
+      <circle cx={15} cy={20} r={0.9} fill={`url(#${p}rainGrad)`} />
+      <circle cx={19} cy={21.5} r={0.9} fill={`url(#${p}rainGrad)`} />
+    </Svg>
+  );
+}
+
+// ===========================================================================
+// 15. Wintry mix — rain cloud + 2 rain streak capsules (left) + 3 snow
+//     dots (right).  Serves freezing rain, sleet, and rain/snow mix.
+// ===========================================================================
+
+export function GlyphWintryMix({ size }: GlyphProps): ReactElement {
+  const p = useId();
+  return (
+    <Svg size={size} p={p}>
+      <path fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={RAIN_CLOUD_D} />
+      {/* Rain streaks — left side */}
+      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(7 20) rotate(18)" />
+      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(10.5 21.3) rotate(18)" />
+      {/* Snow dots — right side */}
+      <circle cx={14} cy={20} r={1} fill={`url(#${p}snowGrad)`} />
+      <circle cx={17} cy={21.3} r={1} fill={`url(#${p}snowGrad)`} />
+      <circle cx={20} cy={19.3} r={1} fill={`url(#${p}snowGrad)`} />
+    </Svg>
+  );
+}
+
+// ===========================================================================
+// 16–21. Combined sky + precipitation — partly-cloudy cloud+sun/moon group
+//        scaled to 80% and shifted up, with precipitation elements below.
+// ===========================================================================
+
+export function GlyphPartlyCloudyRainDay({ size }: GlyphProps): ReactElement {
+  const p = useId();
+  return (
+    <Svg size={size} p={p}>
+      <g transform="translate(0,-4) scale(0.8)">
+        <path fillRule="nonzero" fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={PC_CLOUD_D} />
+        <path fillRule="nonzero" fill={`url(#${p}goldGrad)`} d={PC_SUN_D} />
+      </g>
+      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(8 18) rotate(18)" />
+      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(12 19.4) rotate(18)" />
+      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(16 18) rotate(18)" />
+    </Svg>
+  );
+}
+
+export function GlyphPartlyCloudyRainNight({ size }: GlyphProps): ReactElement {
+  const p = useId();
+  return (
+    <Svg size={size} p={p}>
+      <g transform="translate(0,-4) scale(0.8)">
+        <path fillRule="nonzero" fill={`url(#${p}moonGrad)`} d={PCN_MOON_D} />
+        <path fillRule="nonzero" fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={PCN_CLOUD_D} />
+      </g>
+      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(8 18) rotate(18)" />
+      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(12 19.4) rotate(18)" />
+      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(16 18) rotate(18)" />
+    </Svg>
+  );
+}
+
+export function GlyphPartlyCloudySnowDay({ size }: GlyphProps): ReactElement {
+  const p = useId();
+  return (
+    <Svg size={size} p={p}>
+      <g transform="translate(0,-4) scale(0.8)">
+        <path fillRule="nonzero" fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={PC_CLOUD_D} />
+        <path fillRule="nonzero" fill={`url(#${p}goldGrad)`} d={PC_SUN_D} />
+      </g>
+      <circle cx={8} cy={18.5} r={1.1} fill={`url(#${p}snowGrad)`} />
+      <circle cx={12} cy={20} r={1.1} fill={`url(#${p}snowGrad)`} />
+      <circle cx={16} cy={18.5} r={1.1} fill={`url(#${p}snowGrad)`} />
+    </Svg>
+  );
+}
+
+export function GlyphPartlyCloudySnowNight({ size }: GlyphProps): ReactElement {
+  const p = useId();
+  return (
+    <Svg size={size} p={p}>
+      <g transform="translate(0,-4) scale(0.8)">
+        <path fillRule="nonzero" fill={`url(#${p}moonGrad)`} d={PCN_MOON_D} />
+        <path fillRule="nonzero" fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={PCN_CLOUD_D} />
+      </g>
+      <circle cx={8} cy={18.5} r={1.1} fill={`url(#${p}snowGrad)`} />
+      <circle cx={12} cy={20} r={1.1} fill={`url(#${p}snowGrad)`} />
+      <circle cx={16} cy={18.5} r={1.1} fill={`url(#${p}snowGrad)`} />
+    </Svg>
+  );
+}
+
+export function GlyphPartlyCloudyWintryMixDay({ size }: GlyphProps): ReactElement {
+  const p = useId();
+  return (
+    <Svg size={size} p={p}>
+      <g transform="translate(0,-4) scale(0.8)">
+        <path fillRule="nonzero" fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={PC_CLOUD_D} />
+        <path fillRule="nonzero" fill={`url(#${p}goldGrad)`} d={PC_SUN_D} />
+      </g>
+      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(8 18) rotate(18)" />
+      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(11 19.4) rotate(18)" />
+      <circle cx={14.5} cy={18.8} r={1.1} fill={`url(#${p}snowGrad)`} />
+      <circle cx={17.5} cy={17.6} r={1.1} fill={`url(#${p}snowGrad)`} />
+    </Svg>
+  );
+}
+
+export function GlyphPartlyCloudyWintryMixNight({ size }: GlyphProps): ReactElement {
+  const p = useId();
+  return (
+    <Svg size={size} p={p}>
+      <g transform="translate(0,-4) scale(0.8)">
+        <path fillRule="nonzero" fill={`url(#${p}moonGrad)`} d={PCN_MOON_D} />
+        <path fillRule="nonzero" fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={PCN_CLOUD_D} />
+      </g>
+      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(8 18) rotate(18)" />
+      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(11 19.4) rotate(18)" />
+      <circle cx={14.5} cy={18.8} r={1.1} fill={`url(#${p}snowGrad)`} />
+      <circle cx={17.5} cy={17.6} r={1.1} fill={`url(#${p}snowGrad)`} />
+    </Svg>
+  );
+}
+
+// ===========================================================================
+// 22–26. Smoke overlays — smoke bubbles OVERLAID on intact base icon.
+//        The base icon stays complete; smoke is additive.
+// ===========================================================================
+
+export function GlyphSmokeDay({ size }: GlyphProps): ReactElement {
+  const p = useId();
+  return (
+    <Svg size={size} p={p}>
+      <path fill={`url(#${p}goldGrad)`} d={SUN_D} />
+      <SmokeBubbles p={p} />
+    </Svg>
+  );
+}
+
+export function GlyphSmokeNight({ size }: GlyphProps): ReactElement {
+  const p = useId();
+  return (
+    <Svg size={size} p={p}>
+      <path fill={`url(#${p}moonGrad)`} d={MOON_D} />
+      <SmokeBubbles p={p} />
+    </Svg>
+  );
+}
+
+export function GlyphSmokePartlyCloudyDay({ size }: GlyphProps): ReactElement {
+  const p = useId();
+  return (
+    <Svg size={size} p={p}>
+      <path fillRule="nonzero" fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={PC_CLOUD_D} />
+      <path fillRule="nonzero" fill={`url(#${p}goldGrad)`} d={PC_SUN_D} />
+      <SmokeBubbles p={p} />
+    </Svg>
+  );
+}
+
+export function GlyphSmokePartlyCloudyNight({ size }: GlyphProps): ReactElement {
+  const p = useId();
+  return (
+    <Svg size={size} p={p}>
+      <path fillRule="nonzero" fill={`url(#${p}moonGrad)`} d={PCN_MOON_D} />
+      <path fillRule="nonzero" fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={PCN_CLOUD_D} />
+      <SmokeBubbles p={p} />
+    </Svg>
+  );
+}
+
+export function GlyphSmokeOvercast({ size }: GlyphProps): ReactElement {
+  const p = useId();
+  return (
+    <Svg size={size} p={p}>
+      <path fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={CLOUD_D} />
+      <SmokeBubbles p={p} />
+    </Svg>
+  );
+}
+
+// ===========================================================================
+// 27–29. Dust standalone — dust IS the dominant visual.  The celestial body
+//        (sun/moon/cloud) is a small background element.
+// ===========================================================================
+
+export function GlyphDustDay({ size }: GlyphProps): ReactElement {
+  const p = useId();
+  return (
+    <Svg size={size} p={p}>
+      <g transform="translate(10,-8) scale(0.45)">
+        <path fill={`url(#${p}goldGrad)`} d={SUN_D} />
+      </g>
+      <DustCluster p={p} />
+    </Svg>
+  );
+}
+
+export function GlyphDustNight({ size }: GlyphProps): ReactElement {
+  const p = useId();
+  return (
+    <Svg size={size} p={p}>
+      <g transform="translate(10,-8) scale(0.45)">
+        <path fill={`url(#${p}moonGrad)`} d={MOON_D} />
+      </g>
+      <DustCluster p={p} />
+    </Svg>
+  );
+}
+
+export function GlyphDust({ size }: GlyphProps): ReactElement {
+  const p = useId();
+  return (
+    <Svg size={size} p={p}>
+      <g transform="translate(1,-2) scale(0.4)">
+        <path fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={CLOUD_D} />
+      </g>
+      <DustCluster p={p} />
+    </Svg>
+  );
+}
+
+// ===========================================================================
+// 30–32. Haze cloud-cover variants — same cutout technique as GlyphHazy /
+//        GlyphHazyNight: clip the sky element at y=16.5, render amber haze
+//        stripes below.
+// ===========================================================================
+
+export function GlyphHazyPartlyCloudyDay({ size }: GlyphProps): ReactElement {
+  const p = useId();
+  return (
+    <Svg size={size} p={p}>
+      <defs>
+        <clipPath id={`${p}hazeClipPCD`}>
+          <rect x="0" y="0" width="24" height="16.5" />
+        </clipPath>
+      </defs>
+      <g clipPath={`url(#${p}hazeClipPCD)`}>
+        <path fillRule="nonzero" fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={PC_CLOUD_D} />
+        <path fillRule="nonzero" fill={`url(#${p}goldGrad)`} d={PC_SUN_D} />
+      </g>
+      {HAZE_STRIPE_PATHS.map((d, i) => (
+        <path key={i} fill={`url(#${p}hazeGrad)`} d={d} />
+      ))}
+    </Svg>
+  );
+}
+
+export function GlyphHazyPartlyCloudyNight({ size }: GlyphProps): ReactElement {
+  const p = useId();
+  return (
+    <Svg size={size} p={p}>
+      <defs>
+        <clipPath id={`${p}hazeClipPCN`}>
+          <rect x="0" y="0" width="24" height="16.5" />
+        </clipPath>
+      </defs>
+      <g clipPath={`url(#${p}hazeClipPCN)`}>
+        <path fillRule="nonzero" fill={`url(#${p}moonGrad)`} d={PCN_MOON_D} />
+        <path fillRule="nonzero" fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={PCN_CLOUD_D} />
+      </g>
+      {HAZE_STRIPE_PATHS.map((d, i) => (
+        <path key={i} fill={`url(#${p}hazeGrad)`} d={d} />
+      ))}
+    </Svg>
+  );
+}
+
+export function GlyphHazyOvercast({ size }: GlyphProps): ReactElement {
+  const p = useId();
+  return (
+    <Svg size={size} p={p}>
+      <defs>
+        <clipPath id={`${p}hazeClipOC`}>
+          <rect x="0" y="0" width="24" height="16.5" />
+        </clipPath>
+      </defs>
+      <g clipPath={`url(#${p}hazeClipOC)`}>
+        <path fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={CLOUD_D} />
+      </g>
+      {HAZE_STRIPE_PATHS.map((d, i) => (
         <path key={i} fill={`url(#${p}hazeGrad)`} d={d} />
       ))}
     </Svg>
