@@ -2,17 +2,21 @@
  * weather-icon.test.tsx — Unit tests for WeatherIcon (ADR-049 acceptance criteria).
  *
  * Coverage:
- *   - All 29 WMO codes render a glyph (no null / empty render).
+ *   - All 32 WMO codes (including Clear Skies API extension codes 4, 5, 10,
+ *     79) render a glyph (no null / empty render).
  *   - Night flag: code 0 isNight=true renders the moon glyph (bedtime).
  *   - Night flag: non-zero code isNight=true still renders the day glyph.
  *   - Screen-reader label (sr-only span) is present for every mapped code.
  *   - Null / unknown codes render nothing.
  *   - Size prop: numeric and CSS-string variants resolve correctly.
+ *   - toWmoCode() normalises NWS shortnames, OWM condition IDs, and Aeris
+ *     atmosphere codes to WMO numbers.
  */
 
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { render } from '@testing-library/react';
 import { WeatherIcon } from './weather-icon';
+import { toWmoCode } from '../utils/weather-code';
 
 // ---------------------------------------------------------------------------
 // Mock react-i18next — the component calls useTranslation('weather').
@@ -31,13 +35,18 @@ vi.mock('react-i18next', () => ({
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** All 29 WMO codes the component maps (from the WMO_MAP in weather-icon.tsx). */
+/**
+ * All 32 WMO codes the component maps (from the WMO_MAP in weather-icon.tsx),
+ * including the Clear Skies API extension codes: 4 (overcast/heavy overcast),
+ * 5 (haze), 10 (mist), and 79 (ice pellets/sleet).
+ */
 const ALL_WMO_CODES = [
-  0, 1, 2, 3,
+  0, 1, 2, 3, 4, 5,
+  10,
   45, 48,
   51, 53, 55, 56, 57,
   61, 63, 65, 66, 67,
-  71, 73, 75, 77,
+  71, 73, 75, 77, 79,
   80, 81, 82,
   85, 86,
   95, 96, 99,
@@ -329,5 +338,143 @@ describe('WeatherIcon — SVG a11y attributes', () => {
     const { container } = render(<WeatherIcon code={0} />);
     const svg = container.querySelector('svg');
     expect(svg!.getAttribute('focusable')).toBe('false');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite: toWmoCode() — NWS forecast icon shortname mapping
+// ---------------------------------------------------------------------------
+
+describe('toWmoCode — NWS shortname mapping', () => {
+  it('maps "ra" to 61 (rain)', () => {
+    expect(toWmoCode('ra')).toBe(61);
+  });
+
+  it('maps "sct" to 2 (scattered clouds)', () => {
+    expect(toWmoCode('sct')).toBe(2);
+  });
+
+  it('maps "smoke" to 6', () => {
+    expect(toWmoCode('smoke')).toBe(6);
+  });
+
+  it('maps "dust" to 7', () => {
+    expect(toWmoCode('dust')).toBe(7);
+  });
+
+  it('maps "haze" to 5', () => {
+    expect(toWmoCode('haze')).toBe(5);
+  });
+
+  it('maps "tsra" to 95 (thunderstorm)', () => {
+    expect(toWmoCode('tsra')).toBe(95);
+  });
+
+  it('maps "fzra" to 66 (freezing rain)', () => {
+    expect(toWmoCode('fzra')).toBe(66);
+  });
+
+  it('maps compound "sct/smoke" to 6 (smoke wins over sky)', () => {
+    expect(toWmoCode('sct/smoke')).toBe(6);
+  });
+
+  it('maps "fg/ovc" to 45 (fog)', () => {
+    expect(toWmoCode('fg/ovc')).toBe(45);
+  });
+
+  it('resolves literal "wind_sct" shortname to 2', () => {
+    expect(toWmoCode('wind_sct')).toBe(2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite: toWmoCode() — OpenWeatherMap condition ID mapping
+// ---------------------------------------------------------------------------
+
+describe('toWmoCode — OWM condition ID mapping', () => {
+  it('maps 500 (light rain) to 61', () => {
+    expect(toWmoCode(500)).toBe(61);
+  });
+
+  it('maps 711 (smoke) to 6', () => {
+    expect(toWmoCode(711)).toBe(6);
+  });
+
+  it('maps 721 (haze) to 5', () => {
+    expect(toWmoCode(721)).toBe(5);
+  });
+
+  it('maps 731 (dust) to 7', () => {
+    expect(toWmoCode(731)).toBe(7);
+  });
+
+  it('maps 800 (clear) to 0', () => {
+    expect(toWmoCode(800)).toBe(0);
+  });
+
+  it('maps 804 (overcast) to 3', () => {
+    expect(toWmoCode(804)).toBe(3);
+  });
+
+  it('maps 200 (thunderstorm) to 95', () => {
+    expect(toWmoCode(200)).toBe(95);
+  });
+
+  it('maps string "500" to 61', () => {
+    expect(toWmoCode('500')).toBe(61);
+  });
+
+  it('maps 762 (volcanic ash) to 8', () => {
+    expect(toWmoCode(762)).toBe(8);
+  });
+
+  it('returns null for unknown OWM code 999', () => {
+    expect(toWmoCode(999)).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite: toWmoCode() — Aeris atmosphere codes
+// ---------------------------------------------------------------------------
+
+describe('toWmoCode — Aeris atmosphere codes', () => {
+  it('maps "::K" to 6 (smoke)', () => {
+    expect(toWmoCode('::K')).toBe(6);
+  });
+
+  it('maps "::BD" to 7 (blowing dust)', () => {
+    expect(toWmoCode('::BD')).toBe(7);
+  });
+
+  it('maps "::H" to 5 (haze)', () => {
+    expect(toWmoCode('::H')).toBe(5);
+  });
+
+  it('maps "::VA" to 8 (volcanic ash)', () => {
+    expect(toWmoCode('::VA')).toBe(8);
+  });
+
+  it('maps "::WM" to 79 (wintry mix)', () => {
+    expect(toWmoCode('::WM')).toBe(79);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite: toWmoCode() — edge cases
+// ---------------------------------------------------------------------------
+
+describe('toWmoCode — edge cases', () => {
+  it('returns null for empty string', () => {
+    expect(toWmoCode('')).toBeNull();
+  });
+
+  it('returns null for undefined', () => {
+    expect(toWmoCode(undefined)).toBeNull();
+  });
+
+  it('passes through WMO codes 0-99 unchanged', () => {
+    expect(toWmoCode(0)).toBe(0);
+    expect(toWmoCode(45)).toBe(45);
+    expect(toWmoCode(95)).toBe(95);
   });
 });
