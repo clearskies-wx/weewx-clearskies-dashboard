@@ -12,6 +12,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    pool: 'threads',
     setupFiles: ['./src/test/setup.ts'],
     // Vitest owns unit tests under src/; Playwright owns e2e/ specs and must not
     // be collected here (its test.describe() throws under the vitest runner).
