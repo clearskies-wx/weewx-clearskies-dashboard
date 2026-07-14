@@ -356,7 +356,7 @@ export function BeachSafetyTab({ locationId }: BeachSafetyTabProps) {
             </div>
           </dl>
 
-          {stormSurgeLevel !== null && <StormSurgeBadge level={stormSurgeLevel} t={t} />}
+          {stormSurgeLevel != null && <StormSurgeBadge level={stormSurgeLevel} t={t} />}
         </CardContent>
       </Card>
 

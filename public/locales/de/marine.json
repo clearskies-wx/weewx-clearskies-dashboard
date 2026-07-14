@@ -56,7 +56,8 @@
     "tideLow": "Low",
     "srTimeColumn": "Time",
     "srHeightColumn": "Height ({{unit}})",
-    "srTypeColumn": "Type"
+    "srTypeColumn": "Type",
+    "now": "Now"
   },
   "boating": {
     "loading": "Loading boating conditions…",
