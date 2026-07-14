@@ -28,8 +28,15 @@ export function selectWeatherIcon(params: {
     return { code: 0, isNight };
   }
 
-  // Check if the code indicates precipitation (WMO 51-99 range)
-  const isPrecipCode = weatherCode >= 51 && weatherCode <= 99;
+  // Thunderstorm codes (95-99) always show the full thunderstorm glyph
+  // regardless of PoP or cloud cover — a storm is never suppressed.
+  const isThunderstorm = weatherCode >= 95 && weatherCode <= 99;
+  if (isThunderstorm) {
+    return { code: weatherCode, isNight };
+  }
+
+  // Check if the code indicates precipitation (WMO 51-94 range, excluding thunderstorm)
+  const isPrecipCode = weatherCode >= 51 && weatherCode <= 94;
 
   // Check if the code is an atmosphere condition (5=haze, 6=smoke, 7=dust, 8=ash)
   const isAtmosphereCode = weatherCode >= 5 && weatherCode <= 8;

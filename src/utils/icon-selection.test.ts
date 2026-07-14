@@ -46,6 +46,26 @@ describe('selectWeatherIcon — PoP gate suppression (PoP < 20%)', () => {
     expect(result.code).toBe(100);  // Mostly cloudy
   });
 
+  it('thunderstorm (code 95) at PoP 5% is NEVER suppressed — storms always show', () => {
+    const result = selectWeatherIcon({
+      weatherCode: 95,
+      precipProbability: 5,
+      cloudCover: 10,
+      isNight: false,
+    });
+    expect(result.code).toBe(95);
+  });
+
+  it('thunderstorm with hail (code 99) at PoP 0% is NEVER suppressed', () => {
+    const result = selectWeatherIcon({
+      weatherCode: 99,
+      precipProbability: 0,
+      cloudCover: 0,
+      isNight: false,
+    });
+    expect(result.code).toBe(99);
+  });
+
   it('PoP exactly 19% still suppresses (threshold is >= 20)', () => {
     const result = selectWeatherIcon({
       weatherCode: 80,
