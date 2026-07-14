@@ -5,15 +5,16 @@
 //
 // Two page states:
 //   Landing state (selectedId === null): full map + location card grid.
-//   Selected state (selectedId set): hero map strip + activity tabs
-//     (>=768px) / accordion (<768px) with placeholder tab content — the
-//     real per-activity data ensembles land in T7.2-T7.5.
+//   Selected state (selectedId set): combo map+photo card (T5.4 — map
+//     zoomed to the selected location per T5.2, photo alongside when
+//     configured) + activity tabs (>=768px) / accordion (<768px).
+//     Per-activity data ensembles land in T7.2-T7.5.
 
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Waves, CaretLeft, Sailboat, FishSimple, PersonSimpleSwim, Warning } from '@phosphor-icons/react';
 import { PageLayout } from '../components/layout/page-layout';
-import { footprintColSpan } from '../components/ui/card';
+import { Card, footprintColSpan } from '../components/ui/card';
 import { LocationMap } from '../components/marine/LocationMap';
 import { LocationCard } from '../components/marine/LocationCard';
 import { ActivityTabs } from '../components/marine/ActivityTabs';
@@ -246,7 +247,7 @@ export function MarinePage() {
 
       {!loading && !error && selectedLocation !== null && locations !== null && (
         <>
-          {/* Selected state: hero map strip + back button + activity tabs/accordion */}
+          {/* Selected state: combo map+photo card + back button + activity tabs/accordion */}
           <div className="col-span-1 md:col-span-2 lg:col-span-4 flex flex-col gap-[var(--gap-grid)]">
             <div className="flex items-center justify-between gap-2">
               <button
@@ -276,13 +277,48 @@ export function MarinePage() {
               )}
             </div>
 
-            <LocationMap
-              locations={locations}
-              selectedId={selectedId}
-              onSelectLocation={setSelectedId}
-              variant="hero"
-              fallbackCenter={fallbackCenter}
-            />
+            {/* Combo map+photo card (T5.4, DASHBOARD-MANUAL §12 "Combo card").
+                Replaces the old bare 120px hero map strip. flex-row at md+ /
+                flex-col on mobile; map ~60% + photo ~40% when a photo is
+                configured, map takes the full width otherwise. `py-0`
+                overrides Card's default vertical padding (RadarCard sets its
+                own layout-specific className the same way) so the map/photo
+                fill the card's interior edge-to-edge — Card's own
+                `overflow-hidden rounded-xl` then clips both to the card's
+                shape, which is what gives the photo its right-corner
+                rounding without hand-rounding the <img> itself. `mb-0`
+                cancels Card's own default bottom margin — this Card sits
+                inside the parent's `gap-[var(--gap-grid)]` flex column
+                (unlike per-tab Cards, which rely on Card's own margin since
+                their tabpanel wrapper has no flex gap), so keeping both
+                would double the space before the activity tabs below. */}
+            <Card footprint="full" className="py-0 mb-0">
+              <div className="flex flex-col md:flex-row w-full">
+                <div className={selectedLocation.photoUrl ? 'w-full md:w-[60%]' : 'w-full'}>
+                  <LocationMap
+                    locations={locations}
+                    selectedId={selectedId}
+                    onSelectLocation={setSelectedId}
+                    variant="hero"
+                    fallbackCenter={fallbackCenter}
+                    className={
+                      selectedLocation.photoUrl
+                        ? 'rounded-none ring-0 md:rounded-l-xl md:rounded-r-none'
+                        : 'rounded-none ring-0'
+                    }
+                  />
+                </div>
+                {selectedLocation.photoUrl && (
+                  <div className="w-full md:w-[40%] h-[180px] md:h-[220px]">
+                    <img
+                      src={selectedLocation.photoUrl}
+                      alt={selectedLocation.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+              </div>
+            </Card>
 
             {(() => {
               const activities = buildActivities(selectedLocation);

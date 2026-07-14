@@ -1317,6 +1317,18 @@ export interface MarineLocationSummary {
   activeAlerts: MarineAlertSummary[] | null;
   surfRating: number | null;
   beachSafetyLevel: string | null;
+  /**
+   * Operator-uploaded location photo URL. NOT YET in the OpenAPI v1 contract
+   * (docs/contracts/openapi-v1.yaml `MarineLocationSummary` has no such
+   * field) — the wizard/admin photo-upload flow is a later phase. Declared
+   * here, optional and nullable, so the Phase 5 detail-page combo card
+   * (DASHBOARD-MANUAL §12) and the landing LocationCard's documented photo
+   * treatment can be built against a stable shape now and require no call-
+   * site changes once the API starts populating it. Every current response
+   * omits this field entirely, which reads as `undefined` — treat the same
+   * as `null` (no photo).
+   */
+  photoUrl?: string | null;
 }
 
 /** Marine bundle — returned by GET /marine/{locationId}. */
