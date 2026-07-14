@@ -91,6 +91,7 @@
   },
   "beachSafety": {
     "title": "Beach Safety",
+    "conditions": "Beach Conditions",
     "currentConditions": "Current Conditions",
     "safe": "Safe",
     "caution": "Use Caution",
@@ -98,7 +99,14 @@
     "seaState": "Sea State",
     "wavePeriod": "Wave Period",
     "secondsAbbr": "s",
-    "ripCurrent": "Rip Current Risk",
+    "ripCurrent": {
+      "label": "Rip Current Risk",
+      "guidance": {
+        "low": "Swim near a lifeguard",
+        "moderate": "Stay close to shore, swim near lifeguards",
+        "high": "Stay out of the water, dangerous rip currents"
+      }
+    },
     "ripLow": "Low risk. Always swim near a lifeguard.",
     "ripModerate": "Moderate risk. Check conditions before entering water.",
     "ripHigh": "High risk of dangerous rip currents. Stay out of the water.",
@@ -118,10 +126,35 @@
     "uvHigh": "High — Reduce sun exposure 10am-4pm",
     "uvVeryHigh": "Very High — Seek shade, SPF 30+",
     "uvExtreme": "Extreme — Avoid sun exposure",
+    "uv": {
+      "label": "UV Index",
+      "tiers": {
+        "low": "Low",
+        "moderate": "Moderate",
+        "high": "High",
+        "veryHigh": "Very High",
+        "extreme": "Extreme"
+      },
+      "spf": {
+        "low": "No SPF needed",
+        "moderate": "SPF 15+ recommended",
+        "high": "SPF 30+ recommended",
+        "veryHigh": "SPF 30+ required",
+        "extreme": "SPF 50+ required"
+      },
+      "guidance": {
+        "low": "Minimal risk. No protection needed for most people.",
+        "moderate": "Seek shade during midday hours. Wear a hat and sunglasses.",
+        "high": "Reduce sun exposure between 10am–4pm. Cover up and wear a wide-brim hat.",
+        "veryHigh": "Minimize sun exposure during midday hours. Seek shade and wear protective clothing.",
+        "extreme": "Avoid sun exposure during midday hours. Unprotected skin can burn in minutes."
+      }
+    },
     "coastalRisk": "Coastal Flooding Risk",
     "totalWaterLevel": "Total Water Level",
     "waveRunup": "Wave Runup",
     "localResources": "Local Resources",
+    "resources": "Local Resources",
     "notAvailable": "Not available",
     "stormSurge": "Storm Surge",
     "stormSurgeElevated": "Elevated water levels",
