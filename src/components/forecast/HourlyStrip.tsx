@@ -22,6 +22,7 @@ import { WeatherIcon } from '../weather-icon';
 import { WindSymbol } from './WindSymbol';
 import { TempTrendLine } from './TempTrendLine';
 import { toWmoCode } from '../../utils/weather-code';
+import { selectWeatherIcon } from '../../utils/icon-selection';
 import { HorizontalScrollNav } from '../ui/horizontal-scroll-nav';
 import type { HourlyForecastPoint, UnitsBlock } from '../../api/types';
 
@@ -197,15 +198,23 @@ export function HourlyStrip({
 
   // Row: weather icons
   const weatherIconSize = 36;
-  const iconRow = displayHours.map((hour, i) => (
-    <div key={i} style={{ ...colStyle, ...CELL_BASE, height: rowH.icon }}>
-      <WeatherIcon
-        code={toWmoCode(hour.weatherCode)}
-        size={weatherIconSize}
-        isNight={isNightFromEvents(hour.validTime, sunEvents)}
-      />
-    </div>
-  ));
+  const iconRow = displayHours.map((hour, i) => {
+    const iconResult = selectWeatherIcon({
+      weatherCode: toWmoCode(hour.weatherCode),
+      precipProbability: hour.precipProbability,
+      cloudCover: hour.cloudCover,
+      isNight: isNightFromEvents(hour.validTime, sunEvents),
+    });
+    return (
+      <div key={i} style={{ ...colStyle, ...CELL_BASE, height: rowH.icon }}>
+        <WeatherIcon
+          code={iconResult.code}
+          size={weatherIconSize}
+          isNight={iconResult.isNight}
+        />
+      </div>
+    );
+  });
 
   // Row: temperatures
   const tempRow = displayHours.map((hour, i) => (

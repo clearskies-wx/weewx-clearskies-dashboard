@@ -51,6 +51,7 @@ import type { StationClock } from '../utils/station-clock';
 import { stationMidnightMs } from '../utils/station-clock';
 import { useArchive, useStation } from '../hooks/useWeatherData';
 import { toWmoCode } from '../utils/weather-code';
+import { selectWeatherIcon } from '../utils/icon-selection';
 import type { CardComponentProps } from '../lib/card-registry';
 
 // ---------------------------------------------------------------------------
@@ -650,8 +651,20 @@ export function CurrentConditionsCard(props: CardComponentProps | CurrentConditi
 
     // Derived values constructed in the card (per brief §"Critical details for each card")
     const weatherText = observation?.weatherText ?? todayForecast?.weatherText ?? null;
-    const weatherCode = observation?.weatherCode ?? toWmoCode(todayForecast?.weatherCode) ?? 0;
     const isNight = scene ? !scene.daytime : false;
+
+    // The PoP (probability-of-precipitation) gate applies only to the
+    // forecast-sourced fallback weatherCode. The conditions engine's
+    // observation.weatherCode reflects live station sensor data and is
+    // already the "right" call — it passes through unchanged, no gate.
+    const weatherCode = observation?.weatherCode != null
+      ? observation.weatherCode
+      : selectWeatherIcon({
+          weatherCode: toWmoCode(todayForecast?.weatherCode),
+          precipProbability: todayForecast?.precipProbabilityMax ?? null,
+          cloudCover: todayForecast?.cloudCover ?? null,
+          isNight,
+        }).code;
     const todayHigh = todayForecast?.tempMax ?? null;
     const todayLow = todayForecast?.tempMin ?? null;
     const hourlyForecast = forecast?.hourly ?? null;

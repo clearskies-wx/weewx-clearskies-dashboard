@@ -28,6 +28,7 @@ import { WeatherIcon } from '../weather-icon';
 import { WindSymbol } from './WindSymbol';
 import { TempTrendLine } from './TempTrendLine';
 import { toWmoCode } from '../../utils/weather-code';
+import { selectWeatherIcon } from '../../utils/icon-selection';
 import { addDays, isStationToday } from '../../utils/station-clock';
 import { formatNumber } from '../../utils/format-number';
 import type { DailyForecastPoint, UnitsBlock } from '../../api/types';
@@ -290,29 +291,37 @@ export function DailyColumns({
   // Icon row
   const iconRow = (
     <div style={{ display: 'flex', flexDirection: 'row', position: 'relative', zIndex: 1 }}>
-      {days.map((day, i) => (
-        <div
-          key={i}
-          style={{
-            ...cellBase,
-            height: expandable ? 50 : 38,
-            paddingTop: expandable ? 8 : 2,
-            cursor: expandable ? 'pointer' : 'default',
-          }}
-          onClick={expandable ? () => handleColClick(i) : undefined}
-          onKeyDown={expandable ? (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              handleColClick(i);
-            }
-          } : undefined}
-          role={expandable ? 'button' : undefined}
-          tabIndex={expandable ? -1 : undefined}
-          aria-hidden={expandable ? true : undefined}
-        >
-          <WeatherIcon code={toWmoCode(day.weatherCode)} size={36} />
-        </div>
-      ))}
+      {days.map((day, i) => {
+        const iconResult = selectWeatherIcon({
+          weatherCode: toWmoCode(day.weatherCode),
+          precipProbability: day.precipProbabilityMax,
+          cloudCover: day.cloudCover,
+          isNight: false, // Daily columns always show day icons
+        });
+        return (
+          <div
+            key={i}
+            style={{
+              ...cellBase,
+              height: expandable ? 50 : 38,
+              paddingTop: expandable ? 8 : 2,
+              cursor: expandable ? 'pointer' : 'default',
+            }}
+            onClick={expandable ? () => handleColClick(i) : undefined}
+            onKeyDown={expandable ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleColClick(i);
+              }
+            } : undefined}
+            role={expandable ? 'button' : undefined}
+            tabIndex={expandable ? -1 : undefined}
+            aria-hidden={expandable ? true : undefined}
+          >
+            <WeatherIcon code={iconResult.code} isNight={iconResult.isNight} size={36} />
+          </div>
+        );
+      })}
     </div>
   );
 
