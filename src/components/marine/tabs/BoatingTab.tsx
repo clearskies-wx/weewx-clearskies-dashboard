@@ -41,7 +41,7 @@ import { ChartContainer } from '../../charts/chart-container';
 import { AlertsPanel } from './shared/AlertsPanel';
 import { TideChart } from './shared/TideChart';
 import { buildHourTicks } from './shared/hour-ticks';
-import type { MarineForecastPoint } from '../../../api/types';
+import type { MarineForecastPoint, MarineAlertSummary } from '../../../api/types';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -49,8 +49,7 @@ import type { MarineForecastPoint } from '../../../api/types';
 
 export interface BoatingTabProps {
   locationId: string;
-  /** Active marine-zone alert headlines for this location (from MarineLocationSummary.activeAlerts). */
-  alerts?: string[];
+  alerts?: MarineAlertSummary[];
 }
 
 // ---------------------------------------------------------------------------

@@ -137,7 +137,7 @@ export function BeachSafetyTab({ locationId }: BeachSafetyTabProps) {
   return (
     <div className="flex flex-col gap-[var(--gap-grid)]">
       {/* 1. Safety alerts banner — top, most prominent */}
-      <AlertsPanel alerts={assessment.activeAlerts} />
+      <AlertsPanel alerts={assessment.activeAlerts.map((h) => ({ headline: h, alertType: 'beachHazard' }))} />
 
       {/* 2. Current Conditions — safety indicator, sea state, water temp,
           wind, and UV index consolidated into one panel (T1.5.5) instead of

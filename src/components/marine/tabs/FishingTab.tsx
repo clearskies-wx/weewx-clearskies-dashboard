@@ -48,7 +48,7 @@
 import { useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MoonStars, MapPin, ArrowUp, ArrowDown, ArrowRight } from '@phosphor-icons/react';
-import type { FishingDay, FishingForecast, UnitsBlock } from '../../../api/types';
+import type { FishingDay, FishingForecast, MarineAlertSummary, UnitsBlock } from '../../../api/types';
 import { useFishingDetail, useMarineDetail, useStation } from '../../../hooks/useWeatherData';
 import { formatValue } from '../../../utils/format';
 import { formatNumber } from '../../../utils/format-number';
@@ -62,8 +62,7 @@ import { TideChart } from './shared/TideChart';
 
 export interface FishingTabProps {
   locationId: string;
-  /** Active marine-zone alert headlines for this location (from MarineLocationSummary.activeAlerts). */
-  alerts?: string[];
+  alerts?: MarineAlertSummary[];
 }
 
 type TFn = (key: string, opts?: Record<string, unknown>) => string;

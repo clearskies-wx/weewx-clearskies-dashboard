@@ -44,7 +44,7 @@ import { HorizontalScrollNav } from '../../ui/horizontal-scroll-nav';
 import { AlertsPanel } from './shared/AlertsPanel';
 import { TideChart } from './shared/TideChart';
 import { buildHourTicks } from './shared/hour-ticks';
-import type { SpectralWaveComponent, SurfForecast } from '../../../api/types';
+import type { SpectralWaveComponent, SurfForecast, MarineAlertSummary } from '../../../api/types';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -52,8 +52,7 @@ import type { SpectralWaveComponent, SurfForecast } from '../../../api/types';
 
 export interface SurfingTabProps {
   locationId: string;
-  /** Active marine-zone alert headlines for this location (from MarineLocationSummary.activeAlerts). */
-  alerts?: string[];
+  alerts?: MarineAlertSummary[];
 }
 
 // ---------------------------------------------------------------------------
