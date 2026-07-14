@@ -98,7 +98,8 @@
     "srTimeColumn": "Time",
     "srWindSpeedColumn": "Wind Speed ({{unit}})",
     "srWaveHeightColumn": "Wave Height ({{unit}})",
-    "srWavePeriodColumn": "Wave Period (s)"
+    "srWavePeriodColumn": "Wave Period (s)",
+    "waterLevelOffset": "Water Level Offset"
   },
   "beachSafety": {
     "title": "Beach Safety",
@@ -133,7 +134,12 @@
     "totalWaterLevel": "Total Water Level",
     "waveRunup": "Wave Runup",
     "localResources": "Local Resources",
-    "notAvailable": "Not available"
+    "notAvailable": "Not available",
+    "stormSurge": "Storm Surge",
+    "stormSurgeElevated": "Elevated water levels",
+    "stormSurgeDepressed": "Depressed water levels",
+    "stormSurgeSignificant": "Significant surge",
+    "stormSurgeActive": "Storm surge active"
   },
   "surfing": {
     "loading": "Loading surf conditions…",

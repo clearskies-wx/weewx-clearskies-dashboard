@@ -1328,6 +1328,10 @@ export interface TideBundle {
   coordinates: { lat: number; lon: number };
   predictions: TidePrediction[];
   waterLevels: WaterLevel[];
+  totalWaterLevelForecast: Array<{ time: string; height: number; residual: number }> | null;
+  currentResidual: { value: number; quality: string; source: string; description: string } | null;
+  residualForecastSource: string | null;
+  stormSurgeLevel: "elevated" | "depressed" | "significant" | "storm_surge" | null;
   source: string;
   generatedAt: string;
 }
@@ -1378,6 +1382,7 @@ export interface BeachSafetyDetailData {
   } | null;
   tidePredictions: TidePrediction[];
   waterLevels: WaterLevel[];
+// Composite water level fields (ADR-091 Decision 4, T4.2)  totalWaterLevelForecast: Array<{ time: string; height: number; residual: number }> | null;  currentResidual: { value: number; quality: string; source: string; description: string } | null;  residualForecastSource: string | null;  stormSurgeLevel: "elevated" | "depressed" | "significant" | "storm_surge" | null;
   externalLinks: Array<{ label: string; url: string }>;
   source: string;
   generatedAt: string;

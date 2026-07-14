@@ -17,7 +17,7 @@
 
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useBeachSafetyDetail, useStation } from '../../../hooks/useWeatherData';
+import { useBeachSafetyDetail, useTideDetail, useStation } from '../../../hooks/useWeatherData';
 import { formatValue } from '../../../utils/format';
 import { cardinalFromDegrees } from '../../../utils/wind';
 import { AlertsPanel } from './shared/AlertsPanel';
@@ -100,6 +100,7 @@ export function BeachSafetyTab({ locationId }: BeachSafetyTabProps) {
 
   const { data, units, loading, error, refetch } = useBeachSafetyDetail(locationId);
   const { data: station } = useStation();
+  const { data: tide } = useTideDetail(locationId);
   const stationTz = station?.timezone ?? 'UTC';
 
   if (loading) {
@@ -146,6 +147,33 @@ export function BeachSafetyTab({ locationId }: BeachSafetyTabProps) {
           mile visibility (T1.5.5). */}
       <Panel title={t('beachSafety.currentConditions')}>
         <SafetyIndicator level={assessment.safetyLevel} t={t} />
+
+        {tide?.stormSurgeLevel != null && (
+          <div
+            role="status"
+            className={[
+              'inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold',
+              tide.stormSurgeLevel === 'storm_surge'
+                ? 'bg-destructive/15 text-destructive'
+                : tide.stormSurgeLevel === 'significant'
+                  ? 'bg-orange-500/15 text-orange-700 dark:text-orange-400'
+                  : 'bg-yellow-500/15 text-yellow-700 dark:text-yellow-400',
+            ].join(' ')}
+          >
+            <span aria-hidden="true">
+              {tide.stormSurgeLevel === 'storm_surge' ? '⚠' : '▲'}
+            </span>
+            {t(
+              tide.stormSurgeLevel === 'storm_surge'
+                ? 'beachSafety.stormSurgeActive'
+                : tide.stormSurgeLevel === 'significant'
+                  ? 'beachSafety.stormSurgeSignificant'
+                  : tide.stormSurgeLevel === 'depressed'
+                    ? 'beachSafety.stormSurgeDepressed'
+                    : 'beachSafety.stormSurgeElevated',
+            )}
+          </div>
+        )}
 
         <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3">
           <StatTile

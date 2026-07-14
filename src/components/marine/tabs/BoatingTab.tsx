@@ -557,6 +557,13 @@ export function BoatingTab({ locationId, alerts = [] }: BoatingTabProps) {
             value={formatValue(observation?.airTemp ?? null, 'temperature', locale)}
             unit={tempUnit}
           />
+          {tide?.currentResidual != null && (
+            <StatTile
+              label={t('boating.waterLevelOffset')}
+              value={`${tide.currentResidual.value > 0 ? '+' : ''}${formatValue(tide.currentResidual.value, 'default', locale)}`}
+              unit={tideHeightUnit}
+            />
+          )}
         </dl>
         <PressureTrend tendency={observation?.pressureTendency ?? null} t={t} />
         {textForecast[0]?.visibility && (
