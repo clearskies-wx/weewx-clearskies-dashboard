@@ -759,7 +759,7 @@ function SolunarCard({ day, locale, stationTz, t, tAlmanac }: { day: FishingDay;
   const illumFraction = illuminationFraction(solunar.moonIllumination);
   const illumPercent = Math.round(illumFraction * 100);
   const hyphenPhase = solunar.moonPhase.replace(/_/g, '-');
-  const phaseLabel = tAlmanac(`moonPhases.${hyphenPhase}`, solunar.moonPhase);
+  const phaseLabel = tAlmanac(`moonPhases.${hyphenPhase}`, { defaultValue: solunar.moonPhase });
   // Composed via i18next interpolation (not JS string concatenation) —
   // reuses almanac.json's existing "phaseIllumination"/"illuminatedPercent"
   // templates so word order stays correct per locale (rules/coding.md
