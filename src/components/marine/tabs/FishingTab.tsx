@@ -1,60 +1,122 @@
-// FishingTab.tsx — Fishing activity tab content for the Marine Activities
-// page (DASHBOARD-MANUAL §12, T7.4; consolidated per Phase 1 T1.5/T1.8).
-// Full data ensemble for a single location's fishing conditions:
-// activity-relevant alerts, 3-day period grid, conditions breakdown (score
-// bars — moved directly after the period grid so the scoring rationale
-// sits next to the forecast it explains), solunar calendar, standalone
-// tide chart, a consolidated Conditions panel (barometric pressure + wind
-// & swell, display-only), species forecast table, and CUDEM habitat
-// features.
+// FishingTab.tsx — Fishing activity tab content (DASHBOARD-MANUAL §12, T8.2
+// F23 redesign). Surfaces the fishing scoring system
+// (enrichment/fishing_scorer.py) via a hero conditions summary, a weighted
+// scoring breakdown, the 3-day forecast period grid, a solunar calendar
+// matching the Almanac page's SunMoonDetailCard visual quality, a species
+// forecast table, and the standalone tide chart. All sections use the
+// shared Card/CardHeader/CardTitle/CardContent system and the shared
+// MarineStatTile — no local Panel/StatTile functions (DESIGN-MANUAL §20).
 //
-// Follows the same structure as the sibling tabs landed alongside this one
-// (BoatingTab.tsx / BeachSafetyTab.tsx, T7.2/T7.3): a local `Panel` section
-// wrapper (not the shadcn Card primitive — the tab content sits inside an
-// ActivityTabs/ActivityAccordion panel, not the page grid, so the plain
-// card-glass section matches what the other three tabs already render),
-// the shared `AlertsPanel` at the top, the shared `TideChart` for the
-// standalone 72h tide chart, and all data hooks called once at the top of
-// the exported component rather than inside child components.
+// Panel order (top to bottom), matching DASHBOARD-MANUAL §12 exactly:
+//   1. Alerts (AlertsPanel, shared, unchanged)
+//   2. Current Conditions Hero — conditionsText headline, overall score
+//      (0-100) badge + qualitative label, stat grid (pressure + trend,
+//      tide state, wind speed, water temp)
+//   3. Scoring Breakdown — 4 weighted factor bars: Pressure (37.5%), Tide
+//      (31.25%), Solunar (18.75%), Time of Day (12.5%) — the exact weights
+//      fishing_scorer.py uses (_WEIGHT_PRESSURE/_WEIGHT_TIDE/_WEIGHT_SOLUNAR/
+//      _WEIGHT_TIME_OF_DAY). Tap/click a bar to reveal explanation text.
+//      waterTempScore is intentionally NOT shown here — it is scored purely
+//      per-species server-side (fishing_scorer.py comment, 2026-07-11), not
+//      part of the shared weighted base score, so it has no place in a
+//      *shared* factor breakdown. It has no raw-value counterpart either
+//      (FishingForecast carries no waterTemp field, only *Score fields).
+//   4. Forecast Periods — 3-day period grid as a semantic table (day rows ×
+//      period columns), unchanged data shape from the prior implementation,
+//      now wrapped in a Card + HorizontalScrollNav.
+//   5. Solunar Calendar — MoonPhaseIcon/MoonPhaseG (same components as the
+//      Almanac page), a moonrise→moonset arc with major/minor period
+//      windows highlighted (SunMoonDetailCard geometry, simplified to a
+//      single arc), and a horizontal timeline strip across the full day
+//      with a "now" indicator.
+//   6. Species Forecast — Species / Score / Status (+ Notes when the API
+//      supplies a `note`) table. Status text and color tier both trace back
+//      to the API's `status`/`score` fields (fishing_scorer.py
+//      _score_one_species) — status is ALREADY locale-translated
+//      server-side (i18n.t("fishing.species_status.*", locale)), so the
+//      dashboard renders it verbatim and derives the badge color tier from
+//      the numeric `score` (locale-independent), never by string-matching
+//      the translated status text.
+//   7. Tide Forecast — TideChart (standalone, shared, unchanged).
+//
+// Removed from the prior implementation (DASHBOARD-MANUAL §12 F23): the
+// local `Panel`/`StatTile` functions (replaced by Card/MarineStatTile), the
+// standalone "Conditions" panel duplicating pressure/wind data now folded
+// into the hero, `WindSwellContent` (wind speed folded into the hero stat
+// grid; swell height/period dropped — fishing scoring doesn't use swell,
+// unlike surfing), and the CUDEM Habitat Features panel (no slot in the
+// 7-panel structure; `habitatFeatures` remains in FishingDetailData, just
+// unused by this tab per the redesign).
 //
 // Data sources:
 //   - useFishingDetail(locationId) — primary: days/periods/solunar/species/
 //     habitat/tidePredictions (GET /fishing/{locationId}).
-//   - useMarineDetail(locationId) — barometric pressure panel only. Raw
-//     `pressure` + `pressureTendency` are not part of FishingDetailData
-//     (FishingForecast only carries the normalized pressureScore used in
-//     the Conditions Breakdown), so the panel sources the real observed
-//     value from the marine bundle instead of fabricating one from a score
-//     — same reasoning BoatingTab.tsx documents for its own pressure panel.
+//   - useMarineDetail(locationId) — barometric pressure + trend AND water
+//     temperature. FishingForecast carries no raw pressure/waterTemp value
+//     (only the normalized *Score fields used in Scoring Breakdown), so the
+//     hero sources both real observed values from the marine bundle instead
+//     of fabricating them — same reasoning BoatingTab.tsx/SurfingTab.tsx
+//     document for their own pressure/waterTemp panels.
 //   - `alerts` prop (MarineLocationSummary.activeAlerts, passed down from
-//     marine.tsx) — same pattern as BoatingTab/BeachSafetyTab; fishing has
-//     no per-alert detail of its own to add.
+//     marine.tsx) — same pattern as BoatingTab/SurfingTab; fishing has no
+//     per-alert detail of its own to add.
+//
+// i18n note: the solunar moon phase name (`SolunarTimes.moonPhase`) reuses
+// the Almanac page's existing `moonPhases.*` translation table (a second
+// `useTranslation('almanac')` call) instead of duplicating that 8-entry
+// table into marine.json across all 13 locales — DRY per rules/coding.md §3.
+// The API wire format is underscore-separated ("waxing_crescent" per
+// enrichment/solunar.py's docstring) while both the almanac.json keys and
+// MoonPhaseG's WANING_PHASES set expect the hyphenated form
+// ("waxing-crescent"), so every use converts underscores to hyphens first.
 //
 // A11y (rules/coding.md §5):
-//   - Every panel heading is a real <h3> (document-order sibling of the
-//     tab/accordion h3 header above it, not a skipped level).
+//   - Every panel heading is a real <h3> via CardTitle as="h3" (document
+//     order sibling of the tab/accordion h3 header above it).
 //   - The 3-day period grid renders as a real <table> (day rows × period
-//     columns) rather than a bare CSS grid — this is genuinely tabular
-//     data and DESIGN-MANUAL §11 "Data Tables" / coding.md §5.2 require
+//     columns) — DESIGN-MANUAL §11 "Data Tables" / coding.md §5.2 require
 //     semantic markup over CSS-grid-as-table for this shape of content.
-//   - The solunar timeline is a custom visual (role="img" + sr-only
+//   - The species table is a real <table> with <thead>/<tbody>/<th scope>.
+//   - The solunar arc and timeline are custom visuals (role="img" + sr-only
 //     fallback table), matching the accessible-chart pattern already used
-//     by solar-radiation-card.tsx and the shared TideChart.
-//   - Color is never the only signal: score cells pair color with the
-//     numeric score and period label; solunar overlap pairs color with a
-//     MoonStars icon + sr-only text; pressure trend pairs the arrow icon
-//     with a text label.
+//     by SunMoonDetailCard and the shared TideChart.
+//   - Color is never the only signal: score badges/cells pair color with
+//     the numeric score; solunar overlap pairs color with a MoonStars icon
+//     + sr-only text; pressure trend and tide state pair the arrow icon
+//     with a text label; species status badges pair color with the
+//     server-localized status text.
+//   - Scoring Breakdown bars are real <button type="button"> elements
+//     (aria-expanded/aria-controls), not `<div onClick>` — keyboard
+//     reachable with a visible focus ring, per coding.md §5.3/§5.4.
 
-import { useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MoonStars, MapPin, ArrowUp, ArrowDown, ArrowRight } from '@phosphor-icons/react';
-import type { FishingDay, FishingForecast, MarineAlertSummary, UnitsBlock } from '../../../api/types';
+import {
+  MoonStars,
+  ArrowUp,
+  ArrowDown,
+  ArrowRight,
+  Gauge,
+  Wind,
+  Thermometer,
+  CaretDown,
+} from '@phosphor-icons/react';
+import type {
+  FishingDay,
+  FishingForecast,
+  MarineAlertSummary,
+  TidePrediction,
+} from '../../../api/types';
 import { useFishingDetail, useMarineDetail, useStation } from '../../../hooks/useWeatherData';
 import { formatValue } from '../../../utils/format';
 import { formatNumber } from '../../../utils/format-number';
 import { formatShortDayOfWeek, formatMonthDay, formatTime } from '../../../utils/format-date';
 import { AlertsPanel } from './shared/AlertsPanel';
 import { TideChart } from './shared/TideChart';
+import { HorizontalScrollNav } from '../../ui/horizontal-scroll-nav';
+import { Card, CardHeader, CardTitle, CardContent } from '../../ui/card';
+import { MarineStatTile } from '../shared/MarineStatTile';
+import { MoonPhaseG, MoonPhaseIcon } from '../../moon-phase-icon';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -68,29 +130,53 @@ export interface FishingTabProps {
 type TFn = (key: string, opts?: Record<string, unknown>) => string;
 
 // ---------------------------------------------------------------------------
-// Score color helpers (coordinator spec)
+// Score color helpers
 // ---------------------------------------------------------------------------
 
+/** 60/40 split — aligned with the "good"/"fair" cut points in the
+ *  qualitative label scale (DASHBOARD-MANUAL §12 fishing thresholds:
+ *  Excellent 80+ / Good 60-79 / Fair 40-59 / Poor <40) and with
+ *  fishing_scorer.py's own species-status thresholds (60/30). Used for the
+ *  hero score badge and the period-grid score cells. */
 function scoreBgClass(score: number): string {
-  if (score >= 70) return 'bg-green-100 dark:bg-green-900/30';
-  if (score >= 40) return 'bg-yellow-100 dark:bg-yellow-900/30';
+  if (score >= 60) return 'bg-green-100 dark:bg-green-900/30';
+  if (score >= 40) return 'bg-amber-100 dark:bg-amber-900/30';
   return 'bg-red-100 dark:bg-red-900/30';
 }
 
 function scoreTextClass(score: number): string {
-  if (score >= 70) return 'text-green-700 dark:text-green-300';
-  if (score >= 40) return 'text-yellow-700 dark:text-yellow-300';
+  if (score >= 60) return 'text-green-700 dark:text-green-300';
+  if (score >= 40) return 'text-amber-700 dark:text-amber-300';
   return 'text-red-700 dark:text-red-300';
 }
 
-/** Solid fill color for the ScoreBar's proportional bar — a darker/more
- *  saturated step than scoreBgClass's pale cell background, so the bar
- *  reads clearly against both the cell tint and the neutral bg-muted
- *  track it sits in. */
-function scoreFillClass(score: number): string {
-  if (score >= 70) return 'bg-green-500 dark:bg-green-600';
-  if (score >= 40) return 'bg-yellow-500 dark:bg-yellow-600';
-  return 'bg-red-500 dark:bg-red-600';
+/** Scoring Breakdown bar fill — gauge color tokens per DESIGN-MANUAL §20
+ *  "Scoring factor breakdown" (green >60, amber 30-60, muted <30). Matches
+ *  SurfingTab.tsx's scoreBarFillColor precedent: --gauge-fill-good/
+ *  --gauge-fill-moderate aren't in the DESIGN-MANUAL token table (only
+ *  --gauge-fill/--gauge-unfill/--gauge-indicator are), but the fallback
+ *  values (#16a34a green-600, #d97706 amber-600) are the same verified-AA
+ *  shades SurfingTab already ships against --gauge-unfill's near-white
+ *  light / near-black dark track, and bars are aria-hidden with the numeric
+ *  score + label as the always-visible signal (never color-only). Reusing
+ *  the exact same custom-property names as SurfingTab (rather than
+ *  inventing new ones) keeps the two "scoring breakdown" implementations on
+ *  one system, per rules/coding.md §10 "no ad-hoc one-offs".
+ */
+function scoreBarFillColor(pct: number): string {
+  if (pct >= 60) return 'var(--gauge-fill-good, #16a34a)';
+  if (pct >= 30) return 'var(--gauge-fill-moderate, #d97706)';
+  return 'var(--gauge-unfill)';
+}
+
+/** DASHBOARD-MANUAL §12 fishing qualitative scale: Excellent 80+ / Good
+ *  60-79 / Fair 40-59 / Poor <40. Keys resolve through the existing
+ *  `qualitative.*` table (already shared with Boating/Beach Safety). */
+function fishingQualityKey(score: number): 'excellent' | 'good' | 'fair' | 'poor' {
+  if (score >= 80) return 'excellent';
+  if (score >= 60) return 'good';
+  if (score >= 40) return 'fair';
+  return 'poor';
 }
 
 // ---------------------------------------------------------------------------
@@ -106,22 +192,40 @@ function parseCalendarDate(dateStr: string): Date {
   return new Date(`${dateStr}T12:00:00Z`);
 }
 
-/** speciesScores entries are Array<Record<string, unknown>> — the exact
- *  shape isn't locked in the API contract yet. Read common key variants
- *  defensively rather than assuming one exact shape. */
-function extractSpeciesEntry(raw: Record<string, unknown>): { species: string; activity: string | null; score: number | null } | null {
-  const species = raw.species ?? raw.name;
-  if (typeof species !== 'string' || species.length === 0) return null;
-  const activityRaw = raw.activity ?? raw.status ?? raw.activityLevel;
-  const activity = typeof activityRaw === 'string' ? activityRaw : null;
+interface SpeciesEntry {
+  species: string;
+  /** Already locale-translated by the API (fishing_scorer.py
+   *  `_score_one_species`: `i18n.t("fishing.species_status.*", locale)`).
+   *  Rendered verbatim — never re-translated or string-matched client-side. */
+  status: string | null;
+  score: number | null;
+  /** Plain-English seasonal note from the API when present (e.g. "Spawning
+   *  run — peak activity"); documented server-side as not yet locale-marked
+   *  (fishing_scorer.py comment). Rendered verbatim, same treatment as
+   *  `conditionsText` elsewhere in the marine tabs. */
+  note: string | null;
+}
+
+/** speciesScores entries are Array<Record<string, unknown>> — the TS
+ *  contract isn't a locked interface yet, so read defensively. The current
+ *  wire shape (fishing_scorer.py `_score_one_species`) is
+ *  `{ name, score, status, note? }`; `species`/`activity` are read as a
+ *  fallback for schema drift, not the primary shape. */
+function extractSpeciesEntry(raw: Record<string, unknown>): SpeciesEntry | null {
+  const speciesRaw = raw.name ?? raw.species;
+  if (typeof speciesRaw !== 'string' || speciesRaw.length === 0) return null;
+  const statusRaw = raw.status ?? raw.activity;
+  const status = typeof statusRaw === 'string' ? statusRaw : null;
   const scoreRaw = raw.score ?? raw.value ?? raw.rating;
   const score = typeof scoreRaw === 'number' ? scoreRaw : null;
-  return { species, activity, score };
+  const noteRaw = raw.note;
+  const note = typeof noteRaw === 'string' && noteRaw.length > 0 ? noteRaw : null;
+  return { species: speciesRaw, status, score, note };
 }
 
 function topSpeciesLabel(speciesScores: Array<Record<string, unknown>> | null): string | null {
   if (!speciesScores || speciesScores.length === 0) return null;
-  const entries = speciesScores.map(extractSpeciesEntry).filter((e): e is NonNullable<typeof e> => e !== null);
+  const entries = speciesScores.map(extractSpeciesEntry).filter((e): e is SpeciesEntry => e !== null);
   if (entries.length === 0) return null;
   const withScore = entries.filter((e) => e.score !== null);
   const best = withScore.length > 0
@@ -129,6 +233,24 @@ function topSpeciesLabel(speciesScores: Array<Record<string, unknown>> | null): 
     : entries[0];
   return best.species;
 }
+
+/** Color tier for the species status badge — derived from the numeric
+ *  `score` (locale-independent), NOT by pattern-matching the already-
+ *  translated `status` string (which reads e.g. "actif"/"inactif" in fr).
+ *  Thresholds mirror fishing_scorer.py's own
+ *  _SPECIES_STATUS_ACTIVE_THRESHOLD (60) / _SPECIES_STATUS_LESS_ACTIVE_THRESHOLD (30). */
+function speciesScoreTier(score: number | null): 'active' | 'moderate' | 'inactive' | null {
+  if (score === null) return null;
+  if (score >= 60) return 'active';
+  if (score >= 30) return 'moderate';
+  return 'inactive';
+}
+
+const SPECIES_TIER_COLOR: Record<'active' | 'moderate' | 'inactive', string> = {
+  active: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
+  moderate: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
+  inactive: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
+};
 
 /** Does [start,end) overlap any of the given ISO ranges? Pure interval
  *  math on API-provided instants — not a station-date determination. */
@@ -168,9 +290,8 @@ function dayWindow(day: FishingDay): [number, number] | null {
 
 /** moonIllumination may arrive as a 0–1 fraction or a 0–100 percentage
  *  depending on provider; normalize defensively before formatting. */
-function formatIllumination(value: number, locale: string): string {
-  const fraction = value > 1 ? value / 100 : value;
-  return new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 }).format(fraction);
+function illuminationFraction(value: number): number {
+  return value > 1 ? value / 100 : value;
 }
 
 function pressureTrendDirection(tendency: number | null): 'up' | 'down' | 'steady' | null {
@@ -180,41 +301,31 @@ function pressureTrendDirection(tendency: number | null): 'up' | 'down' | 'stead
   return 'steady';
 }
 
-// ---------------------------------------------------------------------------
-// Shared small pieces — same local pattern as BoatingTab.tsx / BeachSafetyTab.tsx
-// ---------------------------------------------------------------------------
-
-function Panel({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="card-glass rounded-xl ring-1 ring-foreground/10 p-[var(--card-pad)] flex flex-col gap-3">
-      <h3 className="font-semibold text-foreground" style={{ fontSize: 'var(--text-card-title)' }}>
-        {title}
-      </h3>
-      {children}
-    </section>
-  );
+/** Tide direction at `nowMs`, derived from the tide predictions the tab
+ *  already fetches — FishingForecast has no raw tide-state field (only the
+ *  normalized tideScore). Finds the next high/low extremum at or after now:
+ *  heading into a "high" means the tide is rising, into a "low" means
+ *  falling. Falls back to comparing the last two known points when no
+ *  future extremum is present in the fetched window. */
+function computeTideState(predictions: TidePrediction[], nowMs: number): 'rising' | 'falling' | null {
+  const sorted = [...predictions].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+  const extrema = sorted.filter((p) => p.type === 'high' || p.type === 'low');
+  const next = extrema.find((p) => new Date(p.time).getTime() >= nowMs);
+  if (next) return next.type === 'high' ? 'rising' : 'falling';
+  if (sorted.length >= 2) {
+    const last = sorted[sorted.length - 1];
+    const prev = sorted[sorted.length - 2];
+    if (last.height > prev.height) return 'rising';
+    if (last.height < prev.height) return 'falling';
+  }
+  return null;
 }
 
-function StatTile({ label, value, unit }: { label: string; value: string; unit?: string }) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <dt className="text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>
-        {label}
-      </dt>
-      <dd
-        className="text-foreground font-semibold"
-        style={{ fontSize: 'var(--text-stat-tile)', fontFeatureSettings: '"tnum"' }}
-      >
-        {value}
-        {unit && (
-          <span className="text-muted-foreground font-normal ml-1" style={{ fontSize: 'var(--text-label)' }}>
-            {unit}
-          </span>
-        )}
-      </dd>
-    </div>
-  );
-}
+// ---------------------------------------------------------------------------
+// Shared small pieces (TileSkeleton/InlineError follow the same conventions
+// established by BoatingTab.tsx / SurfingTab.tsx so all four marine
+// activity tabs read as one system).
+// ---------------------------------------------------------------------------
 
 function TileSkeleton({ className }: { className?: string }) {
   return <div className={`animate-pulse rounded-lg bg-muted ${className ?? 'h-32'}`} aria-hidden="true" />;
@@ -264,29 +375,72 @@ function PressureTrend({ tendency, t }: { tendency: number | null; t: TFn }) {
 }
 
 // ---------------------------------------------------------------------------
-// ScoreBar — horizontal proportional bar for the Conditions Breakdown
+// ScoreFactorBar — a single weighted-factor bar in the Scoring Breakdown.
+// A real <button> (not a div) so the explanation is keyboard-reachable and
+// screen-reader-discoverable via aria-expanded/aria-controls.
 // ---------------------------------------------------------------------------
 
-function ScoreBar({ label, score, locale }: { label: string; score: number; locale: string }) {
+function ScoreFactorBar({
+  factorKey,
+  label,
+  weight,
+  weightDecimals,
+  score,
+  locale,
+  t,
+}: {
+  factorKey: string;
+  label: string;
+  weight: number;
+  weightDecimals: number;
+  score: number;
+  locale: string;
+  t: TFn;
+}) {
+  const [expanded, setExpanded] = useState(false);
   const pct = Math.max(0, Math.min(100, score));
+  const explanationId = `fishing-scoring-explain-${factorKey}`;
+  const weightLabel = formatNumber(weight, weightDecimals, locale);
+
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-muted-foreground shrink-0 w-28 truncate" style={{ fontSize: 'var(--text-label)' }}>
-        {label}
-      </span>
-      <div
-        role="img"
-        aria-label={`${label}: ${formatNumber(pct, 0, locale)}`}
-        className="flex-1 h-2 rounded-full bg-muted overflow-hidden"
+    <div className="flex flex-col gap-1">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        aria-controls={explanationId}
+        className="flex items-center gap-2 w-full text-left rounded py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
-        <div className={`h-full rounded-full ${scoreFillClass(pct)}`} style={{ width: `${pct}%` }} />
-      </div>
-      <span
-        className={`shrink-0 w-9 text-right font-semibold ${scoreTextClass(pct)}`}
-        style={{ fontSize: 'var(--text-label)', fontFeatureSettings: '"tnum"' }}
-      >
-        {formatNumber(pct, 0, locale)}
-      </span>
+        <CaretDown
+          aria-hidden="true"
+          focusable="false"
+          className={`size-3.5 shrink-0 text-muted-foreground transition-transform ${expanded ? 'rotate-180' : ''}`}
+        />
+        <span className="text-muted-foreground shrink-0 w-32 sm:w-40 truncate" style={{ fontSize: 'var(--text-label)' }}>
+          {t('fishing.scoring.factorLabel', { label, weight: weightLabel })}
+        </span>
+        <span
+          className="flex-1 h-2 rounded-full overflow-hidden"
+          style={{ background: 'var(--gauge-unfill)' }}
+          aria-hidden="true"
+        >
+          <span
+            className="block h-full rounded-full transition-all"
+            style={{ width: `${pct}%`, background: scoreBarFillColor(pct) }}
+          />
+        </span>
+        <span
+          className="shrink-0 w-9 text-right font-semibold text-foreground"
+          style={{ fontSize: 'var(--text-label)', fontFeatureSettings: '"tnum"' }}
+        >
+          {formatNumber(Math.round(pct), 0, locale)}
+        </span>
+      </button>
+      {expanded && (
+        <p id={explanationId} className="text-muted-foreground pl-6" style={{ fontSize: 'var(--text-micro)' }}>
+          {t(`fishing.scoring.explanations.${factorKey}`)}
+        </p>
+      )}
     </div>
   );
 }
@@ -302,107 +456,270 @@ function PeriodGrid({ days, locale, stationTz, t }: { days: FishingDay[]; locale
   );
   const columnCount = headerDay?.periods.length ?? 0;
 
-  if (columnCount === 0) return null;
+  if (columnCount === 0) {
+    return (
+      <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
+        {t('fishing.noData')}
+      </p>
+    );
+  }
 
   return (
-    <Panel title={t('fishing.periodGrid')}>
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse" style={{ fontSize: 'var(--text-body)' }}>
-          <caption className="sr-only">{t('fishing.periodGridCaption')}</caption>
-          <thead>
-            <tr>
+    <HorizontalScrollNav ariaLabel={t('fishing.periodGridScrollAriaLabel')}>
+      <table className="w-full border-collapse" style={{ fontSize: 'var(--text-body)' }}>
+        <caption className="sr-only">{t('fishing.periodGridCaption')}</caption>
+        <thead>
+          <tr>
+            <th
+              scope="col"
+              className="sticky left-0 z-10 bg-[rgb(var(--card-glass))] text-left p-2 whitespace-nowrap"
+              style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--muted-foreground)' }}
+            >
+              {t('fishing.day')}
+            </th>
+            {headerDay.periods.map((p, i) => (
               <th
+                key={i}
                 scope="col"
-                className="sticky left-0 z-10 bg-[rgb(var(--card-glass))] text-left p-2 whitespace-nowrap"
+                className="text-left p-2 whitespace-nowrap"
                 style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--muted-foreground)' }}
               >
-                {t('fishing.day')}
+                {p.periodLabel}
               </th>
-              {headerDay.periods.map((p, i) => (
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {days.map((day, rowIdx) => {
+            const dateObj = parseCalendarDate(day.date);
+            return (
+              <tr key={day.date} className={rowIdx % 2 === 1 ? 'bg-muted/30' : undefined}>
                 <th
-                  key={i}
-                  scope="col"
-                  className="text-left p-2 whitespace-nowrap"
-                  style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--muted-foreground)' }}
+                  scope="row"
+                  className="sticky left-0 z-10 bg-[rgb(var(--card-glass))] text-left p-2 align-top whitespace-nowrap font-semibold text-foreground"
                 >
-                  {p.periodLabel}
+                  {formatShortDayOfWeek(dateObj, locale, stationTz)}
+                  <br />
+                  <span className="text-muted-foreground font-normal" style={{ fontSize: 'var(--text-micro)' }}>
+                    {formatMonthDay(dateObj, locale, stationTz)}
+                  </span>
                 </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {days.map((day, rowIdx) => {
-              const dateObj = parseCalendarDate(day.date);
-              return (
-                <tr key={day.date} className={rowIdx % 2 === 1 ? 'bg-muted/30' : undefined}>
-                  <th
-                    scope="row"
-                    className="sticky left-0 z-10 bg-[rgb(var(--card-glass))] text-left p-2 align-top whitespace-nowrap font-semibold text-foreground"
-                  >
-                    {formatShortDayOfWeek(dateObj, locale, stationTz)}
-                    <br />
-                    <span className="text-muted-foreground font-normal" style={{ fontSize: 'var(--text-micro)' }}>
-                      {formatMonthDay(dateObj, locale, stationTz)}
-                    </span>
-                  </th>
-                  {Array.from({ length: columnCount }).map((_, colIdx) => {
-                    const period = day.periods[colIdx];
-                    if (!period) {
-                      return <td key={colIdx} className="p-2 text-center text-muted-foreground">—</td>;
-                    }
-                    const isMajor = overlapsAny(period.periodStart, period.periodEnd, day.solunar.majorPeriods);
-                    const isMinor = !isMajor && overlapsAny(period.periodStart, period.periodEnd, day.solunar.minorPeriods);
-                    const top = topSpeciesLabel(period.speciesScores);
-                    return (
-                      <td key={colIdx} className={`p-2 align-top rounded-md ${scoreBgClass(period.overallScore)}`}>
-                        <div className="flex flex-col gap-0.5 min-w-[4.5rem]">
-                          <span
-                            className={`font-bold ${scoreTextClass(period.overallScore)}`}
-                            style={{ fontSize: 'var(--text-stat-tile)', fontFeatureSettings: '"tnum"' }}
-                          >
-                            {formatNumber(Math.round(period.overallScore), 0, locale)}
+                {Array.from({ length: columnCount }).map((_, colIdx) => {
+                  const period = day.periods[colIdx];
+                  if (!period) {
+                    return <td key={colIdx} className="p-2 text-center text-muted-foreground">—</td>;
+                  }
+                  const isMajor = overlapsAny(period.periodStart, period.periodEnd, day.solunar.majorPeriods);
+                  const isMinor = !isMajor && overlapsAny(period.periodStart, period.periodEnd, day.solunar.minorPeriods);
+                  const top = topSpeciesLabel(period.speciesScores);
+                  return (
+                    <td key={colIdx} className={`p-2 align-top rounded-md ${scoreBgClass(period.overallScore)}`}>
+                      <div className="flex flex-col gap-0.5 min-w-[4.5rem]">
+                        <span
+                          className={`font-bold ${scoreTextClass(period.overallScore)}`}
+                          style={{ fontSize: 'var(--text-stat-tile)', fontFeatureSettings: '"tnum"' }}
+                        >
+                          {formatNumber(Math.round(period.overallScore), 0, locale)}
+                        </span>
+                        {top && (
+                          <span className="text-foreground truncate" style={{ fontSize: 'var(--text-micro)' }}>
+                            {top}
                           </span>
-                          {top && (
-                            <span className="text-foreground truncate" style={{ fontSize: 'var(--text-micro)' }}>
-                              {top}
-                            </span>
-                          )}
-                          {(isMajor || isMinor) && (
-                            <span className="inline-flex items-center gap-0.5 text-foreground">
-                              <MoonStars
-                                aria-hidden="true"
-                                focusable="false"
-                                weight={isMajor ? 'fill' : 'regular'}
-                                className="size-[18px]"
-                              />
-                              <span className="sr-only">{isMajor ? t('fishing.majorPeriod') : t('fishing.minorPeriod')}</span>
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </Panel>
+                        )}
+                        {(isMajor || isMinor) && (
+                          <span className="inline-flex items-center gap-0.5 text-foreground">
+                            <MoonStars
+                              aria-hidden="true"
+                              focusable="false"
+                              weight={isMajor ? 'fill' : 'regular'}
+                              className="size-[18px]"
+                            />
+                            <span className="sr-only">{isMajor ? t('fishing.majorPeriod') : t('fishing.minorPeriod')}</span>
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </HorizontalScrollNav>
   );
 }
 
 // ---------------------------------------------------------------------------
-// SolunarTimeline — 24h horizontal bar for major/minor periods + moon times
+// SpeciesTable — Species / Score / Status (+ Notes when present)
 // ---------------------------------------------------------------------------
 
-function SolunarTimeline({ day, locale, stationTz, t }: { day: FishingDay; locale: string; stationTz: string; t: TFn }) {
-  // Named timeWindow (not `window`) — that identifier would shadow the
-  // global DOM window object throughout this component's scope.
-  const timeWindow = dayWindow(day);
-  const solunar = day.solunar;
+function SpeciesStatusBadge({ status, score }: { status: string | null; score: number | null }) {
+  if (status === null) return <span className="text-muted-foreground">—</span>;
+  const tier = speciesScoreTier(score);
+  const colorClass = tier ? SPECIES_TIER_COLOR[tier] : 'bg-muted text-muted-foreground';
+  return (
+    <span
+      className={`inline-flex w-fit items-center rounded px-2 py-0.5 font-semibold ${colorClass}`}
+      style={{ fontSize: 'var(--text-label)' }}
+    >
+      {status}
+    </span>
+  );
+}
 
-  const markers = useMemo(() => {
+function SpeciesTable({ period, species, locale, t }: { period: FishingForecast | null; species: string[]; locale: string; t: TFn }) {
+  const entries = useMemo(() => {
+    if (!period?.speciesScores || period.speciesScores.length === 0) return [];
+    return period.speciesScores.map(extractSpeciesEntry).filter((e): e is SpeciesEntry => e !== null);
+  }, [period]);
+
+  const hasNoteColumn = entries.some((e) => e.note !== null);
+
+  const headerStyle: React.CSSProperties = {
+    fontSize: 'var(--text-label)',
+    fontWeight: 600,
+    color: 'var(--muted-foreground)',
+  };
+
+  return (
+    <Card footprint="full">
+      <CardHeader>
+        <CardTitle as="h3">{t('fishing.speciesTable')}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {entries.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse" style={{ fontSize: 'var(--text-body)' }}>
+              <caption className="sr-only">{t('fishing.speciesTableCaption')}</caption>
+              <thead>
+                <tr>
+                  <th
+                    scope="col"
+                    className="sticky left-0 z-10 bg-[rgb(var(--card-glass))] text-left p-2"
+                    style={headerStyle}
+                  >
+                    {t('fishing.species')}
+                  </th>
+                  <th scope="col" className="text-right p-2" style={headerStyle}>
+                    {t('fishing.score')}
+                  </th>
+                  <th scope="col" className="text-left p-2" style={headerStyle}>
+                    {t('fishing.statusColumn')}
+                  </th>
+                  {hasNoteColumn && (
+                    <th scope="col" className="text-left p-2" style={headerStyle}>
+                      {t('fishing.noteColumn')}
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map((e, i) => (
+                  <tr key={`${e.species}-${i}`} className={i % 2 === 1 ? 'bg-muted/30' : undefined}>
+                    <th
+                      scope="row"
+                      className={`sticky left-0 z-10 text-left p-2 font-normal text-foreground whitespace-nowrap ${i % 2 === 1 ? 'bg-muted/30' : 'bg-[rgb(var(--card-glass))]'}`}
+                    >
+                      {e.species}
+                    </th>
+                    <td className="p-2 text-right font-semibold text-foreground" style={{ fontFeatureSettings: '"tnum"' }}>
+                      {e.score !== null ? formatNumber(Math.round(e.score), 0, locale) : '—'}
+                    </td>
+                    <td className="p-2">
+                      <SpeciesStatusBadge status={e.status} score={e.score} />
+                    </td>
+                    {hasNoteColumn && (
+                      <td className="p-2 text-muted-foreground">{e.note ?? '—'}</td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : species.length > 0 ? (
+          <ul className="flex flex-col gap-1">
+            {species.map((s) => (
+              <li key={s} className="text-foreground" style={{ fontSize: 'var(--text-body)' }}>{s}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>{t('fishing.noSpeciesData')}</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Solunar arc geometry — semi-ellipse math, same technique as
+// SunMoonDetailCard.tsx (not imported, to avoid coupling the marine tab to
+// the almanac card — same reasoning SunMoonDetailCard itself documents for
+// not importing sun-moon-card.tsx).
+// ---------------------------------------------------------------------------
+
+const ARC_VIEWBOX_W = 460;
+const ARC_VIEWBOX_H = 260;
+const ARC_CX = 230;
+const ARC_CY = 210;
+const ARC_RX = 190;
+const ARC_RY = 155;
+const ARC_DASH = '7 4';
+/** Silver — same MOON_COLOR as SunMoonDetailCard.tsx (verified AA contrast
+ *  there: 4.52:1 dark / 3.08:1 light, meeting the 3:1 non-text floor). */
+const ARC_MOON_COLOR = '#94a3b8';
+
+function ellipsePath(cx: number, cy: number, rx: number, ry: number): string {
+  const x0 = cx - rx;
+  const x1 = cx + rx;
+  return `M ${x0} ${cy} A ${rx} ${ry} 0 1 1 ${x1} ${cy}`;
+}
+
+function arcPoint(pct: number, cx: number, cy: number, rx: number, ry: number): { x: number; y: number } {
+  const clamped = Math.max(0, Math.min(1, pct));
+  const angle = Math.PI * (1 - clamped);
+  return { x: cx + rx * Math.cos(angle), y: cy - ry * Math.sin(angle) };
+}
+
+/** Ramanujan semi-perimeter approximation for a semi-ellipse — same formula
+ *  SunMoonDetailCard.tsx uses for its traveled-arc dasharray technique. */
+function semiPerimeter(rx: number, ry: number): number {
+  return (Math.PI * (3 * (rx + ry) - Math.sqrt((3 * rx + ry) * (rx + 3 * ry)))) / 2;
+}
+
+/** Fraction [0,1] of how far `atMs` sits between `startIso` and `endIso`,
+ *  handling the cross-midnight case (moonset earlier in the calendar day
+ *  than moonrise → the moon actually sets the following day). Returns null
+ *  when either endpoint is missing/invalid — the caller then treats the
+ *  moon as "not currently up" rather than guessing a position. */
+function arcProgressFraction(startIso: string | null, endIso: string | null, atMs: number): number | null {
+  if (!startIso || !endIso) return null;
+  const startMs = new Date(startIso).getTime();
+  let endMs = new Date(endIso).getTime();
+  if (!isFinite(startMs) || !isFinite(endMs)) return null;
+  if (endMs <= startMs) endMs += 24 * 60 * 60 * 1000;
+  return (atMs - startMs) / (endMs - startMs);
+}
+
+// ---------------------------------------------------------------------------
+// SolunarCard — arc visualization + horizontal timeline + moon phase row +
+// sr-only fallback table, matching SunMoonDetailCard's visual quality
+// (DASHBOARD-MANUAL §12 "Solunar Calendar" / DESIGN-MANUAL §20 "Solunar
+// display").
+// ---------------------------------------------------------------------------
+
+function SolunarCard({ day, locale, stationTz, t, tAlmanac }: { day: FishingDay; locale: string; stationTz: string; t: TFn; tAlmanac: TFn }) {
+  const [nowMs, setNowMs] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowMs(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const solunar = day.solunar;
+  const timeWindow = dayWindow(day);
+
+  // Horizontal timeline — full day span, major/minor segments + now marker.
+  const timelineMarkers = useMemo(() => {
     if (!timeWindow) return [];
     const [start, end] = timeWindow;
     const span = end - start;
@@ -417,249 +734,266 @@ function SolunarTimeline({ day, locale, stationTz, t }: { day: FishingDay; local
     return bars;
   }, [timeWindow, solunar]);
 
-  const moonriseInWindow = solunar.moonrise && timeWindow
-    ? new Date(solunar.moonrise).getTime() >= timeWindow[0] && new Date(solunar.moonrise).getTime() <= timeWindow[1]
-    : false;
-  const moonsetInWindow = solunar.moonset && timeWindow
-    ? new Date(solunar.moonset).getTime() >= timeWindow[0] && new Date(solunar.moonset).getTime() <= timeWindow[1]
-    : false;
+  const nowInTimeline = timeWindow ? nowMs >= timeWindow[0] && nowMs <= timeWindow[1] : false;
+  const nowTimelinePct = timeWindow ? ((nowMs - timeWindow[0]) / (timeWindow[1] - timeWindow[0])) * 100 : 0;
+
+  // Arc — moonrise→moonset window, major/minor periods highlighted on it.
+  const moonPct = arcProgressFraction(solunar.moonrise, solunar.moonset, nowMs);
+  const moonUp = moonPct !== null && moonPct >= 0 && moonPct <= 1;
+  const moonMarker = moonUp && moonPct !== null ? arcPoint(moonPct, ARC_CX, ARC_CY, ARC_RX, ARC_RY) : null;
+  const arcLen = semiPerimeter(ARC_RX, ARC_RY);
+
+  function arcSegment(period: { start: string; end: string }): { start: number; end: number } | null {
+    const p0 = arcProgressFraction(solunar.moonrise, solunar.moonset, new Date(period.start).getTime());
+    const p1 = arcProgressFraction(solunar.moonrise, solunar.moonset, new Date(period.end).getTime());
+    if (p0 === null || p1 === null) return null;
+    const lo = Math.max(0, Math.min(p0, p1));
+    const hi = Math.min(1, Math.max(p0, p1));
+    if (hi <= lo) return null;
+    return { start: lo, end: hi };
+  }
+
+  const majorArcSegments = solunar.majorPeriods.map(arcSegment).filter((s): s is { start: number; end: number } => s !== null);
+  const minorArcSegments = solunar.minorPeriods.map(arcSegment).filter((s): s is { start: number; end: number } => s !== null);
+
+  const illumFraction = illuminationFraction(solunar.moonIllumination);
+  const illumPercent = Math.round(illumFraction * 100);
+  const hyphenPhase = solunar.moonPhase.replace(/_/g, '-');
+  const phaseLabel = tAlmanac(`moonPhases.${hyphenPhase}`, solunar.moonPhase);
+  // Composed via i18next interpolation (not JS string concatenation) —
+  // reuses almanac.json's existing "phaseIllumination"/"illuminatedPercent"
+  // templates so word order stays correct per locale (rules/coding.md
+  // §6.1). illumText mirrors SunMoonDetailCard.tsx's own `${Math.round(...)}%`
+  // composition — the '%' glyph isn't word-order-sensitive text, only the
+  // digit formatting is, and Math.round() + template here matches that
+  // file's existing precedent rather than inventing a second convention.
+  const illumText = `${formatNumber(illumPercent, 0, locale)}%`;
+  const phaseIllumLabel = tAlmanac('phaseIllumination', { phase: phaseLabel, illumination: illumText });
+
+  const moonriseText = solunar.moonrise ? formatTime(new Date(solunar.moonrise), locale, stationTz) : '—';
+  const moonsetText = solunar.moonset ? formatTime(new Date(solunar.moonset), locale, stationTz) : '—';
 
   return (
-    <Panel title={t('fishing.solunar')}>
-      {/* dl/dt/dd (not a colon-joined string) — label/value pairing must not
-          assume any particular punctuation or word order across locales
-          (rules/coding.md §6.1). */}
-      <dl className="flex flex-wrap gap-x-6 gap-y-1" style={{ fontSize: 'var(--text-body)' }}>
-        <div className="flex items-baseline gap-1">
-          <dt className="text-muted-foreground">{t('fishing.moonPhase')}</dt>
-          <dd className="text-foreground font-semibold">{solunar.moonPhase}</dd>
-        </div>
-        <div className="flex items-baseline gap-1">
-          <dt className="text-muted-foreground">{t('fishing.illumination')}</dt>
-          <dd className="text-foreground font-semibold" style={{ fontFeatureSettings: '"tnum"' }}>
-            {formatIllumination(solunar.moonIllumination, locale)}
-          </dd>
-        </div>
-        {solunar.moonrise && (
-          <div className="flex items-baseline gap-1">
-            <dt className="text-muted-foreground">{t('fishing.moonrise')}</dt>
-            <dd className="text-foreground font-semibold" style={{ fontFeatureSettings: '"tnum"' }}>
-              {formatTime(new Date(solunar.moonrise), locale, stationTz)}
-            </dd>
-          </div>
-        )}
-        {solunar.moonset && (
-          <div className="flex items-baseline gap-1">
-            <dt className="text-muted-foreground">{t('fishing.moonset')}</dt>
-            <dd className="text-foreground font-semibold" style={{ fontFeatureSettings: '"tnum"' }}>
-              {formatTime(new Date(solunar.moonset), locale, stationTz)}
-            </dd>
-          </div>
-        )}
-      </dl>
-
-      {timeWindow && (
-        <>
-          <div
+    <Card footprint="full">
+      <CardHeader>
+        <CardTitle as="h3">{t('fishing.solunar')}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        {/* Arc visualization */}
+        <div className="flex flex-col items-center gap-3">
+          <svg
             role="img"
-            aria-label={t('fishing.solunarTimelineAriaLabel')}
-            className="relative h-6 rounded-md bg-muted overflow-hidden"
+            viewBox={`0 0 ${ARC_VIEWBOX_W} ${ARC_VIEWBOX_H}`}
+            width="100%"
+            style={{ display: 'block', maxWidth: '460px' }}
           >
-            {markers.map((m) => (
-              <div
-                key={m.id}
-                className={m.kind === 'major' ? 'absolute top-0.5 bottom-0.5 rounded-sm bg-primary' : 'absolute top-1.5 bottom-1.5 rounded-sm bg-primary/50'}
-                style={{ left: `${m.left}%`, width: `${m.width}%` }}
+            <title>{t('fishing.solunarArcAriaLabel')}</title>
+
+            <defs>
+              <clipPath id="fishing-solunar-above-horizon">
+                <rect x={0} y={0} width={ARC_VIEWBOX_W} height={ARC_CY} />
+              </clipPath>
+            </defs>
+
+            <line
+              x1={ARC_CX - ARC_RX - 10}
+              y1={ARC_CY}
+              x2={ARC_CX + ARC_RX + 10}
+              y2={ARC_CY}
+              stroke="currentColor"
+              strokeWidth={1}
+              opacity={0.25}
+              aria-hidden="true"
+            />
+
+            {/* Base dashed arc (decorative track) */}
+            <path
+              d={ellipsePath(ARC_CX, ARC_CY, ARC_RX, ARC_RY)}
+              fill="none"
+              stroke={ARC_MOON_COLOR}
+              strokeWidth={2.5}
+              strokeDasharray={ARC_DASH}
+              strokeLinecap="round"
+              opacity={0.3}
+              clipPath="url(#fishing-solunar-above-horizon)"
+              aria-hidden="true"
+            />
+
+            {/* Minor period windows — muted accent */}
+            {minorArcSegments.map((seg, i) => (
+              <path
+                key={`minor-arc-${i}`}
+                d={ellipsePath(ARC_CX, ARC_CY, ARC_RX, ARC_RY)}
+                fill="none"
+                stroke="var(--primary)"
+                strokeWidth={4}
+                strokeLinecap="round"
+                opacity={0.4}
+                strokeDasharray={`${(seg.end - seg.start) * arcLen} ${arcLen}`}
+                strokeDashoffset={-(seg.start * arcLen)}
+                clipPath="url(#fishing-solunar-above-horizon)"
+                aria-hidden="true"
               />
             ))}
-            {moonriseInWindow && solunar.moonrise && (
-              <div
-                className="absolute top-0 bottom-0 w-0.5 bg-foreground/60"
-                style={{ left: `${((new Date(solunar.moonrise).getTime() - timeWindow[0]) / (timeWindow[1] - timeWindow[0])) * 100}%` }}
+
+            {/* Major period windows — full accent */}
+            {majorArcSegments.map((seg, i) => (
+              <path
+                key={`major-arc-${i}`}
+                d={ellipsePath(ARC_CX, ARC_CY, ARC_RX, ARC_RY)}
+                fill="none"
+                stroke="var(--primary)"
+                strokeWidth={7}
+                strokeLinecap="round"
+                strokeDasharray={`${(seg.end - seg.start) * arcLen} ${arcLen}`}
+                strokeDashoffset={-(seg.start * arcLen)}
+                clipPath="url(#fishing-solunar-above-horizon)"
+                aria-hidden="true"
               />
+            ))}
+
+            {/* Rise/set endpoint dots */}
+            <circle cx={ARC_CX - ARC_RX} cy={ARC_CY} r={4} fill={ARC_MOON_COLOR} opacity={0.7} aria-hidden="true" />
+            <circle cx={ARC_CX + ARC_RX} cy={ARC_CY} r={4} fill={ARC_MOON_COLOR} opacity={0.4} aria-hidden="true" />
+
+            {/* Moon position marker (only when currently up) */}
+            {moonMarker && (
+              <g aria-hidden="true">
+                <MoonPhaseG
+                  cx={moonMarker.x}
+                  cy={moonMarker.y}
+                  r={11}
+                  illuminationPercent={illumFraction * 100}
+                  phaseName={hyphenPhase}
+                />
+              </g>
             )}
-            {moonsetInWindow && solunar.moonset && (
-              <div
-                className="absolute top-0 bottom-0 w-0.5 bg-foreground/60"
-                style={{ left: `${((new Date(solunar.moonset).getTime() - timeWindow[0]) / (timeWindow[1] - timeWindow[0])) * 100}%` }}
-              />
-            )}
+
+            {/* Rise/set time labels */}
+            <text
+              x={ARC_CX - ARC_RX}
+              y={ARC_CY + 22}
+              textAnchor="middle"
+              fontFamily="var(--font-sans, system-ui, sans-serif)"
+              fontSize={13}
+              fontWeight={600}
+              fill={ARC_MOON_COLOR}
+              aria-hidden="true"
+            >
+              {moonriseText}
+            </text>
+            <text
+              x={ARC_CX + ARC_RX}
+              y={ARC_CY + 22}
+              textAnchor="middle"
+              fontFamily="var(--font-sans, system-ui, sans-serif)"
+              fontSize={13}
+              fontWeight={600}
+              fill={ARC_MOON_COLOR}
+              aria-hidden="true"
+            >
+              {moonsetText}
+            </text>
+          </svg>
+
+          {!moonUp && (
+            <p className="text-muted-foreground" style={{ fontSize: 'var(--text-micro)' }}>
+              {t('fishing.moonBelowHorizon')}
+            </p>
+          )}
+
+          {/* Moon phase row. No aria-label on this wrapping <div> — a plain
+              div's implicit ARIA role is "generic", and aria-label has no
+              effect on generic elements per the ARIA-in-HTML spec (same
+              gotcha SurfingTab.tsx's StarRating comment documents). The
+              accessible name comes from MoonPhaseIcon's own role="img" +
+              aria-label below, backed up by the adjacent visible text. */}
+          <div className="flex items-center gap-3">
+            <MoonPhaseIcon
+              size={40}
+              illuminationPercent={illumFraction * 100}
+              phaseName={hyphenPhase}
+              ariaLabel={phaseIllumLabel}
+            />
+            <div>
+              <div className="font-semibold" style={{ fontSize: 'var(--text-secondary, 0.85rem)' }}>
+                {phaseLabel}
+              </div>
+              <div className="text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>
+                {tAlmanac('illuminatedPercent', { illumination: illumText })}
+              </div>
+            </div>
           </div>
-
-          <div className="flex items-center gap-4" style={{ fontSize: 'var(--text-micro)' }}>
-            <span className="inline-flex items-center gap-1 text-muted-foreground">
-              <span className="inline-block w-3 h-2 rounded-sm bg-primary" aria-hidden="true" />
-              {t('fishing.majorPeriod')}
-            </span>
-            <span className="inline-flex items-center gap-1 text-muted-foreground">
-              <span className="inline-block w-3 h-2 rounded-sm bg-primary/50" aria-hidden="true" />
-              {t('fishing.minorPeriod')}
-            </span>
-          </div>
-
-          {/* sr-only fallback data table for the visual timeline (coding.md §5.5) */}
-          <table className="sr-only">
-            <caption>{t('fishing.solunarTimelineAriaLabel')}</caption>
-            <thead>
-              <tr>
-                <th scope="col">{t('fishing.periodGrid')}</th>
-                <th scope="col">{t('fishing.day')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {solunar.majorPeriods.map((p, i) => (
-                <tr key={`sr-major-${i}`}>
-                  <td>{t('fishing.majorPeriod')}</td>
-                  <td>{formatTime(new Date(p.start), locale, stationTz)} – {formatTime(new Date(p.end), locale, stationTz)}</td>
-                </tr>
-              ))}
-              {solunar.minorPeriods.map((p, i) => (
-                <tr key={`sr-minor-${i}`}>
-                  <td>{t('fishing.minorPeriod')}</td>
-                  <td>{formatTime(new Date(p.start), locale, stationTz)} – {formatTime(new Date(p.end), locale, stationTz)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </>
-      )}
-    </Panel>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// SpeciesTable — semantic table of species activity for the current period
-// ---------------------------------------------------------------------------
-
-function SpeciesTable({ period, species, locale, t }: { period: FishingForecast | null; species: string[]; locale: string; t: TFn }) {
-  const entries = useMemo(() => {
-    if (!period?.speciesScores || period.speciesScores.length === 0) return [];
-    return period.speciesScores.map(extractSpeciesEntry).filter((e): e is NonNullable<typeof e> => e !== null);
-  }, [period]);
-
-  return (
-    <Panel title={t('fishing.speciesTable')}>
-      {entries.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse" style={{ fontSize: 'var(--text-body)' }}>
-            <caption className="sr-only">{t('fishing.speciesTableCaption')}</caption>
-            <thead>
-              <tr>
-                <th scope="col" className="text-left p-2" style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--muted-foreground)' }}>
-                  {t('fishing.species')}
-                </th>
-                <th scope="col" className="text-left p-2" style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--muted-foreground)' }}>
-                  {t('fishing.activity')}
-                </th>
-                <th scope="col" className="text-right p-2" style={{ fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--muted-foreground)' }}>
-                  {t('fishing.score')}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((e, i) => (
-                <tr key={`${e.species}-${i}`} className={i % 2 === 1 ? 'bg-muted/30' : undefined}>
-                  <td className="p-2 text-foreground">{e.species}</td>
-                  <td className="p-2 text-foreground">{e.activity ?? '—'}</td>
-                  <td className="p-2 text-right font-semibold" style={{ fontFeatureSettings: '"tnum"' }}>
-                    {e.score !== null ? formatNumber(Math.round(e.score), 0, locale) : '—'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
-      ) : species.length > 0 ? (
-        <ul className="flex flex-col gap-1">
-          {species.map((s) => (
-            <li key={s} className="text-foreground" style={{ fontSize: 'var(--text-body)' }}>{s}</li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>{t('fishing.noSpeciesData')}</p>
-      )}
-    </Panel>
-  );
-}
 
-// ---------------------------------------------------------------------------
-// ConditionsBreakdown — 5 ScoreBars for the current period
-// ---------------------------------------------------------------------------
+        {/* Horizontal timeline strip */}
+        {timeWindow && (
+          <div className="flex flex-col gap-2">
+            <div
+              role="img"
+              aria-label={t('fishing.solunarTimelineAriaLabel')}
+              className="relative h-6 rounded-md bg-muted overflow-hidden"
+            >
+              {timelineMarkers.map((m) => (
+                <div
+                  key={m.id}
+                  className={m.kind === 'major' ? 'absolute top-0.5 bottom-0.5 rounded-sm bg-primary' : 'absolute top-1.5 bottom-1.5 rounded-sm bg-primary/50'}
+                  style={{ left: `${m.left}%`, width: `${m.width}%` }}
+                />
+              ))}
+              {nowInTimeline && (
+                <div
+                  className="absolute top-0 bottom-0 w-0.5 bg-foreground"
+                  style={{ left: `${nowTimelinePct}%` }}
+                  aria-hidden="true"
+                />
+              )}
+            </div>
+            <div className="flex items-center gap-4 flex-wrap" style={{ fontSize: 'var(--text-micro)' }}>
+              <span className="inline-flex items-center gap-1 text-muted-foreground">
+                <span className="inline-block w-3 h-2 rounded-sm bg-primary" aria-hidden="true" />
+                {t('fishing.majorPeriod')}
+              </span>
+              <span className="inline-flex items-center gap-1 text-muted-foreground">
+                <span className="inline-block w-3 h-2 rounded-sm bg-primary/50" aria-hidden="true" />
+                {t('fishing.minorPeriod')}
+              </span>
+              {nowInTimeline && (
+                <span className="inline-flex items-center gap-1 text-muted-foreground">
+                  <span className="inline-block w-0.5 h-3 bg-foreground" aria-hidden="true" />
+                  {t('tide.now', { defaultValue: 'Now' })}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
-function ConditionsBreakdown({ period, locale, t }: { period: FishingForecast | null; locale: string; t: TFn }) {
-  if (!period) return null;
-  return (
-    <Panel title={t('fishing.conditions')}>
-      <div className="flex flex-col gap-2">
-        <ScoreBar label={t('fishing.pressureScore')} score={period.pressureScore} locale={locale} />
-        <ScoreBar label={t('fishing.tideScore')} score={period.tideScore} locale={locale} />
-        <ScoreBar label={t('fishing.solunarScore')} score={period.solunarScore} locale={locale} />
-        <ScoreBar label={t('fishing.waterTempScore')} score={period.waterTempScore} locale={locale} />
-        <ScoreBar label={t('fishing.timeofdayScore')} score={period.timeofdayScore} locale={locale} />
-      </div>
-    </Panel>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// WindSwellContent — display-only, NOT scored. Renders bare content (no
-// Panel wrapper) so it can be embedded inside the merged Conditions panel
-// alongside the barometric pressure block (T1.5.4).
-// ---------------------------------------------------------------------------
-
-function WindSwellContent({ period, units, locale, t }: { period: FishingForecast | null; units: UnitsBlock | undefined; locale: string; t: TFn }) {
-  if (!period) return null;
-  return (
-    <>
-      <p className="text-muted-foreground" style={{ fontSize: 'var(--text-micro)' }}>{t('fishing.windSwell')}</p>
-      <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3">
-        <StatTile
-          label={t('windSpeed')}
-          value={period.windSpeed !== null ? formatValue(period.windSpeed, 'wind', locale) : '—'}
-          unit={period.windSpeed !== null ? (units?.windSpeed ?? '') : undefined}
-        />
-        <StatTile
-          label={t('fishing.windGust')}
-          value={period.windGust !== null ? formatValue(period.windGust, 'wind', locale) : '—'}
-          unit={period.windGust !== null ? (units?.windGust ?? units?.windSpeed ?? '') : undefined}
-        />
-        <StatTile
-          label={t('fishing.direction')}
-          value={period.windDirection !== null ? formatValue(period.windDirection, 'degrees', locale) : '—'}
-          unit={period.windDirection !== null ? '°' : undefined}
-        />
-        <StatTile
-          label={t('fishing.swellHeight')}
-          value={period.swellHeight !== null ? formatValue(period.swellHeight, 'default', locale) : '—'}
-          unit={period.swellHeight !== null ? (units?.swellHeight ?? '') : undefined}
-        />
-        <StatTile
-          label={t('fishing.swellPeriod')}
-          value={period.swellPeriod !== null ? formatValue(period.swellPeriod, 'default', locale) : '—'}
-          unit={period.swellPeriod !== null ? (units?.swellPeriod ?? t('fishing.secondsAbbr')) : undefined}
-        />
-      </dl>
-    </>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// HabitatFeatures — CUDEM habitat feature list
-// ---------------------------------------------------------------------------
-
-function HabitatFeatures({ features, t }: { features: string[]; t: TFn }) {
-  if (features.length === 0) return null;
-  return (
-    <Panel title={t('fishing.habitat')}>
-      <ul className="flex flex-col gap-1.5">
-        {features.map((f, i) => (
-          <li key={i} className="flex items-start gap-2 text-foreground" style={{ fontSize: 'var(--text-body)' }}>
-            <MapPin aria-hidden="true" focusable="false" className="size-4 shrink-0 mt-0.5 text-muted-foreground" />
-            {f}
-          </li>
-        ))}
-      </ul>
-    </Panel>
+        {/* sr-only fallback data table for both visuals (coding.md §5.5) */}
+        <table className="sr-only">
+          <caption>{t('fishing.solunarTimelineAriaLabel')}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{t('fishing.periodGrid')}</th>
+              <th scope="col">{t('fishing.day')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {solunar.majorPeriods.map((p, i) => (
+              <tr key={`sr-major-${i}`}>
+                <td>{t('fishing.majorPeriod')}</td>
+                <td>{formatTime(new Date(p.start), locale, stationTz)} – {formatTime(new Date(p.end), locale, stationTz)}</td>
+              </tr>
+            ))}
+            {solunar.minorPeriods.map((p, i) => (
+              <tr key={`sr-minor-${i}`}>
+                <td>{t('fishing.minorPeriod')}</td>
+                <td>{formatTime(new Date(p.start), locale, stationTz)} – {formatTime(new Date(p.end), locale, stationTz)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -670,23 +1004,25 @@ function HabitatFeatures({ features, t }: { features: string[]; t: TFn }) {
 export function FishingTab({ locationId, alerts = [] }: FishingTabProps) {
   const { t, i18n } = useTranslation('marine');
   const { t: tCommon } = useTranslation('common');
+  const { t: tAlmanac } = useTranslation('almanac');
   const locale = i18n.language;
   const { data: station } = useStation();
   const stationTz = station?.timezone ?? 'UTC';
 
   const { data, units, loading, error, refetch } = useFishingDetail(locationId);
-  const { data: marineBundle, units: marineUnits, loading: pressureLoading } = useMarineDetail(locationId);
+  const { data: marineBundle, units: marineUnits, loading: marineLoading } = useMarineDetail(locationId);
   const observation = marineBundle?.observation ?? null;
   const pressureUnit = marineUnits?.pressure ?? 'mb';
+  const tempUnit = marineUnits?.temperature ?? '';
 
   // Whole-tab loading state — fishing data is foundational to every panel below.
   if (loading) {
     return (
       <div className="flex flex-col gap-[var(--gap-grid)]">
         <span className="sr-only" role="status">{t('fishing.loading')}</span>
-        <TileSkeleton className="h-64" />
-        <TileSkeleton className="h-40" />
         <TileSkeleton className="h-48" />
+        <TileSkeleton className="h-32" />
+        <TileSkeleton className="h-64" />
       </div>
     );
   }
@@ -705,61 +1041,140 @@ export function FishingTab({ locationId, alerts = [] }: FishingTabProps) {
 
   const currentPeriod = findCurrentPeriod(data.days);
   const tideHeightUnit = units?.height ?? 'ft';
+  const windUnit = units?.windSpeed ?? 'kn';
+  const tideState = computeTideState(data.tidePredictions, Date.now());
+
+  const scoringFactors = currentPeriod
+    ? [
+        { key: 'pressure', label: t('fishing.scoring.pressure'), weight: 37.5, weightDecimals: 1, score: currentPeriod.pressureScore },
+        { key: 'tide', label: t('fishing.scoring.tide'), weight: 31.25, weightDecimals: 2, score: currentPeriod.tideScore },
+        { key: 'solunar', label: t('fishing.scoring.solunar'), weight: 18.75, weightDecimals: 2, score: currentPeriod.solunarScore },
+        { key: 'timeofday', label: t('fishing.scoring.timeofday'), weight: 12.5, weightDecimals: 1, score: currentPeriod.timeofdayScore },
+      ]
+    : [];
 
   return (
     <div className="flex flex-col gap-[var(--gap-grid)]">
-      {/* 1. Activity-relevant alerts — top, prominent (consistent with the
-          other three activity tabs; DASHBOARD-MANUAL §12 lists this last
-          for fishing but doesn't say otherwise, and the sibling tabs both
-          place their alert banner first). */}
+      {/* 1. Activity-relevant alerts — top, prominent */}
       <AlertsPanel alerts={alerts} />
 
-      {/* 2. 3-day period grid */}
-      {data.days.length > 0 && <PeriodGrid days={data.days} locale={locale} stationTz={stationTz} t={t} />}
+      {/* 2. Current Conditions Hero */}
+      <Card footprint="full">
+        <CardHeader>
+          <CardTitle as="h3">{t('fishing.currentConditions')}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          {currentPeriod === null ? (
+            <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
+              {t('fishing.hero.noConditionsData')}
+            </p>
+          ) : (
+            <>
+              <p className="font-semibold text-foreground" style={{ fontSize: 'var(--text-body)' }}>
+                {currentPeriod.conditionsText}
+              </p>
 
-      {/* 3. Conditions breakdown — score bars. Moved directly after the
-          period grid (T1.8.2) so anglers see the scoring rationale for the
-          forecast right below the forecast itself, instead of scrolling
-          past the solunar calendar, tide chart, and pressure panel first. */}
-      <ConditionsBreakdown period={currentPeriod} locale={locale} t={t} />
+              <div className="flex items-center gap-3 flex-wrap">
+                <span
+                  className={`inline-flex items-center rounded-lg px-3 py-2 font-bold ${scoreBgClass(currentPeriod.overallScore)} ${scoreTextClass(currentPeriod.overallScore)}`}
+                  style={{ fontSize: 'var(--text-stat-tile)', fontFeatureSettings: '"tnum"' }}
+                >
+                  {t('fishing.hero.scoreFraction', { score: formatNumber(Math.round(currentPeriod.overallScore), 0, locale), max: 100 })}
+                </span>
+                <span className="font-semibold text-foreground" style={{ fontSize: 'var(--text-label)' }}>
+                  {t(`qualitative.${fishingQualityKey(currentPeriod.overallScore)}`)}
+                </span>
+              </div>
 
-      {/* 4. Solunar calendar */}
-      {data.days[0] && <SolunarTimeline day={data.days[0]} locale={locale} stationTz={stationTz} t={t} />}
+              <dl className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-3">
+                <MarineStatTile
+                  icon={<Gauge aria-hidden="true" focusable="false" />}
+                  label={t('fishing.pressure')}
+                  value={marineLoading ? '—' : formatValue(observation?.pressure ?? null, 'barometer', locale)}
+                  unit={observation?.pressure != null ? pressureUnit : undefined}
+                />
+                <MarineStatTile
+                  icon={tideState === 'rising' ? <ArrowUp aria-hidden="true" focusable="false" /> : tideState === 'falling' ? <ArrowDown aria-hidden="true" focusable="false" /> : undefined}
+                  label={t('fishing.hero.tideState')}
+                  value={tideState === 'rising' ? t('fishing.hero.tideRising') : tideState === 'falling' ? t('fishing.hero.tideFalling') : '—'}
+                />
+                <MarineStatTile
+                  icon={<Wind aria-hidden="true" focusable="false" />}
+                  label={t('windSpeed')}
+                  value={formatValue(currentPeriod.windSpeed, 'wind', locale)}
+                  unit={currentPeriod.windSpeed !== null ? windUnit : undefined}
+                />
+                <MarineStatTile
+                  icon={<Thermometer aria-hidden="true" focusable="false" />}
+                  label={t('waterTemp')}
+                  value={marineLoading ? '—' : formatValue(observation?.waterTemp ?? null, 'temperature', locale)}
+                  unit={observation?.waterTemp != null ? tempUnit : undefined}
+                />
+              </dl>
+              <PressureTrend tendency={observation?.pressureTendency ?? null} t={t} />
+            </>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* 5. Tide chart — standalone, 72h (shared component) */}
-      <Panel title={t('fishing.tides')}>
-        <TideChart
-          predictions={data.tidePredictions}
-          locale={locale}
-          stationTz={stationTz}
-          heightUnit={tideHeightUnit}
-          ariaLabel={t('fishing.tideChartAriaLabel', { location: data.locationName })}
-        />
-      </Panel>
+      {/* 3. Scoring Breakdown */}
+      <Card footprint="full">
+        <CardHeader>
+          <CardTitle as="h3">{t('fishing.scoring.title')}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          {scoringFactors.length === 0 ? (
+            <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
+              {t('fishing.scoring.noData')}
+            </p>
+          ) : (
+            scoringFactors.map((f) => (
+              <ScoreFactorBar
+                key={f.key}
+                factorKey={f.key}
+                label={f.label}
+                weight={f.weight}
+                weightDecimals={f.weightDecimals}
+                score={f.score}
+                locale={locale}
+                t={t}
+              />
+            ))
+          )}
+        </CardContent>
+      </Card>
 
-      {/* 6. Conditions panel — barometric pressure + wind/swell consolidated
-          into one panel (T1.5.4) instead of two single-purpose panels. */}
-      <Panel title={t('fishing.currentConditions')}>
-        {pressureLoading ? (
-          <TileSkeleton className="h-12" />
-        ) : observation?.pressure === null || observation?.pressure === undefined ? (
-          <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>{t('fishing.noPressureData')}</p>
-        ) : (
-          <div className="flex items-center gap-3 flex-wrap">
-            <dl>
-              <StatTile label={t('fishing.pressure')} value={formatValue(observation.pressure, 'barometer', locale)} unit={pressureUnit} />
-            </dl>
-            <PressureTrend tendency={observation.pressureTendency ?? null} t={t} />
-          </div>
-        )}
-        <WindSwellContent period={currentPeriod} units={units} locale={locale} t={t} />
-      </Panel>
+      {/* 4. Forecast Periods */}
+      <Card footprint="full">
+        <CardHeader>
+          <CardTitle as="h3">{t('fishing.periodGrid')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PeriodGrid days={data.days} locale={locale} stationTz={stationTz} t={t} />
+        </CardContent>
+      </Card>
 
-      {/* 7. Species forecast table */}
+      {/* 5. Solunar Calendar */}
+      {data.days[0] && <SolunarCard day={data.days[0]} locale={locale} stationTz={stationTz} t={t} tAlmanac={tAlmanac} />}
+
+      {/* 6. Species Forecast */}
       <SpeciesTable period={currentPeriod} species={data.species} locale={locale} t={t} />
 
-      {/* 8. CUDEM habitat features */}
-      <HabitatFeatures features={data.habitatFeatures} t={t} />
+      {/* 7. Tide Forecast */}
+      <Card footprint="full">
+        <CardHeader>
+          <CardTitle as="h3">{t('fishing.tides')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <TideChart
+            predictions={data.tidePredictions}
+            locale={locale}
+            stationTz={stationTz}
+            heightUnit={tideHeightUnit}
+            ariaLabel={t('fishing.tideChartAriaLabel', { location: data.locationName })}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }

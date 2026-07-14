@@ -226,6 +226,33 @@
     "direction": "Direction",
     "swellHeight": "Swell Height",
     "swellPeriod": "Swell Period",
-    "habitat": "Habitat Features"
+    "habitat": "Habitat Features",
+    "hero": {
+      "tideState": "Tide",
+      "tideRising": "Rising",
+      "tideFalling": "Falling",
+      "scoreFraction": "{{score}} / {{max}}",
+      "noConditionsData": "No current conditions data available"
+    },
+    "scoring": {
+      "title": "Scoring Breakdown",
+      "pressure": "Pressure",
+      "tide": "Tide",
+      "solunar": "Solunar",
+      "timeofday": "Time of Day",
+      "factorLabel": "{{label}} ({{weight}}%)",
+      "explanations": {
+        "pressure": "Fish tend to feed more actively when barometric pressure is falling or steady, ahead of a weather change.",
+        "tide": "Moving water — especially the two hours around a tide change — concentrates bait and triggers feeding activity.",
+        "solunar": "Major and minor solunar periods track the moon's influence on fish activity through the day.",
+        "timeofday": "Low-light periods around dawn and dusk are historically the most productive times to fish."
+      },
+      "noData": "No scoring data available"
+    },
+    "statusColumn": "Status",
+    "noteColumn": "Notes",
+    "solunarArcAriaLabel": "Moon rise-to-set arc with major and minor fishing periods highlighted",
+    "moonBelowHorizon": "Moon is below the horizon",
+    "periodGridScrollAriaLabel": "Scrollable 3-day fishing forecast"
   }
 }
