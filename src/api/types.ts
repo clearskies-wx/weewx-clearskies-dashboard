@@ -222,6 +222,11 @@ export interface Observation {
    */
   weatherCode?: number | null;
   /**
+   * Cloud cover percentage (0-100) from the station's cloudcover field (wview_extended).
+   * Absent/null when the station does not report cloud cover.
+   */
+  cloudcover?: ConvertedValue | number | null;
+  /**
    * Beaufort scale — computed by BFF (ADR-042).
    * .value: Beaufort number (0–12).
    * .label: localised descriptor (e.g. "Gentle breeze").
@@ -303,6 +308,7 @@ export interface DailyForecastPoint {
   sunset: string | null;
   uvIndexMax: number | null;
   weatherCode: string | null;
+  cloudCover: number | null;
   weatherText: string | null;
   narrative: string | null;
   forecastText: string | null;
