@@ -17,16 +17,21 @@
 import type { SVGProps } from 'react';
 
 interface EarthquakeIconProps extends SVGProps<SVGSVGElement> {
-  /** Icon size in px (uniform width = height). Default: 20. */
+  /**
+   * Icon size in px (uniform width = height). When omitted, the icon
+   * renders at width/height="1em" so it inherits its size from the
+   * container's font-size (e.g. PageHeaderCard's 3.75rem icon slot) —
+   * matching how every other Phosphor page-header icon is sized.
+   */
   size?: number;
 }
 
-export function Earthquake({ size = 20, ...props }: EarthquakeIconProps) {
+export function Earthquake({ size, ...props }: EarthquakeIconProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
+      width={size ?? '1em'}
+      height={size ?? '1em'}
       viewBox="0 -960 960 960"
       fill="currentColor"
       aria-hidden="true"

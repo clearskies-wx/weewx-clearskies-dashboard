@@ -11,9 +11,8 @@
 
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Waves, Crosshair, CaretLeft, Sailboat, FishSimple, PersonSimpleSwim, Warning } from '@phosphor-icons/react';
+import { Waves, CaretLeft, Sailboat, FishSimple, PersonSimpleSwim, Warning } from '@phosphor-icons/react';
 import { PageLayout } from '../components/layout/page-layout';
-import { Button } from '../components/ui/button';
 import { LocationMap } from '../components/marine/LocationMap';
 import { LocationCard } from '../components/marine/LocationCard';
 import { ActivityTabs } from '../components/marine/ActivityTabs';
@@ -30,35 +29,6 @@ import type { MarineLocationSummary } from '../api/types';
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371;
-  const toRad = (deg: number) => (deg * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-function findNearestLocation(
-  locations: MarineLocationSummary[],
-  lat: number,
-  lon: number,
-): MarineLocationSummary | null {
-  if (locations.length === 0) return null;
-  let nearest = locations[0];
-  let minDist = haversineKm(lat, lon, nearest.coordinates.lat, nearest.coordinates.lon);
-  for (const loc of locations.slice(1)) {
-    const d = haversineKm(lat, lon, loc.coordinates.lat, loc.coordinates.lon);
-    if (d < minDist) {
-      minDist = d;
-      nearest = loc;
-    }
-  }
-  return nearest;
-}
 
 const ACTIVITY_ICON_SIZE = 'size-4';
 
@@ -115,35 +85,11 @@ export function MarinePage() {
   const { data: station } = useStation();
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [geoStatus, setGeoStatus] = useState<'idle' | 'searching' | 'error'>('idle');
-  const [geoErrorMessage, setGeoErrorMessage] = useState<string | null>(null);
 
   const selectedLocation = useMemo(
     () => (locations ?? []).find((l) => l.locationId === selectedId) ?? null,
     [locations, selectedId],
   );
-
-  function handleUseMyLocation() {
-    if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
-      setGeoStatus('error');
-      setGeoErrorMessage(t('geolocationUnsupported'));
-      return;
-    }
-    setGeoStatus('searching');
-    setGeoErrorMessage(null);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setGeoStatus('idle');
-        const nearest = findNearestLocation(locations ?? [], pos.coords.latitude, pos.coords.longitude);
-        if (nearest) setSelectedId(nearest.locationId);
-      },
-      () => {
-        setGeoStatus('error');
-        setGeoErrorMessage(t('geolocationError'));
-      },
-      { timeout: 10_000 },
-    );
-  }
 
   function buildActivities(location: MarineLocationSummary): ActivityDef[] {
     const API_TO_DASHBOARD: Record<string, ActivityId> = {
@@ -197,7 +143,7 @@ export function MarinePage() {
   const fallbackCenter: [number, number] = station ? [station.latitude, station.longitude] : [0, 0];
 
   return (
-    <PageLayout title={t('title')} icon={<Waves aria-hidden="true" className="h-7 w-7" />}>
+    <PageLayout title={t('title')} icon={<Waves weight="duotone" />}>
       {loading && (
         <>
           <span className="sr-only" role="status">{t('title')}</span>
@@ -221,25 +167,9 @@ export function MarinePage() {
 
       {!loading && !error && locations !== null && locations.length > 0 && selectedLocation === null && (
         <>
-          {/* Landing state: full map + "use my location" + card grid */}
+          {/* Landing state: full map + card grid */}
           <div className="col-span-1 md:col-span-2 lg:col-span-4 flex flex-col gap-[var(--gap-grid)]">
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-              <h2 className="sr-only">{t('map.ariaLabel')}</h2>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleUseMyLocation}
-                disabled={geoStatus === 'searching'}
-              >
-                <Crosshair aria-hidden="true" focusable="false" className="size-4" />
-                {geoStatus === 'searching' ? t('geolocationSearching') : t('useMyLocation')}
-              </Button>
-              {geoStatus === 'error' && geoErrorMessage && (
-                <p role="alert" className="text-destructive" style={{ fontSize: 'var(--text-label)' }}>
-                  {geoErrorMessage}
-                </p>
-              )}
-            </div>
+            <h2 className="sr-only">{t('map.ariaLabel')}</h2>
 
             <LocationMap
               locations={locations}

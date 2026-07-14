@@ -12,7 +12,7 @@ import type { MarineLocationSummary } from '../../api/types';
 import type { UnitsBlock } from '../../api/types';
 import { useStation } from '../../hooks/useWeatherData';
 import { formatValue } from '../../utils/format';
-import { formatRelativeTime, formatTime } from '../../utils/format-date';
+import { formatTime } from '../../utils/format-date';
 
 interface LocationCardProps {
   location: MarineLocationSummary;
@@ -44,16 +44,6 @@ export function LocationCard({ location, units, locale, onSelect }: LocationCard
     : null;
 
   const alertCount = location.activeAlerts?.length ?? 0;
-
-  // Relative "Updated Xm ago" from the observation timestamp, station-clock-free
-  // here since MarineObservation.time already carries a UTC ISO timestamp and
-  // formatRelativeTime only needs an elapsed offset (ADR-075: Date.now() is
-  // approved for elapsed-time display, not for station-date determination).
-  const updatedLabel = conditions?.time
-    ? t('lastUpdated', {
-        time: formatRelativeTime(new Date(conditions.time).getTime() - Date.now(), locale),
-      })
-    : null;
 
   return (
     <button
@@ -111,13 +101,13 @@ export function LocationCard({ location, units, locale, onSelect }: LocationCard
         </dl>
       )}
 
-      <div className="flex items-center justify-between gap-2 mt-1">
-        {alertCount > 0 ? (
-          // Same amber "advisory" tier as the earthquake PAGER badge (utils/earthquake.ts
-          // alertClasses) — the /marine summary endpoint exposes only a flat alert-id
-          // list, not per-alert severity, so a single neutral-warning tier is used here
-          // rather than fabricating a red/yellow split without the data to back it.
-          // Full severity-aware badges land with the per-location alert detail in T7.2-T7.5.
+      {alertCount > 0 && (
+        // Same amber "advisory" tier as the earthquake PAGER badge (utils/earthquake.ts
+        // alertClasses) — the /marine summary endpoint exposes only a flat alert-id
+        // list, not per-alert severity, so a single neutral-warning tier is used here
+        // rather than fabricating a red/yellow split without the data to back it.
+        // Full severity-aware badges land with the per-location alert detail in T7.2-T7.5.
+        <div className="mt-1">
           <span
             className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
             style={{ fontSize: 'var(--text-micro)' }}
@@ -125,15 +115,8 @@ export function LocationCard({ location, units, locale, onSelect }: LocationCard
             <Warning aria-hidden="true" focusable="false" className="size-3" />
             {t('alertCount', { count: alertCount })}
           </span>
-        ) : (
-          <span />
-        )}
-        {updatedLabel && (
-          <span className="text-muted-foreground" style={{ fontSize: 'var(--text-micro)' }}>
-            {updatedLabel}
-          </span>
-        )}
-      </div>
+        </div>
+      )}
     </button>
   );
 }

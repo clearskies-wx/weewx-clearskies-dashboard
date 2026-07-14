@@ -227,7 +227,7 @@ export function SeismicPage() {
     <div>
       <PageLayout
         title={t('title')}
-        icon={<Earthquake size={28} />}
+        icon={<Earthquake />}
         gridClassName="content-start"
         controls={
           config
