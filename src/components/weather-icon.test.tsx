@@ -2,8 +2,10 @@
  * weather-icon.test.tsx — Unit tests for WeatherIcon (ADR-049 acceptance criteria).
  *
  * Coverage:
- *   - All 32 WMO codes (including Clear Skies API extension codes 4, 5, 10,
- *     79) render a glyph (no null / empty render).
+ *   - All 44 WMO codes (including Clear Skies API extension codes 4, 5, 10,
+ *     79 and WMO extension codes 6/7/8, plus internal compound codes
+ *     100-108 added in T4.8 for the icon system overhaul) render a glyph
+ *     (no null / empty render).
  *   - Night flag: code 0 isNight=true renders the moon glyph (bedtime).
  *   - Night flag: non-zero code isNight=true still renders the day glyph.
  *   - Screen-reader label (sr-only span) is present for every mapped code.
@@ -11,6 +13,13 @@
  *   - Size prop: numeric and CSS-string variants resolve correctly.
  *   - toWmoCode() normalises NWS shortnames, OWM condition IDs, and Aeris
  *     atmosphere codes to WMO numbers.
+ *
+ * Gradient IDs note: weather-icon-glyphs.tsx scopes every gradient/clipPath
+ * id with a useId()-generated prefix (e.g. `:r0:goldGrad`) to avoid
+ * collisions across multiple icon instances in the same document (hidden
+ * forecast tab panels). Tests below select by id suffix (`[id$="goldGrad"]`)
+ * or assert the resolved fill/url() string contains the gradient name,
+ * rather than matching a fixed id.
  */
 
 import { describe, it, expect, vi, beforeAll } from 'vitest';
@@ -36,12 +45,20 @@ vi.mock('react-i18next', () => ({
 // ---------------------------------------------------------------------------
 
 /**
- * All 32 WMO codes the component maps (from the WMO_MAP in weather-icon.tsx),
- * including the Clear Skies API extension codes: 4 (overcast/heavy overcast),
- * 5 (haze), 10 (mist), and 79 (ice pellets/sleet).
+ * All 44 WMO codes the component maps (from the WMO_MAP in weather-icon.tsx),
+ * including:
+ *   - Clear Skies API extension codes: 4 (overcast/heavy overcast),
+ *     5 (haze), 10 (mist), and 79 (ice pellets/sleet).
+ *   - WMO extension codes added in T4.8: 6 (smoke), 7 (dust),
+ *     8 (volcanic ash).
+ *   - Internal compound codes (not WMO codes) added in T4.8, returned by
+ *     selectWeatherIcon(): 100 (mostly cloudy), 101-103 (combined sky +
+ *     rain/snow/wintry-mix), 104-105 (haze partly-cloudy/overcast),
+ *     106-107 (smoke partly-cloudy/overcast, also used for ash),
+ *     108 (dust overcast).
  */
 const ALL_WMO_CODES = [
-  0, 1, 2, 3, 4, 5,
+  0, 1, 2, 3, 4, 5, 6, 7, 8,
   10,
   45, 48,
   51, 53, 55, 56, 57,
@@ -50,10 +67,11 @@ const ALL_WMO_CODES = [
   80, 81, 82,
   85, 86,
   95, 96, 99,
+  100, 101, 102, 103, 104, 105, 106, 107, 108,
 ] as const;
 
 // ---------------------------------------------------------------------------
-// Suite: all 29 codes render a glyph
+// Suite: all 44 codes render a glyph
 // ---------------------------------------------------------------------------
 
 describe('WeatherIcon — all WMO codes render a glyph', () => {
@@ -97,7 +115,9 @@ describe('WeatherIcon — night handling', () => {
     // but the distinguishing check is that ALL paths use goldGrad (single-path sunny).
     const paths = svg!.querySelectorAll('path');
     expect(paths.length).toBe(1);
-    expect(paths[0].getAttribute('fill')).toBe('url(#goldGrad)');
+    // Gradient id is scoped with a useId() prefix (e.g. `:r0:goldGrad`), so
+    // assert the resolved fill url() contains the gradient name.
+    expect(paths[0].getAttribute('fill')).toContain('goldGrad');
   });
 
   it('code 0 isNight=true renders the moon (bedtime) SVG (moonGrad fill)', () => {
@@ -106,7 +126,7 @@ describe('WeatherIcon — night handling', () => {
     expect(svg).not.toBeNull();
     const paths = svg!.querySelectorAll('path');
     expect(paths.length).toBe(1);
-    expect(paths[0].getAttribute('fill')).toBe('url(#moonGrad)');
+    expect(paths[0].getAttribute('fill')).toContain('moonGrad');
   });
 
   it('code 1 isNight=true still renders the partly-cloudy glyph (no night override)', () => {
@@ -220,28 +240,38 @@ describe('WeatherIcon — gradient defs', () => {
 
   it('goldGrad linearGradient is present in the defs', () => {
     const { container } = render(<WeatherIcon code={0} />);
-    const grad = container.querySelector('#goldGrad');
+    const grad = container.querySelector('[id$="goldGrad"]');
     expect(grad).not.toBeNull();
   });
 
   it('greyGrad linearGradient is present', () => {
     const { container } = render(<WeatherIcon code={3} />);
-    expect(container.querySelector('#greyGrad')).not.toBeNull();
+    expect(container.querySelector('[id$="greyGrad"]')).not.toBeNull();
   });
 
   it('rainGrad linearGradient is present in rainy glyph', () => {
     const { container } = render(<WeatherIcon code={61} />);
-    expect(container.querySelector('#rainGrad')).not.toBeNull();
+    expect(container.querySelector('[id$="rainGrad"]')).not.toBeNull();
   });
 
   it('snowGrad linearGradient is present in snowy glyph', () => {
     const { container } = render(<WeatherIcon code={71} />);
-    expect(container.querySelector('#snowGrad')).not.toBeNull();
+    expect(container.querySelector('[id$="snowGrad"]')).not.toBeNull();
   });
 
   it('moonGrad linearGradient is present in bedtime glyph', () => {
     const { container } = render(<WeatherIcon code={0} isNight />);
-    expect(container.querySelector('#moonGrad')).not.toBeNull();
+    expect(container.querySelector('[id$="moonGrad"]')).not.toBeNull();
+  });
+
+  it('smokeGrad linearGradient is present in smoke glyph', () => {
+    const { container } = render(<WeatherIcon code={6} />);
+    expect(container.querySelector('[id$="smokeGrad"]')).not.toBeNull();
+  });
+
+  it('dustGrad linearGradient is present in dust glyph', () => {
+    const { container } = render(<WeatherIcon code={7} />);
+    expect(container.querySelector('[id$="dustGrad"]')).not.toBeNull();
   });
 });
 
@@ -252,7 +282,7 @@ describe('WeatherIcon — gradient defs', () => {
 describe('WeatherIcon — locked gradient stop values', () => {
   it('goldGrad stops are #FFD24D and #F5A623', () => {
     const { container } = render(<WeatherIcon code={0} />);
-    const grad = container.querySelector('#goldGrad');
+    const grad = container.querySelector('[id$="goldGrad"]');
     const stops = grad!.querySelectorAll('stop');
     expect(stops[0].getAttribute('stop-color')).toBe('#FFD24D');
     expect(stops[1].getAttribute('stop-color')).toBe('#F5A623');
@@ -260,7 +290,7 @@ describe('WeatherIcon — locked gradient stop values', () => {
 
   it('greyGrad stops are #F3F5F8 and #C7CDD6', () => {
     const { container } = render(<WeatherIcon code={3} />);
-    const grad = container.querySelector('#greyGrad');
+    const grad = container.querySelector('[id$="greyGrad"]');
     const stops = grad!.querySelectorAll('stop');
     expect(stops[0].getAttribute('stop-color')).toBe('#F3F5F8');
     expect(stops[1].getAttribute('stop-color')).toBe('#C7CDD6');
@@ -268,7 +298,7 @@ describe('WeatherIcon — locked gradient stop values', () => {
 
   it('rainGrad stops are #9CCEF5 and #5BA3DC', () => {
     const { container } = render(<WeatherIcon code={61} />);
-    const grad = container.querySelector('#rainGrad');
+    const grad = container.querySelector('[id$="rainGrad"]');
     const stops = grad!.querySelectorAll('stop');
     expect(stops[0].getAttribute('stop-color')).toBe('#9CCEF5');
     expect(stops[1].getAttribute('stop-color')).toBe('#5BA3DC');
@@ -276,7 +306,7 @@ describe('WeatherIcon — locked gradient stop values', () => {
 
   it('snowGrad stops are #E8F4FF and #B8D8F5', () => {
     const { container } = render(<WeatherIcon code={71} />);
-    const grad = container.querySelector('#snowGrad');
+    const grad = container.querySelector('[id$="snowGrad"]');
     const stops = grad!.querySelectorAll('stop');
     expect(stops[0].getAttribute('stop-color')).toBe('#E8F4FF');
     expect(stops[1].getAttribute('stop-color')).toBe('#B8D8F5');
@@ -284,10 +314,26 @@ describe('WeatherIcon — locked gradient stop values', () => {
 
   it('moonGrad stops are #86C3DB and #72B9D5', () => {
     const { container } = render(<WeatherIcon code={0} isNight />);
-    const grad = container.querySelector('#moonGrad');
+    const grad = container.querySelector('[id$="moonGrad"]');
     const stops = grad!.querySelectorAll('stop');
     expect(stops[0].getAttribute('stop-color')).toBe('#86C3DB');
     expect(stops[1].getAttribute('stop-color')).toBe('#72B9D5');
+  });
+
+  it('smokeGrad stops are #9EA5AD and #6B7280', () => {
+    const { container } = render(<WeatherIcon code={6} />);
+    const grad = container.querySelector('[id$="smokeGrad"]');
+    const stops = grad!.querySelectorAll('stop');
+    expect(stops[0].getAttribute('stop-color')).toBe('#9EA5AD');
+    expect(stops[1].getAttribute('stop-color')).toBe('#6B7280');
+  });
+
+  it('dustGrad stops are #D4A574 and #A0734A', () => {
+    const { container } = render(<WeatherIcon code={7} />);
+    const grad = container.querySelector('[id$="dustGrad"]');
+    const stops = grad!.querySelectorAll('stop');
+    expect(stops[0].getAttribute('stop-color')).toBe('#D4A574');
+    expect(stops[1].getAttribute('stop-color')).toBe('#A0734A');
   });
 });
 
@@ -306,13 +352,13 @@ describe('WeatherIcon — partly-cloudy split paths', () => {
   it('code 1 first path uses greyGrad (cloud)', () => {
     const { container } = render(<WeatherIcon code={1} />);
     const svgPaths = container.querySelector('svg')!.querySelectorAll('path');
-    expect(svgPaths[0].getAttribute('fill')).toBe('url(#greyGrad)');
+    expect(svgPaths[0].getAttribute('fill')).toContain('greyGrad');
   });
 
   it('code 1 second path uses goldGrad (sun)', () => {
     const { container } = render(<WeatherIcon code={1} />);
     const svgPaths = container.querySelector('svg')!.querySelectorAll('path');
-    expect(svgPaths[1].getAttribute('fill')).toBe('url(#goldGrad)');
+    expect(svgPaths[1].getAttribute('fill')).toContain('goldGrad');
   });
 
   it('code 1 both paths have fill-rule="nonzero"', () => {
@@ -320,6 +366,116 @@ describe('WeatherIcon — partly-cloudy split paths', () => {
     const svgPaths = container.querySelector('svg')!.querySelectorAll('path');
     expect(svgPaths[0].getAttribute('fill-rule')).toBe('nonzero');
     expect(svgPaths[1].getAttribute('fill-rule')).toBe('nonzero');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite: new-glyph composition (T4.1-T4.8 icon system overhaul)
+// ---------------------------------------------------------------------------
+
+describe('WeatherIcon — drizzle uses round dots, not rain streaks', () => {
+  it('code 51 (drizzle) renders 4 circle drops and no rect rain-streaks', () => {
+    const { container } = render(<WeatherIcon code={51} />);
+    const svg = container.querySelector('svg')!;
+    expect(svg.querySelectorAll('circle').length).toBe(4);
+    expect(svg.querySelectorAll('rect').length).toBe(0);
+  });
+});
+
+describe('WeatherIcon — wintry mix composition (rain streaks + snow dots)', () => {
+  it('code 79 (ice pellets/sleet) renders both rain-streak rects and snow-dot circles', () => {
+    const { container } = render(<WeatherIcon code={79} />);
+    const svg = container.querySelector('svg')!;
+    expect(svg.querySelectorAll('rect').length).toBe(2);
+    expect(svg.querySelectorAll('circle').length).toBe(3);
+  });
+});
+
+describe('WeatherIcon — mostly cloudy (compound code 100)', () => {
+  it('code 100 day renders a scaled <g transform> sun path behind the overcast cloud', () => {
+    const { container } = render(<WeatherIcon code={100} isNight={false} />);
+    const svg = container.querySelector('svg')!;
+    const g = svg.querySelector('g[transform]');
+    expect(g, 'must have a <g transform> wrapping the celestial body').not.toBeNull();
+    expect(g!.getAttribute('transform')).toContain('scale(0.55)');
+    const scaledPath = g!.querySelector('path');
+    expect(scaledPath).not.toBeNull();
+    expect(scaledPath!.getAttribute('fill')).toContain('goldGrad');
+    // The overcast cloud path renders as a direct child of <svg> (outside
+    // the scaled <g>), after it in document order.
+    const directPaths = Array.from(svg.children).filter((el) => el.tagName === 'path');
+    expect(directPaths.length).toBe(1);
+    expect(directPaths[0].getAttribute('fill')).toContain('greyGrad');
+  });
+
+  it('code 100 isNight=true renders GlyphMostlyCloudyNight (moonGrad in the scaled group)', () => {
+    const { container } = render(<WeatherIcon code={100} isNight={true} />);
+    const svg = container.querySelector('svg')!;
+    const g = svg.querySelector('g[transform]');
+    expect(g).not.toBeNull();
+    const scaledPath = g!.querySelector('path');
+    expect(scaledPath!.getAttribute('fill')).toContain('moonGrad');
+  });
+});
+
+describe('WeatherIcon — smoke overlay (base icon stays intact, smoke is additive)', () => {
+  it('code 6 day renders the base sunny icon plus 4 smoke bubble circles', () => {
+    const { container } = render(<WeatherIcon code={6} isNight={false} />);
+    const svg = container.querySelector('svg')!;
+    const basePath = svg.querySelector('path');
+    expect(basePath!.getAttribute('fill')).toContain('goldGrad');
+    const smokeCircles = Array.from(svg.querySelectorAll('circle')).filter((c) =>
+      c.getAttribute('fill')?.includes('smokeGrad'),
+    );
+    expect(smokeCircles.length).toBe(4);
+  });
+
+  it('code 6 isNight=true renders GlyphSmokeNight (moonGrad base) plus smoke bubbles', () => {
+    const { container } = render(<WeatherIcon code={6} isNight={true} />);
+    const svg = container.querySelector('svg')!;
+    const basePath = svg.querySelector('path');
+    expect(basePath!.getAttribute('fill')).toContain('moonGrad');
+    const smokeCircles = Array.from(svg.querySelectorAll('circle')).filter((c) =>
+      c.getAttribute('fill')?.includes('smokeGrad'),
+    );
+    expect(smokeCircles.length).toBe(4);
+  });
+});
+
+describe('WeatherIcon — dust standalone (dust dominant, celestial body secondary)', () => {
+  it('code 7 day renders a small scaled <g transform> celestial body plus 5 dust particle circles', () => {
+    const { container } = render(<WeatherIcon code={7} isNight={false} />);
+    const svg = container.querySelector('svg')!;
+    const g = svg.querySelector('g[transform]');
+    expect(g, 'must have a <g transform> wrapping the small celestial body').not.toBeNull();
+    expect(g!.getAttribute('transform')).toContain('scale(0.45)');
+    const dustCircles = Array.from(svg.querySelectorAll('circle')).filter((c) =>
+      c.getAttribute('fill')?.includes('dustGrad'),
+    );
+    expect(dustCircles.length).toBe(5);
+  });
+});
+
+describe('WeatherIcon — haze cloud-cover clip technique', () => {
+  it('code 104 (haze, partly cloudy) renders a clipPath clipping the sky group', () => {
+    const { container } = render(<WeatherIcon code={104} />);
+    const svg = container.querySelector('svg')!;
+    expect(svg.querySelector('clipPath')).not.toBeNull();
+    expect(svg.querySelector('g[clip-path]')).not.toBeNull();
+  });
+});
+
+describe('WeatherIcon — combined sky + precipitation composition', () => {
+  it('code 101 (partly cloudy + rain) day renders the scaled sky group and rain-streak rects', () => {
+    const { container } = render(<WeatherIcon code={101} isNight={false} />);
+    const svg = container.querySelector('svg')!;
+    const g = svg.querySelector('g[transform]');
+    expect(g, 'must have a <g transform> wrapping the scaled cloud+sun').not.toBeNull();
+    expect(g!.getAttribute('transform')).toContain('scale(0.8)');
+    // Cloud + sun paths inside the scaled group
+    expect(g!.querySelectorAll('path').length).toBe(2);
+    // 3 rain-streak rects outside the scaled group
+    expect(svg.querySelectorAll('rect').length).toBe(3);
   });
 });
 
