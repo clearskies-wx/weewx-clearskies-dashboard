@@ -407,46 +407,71 @@ const HAZE_STRIPE_PATHS = [
 // composition.  Not exported; used only within glyph functions in this file.
 // ---------------------------------------------------------------------------
 
-/** Smoke wisp cluster — 4 circles overlaid on the upper area of the icon. */
+/** Smoke wisp cluster — 4 circles overlaid on the bottom third of the icon. */
 function SmokeBubbles({ p }: { p: string }): ReactElement {
   return (
     <>
-      <circle cx={8.5} cy={8.3} r={2.1} opacity={0.88} fill={`url(#${p}smokeGrad)`} />
-      <circle cx={13.6} cy={6.4} r={1.5} opacity={0.82} fill={`url(#${p}smokeGrad)`} />
-      <circle cx={11.3} cy={10.9} r={1.15} opacity={0.78} fill={`url(#${p}smokeGrad)`} />
-      <circle cx={16.1} cy={9.6} r={1.7} opacity={0.82} fill={`url(#${p}smokeGrad)`} />
+      <circle cx={8.5} cy={18.3} r={2.1} opacity={0.88} fill={`url(#${p}smokeGrad)`} />
+      <circle cx={13.6} cy={16.4} r={1.5} opacity={0.82} fill={`url(#${p}smokeGrad)`} />
+      <circle cx={11.3} cy={20.9} r={1.15} opacity={0.78} fill={`url(#${p}smokeGrad)`} />
+      <circle cx={16.1} cy={19.6} r={1.7} opacity={0.82} fill={`url(#${p}smokeGrad)`} />
     </>
   );
 }
 
-/** Dust particle cluster — 5 circles + 3 arc strokes. */
-function DustCluster({ p }: { p: string }): ReactElement {
+/** Snowflake — 6-armed asterisk to distinguish snow from drizzle dots. */
+function Snowflake({ cx, cy, r, grad }: { cx: number; cy: number; r: number; grad: string }): ReactElement {
+  const dx = r * 0.866;
+  const dy = r * 0.5;
+  const d = `M${cx} ${cy - r}L${cx} ${cy + r}M${cx - dx} ${cy - dy}L${cx + dx} ${cy + dy}M${cx - dx} ${cy + dy}L${cx + dx} ${cy - dy}`;
+  return <path d={d} stroke={grad} strokeWidth={0.7} strokeLinecap="round" fill="none" />;
+}
+
+/**
+ * Dust particle staircase — diagonal pattern from lower-left to upper-right,
+ * matching Meteocons dust composition (paired circles stepping diagonally).
+ * 10 circles at r=0.75, 5 pairs stepping from (9,19) to (19,7).
+ * Spans x=9-19, y=7-19 — fills the lower-right half of the viewBox.
+ */
+function DustStaircase({ p }: { p: string }): ReactElement {
+  const f = `url(#${p}dustGrad)`;
   return (
     <>
-      <circle cx={6} cy={15.5} r={1.3} fill={`url(#${p}dustGrad)`} />
-      <circle cx={9} cy={17.9} r={1.7} fill={`url(#${p}dustGrad)`} />
-      <circle cx={12} cy={14.5} r={2.1} fill={`url(#${p}dustGrad)`} />
-      <circle cx={15.5} cy={17.5} r={1.5} fill={`url(#${p}dustGrad)`} />
-      <circle cx={18} cy={15.1} r={1.1} fill={`url(#${p}dustGrad)`} />
-      <path d="M3.5 20 q3 -1.6 6 0" stroke={`url(#${p}dustGrad)`} strokeWidth={1} fill="none" strokeLinecap="round" />
-      <path d="M9.5 21.5 q3 -1.6 6 0" stroke={`url(#${p}dustGrad)`} strokeWidth={1} fill="none" strokeLinecap="round" />
-      <path d="M13.5 22.9 q3 -1.6 6 0" stroke={`url(#${p}dustGrad)`} strokeWidth={0.8} fill="none" strokeLinecap="round" />
+      <circle cx={9} cy={19} r={0.75} fill={f} />
+      <circle cx={11} cy={19} r={0.75} fill={f} />
+      <circle cx={11} cy={16} r={0.75} fill={f} />
+      <circle cx={13} cy={16} r={0.75} fill={f} />
+      <circle cx={13} cy={13} r={0.75} fill={f} />
+      <circle cx={15} cy={13} r={0.75} fill={f} />
+      <circle cx={15} cy={10} r={0.75} fill={f} />
+      <circle cx={17} cy={10} r={0.75} fill={f} />
+      <circle cx={17} cy={7} r={0.75} fill={f} />
+      <circle cx={19} cy={7} r={0.75} fill={f} />
     </>
   );
 }
 
 // ===========================================================================
-// 12. Mostly cloudy day — sun scaled 55%, tucked behind overcast cloud.
-//     Sun is barely visible — distinguishes from partly cloudy (prominent sun)
-//     and overcast (no celestial body).
+// 12. Mostly cloudy day — sun scaled 70%, peeking from behind overcast cloud.
+//     Uses clipPath with clip-rule="evenodd" to cut out the cloud shape from
+//     the sun — same cutout approach as the partly cloudy icons' compound
+//     paths, but applied via clipping since the overcast cloud path differs
+//     from the partly-cloudy cloud.
 // ===========================================================================
 
 export function GlyphMostlyCloudyDay({ size }: GlyphProps): ReactElement {
   const p = useId();
   return (
     <Svg size={size} p={p}>
-      <g transform="translate(9,-4) scale(0.55)">
-        <path fill={`url(#${p}goldGrad)`} d={SUN_D} />
+      <defs>
+        <clipPath id={`${p}mcClipD`}>
+          <path d={`M0 0h24v24H0z ${CLOUD_D}`} clipRule="evenodd" />
+        </clipPath>
+      </defs>
+      <g clipPath={`url(#${p}mcClipD)`}>
+        <g transform="translate(4,-2) scale(0.7)">
+          <path fill={`url(#${p}goldGrad)`} d={SUN_D} />
+        </g>
       </g>
       <path fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={CLOUD_D} />
     </Svg>
@@ -454,15 +479,23 @@ export function GlyphMostlyCloudyDay({ size }: GlyphProps): ReactElement {
 }
 
 // ===========================================================================
-// 13. Mostly cloudy night — moon scaled 55%, tucked behind overcast cloud.
+// 13. Mostly cloudy night — moon scaled 70%, peeking from behind overcast
+//     cloud.  Same clipPath cutout as day variant.
 // ===========================================================================
 
 export function GlyphMostlyCloudyNight({ size }: GlyphProps): ReactElement {
   const p = useId();
   return (
     <Svg size={size} p={p}>
-      <g transform="translate(9,-4) scale(0.55)">
-        <path fill={`url(#${p}moonGrad)`} d={MOON_D} />
+      <defs>
+        <clipPath id={`${p}mcClipN`}>
+          <path d={`M0 0h24v24H0z ${CLOUD_D}`} clipRule="evenodd" />
+        </clipPath>
+      </defs>
+      <g clipPath={`url(#${p}mcClipN)`}>
+        <g transform="translate(4,-2) scale(0.7)">
+          <path fill={`url(#${p}moonGrad)`} d={MOON_D} />
+        </g>
       </g>
       <path fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={CLOUD_D} />
     </Svg>
@@ -488,8 +521,8 @@ export function GlyphDrizzle({ size }: GlyphProps): ReactElement {
 }
 
 // ===========================================================================
-// 15. Wintry mix — rain cloud + 2 rain streak capsules (left) + 3 snow
-//     dots (right).  Serves freezing rain, sleet, and rain/snow mix.
+// 15. Wintry mix — rain cloud + alternating rain streaks and snowflakes.
+//     Serves freezing rain, sleet, and rain/snow mix.
 // ===========================================================================
 
 export function GlyphWintryMix({ size }: GlyphProps): ReactElement {
@@ -497,13 +530,11 @@ export function GlyphWintryMix({ size }: GlyphProps): ReactElement {
   return (
     <Svg size={size} p={p}>
       <path fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={RAIN_CLOUD_D} />
-      {/* Rain streaks — left side */}
-      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(7 20) rotate(18)" />
-      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(10.5 21.3) rotate(18)" />
-      {/* Snow dots — right side */}
-      <circle cx={14} cy={20} r={1} fill={`url(#${p}snowGrad)`} />
-      <circle cx={17} cy={21.3} r={1} fill={`url(#${p}snowGrad)`} />
-      <circle cx={20} cy={19.3} r={1} fill={`url(#${p}snowGrad)`} />
+      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(7 19) rotate(18)" />
+      <Snowflake cx={10.5} cy={20.5} r={1.1} grad={`url(#${p}snowGrad)`} />
+      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(14 19) rotate(18)" />
+      <Snowflake cx={17.5} cy={20.5} r={1.1} grad={`url(#${p}snowGrad)`} />
+      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(20 19) rotate(18)" />
     </Svg>
   );
 }
@@ -517,13 +548,13 @@ export function GlyphPartlyCloudyRainDay({ size }: GlyphProps): ReactElement {
   const p = useId();
   return (
     <Svg size={size} p={p}>
-      <g transform="translate(0,-4) scale(0.8)">
+      <g transform="translate(0,-1.5) scale(0.9)">
         <path fillRule="nonzero" fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={PC_CLOUD_D} />
         <path fillRule="nonzero" fill={`url(#${p}goldGrad)`} d={PC_SUN_D} />
       </g>
-      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(8 18) rotate(18)" />
-      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(12 19.4) rotate(18)" />
-      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(16 18) rotate(18)" />
+      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(5 18.5) rotate(18)" />
+      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(8.5 20) rotate(18)" />
+      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(12 18.5) rotate(18)" />
     </Svg>
   );
 }
@@ -532,13 +563,13 @@ export function GlyphPartlyCloudyRainNight({ size }: GlyphProps): ReactElement {
   const p = useId();
   return (
     <Svg size={size} p={p}>
-      <g transform="translate(0,-4) scale(0.8)">
+      <g transform="translate(0,-1.5) scale(0.9)">
         <path fillRule="nonzero" fill={`url(#${p}moonGrad)`} d={PCN_MOON_D} />
         <path fillRule="nonzero" fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={PCN_CLOUD_D} />
       </g>
-      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(8 18) rotate(18)" />
-      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(12 19.4) rotate(18)" />
-      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(16 18) rotate(18)" />
+      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(5 18.5) rotate(18)" />
+      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(8.5 20) rotate(18)" />
+      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(12 18.5) rotate(18)" />
     </Svg>
   );
 }
@@ -547,13 +578,13 @@ export function GlyphPartlyCloudySnowDay({ size }: GlyphProps): ReactElement {
   const p = useId();
   return (
     <Svg size={size} p={p}>
-      <g transform="translate(0,-4) scale(0.8)">
+      <g transform="translate(0,-1.5) scale(0.9)">
         <path fillRule="nonzero" fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={PC_CLOUD_D} />
         <path fillRule="nonzero" fill={`url(#${p}goldGrad)`} d={PC_SUN_D} />
       </g>
-      <circle cx={8} cy={18.5} r={1.1} fill={`url(#${p}snowGrad)`} />
-      <circle cx={12} cy={20} r={1.1} fill={`url(#${p}snowGrad)`} />
-      <circle cx={16} cy={18.5} r={1.1} fill={`url(#${p}snowGrad)`} />
+      <Snowflake cx={5.5} cy={19} r={1.1} grad={`url(#${p}snowGrad)`} />
+      <Snowflake cx={9} cy={20.5} r={1.1} grad={`url(#${p}snowGrad)`} />
+      <Snowflake cx={12.5} cy={19} r={1.1} grad={`url(#${p}snowGrad)`} />
     </Svg>
   );
 }
@@ -562,13 +593,13 @@ export function GlyphPartlyCloudySnowNight({ size }: GlyphProps): ReactElement {
   const p = useId();
   return (
     <Svg size={size} p={p}>
-      <g transform="translate(0,-4) scale(0.8)">
+      <g transform="translate(0,-1.5) scale(0.9)">
         <path fillRule="nonzero" fill={`url(#${p}moonGrad)`} d={PCN_MOON_D} />
         <path fillRule="nonzero" fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={PCN_CLOUD_D} />
       </g>
-      <circle cx={8} cy={18.5} r={1.1} fill={`url(#${p}snowGrad)`} />
-      <circle cx={12} cy={20} r={1.1} fill={`url(#${p}snowGrad)`} />
-      <circle cx={16} cy={18.5} r={1.1} fill={`url(#${p}snowGrad)`} />
+      <Snowflake cx={5.5} cy={19} r={1.1} grad={`url(#${p}snowGrad)`} />
+      <Snowflake cx={9} cy={20.5} r={1.1} grad={`url(#${p}snowGrad)`} />
+      <Snowflake cx={12.5} cy={19} r={1.1} grad={`url(#${p}snowGrad)`} />
     </Svg>
   );
 }
@@ -577,14 +608,14 @@ export function GlyphPartlyCloudyWintryMixDay({ size }: GlyphProps): ReactElemen
   const p = useId();
   return (
     <Svg size={size} p={p}>
-      <g transform="translate(0,-4) scale(0.8)">
+      <g transform="translate(0,-1.5) scale(0.9)">
         <path fillRule="nonzero" fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={PC_CLOUD_D} />
         <path fillRule="nonzero" fill={`url(#${p}goldGrad)`} d={PC_SUN_D} />
       </g>
-      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(8 18) rotate(18)" />
-      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(11 19.4) rotate(18)" />
-      <circle cx={14.5} cy={18.8} r={1.1} fill={`url(#${p}snowGrad)`} />
-      <circle cx={17.5} cy={17.6} r={1.1} fill={`url(#${p}snowGrad)`} />
+      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(5 18.5) rotate(18)" />
+      <Snowflake cx={8.5} cy={20} r={1.1} grad={`url(#${p}snowGrad)`} />
+      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(11 18.5) rotate(18)" />
+      <Snowflake cx={14} cy={20} r={1.1} grad={`url(#${p}snowGrad)`} />
     </Svg>
   );
 }
@@ -593,14 +624,14 @@ export function GlyphPartlyCloudyWintryMixNight({ size }: GlyphProps): ReactElem
   const p = useId();
   return (
     <Svg size={size} p={p}>
-      <g transform="translate(0,-4) scale(0.8)">
+      <g transform="translate(0,-1.5) scale(0.9)">
         <path fillRule="nonzero" fill={`url(#${p}moonGrad)`} d={PCN_MOON_D} />
         <path fillRule="nonzero" fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={PCN_CLOUD_D} />
       </g>
-      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(8 18) rotate(18)" />
-      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(11 19.4) rotate(18)" />
-      <circle cx={14.5} cy={18.8} r={1.1} fill={`url(#${p}snowGrad)`} />
-      <circle cx={17.5} cy={17.6} r={1.1} fill={`url(#${p}snowGrad)`} />
+      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(5 18.5) rotate(18)" />
+      <Snowflake cx={8.5} cy={20} r={1.1} grad={`url(#${p}snowGrad)`} />
+      <rect x={-0.55} y={-1.8} width={1.1} height={3.6} rx={0.55} fill={`url(#${p}rainGrad)`} transform="translate(11 18.5) rotate(18)" />
+      <Snowflake cx={14} cy={20} r={1.1} grad={`url(#${p}snowGrad)`} />
     </Svg>
   );
 }
@@ -663,18 +694,23 @@ export function GlyphSmokeOvercast({ size }: GlyphProps): ReactElement {
 }
 
 // ===========================================================================
-// 27–29. Dust standalone — dust IS the dominant visual.  The celestial body
-//        (sun/moon/cloud) is a small background element.
+// 27–29. Dust — Meteocons diagonal composition: full-size sky element masked
+//        to upper-left triangle, dust staircase in lower-right diagonal.
 // ===========================================================================
 
 export function GlyphDustDay({ size }: GlyphProps): ReactElement {
   const p = useId();
   return (
     <Svg size={size} p={p}>
-      <g transform="translate(10,-8) scale(0.45)">
+      <defs>
+        <mask id={`${p}dustMaskD`}>
+          <path d="M0 0h24L0 24z" fill="white" />
+        </mask>
+      </defs>
+      <g mask={`url(#${p}dustMaskD)`}>
         <path fill={`url(#${p}goldGrad)`} d={SUN_D} />
       </g>
-      <DustCluster p={p} />
+      <DustStaircase p={p} />
     </Svg>
   );
 }
@@ -683,10 +719,15 @@ export function GlyphDustNight({ size }: GlyphProps): ReactElement {
   const p = useId();
   return (
     <Svg size={size} p={p}>
-      <g transform="translate(10,-8) scale(0.45)">
+      <defs>
+        <mask id={`${p}dustMaskN`}>
+          <path d="M0 0h24L0 24z" fill="white" />
+        </mask>
+      </defs>
+      <g mask={`url(#${p}dustMaskN)`}>
         <path fill={`url(#${p}moonGrad)`} d={MOON_D} />
       </g>
-      <DustCluster p={p} />
+      <DustStaircase p={p} />
     </Svg>
   );
 }
@@ -695,10 +736,15 @@ export function GlyphDust({ size }: GlyphProps): ReactElement {
   const p = useId();
   return (
     <Svg size={size} p={p}>
-      <g transform="translate(1,-2) scale(0.4)">
+      <defs>
+        <mask id={`${p}dustMaskC`}>
+          <path d="M0 0h24L0 24z" fill="white" />
+        </mask>
+      </defs>
+      <g mask={`url(#${p}dustMaskC)`}>
         <path fill={`url(#${p}greyGrad)`} stroke={CLOUD_STROKE} strokeWidth={CLOUD_STROKE_WIDTH} d={CLOUD_D} />
       </g>
-      <DustCluster p={p} />
+      <DustStaircase p={p} />
     </Svg>
   );
 }
