@@ -112,6 +112,7 @@ function buildDaily(): DailyForecastPoint[] {
       tornadoRisk: null,
       hailRisk: null,
       windRisk: null,
+      cloudCover: 40 + (i % 4) * 15,
       source: 'nws',
       extras: {},
     };
