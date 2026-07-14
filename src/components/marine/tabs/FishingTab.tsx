@@ -637,7 +637,7 @@ function WindSwellContent({ period, units, locale, t }: { period: FishingForecas
         <StatTile
           label={t('fishing.swellPeriod')}
           value={period.swellPeriod !== null ? formatValue(period.swellPeriod, 'default', locale) : '—'}
-          unit={period.swellPeriod !== null ? (units?.swellPeriod ?? 's') : undefined}
+          unit={period.swellPeriod !== null ? (units?.swellPeriod ?? t('fishing.secondsAbbr')) : undefined}
         />
       </dl>
     </>

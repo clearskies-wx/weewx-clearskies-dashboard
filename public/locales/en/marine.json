@@ -224,6 +224,7 @@
     "direction": "Direction",
     "swellHeight": "Swell Height",
     "swellPeriod": "Swell Period",
+    "secondsAbbr": "s",
     "habitat": "Habitat Features"
   }
 }
