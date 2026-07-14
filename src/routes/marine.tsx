@@ -49,6 +49,37 @@ function surfLabel(rating: number | null, t: (key: string, opts?: Record<string,
   return t('qualitative.stars', { count: Math.round(rating) });
 }
 
+/**
+ * Responsive map layout (T3.9, DASHBOARD-MANUAL §12): computes the
+ * width/height aspect ratio of the configured locations' bounding box,
+ * adjusting the longitude span by cos(centerLat) so degrees-longitude are
+ * weighted correctly relative to degrees-latitude at the site's latitude
+ * (a degree of longitude shrinks toward the poles; latitude doesn't).
+ *
+ *   aspect >= 0.8  -> horizontal/square spread  -> map full-width above cards
+ *   aspect <  0.8  -> vertical (north-south) spread -> map as a side panel
+ *                     at lg with cards stacked beside it
+ *
+ * Fewer than 2 locations (or a degenerate single-point spread) has no
+ * meaningful shape to measure — defaults to the horizontal layout, matching
+ * the simple full-width map that's always been correct for a single point.
+ */
+function computeMapAspectRatio(locations: MarineLocationSummary[]): number {
+  if (locations.length < 2) return 1;
+  const lats = locations.map((l) => l.coordinates.lat);
+  const lons = locations.map((l) => l.coordinates.lon);
+  const minLat = Math.min(...lats);
+  const maxLat = Math.max(...lats);
+  const minLon = Math.min(...lons);
+  const maxLon = Math.max(...lons);
+  const centerLat = (minLat + maxLat) / 2;
+  const latSpan = maxLat - minLat;
+  const lonSpan = (maxLon - minLon) * Math.cos((centerLat * Math.PI) / 180);
+  if (latSpan === 0 && lonSpan === 0) return 1;
+  if (latSpan === 0) return Number.POSITIVE_INFINITY;
+  return lonSpan / latSpan;
+}
+
 // ---------------------------------------------------------------------------
 // TileSkeleton / TileError — same pattern as seismic.tsx
 // ---------------------------------------------------------------------------
@@ -94,6 +125,13 @@ export function MarinePage() {
     () => (locations ?? []).find((l) => l.locationId === selectedId) ?? null,
     [locations, selectedId],
   );
+
+  // Responsive map layout (T3.9): aspect < 0.8 means the configured
+  // locations spread north-south more than east-west, so the map reads
+  // better as a tall side panel than a short full-width strip.
+  const mapAspect = useMemo(() => computeMapAspectRatio(locations ?? []), [locations]);
+  const isVerticalLayout = mapAspect < 0.8;
+  const landingMapHeight = isVerticalLayout ? 600 : 400;
 
   function buildActivities(location: MarineLocationSummary): ActivityDef[] {
     const API_TO_DASHBOARD: Record<string, ActivityId> = {
@@ -169,10 +207,51 @@ export function MarinePage() {
         </div>
       )}
 
-      {!loading && !error && locations !== null && locations.length > 0 && selectedLocation === null && (
+      {!loading && !error && locations !== null && locations.length > 0 && selectedLocation === null && isVerticalLayout && (
         <>
-          {/* Landing state: map and LocationCards are direct Grid children —
-              no internal grid wrappers (DASHBOARD-MANUAL §12 / T3.4). */}
+          {/* Landing state, vertical layout (T3.9): site's locations spread
+              north-south, so at lg the map is a ~3/4-width side panel with
+              cards stacked in the remaining column; below lg it stacks
+              (map on top, cards below) — same responsive pattern as the
+              Seismic page's map+list split (src/routes/seismic.tsx). */}
+          <div className={`${footprintColSpan.full} flex flex-col gap-[var(--gap-grid)] lg:flex-row lg:items-start`}>
+            <div className="lg:w-3/4 lg:shrink-0">
+              <h2 className="sr-only">{t('map.ariaLabel')}</h2>
+              <LocationMap
+                locations={locations}
+                selectedId={selectedId}
+                onSelectLocation={setSelectedId}
+                variant="full"
+                fallbackCenter={fallbackCenter}
+                height={landingMapHeight}
+                hoveredId={hoveredId}
+                onHoverLocation={setHoveredId}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--gap-grid)] lg:flex lg:flex-1 lg:flex-col">
+              {locations.map((loc, i) => (
+                <LocationCard
+                  key={loc.locationId}
+                  index={i}
+                  location={loc}
+                  units={units}
+                  locale={locale}
+                  onSelect={setSelectedId}
+                  isHovered={hoveredId === loc.locationId}
+                  onHover={setHoveredId}
+                />
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      {!loading && !error && locations !== null && locations.length > 0 && selectedLocation === null && !isVerticalLayout && (
+        <>
+          {/* Landing state, horizontal layout (T3.9 default): map and
+              LocationCards are direct Grid children — no internal grid
+              wrappers (DASHBOARD-MANUAL §12 / T3.4). */}
           <div className={footprintColSpan.full}>
             <h2 className="sr-only">{t('map.ariaLabel')}</h2>
             <LocationMap
@@ -181,6 +260,7 @@ export function MarinePage() {
               onSelectLocation={setSelectedId}
               variant="full"
               fallbackCenter={fallbackCenter}
+              height={landingMapHeight}
               hoveredId={hoveredId}
               onHoverLocation={setHoveredId}
             />
