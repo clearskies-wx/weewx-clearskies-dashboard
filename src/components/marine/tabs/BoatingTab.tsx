@@ -453,7 +453,7 @@ export function BoatingTab({ locationId, alerts = [] }: BoatingTabProps) {
             <TideChart
               predictions={tide?.predictions ?? []}
               waterLevels={tide?.waterLevels ?? []}
-              totalWaterLevelForecast={tide?.totalWaterLevelForecast}
+              totalWaterLevelForecast={tide?.totalWaterLevelForecast ?? undefined}
               locale={locale}
               stationTz={stationTz}
               heightUnit={tideHeightUnit}
