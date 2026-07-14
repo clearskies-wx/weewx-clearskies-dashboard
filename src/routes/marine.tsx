@@ -13,6 +13,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Waves, CaretLeft, Sailboat, FishSimple, PersonSimpleSwim, Warning } from '@phosphor-icons/react';
 import { PageLayout } from '../components/layout/page-layout';
+import { footprintColSpan } from '../components/ui/card';
 import { LocationMap } from '../components/marine/LocationMap';
 import { LocationCard } from '../components/marine/LocationCard';
 import { ActivityTabs } from '../components/marine/ActivityTabs';
@@ -85,6 +86,9 @@ export function MarinePage() {
   const { data: station } = useStation();
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Linked hover (T3.6): shared between LocationMap's numbered pins and the
+  // LocationCard grid so hovering either highlights the other.
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   const selectedLocation = useMemo(
     () => (locations ?? []).find((l) => l.locationId === selectedId) ?? null,
@@ -167,30 +171,33 @@ export function MarinePage() {
 
       {!loading && !error && locations !== null && locations.length > 0 && selectedLocation === null && (
         <>
-          {/* Landing state: full map + card grid */}
-          <div className="col-span-1 md:col-span-2 lg:col-span-4 flex flex-col gap-[var(--gap-grid)]">
+          {/* Landing state: map and LocationCards are direct Grid children —
+              no internal grid wrappers (DASHBOARD-MANUAL §12 / T3.4). */}
+          <div className={footprintColSpan.full}>
             <h2 className="sr-only">{t('map.ariaLabel')}</h2>
-
             <LocationMap
               locations={locations}
               selectedId={selectedId}
               onSelectLocation={setSelectedId}
               variant="full"
               fallbackCenter={fallbackCenter}
+              hoveredId={hoveredId}
+              onHoverLocation={setHoveredId}
             />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[var(--gap-grid)]">
-              {locations.map((loc) => (
-                <LocationCard
-                  key={loc.locationId}
-                  location={loc}
-                  units={units}
-                  locale={locale}
-                  onSelect={setSelectedId}
-                />
-              ))}
-            </div>
           </div>
+
+          {locations.map((loc, i) => (
+            <LocationCard
+              key={loc.locationId}
+              index={i}
+              location={loc}
+              units={units}
+              locale={locale}
+              onSelect={setSelectedId}
+              isHovered={hoveredId === loc.locationId}
+              onHover={setHoveredId}
+            />
+          ))}
         </>
       )}
 
