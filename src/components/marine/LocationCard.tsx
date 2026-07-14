@@ -98,8 +98,8 @@ export function LocationCard({
           <div className="flex items-start gap-2">
             <span
               aria-hidden="true"
-              className="flex shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold"
-              style={{ width: '20px', height: '20px', fontSize: '0.7rem', lineHeight: 1 }}
+              className="flex shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold size-5"
+              style={{ fontSize: 'var(--text-micro)', lineHeight: 1, fontFeatureSettings: '"tnum"' }}
             >
               {index + 1}
             </span>

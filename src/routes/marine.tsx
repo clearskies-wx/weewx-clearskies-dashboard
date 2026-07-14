@@ -207,52 +207,15 @@ export function MarinePage() {
         </div>
       )}
 
-      {!loading && !error && locations !== null && locations.length > 0 && selectedLocation === null && isVerticalLayout && (
+      {!loading && !error && locations !== null && locations.length > 0 && selectedLocation === null && (
         <>
-          {/* Landing state, vertical layout (T3.9): site's locations spread
-              north-south, so at lg the map is a ~3/4-width side panel with
-              cards stacked in the remaining column; below lg it stacks
-              (map on top, cards below) — same responsive pattern as the
-              Seismic page's map+list split (src/routes/seismic.tsx). */}
-          <div className={`${footprintColSpan.full} flex flex-col gap-[var(--gap-grid)] lg:flex-row lg:items-start`}>
-            <div className="lg:w-3/4 lg:shrink-0">
-              <h2 className="sr-only">{t('map.ariaLabel')}</h2>
-              <LocationMap
-                locations={locations}
-                selectedId={selectedId}
-                onSelectLocation={setSelectedId}
-                variant="full"
-                fallbackCenter={fallbackCenter}
-                height={landingMapHeight}
-                hoveredId={hoveredId}
-                onHoverLocation={setHoveredId}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--gap-grid)] lg:flex lg:flex-1 lg:flex-col">
-              {locations.map((loc, i) => (
-                <LocationCard
-                  key={loc.locationId}
-                  index={i}
-                  location={loc}
-                  units={units}
-                  locale={locale}
-                  onSelect={setSelectedId}
-                  isHovered={hoveredId === loc.locationId}
-                  onHover={setHoveredId}
-                />
-              ))}
-            </div>
-          </div>
-        </>
-      )}
-
-      {!loading && !error && locations !== null && locations.length > 0 && selectedLocation === null && !isVerticalLayout && (
-        <>
-          {/* Landing state, horizontal layout (T3.9 default): map and
-              LocationCards are direct Grid children — no internal grid
-              wrappers (DASHBOARD-MANUAL §12 / T3.4). */}
-          <div className={footprintColSpan.full}>
+          {/* Landing state: map and LocationCards are direct Grid children
+              in both horizontal and vertical layouts (DASHBOARD-MANUAL §12 /
+              T3.4 — no internal grid wrappers, no col-span-full wrapper divs).
+              Vertical layout (T3.9, aspect < 0.8): map spans 3 of 4 cols at lg,
+              cards fill col 4. Horizontal (default): map full-width, cards flow
+              as tiles below. */}
+          <div className={isVerticalLayout ? 'col-span-1 md:col-span-2 lg:col-span-3 lg:row-span-6' : footprintColSpan.full}>
             <h2 className="sr-only">{t('map.ariaLabel')}</h2>
             <LocationMap
               locations={locations}
