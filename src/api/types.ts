@@ -1335,6 +1335,22 @@ export interface MarineLocationSummary {
    * as `null` (no photo).
    */
   photoUrl?: string | null;
+  /**
+   * WMO weather interpretation code for the hero WeatherIcon on LocationCard
+   * (T3.8, FIX-9). Top-level on this summary shape — NOT nested inside
+   * `currentConditions` (models/responses.py `MarineLocationSummary` sets it
+   * from marine_weather_cache directly; `currentConditions` itself is always
+   * null on the current list-route implementation). NOT YET in the OpenAPI
+   * v1 contract (docs/contracts/openapi-v1.yaml `MarineLocationSummary` has
+   * no such field) — contract needs a follow-up fix to match responses.py.
+   * Null when unavailable.
+   */
+  weatherCode: number | null;
+  /**
+   * Day/night flag for WeatherIcon's night-glyph selection. Top-level, same
+   * source/contract-gap notes as `weatherCode` above. Null when unavailable.
+   */
+  isDay: boolean | null;
 }
 
 /** Marine bundle — returned by GET /marine/{locationId}. */

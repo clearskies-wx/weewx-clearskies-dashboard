@@ -58,10 +58,14 @@ export function LocationCard({
   const waveHeight = conditions?.waveHeight ?? null;
   const windSpeed = conditions?.windSpeed ?? null;
   const waterTemp = conditions?.waterTemp ?? null;
-  const weatherCode = conditions?.weatherCode ?? null;
+  // weatherCode/isDay are top-level on MarineLocationSummary, not nested
+  // inside currentConditions (FIX-9) — the API populates them directly from
+  // marine_weather_cache; currentConditions itself is always null on the
+  // current list-route implementation.
+  const weatherCode = location.weatherCode ?? null;
   // isDay is nullable (unknown-at-provider); default to the day glyph rather
   // than presuming night when the provider hasn't reported it.
-  const isNight = conditions?.isDay === false;
+  const isNight = location.isDay === false;
 
   // currentTide is optional on MarineLocationSummary (some locations have no
   // configured tide station) — the next-tide line below simply doesn't
