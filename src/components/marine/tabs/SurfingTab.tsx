@@ -1387,8 +1387,8 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
   // not the raw 0-100 score. Beach alignment is a penalty: it shows the
   // negative amount subtracted from the weighted subtotal.
   // totalScore = subtotal × (beachAlignment/100), displayed as XX/100.
-  const scoringBreakdown = useMemo(() => {
-    if (!primary) return { factors: [], totalScore: 0 };
+  const scoringBreakdown = (() => {
+    if (!primary) return { factors: [] as { key: string; weight: number | null; score: number }[], totalScore: 0 };
 
     const raw = {
       waveHeight: primary.scoring?.waveHeight ?? waveHeightScore(primary.waveHeightAtBreak, heightUnit),
@@ -1410,16 +1410,17 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
     const totalScore = Math.round(subtotal * alignmentMultiplier);
     const penaltyAmount = totalScore - subtotal;
 
-    const factors = [
-      { key: 'waveHeight', weight: 35 as number | null, score: weighted.waveHeight },
-      { key: 'wavePeriod', weight: 35 as number | null, score: weighted.wavePeriod },
-      { key: 'windQuality', weight: 20 as number | null, score: weighted.windQuality },
-      { key: 'swellDominance', weight: 10 as number | null, score: weighted.swellDominance },
-      { key: 'beachAlignment', weight: null as number | null, score: penaltyAmount },
-    ];
-
-    return { factors, totalScore };
-  }, [primary, heightUnit]);
+    return {
+      factors: [
+        { key: 'waveHeight', weight: 35 as number | null, score: weighted.waveHeight },
+        { key: 'wavePeriod', weight: 35 as number | null, score: weighted.wavePeriod },
+        { key: 'windQuality', weight: 20 as number | null, score: weighted.windQuality },
+        { key: 'swellDominance', weight: 10 as number | null, score: weighted.swellDominance },
+        { key: 'beachAlignment', weight: null as number | null, score: penaltyAmount },
+      ],
+      totalScore,
+    };
+  })();
 
   // ── Current conditions — station/forecast provider (NOT marine) ──────────
   // weatherCode: from station Observation (conditions engine, optional field).
