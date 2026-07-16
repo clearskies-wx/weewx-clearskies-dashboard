@@ -176,7 +176,7 @@
     "secondsAbbr": "s",
     "scoreCardTitle": "Surf Score",
     "forecastTimelineTitle": "72-Hour Surf Forecast",
-    "currentConditionsTitle": "Current Surf Conditions",
+    "currentConditionsTitle": "Current Conditions",
     "forecastTimelineAriaLabel": "Hourly surf quality forecast for the next 72 hours",
     "forecastDayAriaLabel": "Surf forecast for {{day}}",
     "waveFaceHeightTitle": "Wave Face Height",

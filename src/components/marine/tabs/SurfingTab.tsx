@@ -199,13 +199,14 @@ function scoreBarFillColor(pct: number): string {
 
 
 function ScoreBar({ label, score }: { label: string; score: number }) {
-  const pct = Math.max(0, Math.min(100, score));
+  const isNegative = score < 0;
+  const absPct = Math.max(0, Math.min(100, Math.abs(score)));
   return (
     <div className="flex flex-col gap-1">
       <div className="flex justify-between" style={{ fontSize: 'var(--text-label)' }}>
         <span className="text-muted-foreground">{label}</span>
         <span className="font-semibold text-foreground" style={{ fontFeatureSettings: '"tnum"' }}>
-          {Math.round(pct)}
+          {isNegative ? `−${Math.round(absPct)}` : Math.round(score)}
         </span>
       </div>
       <div
@@ -215,7 +216,10 @@ function ScoreBar({ label, score }: { label: string; score: number }) {
       >
         <div
           className="h-full rounded-full transition-all"
-          style={{ width: `${pct}%`, background: scoreBarFillColor(pct) }}
+          style={{
+            width: `${absPct}%`,
+            background: isNegative ? 'var(--score-1)' : scoreBarFillColor(score),
+          }}
         />
       </div>
     </div>
@@ -1378,40 +1382,44 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
   const swellDirCardinal = cardinalFromDegrees(primary?.direction ?? null);
   const swellDirLabel    = swellDirCardinal ? tCommon(`directions.${swellDirCardinal}`) : '—';
 
-  // ── Scoring breakdown — UI-side approximations; API-provided when available.
-  // weight: number → weighted factor (shown as "Label (N%)").
-  // weight: null   → penalty factor (shown as "Label (penalty)").
-  // When primary.scoring is present, use API-provided per-factor scores;
-  // otherwise fall back to UI-side approximations computed from raw fields.
-  const scoringFactors = primary
-    ? [
-        {
-          key: 'waveHeight',
-          weight: 35 as number | null,
-          score: primary.scoring?.waveHeight ?? waveHeightScore(primary.waveHeightAtBreak, heightUnit),
-        },
-        {
-          key: 'wavePeriod',
-          weight: 35 as number | null,
-          score: primary.scoring?.wavePeriod ?? periodScore(primary.period),
-        },
-        {
-          key: 'windQuality',
-          weight: 20 as number | null,
-          score: primary.scoring?.windQuality ?? windQualityScore(primary.windQuality),
-        },
-        {
-          key: 'swellDominance',
-          weight: 10 as number | null,
-          score: primary.scoring?.swellDominance ?? Math.max(0, Math.min(100, primary.swellDominance * 100)),
-        },
-        {
-          key: 'beachAlignment',
-          weight: null as number | null,
-          score: primary.scoring?.beachAlignment ?? 50,
-        },
-      ]
-    : [];
+  // ── Scoring breakdown — weighted contributions to the total score.
+  // Each factor's bar shows its weighted contribution (raw × weight/100),
+  // not the raw 0-100 score. Beach alignment is a penalty: it shows the
+  // negative amount subtracted from the weighted subtotal.
+  // totalScore = subtotal × (beachAlignment/100), displayed as XX/100.
+  const scoringBreakdown = useMemo(() => {
+    if (!primary) return { factors: [], totalScore: 0 };
+
+    const raw = {
+      waveHeight: primary.scoring?.waveHeight ?? waveHeightScore(primary.waveHeightAtBreak, heightUnit),
+      wavePeriod: primary.scoring?.wavePeriod ?? periodScore(primary.period),
+      windQuality: primary.scoring?.windQuality ?? windQualityScore(primary.windQuality),
+      swellDominance: primary.scoring?.swellDominance ?? Math.max(0, Math.min(100, primary.swellDominance * 100)),
+      beachAlignment: primary.scoring?.beachAlignment ?? 50,
+    };
+
+    const weighted = {
+      waveHeight: Math.round(raw.waveHeight * 0.35),
+      wavePeriod: Math.round(raw.wavePeriod * 0.35),
+      windQuality: Math.round(raw.windQuality * 0.20),
+      swellDominance: Math.round(raw.swellDominance * 0.10),
+    };
+
+    const subtotal = weighted.waveHeight + weighted.wavePeriod + weighted.windQuality + weighted.swellDominance;
+    const alignmentMultiplier = raw.beachAlignment / 100;
+    const totalScore = Math.round(subtotal * alignmentMultiplier);
+    const penaltyAmount = totalScore - subtotal;
+
+    const factors = [
+      { key: 'waveHeight', weight: 35 as number | null, score: weighted.waveHeight },
+      { key: 'wavePeriod', weight: 35 as number | null, score: weighted.wavePeriod },
+      { key: 'windQuality', weight: 20 as number | null, score: weighted.windQuality },
+      { key: 'swellDominance', weight: 10 as number | null, score: weighted.swellDominance },
+      { key: 'beachAlignment', weight: null as number | null, score: penaltyAmount },
+    ];
+
+    return { factors, totalScore };
+  }, [primary, heightUnit]);
 
   // ── Current conditions — station/forecast provider (NOT marine) ──────────
   // weatherCode: from station Observation (conditions engine, optional field).
@@ -1487,22 +1495,34 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
               </p>
             ) : (
               <>
-                {/* Star rating at top */}
-                <StarRating
-                  score={primary.qualityStars}
-                  label={primary.qualityLabel}
-                  size="lg"
-                />
+                {/* Star rating + total score */}
+                <div className="flex items-start justify-between">
+                  <StarRating
+                    score={primary.qualityStars}
+                    label={primary.qualityLabel}
+                    size="lg"
+                  />
+                  <span
+                    className="font-semibold text-foreground"
+                    style={{
+                      fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
+                      fontSize: 'var(--text-stat-tile)',
+                      fontFeatureSettings: '"tnum"',
+                    }}
+                  >
+                    {scoringBreakdown.totalScore}
+                    <span className="text-muted-foreground font-normal" style={{ fontSize: 'var(--text-label)' }}>/100</span>
+                  </span>
+                </div>
 
                 {/* Conditions text — not bolded */}
                 <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
                   {primary.conditionsText}
                 </p>
 
-                {/* Scoring factor bars — weighted factors show "Label (N%)";
-                 *  beach alignment (penalty) shows "Label (penalty)". */}
+                {/* Scoring factor bars — weighted contributions */}
                 <div className="flex flex-col gap-3">
-                  {scoringFactors.map((factor) => (
+                  {scoringBreakdown.factors.map((factor) => (
                     <ScoreBar
                       key={factor.key}
                       label={
