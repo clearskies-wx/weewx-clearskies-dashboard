@@ -1307,7 +1307,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
        *                  Wind cols 3–4 rows 5–8.
        * At md (2 cols):  All three stack full-width (each spans 2 of 2 cols).
        * At sm (<768px):  All three auto-height stacked. */}
-      <Grid>
+      <Grid className="md:!auto-rows-[auto]">
 
         {/* ── Card 2: Surf Score — 2×2 HERO ────────────────────────────── */}
         {/* rowSpan={2} kept: hero card needs guaranteed visual prominence.
@@ -1358,11 +1358,11 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
         {/* No rowSpan: fluid mode auto-sizes to content. Swell card has more
          *  content (stat tiles + swell breakdown + compass) so it grows taller
          *  than the Wind card naturally. */}
-        <Card footprint="wide">
+        <Card footprint="wide" className="!overflow-visible">
           <CardHeader>
             <CardTitle as="h3">{t('surfing.swellCardTitle')}</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col gap-4">
+          <CardContent className="!overflow-visible flex flex-col gap-4">
             {primary !== null && (
               <dl className="grid grid-cols-3 gap-x-4 gap-y-3">
                 <MarineStatTile
@@ -1418,7 +1418,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
         {/* ── Card 4: Wind — 2×1 fluid auto-height ────────────────────── */}
         {/* No rowSpan: fluid mode auto-sizes to content. Wind card has only
          *  4 stat tiles so it stays compact. */}
-        <Card footprint="wide">
+        <Card footprint="wide" rowSpan="half">
           <CardHeader>
             <CardTitle as="h3">{t('surfing.windCardTitle')}</CardTitle>
           </CardHeader>
@@ -1458,8 +1458,8 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
        *  grows the card to fit the panel).
        *  CardContent uses overflow-visible so HorizontalScrollNav chevron buttons
        *  can project into the card padding area (matches ForecastHourlyCard). */}
-      <Grid>
-        <Card footprint="full">
+      <Grid className="md:!auto-rows-[auto]">
+        <Card footprint="full" className="!overflow-visible">
           <CardHeader>
             <CardTitle as="h3">{t('surfing.forecastTimelineTitle')}</CardTitle>
           </CardHeader>
@@ -1505,8 +1505,8 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
 
       {/* ── Card 6: Tide Forecast — full width ──────────────────────────── */}
       {/* No forced max-height: fluid mode lets TideChart render at natural height. */}
-      <Grid>
-        <Card footprint="full">
+      <Grid className="md:!auto-rows-[auto]">
+        <Card footprint="full" className="!overflow-visible">
           <CardHeader>
             <CardTitle as="h3">{t('surfing.tideForecastTitle')}</CardTitle>
           </CardHeader>
