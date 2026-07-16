@@ -186,11 +186,20 @@ function StarRating({
  *     as --gauge-unfill in semi-circular-gauge.tsx (decorative/unfilled).
  */
 function scoreBarFillColor(pct: number): string {
-  if (pct >= 80) return 'var(--score-5)';
-  if (pct >= 60) return 'var(--score-4)';
-  if (pct >= 40) return 'var(--score-3)';
-  if (pct >= 20) return 'var(--score-2)';
-  return 'var(--score-1)';
+  if (pct >= 80) return 'var(--score-5)';  // epic
+  if (pct >= 60) return 'var(--score-4)';  // very good
+  if (pct >= 40) return 'var(--score-3)';  // good
+  if (pct >= 20) return 'var(--score-2)';  // fair
+  return 'var(--score-1)';                 // poor
+}
+
+// Maps the same 0-100 scale to star tiers for the overall score display
+function scoreTierFromPct(pct: number): number {
+  if (pct >= 80) return 5;
+  if (pct >= 60) return 4;
+  if (pct >= 40) return 3;
+  if (pct >= 20) return 2;
+  return 1;
 }
 
 function ScoreBar({ label, score }: { label: string; score: number }) {
