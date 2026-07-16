@@ -174,10 +174,11 @@
     "noSpectralData": "No swell component data available",
     "noDirectionData": "No dominant swell direction available",
     "secondsAbbr": "s",
-    "currentConditionsHeroTitle": "Current Conditions",
+    "scoreCardTitle": "Surf Score",
     "forecastTimelineTitle": "72-Hour Surf Forecast",
     "currentConditionsTitle": "Current Surf Conditions",
     "forecastTimelineAriaLabel": "Hourly surf quality forecast for the next 72 hours",
+    "forecastDayAriaLabel": "Surf forecast for {{day}}",
     "waveFaceHeightTitle": "Wave Face Height",
     "waveFaceHeightAriaLabel": "Wave face height forecast for the next 72 hours at {{location}}",
     "srTimeColumn": "Time",
@@ -190,7 +191,9 @@
       "swellDominance": "Swell Dominance",
       "factorLabel": "{{label}} ({{weight}}%)"
     },
+    "swellCardTitle": "Swell",
     "swellBreakdownTitle": "Swell Components",
+    "direction": "Direction",
     "height": "Height",
     "period": "Period",
     "energy": "Energy",
@@ -205,7 +208,10 @@
       "swell": "Swell",
       "wind_swell": "Wind Swell"
     },
+    "windCardTitle": "Wind",
     "windQualityTitle": "Wind Quality",
+    "windDirection": "Wind Direction",
+    "gust": "Gust",
     "windQuality": {
       "offshore": "Offshore",
       "cross_offshore": "Cross-Offshore",
@@ -216,13 +222,7 @@
     "swellCompassTitle": "Swell Direction",
     "beachAlignmentAriaLabel": "Dominant swell direction: {{direction}}, {{degrees}}°",
     "tideForecastTitle": "Tide",
-    "tideForecastAriaLabel": "Tide height forecast for the next 72 hours at {{location}}",
-    "ripCurrentRiskLabel": "Rip current risk: {{level}}",
-    "ripCurrentRisk": {
-      "low": "Low",
-      "moderate": "Moderate",
-      "high": "High"
-    }
+    "tideForecastAriaLabel": "Tide height forecast for the next 72 hours at {{location}}"
   },
   "fishing": {
     "loading": "Loading fishing data…",
@@ -294,6 +294,9 @@
     "noteColumn": "Notes",
     "solunarArcAriaLabel": "Moon rise-to-set arc with major and minor fishing periods highlighted",
     "moonBelowHorizon": "Moon is below the horizon",
-    "periodGridScrollAriaLabel": "Scrollable 3-day fishing forecast"
+    "periodGridScrollAriaLabel": "Scrollable 3-day fishing forecast",
+    "scoreCardTitle": "Fishing Score",
+    "periodButtonAriaLabel": "{{weekday}}, {{date}} — {{period}}: score {{score}} of 100. View species detail.",
+    "periodDetailHeading": "Species scores for {{weekday}}, {{date}} — {{period}}"
   }
 }
