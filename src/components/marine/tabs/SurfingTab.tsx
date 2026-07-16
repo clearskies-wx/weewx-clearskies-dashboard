@@ -1422,10 +1422,10 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
   const currentConditionCode  = obsData.data?.weatherCode ?? null;
   const currentDaytime        = obsData.scene?.daytime ?? true;
   const airTempCV             = asConverted(obsData.data?.outTemp ?? null);
-  const airTempValue          = airTempCV.value != null ? airTempCV.formatted : '—';
-  const airTempUnit           = airTempCV.value != null ? (airTempCV.label ?? '') : '';
+  const airTempValue          = airTempCV?.value != null ? airTempCV.formatted : '—';
+  const airTempUnit           = airTempCV?.value != null ? (airTempCV.label ?? '') : '';
   const uvCV                  = asConverted(obsData.data?.UV ?? null);
-  const uvValue               = uvCV.value != null ? String(Math.round(uvCV.value)) : '—';
+  const uvValue               = uvCV?.value != null ? String(Math.round(uvCV.value)) : '—';
   const waterTempValue        = marine?.observation?.waterTemp != null
     ? formatValue(marine.observation.waterTemp, 'temperature', locale)
     : '—';
