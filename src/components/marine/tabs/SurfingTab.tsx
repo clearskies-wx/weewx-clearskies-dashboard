@@ -55,7 +55,7 @@ import { useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AreaChart, Area, XAxis, YAxis } from 'recharts';
-import { Waves, Wind } from '@phosphor-icons/react';
+import { Waves, Wind, Timer, Compass } from '@phosphor-icons/react';
 import { useSurfDetail, useMarineDetail, useStation } from '../../../hooks/useWeatherData';
 import { formatValue } from '../../../utils/format';
 // formatNumber available if energy display is re-added
@@ -126,50 +126,43 @@ function InlineError({ message, onRetry, retryLabel }: { message: string; onRetr
 // qualityStars arrives as 0–5 from the API; we clamp to [0,5] defensively.
 // ---------------------------------------------------------------------------
 
-/** 4–5 stars → green; 3 → amber; 1–2 → red. Color is always paired with
- *  the numeric score AND qualityLabel text — never the only signal. */
-function qualityColorClasses(stars: number): string {
-  const r = Math.round(stars);
-  if (r >= 4) return 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300';
-  if (r === 3) return 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300';
-  return 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300';
+function scoreTierColor(score: number): string {
+  const r = Math.round(Math.max(0, Math.min(5, score)));
+  if (r >= 5) return 'var(--score-5)';
+  if (r >= 4) return 'var(--score-4)';
+  if (r >= 3) return 'var(--score-3)';
+  if (r >= 2) return 'var(--score-2)';
+  return 'var(--score-1)';
 }
 
-function NumericScoreBadge({
-  stars,
+function StarRating({
+  score,
   label,
   size,
-  t,
 }: {
-  stars: number;
+  score: number;
   label: string;
   size: 'lg' | 'sm';
-  t: (key: string, opts?: Record<string, unknown>) => string;
 }) {
-  const clamped = Math.max(0, Math.min(5, Math.round(stars)));
+  const clamped = Math.max(0, Math.min(5, Math.round(score)));
+  const color = scoreTierColor(score);
+  const starSize = size === 'lg' ? 28 : 16;
+  const gap = size === 'lg' ? '0.25rem' : '0.15rem';
+
   return (
-    <span
-      className={`inline-flex w-fit items-center gap-2 rounded-lg font-semibold ${qualityColorClasses(stars)} ${
-        size === 'lg' ? 'px-4 py-3' : 'px-2 py-0.5 gap-1'
-      }`}
-      style={{ fontSize: size === 'lg' ? 'var(--text-body)' : 'var(--text-label)' }}
-    >
-      {/* Digit is aria-hidden; sr-only phrase carries the meaning to AT. */}
-      <span
-        aria-hidden="true"
-        style={{
-          fontFamily: 'var(--font-display, system-ui, sans-serif)',
-          fontWeight: 700,
-          fontSize: size === 'lg' ? 'var(--text-stat-tile)' : 'var(--text-body)',
-          fontFeatureSettings: '"tnum"',
-          lineHeight: 1,
-        }}
-      >
-        {clamped}
+    <div className="flex flex-col" style={{ gap: size === 'lg' ? '0.375rem' : '0.2rem' }}>
+      <div className="flex items-center" style={{ gap }} aria-hidden="true">
+        {Array.from({ length: 5 }, (_, i) => (
+          <svg key={i} width={starSize} height={starSize} viewBox="0 0 24 24" fill={i < clamped ? color : 'var(--muted-foreground)'} opacity={i < clamped ? 1 : 0.25}>
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z" />
+          </svg>
+        ))}
+      </div>
+      <span className="sr-only">{clamped} of 5 — </span>
+      <span style={{ fontSize: size === 'lg' ? 'var(--text-body)' : 'var(--text-label)', color, fontWeight: 600 }}>
+        {label}
       </span>
-      <span className="sr-only">{t('qualitative.stars', { count: clamped })} — </span>
-      {label}
-    </span>
+    </div>
   );
 }
 
@@ -193,9 +186,11 @@ function NumericScoreBadge({
  *     as --gauge-unfill in semi-circular-gauge.tsx (decorative/unfilled).
  */
 function scoreBarFillColor(pct: number): string {
-  if (pct > 60) return 'var(--gauge-fill-good, #15803d)';
-  if (pct >= 30) return 'var(--gauge-fill-moderate, #b45309)';
-  return 'var(--gauge-unfill)';
+  if (pct >= 80) return 'var(--score-5)';
+  if (pct >= 60) return 'var(--score-4)';
+  if (pct >= 40) return 'var(--score-3)';
+  if (pct >= 20) return 'var(--score-2)';
+  return 'var(--score-1)';
 }
 
 function ScoreBar({ label, score }: { label: string; score: number }) {
@@ -773,19 +768,16 @@ function SurfScrollForecast({
                         {timeLabel}
                       </span>
 
-                      {/* Row 2: Score badge — circular, colored by tier.
-                          aria-hidden: quality conveyed via button aria-label. */}
+                      {/* Row 2: Score — numeric + colored by tier */}
                       <span
                         aria-hidden="true"
-                        className={`flex items-center justify-center rounded-full font-bold ${qualityColorClasses(item.entry.qualityStars)}`}
+                        className="font-bold"
                         style={{
-                          width: 26,
-                          height: 26,
-                          flexShrink: 0,
                           fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
                           fontSize: 'var(--text-body)',
                           fontFeatureSettings: '"tnum"',
                           lineHeight: 1,
+                          color: scoreTierColor(item.entry.qualityStars),
                         }}
                       >
                         {Math.round(Math.max(0, Math.min(5, item.entry.qualityStars)))}
@@ -1244,25 +1236,24 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
           <CardHeader>
             <CardTitle as="h3">{t('surfing.scoreCardTitle')}</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col gap-4">
+          <CardContent className="flex flex-col gap-3">
             {primary === null ? (
               <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
                 {t('surfing.noForecastData')}
               </p>
             ) : (
               <>
-                {/* conditionsText — subtitle above the score badge */}
-                <p className="font-semibold text-foreground" style={{ fontSize: 'var(--text-body)' }}>
-                  {primary.conditionsText}
-                </p>
-
-                {/* Numeric score badge — NOT star glyphs (MARINE-FIXIT-PLAN T5.1) */}
-                <NumericScoreBadge
-                  stars={primary.qualityStars}
+                {/* Star rating at top */}
+                <StarRating
+                  score={primary.qualityStars}
                   label={primary.qualityLabel}
                   size="lg"
-                  t={t}
                 />
+
+                {/* Conditions text — not bolded */}
+                <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
+                  {primary.conditionsText}
+                </p>
 
                 {/* Weighted factor breakdown bars */}
                 <div className="flex flex-col gap-3">
@@ -1294,22 +1285,26 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                 <span className="text-muted-foreground font-semibold" style={{ fontSize: 'var(--text-micro)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   {t('surfing.conditionsAtBreak')}
                 </span>
-                <dl className="grid grid-cols-3 gap-x-3">
-                  <MarineStatTile
-                    icon={<Waves aria-hidden="true" focusable="false" />}
-                    label={t('waveHeight')}
-                    value={formatValue(primary.waveHeightAtBreak, 'default', locale)}
-                    unit={heightUnit}
-                  />
-                  <MarineStatTile
-                    label={t('surfing.period')}
-                    value={formatValue(primary.period, 'default', locale)}
-                    unit={periodUnit}
-                  />
-                  <MarineStatTile
-                    label={t('surfing.direction')}
-                    value={swellDirLabel}
-                  />
+                <dl className="grid grid-cols-3 gap-x-4">
+                  {/* Icon-left stat: icon beside the value/label block */}
+                  {[
+                    { icon: <Waves weight="bold" />, label: t('waveHeight'), value: formatValue(primary.waveHeightAtBreak, 'default', locale), unit: heightUnit },
+                    { icon: <Timer weight="bold" />, label: t('surfing.period'), value: formatValue(primary.period, 'default', locale), unit: periodUnit },
+                    { icon: <Compass weight="bold" />, label: t('surfing.direction'), value: swellDirLabel, unit: undefined },
+                  ].map((s) => (
+                    <div key={s.label} className="flex items-center gap-2">
+                      <span aria-hidden="true" className="shrink-0 text-muted-foreground" style={{ fontSize: 'var(--text-stat-tile)' }}>
+                        {s.icon}
+                      </span>
+                      <div className="flex flex-col">
+                        <dt className="text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>{s.label}</dt>
+                        <dd className="text-foreground font-semibold" style={{ fontSize: 'var(--text-stat-tile)', fontFeatureSettings: '"tnum"' }}>
+                          {s.value}
+                          {s.unit && <span className="text-muted-foreground font-normal ml-1" style={{ fontSize: 'var(--text-label)' }}>{s.unit}</span>}
+                        </dd>
+                      </div>
+                    </div>
+                  ))}
                 </dl>
               </div>
             )}

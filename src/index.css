@@ -203,6 +203,13 @@
     --temp-hi: #c81e1e;
     --temp-lo: #1d4ed8;
 
+    /* ── Score tier colors (surf/fishing quality, 1=poor → 5=epic) ─────── */
+    --score-1: #d97706;   /* amber-600 */
+    --score-2: #ea580c;   /* orange-600 */
+    --score-3: #65a30d;   /* lime-600 */
+    --score-4: #15803d;   /* green-700 */
+    --score-5: #7c3aed;   /* violet-600 */
+
     /* ── Weather range chart gradient (cool → mid → warm) ──────────────── */
     --range-chart-cool: #4a90d9;
     --range-chart-mid:  #f5a623;
@@ -292,6 +299,13 @@
 
     --temp-hi: #f87171;
     --temp-lo: #93c5fd;
+
+    /* ── Score tier colors (dark theme) ────────────────────────────────── */
+    --score-1: #fbbf24;   /* amber-400 */
+    --score-2: #fb923c;   /* orange-400 */
+    --score-3: #a3e635;   /* lime-400 */
+    --score-4: #4ade80;   /* green-400 */
+    --score-5: #a78bfa;   /* violet-400 */
 
     /* ── Weather range chart gradient (dark theme) ─────────────────────── */
     --range-chart-cool: #6ba3e0;
