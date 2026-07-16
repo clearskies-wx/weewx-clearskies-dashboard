@@ -31,6 +31,8 @@ import { formatValue } from '../../../../utils/format';
 import { formatTime } from '../../../../utils/format-date';
 import { formatNumber } from '../../../../utils/format-number';
 import { buildHourTicks } from './hour-ticks';
+import { useAlmanac } from '../../../../hooks/useWeatherData';
+import { MoonPhaseIcon } from '../../../moon-phase-icon';
 import type { TidePrediction, WaterLevel } from '../../../../api/types';
 
 interface TotalWaterLevelPoint {
@@ -79,6 +81,12 @@ export function TideChart({
 }: TideChartProps) {
   const { t } = useTranslation('marine');
 
+  // Almanac: current moon phase for spring/neap context in the tide table.
+  // The phase barely changes over 72 hours, so one value serves all table rows.
+  const { data: almanacData } = useAlmanac();
+  const moonIllumination = almanacData?.moon.illuminationPercent ?? null;
+  const moonPhaseName = almanacData?.moon.phaseName ?? null;
+
   const predictionPoints: PredictionPoint[] = useMemo(
     () =>
       predictions.map((p) => ({
@@ -100,6 +108,13 @@ export function TideChart({
     [predictions],
   );
 
+  // Filtered TidePrediction[] for the visible table — preserves the ISO `time`
+  // string so formatTime() and Intl.DateTimeFormat work without re-parsing.
+  const extremaPredictions = useMemo(
+    () => predictions.filter((p) => p.type === 'high' || p.type === 'low'),
+    [predictions],
+  );
+
   const levelPoints: LevelPoint[] = useMemo(
     () =>
       waterLevels.map((w) => ({
@@ -118,7 +133,7 @@ export function TideChart({
     [totalWaterLevelForecast],
   );
 
-  const nowTs = Date.now();
+  const nowTs = Date.now(); // ADR-075: display tick, not data refresh
   const hasComposite = compositePoints.length > 0;
   const hasObserved = levelPoints.length > 0;
 
@@ -138,12 +153,68 @@ export function TideChart({
   // formatNumber (Intl.NumberFormat), not .toFixed() — tick labels render to
   // the DOM and must respect the locale's decimal separator (rules/coding.md
   // §6.1/§6.4: .toFixed() is a FAIL condition for any display text).
-  const yTickFormatter = (v: number | string) => (typeof v === 'number' ? formatNumber(v, 1, locale) : v);
+  const yTickFormatter = (v: number | string) =>
+    typeof v === 'number' ? formatNumber(v, 1, locale) : v;
+
+  // Compute UTC timestamps for each midnight boundary in the station timezone
+  // within [minTs, maxTs]. Uses 'en-CA' locale to produce stable ISO-format
+  // YYYY-MM-DD date keys for comparison across all target browsers.
+  // Binary search finds the exact boundary within ±30 s for a clean chart line.
+  const midnightBoundaries: Array<{ ts: number; label: string }> = (() => {
+    const dateFmt = new Intl.DateTimeFormat('en-CA', { timeZone: stationTz });
+    const labelFmt = new Intl.DateTimeFormat(locale, {
+      timeZone: stationTz,
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
+    const boundaries: Array<{ ts: number; label: string }> = [];
+    let prevDate = dateFmt.format(new Date(minTs));
+
+    for (let t = minTs + 3_600_000; t <= maxTs; t += 3_600_000) {
+      const curDate = dateFmt.format(new Date(t));
+      if (curDate !== prevDate) {
+        // Binary search: narrow to ±30 s accuracy
+        let lo = t - 3_600_000;
+        let hi = t;
+        while (hi - lo > 30_000) {
+          const mid = Math.floor((lo + hi) / 2);
+          if (dateFmt.format(new Date(mid)) === prevDate) {
+            lo = mid;
+          } else {
+            hi = mid;
+          }
+        }
+        boundaries.push({ ts: hi, label: labelFmt.format(new Date(hi)) });
+        prevDate = curDate;
+      }
+    }
+    return boundaries;
+  })();
+
+  // Day formatter for the visible tide table (DASHBOARD-MANUAL §2 — always
+  // supply station IANA TZ; en-CA not needed here since we want locale output).
+  const dayFormatter = new Intl.DateTimeFormat(locale, {
+    timeZone: stationTz,
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
+
+  // Shared aria-label for the moon phase icon in each table row.
+  // All rows show the same phase; the label is descriptive for screen readers.
+  const moonAriaLabel = moonPhaseName
+    ? `${t('tide.moonColumn')}: ${moonPhaseName}${moonIllumination !== null ? `, ${moonIllumination}%` : ''}`
+    : t('tide.moonColumn');
 
   return (
     <>
       <ChartContainer height={250} ariaLabel={ariaLabel}>
-        <ComposedChart margin={{ top: 8, right: 12, bottom: 0, left: 40 }}>
+        {/*
+          margin.top=24  — room for midnight-boundary day labels (position: 'top')
+          margin.bottom=20 — room for Low-tide labels rendered below trough points
+        */}
+        <ComposedChart margin={{ top: 24, right: 12, bottom: 20, left: 40 }}>
           <XAxis
             dataKey="ts"
             type="number"
@@ -170,6 +241,26 @@ export function TideChart({
             }}
           />
           <ReferenceLine y={0} stroke="var(--border)" strokeDasharray="3 3" />
+
+          {/* Day boundary lines — one ReferenceLine per midnight in station TZ.
+              Visitor sees e.g. "Thu Jul 17" at the transition so times on a
+              72-hour chart are unambiguous without date context in the tick. */}
+          {midnightBoundaries.map(({ ts, label }) => (
+            <ReferenceLine
+              key={ts}
+              x={ts}
+              stroke="var(--border)"
+              strokeDasharray="4 4"
+              strokeWidth={1}
+              label={{
+                value: label,
+                position: 'top',
+                fontSize: 11,
+                fill: 'var(--muted-foreground)',
+                fontFamily: 'var(--font-chart)',
+              }}
+            />
+          ))}
 
           <Area
             data={predictionPoints}
@@ -223,7 +314,12 @@ export function TideChart({
               stroke="var(--foreground)"
               strokeDasharray="2 4"
               strokeWidth={1}
-              label={{ value: t('tide.now', { defaultValue: 'Now' }), position: 'top', fontSize: 11, fill: 'var(--foreground)' }}
+              label={{
+                value: t('tide.now', { defaultValue: 'Now' }),
+                position: 'top',
+                fontSize: 11,
+                fill: 'var(--foreground)',
+              }}
             />
           )}
 
@@ -234,6 +330,11 @@ export function TideChart({
             />
           )}
 
+          {/* Extrema scatter — alternate label positions to prevent overlap.
+              High labels go ABOVE the peak (natural — peaks are near chart top).
+              Low labels go BELOW the trough (natural — troughs are near chart
+              bottom); the 20 px bottom margin provides clearance for these.
+              Each label includes the height value for at-a-glance reading. */}
           <Scatter
             data={extremaPoints}
             dataKey="height"
@@ -241,14 +342,31 @@ export function TideChart({
             fill="var(--chart-2)"
             isAnimationActive={false}
             shape={(props: unknown) => {
-              const { cx, cy, payload } = props as { cx: number; cy: number; payload: ExtremaPoint };
-              const label = payload.type === 'high' ? t('tide.tideHigh') : t('tide.tideLow');
+              const { cx, cy, payload } = props as {
+                cx: number;
+                cy: number;
+                payload: ExtremaPoint;
+              };
+              const isHigh = payload.type === 'high';
+              const typeLabel = isHigh ? t('tide.tideHigh') : t('tide.tideLow');
+              const heightLabel = formatNumber(payload.height, 2, locale);
+              const label = `${typeLabel} ${heightLabel} ${heightUnit}`;
+              // Highs: label 16 px above the dot (room above peak).
+              // Lows: label 20 px below the dot (into bottom-margin area).
+              const textY = isHigh ? cy - 16 : cy + 20;
               return (
                 <g>
-                  <circle cx={cx} cy={cy} r={4} fill="var(--chart-2)" stroke="var(--background)" strokeWidth={1.5} />
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={4}
+                    fill="var(--chart-2)"
+                    stroke="var(--background)"
+                    strokeWidth={1.5}
+                  />
                   <text
                     x={cx}
-                    y={cy - 10}
+                    y={textY}
                     textAnchor="middle"
                     fontFamily="var(--font-chart)"
                     fontSize={11}
@@ -263,7 +381,9 @@ export function TideChart({
         </ComposedChart>
       </ChartContainer>
 
-      {/* sr-only data table fallback — WCAG 1.1.1 (rules/coding.md §5.5) */}
+      {/* sr-only data table fallback — WCAG 1.1.1 (rules/coding.md §5.5).
+          Unchanged: lists every interpolated point for maximum screen-reader
+          coverage. The visible table below shows extrema only. */}
       <table className="sr-only">
         <caption>{ariaLabel}</caption>
         <thead>
@@ -289,6 +409,162 @@ export function TideChart({
           ))}
         </tbody>
       </table>
+
+      {/* Visible tide table — extrema only (DESIGN-MANUAL §11 Data Tables).
+          Headers: --text-label / weight 600 / uppercase / text-muted-foreground.
+          Cells: --text-body / weight 400 / text-foreground.
+          Numeric: font-feature-settings: "tnum", right-aligned.
+          Alternating row backgrounds: bg-muted/30 on odd rows (0-indexed).
+          Moon phase column provides spring/neap tidal context — the same icon
+          appears in every row because phase barely changes over 72 hours. */}
+      {extremaPredictions.length > 0 && (
+        <div className="overflow-x-auto mt-4">
+          <table className="w-full">
+            <caption
+              className="caption-top text-foreground"
+              style={{
+                fontSize: 'var(--text-section)',
+                fontWeight: 600,
+                textAlign: 'left',
+                paddingBottom: '0.5rem',
+              }}
+            >
+              {t('tide.tableCaption')}
+            </caption>
+            <thead>
+              <tr>
+                <th
+                  scope="col"
+                  className="text-muted-foreground"
+                  style={{
+                    fontSize: 'var(--text-label)',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    textAlign: 'left',
+                    padding: '0.375rem 0.5rem',
+                  }}
+                >
+                  {t('tide.dayColumn')}
+                </th>
+                <th
+                  scope="col"
+                  className="text-muted-foreground"
+                  style={{
+                    fontSize: 'var(--text-label)',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    textAlign: 'left',
+                    padding: '0.375rem 0.5rem',
+                  }}
+                >
+                  {t('tide.typeColumn')}
+                </th>
+                <th
+                  scope="col"
+                  className="text-muted-foreground"
+                  style={{
+                    fontSize: 'var(--text-label)',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    textAlign: 'left',
+                    padding: '0.375rem 0.5rem',
+                  }}
+                >
+                  {t('tide.timeColumn')}
+                </th>
+                <th
+                  scope="col"
+                  className="text-muted-foreground"
+                  style={{
+                    fontSize: 'var(--text-label)',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    textAlign: 'right',
+                    padding: '0.375rem 0.5rem',
+                  }}
+                >
+                  {t('tide.heightColumn')}
+                </th>
+                <th
+                  scope="col"
+                  className="text-muted-foreground"
+                  style={{
+                    fontSize: 'var(--text-label)',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    textAlign: 'center',
+                    padding: '0.375rem 0.5rem',
+                  }}
+                >
+                  {t('tide.moonColumn')}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {extremaPredictions.map((p, i) => (
+                <tr key={p.time} className={i % 2 === 1 ? 'bg-muted/30' : ''}>
+                  <td
+                    className="text-foreground"
+                    style={{
+                      fontSize: 'var(--text-body)',
+                      fontWeight: 400,
+                      padding: '0.375rem 0.5rem',
+                    }}
+                  >
+                    {dayFormatter.format(new Date(p.time))}
+                  </td>
+                  <td
+                    className="text-foreground"
+                    style={{
+                      fontSize: 'var(--text-body)',
+                      fontWeight: 400,
+                      padding: '0.375rem 0.5rem',
+                    }}
+                  >
+                    {p.type === 'high' ? t('tide.tideHigh') : t('tide.tideLow')}
+                  </td>
+                  <td
+                    className="text-foreground"
+                    style={{
+                      fontSize: 'var(--text-body)',
+                      fontWeight: 400,
+                      padding: '0.375rem 0.5rem',
+                    }}
+                  >
+                    {formatTime(new Date(p.time), locale, stationTz)}
+                  </td>
+                  <td
+                    className="text-foreground"
+                    style={{
+                      fontSize: 'var(--text-body)',
+                      fontWeight: 400,
+                      padding: '0.375rem 0.5rem',
+                      fontFeatureSettings: '"tnum"',
+                      textAlign: 'right',
+                    }}
+                  >
+                    {formatNumber(p.height, 2, locale)}&nbsp;{heightUnit}
+                  </td>
+                  <td
+                    style={{
+                      padding: '0.375rem 0.5rem',
+                      textAlign: 'center',
+                      verticalAlign: 'middle',
+                    }}
+                  >
+                    <MoonPhaseIcon
+                      size={18}
+                      illuminationPercent={moonIllumination}
+                      phaseName={moonPhaseName}
+                      ariaLabel={moonAriaLabel}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </>
   );
 }

@@ -57,7 +57,13 @@
     "srTimeColumn": "Time",
     "srHeightColumn": "Height ({{unit}})",
     "srTypeColumn": "Type",
-    "now": "Now"
+    "now": "Now",
+    "tableCaption": "High and Low Tides",
+    "dayColumn": "Day",
+    "typeColumn": "Type",
+    "timeColumn": "Time",
+    "heightColumn": "Height",
+    "moonColumn": "Moon"
   },
   "boating": {
     "loading": "Loading boating conditions…",
