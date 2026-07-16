@@ -189,7 +189,20 @@
       "wavePeriod": "Wave Period",
       "windQuality": "Wind Quality",
       "swellDominance": "Swell Dominance",
+      "beachAlignment": "Beach Alignment",
+      "penalty": "penalty",
       "factorLabel": "{{label}} ({{weight}}%)"
+    },
+    "scoringExplainer": {
+      "title": "How Surf Scoring Works",
+      "close": "Close",
+      "intro": "The surf score rates current conditions from 1 (Poor) to 5 (Epic) based on four factors and a beach alignment penalty.",
+      "waveHeight": "Larger waves within a rideable range score higher. Very small or dangerously large waves score lower.",
+      "wavePeriod": "Longer swell periods produce cleaner, more powerful waves. Short-period wind chop scores poorly.",
+      "windQuality": "Offshore winds hold the wave face up and score highest. Onshore winds blow waves down and score lowest.",
+      "swellDominance": "A clean, single dominant swell system scores higher than confused, mixed wind chop.",
+      "beachAlignment": "How directly the swell hits the beach. Swells arriving at a steep angle lose energy and score lower.",
+      "tiers": "Score tiers: 1 Poor, 2 Fair, 3 Good, 4 Very Good, 5 Epic."
     },
     "noModelSwellData": "No swell component data available",
     "conditionsAtBreak": "Conditions at Break",

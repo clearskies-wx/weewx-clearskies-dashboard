@@ -51,11 +51,11 @@
 //   - Tide arrows (↑↓) aria-hidden, always paired with "High"/"Low" text
 //   - All interactive elements keyboard-reachable via <button> (no <div onClick>)
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AreaChart, Area, XAxis, YAxis } from 'recharts';
-import { Waves, Wind, Timer, Compass } from '@phosphor-icons/react';
+import { Info, Waves, Wind, Timer, Compass, X } from '@phosphor-icons/react';
 import { useSurfDetail, useMarineDetail, useStation } from '../../../hooks/useWeatherData';
 import { formatValue } from '../../../utils/format';
 // formatNumber available if energy display is re-added
@@ -213,6 +213,158 @@ function ScoreBar({ label, score }: { label: string; score: number }) {
           className="h-full rounded-full transition-all"
           style={{ width: `${pct}%`, background: scoreBarFillColor(pct) }}
         />
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Surf Score explainer modal — explains the 5-star scoring system.
+//
+// A11y (DESIGN-MANUAL §16):
+//   - role="dialog" + aria-modal="true" on the content div
+//   - aria-labelledby references modal heading
+//   - Focus moves to close button on open; restored to trigger on close (caller)
+//   - Escape key closes via document keydown listener
+//   - Tab focus trap: Tab/Shift-Tab cycles within modal
+//   - Backdrop click closes
+//   - ≥44px touch target on close button (WCAG 2.5.8)
+//
+// Surface treatment (DESIGN-MANUAL §8):
+//   - Overlay: rgba(0,0,0,0.60) + blur(4px)
+//   - Modal content: .card-glass + blur(16px) + ring-1 ring-foreground/10
+// ---------------------------------------------------------------------------
+
+const EXPLAINER_FACTORS: ReadonlyArray<{ key: string; weight: string | null }> = [
+  { key: 'waveHeight',     weight: '35%' },
+  { key: 'wavePeriod',     weight: '35%' },
+  { key: 'windQuality',    weight: '20%' },
+  { key: 'swellDominance', weight: '10%' },
+  { key: 'beachAlignment', weight: null  }, // penalty, not a weighted factor
+];
+
+function ScoringExplainerModal({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation('marine');
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Move focus to close button when modal opens
+    closeButtonRef.current?.focus();
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose();
+        return;
+      }
+      // Focus trap: Tab / Shift-Tab cycles within the dialog
+      if (e.key === 'Tab' && dialogRef.current) {
+        const focusable = Array.from(
+          dialogRef.current.querySelectorAll<HTMLElement>(
+            'button:not([disabled]),a[href],[tabindex]:not([tabindex="-1"])',
+          ),
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  function handleOverlayClick(e: React.MouseEvent<HTMLDivElement>) {
+    if (e.target === overlayRef.current) onClose();
+  }
+
+  return (
+    <div
+      ref={overlayRef}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{
+        background: 'rgba(0,0,0,0.60)',
+        backdropFilter: 'blur(4px)',
+        WebkitBackdropFilter: 'blur(4px)',
+      }}
+      onClick={handleOverlayClick}
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="scoring-explainer-title"
+        className="relative card-glass rounded-xl ring-1 ring-foreground/10 max-w-lg w-full"
+        style={{
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          maxHeight: '80vh',
+          overflowY: 'auto',
+        }}
+      >
+        {/* Modal header */}
+        <div
+          className="sticky top-0 flex items-center justify-between border-b border-border card-glass"
+          style={{ padding: 'var(--card-pad)', paddingBottom: '0.75rem' }}
+        >
+          <h2
+            id="scoring-explainer-title"
+            className="font-heading font-semibold"
+            style={{ fontSize: 'var(--text-card-title)' }}
+          >
+            {t('surfing.scoringExplainer.title')}
+          </h2>
+          <button
+            ref={closeButtonRef}
+            type="button"
+            onClick={onClose}
+            aria-label={t('surfing.scoringExplainer.close')}
+            className="shrink-0 flex items-center justify-center text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus:outline-none rounded ml-2"
+            style={{ minWidth: '44px', minHeight: '44px' }}
+          >
+            <X size={18} aria-hidden="true" />
+          </button>
+        </div>
+
+        {/* Modal body */}
+        <div className="flex flex-col gap-4" style={{ padding: 'var(--card-pad)' }}>
+          <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
+            {t('surfing.scoringExplainer.intro')}
+          </p>
+
+          <div className="flex flex-col gap-3">
+            {EXPLAINER_FACTORS.map((f) => (
+              <div key={f.key} className="flex flex-col gap-0.5">
+                <span className="font-semibold text-foreground" style={{ fontSize: 'var(--text-label)' }}>
+                  {t(`surfing.scoring.${f.key}`)}
+                  {f.weight !== null
+                    ? <span className="text-muted-foreground font-normal"> ({f.weight})</span>
+                    : <span className="text-muted-foreground font-normal"> ({t('surfing.scoring.penalty')})</span>
+                  }
+                </span>
+                <p className="text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>
+                  {t(`surfing.scoringExplainer.${f.key}`)}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <p
+            className="text-muted-foreground border-t border-border pt-3"
+            style={{ fontSize: 'var(--text-label)' }}
+          >
+            {t('surfing.scoringExplainer.tiers')}
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -1095,6 +1247,15 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
   const { t: tCommon } = useTranslation('common');
   const locale = i18n.language;
 
+  // ── Scoring explainer modal ───────────────────────────────────────────────
+  const [showExplainer, setShowExplainer] = useState(false);
+  const infoButtonRef = useRef<HTMLButtonElement>(null);
+  const handleCloseExplainer = useCallback(() => {
+    setShowExplainer(false);
+    // Restore focus to the trigger button (DESIGN-MANUAL §16)
+    infoButtonRef.current?.focus();
+  }, []);
+
   const { data, units, loading: surfLoading, error: surfError, refetch: refetchSurf } = useSurfDetail(locationId);
   const { data: marine, units: marineUnits, loading: marineLoading } = useMarineDetail(locationId);
   const { data: station } = useStation();
@@ -1176,28 +1337,37 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
   const swellDirCardinal = cardinalFromDegrees(primary?.direction ?? null);
   const swellDirLabel    = swellDirCardinal ? tCommon(`directions.${swellDirCardinal}`) : '—';
 
-  // ── Scoring breakdown — UI-side approximations (API returns composed score only)
+  // ── Scoring breakdown — UI-side approximations; API-provided when available.
+  // weight: number → weighted factor (shown as "Label (N%)").
+  // weight: null   → penalty factor (shown as "Label (penalty)").
+  // When primary.scoring is present, use API-provided per-factor scores;
+  // otherwise fall back to UI-side approximations computed from raw fields.
   const scoringFactors = primary
     ? [
         {
           key: 'waveHeight',
-          weight: 35,
-          score: waveHeightScore(primary.waveHeightAtBreak, heightUnit),
+          weight: 35 as number | null,
+          score: primary.scoring?.waveHeight ?? waveHeightScore(primary.waveHeightAtBreak, heightUnit),
         },
         {
           key: 'wavePeriod',
-          weight: 35,
-          score: periodScore(primary.period),
+          weight: 35 as number | null,
+          score: primary.scoring?.wavePeriod ?? periodScore(primary.period),
         },
         {
           key: 'windQuality',
-          weight: 20,
-          score: windQualityScore(primary.windQuality),
+          weight: 20 as number | null,
+          score: primary.scoring?.windQuality ?? windQualityScore(primary.windQuality),
         },
         {
           key: 'swellDominance',
-          weight: 10,
-          score: Math.max(0, Math.min(100, primary.swellDominance * 100)),
+          weight: 10 as number | null,
+          score: primary.scoring?.swellDominance ?? Math.max(0, Math.min(100, primary.swellDominance * 100)),
+        },
+        {
+          key: 'beachAlignment',
+          weight: null as number | null,
+          score: primary.scoring?.beachAlignment ?? 50,
         },
       ]
     : [];
@@ -1236,6 +1406,18 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
         <Card footprint="wide" rowSpan={2}>
           <CardHeader>
             <CardTitle as="h3">{t('surfing.scoreCardTitle')}</CardTitle>
+            {/* Info button — opens scoring explainer modal (DESIGN-MANUAL §6 HeaderButton).
+             *  aria-label describes the action (not icon name). ≥44px touch target (WCAG 2.5.8). */}
+            <button
+              ref={infoButtonRef}
+              type="button"
+              onClick={() => setShowExplainer(true)}
+              aria-label={t('surfing.scoringExplainer.title')}
+              className="shrink-0 flex items-center justify-center text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus:outline-none rounded ml-2"
+              style={{ minWidth: '44px', minHeight: '44px', fontSize: 'var(--text-label)' }}
+            >
+              <Info size={18} aria-hidden="true" />
+            </button>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             {primary === null ? (
@@ -1256,15 +1438,20 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                   {primary.conditionsText}
                 </p>
 
-                {/* Weighted factor breakdown bars */}
+                {/* Scoring factor bars — weighted factors show "Label (N%)";
+                 *  beach alignment (penalty) shows "Label (penalty)". */}
                 <div className="flex flex-col gap-3">
                   {scoringFactors.map((factor) => (
                     <ScoreBar
                       key={factor.key}
-                      label={t('surfing.scoring.factorLabel', {
-                        label:  t(`surfing.scoring.${factor.key}`),
-                        weight: factor.weight,
-                      })}
+                      label={
+                        factor.weight !== null
+                          ? t('surfing.scoring.factorLabel', {
+                              label:  t(`surfing.scoring.${factor.key}`),
+                              weight: factor.weight,
+                            })
+                          : `${t(`surfing.scoring.${factor.key}`)} (${t('surfing.scoring.penalty')})`
+                      }
                       score={factor.score}
                     />
                   ))}
@@ -1452,6 +1639,9 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
           </CardContent>
         </Card>
       </Grid>
+
+      {/* Scoring explainer modal — position:fixed, renders above page content */}
+      {showExplainer && <ScoringExplainerModal onClose={handleCloseExplainer} />}
 
     </div>
   );

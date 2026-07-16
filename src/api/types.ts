@@ -1236,6 +1236,18 @@ export interface MarineTextForecast {
   weather: string | null;
 }
 
+export interface SurfForecastScoring {
+  waveHeight: number;
+  wavePeriod: number;
+  windQuality: number;
+  swellDominance: number;
+  beachAlignment: number;
+  waveHeightWeight: number;
+  wavePeriodWeight: number;
+  windQualityWeight: number;
+  swellDominanceWeight: number;
+}
+
 export interface SurfForecast {
   time: string;
   waveHeightAtBreak: number;
@@ -1247,6 +1259,9 @@ export interface SurfForecast {
   windQuality: string;
   swellDominance: number;
   multiSwell: SpectralWaveComponent[] | null;
+  /** Per-factor scoring breakdown — provided by surf_scorer.py when available.
+   *  Null when the API does not yet include scoring (e.g. older server versions). */
+  scoring?: SurfForecastScoring | null;
 }
 
 export interface FishingForecast {
