@@ -532,16 +532,7 @@ function dominantSwellDirection(components: SpectralWaveComponent[]): number | n
   return components.reduce((best, c) => (c.energy > best.energy ? c : best), components[0]).direction;
 }
 
-function dominantSwellStats(
-  components: SpectralWaveComponent[],
-  fallbackEntry: SurfForecast | null,
-): { height: number | null; period: number | null } {
-  if (components.length > 0) {
-    const dominant = components.reduce((best, c) => (c.energy > best.energy ? c : best), components[0]);
-    return { height: dominant.height, period: dominant.period };
-  }
-  return { height: fallbackEntry?.waveHeightAtBreak ?? null, period: fallbackEntry?.period ?? null };
-}
+// dominantSwellStats removed — height/period now shown only in the component table
 
 // ---------------------------------------------------------------------------
 // Time-matching helpers for 72h forecast columns (T5.2).
