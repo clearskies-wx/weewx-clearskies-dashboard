@@ -59,6 +59,7 @@
       "storm-day": "Storm, daytime",
       "storm-night": "Storm, nighttime"
     },
-    "builtIn": "Built-in"
+    "builtIn": "Built-in",
+    "marineHeading": "Marine Locations"
   }
 }

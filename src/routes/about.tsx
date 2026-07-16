@@ -1,6 +1,6 @@
 // about.tsx — About page (/about)
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Info } from '@phosphor-icons/react';
 import {
@@ -10,9 +10,17 @@ import {
   CardContent,
 } from '../components/ui/card';
 import { PageLayout } from '../components/layout/page-layout';
-import { useStation, useCapabilities } from '../hooks/useWeatherData';
+import { useStation, useCapabilities, useMarineLocations } from '../hooks/useWeatherData';
 import { useBranding } from '../lib/branding-provider';
 import { SCENE_ASSET_MAP } from '../components/background/scene-background-types';
+
+// Static config file at /etc/weewx-clearskies/marine-photos.json, written by
+// the wizard/admin when an operator uploads a marine location photo. Not
+// currently guaranteed to be Caddy-served — fetch and fail gracefully on
+// 404, same resilience pattern as /webcam.json (now.tsx) and /now-layout.json.
+interface MarinePhotosConfig {
+  locations?: Record<string, { photo_url?: string | null; photo_attribution?: string | null }>;
+}
 
 const STATIC_PROVIDERS: Array<{ domain: string; name: string; url: string }> = [
   { domain: 'baseMaps',     name: 'OpenStreetMap',                              url: 'https://www.openstreetmap.org/copyright' },
@@ -78,7 +86,32 @@ export function AboutPage() {
   const { t, i18n } = useTranslation('about');
   const { data: station, loading: stationLoading } = useStation();
   const { data: capabilities } = useCapabilities();
+  const { data: marineLocations } = useMarineLocations();
   const branding = useBranding();
+
+  // Marine location photo attributions — /marine-photos.json (Caddy static
+  // file, not an API endpoint). Absent file / 404 / parse error = feature
+  // hidden, not an error (same resilience pattern as webcam.json).
+  const [marinePhotos, setMarinePhotos] = useState<MarinePhotosConfig | null>(null);
+
+  useEffect(() => {
+    fetch('/marine-photos.json')
+      .then(r => (r.ok ? r.json() : null))
+      .catch(() => null)
+      .then(data => setMarinePhotos(data));
+  }, []);
+
+  const marinePhotoCredits = useMemo(() => {
+    if (!marinePhotos?.locations) return [];
+    const nameBySlug = new Map((marineLocations ?? []).map(loc => [loc.locationId, loc.name]));
+    return Object.entries(marinePhotos.locations)
+      .filter(([, entry]) => !!entry?.photo_attribution && entry.photo_attribution.trim().length > 0)
+      .map(([slug, entry]) => ({
+        slug,
+        name: nameBySlug.get(slug) ?? slug,
+        attribution: entry.photo_attribution!.trim(),
+      }));
+  }, [marinePhotos, marineLocations]);
 
   const groupedProviders = useMemo(() => {
     if (!capabilities || capabilities.providers.length === 0) return null;
@@ -274,6 +307,31 @@ export function AboutPage() {
                 </div>
               ))}
             </dl>
+
+            {/* Marine location photo attributions — only rendered when at least
+                one configured location has a non-empty photo_attribution. */}
+            {marinePhotoCredits.length > 0 && (
+              <>
+                <h3
+                  className="font-heading font-semibold text-foreground mt-4 pt-4 border-t border-border"
+                  style={{ fontSize: 'var(--text-body)' }}
+                >
+                  {t('photoCredits.marineHeading')}
+                </h3>
+                <dl className="mt-2 grid grid-cols-1 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
+                  {marinePhotoCredits.map(({ slug, name, attribution }) => (
+                    <div key={slug}>
+                      <dt className="text-muted-foreground uppercase font-semibold" style={{ fontSize: 'var(--text-label)' }}>
+                        {name}
+                      </dt>
+                      <dd className="mt-0.5 text-foreground" style={{ fontSize: 'var(--text-body)' }}>
+                        {attribution}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </>
+            )}
           </CardContent>
         </Card>
 
