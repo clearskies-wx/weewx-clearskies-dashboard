@@ -1,51 +1,57 @@
-// SurfingTab.tsx — Surfing activity tab content (Phase 7 T7.1/T7.2/T7.3,
-// DASHBOARD-MANUAL §12 "Tab content — Surfing (F22 redesign)").
+// SurfingTab.tsx — Surfing activity tab content (MARINE-FIXIT-PLAN T5.1/T5.2
+// redesign of the Phase 7 F22 hero layout).
 //
-// Surfaces the surf scoring system (enrichment/surf_scorer.py) via a hero
-// conditions summary, a weighted scoring breakdown, the 72h forecast
-// timeline + wave face height chart, a ranked swell-component breakdown,
-// a WindCompassCard-style swell direction compass, and the standalone tide
-// chart. All sections use the shared Card/CardHeader/CardTitle/CardContent
-// system and the shared MarineStatTile — no local Panel/StatTile functions
-// (DESIGN-MANUAL §20).
+// Surfaces the surf scoring system (enrichment/surf_scorer.py) as four
+// focused cards instead of one monolithic hero: a Surf Score card (numeric
+// score + weighted scoring breakdown), a Swell card (wave/period/direction
+// stats + ranked swell components + a compact direction compass), a Wind
+// card (live marine observation wind data), and a data-rich day-grouped
+// 72-hour forecast + wave face height chart. All sections use the shared
+// Card/CardHeader/CardTitle/CardContent system and the shared
+// MarineStatTile — no local Panel/StatTile functions (DESIGN-MANUAL §20).
 //
-// Panel order (top to bottom), matching DASHBOARD-MANUAL §12 exactly:
+// Card order (top to bottom):
 //   1. Alerts (AlertsPanel, shared, unchanged)
-//   2. Current Conditions Hero — conditionsText headline, star rating +
-//      qualityLabel, stat grid (wave height at break, period, wind quality
-//      badge, water temp from zoneForecast), rip current risk badge
-//   3. Scoring Breakdown — 4 weighted-factor bars (wave height 35%, wave
-//      period 35%, wind quality 20%, swell dominance 10%). The API does not
-//      return per-factor scores, so these are UI-side approximations
-//      documented inline next to each scoring function.
-//   4. 72-Hour Surf Forecast Timeline — ForecastTimeline + WaveFaceHeightChart
-//   5. Swell Components — ranked by energy, primary swell visually larger
-//   6. Swell Direction Compass — WindCompassCard tick-ring pattern, --chart-2
-//   7. Tide Forecast — TideChart (standalone, shared)
+//   2. Surf Score — conditionsText subtitle, prominent NUMERIC score (never
+//      star glyphs) + qualityLabel, 4 weighted-factor scoring bars absorbed
+//      below (wave height 35%, wave period 35%, wind quality 20%, swell
+//      dominance 10%). The API does not return per-factor scores, so these
+//      remain UI-side approximations documented inline next to each scoring
+//      function.
+//   3. Swell — wave height/period/direction stats, swell components ranked
+//      by energy (prefers SurfForecast.multiSwell, the NWPS/WW3
+//      model-processed breakdown; falls back to SurfDetailData's raw NDBC
+//      spectralComponents when multiSwell is null), and a reduced-footprint
+//      swell direction compass folded in as one element (not its own card).
+//   4. Wind — live wind speed/gust/direction from MarineObservation
+//      (useMarineDetail) plus the forecast-derived wind quality label.
+//   5. 72-Hour Surf Forecast — day-grouped HorizontalScrollNav of per-period
+//      columns (numeric score, wave height, swell period/direction, wind
+//      quality/speed/direction time-matched from the marine bundle, nearest
+//      tide event) + the wave face height area chart below.
+//   6. Tide Forecast — TideChart (standalone, shared, unchanged).
 //
-// Data source: useSurfDetail(locationId) (/surf/{id}) — a single bundle
-// covering forecast, zoneForecast (NWS Surf Zone Forecast), spectral
-// components, and tide predictions. No separate tide fetch is needed (unlike
-// BoatingTab/BeachSafetyTab) since SurfDetailData already carries
-// tidePredictions.
+// Data sources: useSurfDetail(locationId) (/surf/{id}) is the primary
+// bundle (forecast, spectral components, tide predictions). useMarineDetail
+// (/marine/{id}) is added in this redesign solely for live wind
+// observation + the forecast points used to time-match wind onto the surf
+// forecast timeline.
 //
-// Removed in this redesign (DASHBOARD-MANUAL §12): standalone "Conditions"
-// card (wind quality + beach alignment — consolidated into the hero),
-// standalone rip current alert banner at the bottom (rip current is now a
-// status badge in the hero; zoneForecast.hazardsText, when present, moves
-// into the hero alongside the badge instead of being dropped), the "General
-// Weather" panel (UV index has no home in the redesigned tab per the manual;
-// water temp moves into the hero stat grid).
+// Removed in this redesign: star-glyph rating (StarRating component
+// deleted entirely — numeric scores only, MARINE-FIXIT-PLAN T5.1), the
+// standalone Swell Components card and standalone compass card (both folded
+// into the Swell card), the rip current risk badge and zoneForecast
+// hazards text (no longer sourced — not part of the redesigned card set).
 //
 // A11y (rules/coding.md §5):
 //   - Every Card section heading is a real <h3> (CardTitle as="h3"),
 //     siblings of the tab/accordion h3 header above — no skipped levels.
-//   - Star ratings: Unicode glyphs are aria-hidden; the wrapping element
-//     carries a translated aria-label ("N of 5 stars") — glyphs alone are
-//     not accessible text.
-//   - Color is never the only signal: quality/wind-quality/rip-current/
-//     scoring-bar color coding is always paired with a translated text
-//     label or a visible number.
+//   - Numeric score: the digit is aria-hidden with an sr-only "N of 5
+//     stars" phrase (reusing the existing qualitative.stars key) preceding
+//     the visible qualityLabel text, so the accessible name isn't a bare
+//     ambiguous number.
+//   - Color is never the only signal: quality/scoring-bar color coding is
+//     always paired with a translated text label or a visible number.
 //   - Charts: ChartContainer (role="img" + aria-label) + sr-only data table.
 //   - Swell direction compass: role="img" with a <title> summarizing the
 //     dominant swell direction as text; the center overlay's height/period
@@ -53,16 +59,18 @@
 //     don't hear ambiguous bare numbers.
 //   - Primary swell's larger type size is a sighted-only cue — an sr-only
 //     "primary swell" label on the first list item carries the same
-//     information to screen reader users (coding.md §5: never let a purely
-//     visual differentiator be the only signal).
-//   - Horizontal scroll strip uses the shared HorizontalScrollNav pattern
-//     (DESIGN-MANUAL §11) — round buttons + keyboard-scrollable region.
+//     information to screen reader users.
+//   - Horizontal scroll strips use the shared HorizontalScrollNav pattern
+//     (DESIGN-MANUAL §11) — round buttons + keyboard-scrollable region —
+//     one per forecast day, each with a distinct aria-label naming the day.
+//   - Tide arrow glyphs (↑/↓) are aria-hidden and always paired with the
+//     translated "High"/"Low" text label — never the only signal.
 
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AreaChart, Area, XAxis, YAxis } from 'recharts';
-import { Waves, Thermometer } from '@phosphor-icons/react';
-import { useSurfDetail, useStation } from '../../../hooks/useWeatherData';
+import { Waves, Wind } from '@phosphor-icons/react';
+import { useSurfDetail, useMarineDetail, useStation } from '../../../hooks/useWeatherData';
 import { formatValue } from '../../../utils/format';
 import { formatTime } from '../../../utils/format-date';
 import { cardinalFromDegrees } from '../../../utils/wind';
@@ -73,7 +81,13 @@ import { MarineStatTile } from '../shared/MarineStatTile';
 import { AlertsPanel } from './shared/AlertsPanel';
 import { TideChart } from './shared/TideChart';
 import { buildHourTicks } from './shared/hour-ticks';
-import type { SpectralWaveComponent, SurfForecast, MarineAlertSummary } from '../../../api/types';
+import type {
+  SpectralWaveComponent,
+  SurfForecast,
+  MarineAlertSummary,
+  MarineForecastPoint,
+  TidePrediction,
+} from '../../../api/types';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -110,34 +124,8 @@ function InlineError({ message, onRetry, retryLabel }: { message: string; onRetr
   );
 }
 
-// ---------------------------------------------------------------------------
-// StarRating — Unicode ★/☆ glyphs, decorative; the wrapping <span> carries
-// the translated accessible name (reuses the existing "qualitative.stars"
-// key already used by marine.tsx's tab-header qualitative label).
-// ---------------------------------------------------------------------------
-
-function StarRating({ stars, t }: { stars: number; t: (key: string, opts?: Record<string, unknown>) => string }) {
-  const rounded = Math.max(0, Math.min(5, Math.round(stars)));
-  return (
-    // role="img" is required here, not decorative flourish: a plain <span>
-    // has an implicit ARIA role of "generic", and aria-label has no effect
-    // on generic elements per the ARIA-in-HTML spec — axe-core's
-    // aria-prohibited-attr rule flags this (confirmed live during T7.3
-    // verification). "img" is a naming-container role, so the translated
-    // "N of 5 stars" label actually reaches the accessibility tree.
-    <span
-      role="img"
-      aria-label={t('qualitative.stars', { count: rounded })}
-      className="text-foreground"
-      style={{ fontSize: 'var(--text-label)', letterSpacing: '0.05em' }}
-    >
-      <span aria-hidden="true">{'★'.repeat(rounded)}{'☆'.repeat(5 - rounded)}</span>
-    </span>
-  );
-}
-
 /** 4-5 stars → green (great), 3 → amber (fair), 1-2 → red (poor). Color is
- *  always paired with the star glyphs + qualityLabel text — never alone. */
+ *  always paired with the numeric score + qualityLabel text — never alone. */
 function qualityColorClasses(stars: number): string {
   const rounded = Math.round(stars);
   if (rounded >= 4) return 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300';
@@ -145,177 +133,45 @@ function qualityColorClasses(stars: number): string {
   return 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300';
 }
 
-// ---------------------------------------------------------------------------
-// 72-hour forecast timeline — horizontal scroll strip of star-rated cells
-// ---------------------------------------------------------------------------
-
-function ForecastTimeline({
-  forecast,
-  locale,
-  stationTz,
+/** Renders a rounded/clamped quality score as a digit (aria-hidden) with an
+ *  sr-only "N of 5 stars" phrase ahead of the visible qualityLabel — never
+ *  star glyphs (MARINE-FIXIT-PLAN T5.1: numeric scores only). Shared between
+ *  the Surf Score card and each forecast column so the two stay visually
+ *  consistent. */
+function NumericScoreBadge({
+  stars,
+  label,
+  size,
   t,
 }: {
-  forecast: SurfForecast[];
-  locale: string;
-  stationTz: string;
+  stars: number;
+  label: string;
+  size: 'lg' | 'sm';
   t: (key: string, opts?: Record<string, unknown>) => string;
 }) {
-  if (forecast.length === 0) {
-    return (
-      <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
-        {t('surfing.noForecastData')}
-      </p>
-    );
-  }
-
-  // A single forecast point isn't a "72-hour" timeline — render it as one
-  // conditions card instead of a one-item horizontal scroll strip (the
-  // section title above already switches to "Current Surf Conditions" for
-  // this case; see SurfingTab's isSinglePointForecast).
-  if (forecast.length === 1) {
-    const entry = forecast[0];
-    return (
-      <div
-        className={`flex flex-col items-center gap-1.5 rounded-lg px-4 py-3 w-fit ${qualityColorClasses(entry.qualityStars)}`}
+  const rounded = Math.max(0, Math.min(5, Math.round(stars)));
+  return (
+    <span
+      className={`inline-flex w-fit items-center gap-2 rounded-lg font-semibold ${qualityColorClasses(stars)} ${
+        size === 'lg' ? 'px-4 py-3' : 'px-2 py-0.5 gap-1'
+      }`}
+      style={{ fontSize: size === 'lg' ? 'var(--text-body)' : 'var(--text-label)' }}
+    >
+      <span
+        aria-hidden="true"
+        style={{
+          fontFamily: 'var(--font-display, system-ui, sans-serif)',
+          fontWeight: 700,
+          fontSize: size === 'lg' ? 'var(--text-stat-tile)' : 'var(--text-body)',
+          fontFeatureSettings: '"tnum"',
+          lineHeight: 1,
+        }}
       >
-        <span className="font-semibold" style={{ fontSize: 'var(--text-label)', fontFeatureSettings: '"tnum"' }}>
-          {formatTime(new Date(entry.time), locale, stationTz)}
-        </span>
-        <StarRating stars={entry.qualityStars} t={t} />
-        <span className="text-center" style={{ fontSize: 'var(--text-body)' }}>
-          {entry.qualityLabel}
-        </span>
-      </div>
-    );
-  }
-
-  return (
-    <HorizontalScrollNav ariaLabel={t('surfing.forecastTimelineAriaLabel')}>
-      <div className="flex gap-2 px-1 py-1">
-        {forecast.map((entry) => (
-          <div
-            key={entry.time}
-            className={`flex flex-col items-center gap-1 rounded-lg px-3 py-2 shrink-0 min-w-[5.5rem] ${qualityColorClasses(entry.qualityStars)}`}
-          >
-            <span className="font-semibold" style={{ fontSize: 'var(--text-label)', fontFeatureSettings: '"tnum"' }}>
-              {formatTime(new Date(entry.time), locale, stationTz)}
-            </span>
-            <StarRating stars={entry.qualityStars} t={t} />
-            <span className="text-center" style={{ fontSize: 'var(--text-micro)' }}>
-              {entry.qualityLabel}
-            </span>
-          </div>
-        ))}
-      </div>
-    </HorizontalScrollNav>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Wave face height chart — the post-supplement breaking height (NOT raw
-// offshore Hs), which is the number surfers actually care about.
-// ---------------------------------------------------------------------------
-
-function WaveFaceHeightChart({
-  forecast,
-  locale,
-  stationTz,
-  heightUnit,
-  ariaLabel,
-  t,
-}: {
-  forecast: SurfForecast[];
-  locale: string;
-  stationTz: string;
-  heightUnit: string;
-  ariaLabel: string;
-  t: (key: string, opts?: Record<string, unknown>) => string;
-}) {
-  const points = useMemo(
-    () =>
-      forecast
-        .map((f) => ({ ts: new Date(f.time).getTime(), height: f.waveHeightAtBreak }))
-        .sort((a, b) => a.ts - b.ts),
-    [forecast],
-  );
-
-  if (points.length === 0) {
-    return (
-      <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
-        {t('surfing.noForecastData')}
-      </p>
-    );
-  }
-
-  const minTs = points[0].ts;
-  const maxTs = points[points.length - 1].ts;
-  const ticks = buildHourTicks(minTs, maxTs);
-  const tickFormatter = (ts: number) => formatTime(new Date(ts), locale, stationTz);
-
-  return (
-    <>
-      <ChartContainer height={220} ariaLabel={ariaLabel}>
-        <AreaChart data={points} margin={{ top: 8, right: 12, bottom: 0, left: 12 }}>
-          <defs>
-            <linearGradient id="surfingWaveFaceGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" style={{ stopColor: 'var(--chart-2)', stopOpacity: 0.4 }} />
-              <stop offset="95%" style={{ stopColor: 'var(--chart-2)', stopOpacity: 0 }} />
-            </linearGradient>
-          </defs>
-          <XAxis
-            dataKey="ts"
-            type="number"
-            domain={[minTs, maxTs]}
-            ticks={ticks}
-            tickFormatter={tickFormatter}
-            tickLine={false}
-            axisLine={false}
-            tick={{ fontFamily: 'var(--font-chart)', fontSize: 14, fill: 'var(--muted-foreground)' }}
-            height={28}
-          />
-          <YAxis
-            tickLine={false}
-            axisLine={false}
-            tick={{ fontFamily: 'var(--font-chart)', fontSize: 14, fill: 'var(--muted-foreground)' }}
-            width={36}
-            label={{
-              value: heightUnit,
-              angle: -90,
-              position: 'insideLeft',
-              style: { fontFamily: 'var(--font-chart)', fontSize: 12, fill: 'var(--muted-foreground)' },
-            }}
-          />
-          <Area
-            type="monotone"
-            dataKey="height"
-            stroke="var(--chart-2)"
-            fill="url(#surfingWaveFaceGradient)"
-            strokeWidth={2}
-            dot={false}
-            activeDot={{ r: 4 }}
-            isAnimationActive={false}
-            connectNulls
-          />
-        </AreaChart>
-      </ChartContainer>
-      <table className="sr-only">
-        <caption>{ariaLabel}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{t('surfing.srTimeColumn')}</th>
-            <th scope="col">{t('surfing.srWaveFaceHeightColumn', { unit: heightUnit })}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {forecast.map((f, i) => (
-            <tr key={`${f.time}-${i}`}>
-              <td>{formatTime(new Date(f.time), locale, stationTz)}</td>
-              <td>{formatValue(f.waveHeightAtBreak, 'default', locale)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </>
+        {rounded}
+      </span>
+      <span className="sr-only">{t('qualitative.stars', { count: rounded })} — </span>
+      {label}
+    </span>
   );
 }
 
@@ -403,7 +259,10 @@ function ScoreBar({ label, score }: { label: string; score: number }) {
 
 // ---------------------------------------------------------------------------
 // Swell breakdown — spectral components ranked by energy (primary first),
-// classification color-coded, primary swell visually larger.
+// classification color-coded, primary swell visually larger. Accepts either
+// SurfForecast.multiSwell (preferred, NWPS/WW3 model-processed) or
+// SurfDetailData.spectralComponents (raw NDBC fallback) — both share the
+// SpectralWaveComponent shape, so the caller resolves which one to pass.
 // ---------------------------------------------------------------------------
 
 const CLASSIFICATION_COLOR: Record<string, string> = {
@@ -531,65 +390,24 @@ function SwellBreakdown({
 }
 
 // ---------------------------------------------------------------------------
-// Wind quality badge — offshore (ideal, green) / cross (amber) / onshore
-// (poor, red), always paired with the translated label text.
+// Wind quality — plain translated label (no color badge; the Wind card and
+// forecast columns render it via MarineStatTile / plain text per the T5.1
+// spec, so no separate colored-pill component is needed here).
 // ---------------------------------------------------------------------------
 
-const WIND_QUALITY_COLOR: Record<string, string> = {
-  offshore: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
-  cross_offshore: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
-  cross: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
-  cross_onshore: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
-  onshore: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
-};
+const WIND_QUALITY_KEYS = ['offshore', 'cross_offshore', 'cross', 'cross_onshore', 'onshore'];
 
-function WindQualityBadge({ quality, t }: { quality: string | null; t: (key: string) => string }) {
-  if (quality === null) {
-    return (
-      <span className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
-        {t('surfing.noData')}
-      </span>
-    );
-  }
-  const key = quality in WIND_QUALITY_COLOR ? quality : 'cross';
-  return (
-    <span
-      className={`inline-flex w-fit items-center rounded px-2.5 py-1 font-semibold ${WIND_QUALITY_COLOR[key]}`}
-      style={{ fontSize: 'var(--text-label)' }}
-    >
-      {t(`surfing.windQuality.${key}`)}
-    </span>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Rip current risk badge — low (green) / moderate (amber) / high (red),
-// always paired with the translated risk-level text.
-// ---------------------------------------------------------------------------
-
-const RIP_RISK_COLOR: Record<string, string> = {
-  low: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
-  moderate: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
-  high: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
-};
-
-function RipCurrentBadge({ riskKey, t }: { riskKey: string; t: (key: string, opts?: Record<string, unknown>) => string }) {
-  const key = riskKey in RIP_RISK_COLOR ? riskKey : 'moderate';
-  return (
-    <span
-      role={key === 'high' ? 'alert' : undefined}
-      className={`inline-flex w-fit items-center rounded px-2.5 py-1 font-semibold ${RIP_RISK_COLOR[key]}`}
-      style={{ fontSize: 'var(--text-label)' }}
-    >
-      {t('surfing.ripCurrentRiskLabel', { level: t(`surfing.ripCurrentRisk.${key}`) })}
-    </span>
-  );
+function windQualityLabel(quality: string | null, t: (key: string) => string): string {
+  if (quality === null) return t('surfing.noData');
+  const key = WIND_QUALITY_KEYS.includes(quality) ? quality : 'cross';
+  return t(`surfing.windQuality.${key}`);
 }
 
 // ---------------------------------------------------------------------------
 // Swell direction compass — WindCompassCard tick-ring pattern (DASHBOARD-
 // MANUAL §20 "Swell direction compass"), lit ticks in --chart-2 (distinct
-// from wind's --primary), rendered ~160px within a "tile" Card.
+// from wind's --primary). Folded into the Swell card at a reduced footprint
+// per MARINE-FIXIT-PLAN T5.1 ("reduce compass visual footprint").
 // ---------------------------------------------------------------------------
 
 const SWELL_CX = 210;
@@ -674,7 +492,7 @@ function SwellDirectionCompass({
         role="img"
         aria-labelledby="swell-compass-title"
         focusable={false as unknown as boolean}
-        style={{ width: '100%', maxWidth: '10rem', height: 'auto', aspectRatio: '1 / 1', display: 'block' }}
+        style={{ width: '100%', maxWidth: '7rem', height: 'auto', aspectRatio: '1 / 1', display: 'block' }}
       >
         <title id="swell-compass-title">{svgTitle}</title>
         <g aria-hidden="true">{ticks}</g>
@@ -705,7 +523,7 @@ function SwellDirectionCompass({
           pointerEvents: 'none',
         }}
       >
-        <div style={{ fontFamily: 'var(--font-sans, system-ui, sans-serif)', fontSize: 'var(--text-label)', color: 'var(--muted-foreground)' }}>
+        <div style={{ fontFamily: 'var(--font-sans, system-ui, sans-serif)', fontSize: 'var(--text-micro)', color: 'var(--muted-foreground)' }}>
           {Math.round(directionDeg)}°
           <span style={{ color: 'var(--foreground)', fontWeight: 600, marginLeft: '0.2rem' }}>{cardinalLabel}</span>
         </div>
@@ -713,7 +531,7 @@ function SwellDirectionCompass({
           <div
             style={{
               fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-              fontSize: 'var(--text-body)',
+              fontSize: 'var(--text-label)',
               fontWeight: 600,
               color: 'var(--foreground)',
               fontFeatureSettings: '"tnum"',
@@ -724,13 +542,321 @@ function SwellDirectionCompass({
           </div>
         )}
         {period !== null && (
-          <div style={{ fontFamily: 'var(--font-sans, system-ui, sans-serif)', fontSize: 'var(--text-label)', color: 'var(--muted-foreground)' }}>
+          <div style={{ fontFamily: 'var(--font-sans, system-ui, sans-serif)', fontSize: 'var(--text-micro)', color: 'var(--muted-foreground)' }}>
             <span className="sr-only">{t('surfing.period')}: </span>
             {formatValue(period, 'default', locale)} {periodUnit}
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Helper: dominant swell (highest-energy component in the resolved
+// multiSwell-or-spectralComponents array), falling back to the primary
+// forecast entry's own direction/height/period fields when the array is
+// empty. Plain functions, not hooks — called after SurfingTab's early
+// returns, so they must not themselves call useMemo/useState (Rules of
+// Hooks). The input arrays are short (a handful of swell components), so a
+// plain reduce on every render is cheap enough that memoization isn't
+// needed here.
+// ---------------------------------------------------------------------------
+
+function dominantSwellDirection(swellComponents: SpectralWaveComponent[], primary: SurfForecast | null): number | null {
+  if (swellComponents.length > 0) {
+    const dominant = swellComponents.reduce((best, c) => (c.energy > best.energy ? c : best), swellComponents[0]);
+    return dominant.direction;
+  }
+  return primary?.direction ?? null;
+}
+
+function dominantSwellStats(
+  swellComponents: SpectralWaveComponent[],
+  primary: SurfForecast | null,
+): { height: number | null; period: number | null } {
+  if (swellComponents.length > 0) {
+    const dominant = swellComponents.reduce((best, c) => (c.energy > best.energy ? c : best), swellComponents[0]);
+    return { height: dominant.height, period: dominant.period };
+  }
+  return { height: primary?.waveHeightAtBreak ?? null, period: primary?.period ?? null };
+}
+
+// ---------------------------------------------------------------------------
+// Time-matching helpers for the 72h forecast columns (T5.2). Simple
+// closest-timestamp match — the marine bundle's forecast points and the
+// tide predictions are both short arrays (a few dozen entries each), so a
+// linear scan per forecast entry is cheap.
+// ---------------------------------------------------------------------------
+
+function nearestForecastPoint(ts: number, points: MarineForecastPoint[]): MarineForecastPoint | null {
+  if (points.length === 0) return null;
+  return points.reduce((best, p) => {
+    const bestDiff = Math.abs(new Date(best.time).getTime() - ts);
+    const diff = Math.abs(new Date(p.time).getTime() - ts);
+    return diff < bestDiff ? p : best;
+  }, points[0]);
+}
+
+function nearestTideEvent(ts: number, predictions: TidePrediction[]): TidePrediction | null {
+  const extrema = predictions.filter((p) => p.type === 'high' || p.type === 'low');
+  if (extrema.length === 0) return null;
+  return extrema.reduce((best, p) => {
+    const bestDiff = Math.abs(new Date(best.time).getTime() - ts);
+    const diff = Math.abs(new Date(p.time).getTime() - ts);
+    return diff < bestDiff ? p : best;
+  }, extrema[0]);
+}
+
+/** Station-local YYYY-MM-DD grouping key. 'en-US' here is used only to
+ *  extract numeric year/month/day parts for an internal Map key — it is
+ *  never rendered, so it does not need to be the visitor's locale (unlike
+ *  every *displayed* date string in this file, which always uses `locale`
+ *  + `tz` together per DASHBOARD-MANUAL §2/§3). Deliberately not
+ *  `.toISOString().split('T')[0]` — that derives a UTC date, not the
+ *  station-local date, and would misgroup entries near local midnight. */
+function stationDateKey(ts: number, tz: string): string {
+  const parts = new Intl.DateTimeFormat('en-US', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(
+    new Date(ts),
+  );
+  const y = parts.find((p) => p.type === 'year')?.value ?? '0000';
+  const m = parts.find((p) => p.type === 'month')?.value ?? '00';
+  const d = parts.find((p) => p.type === 'day')?.value ?? '00';
+  return `${y}-${m}-${d}`;
+}
+
+interface EnrichedForecastEntry {
+  entry: SurfForecast;
+  windPoint: MarineForecastPoint | null;
+  tideEvent: TidePrediction | null;
+}
+
+interface ForecastDayGroup {
+  key: string;
+  label: string;
+  items: EnrichedForecastEntry[];
+}
+
+/** Forecast entries arrive in chronological order, so Map insertion order
+ *  already yields day-chronological groups — no separate sort needed. */
+function groupForecastByDay(items: EnrichedForecastEntry[], locale: string, tz: string): ForecastDayGroup[] {
+  const groups = new Map<string, EnrichedForecastEntry[]>();
+  for (const item of items) {
+    const ts = new Date(item.entry.time).getTime();
+    const key = stationDateKey(ts, tz);
+    const list = groups.get(key) ?? [];
+    list.push(item);
+    groups.set(key, list);
+  }
+  return Array.from(groups.entries()).map(([key, groupItems]) => ({
+    key,
+    label: new Intl.DateTimeFormat(locale, { weekday: 'short', month: 'short', day: 'numeric', timeZone: tz }).format(
+      new Date(groupItems[0].entry.time),
+    ),
+    items: groupItems,
+  }));
+}
+
+// ---------------------------------------------------------------------------
+// Forecast column — one period's full data stack (T5.2). Shared between the
+// single-point fallback and the day-grouped HorizontalScrollNav rendering.
+// ---------------------------------------------------------------------------
+
+function ForecastColumn({
+  item,
+  locale,
+  stationTz,
+  heightUnit,
+  periodUnit,
+  windUnit,
+  t,
+  tCommon,
+}: {
+  item: EnrichedForecastEntry;
+  locale: string;
+  stationTz: string;
+  heightUnit: string;
+  periodUnit: string;
+  windUnit: string;
+  t: (key: string, opts?: Record<string, unknown>) => string;
+  tCommon: (key: string) => string;
+}) {
+  const { entry, windPoint, tideEvent } = item;
+
+  const swellDirCardinal = cardinalFromDegrees(entry.direction);
+  const swellDirLabel = swellDirCardinal ? tCommon(`directions.${swellDirCardinal}`) : '—';
+  const windDirCardinal = cardinalFromDegrees(windPoint?.windDirection ?? null);
+  const windDirLabel = windDirCardinal ? tCommon(`directions.${windDirCardinal}`) : '—';
+
+  return (
+    <div className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5 shrink-0 w-[9rem] ring-1 ring-foreground/10">
+      <span
+        className="font-semibold text-center"
+        style={{ fontSize: 'var(--text-label)', fontFeatureSettings: '"tnum"' }}
+      >
+        {formatTime(new Date(entry.time), locale, stationTz)}
+      </span>
+
+      <div className="self-center">
+        <NumericScoreBadge stars={entry.qualityStars} label={entry.qualityLabel} size="sm" t={t} />
+      </div>
+
+      <dl className="flex flex-col gap-1" style={{ fontSize: 'var(--text-micro)' }}>
+        <div className="flex justify-between gap-2">
+          <dt className="text-muted-foreground">{t('surfing.height')}</dt>
+          <dd className="font-semibold" style={{ fontFeatureSettings: '"tnum"' }}>
+            {formatValue(entry.waveHeightAtBreak, 'default', locale)} {heightUnit}
+          </dd>
+        </div>
+        <div className="flex justify-between gap-2">
+          <dt className="text-muted-foreground">{t('surfing.period')}</dt>
+          <dd className="font-semibold" style={{ fontFeatureSettings: '"tnum"' }}>
+            {formatValue(entry.period, 'default', locale)} {periodUnit}
+          </dd>
+        </div>
+        <div className="flex justify-between gap-2">
+          <dt className="text-muted-foreground">{t('surfing.direction')}</dt>
+          <dd className="font-semibold">{swellDirLabel}</dd>
+        </div>
+        <div className="flex justify-between gap-2">
+          <dt className="text-muted-foreground">{t('surfing.windQualityTitle')}</dt>
+          <dd className="font-semibold">{windQualityLabel(entry.windQuality, t)}</dd>
+        </div>
+        <div className="flex justify-between gap-2">
+          <dt className="text-muted-foreground">{t('windSpeed')}</dt>
+          <dd className="font-semibold" style={{ fontFeatureSettings: '"tnum"' }}>
+            {formatValue(windPoint?.windSpeed ?? null, 'wind', locale)} {windUnit}
+          </dd>
+        </div>
+        <div className="flex justify-between gap-2">
+          <dt className="text-muted-foreground">{t('surfing.windDirection')}</dt>
+          <dd className="font-semibold">{windDirLabel}</dd>
+        </div>
+      </dl>
+
+      {tideEvent && (
+        <div
+          className="flex items-center justify-center gap-1 rounded"
+          style={{ fontSize: 'var(--text-micro)', background: 'var(--muted)', padding: '0.25rem 0.375rem' }}
+        >
+          <span aria-hidden="true">{tideEvent.type === 'high' ? '↑' : '↓'}</span>
+          <span className="font-semibold">{tideEvent.type === 'high' ? t('tide.tideHigh') : t('tide.tideLow')}</span>
+          <span style={{ fontFeatureSettings: '"tnum"' }}>
+            {formatValue(tideEvent.height, 'default', locale)}
+            {heightUnit}
+          </span>
+          <span style={{ fontFeatureSettings: '"tnum"' }}>{formatTime(new Date(tideEvent.time), locale, stationTz)}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Wave face height chart — the post-supplement breaking height (NOT raw
+// offshore Hs), which is the number surfers actually care about.
+// ---------------------------------------------------------------------------
+
+function WaveFaceHeightChart({
+  forecast,
+  locale,
+  stationTz,
+  heightUnit,
+  ariaLabel,
+  t,
+}: {
+  forecast: SurfForecast[];
+  locale: string;
+  stationTz: string;
+  heightUnit: string;
+  ariaLabel: string;
+  t: (key: string, opts?: Record<string, unknown>) => string;
+}) {
+  const points = useMemo(
+    () =>
+      forecast
+        .map((f) => ({ ts: new Date(f.time).getTime(), height: f.waveHeightAtBreak }))
+        .sort((a, b) => a.ts - b.ts),
+    [forecast],
+  );
+
+  if (points.length === 0) {
+    return (
+      <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
+        {t('surfing.noForecastData')}
+      </p>
+    );
+  }
+
+  const minTs = points[0].ts;
+  const maxTs = points[points.length - 1].ts;
+  const ticks = buildHourTicks(minTs, maxTs);
+  const tickFormatter = (ts: number) => formatTime(new Date(ts), locale, stationTz);
+
+  return (
+    <>
+      <ChartContainer height={220} ariaLabel={ariaLabel}>
+        <AreaChart data={points} margin={{ top: 8, right: 12, bottom: 0, left: 12 }}>
+          <defs>
+            <linearGradient id="surfingWaveFaceGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" style={{ stopColor: 'var(--chart-2)', stopOpacity: 0.4 }} />
+              <stop offset="95%" style={{ stopColor: 'var(--chart-2)', stopOpacity: 0 }} />
+            </linearGradient>
+          </defs>
+          <XAxis
+            dataKey="ts"
+            type="number"
+            domain={[minTs, maxTs]}
+            ticks={ticks}
+            tickFormatter={tickFormatter}
+            tickLine={false}
+            axisLine={false}
+            tick={{ fontFamily: 'var(--font-chart)', fontSize: 14, fill: 'var(--muted-foreground)' }}
+            height={28}
+          />
+          <YAxis
+            tickLine={false}
+            axisLine={false}
+            tick={{ fontFamily: 'var(--font-chart)', fontSize: 14, fill: 'var(--muted-foreground)' }}
+            width={36}
+            label={{
+              value: heightUnit,
+              angle: -90,
+              position: 'insideLeft',
+              style: { fontFamily: 'var(--font-chart)', fontSize: 12, fill: 'var(--muted-foreground)' },
+            }}
+          />
+          <Area
+            type="monotone"
+            dataKey="height"
+            stroke="var(--chart-2)"
+            fill="url(#surfingWaveFaceGradient)"
+            strokeWidth={2}
+            dot={false}
+            activeDot={{ r: 4 }}
+            isAnimationActive={false}
+            connectNulls
+          />
+        </AreaChart>
+      </ChartContainer>
+      <table className="sr-only">
+        <caption>{ariaLabel}</caption>
+        <thead>
+          <tr>
+            <th scope="col">{t('surfing.srTimeColumn')}</th>
+            <th scope="col">{t('surfing.srWaveFaceHeightColumn', { unit: heightUnit })}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {forecast.map((f, i) => (
+            <tr key={`${f.time}-${i}`}>
+              <td>{formatTime(new Date(f.time), locale, stationTz)}</td>
+              <td>{formatValue(f.waveHeightAtBreak, 'default', locale)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </>
   );
 }
 
@@ -743,17 +869,46 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
   const { t: tCommon } = useTranslation('common');
   const locale = i18n.language;
 
-  const { data, units, loading, error, refetch } = useSurfDetail(locationId);
+  const { data, units, loading: surfLoading, error: surfError, refetch: refetchSurf } = useSurfDetail(locationId);
+  const { data: marine, units: marineUnits, loading: marineLoading } = useMarineDetail(locationId);
   const { data: station } = useStation();
   const stationTz = station?.timezone ?? 'UTC';
 
-  if (loading) {
+  const forecast = data?.forecast ?? [];
+  const spectralComponents = data?.spectralComponents ?? [];
+  const tidePredictions = data?.tidePredictions ?? [];
+  const locationName = data?.locationName ?? '';
+
+  // Time-match wind + nearest tide event onto every surf forecast entry once,
+  // up front (Rules of Hooks — useMemo must run unconditionally, before the
+  // loading/error early returns below). Depend on `data`/`marine` directly
+  // (stable references from the query hooks) rather than the `?? []`
+  // fallback consts above, which are fresh array literals every render and
+  // would defeat memoization (react-hooks/exhaustive-deps).
+  const enrichedForecast = useMemo<EnrichedForecastEntry[]>(() => {
+    const fc = data?.forecast ?? [];
+    const mf = marine?.forecast ?? [];
+    const tp = data?.tidePredictions ?? [];
+    return fc.map((entry) => {
+      const ts = new Date(entry.time).getTime();
+      return {
+        entry,
+        windPoint: nearestForecastPoint(ts, mf),
+        tideEvent: nearestTideEvent(ts, tp),
+      };
+    });
+  }, [data, marine]);
+
+  // Loading state: skeletons while EITHER surf or marine data is loading —
+  // the Wind card depends on the marine bundle.
+  if (surfLoading || marineLoading) {
     return (
       <div className="flex flex-col gap-[var(--gap-grid)]">
         <span className="sr-only" role="status">
           {t('surfing.loading')}
         </span>
-        <TileSkeleton className="h-32" />
+        <TileSkeleton className="h-40" />
+        <TileSkeleton className="h-40" />
         <TileSkeleton className="h-24" />
         <TileSkeleton className="h-48" />
         <TileSkeleton className="h-48" />
@@ -761,33 +916,34 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
     );
   }
 
-  if (error) {
-    return <InlineError message={t('surfing.unableToLoad')} onRetry={refetch} retryLabel={tCommon('retry')} />;
+  // Surf is the primary data source — a marine-bundle failure degrades the
+  // Wind card gracefully (its stats read null → "—") rather than blocking
+  // the whole tab.
+  if (surfError) {
+    return <InlineError message={t('surfing.unableToLoad')} onRetry={refetchSurf} retryLabel={tCommon('retry')} />;
   }
 
   if (!data) return null;
 
-  const { forecast, zoneForecast, spectralComponents, tidePredictions, locationName } = data;
-
   const heightUnit = units?.waveHeightAtBreak ?? units?.waveHeight ?? units?.height ?? 'ft';
   const periodUnit = units?.period ?? t('surfing.secondsAbbr');
-  const tempUnit = units?.waterTemp ?? units?.temperature ?? '';
+  const windUnit = marineUnits?.windSpeed ?? 'kn';
+
+  const observation = marine?.observation ?? null;
+  const windDirCardinal = cardinalFromDegrees(observation?.windDirection ?? null);
+  const windDirLabel = windDirCardinal ? tCommon(`directions.${windDirCardinal}`) : '—';
 
   const primary = forecast[0] ?? null;
 
-  const ripRiskKey = zoneForecast?.ripCurrentRisk?.toLowerCase() ?? null;
-  const hazardsText = zoneForecast?.hazardsText ?? null;
+  // Prefer the model-processed multiSwell breakdown; fall back to raw NDBC
+  // spectralComponents when the forecast doesn't carry one.
+  const swellComponents: SpectralWaveComponent[] = primary?.multiSwell ?? spectralComponents;
 
-  // A single forecast point isn't a 72h timeline — the section title and the
-  // wave face height chart both change behavior for this case.
-  const isSinglePointForecast = forecast.length === 1;
-  const hasMultiPointForecast = forecast.length >= 2;
+  const dominantDirection = dominantSwellDirection(swellComponents, primary);
+  const dominantStats = dominantSwellStats(swellComponents, primary);
 
-  // Dominant swell (highest-energy spectral component, falling back to the
-  // primary forecast entry) drives both the scoring-adjacent hero and the
-  // swell direction compass.
-  const dominantDirection = dominantSwellDirection(spectralComponents, forecast);
-  const dominantStats = dominantSwellStats(spectralComponents, forecast);
+  const swellDirCardinal = cardinalFromDegrees(primary?.direction ?? null);
+  const swellDirLabel = swellDirCardinal ? tCommon(`directions.${swellDirCardinal}`) : '—';
 
   // Scoring breakdown factors — see the score-function comments above for
   // the approximation each one uses (the API doesn't return per-factor
@@ -801,15 +957,19 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
       ]
     : [];
 
+  const isSinglePointForecast = forecast.length === 1;
+  const hasMultiPointForecast = forecast.length >= 2;
+  const dayGroups = hasMultiPointForecast ? groupForecastByDay(enrichedForecast, locale, stationTz) : [];
+
   return (
     <div className="flex flex-col gap-[var(--gap-grid)]">
       {/* 1. Active advisories — top, prominent */}
       <AlertsPanel alerts={alerts} />
 
-      {/* 2. Current Conditions Hero */}
-      <Card footprint="full">
+      {/* 2. Surf Score — numeric score + qualityLabel, scoring breakdown absorbed below */}
+      <Card footprint="wide">
         <CardHeader>
-          <CardTitle as="h3">{t('surfing.currentConditionsHeroTitle')}</CardTitle>
+          <CardTitle as="h3">{t('surfing.scoreCardTitle')}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {primary === null ? (
@@ -822,87 +982,100 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                 {primary.conditionsText}
               </p>
 
-              <span
-                className={`inline-flex w-fit items-center gap-2 rounded px-2.5 py-1 font-semibold ${qualityColorClasses(primary.qualityStars)}`}
-                style={{ fontSize: 'var(--text-label)' }}
-              >
-                <StarRating stars={primary.qualityStars} t={t} />
-                {primary.qualityLabel}
-              </span>
+              <NumericScoreBadge stars={primary.qualityStars} label={primary.qualityLabel} size="lg" t={t} />
 
-              <dl className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-3">
-                <MarineStatTile
-                  icon={<Waves aria-hidden="true" focusable="false" />}
-                  label={t('waveHeight')}
-                  value={formatValue(primary.waveHeightAtBreak, 'default', locale)}
-                  unit={heightUnit}
-                />
-                <MarineStatTile
-                  label={t('surfing.period')}
-                  value={formatValue(primary.period, 'default', locale)}
-                  unit={periodUnit}
-                />
-                <div className="flex flex-col gap-0.5">
-                  <dt className="text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>
-                    {t('surfing.windQualityTitle')}
-                  </dt>
-                  <dd>
-                    <WindQualityBadge quality={primary.windQuality} t={t} />
-                  </dd>
-                </div>
-                <MarineStatTile
-                  icon={<Thermometer aria-hidden="true" focusable="false" />}
-                  label={t('waterTemp')}
-                  value={formatValue(zoneForecast?.waterTemp ?? null, 'temperature', locale)}
-                  unit={tempUnit}
-                />
-              </dl>
-
-              {ripRiskKey !== null && (
-                <div className="flex flex-col gap-2">
-                  <RipCurrentBadge riskKey={ripRiskKey} t={t} />
-                  {hazardsText && (
-                    <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
-                      {hazardsText}
-                    </p>
-                  )}
-                </div>
-              )}
+              <div className="flex flex-col gap-3">
+                {scoringFactors.map((factor) => (
+                  <ScoreBar
+                    key={factor.key}
+                    label={t('surfing.scoring.factorLabel', {
+                      label: t(`surfing.scoring.${factor.key}`),
+                      weight: factor.weight,
+                    })}
+                    score={factor.score}
+                  />
+                ))}
+              </div>
             </>
           )}
         </CardContent>
       </Card>
 
-      {/* 3. Scoring Breakdown
-          DEFERRED: beach alignment and directional exposure multipliers
-          (MARINE-COMPLETE-REMEDIATION-PLAN.md T7.1 line 978). The backend
-          surf_scorer.py computes _beach_alignment() but does not expose it
-          on SurfForecast — pending API field addition. */}
-      <Card footprint="full">
+      {/* 3. Swell — stats + ranked component breakdown + reduced-footprint compass */}
+      <Card footprint="wide">
         <CardHeader>
-          <CardTitle as="h3">{t('surfing.scoringBreakdownTitle')}</CardTitle>
+          <CardTitle as="h3">{t('surfing.swellCardTitle')}</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          {scoringFactors.length === 0 ? (
-            <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
-              {t('surfing.noForecastData')}
-            </p>
-          ) : (
-            scoringFactors.map((factor) => (
-              <ScoreBar
-                key={factor.key}
-                label={t('surfing.scoring.factorLabel', {
-                  label: t(`surfing.scoring.${factor.key}`),
-                  weight: factor.weight,
-                })}
-                score={factor.score}
+        <CardContent className="flex flex-col gap-4">
+          {primary !== null && (
+            <dl className="grid grid-cols-3 gap-x-4 gap-y-3">
+              <MarineStatTile
+                icon={<Waves aria-hidden="true" focusable="false" />}
+                label={t('waveHeight')}
+                value={formatValue(primary.waveHeightAtBreak, 'default', locale)}
+                unit={heightUnit}
               />
-            ))
+              <MarineStatTile
+                label={t('surfing.period')}
+                value={formatValue(primary.period, 'default', locale)}
+                unit={periodUnit}
+              />
+              <MarineStatTile label={t('surfing.direction')} value={swellDirLabel} />
+            </dl>
           )}
+          <div className="flex flex-col md:flex-row gap-4 items-start">
+            <div className="flex-1 min-w-0">
+              <SwellBreakdown
+                components={swellComponents}
+                locale={locale}
+                heightUnit={heightUnit}
+                periodUnit={periodUnit}
+                t={t}
+                tCommon={tCommon}
+              />
+            </div>
+            <div className="w-full md:w-32 shrink-0 flex justify-center">
+              <SwellDirectionCompass
+                directionDeg={dominantDirection}
+                height={dominantStats.height}
+                period={dominantStats.period}
+                heightUnit={heightUnit}
+                periodUnit={periodUnit}
+                locale={locale}
+                t={t}
+                tCommon={tCommon}
+              />
+            </div>
+          </div>
         </CardContent>
       </Card>
 
-      {/* 4. 72-Hour Surf Forecast Timeline + wave face height chart */}
+      {/* 4. Wind — live observation from the marine bundle + forecast-derived wind quality */}
+      <Card footprint="wide">
+        <CardHeader>
+          <CardTitle as="h3">{t('surfing.windCardTitle')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <dl className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-3">
+            <MarineStatTile
+              icon={<Wind aria-hidden="true" focusable="false" />}
+              label={t('windSpeed')}
+              value={formatValue(observation?.windSpeed ?? null, 'wind', locale)}
+              unit={windUnit}
+            />
+            <MarineStatTile
+              icon={<Wind aria-hidden="true" focusable="false" />}
+              label={t('surfing.gust')}
+              value={formatValue(observation?.windGust ?? null, 'wind', locale)}
+              unit={windUnit}
+            />
+            <MarineStatTile label={t('surfing.windDirection')} value={windDirLabel} />
+            <MarineStatTile label={t('surfing.windQualityTitle')} value={windQualityLabel(primary?.windQuality ?? null, t)} />
+          </dl>
+        </CardContent>
+      </Card>
+
+      {/* 5. 72-Hour Surf Forecast — day-grouped columns + wave face height chart */}
       <Card footprint="full">
         <CardHeader>
           <CardTitle as="h3">
@@ -910,7 +1083,52 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <ForecastTimeline forecast={forecast} locale={locale} stationTz={stationTz} t={t} />
+          {forecast.length === 0 ? (
+            <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
+              {t('surfing.noForecastData')}
+            </p>
+          ) : isSinglePointForecast ? (
+            <div className="w-fit">
+              <ForecastColumn
+                item={enrichedForecast[0]}
+                locale={locale}
+                stationTz={stationTz}
+                heightUnit={heightUnit}
+                periodUnit={periodUnit}
+                windUnit={windUnit}
+                t={t}
+                tCommon={tCommon}
+              />
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {dayGroups.map((group) => (
+                <div key={group.key} className="flex flex-col gap-2">
+                  <p className="text-muted-foreground font-semibold" style={{ fontSize: 'var(--text-label)' }}>
+                    {group.label}
+                  </p>
+                  <HorizontalScrollNav ariaLabel={t('surfing.forecastDayAriaLabel', { day: group.label })}>
+                    <div className="flex gap-2 px-1 py-1">
+                      {group.items.map((item) => (
+                        <ForecastColumn
+                          key={item.entry.time}
+                          item={item}
+                          locale={locale}
+                          stationTz={stationTz}
+                          heightUnit={heightUnit}
+                          periodUnit={periodUnit}
+                          windUnit={windUnit}
+                          t={t}
+                          tCommon={tCommon}
+                        />
+                      ))}
+                    </div>
+                  </HorizontalScrollNav>
+                </div>
+              ))}
+            </div>
+          )}
+
           {hasMultiPointForecast && (
             <div className="flex flex-col gap-2">
               <p className="text-muted-foreground font-semibold" style={{ fontSize: 'var(--text-label)' }}>
@@ -929,43 +1147,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
         </CardContent>
       </Card>
 
-      {/* 5. Swell Components — ranked by energy, primary swell larger */}
-      <Card footprint="full">
-        <CardHeader>
-          <CardTitle as="h3">{t('surfing.swellBreakdownTitle')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <SwellBreakdown
-            components={spectralComponents}
-            locale={locale}
-            heightUnit={heightUnit}
-            periodUnit={periodUnit}
-            t={t}
-            tCommon={tCommon}
-          />
-        </CardContent>
-      </Card>
-
-      {/* 6. Swell Direction Compass — WindCompassCard tick-ring pattern */}
-      <Card footprint="tile">
-        <CardHeader>
-          <CardTitle as="h3">{t('surfing.swellCompassTitle')}</CardTitle>
-        </CardHeader>
-        <CardContent className="flex items-center justify-center">
-          <SwellDirectionCompass
-            directionDeg={dominantDirection}
-            height={dominantStats.height}
-            period={dominantStats.period}
-            heightUnit={heightUnit}
-            periodUnit={periodUnit}
-            locale={locale}
-            t={t}
-            tCommon={tCommon}
-          />
-        </CardContent>
-      </Card>
-
-      {/* 7. Tide chart — standalone, 72h (shared component) */}
+      {/* 6. Tide chart — standalone, 72h (shared component) */}
       <Card footprint="full">
         <CardHeader>
           <CardTitle as="h3">{t('surfing.tideForecastTitle')}</CardTitle>
@@ -982,45 +1164,6 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
       </Card>
     </div>
   );
-}
-
-// ---------------------------------------------------------------------------
-// Helper: dominant swell direction (highest-energy spectral component,
-// falling back to the first forecast entry's direction field). Plain
-// function, not a hook — SurfingTab calls it after its loading/error/no-data
-// early returns, so it must not itself call useMemo/useState (Rules of
-// Hooks — DASHBOARD-MANUAL §9 "React hooks constraint"). The input arrays
-// are short (a handful of spectral components, 72 hourly forecast entries),
-// so a plain reduce on every render is cheap enough that memoization isn't
-// needed here.
-// ---------------------------------------------------------------------------
-
-function dominantSwellDirection(
-  spectralComponents: SpectralWaveComponent[],
-  forecast: SurfForecast[],
-): number | null {
-  if (spectralComponents.length > 0) {
-    const dominant = spectralComponents.reduce((best, c) => (c.energy > best.energy ? c : best), spectralComponents[0]);
-    return dominant.direction;
-  }
-  return forecast[0]?.direction ?? null;
-}
-
-/** Same "highest-energy component, else first forecast entry" selection as
- *  dominantSwellDirection, but returns height/period for the swell direction
- *  compass's center overlay. Kept as a separate function (rather than
- *  extending dominantSwellDirection's return shape) so existing callers of
- *  dominantSwellDirection are unaffected. */
-function dominantSwellStats(
-  spectralComponents: SpectralWaveComponent[],
-  forecast: SurfForecast[],
-): { height: number | null; period: number | null } {
-  if (spectralComponents.length > 0) {
-    const dominant = spectralComponents.reduce((best, c) => (c.energy > best.energy ? c : best), spectralComponents[0]);
-    return { height: dominant.height, period: dominant.period };
-  }
-  const first = forecast[0];
-  return { height: first?.waveHeightAtBreak ?? null, period: first?.period ?? null };
 }
 
 export default SurfingTab;
