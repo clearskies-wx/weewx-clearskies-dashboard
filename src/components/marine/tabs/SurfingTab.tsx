@@ -428,20 +428,15 @@ const SWELL_COMPASS_LABEL_STYLE: CSSProperties = {
 
 function SwellDirectionCompass({
   directionDeg,
-  height,
-  period,
-  heightUnit,
-  periodUnit,
-  locale,
   t,
   tCommon,
 }: {
   directionDeg: number | null;
-  height: number | null;
-  period: number | null;
-  heightUnit: string;
-  periodUnit: string;
-  locale: string;
+  height?: number | null;
+  period?: number | null;
+  heightUnit?: string;
+  periodUnit?: string;
+  locale?: string;
   t: (key: string, opts?: Record<string, unknown>) => string;
   tCommon: (key: string) => string;
 }) {
