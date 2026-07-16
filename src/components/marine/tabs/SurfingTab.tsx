@@ -1187,7 +1187,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
   const swellComponents: SpectralWaveComponent[] = primary?.multiSwell ?? [];
 
   const dominantDirection = dominantSwellDirection(swellComponents);
-  const dominantStats     = dominantSwellStats(swellComponents, primary);
+  // dominantSwellStats no longer used — height/period live in the component table only
 
   const swellDirCardinal = cardinalFromDegrees(primary?.direction ?? null);
   const swellDirLabel    = swellDirCardinal ? tCommon(`directions.${swellDirCardinal}`) : '—';
