@@ -55,7 +55,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AreaChart, Area, XAxis, YAxis } from 'recharts';
-import { Info, Waves, Wind, Timer, Compass, X } from '@phosphor-icons/react';
+import { Info, Waves, Timer, Compass, X } from '@phosphor-icons/react';
 import { useSurfDetail, useMarineDetail, useStation } from '../../../hooks/useWeatherData';
 import { formatValue } from '../../../utils/format';
 // formatNumber available if energy display is re-added
@@ -66,7 +66,8 @@ import { cardinalFromDegrees } from '../../../utils/wind';
 import { Grid } from '../../../components/layout/grid';
 import { ChartContainer } from '../../charts/chart-container';
 import { Card, CardHeader, CardTitle, CardContent } from '../../ui/card';
-import { MarineStatTile } from '../shared/MarineStatTile';
+// MarineStatTile available for future use — swell card uses icon-left inline layout
+// import { MarineStatTile } from '../shared/MarineStatTile';
 import { HorizontalScrollNav } from '../../ui/horizontal-scroll-nav';
 import { AlertsPanel } from './shared/AlertsPanel';
 import { TideChart } from './shared/TideChart';
