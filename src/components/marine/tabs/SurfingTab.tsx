@@ -1541,28 +1541,21 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
             <CardTitle as="h3">{t('surfing.windCardTitle')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <dl className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-3">
-              <MarineStatTile
-                icon={<Wind aria-hidden="true" focusable="false" />}
-                label={t('windSpeed')}
-                value={formatValue(observation?.windSpeed ?? null, 'wind', locale)}
-                unit={windUnit}
-              />
-              <MarineStatTile
-                icon={<Wind aria-hidden="true" focusable="false" />}
-                label={t('surfing.gust')}
-                value={formatValue(observation?.windGust ?? null, 'wind', locale)}
-                unit={windUnit}
-              />
-              <MarineStatTile
-                label={t('surfing.windDirection')}
-                value={windDirLabel}
-              />
-              {/* windQuality: display as-is — human-readable from API ("Offshore", "Cross-shore", …) */}
-              <MarineStatTile
-                label={t('surfing.windQualityTitle')}
-                value={primary?.windQuality ?? '—'}
-              />
+            <dl className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2">
+              {[
+                { label: t('windSpeed'), value: formatValue(observation?.windSpeed ?? null, 'wind', locale), unit: windUnit },
+                { label: t('surfing.gust'), value: formatValue(observation?.windGust ?? null, 'wind', locale), unit: windUnit },
+                { label: t('surfing.windDirection'), value: windDirLabel, unit: undefined },
+                { label: t('surfing.windQualityTitle'), value: primary?.windQuality ?? '—', unit: undefined },
+              ].map((s) => (
+                <div key={s.label} className="flex flex-col gap-0.5">
+                  <dt className="text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>{s.label}</dt>
+                  <dd className="text-foreground font-semibold" style={{ fontSize: 'var(--text-stat-label)', fontFeatureSettings: '"tnum"' }}>
+                    {s.value}
+                    {s.unit && <span className="text-muted-foreground font-normal ml-1" style={{ fontSize: 'var(--text-label)' }}>{s.unit}</span>}
+                  </dd>
+                </div>
+              ))}
             </dl>
           </CardContent>
         </Card>
