@@ -12,7 +12,7 @@
 
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Waves, CaretLeft, Sailboat, FishSimple, PersonSimpleSwim, Warning } from '@phosphor-icons/react';
+import { Waves, Sailboat, FishSimple, PersonSimpleSwim, Warning } from '@phosphor-icons/react';
 import { PageLayout } from '../components/layout/page-layout';
 import { Card, footprintColSpan } from '../components/ui/card';
 import { LocationMap } from '../components/marine/LocationMap';
@@ -247,35 +247,39 @@ export function MarinePage() {
 
       {!loading && !error && selectedLocation !== null && locations !== null && (
         <>
-          {/* Selected state: combo map+photo card + back button + activity tabs/accordion */}
+          {/* Selected state: location-name header strip + combo map+photo
+              card (back button now lives inside the map, T4.4) + activity
+              tabs/accordion. */}
           <div className="col-span-1 md:col-span-2 lg:col-span-4 flex flex-col gap-[var(--gap-grid)]">
-            <div className="flex items-center justify-between gap-2">
-              <button
-                type="button"
-                onClick={() => setSelectedId(null)}
-                className={[
-                  'flex items-center gap-1.5 rounded-md px-3 py-2 font-semibold text-foreground',
-                  'min-h-[44px] bg-muted hover:bg-muted/70 transition-colors',
-                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                ].join(' ')}
-                style={{ fontSize: 'var(--text-label)' }}
-              >
-                <CaretLeft aria-hidden="true" focusable="false" className="size-4" />
-                {t('backToMap')}
-              </button>
-              <h2 className="font-semibold text-foreground truncate" style={{ fontSize: 'var(--text-card-title)' }}>
-                {selectedLocation.name}
-              </h2>
-              {(selectedLocation.activeAlerts?.length ?? 0) > 0 && (
-                <span
-                  className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 shrink-0"
-                  style={{ fontSize: 'var(--text-micro)' }}
+            {/* Location-name header strip (T4.4) — full-width, card-glass,
+                compact padding, following the ControlsStrip/PageHeaderCard
+                quarter-row pattern (DESIGN-MANUAL §6/§10): Card itself has
+                no horizontal padding, so the inner div supplies
+                px-[var(--card-pad-compact)] the same way PageHeaderCard
+                does. `mb-0` cancels Card's own default bottom margin since
+                this Card sits inside the parent's own
+                gap-[var(--gap-grid)] flex column (same reasoning as the
+                combo card below). The back button that used to live in this
+                row now overlays the map itself (LocationMap onBack prop). */}
+            <Card footprint="full" rowSpan="quarter" className="mb-0">
+              <div className="flex flex-1 items-center gap-2 px-[var(--card-pad-compact)]">
+                <h2
+                  className="min-w-0 flex-1 truncate font-semibold text-foreground"
+                  style={{ fontSize: 'var(--text-card-title)' }}
                 >
-                  <Warning aria-hidden="true" focusable="false" className="size-3" />
-                  {t('alertCount', { count: selectedLocation.activeAlerts?.length ?? 0 })}
-                </span>
-              )}
-            </div>
+                  {selectedLocation.name}
+                </h2>
+                {(selectedLocation.activeAlerts?.length ?? 0) > 0 && (
+                  <span
+                    className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 shrink-0"
+                    style={{ fontSize: 'var(--text-micro)' }}
+                  >
+                    <Warning aria-hidden="true" focusable="false" className="size-3" />
+                    {t('alertCount', { count: selectedLocation.activeAlerts?.length ?? 0 })}
+                  </span>
+                )}
+              </div>
+            </Card>
 
             {/* Combo map+photo card (T5.4, DASHBOARD-MANUAL §12 "Combo card").
                 Replaces the old bare 120px hero map strip. flex-row at md+ /
@@ -301,6 +305,7 @@ export function MarinePage() {
                     onSelectLocation={setSelectedId}
                     variant="hero"
                     fallbackCenter={fallbackCenter}
+                    onBack={() => setSelectedId(null)}
                     className={
                       selectedLocation.photoUrl
                         ? 'rounded-none ring-0 md:rounded-l-xl md:rounded-r-none'

@@ -24,15 +24,21 @@
 // keyboard-reachable interaction is the LocationCard grid (real <button>
 // elements) rendered alongside the map, not the map markers themselves.
 //
-// OpenSeaMap overlay (T5.3): a second TileLayer renders marine features
-// (buoys, channels, harbors, depth contours) above the basemap, on both
-// variants, at a fixed 0.7 opacity so the basemap and any markers stay
-// legible underneath.
+// Marine feature label overlay (T4.2, DASHBOARD-MANUAL §12 / FIX-8): a
+// second TileLayer renders CARTO's `light_only_labels` layer — clean
+// geographic name labels (water body names, coastal place names) sourced
+// from OSM data — above the basemap, on both variants. This replaces the
+// prior OpenSeaMap seamark overlay, which showed navigational features
+// (buoys, channels, harbor markers, depth contours) that read as clutter
+// rather than the "clean marine feature labels" the page wants. No opacity
+// dimming — `light_only_labels` is already a transparent label-only layer
+// by design, so darkening it would just make the text harder to read.
 
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
+import { CaretLeft } from '@phosphor-icons/react';
 import { cn } from '../../lib/utils';
 // Side-effect import already runs once globally from src/main.tsx; re-imported
 // here defensively so this component has no implicit ordering dependency on
@@ -40,9 +46,16 @@ import { cn } from '../../lib/utils';
 // when main.tsx already imported it).
 import '../../lib/leaflet-setup';
 import { useTheme } from '../../lib/theme-provider';
-import { OSM_ATTRIBUTION, CARTO_OSM_ATTRIBUTION, OPENSEAMAP_ATTRIBUTION } from '../../lib/map-attribution';
+import { OSM_ATTRIBUTION, CARTO_OSM_ATTRIBUTION } from '../../lib/map-attribution';
 import type { LatLngBoundsExpression } from 'leaflet';
 import type { MarineLocationSummary } from '../../api/types';
+
+/** CARTO `light_only_labels` — transparent label-only overlay (place/water
+ *  names), served over `{s}.basemaps.cartocdn.com`. Same CARTO product
+ *  family as the existing dark basemap tiles, so the existing
+ *  CARTO_OSM_ATTRIBUTION string covers it — no new attribution string
+ *  needed (T4.2). */
+const LABEL_OVERLAY_URL = 'https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png';
 
 /** Hero variant (T5.2): fixed zoom on the selected location — coastal
  *  features (pier, harbor entrance, breakwater) are visible at this level. */
@@ -117,6 +130,16 @@ interface LocationMapProps {
    * edge rather than two independently-rounded rectangles.
    */
   className?: string;
+  /**
+   * T4.4 (DASHBOARD-MANUAL §12 detail-page fixes): when provided AND
+   * variant="hero", renders a "Back to map" button as an overlay control
+   * inside the map container (top-left), matching the radar card's own
+   * map-overlay-control treatment (bg-background/80 + backdrop-blur-sm,
+   * DESIGN-MANUAL §8 Surface Treatment Inventory "Radar controls" row).
+   * Replaces the old back button that sat in a flex row above the combo
+   * card in marine.tsx.
+   */
+  onBack?: () => void;
 }
 
 export function LocationMap({
@@ -129,12 +152,14 @@ export function LocationMap({
   hoveredId = null,
   onHoverLocation,
   className,
+  onBack,
 }: LocationMapProps) {
   const { t } = useTranslation('marine');
   const { resolved: resolvedTheme } = useTheme();
   const baseTile = TILE_CONFIG[resolvedTheme];
 
   const isHero = variant === 'hero';
+  const showBackButton = isHero && Boolean(onBack);
 
   const selectedLocation = useMemo(
     () => locations.find((l) => l.locationId === selectedId) ?? null,
@@ -175,7 +200,7 @@ export function LocationMap({
   return (
     <div
       className={cn(
-        'w-full overflow-hidden rounded-xl ring-1 ring-foreground/10',
+        'relative w-full overflow-hidden rounded-xl ring-1 ring-foreground/10',
         resolvedHeight === undefined && 'h-[180px] md:h-[220px]',
         className,
       )}
@@ -198,14 +223,10 @@ export function LocationMap({
       >
         <TileLayer key={baseTile.url} url={baseTile.url} attribution={baseTile.attribution} />
 
-        {/* OpenSeaMap marine feature overlay (T5.3) — buoys, channels,
-            harbors, depth contours. Rendered above the basemap on both
-            variants. */}
-        <TileLayer
-          url="https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"
-          attribution={OPENSEAMAP_ATTRIBUTION}
-          opacity={0.7}
-        />
+        {/* Marine feature label overlay (T4.2) — water body / coastal place
+            name labels only, no buoys/channels/depth soundings. Rendered
+            above the basemap on both variants. */}
+        <TileLayer url={LABEL_OVERLAY_URL} attribution={CARTO_OSM_ATTRIBUTION} />
 
         {/* Hero mode renders only the selected location's marker (T5.2) —
             not every configured location. */}
@@ -248,6 +269,30 @@ export function LocationMap({
           );
         })}
       </MapContainer>
+
+      {/* Back-to-map overlay button (T4.4) — lives inside the map container,
+          top-left, like the radar card's own overlay controls (RadarLegend /
+          loading indicator in src/components/shared/radar-map.tsx use the
+          same bg-background/80 + backdrop-blur-sm + z-[1000] convention).
+          Rendered as a DOM sibling of MapContainer, not a Leaflet control,
+          so it doesn't need react-leaflet's imperative control API. */}
+      {showBackButton && (
+        <button
+          type="button"
+          onClick={onBack}
+          className={[
+            'absolute top-2 left-2 z-[1000] flex items-center gap-1.5',
+            'min-h-[44px] rounded-md border bg-background/80 px-3 py-2',
+            'font-semibold text-foreground backdrop-blur-sm',
+            'hover:bg-background/95 transition-colors',
+            'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+          ].join(' ')}
+          style={{ fontSize: 'var(--text-label)' }}
+        >
+          <CaretLeft aria-hidden="true" focusable="false" className="size-4" />
+          {t('backToMap')}
+        </button>
+      )}
     </div>
   );
 }

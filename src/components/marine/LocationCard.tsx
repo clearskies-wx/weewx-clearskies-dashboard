@@ -3,11 +3,12 @@
 // numeric activity scores on the landing page (those live in the per-
 // activity tabs/accordions after a location is selected).
 //
-// Renders the official Card primitive (footprint="tile") as a direct Grid
-// child (T3.4) — the click-to-select control is a real <button> nested
-// inside the Card, not the Card element itself, so Card can stay a plain
-// <div> wrapper while the interactive surface remains keyboard-reachable
-// and announced as actionable per rules/coding.md §5.2.
+// Renders the official Card primitive (footprint="wide", T4.3 —
+// DESIGN-MANUAL §20 "Location card" 2×1 spec) as a direct Grid child
+// (T3.4) — the click-to-select control is a real <button> nested inside
+// the Card, not the Card element itself, so Card can stay a plain <div>
+// wrapper while the interactive surface remains keyboard-reachable and
+// announced as actionable per rules/coding.md §5.2.
 //
 // Linked hover (T3.6): hovering the card highlights the matching numbered
 // map pin in LocationMap, and vice versa — `isHovered`/`onHover` thread
@@ -81,15 +82,20 @@ export function LocationCard({
   const alertCount = location.activeAlerts?.length ?? 0;
 
   // Location photo (T4.4, DASHBOARD-MANUAL §12): right ~40% of the card when
-  // `photoUrl` is non-null, hidden below `sm` (640px) where a "tile" card is
-  // too narrow to spare 40% of its width to a photo without crowding the
-  // stat row. Text-only layout (unchanged) when `photoUrl` is null — no
+  // `photoUrl` is non-null, hidden below `sm` (640px). The card is now
+  // footprint="wide" (T4.3) but "wide" only widens the card at md+
+  // (>=768px, per DESIGN-MANUAL §5 footprint vocabulary — wide collapses to
+  // 1 column, same as tile, below md); at the <640px phone widths this
+  // breakpoint actually targets, the card renders at its original
+  // single-column width regardless of footprint, so the same "too narrow
+  // for a 40% photo pane" reasoning still applies and the breakpoint is
+  // unchanged. Text-only layout (unchanged) when `photoUrl` is null — no
   // empty placeholder.
   const hasPhoto = Boolean(location.photoUrl);
 
   return (
     <Card
-      footprint="tile"
+      footprint="wide"
       onMouseEnter={() => onHover?.(location.locationId)}
       onMouseLeave={() => onHover?.(null)}
       className={[
