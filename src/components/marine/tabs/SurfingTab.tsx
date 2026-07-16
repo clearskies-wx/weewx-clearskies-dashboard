@@ -11,12 +11,19 @@
 //   6. Energy display: `formatValue(energy, 'default')` → rounded to "0.0"
 //   7. Wind quality label: case-mismatch prevented correct display
 //
+// Design compliance round 2 (MARINE-FIXIT-LIST-2):
+//   Issue 1: Swell + Wind cards auto-size in fluid grid (no explicit rowSpan)
+//   Issue 2: 72h forecast uses HorizontalScrollNav + fixed-width <button> columns
+//   Issue 3: Typography uses design tokens throughout; no <div role="button">
+//   Issue 4: Forecast card CardContent uses overflow-visible for chevron projection
+//   Issue 5: Tide card autofit (no forced max-height)
+//
 // Card order:
 //   AlertsPanel (full width, outside Grid)
 //   Grid {
 //     Surf Score  footprint="wide"  rowSpan={2}  — 2×2 hero
-//     Swell       footprint="wide"              — 2×1
-//     Wind        footprint="wide"              — 2×1
+//     Swell       footprint="wide"              — 2×1 fluid auto-height
+//     Wind        footprint="wide"              — 2×1 fluid auto-height
 //   }
 //   Grid {
 //     72-Hour Forecast  footprint="full"         — full width
@@ -42,7 +49,7 @@
 //   - Swell list: primary swell has sr-only "primary swell" label
 //   - Charts: ChartContainer (role=img + aria-label) + sr-only data table
 //   - Tide arrows (↑↓) aria-hidden, always paired with "High"/"Low" text
-//   - All interactive elements keyboard-reachable
+//   - All interactive elements keyboard-reachable via <button> (no <div onClick>)
 
 import { useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
@@ -58,6 +65,7 @@ import { Grid } from '../../../components/layout/grid';
 import { ChartContainer } from '../../charts/chart-container';
 import { Card, CardHeader, CardTitle, CardContent } from '../../ui/card';
 import { MarineStatTile } from '../shared/MarineStatTile';
+import { HorizontalScrollNav } from '../../ui/horizontal-scroll-nav';
 import { AlertsPanel } from './shared/AlertsPanel';
 import { TideChart } from './shared/TideChart';
 import { buildHourTicks } from './shared/hour-ticks';
@@ -672,34 +680,32 @@ function groupForecastByDay(
 }
 
 // ---------------------------------------------------------------------------
-// SurfForecastColumns — DailyColumns-style proportional-width row layout
-// for 3–4 hour surf forecast periods (FIX-15, T5.2).
+// SurfScrollForecast — 72-hour forecast with HorizontalScrollNav (T5.2 redesign).
 //
-// Architecture mirrors DailyColumns.tsx exactly:
-//   - Each column = one time period; flex:1 proportional width (NOT fixed 9rem)
-//   - Rows span horizontally across ALL columns; data type per row, period per column
-//   - Click the time-header cell → accent bar highlights + detail panel expands below
-//   - NO HorizontalScrollNav; columns proportionally narrowed at mobile widths
+// Replaces SurfForecastColumns. Uses HorizontalScrollNav with fixed-width period
+// columns (Design Manual §11 "Horizontal Scroll Navigation", HourlyStrip.tsx pattern).
 //
-// Row order (T5.2 spec, top→bottom):
-//   accent bar (3px)
-//   time header (primary accessible click target, role="button" aria-expanded)
-//   score badge (numeric — no stars)
-//   weather icon   ← placeholder "—" (SurfForecast has no weatherCode per period)
-//   air temp       ← placeholder "—" (SurfForecast has no airTemp per period)
-//   wave height
-//   swell period + direction combined ("12s SSW")
-//   wind quality label ("Offshore", "Cross-shore", etc.)
-//   wind speed + direction ("15kn NW")
-//   tide nearest event ("↑ 4.2ft")
-//   precipitation  ← placeholder "—" (SurfForecast has no precipProbability per period)
+// Column anatomy (top→bottom, 72px wide):
+//   time label → score badge (circular, color-coded) → wave height →
+//   swell direction → wind quality label → wind speed + direction → tide event
 //
-// Detail panel (click column to expand, aria-live="polite"):
-//   conditionsText + chip grid + per-period SwellBreakdown from entry.multiSwell
+// Day group headers appear as labeled sections above each day's columns within
+// the scroll area. Clicking a column <button> toggles the detail panel below
+// the scroll area (outside HorizontalScrollNav, expands card in fluid mode).
+//
+// Detail panel: time + qualityLabel + conditionsText + chip grid + SwellBreakdown.
+//
+// A11y:
+//   - Each period column is a <button type="button"> (never <div role="button">)
+//   - button aria-label = time + qualityLabel (conveys quality to AT)
+//   - Score badge circular span is aria-hidden (visual supplement only)
+//   - Tide direction arrows (↑↓) are aria-hidden; paired with text values
+//   - Detail panel has aria-live="polite" for dynamic content announcement
+//   - HorizontalScrollNav provides role="region" + aria-label + tabIndex=0
 // ---------------------------------------------------------------------------
 
-function SurfForecastColumns({
-  items,
+function SurfScrollForecast({
+  dayGroups,
   locale,
   stationTz,
   heightUnit,
@@ -708,7 +714,7 @@ function SurfForecastColumns({
   t,
   tCommon,
 }: {
-  items: EnrichedForecastEntry[];
+  dayGroups: ForecastDayGroup[];
   locale: string;
   stationTz: string;
   heightUnit: string;
@@ -718,548 +724,333 @@ function SurfForecastColumns({
   tCommon: (key: string) => string;
 }) {
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
-  const N = items.length;
-  if (N === 0) return null;
 
-  function toggleExpand(i: number) {
-    setExpandedIdx((prev) => (prev === i ? null : i));
-  }
+  // Attach a flat index to each group for tracking which column is expanded.
+  const groupsWithIdx = useMemo(() => {
+    let startIdx = 0;
+    return dayGroups.map((group) => {
+      const withIdx = { key: group.key, label: group.label, items: group.items, startIdx };
+      startIdx += group.items.length;
+      return withIdx;
+    });
+  }, [dayGroups]);
 
-  // Shared cell style — flex:1 proportional, same as DailyColumns.
-  const cellBase: CSSProperties = {
-    flex: 1,
-    minWidth: 0,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '0 0.1rem',
-    overflow: 'hidden',
-  };
+  // Find the expanded entry for the detail panel via flat-index lookup.
+  const expandedEntry = useMemo<EnrichedForecastEntry | null>(() => {
+    if (expandedIdx === null) return null;
+    let idx = 0;
+    for (const group of dayGroups) {
+      for (const item of group.items) {
+        if (idx === expandedIdx) return item;
+        idx++;
+      }
+    }
+    return null;
+  }, [expandedIdx, dayGroups]);
 
-  // ── Rows ──────────────────────────────────────────────────────────────────
+  // Fixed column width — wider than HourlyStrip's 56px to accommodate score badge
+  // and multi-row surf data (wave height, swell direction, wind, tide).
+  const COL_W = 72; // px
 
-  // 1. Accent bar (3px, var(--primary) on expanded column)
-  const accentBarRow = (
-    <div style={{ display: 'flex', flexDirection: 'row', height: 3, position: 'relative', zIndex: 1 }}>
-      {items.map((_, i) => (
-        <div
-          key={i}
-          style={{
-            flex: 1,
-            height: 3,
-            background: i === expandedIdx ? 'var(--primary)' : 'transparent',
-          }}
-        />
-      ))}
+  // Reusable label/value chip for the detail panel (matches DailyColumns pattern).
+  const chip = (label: string, value: string) => (
+    <div
+      key={label}
+      style={{
+        display: 'flex',
+        alignItems: 'baseline',
+        gap: '0.3rem',
+        fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+        fontSize: 'var(--text-card-title)',
+      }}
+    >
+      <span style={{ fontSize: 'var(--text-micro)', color: 'var(--muted-foreground)', flexShrink: 0 }}>{label}</span>
+      <span style={{ color: 'var(--foreground)', fontWeight: 600 }}>{value}</span>
     </div>
   );
 
-  // 2. Time row — primary accessible click target per column (tabIndex=0, aria-expanded).
-  //    Screen-reader label: "<time> — <qualityLabel>" — quality conveyed via badge below,
-  //    but badge is aria-hidden so the label here carries it for AT users.
-  const timeRow = (
-    <div style={{ display: 'flex', flexDirection: 'row', position: 'relative', zIndex: 1 }}>
-      {items.map((item, i) => {
-        const isSelected = i === expandedIdx;
-        const timeLabel = formatTime(new Date(item.entry.time), locale, stationTz);
-        return (
-          <div
-            key={i}
-            role="button"
-            tabIndex={0}
-            aria-expanded={isSelected}
-            aria-label={`${timeLabel} — ${item.entry.qualityLabel}`}
-            onClick={() => toggleExpand(i)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(i); }
-            }}
-            style={{
-              ...cellBase,
-              height: 28,
-              paddingTop: 8,
-              cursor: 'pointer',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'flex-start',
-            }}
-          >
-            <span
-              style={{
-                fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                fontSize: 'var(--text-label)',
-                fontWeight: 600,
-                color: isSelected ? 'var(--primary)' : 'var(--foreground)',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {timeLabel}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-
-  // 3. Score badge row (numeric badge — no stars; role="button" tabIndex=-1 aria-hidden)
-  const scoreRow = (
-    <div style={{ display: 'flex', flexDirection: 'row', position: 'relative', zIndex: 1 }}>
-      {items.map((item, i) => (
-        <div
-          key={i}
-          role="button"
-          tabIndex={-1}
-          aria-hidden={true}
-          onClick={() => toggleExpand(i)}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(i); } }}
-          style={{ ...cellBase, height: 28, cursor: 'pointer' }}
-        >
-          <NumericScoreBadge stars={item.entry.qualityStars} label={item.entry.qualityLabel} size="sm" t={t} />
-        </div>
-      ))}
-    </div>
-  );
-
-  // 4. Weather icon row — placeholder "—" (no weatherCode per period in SurfForecast).
-  //    Row is required by T5.2; placeholder shown until API adds weatherCode field.
-  const weatherIconRow = (
-    <div style={{ display: 'flex', flexDirection: 'row', position: 'relative', zIndex: 1 }}>
-      {items.map((_, i) => (
-        <div
-          key={i}
-          role="button"
-          tabIndex={-1}
-          aria-hidden={true}
-          onClick={() => toggleExpand(i)}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(i); } }}
-          style={{ ...cellBase, height: 20, cursor: 'pointer' }}
-        >
-          <span
-            style={{
-              fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-              fontSize: 'var(--text-micro)',
-              color: 'var(--muted-foreground)',
-            }}
-          >
-            —
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-
-  // 5. Air temp row — placeholder "—" (no airTemp field in SurfForecast).
-  const airTempRow = (
-    <div style={{ display: 'flex', flexDirection: 'row', position: 'relative', zIndex: 1 }}>
-      {items.map((_, i) => (
-        <div
-          key={i}
-          role="button"
-          tabIndex={-1}
-          aria-hidden={true}
-          onClick={() => toggleExpand(i)}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(i); } }}
-          style={{ ...cellBase, height: 18, cursor: 'pointer' }}
-        >
-          <span
-            style={{
-              fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-              fontSize: 'var(--text-micro)',
-              color: 'var(--muted-foreground)',
-              fontFeatureSettings: '"tnum"',
-            }}
-          >
-            —
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-
-  // 6. Wave height row
-  const waveRow = (
-    <div style={{ display: 'flex', flexDirection: 'row', position: 'relative', zIndex: 1 }}>
-      {items.map((item, i) => (
-        <div
-          key={i}
-          role="button"
-          tabIndex={-1}
-          aria-hidden={true}
-          onClick={() => toggleExpand(i)}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(i); } }}
-          style={{ ...cellBase, height: 22, cursor: 'pointer' }}
-        >
-          <span
-            style={{
-              fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
-              fontSize: 'var(--text-secondary)',
-              fontWeight: 600,
-              fontFeatureSettings: '"tnum"',
-              whiteSpace: 'nowrap',
-              color: 'var(--foreground)',
-            }}
-          >
-            {formatValue(item.entry.waveHeightAtBreak, 'default', locale)}
-            <span
-              style={{ fontSize: 'var(--text-micro)', fontWeight: 400, marginLeft: '0.1rem', color: 'var(--muted-foreground)' }}
-            >
-              {heightUnit}
-            </span>
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-
-  // 7. Swell row — period + direction combined ("12s SSW")
-  const swellRow = (
-    <div style={{ display: 'flex', flexDirection: 'row', position: 'relative', zIndex: 1 }}>
-      {items.map((item, i) => {
-        const cardinal = cardinalFromDegrees(item.entry.direction);
-        return (
-          <div
-            key={i}
-            role="button"
-            tabIndex={-1}
-            aria-hidden={true}
-            onClick={() => toggleExpand(i)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(i); } }}
-            style={{ ...cellBase, height: 18, cursor: 'pointer' }}
-          >
-            <span
-              style={{
-                fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                fontSize: 'var(--text-micro)',
-                color: 'var(--muted-foreground)',
-                whiteSpace: 'nowrap',
-                fontFeatureSettings: '"tnum"',
-              }}
-            >
-              {formatValue(item.entry.period, 'default', locale)}{periodUnit}
-              {cardinal ? ` ${cardinal}` : ''}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-
-  // 8. Wind quality row ("Offshore", "Cross-shore", "Onshore", etc.)
-  const windQualityRow = (
-    <div style={{ display: 'flex', flexDirection: 'row', position: 'relative', zIndex: 1 }}>
-      {items.map((item, i) => (
-        <div
-          key={i}
-          role="button"
-          tabIndex={-1}
-          aria-hidden={true}
-          onClick={() => toggleExpand(i)}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(i); } }}
-          style={{ ...cellBase, height: 18, cursor: 'pointer' }}
-        >
-          <span
-            style={{
-              fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-              fontSize: 'var(--text-micro)',
-              color: 'var(--muted-foreground)',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              maxWidth: '100%',
-            }}
-          >
-            {item.entry.windQuality ?? '—'}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-
-  // 9. Wind speed + direction row ("15kn NW")
-  const windSpeedRow = (
-    <div style={{ display: 'flex', flexDirection: 'row', position: 'relative', zIndex: 1 }}>
-      {items.map((item, i) => {
-        const { windPoint } = item;
-        const windDirCardinal = cardinalFromDegrees(windPoint?.windDirection ?? null);
-        return (
-          <div
-            key={i}
-            role="button"
-            tabIndex={-1}
-            aria-hidden={true}
-            onClick={() => toggleExpand(i)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(i); } }}
-            style={{ ...cellBase, height: 18, cursor: 'pointer' }}
-          >
-            <span
-              style={{
-                fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                fontSize: 'var(--text-micro)',
-                color: 'var(--muted-foreground)',
-                whiteSpace: 'nowrap',
-                fontFeatureSettings: '"tnum"',
-              }}
-            >
-              {formatValue(windPoint?.windSpeed ?? null, 'wind', locale)}{windUnit}
-              {windDirCardinal ? ` ${windDirCardinal}` : ''}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-
-  // 10. Tide row — nearest high/low event ("↑ 4.2ft")
-  const tideRow = (
-    <div style={{ display: 'flex', flexDirection: 'row', position: 'relative', zIndex: 1 }}>
-      {items.map((item, i) => {
-        const { tideEvent } = item;
-        return (
-          <div
-            key={i}
-            role="button"
-            tabIndex={-1}
-            aria-hidden={true}
-            onClick={() => toggleExpand(i)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(i); } }}
-            style={{ ...cellBase, height: 18, cursor: 'pointer' }}
-          >
-            {tideEvent ? (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.1rem',
-                  fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                  fontSize: 'var(--text-micro)',
-                  color: 'var(--muted-foreground)',
-                  whiteSpace: 'nowrap',
-                  fontFeatureSettings: '"tnum"',
-                }}
-              >
-                <span aria-hidden="true">{tideEvent.type === 'high' ? '↑' : '↓'}</span>
-                {formatValue(tideEvent.height, 'default', locale)}{heightUnit}
-              </span>
-            ) : (
-              <span style={{ fontSize: 'var(--text-micro)', color: 'var(--muted-foreground)' }}>—</span>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-
-  // 11. Precipitation row — placeholder "—" (SurfForecast has no precipProbability field).
-  const precipRow = (
-    <div style={{ display: 'flex', flexDirection: 'row', position: 'relative', zIndex: 1 }}>
-      {items.map((_, i) => (
-        <div
-          key={i}
-          role="button"
-          tabIndex={-1}
-          aria-hidden={true}
-          onClick={() => toggleExpand(i)}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(i); } }}
-          style={{ ...cellBase, height: 18, cursor: 'pointer' }}
-        >
-          <span
-            style={{
-              fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-              fontSize: 'var(--text-micro)',
-              color: 'var(--muted-foreground)',
-            }}
-          >
-            —
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-
-  // ── Expansion detail panel ─────────────────────────────────────────────────
-  // Blue-tint gradient: non-selected columns get the tint, selected column stays
-  // transparent (matches DailyColumns detailPanel gradient approach exactly).
-  const detailPanel = expandedIdx !== null ? (() => {
-    const item = items[expandedIdx];
-    const { entry, windPoint, tideEvent } = item;
-
-    const swellDirCardinal = cardinalFromDegrees(entry.direction);
-    const swellDirLabel    = swellDirCardinal ? tCommon(`directions.${swellDirCardinal}`) : '—';
-    const windDirCardinal  = cardinalFromDegrees(windPoint?.windDirection ?? null);
-    const windDirLabel     = windDirCardinal ? tCommon(`directions.${windDirCardinal}`) : '—';
-
-    const selLeft  = `${(expandedIdx / N) * 100}%`;
-    const selRight = `${((expandedIdx + 1) / N) * 100}%`;
-
-    const chip = (label: string, value: string) => (
-      <div
-        key={label}
-        style={{
-          display: 'flex',
-          alignItems: 'baseline',
-          gap: '0.3rem',
-          fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-          fontSize: 'var(--text-card-title)',
-        }}
-      >
-        <span style={{ fontSize: 'var(--text-micro)', color: 'var(--muted-foreground)', flexShrink: 0 }}>{label}</span>
-        <span style={{ color: 'var(--foreground)', fontWeight: 600 }}>{value}</span>
-      </div>
-    );
-
-    // Per-period swell components (FIX-15: swell breakdown in expandable detail panel)
-    const periodSwellComponents: SpectralWaveComponent[] = entry.multiSwell ?? [];
-
-    return (
-      <div
-        style={{
-          width: '100%',
-          background: `linear-gradient(to right,
-            var(--detail-panel-bg, rgba(80,100,255,0.08)) 0%,
-            var(--detail-panel-bg, rgba(80,100,255,0.08)) ${selLeft},
-            transparent ${selLeft},
-            transparent ${selRight},
-            var(--detail-panel-bg, rgba(80,100,255,0.08)) ${selRight},
-            var(--detail-panel-bg, rgba(80,100,255,0.08)) 100%
-          )`,
-          borderRadius: '0 0 calc(0.875rem - 1px) calc(0.875rem - 1px)',
-          padding: '0.75rem 1rem 1.25rem',
-          flexShrink: 0,
-          position: 'relative',
-          zIndex: 1,
-        }}
-        aria-live="polite"
-      >
-        {/* Period time header */}
-        <div
-          style={{
-            fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-            fontSize: 'var(--text-card-title)',
-            fontWeight: 600,
-            color: 'var(--primary)',
-            marginBottom: '0.45rem',
-            opacity: 0.9,
-          }}
-        >
-          {formatTime(new Date(entry.time), locale, stationTz)}
-        </div>
-
-        {/* conditionsText */}
-        {entry.conditionsText && (
-          <p
-            style={{
-              fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-              fontSize: 'var(--text-card-title)',
-              color: 'var(--muted-foreground)',
-              lineHeight: 1.55,
-              margin: '0 0 0.5rem',
-            }}
-          >
-            {entry.conditionsText}
-          </p>
-        )}
-
-        {/* Chip grid — wrapping flex row of label/value pairs */}
+  return (
+    <div className="flex flex-col gap-3">
+      {/* HorizontalScrollNav — chevrons project into card padding area.
+          CardContent must use overflow-visible for chevrons to be visible. */}
+      <HorizontalScrollNav ariaLabel={t('surfing.forecastTimelineTitle')}>
         <div
           style={{
             display: 'flex',
             flexDirection: 'row',
-            columnGap: '1.5rem',
-            rowGap: '0.35rem',
-            flexWrap: 'wrap',
-            alignItems: 'flex-start',
-            marginBottom: periodSwellComponents.length > 0 ? '0.75rem' : 0,
+            gap: '0.75rem',
+            width: 'max-content',
+            padding: '0.25rem 0.25rem 0.5rem',
           }}
         >
-          {chip(t('waveHeight'), `${formatValue(entry.waveHeightAtBreak, 'default', locale)} ${heightUnit}`)}
-          {chip(t('surfing.period'), `${formatValue(entry.period, 'default', locale)} ${periodUnit}`)}
-          {chip(t('surfing.direction'), swellDirLabel)}
-          {chip(t('surfing.windQualityTitle'), entry.windQuality ?? '—')}
-          {windPoint?.windSpeed !== null && windPoint?.windSpeed !== undefined &&
-            chip(t('windSpeed'), `${formatValue(windPoint.windSpeed, 'wind', locale)} ${windUnit}`)}
-          {windPoint?.windGust !== null && windPoint?.windGust !== undefined &&
-            chip(t('surfing.gust'), `${formatValue(windPoint.windGust, 'wind', locale)} ${windUnit}`)}
-          {chip(t('surfing.windDirection'), windDirLabel)}
-          {chip(t('surfing.airTemp'), '—')}
-          {tideEvent && chip(
-            tideEvent.type === 'high' ? t('tide.tideHigh') : t('tide.tideLow'),
-            `${formatValue(tideEvent.height, 'default', locale)} ${heightUnit} · ${formatTime(new Date(tideEvent.time), locale, stationTz)}`,
-          )}
+          {groupsWithIdx.map((group) => (
+            <div key={group.key} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              {/* Day section header — appears above this day's columns */}
+              <div
+                style={{
+                  fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                  fontSize: 'var(--text-label)',
+                  fontWeight: 600,
+                  color: 'var(--muted-foreground)',
+                  paddingLeft: '0.25rem',
+                  paddingBottom: '0.125rem',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {group.label}
+              </div>
+
+              {/* Period column buttons for this day */}
+              <div style={{ display: 'flex', flexDirection: 'row', gap: '0.25rem' }}>
+                {group.items.map((item, i) => {
+                  const flatIdx = group.startIdx + i;
+                  const isSelected = expandedIdx === flatIdx;
+                  const timeLabel = formatTime(new Date(item.entry.time), locale, stationTz);
+                  const swellDirCardinal = cardinalFromDegrees(item.entry.direction);
+                  const windDirCardinal  = cardinalFromDegrees(item.windPoint?.windDirection ?? null);
+
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setExpandedIdx((prev) => (prev === flatIdx ? null : flatIdx))}
+                      aria-expanded={isSelected}
+                      aria-label={`${timeLabel} — ${item.entry.qualityLabel}`}
+                      className="focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-lg"
+                      style={{
+                        width: COL_W,
+                        flexShrink: 0,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 3,
+                        padding: '0.375rem 0.25rem 0.5rem',
+                        background: isSelected ? 'var(--detail-panel-bg, rgba(80,100,255,0.08))' : 'transparent',
+                        border: 'none',
+                        borderTop: `3px solid ${isSelected ? 'var(--primary)' : 'transparent'}`,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {/* Row 1: Time label */}
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                          fontSize: 'var(--text-label)',
+                          fontWeight: 600,
+                          color: isSelected ? 'var(--primary)' : 'var(--foreground)',
+                          whiteSpace: 'nowrap',
+                          lineHeight: 1,
+                        }}
+                      >
+                        {timeLabel}
+                      </span>
+
+                      {/* Row 2: Score badge — circular, colored by tier.
+                          aria-hidden: quality conveyed via button aria-label. */}
+                      <span
+                        aria-hidden="true"
+                        className={`flex items-center justify-center rounded-full font-bold ${qualityColorClasses(item.entry.qualityStars)}`}
+                        style={{
+                          width: 26,
+                          height: 26,
+                          flexShrink: 0,
+                          fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
+                          fontSize: 'var(--text-body)',
+                          fontFeatureSettings: '"tnum"',
+                          lineHeight: 1,
+                        }}
+                      >
+                        {Math.round(Math.max(0, Math.min(5, item.entry.qualityStars)))}
+                      </span>
+
+                      {/* Row 3: Wave height — display font for stat numerals (DESIGN-MANUAL §4) */}
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
+                          fontSize: 'var(--text-label)',
+                          fontWeight: 600,
+                          fontFeatureSettings: '"tnum"',
+                          whiteSpace: 'nowrap',
+                          color: 'var(--foreground)',
+                          lineHeight: 1,
+                        }}
+                      >
+                        {formatValue(item.entry.waveHeightAtBreak, 'default', locale)}
+                        <span
+                          style={{
+                            fontSize: 'var(--text-micro)',
+                            fontWeight: 400,
+                            color: 'var(--muted-foreground)',
+                            marginLeft: '0.1rem',
+                          }}
+                        >
+                          {heightUnit}
+                        </span>
+                      </span>
+
+                      {/* Row 4: Swell direction — cardinal abbreviation */}
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                          fontSize: 'var(--text-micro)',
+                          color: 'var(--muted-foreground)',
+                          whiteSpace: 'nowrap',
+                          lineHeight: 1,
+                        }}
+                      >
+                        {swellDirCardinal ?? '—'}
+                      </span>
+
+                      {/* Row 5: Wind quality label ("Offshore", "Cross-shore", etc.) */}
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                          fontSize: 'var(--text-micro)',
+                          color: 'var(--muted-foreground)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          maxWidth: '100%',
+                          lineHeight: 1,
+                          textAlign: 'center',
+                        }}
+                      >
+                        {item.entry.windQuality ?? '—'}
+                      </span>
+
+                      {/* Row 6: Wind speed + direction */}
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                          fontSize: 'var(--text-micro)',
+                          color: 'var(--muted-foreground)',
+                          whiteSpace: 'nowrap',
+                          fontFeatureSettings: '"tnum"',
+                          lineHeight: 1,
+                        }}
+                      >
+                        {item.windPoint?.windSpeed != null
+                          ? `${formatValue(item.windPoint.windSpeed, 'wind', locale)}${windUnit}`
+                          : '—'}
+                        {windDirCardinal ? ` ${windDirCardinal}` : ''}
+                      </span>
+
+                      {/* Row 7: Tide event — nearest high/low.
+                          ↑/↓ arrows are aria-hidden; text value follows. */}
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                          fontSize: 'var(--text-micro)',
+                          color: 'var(--muted-foreground)',
+                          whiteSpace: 'nowrap',
+                          fontFeatureSettings: '"tnum"',
+                          lineHeight: 1,
+                          minHeight: 'var(--text-micro)',
+                        }}
+                      >
+                        {item.tideEvent ? (
+                          <>
+                            <span aria-hidden="true">{item.tideEvent.type === 'high' ? '↑' : '↓'}</span>
+                            {formatValue(item.tideEvent.height, 'default', locale)}{heightUnit}
+                          </>
+                        ) : '—'}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
+      </HorizontalScrollNav>
 
-        {/* Per-period swell component breakdown (FIX-15 requirement) */}
-        {periodSwellComponents.length > 0 && (
-          <SwellBreakdown
-            components={periodSwellComponents}
-            locale={locale}
-            heightUnit={heightUnit}
-            periodUnit={periodUnit}
-            t={t}
-            tCommon={tCommon}
-          />
-        )}
-      </div>
-    );
-  })() : null;
+      {/* Detail panel — rendered outside the scroll area so it doesn't scroll.
+          Card grows vertically in fluid mode to accommodate the panel. */}
+      {expandedIdx !== null && expandedEntry !== null && (() => {
+        const { entry, windPoint, tideEvent } = expandedEntry;
+        const swellDirCardinal  = cardinalFromDegrees(entry.direction);
+        const swellDirLabel     = swellDirCardinal ? tCommon(`directions.${swellDirCardinal}`) : '—';
+        const windDirCardinal   = cardinalFromDegrees(windPoint?.windDirection ?? null);
+        const windDirLabel      = windDirCardinal ? tCommon(`directions.${windDirCardinal}`) : '—';
+        const periodSwellComponents: SpectralWaveComponent[] = entry.multiSwell ?? [];
 
-  // ── Selected column background overlay (same as DailyColumns) ─────────────
-  const selectedColBg = expandedIdx !== null ? (
-    <div
-      aria-hidden="true"
-      style={{
-        position: 'absolute',
-        top: 0,
-        bottom: 0,
-        left: `${(expandedIdx / N) * 100}%`,
-        width: `${(1 / N) * 100}%`,
-        background: 'var(--detail-panel-bg, rgba(80,100,255,0.08))',
-        pointerEvents: 'none',
-        zIndex: 0,
-      }}
-    />
-  ) : null;
+        return (
+          <div
+            aria-live="polite"
+            style={{
+              background: 'var(--detail-panel-bg, rgba(80,100,255,0.08))',
+              borderRadius: '0.5rem',
+              padding: '0.75rem 1rem 1rem',
+            }}
+          >
+            {/* Period time header + quality label */}
+            <div
+              style={{
+                fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                fontSize: 'var(--text-card-title)',
+                fontWeight: 600,
+                color: 'var(--primary)',
+                marginBottom: '0.35rem',
+                opacity: 0.9,
+              }}
+            >
+              {formatTime(new Date(entry.time), locale, stationTz)}
+              {' — '}{entry.qualityLabel}
+            </div>
 
-  return (
-    <div
-      style={{
-        flex: 1,
-        minHeight: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-      }}
-    >
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          overflow: 'visible',
-        }}
-      >
-        {selectedColBg}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            position: 'relative',
-            width: '100%',
-            overflow: 'visible',
-            gap: 6,
-          }}
-        >
-          {accentBarRow}
-          {timeRow}
-          {scoreRow}
-          {weatherIconRow}
-          {airTempRow}
-          {waveRow}
-          {swellRow}
-          {windQualityRow}
-          {windSpeedRow}
-          {tideRow}
-          {precipRow}
-        </div>
-        {detailPanel}
-      </div>
+            {entry.conditionsText && (
+              <p
+                style={{
+                  fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                  fontSize: 'var(--text-card-title)',
+                  color: 'var(--muted-foreground)',
+                  lineHeight: 1.55,
+                  margin: '0 0 0.5rem',
+                }}
+              >
+                {entry.conditionsText}
+              </p>
+            )}
+
+            {/* Chip grid — wrapping flex row of label/value pairs */}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                columnGap: '1.5rem',
+                rowGap: '0.35rem',
+                flexWrap: 'wrap',
+                alignItems: 'flex-start',
+                marginBottom: periodSwellComponents.length > 0 ? '0.75rem' : 0,
+              }}
+            >
+              {chip(t('waveHeight'), `${formatValue(entry.waveHeightAtBreak, 'default', locale)} ${heightUnit}`)}
+              {chip(t('surfing.period'), `${formatValue(entry.period, 'default', locale)} ${periodUnit}`)}
+              {chip(t('surfing.direction'), swellDirLabel)}
+              {chip(t('surfing.windQualityTitle'), entry.windQuality ?? '—')}
+              {windPoint?.windSpeed != null && chip(t('windSpeed'), `${formatValue(windPoint.windSpeed, 'wind', locale)} ${windUnit}`)}
+              {chip(t('surfing.windDirection'), windDirLabel)}
+              {chip(t('surfing.airTemp'), '—')}
+              {tideEvent && chip(
+                tideEvent.type === 'high' ? t('tide.tideHigh') : t('tide.tideLow'),
+                `${formatValue(tideEvent.height, 'default', locale)} ${heightUnit} · ${formatTime(new Date(tideEvent.time), locale, stationTz)}`,
+              )}
+            </div>
+
+            {/* Per-period swell component breakdown (FIX-15 requirement) */}
+            {periodSwellComponents.length > 0 && (
+              <SwellBreakdown
+                components={periodSwellComponents}
+                locale={locale}
+                heightUnit={heightUnit}
+                periodUnit={periodUnit}
+                t={t}
+                tCommon={tCommon}
+              />
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -1491,7 +1282,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
     : [];
 
   // ── Forecast layout helpers ───────────────────────────────────────────────
-  // Always compute day groups — SurfForecastColumns handles single-entry day groups.
+  // Always compute day groups — SurfScrollForecast handles single-entry day groups.
   const dayGroups = groupForecastByDay(enrichedForecast, locale, stationTz);
   const hasMultiPointForecast = forecast.length >= 2;
 
@@ -1502,11 +1293,15 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
       {/* 1. Active advisories — full width, above the card grid */}
       <AlertsPanel alerts={alerts} filterTypes={SURFING_ALERT_TYPES} />
 
-      {/* 2–4. Score (2×2 hero) + Swell (2×1) + Wind (2×1) in a shared Grid.
+      {/* 2–4. Score (2×2 hero) + Swell (2×1 fluid) + Wind (2×1 fluid) in a shared Grid.
        *
        * FIX (FAIL CONDITION): previous implementation had NO <Grid> wrapper —
        * cards were in a bare flex column, so footprint col-span classes had
        * zero effect. All three cards are now wrapped in <Grid>.
+       *
+       * Score card: rowSpan={2} — guaranteed 2×2 hero prominence.
+       * Swell card: no rowSpan — fluid mode auto-sizes to content (more rows = taller).
+       * Wind card:  no rowSpan — fluid mode auto-sizes to content (4 stats = compact).
        *
        * At lg (4 cols):  Score cols 1–2 rows 1–8, Swell cols 3–4 rows 1–4,
        *                  Wind cols 3–4 rows 5–8.
@@ -1515,8 +1310,8 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
       <Grid>
 
         {/* ── Card 2: Surf Score — 2×2 HERO ────────────────────────────── */}
-        {/* FIX (FAIL CONDITION): was `<Card footprint="wide">` — missing rowSpan={2}.
-         *  Must be footprint="wide" rowSpan={2} for the 2×2 hero layout. */}
+        {/* rowSpan={2} kept: hero card needs guaranteed visual prominence.
+         *  Fluid mode still honors rowSpan for hero prominence against siblings. */}
         <Card footprint="wide" rowSpan={2}>
           <CardHeader>
             <CardTitle as="h3">{t('surfing.scoreCardTitle')}</CardTitle>
@@ -1559,7 +1354,10 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
           </CardContent>
         </Card>
 
-        {/* ── Card 3: Swell — 2×1 ─────────────────────────────────────── */}
+        {/* ── Card 3: Swell — 2×1 fluid auto-height ───────────────────── */}
+        {/* No rowSpan: fluid mode auto-sizes to content. Swell card has more
+         *  content (stat tiles + swell breakdown + compass) so it grows taller
+         *  than the Wind card naturally. */}
         <Card footprint="wide">
           <CardHeader>
             <CardTitle as="h3">{t('surfing.swellCardTitle')}</CardTitle>
@@ -1617,7 +1415,9 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
           </CardContent>
         </Card>
 
-        {/* ── Card 4: Wind — 2×1 ──────────────────────────────────────── */}
+        {/* ── Card 4: Wind — 2×1 fluid auto-height ────────────────────── */}
+        {/* No rowSpan: fluid mode auto-sizes to content. Wind card has only
+         *  4 stat tiles so it stays compact. */}
         <Card footprint="wide">
           <CardHeader>
             <CardTitle as="h3">{t('surfing.windCardTitle')}</CardTitle>
@@ -1652,44 +1452,33 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
       </Grid>
 
       {/* ── Card 5: 72-Hour Surf Forecast — full width ──────────────────── */}
-      {/* Layout follows DailyColumns.tsx pattern (FIX-15, T5.2):
-       *  - SurfForecastColumns: flex:1 proportional columns (NOT fixed 9rem)
-       *  - No HorizontalScrollNav — columns narrow naturally at mobile widths
-       *  - One SurfForecastColumns per day group; day name header above each
-       *  - Click a time-period column → accent bar + detail panel below */}
+      {/* Uses HorizontalScrollNav with fixed-width <button> columns per period.
+       *  Day group headers appear above each day's columns within the scroll area.
+       *  Click a column to expand the detail panel below the scroll (fluid mode
+       *  grows the card to fit the panel).
+       *  CardContent uses overflow-visible so HorizontalScrollNav chevron buttons
+       *  can project into the card padding area (matches ForecastHourlyCard). */}
       <Grid>
         <Card footprint="full">
           <CardHeader>
             <CardTitle as="h3">{t('surfing.forecastTimelineTitle')}</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col gap-4">
+          <CardContent className="overflow-visible flex flex-col gap-4">
             {dayGroups.length === 0 ? (
               <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
                 {t('surfing.noForecastData')}
               </p>
             ) : (
-              <div className="flex flex-col gap-4">
-                {dayGroups.map((group) => (
-                  <div key={group.key} className="flex flex-col gap-2">
-                    <p
-                      className="text-muted-foreground font-semibold"
-                      style={{ fontSize: 'var(--text-label)' }}
-                    >
-                      {group.label}
-                    </p>
-                    <SurfForecastColumns
-                      items={group.items}
-                      locale={locale}
-                      stationTz={stationTz}
-                      heightUnit={heightUnit}
-                      periodUnit={periodUnit}
-                      windUnit={windUnit}
-                      t={t}
-                      tCommon={tCommon}
-                    />
-                  </div>
-                ))}
-              </div>
+              <SurfScrollForecast
+                dayGroups={dayGroups}
+                locale={locale}
+                stationTz={stationTz}
+                heightUnit={heightUnit}
+                periodUnit={periodUnit}
+                windUnit={windUnit}
+                t={t}
+                tCommon={tCommon}
+              />
             )}
 
             {hasMultiPointForecast && (
@@ -1715,6 +1504,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
       </Grid>
 
       {/* ── Card 6: Tide Forecast — full width ──────────────────────────── */}
+      {/* No forced max-height: fluid mode lets TideChart render at natural height. */}
       <Grid>
         <Card footprint="full">
           <CardHeader>
