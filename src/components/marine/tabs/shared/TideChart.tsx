@@ -214,7 +214,7 @@ export function TideChart({
           margin.top=24  — room for midnight-boundary day labels (position: 'top')
           margin.bottom=20 — room for Low-tide labels rendered below trough points
         */}
-        <ComposedChart margin={{ top: 12, right: 12, bottom: 20, left: 12 }}>
+        <ComposedChart margin={{ top: 12, right: 12, bottom: 36, left: 12 }}>
           <XAxis
             dataKey="ts"
             type="number"
@@ -254,11 +254,11 @@ export function TideChart({
               strokeWidth={1}
               label={{
                 value: label,
-                position: 'insideBottomLeft',
+                position: 'bottom',
                 fontSize: 11,
                 fill: 'var(--muted-foreground)',
                 fontFamily: 'var(--font-chart)',
-                offset: 4,
+                offset: 20,
               }}
             />
           ))}
