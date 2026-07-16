@@ -191,6 +191,7 @@
       "swellDominance": "Swell Dominance",
       "factorLabel": "{{label}} ({{weight}}%)"
     },
+    "noModelSwellData": "No swell component data available",
     "swellCardTitle": "Swell",
     "swellBreakdownTitle": "Swell Components",
     "direction": "Direction",

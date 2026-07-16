@@ -1358,7 +1358,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
         {/* No rowSpan: fluid mode auto-sizes to content. Swell card has more
          *  content (stat tiles + swell breakdown + compass) so it grows taller
          *  than the Wind card naturally. */}
-        <Card footprint="wide" className="!overflow-visible">
+        <Card footprint="wide" className="!overflow-visible md:!row-span-6">
           <CardHeader>
             <CardTitle as="h3">{t('surfing.swellCardTitle')}</CardTitle>
           </CardHeader>
