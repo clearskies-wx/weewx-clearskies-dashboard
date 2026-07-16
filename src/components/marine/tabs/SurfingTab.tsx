@@ -44,7 +44,7 @@
 //   - Tide arrows (↑↓) aria-hidden, always paired with "High"/"Low" text
 //   - All interactive elements keyboard-reachable
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AreaChart, Area, XAxis, YAxis } from 'recharts';
@@ -56,7 +56,6 @@ import { formatTime } from '../../../utils/format-date';
 import { cardinalFromDegrees } from '../../../utils/wind';
 import { Grid } from '../../../components/layout/grid';
 import { ChartContainer } from '../../charts/chart-container';
-import { HorizontalScrollNav } from '../../ui/horizontal-scroll-nav';
 import { Card, CardHeader, CardTitle, CardContent } from '../../ui/card';
 import { MarineStatTile } from '../shared/MarineStatTile';
 import { AlertsPanel } from './shared/AlertsPanel';
@@ -673,17 +672,34 @@ function groupForecastByDay(
 }
 
 // ---------------------------------------------------------------------------
-// ForecastColumn — one 3–4 hour period's full data stack (T5.2).
+// SurfForecastColumns — DailyColumns-style proportional-width row layout
+// for 3–4 hour surf forecast periods (FIX-15, T5.2).
 //
-// FIX: windQuality displayed as-is (API value is already human-readable:
-// "Offshore", "Cross-shore", etc.). Previous i18n lookup used wrong keys.
+// Architecture mirrors DailyColumns.tsx exactly:
+//   - Each column = one time period; flex:1 proportional width (NOT fixed 9rem)
+//   - Rows span horizontally across ALL columns; data type per row, period per column
+//   - Click the time-header cell → accent bar highlights + detail panel expands below
+//   - NO HorizontalScrollNav; columns proportionally narrowed at mobile widths
 //
-// Per brief: weather icon + air temp per period — SurfForecast has neither
-// field. Display "—" explicitly rather than silently omitting the row.
+// Row order (T5.2 spec, top→bottom):
+//   accent bar (3px)
+//   time header (primary accessible click target, role="button" aria-expanded)
+//   score badge (numeric — no stars)
+//   weather icon   ← placeholder "—" (SurfForecast has no weatherCode per period)
+//   air temp       ← placeholder "—" (SurfForecast has no airTemp per period)
+//   wave height
+//   swell period + direction combined ("12s SSW")
+//   wind quality label ("Offshore", "Cross-shore", etc.)
+//   wind speed + direction ("15kn NW")
+//   tide nearest event ("↑ 4.2ft")
+//   precipitation  ← placeholder "—" (SurfForecast has no precipProbability per period)
+//
+// Detail panel (click column to expand, aria-live="polite"):
+//   conditionsText + chip grid + per-period SwellBreakdown from entry.multiSwell
 // ---------------------------------------------------------------------------
 
-function ForecastColumn({
-  item,
+function SurfForecastColumns({
+  items,
   locale,
   stationTz,
   heightUnit,
@@ -692,7 +708,7 @@ function ForecastColumn({
   t,
   tCommon,
 }: {
-  item: EnrichedForecastEntry;
+  items: EnrichedForecastEntry[];
   locale: string;
   stationTz: string;
   heightUnit: string;
@@ -701,83 +717,549 @@ function ForecastColumn({
   t: (key: string, opts?: Record<string, unknown>) => string;
   tCommon: (key: string) => string;
 }) {
-  const { entry, windPoint, tideEvent } = item;
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+  const N = items.length;
+  if (N === 0) return null;
 
-  const swellDirCardinal = cardinalFromDegrees(entry.direction);
-  const swellDirLabel = swellDirCardinal ? tCommon(`directions.${swellDirCardinal}`) : '—';
-  const windDirCardinal = cardinalFromDegrees(windPoint?.windDirection ?? null);
-  const windDirLabel = windDirCardinal ? tCommon(`directions.${windDirCardinal}`) : '—';
+  function toggleExpand(i: number) {
+    setExpandedIdx((prev) => (prev === i ? null : i));
+  }
+
+  // Shared cell style — flex:1 proportional, same as DailyColumns.
+  const cellBase: CSSProperties = {
+    flex: 1,
+    minWidth: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '0 0.1rem',
+    overflow: 'hidden',
+  };
+
+  // ── Rows ──────────────────────────────────────────────────────────────────
+
+  // 1. Accent bar (3px, var(--primary) on expanded column)
+  const accentBarRow = (
+    <div style={{ display: 'flex', flexDirection: 'row', height: 3, position: 'relative', zIndex: 1 }}>
+      {items.map((_, i) => (
+        <div
+          key={i}
+          style={{
+            flex: 1,
+            height: 3,
+            background: i === expandedIdx ? 'var(--primary)' : 'transparent',
+          }}
+        />
+      ))}
+    </div>
+  );
+
+  // 2. Time row — primary accessible click target per column (tabIndex=0, aria-expanded).
+  //    Screen-reader label: "<time> — <qualityLabel>" — quality conveyed via badge below,
+  //    but badge is aria-hidden so the label here carries it for AT users.
+  const timeRow = (
+    <div style={{ display: 'flex', flexDirection: 'row', position: 'relative', zIndex: 1 }}>
+      {items.map((item, i) => {
+        const isSelected = i === expandedIdx;
+        const timeLabel = formatTime(new Date(item.entry.time), locale, stationTz);
+        return (
+          <div
+            key={i}
+            role="button"
+            tabIndex={0}
+            aria-expanded={isSelected}
+            aria-label={`${timeLabel} — ${item.entry.qualityLabel}`}
+            onClick={() => toggleExpand(i)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(i); }
+            }}
+            style={{
+              ...cellBase,
+              height: 28,
+              paddingTop: 8,
+              cursor: 'pointer',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'flex-start',
+            }}
+          >
+            <span
+              style={{
+                fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                fontSize: 'var(--text-label)',
+                fontWeight: 600,
+                color: isSelected ? 'var(--primary)' : 'var(--foreground)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {timeLabel}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  // 3. Score badge row (numeric badge — no stars; role="button" tabIndex=-1 aria-hidden)
+  const scoreRow = (
+    <div style={{ display: 'flex', flexDirection: 'row', position: 'relative', zIndex: 1 }}>
+      {items.map((item, i) => (
+        <div
+          key={i}
+          role="button"
+          tabIndex={-1}
+          aria-hidden={true}
+          onClick={() => toggleExpand(i)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(i); } }}
+          style={{ ...cellBase, height: 28, cursor: 'pointer' }}
+        >
+          <NumericScoreBadge stars={item.entry.qualityStars} label={item.entry.qualityLabel} size="sm" t={t} />
+        </div>
+      ))}
+    </div>
+  );
+
+  // 4. Weather icon row — placeholder "—" (no weatherCode per period in SurfForecast).
+  //    Row is required by T5.2; placeholder shown until API adds weatherCode field.
+  const weatherIconRow = (
+    <div style={{ display: 'flex', flexDirection: 'row', position: 'relative', zIndex: 1 }}>
+      {items.map((_, i) => (
+        <div
+          key={i}
+          role="button"
+          tabIndex={-1}
+          aria-hidden={true}
+          onClick={() => toggleExpand(i)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(i); } }}
+          style={{ ...cellBase, height: 20, cursor: 'pointer' }}
+        >
+          <span
+            style={{
+              fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+              fontSize: 'var(--text-micro)',
+              color: 'var(--muted-foreground)',
+            }}
+          >
+            —
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+
+  // 5. Air temp row — placeholder "—" (no airTemp field in SurfForecast).
+  const airTempRow = (
+    <div style={{ display: 'flex', flexDirection: 'row', position: 'relative', zIndex: 1 }}>
+      {items.map((_, i) => (
+        <div
+          key={i}
+          role="button"
+          tabIndex={-1}
+          aria-hidden={true}
+          onClick={() => toggleExpand(i)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(i); } }}
+          style={{ ...cellBase, height: 18, cursor: 'pointer' }}
+        >
+          <span
+            style={{
+              fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+              fontSize: 'var(--text-micro)',
+              color: 'var(--muted-foreground)',
+              fontFeatureSettings: '"tnum"',
+            }}
+          >
+            —
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+
+  // 6. Wave height row
+  const waveRow = (
+    <div style={{ display: 'flex', flexDirection: 'row', position: 'relative', zIndex: 1 }}>
+      {items.map((item, i) => (
+        <div
+          key={i}
+          role="button"
+          tabIndex={-1}
+          aria-hidden={true}
+          onClick={() => toggleExpand(i)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(i); } }}
+          style={{ ...cellBase, height: 22, cursor: 'pointer' }}
+        >
+          <span
+            style={{
+              fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
+              fontSize: 'var(--text-secondary)',
+              fontWeight: 600,
+              fontFeatureSettings: '"tnum"',
+              whiteSpace: 'nowrap',
+              color: 'var(--foreground)',
+            }}
+          >
+            {formatValue(item.entry.waveHeightAtBreak, 'default', locale)}
+            <span
+              style={{ fontSize: 'var(--text-micro)', fontWeight: 400, marginLeft: '0.1rem', color: 'var(--muted-foreground)' }}
+            >
+              {heightUnit}
+            </span>
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+
+  // 7. Swell row — period + direction combined ("12s SSW")
+  const swellRow = (
+    <div style={{ display: 'flex', flexDirection: 'row', position: 'relative', zIndex: 1 }}>
+      {items.map((item, i) => {
+        const cardinal = cardinalFromDegrees(item.entry.direction);
+        return (
+          <div
+            key={i}
+            role="button"
+            tabIndex={-1}
+            aria-hidden={true}
+            onClick={() => toggleExpand(i)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(i); } }}
+            style={{ ...cellBase, height: 18, cursor: 'pointer' }}
+          >
+            <span
+              style={{
+                fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                fontSize: 'var(--text-micro)',
+                color: 'var(--muted-foreground)',
+                whiteSpace: 'nowrap',
+                fontFeatureSettings: '"tnum"',
+              }}
+            >
+              {formatValue(item.entry.period, 'default', locale)}{periodUnit}
+              {cardinal ? ` ${cardinal}` : ''}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  // 8. Wind quality row ("Offshore", "Cross-shore", "Onshore", etc.)
+  const windQualityRow = (
+    <div style={{ display: 'flex', flexDirection: 'row', position: 'relative', zIndex: 1 }}>
+      {items.map((item, i) => (
+        <div
+          key={i}
+          role="button"
+          tabIndex={-1}
+          aria-hidden={true}
+          onClick={() => toggleExpand(i)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(i); } }}
+          style={{ ...cellBase, height: 18, cursor: 'pointer' }}
+        >
+          <span
+            style={{
+              fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+              fontSize: 'var(--text-micro)',
+              color: 'var(--muted-foreground)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              maxWidth: '100%',
+            }}
+          >
+            {item.entry.windQuality ?? '—'}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+
+  // 9. Wind speed + direction row ("15kn NW")
+  const windSpeedRow = (
+    <div style={{ display: 'flex', flexDirection: 'row', position: 'relative', zIndex: 1 }}>
+      {items.map((item, i) => {
+        const { windPoint } = item;
+        const windDirCardinal = cardinalFromDegrees(windPoint?.windDirection ?? null);
+        return (
+          <div
+            key={i}
+            role="button"
+            tabIndex={-1}
+            aria-hidden={true}
+            onClick={() => toggleExpand(i)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(i); } }}
+            style={{ ...cellBase, height: 18, cursor: 'pointer' }}
+          >
+            <span
+              style={{
+                fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                fontSize: 'var(--text-micro)',
+                color: 'var(--muted-foreground)',
+                whiteSpace: 'nowrap',
+                fontFeatureSettings: '"tnum"',
+              }}
+            >
+              {formatValue(windPoint?.windSpeed ?? null, 'wind', locale)}{windUnit}
+              {windDirCardinal ? ` ${windDirCardinal}` : ''}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  // 10. Tide row — nearest high/low event ("↑ 4.2ft")
+  const tideRow = (
+    <div style={{ display: 'flex', flexDirection: 'row', position: 'relative', zIndex: 1 }}>
+      {items.map((item, i) => {
+        const { tideEvent } = item;
+        return (
+          <div
+            key={i}
+            role="button"
+            tabIndex={-1}
+            aria-hidden={true}
+            onClick={() => toggleExpand(i)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(i); } }}
+            style={{ ...cellBase, height: 18, cursor: 'pointer' }}
+          >
+            {tideEvent ? (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.1rem',
+                  fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                  fontSize: 'var(--text-micro)',
+                  color: 'var(--muted-foreground)',
+                  whiteSpace: 'nowrap',
+                  fontFeatureSettings: '"tnum"',
+                }}
+              >
+                <span aria-hidden="true">{tideEvent.type === 'high' ? '↑' : '↓'}</span>
+                {formatValue(tideEvent.height, 'default', locale)}{heightUnit}
+              </span>
+            ) : (
+              <span style={{ fontSize: 'var(--text-micro)', color: 'var(--muted-foreground)' }}>—</span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  // 11. Precipitation row — placeholder "—" (SurfForecast has no precipProbability field).
+  const precipRow = (
+    <div style={{ display: 'flex', flexDirection: 'row', position: 'relative', zIndex: 1 }}>
+      {items.map((_, i) => (
+        <div
+          key={i}
+          role="button"
+          tabIndex={-1}
+          aria-hidden={true}
+          onClick={() => toggleExpand(i)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(i); } }}
+          style={{ ...cellBase, height: 18, cursor: 'pointer' }}
+        >
+          <span
+            style={{
+              fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+              fontSize: 'var(--text-micro)',
+              color: 'var(--muted-foreground)',
+            }}
+          >
+            —
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+
+  // ── Expansion detail panel ─────────────────────────────────────────────────
+  // Blue-tint gradient: non-selected columns get the tint, selected column stays
+  // transparent (matches DailyColumns detailPanel gradient approach exactly).
+  const detailPanel = expandedIdx !== null ? (() => {
+    const item = items[expandedIdx];
+    const { entry, windPoint, tideEvent } = item;
+
+    const swellDirCardinal = cardinalFromDegrees(entry.direction);
+    const swellDirLabel    = swellDirCardinal ? tCommon(`directions.${swellDirCardinal}`) : '—';
+    const windDirCardinal  = cardinalFromDegrees(windPoint?.windDirection ?? null);
+    const windDirLabel     = windDirCardinal ? tCommon(`directions.${windDirCardinal}`) : '—';
+
+    const selLeft  = `${(expandedIdx / N) * 100}%`;
+    const selRight = `${((expandedIdx + 1) / N) * 100}%`;
+
+    const chip = (label: string, value: string) => (
+      <div
+        key={label}
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          gap: '0.3rem',
+          fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+          fontSize: 'var(--text-card-title)',
+        }}
+      >
+        <span style={{ fontSize: 'var(--text-micro)', color: 'var(--muted-foreground)', flexShrink: 0 }}>{label}</span>
+        <span style={{ color: 'var(--foreground)', fontWeight: 600 }}>{value}</span>
+      </div>
+    );
+
+    // Per-period swell components (FIX-15: swell breakdown in expandable detail panel)
+    const periodSwellComponents: SpectralWaveComponent[] = entry.multiSwell ?? [];
+
+    return (
+      <div
+        style={{
+          width: '100%',
+          background: `linear-gradient(to right,
+            var(--detail-panel-bg, rgba(80,100,255,0.08)) 0%,
+            var(--detail-panel-bg, rgba(80,100,255,0.08)) ${selLeft},
+            transparent ${selLeft},
+            transparent ${selRight},
+            var(--detail-panel-bg, rgba(80,100,255,0.08)) ${selRight},
+            var(--detail-panel-bg, rgba(80,100,255,0.08)) 100%
+          )`,
+          borderRadius: '0 0 calc(0.875rem - 1px) calc(0.875rem - 1px)',
+          padding: '0.75rem 1rem 1.25rem',
+          flexShrink: 0,
+          position: 'relative',
+          zIndex: 1,
+        }}
+        aria-live="polite"
+      >
+        {/* Period time header */}
+        <div
+          style={{
+            fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+            fontSize: 'var(--text-card-title)',
+            fontWeight: 600,
+            color: 'var(--primary)',
+            marginBottom: '0.45rem',
+            opacity: 0.9,
+          }}
+        >
+          {formatTime(new Date(entry.time), locale, stationTz)}
+        </div>
+
+        {/* conditionsText */}
+        {entry.conditionsText && (
+          <p
+            style={{
+              fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+              fontSize: 'var(--text-card-title)',
+              color: 'var(--muted-foreground)',
+              lineHeight: 1.55,
+              margin: '0 0 0.5rem',
+            }}
+          >
+            {entry.conditionsText}
+          </p>
+        )}
+
+        {/* Chip grid — wrapping flex row of label/value pairs */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            columnGap: '1.5rem',
+            rowGap: '0.35rem',
+            flexWrap: 'wrap',
+            alignItems: 'flex-start',
+            marginBottom: periodSwellComponents.length > 0 ? '0.75rem' : 0,
+          }}
+        >
+          {chip(t('waveHeight'), `${formatValue(entry.waveHeightAtBreak, 'default', locale)} ${heightUnit}`)}
+          {chip(t('surfing.period'), `${formatValue(entry.period, 'default', locale)} ${periodUnit}`)}
+          {chip(t('surfing.direction'), swellDirLabel)}
+          {chip(t('surfing.windQualityTitle'), entry.windQuality ?? '—')}
+          {windPoint?.windSpeed !== null && windPoint?.windSpeed !== undefined &&
+            chip(t('windSpeed'), `${formatValue(windPoint.windSpeed, 'wind', locale)} ${windUnit}`)}
+          {windPoint?.windGust !== null && windPoint?.windGust !== undefined &&
+            chip(t('surfing.gust'), `${formatValue(windPoint.windGust, 'wind', locale)} ${windUnit}`)}
+          {chip(t('surfing.windDirection'), windDirLabel)}
+          {chip(t('surfing.airTemp'), '—')}
+          {tideEvent && chip(
+            tideEvent.type === 'high' ? t('tide.tideHigh') : t('tide.tideLow'),
+            `${formatValue(tideEvent.height, 'default', locale)} ${heightUnit} · ${formatTime(new Date(tideEvent.time), locale, stationTz)}`,
+          )}
+        </div>
+
+        {/* Per-period swell component breakdown (FIX-15 requirement) */}
+        {periodSwellComponents.length > 0 && (
+          <SwellBreakdown
+            components={periodSwellComponents}
+            locale={locale}
+            heightUnit={heightUnit}
+            periodUnit={periodUnit}
+            t={t}
+            tCommon={tCommon}
+          />
+        )}
+      </div>
+    );
+  })() : null;
+
+  // ── Selected column background overlay (same as DailyColumns) ─────────────
+  const selectedColBg = expandedIdx !== null ? (
+    <div
+      aria-hidden="true"
+      style={{
+        position: 'absolute',
+        top: 0,
+        bottom: 0,
+        left: `${(expandedIdx / N) * 100}%`,
+        width: `${(1 / N) * 100}%`,
+        background: 'var(--detail-panel-bg, rgba(80,100,255,0.08))',
+        pointerEvents: 'none',
+        zIndex: 0,
+      }}
+    />
+  ) : null;
 
   return (
-    <div className="flex flex-col gap-1.5 rounded-lg px-3 py-2.5 shrink-0 w-[9rem] ring-1 ring-foreground/10">
-      <span
-        className="font-semibold text-center"
-        style={{ fontSize: 'var(--text-label)', fontFeatureSettings: '"tnum"' }}
+    <div
+      style={{
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          position: 'relative',
+          width: '100%',
+          overflow: 'visible',
+        }}
       >
-        {formatTime(new Date(entry.time), locale, stationTz)}
-      </span>
-
-      <div className="self-center">
-        <NumericScoreBadge stars={entry.qualityStars} label={entry.qualityLabel} size="sm" t={t} />
-      </div>
-
-      <dl className="flex flex-col gap-1" style={{ fontSize: 'var(--text-micro)' }}>
-        <div className="flex justify-between gap-2">
-          <dt className="text-muted-foreground">{t('surfing.height')}</dt>
-          <dd className="font-semibold" style={{ fontFeatureSettings: '"tnum"' }}>
-            {formatValue(entry.waveHeightAtBreak, 'default', locale)} {heightUnit}
-          </dd>
-        </div>
-        <div className="flex justify-between gap-2">
-          <dt className="text-muted-foreground">{t('surfing.period')}</dt>
-          <dd className="font-semibold" style={{ fontFeatureSettings: '"tnum"' }}>
-            {formatValue(entry.period, 'default', locale)} {periodUnit}
-          </dd>
-        </div>
-        <div className="flex justify-between gap-2">
-          <dt className="text-muted-foreground">{t('surfing.direction')}</dt>
-          <dd className="font-semibold">{swellDirLabel}</dd>
-        </div>
-        {/* windQuality: display as-is — already human-readable from API */}
-        <div className="flex justify-between gap-2">
-          <dt className="text-muted-foreground">{t('surfing.windQualityTitle')}</dt>
-          <dd className="font-semibold">{entry.windQuality ?? '—'}</dd>
-        </div>
-        <div className="flex justify-between gap-2">
-          <dt className="text-muted-foreground">{t('windSpeed')}</dt>
-          <dd className="font-semibold" style={{ fontFeatureSettings: '"tnum"' }}>
-            {formatValue(windPoint?.windSpeed ?? null, 'wind', locale)} {windUnit}
-          </dd>
-        </div>
-        <div className="flex justify-between gap-2">
-          <dt className="text-muted-foreground">{t('surfing.windDirection')}</dt>
-          <dd className="font-semibold">{windDirLabel}</dd>
-        </div>
-        {/* Air temp — SurfForecast has no airTemp field; show '—' per brief
-            (do NOT silently omit the row). */}
-        <div className="flex justify-between gap-2">
-          <dt className="text-muted-foreground">{t('surfing.airTemp')}</dt>
-          <dd className="font-semibold">—</dd>
-        </div>
-      </dl>
-
-      {tideEvent && (
+        {selectedColBg}
         <div
-          className="flex items-center justify-center gap-1 rounded"
-          style={{ fontSize: 'var(--text-micro)', background: 'var(--muted)', padding: '0.25rem 0.375rem' }}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            position: 'relative',
+            width: '100%',
+            overflow: 'visible',
+            gap: 6,
+          }}
         >
-          <span aria-hidden="true">{tideEvent.type === 'high' ? '↑' : '↓'}</span>
-          <span className="font-semibold">
-            {tideEvent.type === 'high' ? t('tide.tideHigh') : t('tide.tideLow')}
-          </span>
-          <span style={{ fontFeatureSettings: '"tnum"' }}>
-            {formatValue(tideEvent.height, 'default', locale)}{heightUnit}
-          </span>
-          <span style={{ fontFeatureSettings: '"tnum"' }}>
-            {formatTime(new Date(tideEvent.time), locale, stationTz)}
-          </span>
+          {accentBarRow}
+          {timeRow}
+          {scoreRow}
+          {weatherIconRow}
+          {airTempRow}
+          {waveRow}
+          {swellRow}
+          {windQualityRow}
+          {windSpeedRow}
+          {tideRow}
+          {precipRow}
         </div>
-      )}
+        {detailPanel}
+      </div>
     </div>
   );
 }
@@ -1009,11 +1491,9 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
     : [];
 
   // ── Forecast layout helpers ───────────────────────────────────────────────
-  const isSinglePointForecast = forecast.length === 1;
+  // Always compute day groups — SurfForecastColumns handles single-entry day groups.
+  const dayGroups = groupForecastByDay(enrichedForecast, locale, stationTz);
   const hasMultiPointForecast = forecast.length >= 2;
-  const dayGroups = hasMultiPointForecast
-    ? groupForecastByDay(enrichedForecast, locale, stationTz)
-    : [];
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -1172,35 +1652,23 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
       </Grid>
 
       {/* ── Card 5: 72-Hour Surf Forecast — full width ──────────────────── */}
+      {/* Layout follows DailyColumns.tsx pattern (FIX-15, T5.2):
+       *  - SurfForecastColumns: flex:1 proportional columns (NOT fixed 9rem)
+       *  - No HorizontalScrollNav — columns narrow naturally at mobile widths
+       *  - One SurfForecastColumns per day group; day name header above each
+       *  - Click a time-period column → accent bar + detail panel below */}
       <Grid>
         <Card footprint="full">
           <CardHeader>
-            <CardTitle as="h3">
-              {isSinglePointForecast
-                ? t('surfing.currentConditionsTitle')
-                : t('surfing.forecastTimelineTitle')}
-            </CardTitle>
+            <CardTitle as="h3">{t('surfing.forecastTimelineTitle')}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            {forecast.length === 0 ? (
+            {dayGroups.length === 0 ? (
               <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
                 {t('surfing.noForecastData')}
               </p>
-            ) : isSinglePointForecast ? (
-              <div className="w-fit">
-                <ForecastColumn
-                  item={enrichedForecast[0]}
-                  locale={locale}
-                  stationTz={stationTz}
-                  heightUnit={heightUnit}
-                  periodUnit={periodUnit}
-                  windUnit={windUnit}
-                  t={t}
-                  tCommon={tCommon}
-                />
-              </div>
             ) : (
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-4">
                 {dayGroups.map((group) => (
                   <div key={group.key} className="flex flex-col gap-2">
                     <p
@@ -1209,25 +1677,16 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                     >
                       {group.label}
                     </p>
-                    <HorizontalScrollNav
-                      ariaLabel={t('surfing.forecastDayAriaLabel', { day: group.label })}
-                    >
-                      <div className="flex gap-2 px-1 py-1">
-                        {group.items.map((item) => (
-                          <ForecastColumn
-                            key={item.entry.time}
-                            item={item}
-                            locale={locale}
-                            stationTz={stationTz}
-                            heightUnit={heightUnit}
-                            periodUnit={periodUnit}
-                            windUnit={windUnit}
-                            t={t}
-                            tCommon={tCommon}
-                          />
-                        ))}
-                      </div>
-                    </HorizontalScrollNav>
+                    <SurfForecastColumns
+                      items={group.items}
+                      locale={locale}
+                      stationTz={stationTz}
+                      heightUnit={heightUnit}
+                      periodUnit={periodUnit}
+                      windUnit={windUnit}
+                      t={t}
+                      tCommon={tCommon}
+                    />
                   </div>
                 ))}
               </div>
