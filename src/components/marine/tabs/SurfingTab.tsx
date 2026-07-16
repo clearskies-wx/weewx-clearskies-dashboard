@@ -55,8 +55,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AreaChart, Area, XAxis, YAxis } from 'recharts';
-import { Info, Waves, Timer, Compass, X } from '@phosphor-icons/react';
-import { useSurfDetail, useMarineDetail, useStation } from '../../../hooks/useWeatherData';
+import { Info, Waves, Timer, Compass, X, Thermometer } from '@phosphor-icons/react';
+import { useSurfDetail, useMarineDetail, useStation, useObservation } from '../../../hooks/useWeatherData';
+import { asConverted } from '../../../api/types';
+import { WeatherIcon } from '../../weather-icon';
+import { UvIndex } from '../../icons/uv-index';
 import { formatValue } from '../../../utils/format';
 // formatNumber available if energy display is re-added
 // // Energy display removed — formatNumber no longer needed
@@ -1240,6 +1243,39 @@ function WaveFaceHeightChart({
 }
 
 // ---------------------------------------------------------------------------
+// WaterThermometerIcon — local inline SVG: thermometer + water drop.
+//
+// Represents water temperature in the Current Conditions card.
+// Not a shared component (scope rule: no new files). 24×24 default.
+// A11y: aria-hidden + focusable=false — label text is in sibling span/dt.
+// ---------------------------------------------------------------------------
+
+function WaterThermometerIcon({ size = 24 }: { size?: number }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable={false as unknown as boolean}
+    >
+      {/* Thermometer: open-bottom tube (left area of icon) */}
+      <path d="M7 14V6a1.5 1.5 0 0 1 3 0v8" />
+      {/* Thermometer bulb */}
+      <circle cx="8.5" cy="17.5" r="2.5" />
+      {/* Water drop (right area): tip at top, rounded at bottom */}
+      <path d="M17.5 7l2.5 5a3 3 0 0 1-5 0l2.5-5z" />
+    </svg>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // SurfingTab — main export
 // ---------------------------------------------------------------------------
 
@@ -1261,6 +1297,10 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
   const { data: marine, units: marineUnits, loading: marineLoading } = useMarineDetail(locationId);
   const { data: station } = useStation();
   const stationTz = station?.timezone ?? 'UTC';
+  // Station/forecast-provider observation — air temp, weather icon, UV index.
+  // NOT marine data. Does not gate the loading spinner: the card degrades
+  // gracefully (shows '—') while obsData is loading or if the station is offline.
+  const obsData = useObservation();
 
   const forecast       = data?.forecast       ?? [];
   const tidePredictions = data?.tidePredictions ?? [];
@@ -1372,6 +1412,26 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
         },
       ]
     : [];
+
+  // ── Current conditions — station/forecast provider (NOT marine) ──────────
+  // weatherCode: from station Observation (conditions engine, optional field).
+  // daytime: from scene.daytime (SceneDescriptor on ObservationHookResult).
+  // airTemp: converted numeric value; unit embedded in ConvertedValue.label.
+  // UV: from station Observation.UV (ConvertedValue | number | null).
+  // waterTemp: from marine observation (already fetched for Wind card).
+  const currentConditionCode  = obsData.data?.weatherCode ?? null;
+  const currentDaytime        = obsData.scene?.daytime ?? true;
+  const airTempCV             = asConverted(obsData.data?.outTemp ?? null);
+  const airTempValue          = airTempCV.value != null ? airTempCV.formatted : '—';
+  const airTempUnit           = airTempCV.value != null ? (airTempCV.label ?? '') : '';
+  const uvCV                  = asConverted(obsData.data?.UV ?? null);
+  const uvValue               = uvCV.value != null ? String(Math.round(uvCV.value)) : '—';
+  const waterTempValue        = marine?.observation?.waterTemp != null
+    ? formatValue(marine.observation.waterTemp, 'temperature', locale)
+    : '—';
+  const waterTempUnit         = marine?.observation?.waterTemp != null
+    ? (marineUnits?.temperature ?? marineUnits?.waterTemp ?? '')
+    : '';
 
   // ── Forecast layout helpers ───────────────────────────────────────────────
   // Always compute day groups — SurfScrollForecast handles single-entry day groups.
@@ -1558,6 +1618,129 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                 </div>
               ))}
             </dl>
+          </CardContent>
+        </Card>
+
+        {/* ── Card 5: Current Conditions — 2×half, icon-left stat tiles ── */}
+        {/*
+         * Data sources (NOT all marine):
+         *   weatherCode / isNight — obsData (station/forecast provider)
+         *   airTemp — obsData.data.outTemp (station, ConvertedValue)
+         *   UV index — obsData.data.UV (station, ConvertedValue)
+         *   waterTemp — marine.observation.waterTemp (ocean resolver, numeric)
+         *
+         * Layout: 4-column grid, each item icon-left of value+label block.
+         * Matches "Conditions at Break" icon-left pattern in Swell card.
+         *
+         * A11y:
+         *   - All icons aria-hidden / focusable=false (decorative)
+         *   - Each stat label is visible text (text-muted-foreground)
+         *   - No color-only state signals
+         *   - WeatherIcon aria-hidden; card heading ("Current Conditions")
+         *     provides the accessible context for the condition visual
+         */}
+        <Card footprint="wide" rowSpan="half">
+          <CardHeader>
+            <CardTitle as="h3">{t('surfing.currentConditionsTitle')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2 items-center">
+
+              {/* Col 1: Current sky condition — WeatherIcon visual.
+               *  WCAG 1.1.1 (Non-text Content): icon is aria-hidden (decorative);
+               *  sr-only span carries weatherText when available. When weatherText
+               *  is null the card heading "Current Conditions" provides the
+               *  accessible context; the condition visual is treated as decorative. */}
+              <div className="flex justify-center items-center">
+                <span aria-hidden="true">
+                  <WeatherIcon
+                    code={currentConditionCode ?? 0}
+                    isNight={!currentDaytime}
+                    size={36}
+                  />
+                </span>
+                {obsData.data?.weatherText && (
+                  <span className="sr-only">{obsData.data.weatherText}</span>
+                )}
+              </div>
+
+              {/* Col 2: Air temp — Thermometer icon + value + label */}
+              <div className="flex items-center gap-2">
+                <span
+                  aria-hidden="true"
+                  className="shrink-0 text-muted-foreground"
+                  style={{ fontSize: 'var(--text-stat-tile)' }}
+                >
+                  <Thermometer weight="bold" />
+                </span>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>
+                    {t('airTemp')}
+                  </span>
+                  <span
+                    className="text-foreground font-semibold"
+                    style={{ fontSize: 'var(--text-stat-label)', fontFeatureSettings: '"tnum"', fontFamily: 'var(--font-display)' }}
+                  >
+                    {airTempValue}
+                    {airTempUnit && (
+                      <span className="text-muted-foreground font-normal ml-1" style={{ fontSize: 'var(--text-label)' }}>
+                        {airTempUnit}
+                      </span>
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              {/* Col 3: Water temp — WaterThermometerIcon + value + label */}
+              <div className="flex items-center gap-2">
+                <span
+                  aria-hidden="true"
+                  className="shrink-0 text-muted-foreground"
+                  style={{ fontSize: 'var(--text-stat-tile)' }}
+                >
+                  <WaterThermometerIcon size={24} />
+                </span>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>
+                    {t('waterTemp')}
+                  </span>
+                  <span
+                    className="text-foreground font-semibold"
+                    style={{ fontSize: 'var(--text-stat-label)', fontFeatureSettings: '"tnum"', fontFamily: 'var(--font-display)' }}
+                  >
+                    {waterTempValue}
+                    {waterTempUnit && (
+                      <span className="text-muted-foreground font-normal ml-1" style={{ fontSize: 'var(--text-label)' }}>
+                        {waterTempUnit}
+                      </span>
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              {/* Col 4: UV index — UvIndex icon + value + label */}
+              <div className="flex items-center gap-2">
+                <span
+                  aria-hidden="true"
+                  className="shrink-0 text-muted-foreground"
+                  style={{ fontSize: 'var(--text-stat-tile)' }}
+                >
+                  <UvIndex size={24} />
+                </span>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>
+                    {t('beachSafety.uvIndex')}
+                  </span>
+                  <span
+                    className="text-foreground font-semibold"
+                    style={{ fontSize: 'var(--text-stat-label)', fontFeatureSettings: '"tnum"', fontFamily: 'var(--font-display)' }}
+                  >
+                    {uvValue}
+                  </span>
+                </div>
+              </div>
+
+            </div>
           </CardContent>
         </Card>
 
