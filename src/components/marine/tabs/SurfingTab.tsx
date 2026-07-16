@@ -363,46 +363,46 @@ function SwellBreakdown({
   }
 
   const ranked = [...components].sort((a, b) => b.energy - a.energy);
+  const fs = 'var(--text-label)';
 
   return (
-    <ul className="flex flex-col gap-1.5 list-none p-0 m-0">
-      {ranked.map((c, i) => {
-        const classKey = c.classification in CLASSIFICATION_COLOR ? c.classification : 'swell';
-        const cardinal = cardinalFromDegrees(c.direction);
-        const cardinalLabel = cardinal ? tCommon(`directions.${cardinal}`) : '—';
-        const periodTier = periodQualityTier(c.period);
+    <table className="w-full border-collapse" style={{ fontSize: fs, fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)' }}>
+      <thead>
+        <tr>
+          <th className="text-left text-muted-foreground font-semibold pb-1.5 pr-2" style={{ fontSize: 'var(--text-micro)' }}>{t('surfing.swellType')}</th>
+          <th className="text-left text-muted-foreground font-semibold pb-1.5 pr-2" style={{ fontSize: 'var(--text-micro)' }}>{t('surfing.direction')}</th>
+          <th className="text-right text-muted-foreground font-semibold pb-1.5 pr-2" style={{ fontSize: 'var(--text-micro)' }}>{t('surfing.height')}</th>
+          <th className="text-right text-muted-foreground font-semibold pb-1.5" style={{ fontSize: 'var(--text-micro)' }}>{t('surfing.period')}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {ranked.map((c, i) => {
+          const classKey = c.classification in CLASSIFICATION_COLOR ? c.classification : 'swell';
+          const cardinal = cardinalFromDegrees(c.direction);
+          const cardinalLabel = cardinal ? tCommon(`directions.${cardinal}`) : '—';
+          const periodTier = periodQualityTier(c.period);
 
-        return (
-          <li
-            key={i}
-            className={`rounded-md flex items-center gap-3 px-2.5 py-1.5 ${CLASSIFICATION_COLOR[classKey]}`}
-          >
-            {/* Classification + direction */}
-            <div className="flex items-center gap-1.5 shrink-0" style={{ minWidth: '5.5rem' }}>
-              <span className="font-semibold" style={{ fontSize: 'var(--text-label)' }}>
-                {t(`surfing.classification.${classKey}`)}
-              </span>
-              <span className="inline-flex items-center gap-0.5 text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>
-                <SwellDirectionArrow directionDeg={c.direction} />
-                {cardinalLabel}
-              </span>
-            </div>
-            {/* Height / Period / Energy — inline row */}
-            <div className="flex items-baseline gap-3 flex-1 min-w-0" style={{ fontSize: 'var(--text-label)', fontFeatureSettings: '"tnum"' }}>
-              <span className="font-semibold whitespace-nowrap">
-                {formatValue(c.height, 'default', locale)}<span className="text-muted-foreground font-normal ml-0.5">{heightUnit}</span>
-              </span>
-              <span className="font-semibold whitespace-nowrap">
-                {formatValue(c.period, 'default', locale)}<span className="text-muted-foreground font-normal ml-0.5">{periodUnit}</span>
-                {periodTier && (
-                  <span className="text-muted-foreground font-normal ml-1">{t(`surfing.periodQuality.${periodTier}`)}</span>
-                )}
-              </span>
-            </div>
-          </li>
-        );
-      })}
-    </ul>
+          return (
+            <tr key={i} className={i % 2 === 1 ? 'bg-muted/30' : ''}>
+              <td className="py-1 pr-2 font-semibold whitespace-nowrap">{t(`surfing.classification.${classKey}`)}</td>
+              <td className="py-1 pr-2 whitespace-nowrap">
+                <span className="inline-flex items-center gap-1">
+                  <SwellDirectionArrow directionDeg={c.direction} />
+                  {cardinalLabel}
+                </span>
+              </td>
+              <td className="py-1 pr-2 text-right font-semibold whitespace-nowrap" style={{ fontFeatureSettings: '"tnum"' }}>
+                {formatValue(c.height, 'default', locale)} <span className="text-muted-foreground font-normal">{heightUnit}</span>
+              </td>
+              <td className="py-1 text-right font-semibold whitespace-nowrap" style={{ fontFeatureSettings: '"tnum"' }}>
+                {formatValue(c.period, 'default', locale)} <span className="text-muted-foreground font-normal">{periodUnit}</span>
+                {periodTier && <span className="text-muted-foreground font-normal ml-1">{t(`surfing.periodQuality.${periodTier}`)}</span>}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
   );
 }
 
@@ -1296,77 +1296,66 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
           <CardHeader>
             <CardTitle as="h3">{t('surfing.swellCardTitle')}</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-row gap-4">
-            {/* Left 2/3: dominant stats + component breakdown */}
-            <div className="flex flex-col gap-3 flex-[2] min-w-0">
-              {/* Dominant swell section */}
-              {primary !== null && (
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-muted-foreground font-semibold" style={{ fontSize: 'var(--text-micro)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    {t('surfing.dominantSwell')}
-                  </span>
-                  <dl className="grid grid-cols-3 gap-x-3">
-                    <MarineStatTile
-                      icon={<Waves aria-hidden="true" focusable="false" />}
-                      label={t('waveHeight')}
-                      value={formatValue(primary.waveHeightAtBreak, 'default', locale)}
-                      unit={heightUnit}
-                    />
-                    <MarineStatTile
-                      label={t('surfing.period')}
-                      value={formatValue(primary.period, 'default', locale)}
-                      unit={periodUnit}
-                    />
-                    <MarineStatTile
-                      label={t('surfing.direction')}
-                      value={swellDirLabel}
-                    />
-                  </dl>
-                </div>
-              )}
-
-              {/* Component breakdown — compact rows */}
-              <SwellBreakdown
-                components={swellComponents}
-                locale={locale}
-                heightUnit={heightUnit}
-                periodUnit={periodUnit}
-                t={t}
-                tCommon={tCommon}
-              />
-            </div>
-
-            {/* Right 1/3: compass + dominant component stats below */}
-            {swellComponents.length > 0 && (
-              <div className="flex-1 flex flex-col items-center justify-center gap-3">
-                <SwellDirectionCompass
-                  directionDeg={dominantDirection}
-                  height={dominantStats.height}
-                  period={dominantStats.period}
-                  heightUnit={heightUnit}
-                  periodUnit={periodUnit}
-                  locale={locale}
-                  t={t}
-                  tCommon={tCommon}
-                />
-                <dl className="flex flex-col gap-1 w-full items-center">
-                  {dominantStats.height !== null && (
-                    <MarineStatTile
-                      label={t('surfing.height')}
-                      value={formatValue(dominantStats.height, 'default', locale)}
-                      unit={heightUnit}
-                    />
-                  )}
-                  {dominantStats.period !== null && (
-                    <MarineStatTile
-                      label={t('surfing.period')}
-                      value={formatValue(dominantStats.period, 'default', locale)}
-                      unit={periodUnit}
-                    />
-                  )}
+          <CardContent className="flex flex-col gap-3">
+            {/* Row 1: Conditions at Break (combined wave) — stat tiles */}
+            {primary !== null && (
+              <div className="flex flex-col gap-1">
+                <span className="text-muted-foreground font-semibold" style={{ fontSize: 'var(--text-micro)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  {t('surfing.conditionsAtBreak')}
+                </span>
+                <dl className="grid grid-cols-3 gap-x-3">
+                  <MarineStatTile
+                    icon={<Waves aria-hidden="true" focusable="false" />}
+                    label={t('waveHeight')}
+                    value={formatValue(primary.waveHeightAtBreak, 'default', locale)}
+                    unit={heightUnit}
+                  />
+                  <MarineStatTile
+                    label={t('surfing.period')}
+                    value={formatValue(primary.period, 'default', locale)}
+                    unit={periodUnit}
+                  />
+                  <MarineStatTile
+                    label={t('surfing.direction')}
+                    value={swellDirLabel}
+                  />
                 </dl>
               </div>
             )}
+
+            {/* Row 2: Swell components table (left 2/3) + compass (right 1/3) */}
+            <div className="flex flex-row gap-4 flex-1 min-h-0">
+              {/* Left: component table */}
+              <div className="flex flex-col gap-1 flex-[2] min-w-0">
+                <span className="text-muted-foreground font-semibold" style={{ fontSize: 'var(--text-micro)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  {t('surfing.swellBreakdownTitle')}
+                </span>
+                <SwellBreakdown
+                  components={swellComponents}
+                  locale={locale}
+                  heightUnit={heightUnit}
+                  periodUnit={periodUnit}
+                  t={t}
+                  tCommon={tCommon}
+                />
+              </div>
+
+              {/* Right: compass */}
+              {swellComponents.length > 0 && (
+                <div className="flex-1 flex flex-col items-center gap-1">
+                  <span className="text-muted-foreground font-semibold self-center" style={{ fontSize: 'var(--text-micro)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    {t('surfing.dominantDirection')}
+                  </span>
+                  <div className="flex-1 flex items-center justify-center w-full">
+                    <SwellDirectionCompass
+                      directionDeg={dominantDirection}
+                      t={t}
+                      tCommon={tCommon}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
 
