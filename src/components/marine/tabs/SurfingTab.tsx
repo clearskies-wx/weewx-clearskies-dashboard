@@ -363,9 +363,8 @@ function SwellBreakdown({
   const ranked = [...components].sort((a, b) => b.energy - a.energy);
 
   return (
-    <ul className="flex flex-col gap-2 list-none p-0 m-0">
+    <ul className="flex flex-col gap-1.5 list-none p-0 m-0">
       {ranked.map((c, i) => {
-        const isPrimary = i === 0;
         const classKey = c.classification in CLASSIFICATION_COLOR ? c.classification : 'swell';
         const cardinal = cardinalFromDegrees(c.direction);
         const cardinalLabel = cardinal ? tCommon(`directions.${cardinal}`) : '—';
@@ -374,68 +373,30 @@ function SwellBreakdown({
         return (
           <li
             key={i}
-            className={`rounded-lg flex flex-col gap-2 ${isPrimary ? 'p-4' : 'p-3'} ${CLASSIFICATION_COLOR[classKey]}`}
+            className={`rounded-md flex items-center gap-3 px-2.5 py-1.5 ${CLASSIFICATION_COLOR[classKey]}`}
           >
-            <div className="flex items-center gap-3 flex-wrap">
-              <span
-                className="font-semibold"
-                style={{ fontSize: isPrimary ? 'var(--text-body)' : 'var(--text-label)' }}
-              >
+            {/* Classification + direction */}
+            <div className="flex items-center gap-1.5 shrink-0" style={{ minWidth: '5.5rem' }}>
+              <span className="font-semibold" style={{ fontSize: 'var(--text-label)' }}>
                 {t(`surfing.classification.${classKey}`)}
-                {isPrimary && <span className="sr-only"> — {t('surfing.primarySwell')}</span>}
               </span>
-              <span
-                className="inline-flex items-center gap-1"
-                style={{ fontSize: isPrimary ? 'var(--text-body)' : 'var(--text-label)' }}
-              >
+              <span className="inline-flex items-center gap-0.5 text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>
                 <SwellDirectionArrow directionDeg={c.direction} />
                 {cardinalLabel}
               </span>
             </div>
-            <dl className="grid grid-cols-3 gap-x-4 gap-y-1">
-              <div className="flex flex-col">
-                <dt className="opacity-80" style={{ fontSize: 'var(--text-micro)' }}>
-                  {t('surfing.height')}
-                </dt>
-                <dd
-                  className="font-semibold"
-                  style={{
-                    fontSize: isPrimary ? 'var(--text-stat-tile)' : 'var(--text-label)',
-                    fontFeatureSettings: '"tnum"',
-                  }}
-                >
-                  {formatValue(c.height, 'default', locale)} {heightUnit}
-                </dd>
-              </div>
-              <div className="flex flex-col">
-                <dt className="opacity-80" style={{ fontSize: 'var(--text-micro)' }}>
-                  {t('surfing.period')}
-                </dt>
-                <dd
-                  className="font-semibold"
-                  style={{ fontSize: 'var(--text-label)', fontFeatureSettings: '"tnum"' }}
-                >
-                  {formatValue(c.period, 'default', locale)} {periodUnit}
-                  {periodTier && (
-                    <span className="font-normal opacity-80">
-                      {' '}&mdash; {t(`surfing.periodQuality.${periodTier}`)}
-                    </span>
-                  )}
-                </dd>
-              </div>
-              <div className="flex flex-col">
-                <dt className="opacity-80" style={{ fontSize: 'var(--text-micro)' }}>
-                  {t('surfing.energy')}
-                </dt>
-                {/* FIX: 4 decimal places, locale-aware — NOT formatValue(energy, 'default') → "0.0" */}
-                <dd
-                  className="font-semibold"
-                  style={{ fontSize: 'var(--text-label)', fontFeatureSettings: '"tnum"' }}
-                >
-                  {formatNumber(c.energy, 4, locale)}
-                </dd>
-              </div>
-            </dl>
+            {/* Height / Period / Energy — inline row */}
+            <div className="flex items-baseline gap-3 flex-1 min-w-0" style={{ fontSize: 'var(--text-label)', fontFeatureSettings: '"tnum"' }}>
+              <span className="font-semibold whitespace-nowrap">
+                {formatValue(c.height, 'default', locale)}<span className="text-muted-foreground font-normal ml-0.5">{heightUnit}</span>
+              </span>
+              <span className="font-semibold whitespace-nowrap">
+                {formatValue(c.period, 'default', locale)}<span className="text-muted-foreground font-normal ml-0.5">{periodUnit}</span>
+                {periodTier && (
+                  <span className="text-muted-foreground font-normal ml-1">{t(`surfing.periodQuality.${periodTier}`)}</span>
+                )}
+              </span>
+            </div>
           </li>
         );
       })}
@@ -528,7 +489,7 @@ function SwellDirectionCompass({
         role="img"
         aria-labelledby="swell-compass-title"
         focusable={false as unknown as boolean}
-        style={{ width: '100%', maxWidth: '7rem', height: 'auto', aspectRatio: '1 / 1', display: 'block' }}
+        style={{ width: '100%', height: 'auto', aspectRatio: '1 / 1', display: 'block' }}
       >
         <title id="swell-compass-title">{svgTitle}</title>
         <g aria-hidden="true">{ticks}</g>
@@ -1354,64 +1315,66 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
           </CardContent>
         </Card>
 
-        {/* ── Card 3: Swell — 2×1 fluid auto-height ───────────────────── */}
-        {/* No rowSpan: fluid mode auto-sizes to content. Swell card has more
-         *  content (stat tiles + swell breakdown + compass) so it grows taller
-         *  than the Wind card naturally. */}
-        <Card footprint="wide" className="!overflow-visible md:!row-span-6">
+        {/* ── Card 3: Swell — 2×2 fixed ─────────────────────────────── */}
+        <Card footprint="wide" rowSpan={2}>
           <CardHeader>
             <CardTitle as="h3">{t('surfing.swellCardTitle')}</CardTitle>
           </CardHeader>
-          <CardContent className="!overflow-visible flex flex-col gap-4">
-            {primary !== null && (
-              <dl className="grid grid-cols-3 gap-x-4 gap-y-3">
-                <MarineStatTile
-                  icon={<Waves aria-hidden="true" focusable="false" />}
-                  label={t('waveHeight')}
-                  value={formatValue(primary.waveHeightAtBreak, 'default', locale)}
-                  unit={heightUnit}
-                />
-                <MarineStatTile
-                  label={t('surfing.period')}
-                  value={formatValue(primary.period, 'default', locale)}
-                  unit={periodUnit}
-                />
-                <MarineStatTile
-                  label={t('surfing.direction')}
-                  value={swellDirLabel}
-                />
-              </dl>
-            )}
+          <CardContent className="flex flex-row gap-4">
+            {/* Left 2/3: dominant stats + component breakdown */}
+            <div className="flex flex-col gap-3 flex-[2] min-w-0">
+              {/* Dominant swell section */}
+              {primary !== null && (
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-muted-foreground font-semibold" style={{ fontSize: 'var(--text-micro)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    {t('surfing.dominantSwell')}
+                  </span>
+                  <dl className="grid grid-cols-3 gap-x-3">
+                    <MarineStatTile
+                      icon={<Waves aria-hidden="true" focusable="false" />}
+                      label={t('waveHeight')}
+                      value={formatValue(primary.waveHeightAtBreak, 'default', locale)}
+                      unit={heightUnit}
+                    />
+                    <MarineStatTile
+                      label={t('surfing.period')}
+                      value={formatValue(primary.period, 'default', locale)}
+                      unit={periodUnit}
+                    />
+                    <MarineStatTile
+                      label={t('surfing.direction')}
+                      value={swellDirLabel}
+                    />
+                  </dl>
+                </div>
+              )}
 
-            {/* Swell breakdown + compass side by side */}
-            <div className="flex flex-col md:flex-row gap-4 items-start">
-              <div className="flex-1 min-w-0">
-                {/* FIX: ONLY multiSwell — never spectralComponents */}
-                <SwellBreakdown
-                  components={swellComponents}
-                  locale={locale}
+              {/* Component breakdown — compact rows */}
+              <SwellBreakdown
+                components={swellComponents}
+                locale={locale}
+                heightUnit={heightUnit}
+                periodUnit={periodUnit}
+                t={t}
+                tCommon={tCommon}
+              />
+            </div>
+
+            {/* Right 1/3: compass */}
+            {swellComponents.length > 0 && (
+              <div className="flex-1 flex items-center justify-center">
+                <SwellDirectionCompass
+                  directionDeg={dominantDirection}
+                  height={dominantStats.height}
+                  period={dominantStats.period}
                   heightUnit={heightUnit}
                   periodUnit={periodUnit}
+                  locale={locale}
                   t={t}
                   tCommon={tCommon}
                 />
               </div>
-              {/* Compass only shown when multiSwell has data */}
-              {swellComponents.length > 0 && (
-                <div className="w-full md:w-32 shrink-0 flex justify-center">
-                  <SwellDirectionCompass
-                    directionDeg={dominantDirection}
-                    height={dominantStats.height}
-                    period={dominantStats.period}
-                    heightUnit={heightUnit}
-                    periodUnit={periodUnit}
-                    locale={locale}
-                    t={t}
-                    tCommon={tCommon}
-                  />
-                </div>
-              )}
-            </div>
+            )}
           </CardContent>
         </Card>
 
