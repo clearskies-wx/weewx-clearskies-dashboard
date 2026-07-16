@@ -58,7 +58,9 @@ import { AreaChart, Area, XAxis, YAxis } from 'recharts';
 import { Waves, Wind } from '@phosphor-icons/react';
 import { useSurfDetail, useMarineDetail, useStation } from '../../../hooks/useWeatherData';
 import { formatValue } from '../../../utils/format';
-import { formatNumber } from '../../../utils/format-number';
+// formatNumber available if energy display is re-added
+// // Energy display removed — formatNumber no longer needed
+// import { formatNumber } from '../../../utils/format-number';
 import { formatTime } from '../../../utils/format-date';
 import { cardinalFromDegrees } from '../../../utils/wind';
 import { Grid } from '../../../components/layout/grid';
@@ -508,36 +510,15 @@ function SwellDirectionCompass({
           alignItems: 'center',
           justifyContent: 'center',
           textAlign: 'center',
-          gap: '0.1rem',
           pointerEvents: 'none',
         }}
       >
-        <div style={{ fontFamily: 'var(--font-sans, system-ui, sans-serif)', fontSize: 'var(--text-micro)', color: 'var(--muted-foreground)' }}>
+        <div style={{ fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)', fontSize: 'var(--text-stat-tile)', fontWeight: 600, color: 'var(--foreground)', fontFeatureSettings: '"tnum"' }}>
           {Math.round(directionDeg)}°
-          <span style={{ color: 'var(--foreground)', fontWeight: 600, marginLeft: '0.2rem' }}>
-            {cardinalLabel}
-          </span>
         </div>
-        {height !== null && (
-          <div
-            style={{
-              fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-              fontSize: 'var(--text-label)',
-              fontWeight: 600,
-              color: 'var(--foreground)',
-              fontFeatureSettings: '"tnum"',
-            }}
-          >
-            <span className="sr-only">{t('surfing.height')}: </span>
-            {formatValue(height, 'default', locale)} {heightUnit}
-          </div>
-        )}
-        {period !== null && (
-          <div style={{ fontFamily: 'var(--font-sans, system-ui, sans-serif)', fontSize: 'var(--text-micro)', color: 'var(--muted-foreground)' }}>
-            <span className="sr-only">{t('surfing.period')}: </span>
-            {formatValue(period, 'default', locale)} {periodUnit}
-          </div>
-        )}
+        <div style={{ fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)', fontSize: 'var(--text-label)', fontWeight: 600, color: 'var(--foreground)' }}>
+          {cardinalLabel}
+        </div>
       </div>
     </div>
   );
@@ -1360,9 +1341,9 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
               />
             </div>
 
-            {/* Right 1/3: compass */}
+            {/* Right 1/3: compass + dominant component stats below */}
             {swellComponents.length > 0 && (
-              <div className="flex-1 flex items-center justify-center">
+              <div className="flex-1 flex flex-col items-center justify-center gap-3">
                 <SwellDirectionCompass
                   directionDeg={dominantDirection}
                   height={dominantStats.height}
@@ -1373,6 +1354,22 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                   t={t}
                   tCommon={tCommon}
                 />
+                <dl className="flex flex-col gap-1 w-full items-center">
+                  {dominantStats.height !== null && (
+                    <MarineStatTile
+                      label={t('surfing.height')}
+                      value={formatValue(dominantStats.height, 'default', locale)}
+                      unit={heightUnit}
+                    />
+                  )}
+                  {dominantStats.period !== null && (
+                    <MarineStatTile
+                      label={t('surfing.period')}
+                      value={formatValue(dominantStats.period, 'default', locale)}
+                      unit={periodUnit}
+                    />
+                  )}
+                </dl>
               </div>
             )}
           </CardContent>
