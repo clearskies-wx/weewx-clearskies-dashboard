@@ -49,13 +49,14 @@
 import { Wind, Waves, Thermometer, SunDim, Warning } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { useBeachSafetyDetail, useStation } from '../../../hooks/useWeatherData';
+import { useBeachSafetyDetail, useMarineDetail, useStation } from '../../../hooks/useWeatherData';
 import { formatValue } from '../../../utils/format';
 import { cardinalFromDegrees } from '../../../utils/wind';
 import { Card, CardHeader, CardTitle, CardContent } from '../../ui/card';
 import { AlertsPanel } from './shared/AlertsPanel';
 import { TideChart } from './shared/TideChart';
 import { MarineStatTile } from '../shared/MarineStatTile';
+import { WeatherIcon } from '../../weather-icon';
 
 interface BeachSafetyTabProps {
   locationId: string;
@@ -281,10 +282,13 @@ export function BeachSafetyTab({ locationId }: BeachSafetyTabProps) {
   const locale = i18n.language;
 
   const { data, units, loading, error, refetch } = useBeachSafetyDetail(locationId);
+  const { data: marine, units: marineUnits, loading: marineLoading } = useMarineDetail(locationId);
   const { data: station } = useStation();
   const stationTz = station?.timezone ?? 'UTC';
 
-  if (loading) {
+  const observation = marine?.observation ?? null;
+
+  if (loading || marineLoading) {
     return (
       <div className="flex flex-col gap-[var(--gap-grid)]">
         <span className="sr-only" role="status">{t('beachSafety.title')}</span>
@@ -323,6 +327,18 @@ export function BeachSafetyTab({ locationId }: BeachSafetyTabProps) {
           <CardTitle as="h3">{t('beachSafety.conditions')}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
+          {observation?.weatherCode != null && (
+            <div className="flex items-center gap-3">
+              <WeatherIcon code={observation.weatherCode} isNight={observation.isDay === false} size={36} />
+              <dl className="m-0">
+                <MarineStatTile
+                  label={t('airTemp')}
+                  value={formatValue(observation.airTemp, 'temperature', locale)}
+                  unit={marineUnits?.temperature ?? tempUnit}
+                />
+              </dl>
+            </div>
+          )}
           <RipCurrentRow risk={assessment.ripCurrentRisk} t={t} />
           <UvIndexRow uvIndex={assessment.uvIndex} locale={locale} t={t} />
 

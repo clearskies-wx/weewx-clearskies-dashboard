@@ -88,7 +88,10 @@
     "srTimeColumn": "Time",
     "srWaveHeightColumn": "Wave Height ({{unit}})",
     "srWavePeriodColumn": "Wave Period (s)",
-    "waterLevelOffset": "Water Level Offset"
+    "waterLevelOffset": "Water Level Offset",
+    "windTitle": "Wind",
+    "visibility": "Visibility",
+    "dewpoint": "Dewpoint"
   },
   "beachSafety": {
     "title": "Beach Safety",

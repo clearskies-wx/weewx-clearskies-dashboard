@@ -32,7 +32,7 @@ import {
   YAxis,
   Legend,
 } from 'recharts';
-import { ArrowUp, ArrowDown, ArrowRight, Wind, Waves, Thermometer } from '@phosphor-icons/react';
+import { ArrowUp, ArrowDown, ArrowRight, Wind, Waves, Thermometer, Eye, Drop } from '@phosphor-icons/react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { HorizontalScrollNav } from '@/components/ui/horizontal-scroll-nav';
 import { useMarineDetail, useTideDetail, useStation } from '../../../hooks/useWeatherData';
@@ -44,6 +44,7 @@ import { AlertsPanel } from './shared/AlertsPanel';
 import { TideChart } from './shared/TideChart';
 import { MarineStatTile } from '../shared/MarineStatTile';
 import { buildHourTicks } from './shared/hour-ticks';
+import { WeatherIcon } from '../../weather-icon';
 import type { MarineForecastPoint, MarineAlertSummary } from '../../../api/types';
 
 // ---------------------------------------------------------------------------
@@ -350,9 +351,10 @@ export function BoatingTab({ locationId, alerts = [] }: BoatingTabProps) {
       {/* 1. Active advisories — top, prominent */}
       <AlertsPanel alerts={alerts} />
 
-      {/* 2. Current Conditions — wind, air/water temp, pressure + trend,
-          water level offset, and storm surge badge consolidated into one
-          card per DASHBOARD-MANUAL §12. */}
+      {/* 2. Current Conditions — weather icon, air/water temp, visibility,
+          dewpoint, pressure + trend, water level offset, and storm surge
+          badge consolidated into one card per DASHBOARD-MANUAL §12. Wind
+          moved to its own card (T7.2) — see below. */}
       <Card footprint="full">
         <CardHeader>
           <CardTitle as="h3">{t('boating.conditions')}</CardTitle>
@@ -360,20 +362,10 @@ export function BoatingTab({ locationId, alerts = [] }: BoatingTabProps) {
         <CardContent className="flex flex-col gap-3">
           {hasConditionsData ? (
             <>
+              {observation?.weatherCode != null && (
+                <WeatherIcon code={observation.weatherCode} isNight={observation.isDay === false} size={36} />
+              )}
               <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3">
-                <MarineStatTile
-                  icon={<Wind size={16} aria-hidden="true" focusable="false" />}
-                  label={t('windSpeed')}
-                  value={formatValue(observation?.windSpeed ?? null, 'wind', locale)}
-                  unit={windUnit}
-                />
-                <MarineStatTile
-                  icon={<Wind size={16} aria-hidden="true" focusable="false" />}
-                  label={t('boating.gust')}
-                  value={formatValue(observation?.windGust ?? null, 'wind', locale)}
-                  unit={windUnit}
-                />
-                <MarineStatTile label={t('boating.direction')} value={windDirLabel ?? '—'} />
                 <MarineStatTile
                   icon={<Thermometer size={16} aria-hidden="true" focusable="false" />}
                   label={t('airTemp')}
@@ -384,6 +376,18 @@ export function BoatingTab({ locationId, alerts = [] }: BoatingTabProps) {
                   icon={<Thermometer size={16} aria-hidden="true" focusable="false" />}
                   label={t('waterTemp')}
                   value={formatValue(observation?.waterTemp ?? null, 'temperature', locale)}
+                  unit={tempUnit}
+                />
+                <MarineStatTile
+                  icon={<Eye size={16} aria-hidden="true" focusable="false" />}
+                  label={t('boating.visibility')}
+                  value={formatValue(observation?.visibility ?? null, 'default', locale)}
+                  unit={marineUnits?.visibility ?? 'mi'}
+                />
+                <MarineStatTile
+                  icon={<Drop size={16} aria-hidden="true" focusable="false" />}
+                  label={t('boating.dewpoint')}
+                  value={formatValue(observation?.dewpoint ?? null, 'temperature', locale)}
                   unit={tempUnit}
                 />
                 <MarineStatTile
@@ -407,6 +411,36 @@ export function BoatingTab({ locationId, alerts = [] }: BoatingTabProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* 2b. Wind — extracted from Current Conditions into its own card
+          (T7.2). Speed, gust, and direction as MarineStatTiles. No wind-
+          trend stat: MarineObservation carries no wind-trend field, so it is
+          omitted rather than rendered as a placeholder "—" (tracked data
+          gap, not a bug). */}
+      {hasConditionsData && (
+        <Card footprint="wide">
+          <CardHeader>
+            <CardTitle as="h3">{t('boating.windTitle')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3">
+              <MarineStatTile
+                icon={<Wind size={16} aria-hidden="true" focusable="false" />}
+                label={t('windSpeed')}
+                value={formatValue(observation?.windSpeed ?? null, 'wind', locale)}
+                unit={windUnit}
+              />
+              <MarineStatTile
+                icon={<Wind size={16} aria-hidden="true" focusable="false" />}
+                label={t('boating.gust')}
+                value={formatValue(observation?.windGust ?? null, 'wind', locale)}
+                unit={windUnit}
+              />
+              <MarineStatTile label={t('boating.direction')} value={windDirLabel ?? '—'} />
+            </dl>
+          </CardContent>
+        </Card>
+      )}
 
       {/* 3. Waves — current wave stats + 72h forecast chart. Self-hides for
           harbor locations with no wave data at all. */}
