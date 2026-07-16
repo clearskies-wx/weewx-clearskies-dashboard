@@ -316,6 +316,43 @@ function findCurrentPeriod(days: FishingDay[]): FishingForecast | null {
   return days[0]?.periods[0] ?? null;
 }
 
+/** Per-period wind summary for the grid-cell button's `aria-label` (T6.3 —
+ *  MARINE-FIXIT-PLAN "per-period wind/wave data"). The visible grid cell
+ *  renders the same speed/direction/gust tokens as bare aria-hidden text
+ *  (§6.1 "number + short unit symbol" is the same established pattern as
+ *  MarineStatTile/LocationCard/SurfingTab use elsewhere in this file), so
+ *  this composes the equivalent sentence through i18next interpolation for
+ *  screen-reader users — never a template literal splicing translated and
+ *  untranslated fragments (coding.md §6.1/§6.4). Returns '' (no clause) when
+ *  the period carries no wind data at all. */
+function periodWindAriaText(period: FishingForecast, windUnit: string, locale: string, t: TFn, tCommon: TFn): string {
+  if (period.windSpeed === null) return '';
+  const speed = formatNumber(Math.round(period.windSpeed), 0, locale);
+  const dirCardinal = cardinalFromDegrees(period.windDirection);
+  const direction = dirCardinal ? tCommon(`directions.${dirCardinal}`) : '';
+  if (period.windGust !== null) {
+    const gust = formatNumber(Math.round(period.windGust), 0, locale);
+    return `${t('fishing.periodWindGustAriaLabel', { speed, unit: windUnit, direction, gust })}. `;
+  }
+  return `${t('fishing.periodWindAriaLabel', { speed, unit: windUnit, direction })}. `;
+}
+
+/** Per-period swell summary for the grid-cell button's `aria-label` — same
+ *  reasoning as `periodWindAriaText` above. Returns '' when the period
+ *  carries no swell data at all. */
+function periodSwellAriaText(
+  period: FishingForecast,
+  heightUnit: string,
+  periodUnit: string,
+  locale: string,
+  t: TFn,
+): string {
+  if (period.swellHeight === null && period.swellPeriod === null) return '';
+  const height = period.swellHeight !== null ? formatValue(period.swellHeight, 'default', locale) : '—';
+  const swellPeriod = period.swellPeriod !== null ? formatValue(period.swellPeriod, 'default', locale) : '—';
+  return `${t('fishing.periodSwellAriaLabel', { height, heightUnit, period: swellPeriod, periodUnit })}. `;
+}
+
 /** Look up the (day, period) pair whose `periodStart` matches `key` — used
  *  by the T6.2 per-period species accordion. `periodStart` (an ISO instant)
  *  is unique across the whole `days` array, so it doubles as a stable React
@@ -505,7 +542,25 @@ function ScoreFactorBar({
  *  when no screen reader happens to surface it. */
 const PERIOD_ACCORDION_ID = 'fishing-period-species-accordion';
 
-function PeriodGrid({ days, locale, stationTz, t }: { days: FishingDay[]; locale: string; stationTz: string; t: TFn }) {
+function PeriodGrid({
+  days,
+  locale,
+  stationTz,
+  t,
+  tCommon,
+  windUnit,
+  swellHeightUnit,
+  swellPeriodUnit,
+}: {
+  days: FishingDay[];
+  locale: string;
+  stationTz: string;
+  t: TFn;
+  tCommon: TFn;
+  windUnit: string;
+  swellHeightUnit: string;
+  swellPeriodUnit: string;
+}) {
   const [expandedPeriod, setExpandedPeriod] = useState<string | null>(null);
 
   const headerDay = useMemo(
@@ -584,6 +639,9 @@ function PeriodGrid({ days, locale, stationTz, t }: { days: FishingDay[]; locale
                     const isMinor = !isMajor && overlapsAny(period.periodStart, period.periodEnd, day.solunar.minorPeriods);
                     const top = topSpeciesLabel(period.speciesScores);
                     const isExpanded = expandedPeriod === period.periodStart;
+                    const periodWindDirCardinal = cardinalFromDegrees(period.windDirection);
+                    const periodWindDirLabel = periodWindDirCardinal ? tCommon(`directions.${periodWindDirCardinal}`) : null;
+                    const hasSwell = period.swellHeight !== null || period.swellPeriod !== null;
                     return (
                       <td key={colIdx} className="p-1 align-top">
                         <button
@@ -596,6 +654,8 @@ function PeriodGrid({ days, locale, stationTz, t }: { days: FishingDay[]; locale
                             date: monthDayLabel,
                             period: period.periodLabel,
                             score: formatNumber(Math.round(period.overallScore), 0, locale),
+                            wind: periodWindAriaText(period, windUnit, locale, t, tCommon),
+                            swell: periodSwellAriaText(period, swellHeightUnit, swellPeriodUnit, locale, t),
                           })}
                           className={`w-full flex flex-col gap-0.5 min-w-[4.5rem] p-2 rounded-md text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${scoreBgClass(period.overallScore)} ${isExpanded ? 'ring-2 ring-primary' : ''}`}
                         >
@@ -624,6 +684,45 @@ function PeriodGrid({ days, locale, stationTz, t }: { days: FishingDay[]; locale
                                   className="size-[18px]"
                                 />
                                 <span className="sr-only">{isMajor ? t('fishing.majorPeriod') : t('fishing.minorPeriod')}</span>
+                              </span>
+                            )}
+                            {/* T6.3 (MARINE-FIXIT-PLAN) — per-period wind/swell
+                                data. Bare number + short unit-symbol/cardinal
+                                tokens follow the same compact convention as
+                                MarineStatTile/LocationCard elsewhere in this
+                                file (coding.md §6.6 unit symbols); the full
+                                sentence equivalent lives in this button's
+                                aria-label above (periodWindAriaText/
+                                periodSwellAriaText) since this whole block is
+                                aria-hidden. */}
+                            {period.windSpeed !== null && (
+                              <span className="text-muted-foreground truncate" style={{ fontSize: 'var(--text-micro)' }}>
+                                {formatNumber(Math.round(period.windSpeed), 0, locale)}
+                                {windUnit}
+                                {periodWindDirLabel && <> {periodWindDirLabel}</>}
+                              </span>
+                            )}
+                            {period.windGust !== null && (
+                              <span className="text-muted-foreground truncate" style={{ fontSize: 'var(--text-micro)' }}>
+                                {t('fishing.periodGustAbbr')} {formatNumber(Math.round(period.windGust), 0, locale)}
+                                {windUnit}
+                              </span>
+                            )}
+                            {hasSwell && (
+                              <span className="text-muted-foreground truncate" style={{ fontSize: 'var(--text-micro)' }}>
+                                {period.swellHeight !== null && (
+                                  <>
+                                    {formatValue(period.swellHeight, 'default', locale)}
+                                    {swellHeightUnit}
+                                  </>
+                                )}
+                                {period.swellPeriod !== null && (
+                                  <>
+                                    {' '}
+                                    {formatValue(period.swellPeriod, 'default', locale)}
+                                    {swellPeriodUnit}
+                                  </>
+                                )}
                               </span>
                             )}
                           </span>
@@ -1181,6 +1280,15 @@ export function FishingTab({ locationId, alerts = [] }: FishingTabProps) {
   const tideState = computeTideState(data.tidePredictions, Date.now());
   const windDirCardinal = cardinalFromDegrees(observation?.windDirection ?? null);
   const windDirLabel = windDirCardinal ? tCommon(`directions.${windDirCardinal}`) : null;
+  // T6.3 (MARINE-FIXIT-PLAN) — units for the per-period wind/swell tokens in
+  // the forecast grid (PeriodGrid). These read FishingForecast fields (the
+  // fishing endpoint's own `units` block), falling back to the marine
+  // endpoint's wind unit / the tide height unit already computed above, then
+  // a hardcoded default — same fallback-chain convention BeachSafetyTab.tsx
+  // and SurfingTab.tsx already use for their own unit lookups.
+  const periodWindUnit = units?.windSpeed ?? marineWindUnit;
+  const swellHeightUnit = units?.swellHeight ?? units?.waveHeight ?? tideHeightUnit;
+  const swellPeriodUnit = units?.swellPeriod ?? units?.period ?? t('fishing.secondsAbbr');
 
   const scoringFactors = currentPeriod
     ? [
@@ -1309,7 +1417,16 @@ export function FishingTab({ locationId, alerts = [] }: FishingTabProps) {
           <CardTitle as="h3">{t('fishing.periodGrid')}</CardTitle>
         </CardHeader>
         <CardContent>
-          <PeriodGrid days={data.days} locale={locale} stationTz={stationTz} t={t} />
+          <PeriodGrid
+            days={data.days}
+            locale={locale}
+            stationTz={stationTz}
+            t={t}
+            tCommon={tCommon}
+            windUnit={periodWindUnit}
+            swellHeightUnit={swellHeightUnit}
+            swellPeriodUnit={swellPeriodUnit}
+          />
         </CardContent>
       </Card>
 

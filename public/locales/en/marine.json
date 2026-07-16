@@ -296,7 +296,11 @@
     "moonBelowHorizon": "Moon is below the horizon",
     "periodGridScrollAriaLabel": "Scrollable 3-day fishing forecast",
     "scoreCardTitle": "Fishing Score",
-    "periodButtonAriaLabel": "{{weekday}}, {{date}} — {{period}}: score {{score}} of 100. View species detail.",
-    "periodDetailHeading": "Species scores for {{weekday}}, {{date}} — {{period}}"
+    "periodButtonAriaLabel": "{{weekday}}, {{date}} — {{period}}: score {{score}} of 100. {{wind}}{{swell}}View species detail.",
+    "periodDetailHeading": "Species scores for {{weekday}}, {{date}} — {{period}}",
+    "periodWindAriaLabel": "Wind {{speed}} {{unit}} {{direction}}",
+    "periodWindGustAriaLabel": "Wind {{speed}} {{unit}} {{direction}}, gusting {{gust}} {{unit}}",
+    "periodSwellAriaLabel": "Swell {{height}} {{heightUnit}} at {{period}} {{periodUnit}}",
+    "periodGustAbbr": "G"
   }
 }
