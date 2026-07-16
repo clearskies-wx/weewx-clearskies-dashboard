@@ -410,161 +410,114 @@ export function TideChart({
         </tbody>
       </table>
 
-      {/* Visible tide table — extrema only (DESIGN-MANUAL §11 Data Tables).
-          Headers: --text-label / weight 600 / uppercase / text-muted-foreground.
-          Cells: --text-body / weight 400 / text-foreground.
-          Numeric: font-feature-settings: "tnum", right-aligned.
-          Alternating row backgrounds: bg-muted/30 on odd rows (0-indexed).
-          Moon phase column provides spring/neap tidal context — the same icon
-          appears in every row because phase barely changes over 72 hours. */}
-      {extremaPredictions.length > 0 && (
-        <div className="overflow-x-auto mt-4">
-          <table className="w-full">
-            <caption
-              className="caption-top text-foreground"
-              style={{
-                fontSize: 'var(--text-section)',
-                fontWeight: 600,
-                textAlign: 'left',
-                paddingBottom: '0.5rem',
-              }}
-            >
-              {t('tide.tableCaption')}
-            </caption>
-            <thead>
-              <tr>
-                <th
-                  scope="col"
-                  className="text-muted-foreground"
-                  style={{
-                    fontSize: 'var(--text-label)',
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    textAlign: 'left',
-                    padding: '0.375rem 0.5rem',
-                  }}
-                >
-                  {t('tide.dayColumn')}
-                </th>
-                <th
-                  scope="col"
-                  className="text-muted-foreground"
-                  style={{
-                    fontSize: 'var(--text-label)',
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    textAlign: 'left',
-                    padding: '0.375rem 0.5rem',
-                  }}
-                >
-                  {t('tide.typeColumn')}
-                </th>
-                <th
-                  scope="col"
-                  className="text-muted-foreground"
-                  style={{
-                    fontSize: 'var(--text-label)',
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    textAlign: 'left',
-                    padding: '0.375rem 0.5rem',
-                  }}
-                >
-                  {t('tide.timeColumn')}
-                </th>
-                <th
-                  scope="col"
-                  className="text-muted-foreground"
-                  style={{
-                    fontSize: 'var(--text-label)',
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    textAlign: 'right',
-                    padding: '0.375rem 0.5rem',
-                  }}
-                >
-                  {t('tide.heightColumn')}
-                </th>
-                <th
-                  scope="col"
-                  className="text-muted-foreground"
-                  style={{
-                    fontSize: 'var(--text-label)',
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    textAlign: 'center',
-                    padding: '0.375rem 0.5rem',
-                  }}
-                >
-                  {t('tide.moonColumn')}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {extremaPredictions.map((p, i) => (
-                <tr key={p.time} className={i % 2 === 1 ? 'bg-muted/30' : ''}>
-                  <td
-                    className="text-foreground"
-                    style={{
-                      fontSize: 'var(--text-body)',
-                      fontWeight: 400,
-                      padding: '0.375rem 0.5rem',
-                    }}
-                  >
-                    {dayFormatter.format(new Date(p.time))}
-                  </td>
-                  <td
-                    className="text-foreground"
-                    style={{
-                      fontSize: 'var(--text-body)',
-                      fontWeight: 400,
-                      padding: '0.375rem 0.5rem',
-                    }}
-                  >
-                    {p.type === 'high' ? t('tide.tideHigh') : t('tide.tideLow')}
-                  </td>
-                  <td
-                    className="text-foreground"
-                    style={{
-                      fontSize: 'var(--text-body)',
-                      fontWeight: 400,
-                      padding: '0.375rem 0.5rem',
-                    }}
-                  >
-                    {formatTime(new Date(p.time), locale, stationTz)}
-                  </td>
-                  <td
-                    className="text-foreground"
-                    style={{
-                      fontSize: 'var(--text-body)',
-                      fontWeight: 400,
-                      padding: '0.375rem 0.5rem',
-                      fontFeatureSettings: '"tnum"',
-                      textAlign: 'right',
-                    }}
-                  >
-                    {formatNumber(p.height, 2, locale)}&nbsp;{heightUnit}
-                  </td>
-                  <td
-                    style={{
-                      padding: '0.375rem 0.5rem',
-                      textAlign: 'center',
-                      verticalAlign: 'middle',
-                    }}
-                  >
-                    <MoonPhaseIcon
-                      size={18}
-                      illuminationPercent={moonIllumination}
-                      phaseName={moonPhaseName}
-                      ariaLabel={moonAriaLabel}
-                    />
-                  </td>
+      {/* Visible tide table — date-column layout aligned with the chart.
+          Columns = one per day. Rows = High, Low, Moon.
+          Each cell shows time + height for each extremum that day. */}
+      {extremaPredictions.length > 0 && (() => {
+        // Group extrema by station-local date
+        const dayGroups = new Map<string, { label: string; highs: typeof extremaPredictions; lows: typeof extremaPredictions }>();
+        for (const p of extremaPredictions) {
+          const d = new Date(p.time);
+          const dateKey = new Intl.DateTimeFormat('en-CA', { timeZone: stationTz }).format(d);
+          const dateLabel = dayFormatter.format(d);
+          if (!dayGroups.has(dateKey)) {
+            dayGroups.set(dateKey, { label: dateLabel, highs: [], lows: [] });
+          }
+          const group = dayGroups.get(dateKey)!;
+          if (p.type === 'high') group.highs.push(p);
+          else group.lows.push(p);
+        }
+        const days = Array.from(dayGroups.entries()).sort(([a], [b]) => a.localeCompare(b));
+
+        const thStyle: React.CSSProperties = {
+          fontSize: 'var(--text-label)',
+          fontWeight: 600,
+          textTransform: 'uppercase',
+          textAlign: 'left',
+          padding: '0.375rem 0.5rem',
+          whiteSpace: 'nowrap',
+        };
+        const tdStyle: React.CSSProperties = {
+          fontSize: 'var(--text-body)',
+          fontWeight: 400,
+          padding: '0.25rem 0.5rem',
+          fontFeatureSettings: '"tnum"',
+          verticalAlign: 'top',
+          whiteSpace: 'nowrap',
+        };
+
+        return (
+          <div className="overflow-x-auto mt-4">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr>
+                  <th scope="col" className="text-muted-foreground" style={thStyle}>&nbsp;</th>
+                  {days.map(([key, { label }]) => (
+                    <th key={key} scope="col" className="text-foreground" style={{ ...thStyle, textAlign: 'center' }}>
+                      {label}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+              <tbody>
+                {/* High tide row */}
+                <tr>
+                  <th scope="row" className="text-muted-foreground" style={thStyle}>{t('tide.tideHigh')}</th>
+                  {days.map(([key, { highs }]) => (
+                    <td key={key} className="text-foreground" style={{ ...tdStyle, textAlign: 'center' }}>
+                      {highs.length > 0
+                        ? highs.map((h, i) => (
+                            <div key={i}>
+                              {formatNumber(h.height, 2, locale)} {heightUnit}
+                              <span className="text-muted-foreground ml-1">{formatTime(new Date(h.time), locale, stationTz)}</span>
+                            </div>
+                          ))
+                        : '—'}
+                    </td>
+                  ))}
+                </tr>
+                {/* Low tide row */}
+                <tr className="bg-muted/30">
+                  <th scope="row" className="text-muted-foreground" style={thStyle}>{t('tide.tideLow')}</th>
+                  {days.map(([key, { lows }]) => (
+                    <td key={key} className="text-foreground" style={{ ...tdStyle, textAlign: 'center' }}>
+                      {lows.length > 0
+                        ? lows.map((l, i) => (
+                            <div key={i}>
+                              {formatNumber(l.height, 2, locale)} {heightUnit}
+                              <span className="text-muted-foreground ml-1">{formatTime(new Date(l.time), locale, stationTz)}</span>
+                            </div>
+                          ))
+                        : '—'}
+                    </td>
+                  ))}
+                </tr>
+                {/* Moon phase row */}
+                <tr>
+                  <th scope="row" className="text-muted-foreground" style={thStyle}>{t('tide.moonColumn')}</th>
+                  {days.map(([key]) => (
+                    <td key={key} style={{ ...tdStyle, textAlign: 'center' }}>
+                      <div className="flex items-center justify-center gap-1">
+                        <MoonPhaseIcon
+                          size={18}
+                          illuminationPercent={moonIllumination}
+                          phaseName={moonPhaseName}
+                          ariaLabel={moonAriaLabel}
+                        />
+                        {moonPhaseName && (
+                          <span className="text-muted-foreground" style={{ fontSize: 'var(--text-micro)' }}>
+                            ({moonPhaseName})
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        );
+      })()}
     </>
   );
 }
