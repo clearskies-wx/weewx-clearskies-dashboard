@@ -57,9 +57,13 @@ import { AlertsPanel } from './shared/AlertsPanel';
 import { TideChart } from './shared/TideChart';
 import { MarineStatTile } from '../shared/MarineStatTile';
 import { WeatherIcon } from '../../weather-icon';
+import type { MarineAlertSummary } from '../../../api/types';
+
+const BEACH_SAFETY_ALERT_TYPES = new Set(['coastalFlood', 'beachHazard']);
 
 interface BeachSafetyTabProps {
   locationId: string;
+  alerts?: MarineAlertSummary[];
 }
 
 // ---------------------------------------------------------------------------
@@ -276,7 +280,7 @@ function StormSurgeBadge({ level, t }: { level: StormSurgeLevel; t: TFunction })
 // Main component
 // ---------------------------------------------------------------------------
 
-export function BeachSafetyTab({ locationId }: BeachSafetyTabProps) {
+export function BeachSafetyTab({ locationId, alerts = [] }: BeachSafetyTabProps) {
   const { t, i18n } = useTranslation('marine');
   const { t: tCommon } = useTranslation('common');
   const locale = i18n.language;
@@ -316,8 +320,17 @@ export function BeachSafetyTab({ locationId }: BeachSafetyTabProps) {
 
   return (
     <div className="flex flex-col gap-[var(--gap-grid)]">
-      {/* 1. Safety alerts banner — top, most prominent */}
-      <AlertsPanel alerts={assessment.activeAlerts.map((h) => ({ headline: h, alertType: 'beachHazard' }))} />
+      {/* 1. Safety alerts banner — top, most prominent. Uses real
+          MarineAlertSummary[] from parent when available (same data path as
+          Boating/Surfing/Fishing), filtered to coastalFlood + beachHazard
+          per DASHBOARD-MANUAL §12. Falls back to the assessment's own
+          activeAlerts strings when the parent doesn't pass alerts. */}
+      <AlertsPanel
+        alerts={alerts.length > 0
+          ? alerts
+          : assessment.activeAlerts.map((h) => ({ headline: h, alertType: 'beachHazard' }))}
+        filterTypes={BEACH_SAFETY_ALERT_TYPES}
+      />
 
       {/* 2. Beach Conditions — itemized hazard rows (rip current, UV), each
           show-when-available, followed by a stat-tile grid and a storm

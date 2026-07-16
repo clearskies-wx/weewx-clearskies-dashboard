@@ -177,7 +177,7 @@ export function MarinePage() {
         icon: <PersonSimpleSwim aria-hidden="true" focusable="false" className={ACTIVITY_ICON_SIZE} />,
         label: t('activities.beachSafety'),
         qualitativeLabel: beachSafetyLabel(location.beachSafetyLevel, t),
-        content: <BeachSafetyTab locationId={location.locationId} />,
+        content: <BeachSafetyTab locationId={location.locationId} alerts={location.activeAlerts ?? []} />,
       });
     }
     return defs;
