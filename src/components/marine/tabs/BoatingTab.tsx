@@ -57,6 +57,17 @@ export interface BoatingTabProps {
 }
 
 // ---------------------------------------------------------------------------
+// Alert filtering — DASHBOARD-MANUAL §12 "Activity-relevant alert filtering":
+// Boating shows marine zone alerts + coastal flood alerts. `alertType` is a
+// closed 3-value server-side bucket (docs/contracts/openapi-v1.yaml
+// `MarineLocationSummary.activeAlerts[].alertType` enum: marineZone,
+// coastalFlood, beachHazard) — NOT a per-NWS-product-type string — so this
+// Set matches the wire values directly, no keyword/headline matching.
+// ---------------------------------------------------------------------------
+
+const BOATING_ALERT_TYPES = new Set(['marineZone', 'coastalFlood']);
+
+// ---------------------------------------------------------------------------
 // Shared small pieces
 // ---------------------------------------------------------------------------
 
@@ -349,7 +360,7 @@ export function BoatingTab({ locationId, alerts = [] }: BoatingTabProps) {
   return (
     <div className="flex flex-col gap-[var(--gap-grid)]">
       {/* 1. Active advisories — top, prominent */}
-      <AlertsPanel alerts={alerts} />
+      <AlertsPanel alerts={alerts} filterTypes={BOATING_ALERT_TYPES} />
 
       {/* 2. Current Conditions — weather icon, air/water temp, visibility,
           dewpoint, pressure + trend, water level offset, and storm surge

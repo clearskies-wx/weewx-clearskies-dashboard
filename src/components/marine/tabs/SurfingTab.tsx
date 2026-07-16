@@ -99,6 +99,17 @@ export interface SurfingTabProps {
 }
 
 // ---------------------------------------------------------------------------
+// Alert filtering — DASHBOARD-MANUAL §12 "Activity-relevant alert filtering":
+// Surfing shows marine zone alerts + coastal/beach alerts. `alertType` is a
+// closed 3-value server-side bucket (docs/contracts/openapi-v1.yaml
+// `MarineLocationSummary.activeAlerts[].alertType` enum: marineZone,
+// coastalFlood, beachHazard) — NOT a per-NWS-product-type string — so this
+// Set matches the wire values directly, no keyword/headline matching.
+// ---------------------------------------------------------------------------
+
+const SURFING_ALERT_TYPES = new Set(['marineZone', 'beachHazard']);
+
+// ---------------------------------------------------------------------------
 // Shared small pieces (TileSkeleton/InlineError follow the same conventions
 // established by BoatingTab.tsx / BeachSafetyTab.tsx so all four marine
 // activity tabs read as one system).
@@ -964,7 +975,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
   return (
     <div className="flex flex-col gap-[var(--gap-grid)]">
       {/* 1. Active advisories — top, prominent */}
-      <AlertsPanel alerts={alerts} />
+      <AlertsPanel alerts={alerts} filterTypes={SURFING_ALERT_TYPES} />
 
       {/* 2. Surf Score — numeric score + qualityLabel, scoring breakdown absorbed below */}
       <Card footprint="wide">

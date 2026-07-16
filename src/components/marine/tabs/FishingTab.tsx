@@ -152,6 +152,17 @@ export interface FishingTabProps {
   alerts?: MarineAlertSummary[];
 }
 
+// ---------------------------------------------------------------------------
+// Alert filtering — DASHBOARD-MANUAL §12 "Activity-relevant alert filtering":
+// Fishing shows marine zone alerts only. `alertType` is a closed 3-value
+// server-side bucket (docs/contracts/openapi-v1.yaml
+// `MarineLocationSummary.activeAlerts[].alertType` enum: marineZone,
+// coastalFlood, beachHazard) — NOT a per-NWS-product-type string — so this
+// Set matches the wire value directly, no keyword/headline matching.
+// ---------------------------------------------------------------------------
+
+const FISHING_ALERT_TYPES = new Set(['marineZone']);
+
 type TFn = (key: string, opts?: Record<string, unknown>) => string;
 
 // ---------------------------------------------------------------------------
@@ -1183,7 +1194,7 @@ export function FishingTab({ locationId, alerts = [] }: FishingTabProps) {
   return (
     <div className="flex flex-col gap-[var(--gap-grid)]">
       {/* 1. Activity-relevant alerts — top, prominent */}
-      <AlertsPanel alerts={alerts} />
+      <AlertsPanel alerts={alerts} filterTypes={FISHING_ALERT_TYPES} />
 
       {/* 2. Score — headline + overall score/label, with the 4 weighted
           scoring-factor bars merged directly below (T6.1: previously a
