@@ -1606,8 +1606,8 @@ function NearshoreModelIndicator({
             cursor: 'pointer',
             listStyle: 'none',
             color: 'var(--muted-foreground)',
-            minWidth: '20px',
-            minHeight: '20px',
+            minWidth: '24px',
+            minHeight: '24px',
           }}
           aria-label={t('surfing.modelTooltipTitle')}
         >
