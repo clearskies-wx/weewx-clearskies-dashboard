@@ -43,6 +43,8 @@ function buildHourly(): HourlyForecastPoint[] {
       cloudCover: [30, 40, 35, 60, 45, 30, 20, 25, 15, 30, 40, 35][i],
       weatherCode: String(HOURLY_CODES[i]),
       weatherText: HOURLY_TEXTS[i],
+      feelsLike: HOURLY_TEMPS[i] + (i % 2 === 0 ? 2 : -1),
+      dewpoint: HOURLY_TEMPS[i] - 12 + (i % 3),
       source: 'nws',
       extras: {},
     };
