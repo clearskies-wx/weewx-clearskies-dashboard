@@ -848,6 +848,8 @@ const SURF_CELL_BASE: React.CSSProperties = {
   justifyContent: 'center',
 };
 
+const WAVE_CHART_H = 100; // px — wave height chart area
+
 const SURF_ROW_H = {
   time:        24,
   score:       28,
@@ -857,7 +859,8 @@ const SURF_ROW_H = {
   wind:        40,
   windQuality: 22,
   waterTemp:   22,
-  trendSvg:    56,
+  waveValues:  22,
+  trendSvg:    WAVE_CHART_H,
   direction:   22,
   period:      22,
   energy:      22,
@@ -880,10 +883,12 @@ const ROW_HEADER_STYLE: React.CSSProperties = {
 const SECTION_DIVIDER: React.CSSProperties = {
   height: 1,
   background: 'var(--border)',
-  opacity: 0.4,
-  marginTop: '0.25rem',
-  marginBottom: '0.25rem',
+  marginTop: '0.35rem',
+  marginBottom: '0.35rem',
 };
+
+const WAVE_BLUE = '#3b82f6';
+const WAVE_BLUE_FILL = 'rgba(59, 130, 246, 0.15)';
 
 const DETAIL_PANEL_BG = 'var(--detail-panel-bg, rgba(80,100,255,0.08))';
 
@@ -1008,79 +1013,114 @@ function SurfScrollForecast({
 
   const tempUnitLabel = tempUnit ? tempUnit.replace(/^\s+/, '') : '°';
 
+  // Y-axis range: 0 to next integer above max, minimum 4ft to show variation.
+  const yMax = Math.max(4, Math.ceil(globalMaxH));
+  const TREND_PAD_TOP = 14; // room for value labels above curve
+  const TREND_PAD_BOT = 4;
+  const chartDrawH = trendH - TREND_PAD_TOP - TREND_PAD_BOT;
+
+  function hToY(h: number | null): number {
+    if (h == null || isNaN(h)) return TREND_PAD_TOP + chartDrawH;
+    return TREND_PAD_TOP + chartDrawH - (h / yMax) * chartDrawH;
+  }
+
+  // Build smooth cubic bezier path for the wave curve.
+  function buildSmoothPath(items: EnrichedForecastEntry[]): string {
+    const pts = items.map((item, i) => ({
+      x: i * SURF_COL_W + SURF_COL_W / 2,
+      y: hToY(item.entry.waveHeightAtBreak),
+    }));
+    if (pts.length === 0) return '';
+    if (pts.length === 1) return `M${pts[0].x},${pts[0].y}`;
+    let d = `M${pts[0].x},${pts[0].y}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[Math.max(0, i - 1)];
+      const p1 = pts[i];
+      const p2 = pts[i + 1];
+      const p3 = pts[Math.min(pts.length - 1, i + 2)];
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+      d += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
+    }
+    return d;
+  }
+
+  // Build area fill path (curve + baseline at bottom).
+  function buildAreaPath(items: EnrichedForecastEntry[]): string {
+    const curvePath = buildSmoothPath(items);
+    if (!curvePath || items.length === 0) return '';
+    const lastX = (items.length - 1) * SURF_COL_W + SURF_COL_W / 2;
+    const firstX = SURF_COL_W / 2;
+    const baseY = TREND_PAD_TOP + chartDrawH;
+    return `${curvePath} L${lastX},${baseY} L${firstX},${baseY} Z`;
+  }
+
+  // Y-axis tick values (integers from 0 to yMax).
+  const yTicks: number[] = [];
+  for (let v = 0; v <= yMax; v++) yTicks.push(v);
+
+  // Row header helper.
+  function rowHeader(height: number, label?: string) {
+    return (
+      <div style={{ ...ROW_HEADER_STYLE, height }}>
+        {label && <span>{label}</span>}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-3">
-      <div style={{ display: 'flex', flexDirection: 'row' }}>
-        {/* ── Fixed row header column ── */}
+      {/* Row headers + scrollable content side-by-side. The header column is
+          position:sticky so it stays visible while the data scrolls. */}
+      <HorizontalScrollNav ariaLabel={t('surfing.forecastTimelineTitle')}>
         <div
           style={{
-            width: ROW_HEADER_W,
-            flexShrink: 0,
-            position: 'sticky',
-            left: 0,
-            zIndex: 2,
-            background: 'var(--card)',
+            display: 'flex',
+            flexDirection: 'row',
+            width: 'max-content',
+            padding: '0 0.25rem 0.5rem',
           }}
         >
-          {/* Day label row spacer */}
-          <div style={{ ...ROW_HEADER_STYLE, height: 22 }} />
-
-          {/* ── Score section ── */}
-          <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.time }} />
-          <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.score }}>
-            <span>{t('surfing.scoreLabel', { defaultValue: 'Score' })}</span>
-          </div>
-
-          {/* Section divider */}
-          <div style={{ ...SECTION_DIVIDER, marginLeft: '0.25rem', marginRight: '0.25rem' }} />
-
-          {/* ── Current Conditions section ── */}
-          <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.icon }} />
-          <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.airTemp }}>
-            <span>{t('surfing.tempLabel', { defaultValue: 'Temp' })}</span>
-          </div>
-          <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.precip }}>
-            <span>{t('surfing.precipLabel', { defaultValue: 'Precip' })}</span>
-          </div>
-          <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.wind }}>
-            <span>{t('surfing.windLabel', { defaultValue: 'Wind' })}</span>
-          </div>
-          <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.windQuality }}>
-            <span>{t('surfing.windQualityLabel', { defaultValue: 'Quality' })}</span>
-          </div>
-
-          {/* Section divider */}
-          <div style={{ ...SECTION_DIVIDER, marginLeft: '0.25rem', marginRight: '0.25rem' }} />
-
-          {/* ── Swells section ── */}
-          <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.waterTemp }}>
-            <span>{t('surfing.waterTempLabel', { defaultValue: 'Water' })}</span>
-          </div>
-          <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.trendSvg }}>
-            <span>{t('waveHeight', { defaultValue: 'Waves' })}</span>
-          </div>
-          <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.direction }}>
-            <span>{t('surfing.directionLabel', { defaultValue: 'Direction' })}</span>
-          </div>
-          <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.period }}>
-            <span>{t('surfing.periodLabel', { defaultValue: 'Period' })}</span>
-          </div>
-          <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.energy }}>
-            <span>{t('surfing.energyLabel', { defaultValue: 'Power' })}</span>
-          </div>
-        </div>
-
-        {/* ── Scrollable data columns ── */}
-        <HorizontalScrollNav ariaLabel={t('surfing.forecastTimelineTitle')}>
+          {/* ── Fixed row header column ── */}
           <div
             style={{
-              display: 'flex',
-              flexDirection: 'column',
-              width: 'max-content',
-              padding: '0 0.25rem 0.5rem',
+              width: ROW_HEADER_W,
+              flexShrink: 0,
+              position: 'sticky',
+              left: 0,
+              zIndex: 2,
+              background: 'rgb(var(--card-glass))',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              borderRight: '1px solid var(--border)',
             }}
           >
-            {/* Day labels row — spans across all day groups */}
+            {rowHeader(22)}
+            {/* Score */}
+            {rowHeader(SURF_ROW_H.time)}
+            {rowHeader(SURF_ROW_H.score, t('surfing.scoreLabel', { defaultValue: 'Score' }))}
+            <div style={SECTION_DIVIDER} />
+            {/* Current Conditions */}
+            {rowHeader(SURF_ROW_H.icon)}
+            {rowHeader(SURF_ROW_H.airTemp, t('surfing.airTempLabel', { defaultValue: 'Air Temp' }))}
+            {rowHeader(SURF_ROW_H.precip, t('surfing.precipLabel', { defaultValue: 'Precip' }))}
+            {rowHeader(SURF_ROW_H.wind, t('surfing.windLabel', { defaultValue: 'Wind' }))}
+            {rowHeader(SURF_ROW_H.windQuality, t('surfing.windQualityLabel', { defaultValue: 'Quality' }))}
+            <div style={SECTION_DIVIDER} />
+            {/* Swells */}
+            {rowHeader(SURF_ROW_H.waterTemp, t('surfing.waterTempLabel', { defaultValue: 'Water' }))}
+            {rowHeader(SURF_ROW_H.trendSvg, t('waveHeight', { defaultValue: 'Waves' }))}
+            {rowHeader(SURF_ROW_H.waveValues, `(${heightUnit})`)}
+            {rowHeader(SURF_ROW_H.direction, t('surfing.directionLabel', { defaultValue: 'Direction' }))}
+            {rowHeader(SURF_ROW_H.period, t('surfing.periodLabel', { defaultValue: 'Period' }))}
+            {rowHeader(SURF_ROW_H.energy, t('surfing.energyLabel', { defaultValue: 'Power' }))}
+          </div>
+
+          {/* ── Scrollable data columns ── */}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {/* Day labels */}
             <div style={{ display: 'flex', flexDirection: 'row', height: 22 }}>
               {groupsWithIdx.map((group) => (
                 <div
@@ -1104,7 +1144,7 @@ function SurfScrollForecast({
 
             {/* ── Score section ── */}
 
-            {/* Row: Time buttons */}
+            {/* Time buttons */}
             <div style={{ display: 'flex', flexDirection: 'row' }}>
               {groupsWithIdx.map((group) =>
                 group.items.map((item, i) => {
@@ -1129,16 +1169,14 @@ function SurfScrollForecast({
                         cursor: 'pointer',
                       }}
                     >
-                      <span
-                        style={{
-                          fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                          fontSize: 'var(--text-label)',
-                          fontWeight: 600,
-                          color: isSelected ? 'var(--primary)' : 'var(--muted-foreground)',
-                          whiteSpace: 'nowrap',
-                          lineHeight: 1,
-                        }}
-                      >
+                      <span style={{
+                        fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                        fontSize: 'var(--text-label)',
+                        fontWeight: 600,
+                        color: isSelected ? 'var(--primary)' : 'var(--muted-foreground)',
+                        whiteSpace: 'nowrap',
+                        lineHeight: 1,
+                      }}>
                         {timeLabel}
                       </span>
                     </button>
@@ -1147,32 +1185,27 @@ function SurfScrollForecast({
               )}
             </div>
 
-            {/* Row: Score 0-100 */}
+            {/* Score */}
             {renderRow('score', SURF_ROW_H.score, (item) => {
               const score = computeEntryScore(item.entry, heightUnit);
               return (
-                <span
-                  aria-hidden="true"
-                  style={{
-                    fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
-                    fontSize: 'var(--text-body)',
-                    fontWeight: 700,
-                    fontFeatureSettings: '"tnum"',
-                    lineHeight: 1,
-                    color: scoreBarFillColor(score),
-                  }}
-                >
+                <span aria-hidden="true" style={{
+                  fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
+                  fontSize: 'var(--text-body)',
+                  fontWeight: 700,
+                  fontFeatureSettings: '"tnum"',
+                  lineHeight: 1,
+                  color: scoreBarFillColor(score),
+                }}>
                   {score}
                 </span>
               );
             })}
 
-            {/* Section divider */}
             <div style={SECTION_DIVIDER} />
 
-            {/* ── Current Conditions section ── */}
+            {/* ── Current Conditions ── */}
 
-            {/* Row: Weather icon */}
             {renderRow('icon', SURF_ROW_H.icon, (item) => {
               const hp = item.hourlyPoint;
               const iconResult = hp
@@ -1183,32 +1216,26 @@ function SurfScrollForecast({
                     isNight: false,
                   })
                 : null;
-              return iconResult ? (
-                <WeatherIcon code={iconResult.code} isNight={iconResult.isNight} size={28} />
-              ) : (
-                <span style={microText}>—</span>
-              );
+              return iconResult
+                ? <WeatherIcon code={iconResult.code} isNight={iconResult.isNight} size={28} />
+                : <span style={microText}>—</span>;
             })}
 
-            {/* Row: Air temp with unit */}
             {renderRow('airTemp', SURF_ROW_H.airTemp, (item) => {
               const hp = item.hourlyPoint;
               return (
-                <span
-                  style={{
-                    fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
-                    fontSize: 'var(--text-label)',
-                    fontWeight: 600,
-                    color: 'var(--foreground)',
-                    lineHeight: 1,
-                  }}
-                >
+                <span style={{
+                  fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
+                  fontSize: 'var(--text-label)',
+                  fontWeight: 600,
+                  color: 'var(--foreground)',
+                  lineHeight: 1,
+                }}>
                   {hp?.outTemp != null ? `${Math.round(hp.outTemp)}${tempUnitLabel}` : '—'}
                 </span>
               );
             })}
 
-            {/* Row: Precip % */}
             {renderRow('precip', SURF_ROW_H.precip, (item) => {
               const hp = item.hourlyPoint;
               const isSnow = hp?.precipType === 'snow';
@@ -1220,50 +1247,28 @@ function SurfScrollForecast({
               );
             })}
 
-            {/* Row: Wind symbol */}
             {renderRow('wind', SURF_ROW_H.wind, (item) => {
               const hp = item.hourlyPoint;
-              return (
-                <WindSymbol
-                  bearing={hp?.windDir ?? null}
-                  speed={hp?.windSpeed != null ? Math.round(hp.windSpeed) : 0}
-                  size={20}
-                />
-              );
+              return <WindSymbol bearing={hp?.windDir ?? null} speed={hp?.windSpeed != null ? Math.round(hp.windSpeed) : 0} size={20} />;
             }, { overflow: 'visible' })}
 
-            {/* Row: Wind quality */}
             {renderRow('windQuality', SURF_ROW_H.windQuality, (item) => (
-              <span
-                style={{
-                  ...microText,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  maxWidth: `${SURF_COL_W - 6}px`,
-                }}
-              >
+              <span style={{ ...microText, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: `${SURF_COL_W - 6}px` }}>
                 {item.entry.windQuality ?? '—'}
               </span>
             ))}
 
-            {/* Section divider */}
             <div style={SECTION_DIVIDER} />
 
-            {/* ── Swells section ── */}
+            {/* ── Swells ── */}
 
-            {/* Row: Water temp (1 decimal place, with unit) */}
             {renderRow('waterTemp', SURF_ROW_H.waterTemp, (item) => {
-              const waterTempVal = item.windPoint?.waterTemp ?? null;
-              return (
-                <span style={microText}>
-                  {waterTempVal != null ? `${waterTempVal.toFixed(1)}${tempUnitLabel}` : '—'}
-                </span>
-              );
+              const wt = item.windPoint?.waterTemp ?? null;
+              return <span style={microText}>{wt != null ? `${wt.toFixed(1)}${tempUnitLabel}` : '—'}</span>;
             })}
 
-            {/* Row: Wave height chart — continuous SVG spanning ALL columns across ALL days */}
-            <div style={{ height: trendH, width: totalCols * SURF_COL_W, flexShrink: 0, position: 'relative' }}>
+            {/* Wave height chart — smooth curve with blue area fill, Y-axis */}
+            <div style={{ height: trendH, width: totalCols * SURF_COL_W, flexShrink: 0 }}>
               <svg
                 viewBox={`0 0 ${totalCols * SURF_COL_W} ${trendH}`}
                 width={totalCols * SURF_COL_W}
@@ -1272,69 +1277,53 @@ function SurfScrollForecast({
                 focusable={false as unknown as boolean}
                 style={{ display: 'block' }}
               >
-                {/* Continuous polyline across all day groups */}
-                <polyline
-                  points={allItems.map((item, i) => {
-                    const x = i * SURF_COL_W + SURF_COL_W / 2;
-                    const y = heightToY(item.entry.waveHeightAtBreak);
-                    return `${x},${y}`;
-                  }).join(' ')}
-                  fill="none"
-                  stroke="var(--chart-2)"
-                  strokeWidth={1.5}
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                />
-                {/* Dots at each data point with value labels */}
+                {/* Y-axis gridlines */}
+                {yTicks.map((v) => {
+                  const y = hToY(v);
+                  return (
+                    <line key={v} x1={0} y1={y} x2={totalCols * SURF_COL_W} y2={y}
+                      stroke="var(--border)" strokeWidth={0.5} strokeDasharray={v === 0 ? 'none' : '2,3'} />
+                  );
+                })}
+                {/* Area fill */}
+                <path d={buildAreaPath(allItems)} fill={WAVE_BLUE_FILL} />
+                {/* Smooth curve */}
+                <path d={buildSmoothPath(allItems)} fill="none" stroke={WAVE_BLUE} strokeWidth={2} />
+                {/* Dots */}
                 {allItems.map((item, i) => {
                   const x = i * SURF_COL_W + SURF_COL_W / 2;
-                  const y = heightToY(item.entry.waveHeightAtBreak);
-                  const val = item.entry.waveHeightAtBreak;
-                  return (
-                    <g key={i}>
-                      <circle cx={x} cy={y} r={2.5} fill="var(--chart-2)" />
-                      {val != null && !isNaN(val) && (
-                        <text
-                          x={x}
-                          y={y - 6}
-                          textAnchor="middle"
-                          fill="var(--muted-foreground)"
-                          style={{
-                            fontSize: '9px',
-                            fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                            fontWeight: 500,
-                          }}
-                        >
-                          {formatValue(val, 'default', locale)}
-                        </text>
-                      )}
-                    </g>
-                  );
+                  const y = hToY(item.entry.waveHeightAtBreak);
+                  return <circle key={i} cx={x} cy={y} r={2.5} fill={WAVE_BLUE} />;
                 })}
               </svg>
             </div>
 
-            {/* Row: Direction */}
+            {/* Wave height values row */}
+            {renderRow('waveValues', SURF_ROW_H.waveValues, (item) => {
+              const val = item.entry.waveHeightAtBreak;
+              return (
+                <span style={{ ...microText, fontFeatureSettings: '"tnum"', fontWeight: 600, color: WAVE_BLUE }}>
+                  {val != null && !isNaN(val) ? formatValue(val, 'default', locale) : '—'}
+                </span>
+              );
+            })}
+
             {renderRow('direction', SURF_ROW_H.direction, (item) => {
               const cardinal = cardinalFromDegrees(item.entry.direction);
               return <span style={microText}>{cardinal ?? '—'}</span>;
             })}
 
-            {/* Row: Period */}
             {renderRow('period', SURF_ROW_H.period, (item) => (
-              <span style={microText}>
-                {item.entry.period != null ? `${Math.round(item.entry.period)}s` : '—'}
-              </span>
+              <span style={microText}>{item.entry.period != null ? `${Math.round(item.entry.period)}s` : '—'}</span>
             ))}
 
-            {/* Row: Energy/Power */}
             {renderRow('energy', SURF_ROW_H.energy, (item) => {
               const energy = Math.round(item.entry.swellDominance * 100);
               return <span style={microText}>{energy}%</span>;
             })}
           </div>
-        </HorizontalScrollNav>
-      </div>
+        </div>
+      </HorizontalScrollNav>
 
       {/* Detail panel — outside the scroll area; grows the card vertically.
           aria-live="polite" announces content changes to screen readers. */}
@@ -1963,13 +1952,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
 
       </Grid>
 
-      {/* ── Card 5: 72-Hour Surf Forecast — full width ──────────────────── */}
-      {/* Uses HorizontalScrollNav with fixed-width <button> columns per period.
-       *  Day group headers appear above each day's columns within the scroll area.
-       *  Click a column to expand the detail panel below the scroll (fluid mode
-       *  grows the card to fit the panel).
-       *  CardContent uses overflow-visible so HorizontalScrollNav chevron buttons
-       *  can project into the card padding area (matches ForecastHourlyCard). */}
+      {/* ── Cards 5–6: 72-Hour Forecast + Tide — full width, same Grid ── */}
       <Grid className="md:!auto-rows-[auto]">
         <Card footprint="full" className="!overflow-visible">
           <CardHeader>
@@ -1993,14 +1976,9 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                 tCommon={tCommon}
               />
             )}
-
           </CardContent>
         </Card>
-      </Grid>
 
-      {/* ── Card 6: Tide Forecast — full width ──────────────────────────── */}
-      {/* No forced max-height: fluid mode lets TideChart render at natural height. */}
-      <Grid className="md:!auto-rows-[auto]">
         <Card footprint="full" className="!overflow-visible">
           <CardHeader>
             <CardTitle as="h3">{t('surfing.tideForecastTitle')}</CardTitle>
