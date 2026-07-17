@@ -292,6 +292,8 @@ export interface HourlyForecastPoint {
   cloudCover: number | null;
   weatherCode: string | null;
   weatherText: string | null;
+  feelsLike: number | null;
+  dewpoint: number | null;
   source: string;
   extras: Record<string, number | string | boolean | null>;
 }

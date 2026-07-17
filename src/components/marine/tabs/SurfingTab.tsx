@@ -1627,6 +1627,9 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
   const airTempCV             = asConverted(obsData.data?.outTemp ?? null);
   const airTempValue          = airTempCV?.value != null ? airTempCV.formatted : '—';
   const airTempUnit           = airTempCV?.value != null ? (airTempCV.label ?? '') : '';
+  const dewpointCV            = asConverted(obsData.data?.dewpoint ?? null);
+  const dewpointValue         = dewpointCV?.value != null ? dewpointCV.formatted : '—';
+  const dewpointUnit          = dewpointCV?.value != null ? (dewpointCV.label ?? '') : '';
   const uvCV                  = asConverted(obsData.data?.UV ?? null);
   const uvValue               = uvCV?.value != null ? String(Math.round(uvCV.value)) : '—';
   const waterTempValue        = marine?.observation?.waterTemp != null
@@ -1861,7 +1864,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
             <CardTitle as="h3">{t('surfing.currentConditionsTitle')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2 items-center">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-x-4 gap-y-2 items-center">
 
               {/* Col 1: Current sky condition — WeatherIcon visual.
                *  WCAG 1.1.1 (Non-text Content): icon is aria-hidden (decorative);
@@ -1908,7 +1911,34 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                 </div>
               </div>
 
-              {/* Col 3: Water temp — WaterThermometerIcon + value + label */}
+              {/* Col 3: Dewpoint — Drop icon + value + label */}
+              <div className="flex items-center gap-2">
+                <span
+                  aria-hidden="true"
+                  className="shrink-0 text-muted-foreground"
+                  style={{ fontSize: 'var(--text-stat-tile)' }}
+                >
+                  <Drop weight="bold" />
+                </span>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>
+                    {t('surfing.dewpoint', { defaultValue: 'Dewpoint' })}
+                  </span>
+                  <span
+                    className="text-foreground font-semibold"
+                    style={{ fontSize: 'var(--text-stat-label)', fontFeatureSettings: '"tnum"', fontFamily: 'var(--font-display)' }}
+                  >
+                    {dewpointValue}
+                    {dewpointUnit && (
+                      <span className="text-muted-foreground font-normal ml-1" style={{ fontSize: 'var(--text-label)' }}>
+                        {dewpointUnit}
+                      </span>
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              {/* Col 4: Water temp — WaterThermometerIcon + value + label */}
               <div className="flex items-center gap-2">
                 <span
                   aria-hidden="true"
