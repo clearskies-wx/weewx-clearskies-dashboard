@@ -54,7 +54,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AreaChart, Area, XAxis, YAxis } from 'recharts';
+// Recharts imports removed — WaveFaceHeightChart replaced by inline SVG trend
 import { Info, Waves, Timer, Compass, X, Thermometer, Drop, Snowflake } from '@phosphor-icons/react';
 import { useSurfDetail, useMarineDetail, useStation, useObservation, useForecast } from '../../../hooks/useWeatherData';
 import { WindSymbol } from '../../forecast/WindSymbol';
@@ -70,14 +70,14 @@ import { formatValue } from '../../../utils/format';
 import { formatTime } from '../../../utils/format-date';
 import { cardinalFromDegrees } from '../../../utils/wind';
 import { Grid } from '../../../components/layout/grid';
-import { ChartContainer } from '../../charts/chart-container';
+// ChartContainer import removed — no Recharts charts remain in this file
 import { Card, CardHeader, CardTitle, CardContent } from '../../ui/card';
 // MarineStatTile available for future use — swell card uses icon-left inline layout
 // import { MarineStatTile } from '../shared/MarineStatTile';
 import { HorizontalScrollNav } from '../../ui/horizontal-scroll-nav';
 import { AlertsPanel } from './shared/AlertsPanel';
 import { TideChart } from './shared/TideChart';
-import { buildHourTicks } from './shared/hour-ticks';
+// buildHourTicks import removed — no longer needed without WaveFaceHeightChart
 import type {
   SpectralWaveComponent,
   SurfForecast,
@@ -1500,110 +1500,8 @@ function SurfScrollForecast({
 // actually care about, not raw offshore Hs).
 // ---------------------------------------------------------------------------
 
-function WaveFaceHeightChart({
-  forecast,
-  locale,
-  stationTz,
-  heightUnit,
-  ariaLabel,
-  t,
-}: {
-  forecast: SurfForecast[];
-  locale: string;
-  stationTz: string;
-  heightUnit: string;
-  ariaLabel: string;
-  t: (key: string, opts?: Record<string, unknown>) => string;
-}) {
-  const points = useMemo(
-    () =>
-      forecast
-        .map((f) => ({ ts: new Date(f.time).getTime(), height: f.waveHeightAtBreak }))
-        .sort((a, b) => a.ts - b.ts),
-    [forecast],
-  );
-
-  if (points.length === 0) {
-    return (
-      <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
-        {t('surfing.noForecastData')}
-      </p>
-    );
-  }
-
-  const minTs = points[0].ts;
-  const maxTs = points[points.length - 1].ts;
-  const ticks = buildHourTicks(minTs, maxTs);
-  const tickFormatter = (ts: number) => formatTime(new Date(ts), locale, stationTz);
-
-  return (
-    <>
-      <ChartContainer height={220} ariaLabel={ariaLabel}>
-        <AreaChart data={points} margin={{ top: 8, right: 12, bottom: 0, left: 12 }}>
-          <defs>
-            <linearGradient id="surfingWaveFaceGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%"  style={{ stopColor: 'var(--chart-2)', stopOpacity: 0.4 }} />
-              <stop offset="95%" style={{ stopColor: 'var(--chart-2)', stopOpacity: 0 }} />
-            </linearGradient>
-          </defs>
-          <XAxis
-            dataKey="ts"
-            type="number"
-            domain={[minTs, maxTs]}
-            ticks={ticks}
-            tickFormatter={tickFormatter}
-            tickLine={false}
-            axisLine={false}
-            tick={{ fontFamily: 'var(--font-chart)', fontSize: 14, fill: 'var(--muted-foreground)' }}
-            height={28}
-          />
-          <YAxis
-            tickLine={false}
-            axisLine={false}
-            tick={{ fontFamily: 'var(--font-chart)', fontSize: 14, fill: 'var(--muted-foreground)' }}
-            width={36}
-            label={{
-              value: heightUnit,
-              angle: -90,
-              position: 'insideLeft',
-              style: { fontFamily: 'var(--font-chart)', fontSize: 12, fill: 'var(--muted-foreground)' },
-            }}
-          />
-          <Area
-            type="monotone"
-            dataKey="height"
-            stroke="var(--chart-2)"
-            fill="url(#surfingWaveFaceGradient)"
-            strokeWidth={2}
-            dot={false}
-            activeDot={{ r: 4 }}
-            isAnimationActive={false}
-            connectNulls
-          />
-        </AreaChart>
-      </ChartContainer>
-
-      {/* sr-only data table — WCAG 1.1.1 (rules/coding.md §5.5) */}
-      <table className="sr-only">
-        <caption>{ariaLabel}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{t('surfing.srTimeColumn')}</th>
-            <th scope="col">{t('surfing.srWaveFaceHeightColumn', { unit: heightUnit })}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {forecast.map((f, i) => (
-            <tr key={`${f.time}-${i}`}>
-              <td>{formatTime(new Date(f.time), locale, stationTz)}</td>
-              <td>{formatValue(f.waveHeightAtBreak, 'default', locale)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </>
-  );
-}
+// WaveFaceHeightChart removed — wave height is now shown as an inline SVG
+// polyline trend within the 72-hour forecast scroll columns (row 9).
 
 // ---------------------------------------------------------------------------
 // WaterThermometerIcon — local inline SVG: thermometer + water drop.
