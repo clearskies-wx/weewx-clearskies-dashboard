@@ -959,17 +959,10 @@ function SurfScrollForecast({
   const allItems = useMemo(() => dayGroups.flatMap((g) => g.items), [dayGroups]);
   const allWaveHeights = allItems.map((it) => it.entry.waveHeightAtBreak);
   const validAllH = allWaveHeights.filter((h): h is number => h != null && !isNaN(h));
-  const globalMinH = validAllH.length > 0 ? Math.min(...validAllH) : 0;
   const globalMaxH = validAllH.length > 0 ? Math.max(...validAllH) : 1;
-  const globalHRange = globalMaxH === globalMinH ? 1 : globalMaxH - globalMinH;
-  const TREND_PAD_Y = 8;
   const trendH = SURF_ROW_H.trendSvg;
   const totalCols = allItems.length;
 
-  function heightToY(h: number | null): number {
-    if (h == null || isNaN(h)) return trendH / 2;
-    return trendH - TREND_PAD_Y - ((h - globalMinH) / globalHRange) * (trendH - TREND_PAD_Y * 2);
-  }
 
   // Helper: render a row of data cells across all day groups (no header — that's added by the caller).
   function renderRow(
