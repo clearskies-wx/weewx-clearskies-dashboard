@@ -1110,13 +1110,13 @@ function SurfScrollForecast({
             {rowHeader(SURF_ROW_H.waterTemp, t('surfing.waterTempLabel', { defaultValue: 'Water' }))}
             {/* Wave chart Y-axis labels in the header column */}
             <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.trendSvg, flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: TREND_PAD_TOP, paddingBottom: TREND_PAD_BOT }}>
-              {[...yTicks].reverse().map((v) => (
+              {[...yTicks].reverse().map((v, i) => (
                 <span key={v} style={{ fontSize: '9px', lineHeight: 1, color: 'var(--muted-foreground)', fontFeatureSettings: '"tnum"' }}>
                   {v}
                 </span>
               ))}
             </div>
-            {rowHeader(SURF_ROW_H.waveValues, `(${heightUnit})`)}
+            {rowHeader(SURF_ROW_H.waveValues, t('surfing.swellHeightLabel', { defaultValue: 'Swell Height' }))}
             {rowHeader(SURF_ROW_H.direction, t('surfing.directionLabel', { defaultValue: 'Direction' }))}
             {rowHeader(SURF_ROW_H.period, t('surfing.periodLabel', { defaultValue: 'Period' }))}
             {rowHeader(SURF_ROW_H.energy, t('surfing.energyLabel', { defaultValue: 'Power' }))}
@@ -1306,8 +1306,15 @@ function SurfScrollForecast({
             {renderRow('waveValues', SURF_ROW_H.waveValues, (item) => {
               const val = item.entry.waveHeightAtBreak;
               return (
-                <span style={{ ...microText, fontFeatureSettings: '"tnum"', fontWeight: 600, color: WAVE_BLUE }}>
-                  {val != null && !isNaN(val) ? formatValue(val, 'default', locale) : '—'}
+                <span style={{
+                  fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
+                  fontSize: 'var(--text-label)',
+                  fontWeight: 600,
+                  fontFeatureSettings: '"tnum"',
+                  color: 'var(--foreground)',
+                  lineHeight: 1,
+                }}>
+                  {val != null && !isNaN(val) ? `${formatValue(val, 'default', locale)} ${heightUnit}` : '—'}
                 </span>
               );
             })}
