@@ -938,7 +938,7 @@ function SurfScrollForecast({
           style={{
             display: 'flex',
             flexDirection: 'row',
-            gap: '1rem',
+            gap: 0,
             width: 'max-content',
             padding: '0.25rem 0.25rem 0.5rem',
           }}
@@ -1809,8 +1809,10 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
 
   // ── Forecast layout helpers ───────────────────────────────────────────────
   // Always compute day groups — SurfScrollForecast handles single-entry day groups.
-  const dayGroups = groupForecastByDay(enrichedForecast, locale, stationTz);
-  const hasMultiPointForecast = forecast.length >= 2;
+  // Filter out past entries — only show current + future periods
+  const nowMs = Date.now();
+  const futureEntries = enrichedForecast.filter((e) => new Date(e.entry.time).getTime() >= nowMs - 90 * 60 * 1000);
+  const dayGroups = groupForecastByDay(futureEntries.length > 0 ? futureEntries : enrichedForecast, locale, stationTz);
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -2162,24 +2164,6 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
               />
             )}
 
-            {hasMultiPointForecast && (
-              <div className="flex flex-col gap-2">
-                <p
-                  className="text-muted-foreground font-semibold"
-                  style={{ fontSize: 'var(--text-label)' }}
-                >
-                  {t('surfing.waveFaceHeightTitle')}
-                </p>
-                <WaveFaceHeightChart
-                  forecast={forecast}
-                  locale={locale}
-                  stationTz={stationTz}
-                  heightUnit={heightUnit}
-                  ariaLabel={t('surfing.waveFaceHeightAriaLabel', { location: locationName })}
-                  t={t}
-                />
-              </div>
-            )}
           </CardContent>
         </Card>
       </Grid>
