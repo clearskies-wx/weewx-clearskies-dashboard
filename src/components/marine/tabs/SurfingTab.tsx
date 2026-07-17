@@ -1028,7 +1028,7 @@ function SurfScrollForecast({
           {/* ── Score section ── */}
           <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.time }} />
           <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.score }}>
-            <span>{t('surfing.scoreLabel', 'Score')}</span>
+            <span>{t('surfing.scoreLabel', { defaultValue: 'Score' })}</span>
           </div>
 
           {/* Section divider */}
@@ -1037,16 +1037,16 @@ function SurfScrollForecast({
           {/* ── Current Conditions section ── */}
           <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.icon }} />
           <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.airTemp }}>
-            <span>{t('surfing.tempLabel', 'Temp')}</span>
+            <span>{t('surfing.tempLabel', { defaultValue: 'Temp' })}</span>
           </div>
           <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.precip }}>
-            <span>{t('surfing.precipLabel', 'Precip')}</span>
+            <span>{t('surfing.precipLabel', { defaultValue: 'Precip' })}</span>
           </div>
           <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.wind }}>
-            <span>{t('surfing.windLabel', 'Wind')}</span>
+            <span>{t('surfing.windLabel', { defaultValue: 'Wind' })}</span>
           </div>
           <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.windQuality }}>
-            <span>{t('surfing.windQualityLabel', 'Quality')}</span>
+            <span>{t('surfing.windQualityLabel', { defaultValue: 'Quality' })}</span>
           </div>
 
           {/* Section divider */}
@@ -1054,19 +1054,19 @@ function SurfScrollForecast({
 
           {/* ── Swells section ── */}
           <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.waterTemp }}>
-            <span>{t('surfing.waterTempLabel', 'Water')}</span>
+            <span>{t('surfing.waterTempLabel', { defaultValue: 'Water' })}</span>
           </div>
           <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.trendSvg }}>
-            <span>{t('waveHeight', 'Waves')}</span>
+            <span>{t('waveHeight', { defaultValue: 'Waves' })}</span>
           </div>
           <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.direction }}>
-            <span>{t('surfing.directionLabel', 'Direction')}</span>
+            <span>{t('surfing.directionLabel', { defaultValue: 'Direction' })}</span>
           </div>
           <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.period }}>
-            <span>{t('surfing.periodLabel', 'Period')}</span>
+            <span>{t('surfing.periodLabel', { defaultValue: 'Period' })}</span>
           </div>
           <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.energy }}>
-            <span>{t('surfing.energyLabel', 'Power')}</span>
+            <span>{t('surfing.energyLabel', { defaultValue: 'Power' })}</span>
           </div>
         </div>
 
