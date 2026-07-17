@@ -1611,8 +1611,6 @@ function NearshoreModelIndicator({
           }}
           aria-label={t('surfing.modelTooltipTitle')}
         >
-          {/* Hide the default disclosure triangle */}
-          <style>{`details > summary::-webkit-details-marker { display: none; }`}</style>
           <Info size={12} aria-hidden="true" />
         </summary>
         {/* Tooltip panel — appears below the info icon */}
