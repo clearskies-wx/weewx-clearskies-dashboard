@@ -1961,10 +1961,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
           </CardContent>
         </Card>
 
-      </Grid>
-
-      {/* ── Cards 5–6: 72-Hour Forecast + Tide — full width, same Grid ── */}
-      <Grid className="md:!auto-rows-[auto]">
+        {/* ── Card 5: 72-Hour Surf Forecast — full width ── */}
         <Card footprint="full" className="!overflow-visible">
           <CardHeader>
             <CardTitle as="h3">{t('surfing.forecastTimelineTitle')}</CardTitle>
