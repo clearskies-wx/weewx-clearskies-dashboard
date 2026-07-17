@@ -848,7 +848,7 @@ const SURF_CELL_BASE: React.CSSProperties = {
   justifyContent: 'center',
 };
 
-const WAVE_CHART_H = 100; // px — wave height chart area
+const WAVE_CHART_H = 140; // px — wave height chart area
 
 const SURF_ROW_H = {
   time:        24,
@@ -1006,16 +1006,20 @@ function SurfScrollForecast({
 
   const tempUnitLabel = tempUnit ? tempUnit.replace(/^\s+/, '') : '°';
 
-  // Y-axis range: 0 to next integer above max, minimum 4ft to show variation.
-  const yMax = Math.max(4, Math.ceil(globalMaxH));
-  const TREND_PAD_TOP = 14; // room for value labels above curve
-  const TREND_PAD_BOT = 4;
+  // Y-axis: 0–12 ft minimum, auto-scales above if data exceeds 12.
+  const Y_AXIS_MIN = 12;
+  const yMax = Math.max(Y_AXIS_MIN, Math.ceil(globalMaxH + 1));
+  const TREND_PAD_TOP = 6;
+  const TREND_PAD_BOT = 2;
   const chartDrawH = trendH - TREND_PAD_TOP - TREND_PAD_BOT;
 
   function hToY(h: number | null): number {
     if (h == null || isNaN(h)) return TREND_PAD_TOP + chartDrawH;
     return TREND_PAD_TOP + chartDrawH - (h / yMax) * chartDrawH;
   }
+
+  // Y-axis tick interval: every 3 units for readability.
+  const yTickInterval = yMax <= 15 ? 3 : yMax <= 30 ? 5 : 10;
 
   // Build smooth cubic bezier path for the wave curve.
   function buildSmoothPath(items: EnrichedForecastEntry[]): string {
@@ -1050,9 +1054,9 @@ function SurfScrollForecast({
     return `${curvePath} L${lastX},${baseY} L${firstX},${baseY} Z`;
   }
 
-  // Y-axis tick values (integers from 0 to yMax).
+  // Y-axis tick values at regular intervals.
   const yTicks: number[] = [];
-  for (let v = 0; v <= yMax; v++) yTicks.push(v);
+  for (let v = 0; v <= yMax; v += yTickInterval) yTicks.push(v);
 
   // Row header helper.
   function rowHeader(height: number, label?: string) {
@@ -1104,7 +1108,14 @@ function SurfScrollForecast({
             <div style={SECTION_DIVIDER} />
             {/* Swells */}
             {rowHeader(SURF_ROW_H.waterTemp, t('surfing.waterTempLabel', { defaultValue: 'Water' }))}
-            {rowHeader(SURF_ROW_H.trendSvg, t('waveHeight', { defaultValue: 'Waves' }))}
+            {/* Wave chart Y-axis labels in the header column */}
+            <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.trendSvg, flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: TREND_PAD_TOP, paddingBottom: TREND_PAD_BOT }}>
+              {[...yTicks].reverse().map((v) => (
+                <span key={v} style={{ fontSize: '9px', lineHeight: 1, color: 'var(--muted-foreground)', fontFeatureSettings: '"tnum"' }}>
+                  {v}
+                </span>
+              ))}
+            </div>
             {rowHeader(SURF_ROW_H.waveValues, `(${heightUnit})`)}
             {rowHeader(SURF_ROW_H.direction, t('surfing.directionLabel', { defaultValue: 'Direction' }))}
             {rowHeader(SURF_ROW_H.period, t('surfing.periodLabel', { defaultValue: 'Period' }))}
