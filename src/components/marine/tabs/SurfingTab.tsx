@@ -1110,7 +1110,7 @@ function SurfScrollForecast({
             {rowHeader(SURF_ROW_H.waterTemp, t('surfing.waterTempLabel', { defaultValue: 'Water' }))}
             {/* Wave chart Y-axis labels in the header column */}
             <div style={{ ...ROW_HEADER_STYLE, height: SURF_ROW_H.trendSvg, flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: TREND_PAD_TOP, paddingBottom: TREND_PAD_BOT }}>
-              {[...yTicks].reverse().map((v, i) => (
+              {[...yTicks].reverse().map((v) => (
                 <span key={v} style={{ fontSize: '9px', lineHeight: 1, color: 'var(--muted-foreground)', fontFeatureSettings: '"tnum"' }}>
                   {v}
                 </span>
