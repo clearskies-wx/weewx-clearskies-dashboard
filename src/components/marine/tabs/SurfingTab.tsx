@@ -1489,7 +1489,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
   // Hourly forecast — used for weather icon, air temp, precip, wind rows in
   // the 72-hour surf forecast card. Does NOT gate the loading spinner; the
   // forecast scroll degrades gracefully (shows '—') while forecast is loading.
-  const { data: forecastData } = useForecast();
+  const { data: forecastData } = useForecast({ hours: 72 });
 
   const forecast       = data?.forecast       ?? [];
   const tidePredictions = data?.tidePredictions ?? [];
