@@ -407,7 +407,7 @@ export function BeachSafetyTab({ locationId, alerts = [] }: BeachSafetyTabProps)
       </Card>
 
       {/* 4. NWPS v1.5 coastal flooding risk — show-when-available */}
-      {nwpsV15 !== null && (nwpsV15.totalWaterLevel !== null || nwpsV15.waveRunup !== null) && (
+      {nwpsV15 != null && (nwpsV15.totalWaterLevel !== null || nwpsV15.waveRunup !== null) && (
         <Card footprint="full">
           <CardHeader>
             <CardTitle as="h3">{t('beachSafety.coastalRisk')}</CardTitle>
