@@ -1018,7 +1018,7 @@ function SurfScrollForecast({
 
   // Flatten all items across day groups for the unified wave height chart.
   const allItems = useMemo(() => dayGroups.flatMap((g) => g.items), [dayGroups]);
-  const allWaveHeights = allItems.map((it) => it.entry.waveHeightAtBreak);
+  const allWaveHeights = allItems.map((it) => getDisplayHeight(it.entry, surfHeightDisplay));
   const validAllH = allWaveHeights.filter((h): h is number => h != null && !isNaN(h));
   const globalMaxH = validAllH.length > 0 ? Math.max(...validAllH) : 1;
   const trendH = SURF_ROW_H.trendSvg;
@@ -1086,7 +1086,7 @@ function SurfScrollForecast({
   function buildSmoothPath(items: EnrichedForecastEntry[]): string {
     const pts = items.map((item, i) => ({
       x: i * SURF_COL_W + SURF_COL_W / 2,
-      y: hToY(item.entry.waveHeightAtBreak),
+      y: hToY(getDisplayHeight(item.entry, surfHeightDisplay)),
     }));
     if (pts.length === 0) return '';
     if (pts.length === 1) return `M${pts[0].x},${pts[0].y}`;
@@ -1252,7 +1252,7 @@ function SurfScrollForecast({
 
             {/* Score */}
             {renderRow('score', SURF_ROW_H.score, (item) => {
-              const score = computeEntryScore(item.entry, heightUnit);
+              const score = computeEntryScore(item.entry, heightUnit, surfHeightDisplay);
               return (
                 <span aria-hidden="true" style={{
                   fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
@@ -1357,15 +1357,17 @@ function SurfScrollForecast({
                 {/* Dots */}
                 {allItems.map((item, i) => {
                   const x = i * SURF_COL_W + SURF_COL_W / 2;
-                  const y = hToY(item.entry.waveHeightAtBreak);
+                  const y = hToY(getDisplayHeight(item.entry, surfHeightDisplay));
                   return <circle key={i} cx={x} cy={y} r={2.5} fill={WAVE_BLUE} />;
                 })}
               </svg>
             </div>
 
-            {/* Wave height values row */}
+            {/* Wave height values row — uses breakingFaceHeight or breakingHawaiianHeight
+                 per surfHeightDisplay; falls back to waveHeightAtBreak when TruShore
+                 fields are absent (WW3 fallback data). */}
             {renderRow('waveValues', SURF_ROW_H.waveValues, (item) => {
-              const val = item.entry.waveHeightAtBreak;
+              const val = getDisplayHeight(item.entry, surfHeightDisplay);
               return (
                 <span style={{
                   fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
@@ -1457,7 +1459,7 @@ function SurfScrollForecast({
                 marginBottom: periodSwellComponents.length > 0 ? '0.75rem' : 0,
               }}
             >
-              {chip(t('waveHeight'), `${formatValue(entry.waveHeightAtBreak, 'default', locale)} ${heightUnit}`)}
+              {chip(t('waveHeight'), `${formatValue(getDisplayHeight(entry, surfHeightDisplay), 'default', locale)} ${heightUnit}`)}
               {chip(t('surfing.period'), `${formatValue(entry.period, 'default', locale)} ${periodUnit}`)}
               {chip(t('surfing.direction'), swellDirLabel)}
               {chip(t('surfing.windQualityTitle'), entry.windQuality ?? '—')}
@@ -1525,6 +1527,126 @@ function WaterThermometerIcon({ size = 24 }: { size?: number }) {
       {/* Water drop (right area): tip at top, rounded at bottom */}
       <path d="M17.5 7l2.5 5a3 3 0 0 1-5 0l2.5-5z" />
     </svg>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// NearshoreModelIndicator — T5.2 data source indicator for the 72h forecast.
+//
+// Displays: "Model: SWAN+TruShore" + "Last model run: X minutes ago" + an
+// accessible info disclosure that explains what SWAN+TruShore is.
+//
+// A11y:
+//   - All text in --text-micro, color: --muted-foreground (decorative metadata)
+//   - <details>/<summary> provides native keyboard access (Tab → Enter to toggle)
+//   - summary has a visible focus ring via focus-visible:ring-2
+//   - The info panel uses role="status" so AT announces it politely on open
+//   - Color is not the only signal (text labels carry the full meaning)
+//   - Renders null when nearshoreModel is absent (WW3 fallback, no SWAN data)
+// ---------------------------------------------------------------------------
+
+function NearshoreModelIndicator({
+  nearshoreModel,
+  lastRunTime,
+  locale,
+  t,
+}: {
+  nearshoreModel: string | null | undefined;
+  lastRunTime: string | null | undefined;
+  locale: string;
+  t: (key: string, opts?: Record<string, unknown>) => string;
+}) {
+  if (!nearshoreModel) return null;
+
+  const modelLabel = nearshoreModelDisplayName(nearshoreModel);
+  const relativeTime = formatRelativeTime(lastRunTime, locale);
+
+  const metaStyle: React.CSSProperties = {
+    fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+    fontSize: 'var(--text-micro)',
+    color: 'var(--muted-foreground)',
+    lineHeight: 1.4,
+  };
+
+  return (
+    <div
+      style={{
+        borderTop: '1px solid var(--border)',
+        paddingTop: '0.5rem',
+        display: 'flex',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '0.375rem',
+      }}
+    >
+      {/* "Model: SWAN+TruShore" */}
+      <span style={metaStyle}>
+        {t('surfing.nearshoreModel', { model: modelLabel })}
+      </span>
+
+      {/* Separator dot */}
+      {relativeTime && (
+        <>
+          <span aria-hidden="true" style={{ ...metaStyle, opacity: 0.5 }}>·</span>
+          {/* "Last model run: 34 minutes ago" */}
+          <span style={metaStyle}>
+            {t('surfing.lastModelRun', { time: relativeTime })}
+          </span>
+        </>
+      )}
+
+      {/* Info disclosure — accessible via keyboard (Tab + Enter/Space) */}
+      <details style={{ display: 'inline-block', position: 'relative' }}>
+        <summary
+          className="focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            listStyle: 'none',
+            color: 'var(--muted-foreground)',
+            minWidth: '20px',
+            minHeight: '20px',
+          }}
+          aria-label={t('surfing.modelTooltipTitle')}
+        >
+          {/* Hide the default disclosure triangle */}
+          <style>{`details > summary::-webkit-details-marker { display: none; }`}</style>
+          <Info size={12} aria-hidden="true" />
+        </summary>
+        {/* Tooltip panel — appears below the info icon */}
+        <div
+          role="status"
+          style={{
+            position: 'absolute',
+            bottom: 'calc(100% + 6px)',
+            left: 0,
+            zIndex: 20,
+            background: 'var(--popover)',
+            color: 'var(--popover-foreground)',
+            border: '1px solid var(--border)',
+            borderRadius: '0.375rem',
+            padding: '0.625rem 0.75rem',
+            maxWidth: '280px',
+            width: 'max-content',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+            fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+            fontSize: 'var(--text-micro)',
+          }}
+        >
+          <p
+            className="font-semibold mb-1"
+            style={{ color: 'var(--foreground)', fontSize: 'var(--text-label)' }}
+          >
+            {t('surfing.modelTooltipTitle')}
+          </p>
+          <p style={{ color: 'var(--muted-foreground)', lineHeight: 1.5 }}>
+            {t('surfing.modelTooltip')}
+          </p>
+        </div>
+      </details>
+    </div>
   );
 }
 
@@ -1618,6 +1740,12 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
   const periodUnit = units?.period ?? t('surfing.secondsAbbr');
   const windUnit   = marineUnits?.windSpeed ?? 'kn';
 
+  // ── SWAN+TruShore display preference (T5.1) ───────────────────────────────
+  // "face" → breakingFaceHeight (trough-to-crest)
+  // "hawaiian" → breakingHawaiianHeight (back-of-wave ~0.5×)
+  // null → default to "face" behavior
+  const surfHeightDisplay = data.surfHeightDisplay ?? null;
+
   // ── Live wind observation (from marine bundle) ────────────────────────────
   const observation    = marine?.observation ?? null;
   const windDirCardinal = cardinalFromDegrees(observation?.windDirection ?? null);
@@ -1646,7 +1774,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
     if (!primary) return { factors: [] as { key: string; weight: number | null; score: number }[], totalScore: 0 };
 
     const raw = {
-      waveHeight: primary.scoring?.waveHeight ?? waveHeightScore(primary.waveHeightAtBreak, heightUnit),
+      waveHeight: primary.scoring?.waveHeight ?? waveHeightScore(getDisplayHeight(primary, surfHeightDisplay), heightUnit),
       wavePeriod: primary.scoring?.wavePeriod ?? periodScore(primary.period),
       windQuality: primary.scoring?.windQuality ?? windQualityScore(primary.windQuality),
       swellDominance: primary.scoring?.swellDominance ?? Math.max(0, Math.min(100, primary.swellDominance * 100)),
@@ -1818,7 +1946,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                 <dl className="grid grid-cols-3 gap-x-4">
                   {/* Icon-left stat: icon beside the value/label block */}
                   {[
-                    { icon: <Waves weight="bold" />, label: t('waveHeight'), value: formatValue(primary.waveHeightAtBreak, 'default', locale), unit: heightUnit },
+                    { icon: <Waves weight="bold" />, label: t('waveHeight'), value: formatValue(getDisplayHeight(primary, surfHeightDisplay), 'default', locale), unit: heightUnit },
                     { icon: <Timer weight="bold" />, label: t('surfing.period'), value: formatValue(primary.period, 'default', locale), unit: periodUnit },
                     { icon: <Compass weight="bold" />, label: t('surfing.direction'), value: swellDirLabel, unit: undefined },
                   ].map((s) => (
@@ -2071,10 +2199,18 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                 periodUnit={periodUnit}
                 windUnit={windUnit}
                 tempUnit={marineUnits?.temperature ?? marineUnits?.waterTemp ?? units?.temperature ?? '°'}
+                surfHeightDisplay={surfHeightDisplay}
                 t={t}
                 tCommon={tCommon}
               />
             )}
+            {/* T5.2 — SWAN+TruShore model provenance indicator */}
+            <NearshoreModelIndicator
+              nearshoreModel={data.nearshoreModel}
+              lastRunTime={data.lastRunTime}
+              locale={locale}
+              t={t}
+            />
           </CardContent>
         </Card>
 
