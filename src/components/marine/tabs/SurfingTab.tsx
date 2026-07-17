@@ -55,8 +55,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AreaChart, Area, XAxis, YAxis } from 'recharts';
-import { Info, Waves, Timer, Compass, X, Thermometer } from '@phosphor-icons/react';
-import { useSurfDetail, useMarineDetail, useStation, useObservation } from '../../../hooks/useWeatherData';
+import { Info, Waves, Timer, Compass, X, Thermometer, Drop, Snowflake } from '@phosphor-icons/react';
+import { useSurfDetail, useMarineDetail, useStation, useObservation, useForecast } from '../../../hooks/useWeatherData';
+import { WindSymbol } from '../../forecast/WindSymbol';
+import { toWmoCode } from '../../../utils/weather-code';
+import { selectWeatherIcon } from '../../../utils/icon-selection';
 import { asConverted } from '../../../api/types';
 import { WeatherIcon } from '../../weather-icon';
 import { UvIndex } from '../../icons/uv-index';
@@ -80,6 +83,7 @@ import type {
   SurfForecast,
   MarineAlertSummary,
   MarineForecastPoint,
+  HourlyForecastPoint,
   TidePrediction,
 } from '../../../api/types';
 
@@ -448,6 +452,28 @@ function waveHeightScore(height: number | null, unit: string): number {
   return 100;
 }
 
+/**
+ * computeEntryScore — compute a 0-100 total score from a single SurfForecast entry.
+ *
+ * Uses the same weighted-factor formula as the Surf Score hero card. Returns
+ * the total score (XX/100) used for the forecast column score row.
+ */
+function computeEntryScore(entry: SurfForecast, heightUnit: string): number {
+  const raw = {
+    waveHeight:     entry.scoring?.waveHeight     ?? waveHeightScore(entry.waveHeightAtBreak, heightUnit),
+    wavePeriod:     entry.scoring?.wavePeriod     ?? periodScore(entry.period),
+    windQuality:    entry.scoring?.windQuality    ?? windQualityScore(entry.windQuality),
+    swellDominance: entry.scoring?.swellDominance ?? Math.max(0, Math.min(100, entry.swellDominance * 100)),
+    beachAlignment: entry.scoring?.beachAlignment ?? 50,
+  };
+  const subtotal =
+    Math.round(raw.waveHeight     * 0.35) +
+    Math.round(raw.wavePeriod     * 0.35) +
+    Math.round(raw.windQuality    * 0.20) +
+    Math.round(raw.swellDominance * 0.10);
+  return Math.round(subtotal * raw.beachAlignment / 100);
+}
+
 // ---------------------------------------------------------------------------
 // Swell component breakdown — ranked by energy (primary first).
 // FIX: NEVER accept spectralComponents as a fallback. Only multiSwell.
@@ -714,6 +740,24 @@ function nearestTideEvent(ts: number, predictions: TidePrediction[]): TidePredic
   }, extrema[0]);
 }
 
+/** 1.5h threshold for hourly forecast matching — surf periods are 3-6h apart
+ *  so a 1.5h window captures the nearest hourly slot cleanly. */
+const HOURLY_MATCH_THRESHOLD_MS = 1.5 * 60 * 60 * 1000;
+
+function nearestHourlyPoint(ts: number, hours: HourlyForecastPoint[]): HourlyForecastPoint | null {
+  if (hours.length === 0) return null;
+  let best: HourlyForecastPoint | null = null;
+  let bestDiff = Infinity;
+  for (const h of hours) {
+    const diff = Math.abs(new Date(h.validTime).getTime() - ts);
+    if (diff <= HOURLY_MATCH_THRESHOLD_MS && diff < bestDiff) {
+      best = h;
+      bestDiff = diff;
+    }
+  }
+  return best;
+}
+
 /** Station-local YYYY-MM-DD key for grouping. Uses 'en-US' only for the
  *  internal Map key — never rendered. Avoids toISOString() which gives UTC
  *  date, misgroups entries near local midnight. */
@@ -730,6 +774,8 @@ function stationDateKey(ts: number, tz: string): string {
 interface EnrichedForecastEntry {
   entry: SurfForecast;
   windPoint: MarineForecastPoint | null;
+  /** Nearest HourlyForecastPoint within 1.5h — for weather icon, air temp, precip, wind rows. */
+  hourlyPoint: HourlyForecastPoint | null;
   tideEvent: TidePrediction | null;
 }
 
@@ -764,29 +810,63 @@ function groupForecastByDay(
 }
 
 // ---------------------------------------------------------------------------
-// SurfScrollForecast — 72-hour forecast with HorizontalScrollNav (T5.2 redesign).
+// SurfScrollForecast — 72-hour forecast, redesigned to match HourlyStrip.
 //
-// Replaces SurfForecastColumns. Uses HorizontalScrollNav with fixed-width period
-// columns (Design Manual §11 "Horizontal Scroll Navigation", HourlyStrip.tsx pattern).
+// Layout: row-major (each row spans ALL columns), like HourlyStrip.tsx.
+// Wrapped in HorizontalScrollNav. Columns are 72px wide.
 //
-// Column anatomy (top→bottom, 72px wide):
-//   time label → score badge (circular, color-coded) → wave height →
-//   swell direction → wind quality label → wind speed + direction → tide event
-//
-// Day group headers appear as labeled sections above each day's columns within
-// the scroll area. Clicking a column <button> toggles the detail panel below
-// the scroll area (outside HorizontalScrollNav, expands card in fluid mode).
-//
-// Detail panel: time + qualityLabel + conditionsText + chip grid + SwellBreakdown.
+// Row order and section grouping:
+//   Section 1 — Header + Score (transparent):
+//     Row 1: Time label (<button> per column — the a11y interaction target)
+//     Row 2: Score 0-100 (aria-hidden, visual supplement to time button label)
+//   Section 2 — Weather (bg-muted/15 subtle tint):
+//     Row 3: WeatherIcon (time-matched from useForecast hourly)
+//     Row 4: Air temp (time-matched from useForecast hourly)
+//     Row 5: Precip % with drop/snowflake icon
+//     Row 6: WindSymbol (time-matched from useForecast hourly)
+//   Section 3 — Surf conditions (transparent):
+//     Row 7:  Wind quality ("Offshore", "Cross-shore", etc.)
+//     Row 8:  Water temp (from marine.forecast[].waterTemp, time-matched)
+//     Row 9:  Wave height trend — single SVG polyline spanning all columns
+//     Row 10: Dom direction (cardinal)
+//     Row 11: Period (seconds)
+//     Row 12: Energy (swellDominance × 100)
 //
 // A11y:
-//   - Each period column is a <button type="button"> (never <div role="button">)
-//   - button aria-label = time + qualityLabel (conveys quality to AT)
-//   - Score badge circular span is aria-hidden (visual supplement only)
-//   - Tide direction arrows (↑↓) are aria-hidden; paired with text values
-//   - Detail panel has aria-live="polite" for dynamic content announcement
-//   - HorizontalScrollNav provides role="region" + aria-label + tabIndex=0
+//   - Time row cells are <button type="button"> with aria-expanded + aria-label
+//   - All other rows are display-only <div> (non-interactive)
+//   - Score span is aria-hidden (AT uses the time button label for context)
+//   - Wave height trend SVG is aria-hidden (decorative chart)
+//   - WeatherIcon, WindSymbol both render with aria-hidden internally
+//   - Detail panel uses aria-live="polite"
+//   - HorizontalScrollNav provides role="region" + aria-label
 // ---------------------------------------------------------------------------
+
+const SURF_COL_W = 72; // px — matches task spec
+
+const SURF_CELL_BASE: React.CSSProperties = {
+  flexShrink: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+};
+
+const SURF_ROW_H = {
+  time:        20,
+  score:       24,
+  icon:        36,
+  airTemp:     20,
+  precip:      18,
+  wind:        36,
+  windQuality: 18,
+  waterTemp:   18,
+  trendSvg:    40,
+  direction:   18,
+  period:      18,
+  energy:      18,
+} as const;
+
+const DETAIL_PANEL_BG = 'var(--detail-panel-bg, rgba(80,100,255,0.08))';
 
 function SurfScrollForecast({
   dayGroups,
@@ -809,7 +889,7 @@ function SurfScrollForecast({
 }) {
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
 
-  // Attach a flat index to each group for tracking which column is expanded.
+  // Attach a flat index to each group for expanded-state tracking.
   const groupsWithIdx = useMemo(() => {
     let startIdx = 0;
     return dayGroups.map((group) => {
@@ -819,7 +899,7 @@ function SurfScrollForecast({
     });
   }, [dayGroups]);
 
-  // Find the expanded entry for the detail panel via flat-index lookup.
+  // Resolve the expanded entry for the detail panel.
   const expandedEntry = useMemo<EnrichedForecastEntry | null>(() => {
     if (expandedIdx === null) return null;
     let idx = 0;
@@ -832,11 +912,7 @@ function SurfScrollForecast({
     return null;
   }, [expandedIdx, dayGroups]);
 
-  // Fixed column width — wider than HourlyStrip's 56px to accommodate score badge
-  // and multi-row surf data (wave height, swell direction, wind, tide).
-  const COL_W = 72; // px
-
-  // Reusable label/value chip for the detail panel (matches DailyColumns pattern).
+  // Detail panel chip renderer.
   const chip = (label: string, value: string) => (
     <div
       key={label}
@@ -856,197 +932,481 @@ function SurfScrollForecast({
   return (
     <div className="flex flex-col gap-3">
       {/* HorizontalScrollNav — chevrons project into card padding area.
-          CardContent must use overflow-visible for chevrons to be visible. */}
+          CardContent overflow-visible is set on the parent card. */}
       <HorizontalScrollNav ariaLabel={t('surfing.forecastTimelineTitle')}>
         <div
           style={{
             display: 'flex',
             flexDirection: 'row',
-            gap: '0.75rem',
+            gap: '1rem',
             width: 'max-content',
             padding: '0.25rem 0.25rem 0.5rem',
           }}
         >
-          {groupsWithIdx.map((group) => (
-            <div key={group.key} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-              {/* Day section header — appears above this day's columns */}
-              <div
-                style={{
-                  fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                  fontSize: 'var(--text-label)',
-                  fontWeight: 600,
-                  color: 'var(--muted-foreground)',
-                  paddingLeft: '0.25rem',
-                  paddingBottom: '0.125rem',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {group.label}
-              </div>
+          {groupsWithIdx.map((group) => {
+            const N = group.items.length;
 
-              {/* Period column buttons for this day */}
-              <div style={{ display: 'flex', flexDirection: 'row', gap: '0.25rem' }}>
-                {group.items.map((item, i) => {
-                  const flatIdx = group.startIdx + i;
-                  const isSelected = expandedIdx === flatIdx;
-                  const timeLabel = formatTime(new Date(item.entry.time), locale, stationTz);
-                  const swellDirCardinal = cardinalFromDegrees(item.entry.direction);
-                  const windDirCardinal  = cardinalFromDegrees(item.windPoint?.windDirection ?? null);
+            // Wave height data for the SVG trend line in this day group.
+            const waveHeights = group.items.map((it) => it.entry.waveHeightAtBreak);
+            const validH = waveHeights.filter((h): h is number => h != null && !isNaN(h));
+            const minH = validH.length > 0 ? Math.min(...validH) : 0;
+            const maxH = validH.length > 0 ? Math.max(...validH) : 1;
+            const hRange = maxH === minH ? 1 : maxH - minH;
+            const TREND_PAD_Y = 6;
+            const trendH = SURF_ROW_H.trendSvg;
 
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setExpandedIdx((prev) => (prev === flatIdx ? null : flatIdx))}
-                      aria-expanded={isSelected}
-                      aria-label={`${timeLabel} — ${item.entry.qualityLabel}`}
-                      className="focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-lg"
-                      style={{
-                        width: COL_W,
-                        flexShrink: 0,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: 3,
-                        padding: '0.375rem 0.25rem 0.5rem',
-                        background: isSelected ? 'var(--detail-panel-bg, rgba(80,100,255,0.08))' : 'transparent',
-                        border: 'none',
-                        borderTop: `3px solid ${isSelected ? 'var(--primary)' : 'transparent'}`,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {/* Row 1: Time label */}
-                      <span
+            function heightToY(h: number | null): number {
+              if (h == null || isNaN(h)) return trendH / 2;
+              return trendH - TREND_PAD_Y - ((h - minH) / hRange) * (trendH - TREND_PAD_Y * 2);
+            }
+
+            return (
+              <div key={group.key} style={{ display: 'flex', flexDirection: 'column' }}>
+
+                {/* Day section label */}
+                <div
+                  style={{
+                    fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                    fontSize: 'var(--text-label)',
+                    fontWeight: 600,
+                    color: 'var(--muted-foreground)',
+                    paddingLeft: '0.25rem',
+                    paddingBottom: '0.25rem',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {group.label}
+                </div>
+
+                {/* ── Section 1: Time + Score (transparent background) ── */}
+
+                {/* Row 1: Time — <button> per column (the keyboard interaction target).
+                    aria-label = time + qualityLabel so AT users hear the key info.
+                    aria-expanded indicates whether the detail panel is open. */}
+                <div style={{ display: 'flex', flexDirection: 'row' }}>
+                  {group.items.map((item, i) => {
+                    const flatIdx = group.startIdx + i;
+                    const isSelected = expandedIdx === flatIdx;
+                    const timeLabel = formatTime(new Date(item.entry.time), locale, stationTz);
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setExpandedIdx((prev) => (prev === flatIdx ? null : flatIdx))}
+                        aria-expanded={isSelected}
+                        aria-label={`${timeLabel} — ${item.entry.qualityLabel}`}
+                        className="focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-sm"
                         style={{
-                          fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                          fontSize: 'var(--text-label)',
-                          fontWeight: 600,
-                          color: isSelected ? 'var(--primary)' : 'var(--foreground)',
-                          whiteSpace: 'nowrap',
-                          lineHeight: 1,
+                          width: SURF_COL_W,
+                          height: SURF_ROW_H.time,
+                          ...SURF_CELL_BASE,
+                          background: isSelected ? DETAIL_PANEL_BG : 'transparent',
+                          border: 'none',
+                          borderTop: `2px solid ${isSelected ? 'var(--primary)' : 'transparent'}`,
+                          cursor: 'pointer',
                         }}
                       >
-                        {timeLabel}
-                      </span>
-
-                      {/* Row 2: Score — numeric + colored by tier */}
-                      <span
-                        aria-hidden="true"
-                        className="font-bold"
-                        style={{
-                          fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
-                          fontSize: 'var(--text-body)',
-                          fontFeatureSettings: '"tnum"',
-                          lineHeight: 1,
-                          color: scoreTierColor(item.entry.qualityStars),
-                        }}
-                      >
-                        {Math.round(Math.max(0, Math.min(5, item.entry.qualityStars)))}
-                      </span>
-
-                      {/* Row 3: Wave height — display font for stat numerals (DESIGN-MANUAL §4) */}
-                      <span
-                        style={{
-                          fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
-                          fontSize: 'var(--text-label)',
-                          fontWeight: 600,
-                          fontFeatureSettings: '"tnum"',
-                          whiteSpace: 'nowrap',
-                          color: 'var(--foreground)',
-                          lineHeight: 1,
-                        }}
-                      >
-                        {formatValue(item.entry.waveHeightAtBreak, 'default', locale)}
                         <span
                           style={{
-                            fontSize: 'var(--text-micro)',
-                            fontWeight: 400,
-                            color: 'var(--muted-foreground)',
-                            marginLeft: '0.1rem',
+                            fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                            fontSize: 'var(--text-label)',
+                            fontWeight: 600,
+                            color: isSelected ? 'var(--primary)' : 'var(--muted-foreground)',
+                            whiteSpace: 'nowrap',
+                            lineHeight: 1,
                           }}
                         >
-                          {heightUnit}
+                          {timeLabel}
                         </span>
-                      </span>
+                      </button>
+                    );
+                  })}
+                </div>
 
-                      {/* Row 4: Swell direction — cardinal abbreviation */}
-                      <span
+                {/* Row 2: Score 0-100, colored by tier.
+                    aria-hidden — time button aria-label already conveys quality. */}
+                <div style={{ display: 'flex', flexDirection: 'row' }}>
+                  {group.items.map((item, i) => {
+                    const flatIdx = group.startIdx + i;
+                    const isSelected = expandedIdx === flatIdx;
+                    const score = computeEntryScore(item.entry, heightUnit);
+                    return (
+                      <div
+                        key={i}
+                        aria-hidden="true"
                         style={{
-                          fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                          fontSize: 'var(--text-micro)',
-                          color: 'var(--muted-foreground)',
-                          whiteSpace: 'nowrap',
-                          lineHeight: 1,
+                          width: SURF_COL_W,
+                          height: SURF_ROW_H.score,
+                          ...SURF_CELL_BASE,
+                          background: isSelected ? DETAIL_PANEL_BG : 'transparent',
                         }}
                       >
-                        {swellDirCardinal ?? '—'}
-                      </span>
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
+                            fontSize: 'var(--text-body)',
+                            fontWeight: 700,
+                            fontFeatureSettings: '"tnum"',
+                            lineHeight: 1,
+                            color: scoreBarFillColor(score),
+                          }}
+                        >
+                          {score}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
 
-                      {/* Row 5: Wind quality label ("Offshore", "Cross-shore", etc.) */}
-                      <span
+                {/* ── Section 2: Weather rows (subtle muted tint) ── */}
+                <div className="bg-muted/15" style={{ overflow: 'visible' }}>
+
+                  {/* Row 3: Weather icon (time-matched hourly forecast) */}
+                  <div style={{ display: 'flex', flexDirection: 'row' }}>
+                    {group.items.map((item, i) => {
+                      const flatIdx = group.startIdx + i;
+                      const isSelected = expandedIdx === flatIdx;
+                      const hp = item.hourlyPoint;
+                      const iconResult = hp
+                        ? selectWeatherIcon({
+                            weatherCode:       toWmoCode(hp.weatherCode),
+                            precipProbability: hp.precipProbability,
+                            cloudCover:        hp.cloudCover,
+                            isNight:           false, // day/night from sun times not available per-entry; default to day
+                          })
+                        : null;
+                      return (
+                        <div
+                          key={i}
+                          style={{
+                            width: SURF_COL_W,
+                            height: SURF_ROW_H.icon,
+                            ...SURF_CELL_BASE,
+                            background: isSelected ? DETAIL_PANEL_BG : 'transparent',
+                          }}
+                        >
+                          {iconResult ? (
+                            <WeatherIcon
+                              code={iconResult.code}
+                              isNight={iconResult.isNight}
+                              size={28}
+                            />
+                          ) : (
+                            <span
+                              style={{
+                                fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                                fontSize: 'var(--text-micro)',
+                                color: 'var(--muted-foreground)',
+                              }}
+                            >
+                              —
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Row 4: Air temp (time-matched hourly forecast) */}
+                  <div style={{ display: 'flex', flexDirection: 'row' }}>
+                    {group.items.map((item, i) => {
+                      const flatIdx = group.startIdx + i;
+                      const isSelected = expandedIdx === flatIdx;
+                      const hp = item.hourlyPoint;
+                      return (
+                        <div
+                          key={i}
+                          style={{
+                            width: SURF_COL_W,
+                            height: SURF_ROW_H.airTemp,
+                            ...SURF_CELL_BASE,
+                            background: isSelected ? DETAIL_PANEL_BG : 'transparent',
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
+                              fontSize: 'var(--text-label)',
+                              fontWeight: 600,
+                              color: 'var(--foreground)',
+                              lineHeight: 1,
+                            }}
+                          >
+                            {hp?.outTemp != null ? `${Math.round(hp.outTemp)}°` : '—'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Row 5: Precip % with drop/snowflake icon */}
+                  <div style={{ display: 'flex', flexDirection: 'row' }}>
+                    {group.items.map((item, i) => {
+                      const flatIdx = group.startIdx + i;
+                      const isSelected = expandedIdx === flatIdx;
+                      const hp = item.hourlyPoint;
+                      const isSnow = hp?.precipType === 'snow';
+                      return (
+                        <div
+                          key={i}
+                          style={{
+                            width: SURF_COL_W,
+                            height: SURF_ROW_H.precip,
+                            ...SURF_CELL_BASE,
+                            background: isSelected ? DETAIL_PANEL_BG : 'transparent',
+                          }}
+                        >
+                          <span
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 2,
+                              fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                              fontSize: 'var(--text-micro)',
+                              color: 'var(--muted-foreground)',
+                            }}
+                          >
+                            {isSnow
+                              ? <Snowflake aria-hidden="true" size={8} />
+                              : <Drop    aria-hidden="true" size={8} />}
+                            {hp?.precipProbability != null ? `${hp.precipProbability}%` : '—'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Row 6: WindSymbol (time-matched hourly forecast) */}
+                  <div style={{ display: 'flex', flexDirection: 'row', overflow: 'visible' }}>
+                    {group.items.map((item, i) => {
+                      const flatIdx = group.startIdx + i;
+                      const isSelected = expandedIdx === flatIdx;
+                      const hp = item.hourlyPoint;
+                      return (
+                        <div
+                          key={i}
+                          style={{
+                            width: SURF_COL_W,
+                            height: SURF_ROW_H.wind,
+                            ...SURF_CELL_BASE,
+                            overflow: 'visible',
+                            background: isSelected ? DETAIL_PANEL_BG : 'transparent',
+                          }}
+                        >
+                          <WindSymbol
+                            bearing={hp?.windDir ?? null}
+                            speed={hp?.windSpeed != null ? Math.round(hp.windSpeed) : 0}
+                            size={20}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                </div>
+
+                {/* ── Section 3: Surf conditions (transparent background) ── */}
+
+                {/* Row 7: Wind quality ("Offshore", "Cross-shore", etc.) */}
+                <div style={{ display: 'flex', flexDirection: 'row' }}>
+                  {group.items.map((item, i) => {
+                    const flatIdx = group.startIdx + i;
+                    const isSelected = expandedIdx === flatIdx;
+                    return (
+                      <div
+                        key={i}
                         style={{
-                          fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                          fontSize: 'var(--text-micro)',
-                          color: 'var(--muted-foreground)',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          maxWidth: '100%',
-                          lineHeight: 1,
-                          textAlign: 'center',
+                          width: SURF_COL_W,
+                          height: SURF_ROW_H.windQuality,
+                          ...SURF_CELL_BASE,
+                          background: isSelected ? DETAIL_PANEL_BG : 'transparent',
                         }}
                       >
-                        {item.entry.windQuality ?? '—'}
-                      </span>
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                            fontSize: 'var(--text-micro)',
+                            color: 'var(--muted-foreground)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            maxWidth: `${SURF_COL_W - 6}px`,
+                            lineHeight: 1,
+                          }}
+                        >
+                          {item.entry.windQuality ?? '—'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
 
-                      {/* Row 6: Wind speed + direction */}
-                      <span
+                {/* Row 8: Water temp (marine.forecast[].waterTemp, time-matched) */}
+                <div style={{ display: 'flex', flexDirection: 'row' }}>
+                  {group.items.map((item, i) => {
+                    const flatIdx = group.startIdx + i;
+                    const isSelected = expandedIdx === flatIdx;
+                    const waterTempVal = item.windPoint?.waterTemp ?? null;
+                    return (
+                      <div
+                        key={i}
                         style={{
-                          fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                          fontSize: 'var(--text-micro)',
-                          color: 'var(--muted-foreground)',
-                          whiteSpace: 'nowrap',
-                          fontFeatureSettings: '"tnum"',
-                          lineHeight: 1,
+                          width: SURF_COL_W,
+                          height: SURF_ROW_H.waterTemp,
+                          ...SURF_CELL_BASE,
+                          background: isSelected ? DETAIL_PANEL_BG : 'transparent',
                         }}
                       >
-                        {item.windPoint?.windSpeed != null
-                          ? `${formatValue(item.windPoint.windSpeed, 'wind', locale)}${windUnit}`
-                          : '—'}
-                        {windDirCardinal ? ` ${windDirCardinal}` : ''}
-                      </span>
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                            fontSize: 'var(--text-micro)',
+                            color: 'var(--muted-foreground)',
+                            lineHeight: 1,
+                          }}
+                        >
+                          {waterTempVal != null ? `${Math.round(waterTempVal)}°` : '—'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
 
-                      {/* Row 7: Tide event — nearest high/low.
-                          ↑/↓ arrows are aria-hidden; text value follows. */}
-                      <span
+                {/* Row 9: Wave height trend — single SVG polyline spanning all columns.
+                    aria-hidden: decorative chart; the detail panel provides accessible data. */}
+                <div style={{ height: trendH, width: N * SURF_COL_W, flexShrink: 0 }}>
+                  <svg
+                    viewBox={`0 0 ${N * SURF_COL_W} ${trendH}`}
+                    width={N * SURF_COL_W}
+                    height={trendH}
+                    aria-hidden="true"
+                    focusable={false as unknown as boolean}
+                    style={{ display: 'block' }}
+                  >
+                    <polyline
+                      points={group.items.map((item, i) => {
+                        const x = i * SURF_COL_W + SURF_COL_W / 2;
+                        const y = heightToY(item.entry.waveHeightAtBreak);
+                        return `${x},${y}`;
+                      }).join(' ')}
+                      fill="none"
+                      stroke="var(--chart-2)"
+                      strokeWidth={1.5}
+                      strokeLinejoin="round"
+                      strokeLinecap="round"
+                    />
+                    {group.items.map((item, i) => (
+                      <circle
+                        key={i}
+                        cx={i * SURF_COL_W + SURF_COL_W / 2}
+                        cy={heightToY(item.entry.waveHeightAtBreak)}
+                        r={2}
+                        fill="var(--chart-2)"
+                      />
+                    ))}
+                  </svg>
+                </div>
+
+                {/* Row 10: Dom direction (cardinal abbreviation) */}
+                <div style={{ display: 'flex', flexDirection: 'row' }}>
+                  {group.items.map((item, i) => {
+                    const flatIdx = group.startIdx + i;
+                    const isSelected = expandedIdx === flatIdx;
+                    const cardinal = cardinalFromDegrees(item.entry.direction);
+                    return (
+                      <div
+                        key={i}
                         style={{
-                          fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
-                          fontSize: 'var(--text-micro)',
-                          color: 'var(--muted-foreground)',
-                          whiteSpace: 'nowrap',
-                          fontFeatureSettings: '"tnum"',
-                          lineHeight: 1,
-                          minHeight: 'var(--text-micro)',
+                          width: SURF_COL_W,
+                          height: SURF_ROW_H.direction,
+                          ...SURF_CELL_BASE,
+                          background: isSelected ? DETAIL_PANEL_BG : 'transparent',
                         }}
                       >
-                        {item.tideEvent ? (
-                          <>
-                            <span aria-hidden="true">{item.tideEvent.type === 'high' ? '↑' : '↓'}</span>
-                            {formatValue(item.tideEvent.height, 'default', locale)}{heightUnit}
-                          </>
-                        ) : '—'}
-                      </span>
-                    </button>
-                  );
-                })}
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                            fontSize: 'var(--text-micro)',
+                            color: 'var(--muted-foreground)',
+                            lineHeight: 1,
+                          }}
+                        >
+                          {cardinal ?? '—'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Row 11: Period (seconds) */}
+                <div style={{ display: 'flex', flexDirection: 'row' }}>
+                  {group.items.map((item, i) => {
+                    const flatIdx = group.startIdx + i;
+                    const isSelected = expandedIdx === flatIdx;
+                    return (
+                      <div
+                        key={i}
+                        style={{
+                          width: SURF_COL_W,
+                          height: SURF_ROW_H.period,
+                          ...SURF_CELL_BASE,
+                          background: isSelected ? DETAIL_PANEL_BG : 'transparent',
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                            fontSize: 'var(--text-micro)',
+                            color: 'var(--muted-foreground)',
+                            lineHeight: 1,
+                          }}
+                        >
+                          {item.entry.period != null ? `${Math.round(item.entry.period)}s` : '—'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Row 12: Energy (swellDominance × 100, rounded to nearest %) */}
+                <div style={{ display: 'flex', flexDirection: 'row' }}>
+                  {group.items.map((item, i) => {
+                    const flatIdx = group.startIdx + i;
+                    const isSelected = expandedIdx === flatIdx;
+                    const energy = Math.round(item.entry.swellDominance * 100);
+                    return (
+                      <div
+                        key={i}
+                        style={{
+                          width: SURF_COL_W,
+                          height: SURF_ROW_H.energy,
+                          ...SURF_CELL_BASE,
+                          background: isSelected ? DETAIL_PANEL_BG : 'transparent',
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-sans, Manrope, system-ui, sans-serif)',
+                            fontSize: 'var(--text-micro)',
+                            color: 'var(--muted-foreground)',
+                            lineHeight: 1,
+                          }}
+                        >
+                          {energy}%
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </HorizontalScrollNav>
 
-      {/* Detail panel — rendered outside the scroll area so it doesn't scroll.
-          Card grows vertically in fluid mode to accommodate the panel. */}
+      {/* Detail panel — outside the scroll area; grows the card vertically.
+          aria-live="polite" announces content changes to screen readers. */}
       {expandedIdx !== null && expandedEntry !== null && (() => {
         const { entry, windPoint, tideEvent } = expandedEntry;
         const swellDirCardinal  = cardinalFromDegrees(entry.direction);
@@ -1059,7 +1419,7 @@ function SurfScrollForecast({
           <div
             aria-live="polite"
             style={{
-              background: 'var(--detail-panel-bg, rgba(80,100,255,0.08))',
+              background: DETAIL_PANEL_BG,
               borderRadius: '0.5rem',
               padding: '0.75rem 1rem 1rem',
             }}
@@ -1111,14 +1471,13 @@ function SurfScrollForecast({
               {chip(t('surfing.windQualityTitle'), entry.windQuality ?? '—')}
               {windPoint?.windSpeed != null && chip(t('windSpeed'), `${formatValue(windPoint.windSpeed, 'wind', locale)} ${windUnit}`)}
               {chip(t('surfing.windDirection'), windDirLabel)}
-              {chip(t('surfing.airTemp'), '—')}
               {tideEvent && chip(
                 tideEvent.type === 'high' ? t('tide.tideHigh') : t('tide.tideLow'),
                 `${formatValue(tideEvent.height, 'default', locale)} ${heightUnit} · ${formatTime(new Date(tideEvent.time), locale, stationTz)}`,
               )}
             </div>
 
-            {/* Per-period swell component breakdown (FIX-15 requirement) */}
+            {/* Per-period swell component breakdown */}
             {periodSwellComponents.length > 0 && (
               <SwellBreakdown
                 components={periodSwellComponents}
@@ -1305,6 +1664,10 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
   // NOT marine data. Does not gate the loading spinner: the card degrades
   // gracefully (shows '—') while obsData is loading or if the station is offline.
   const obsData = useObservation();
+  // Hourly forecast — used for weather icon, air temp, precip, wind rows in
+  // the 72-hour surf forecast card. Does NOT gate the loading spinner; the
+  // forecast scroll degrades gracefully (shows '—') while forecast is loading.
+  const { data: forecastData } = useForecast();
 
   const forecast       = data?.forecast       ?? [];
   const tidePredictions = data?.tidePredictions ?? [];
@@ -1318,15 +1681,17 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
     const fc = data?.forecast        ?? [];
     const mf = marine?.forecast      ?? [];
     const tp = data?.tidePredictions ?? [];
+    const hf = forecastData?.hourly  ?? [];
     return fc.map((entry) => {
       const ts = new Date(entry.time).getTime();
       return {
         entry,
-        windPoint: nearestForecastPoint(ts, mf),
-        tideEvent: nearestTideEvent(ts, tp),
+        windPoint:   nearestForecastPoint(ts, mf),
+        hourlyPoint: nearestHourlyPoint(ts, hf),
+        tideEvent:   nearestTideEvent(ts, tp),
       };
     });
-  }, [data, marine]);
+  }, [data, marine, forecastData]);
 
   // ── Loading state ─────────────────────────────────────────────────────────
   // Both surf and marine data needed (Wind card depends on marine bundle).

@@ -1225,6 +1225,8 @@ export interface MarineForecastPoint {
   windWaveHeight: number | null;
   windWavePeriod: number | null;
   windWaveDirection: number | null;
+  /** OFS model forecast water temperature — from ofs.fetch_forecast() via ocean_data_resolver.resolve_forecast() */
+  waterTemp: number | null;
 }
 
 export interface MarineTextForecast {
