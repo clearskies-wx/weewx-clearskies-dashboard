@@ -245,7 +245,11 @@
     "swellCompassTitle": "Swell Direction",
     "beachAlignmentAriaLabel": "Dominant swell direction: {{direction}}, {{degrees}}°",
     "tideForecastTitle": "Tide",
-    "tideForecastAriaLabel": "Tide height forecast for the next 72 hours at {{location}}"
+    "tideForecastAriaLabel": "Tide height forecast for the next 72 hours at {{location}}",
+    "nearshoreModel": "Model: {{model}}",
+    "lastModelRun": "Last model run: {{time}}",
+    "modelTooltipTitle": "About SWAN+TruShore",
+    "modelTooltip": "SWAN+TruShore is the Clear Skies nearshore wave model powered by SWAN, running on an hourly schedule independent of NWS operations."
   },
   "fishing": {
     "loading": "Loading fishing data…",

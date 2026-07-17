@@ -454,9 +454,14 @@ function waveHeightScore(height: number | null, unit: string): number {
  * Uses the same weighted-factor formula as the Surf Score hero card. Returns
  * the total score (XX/100) used for the forecast column score row.
  */
-function computeEntryScore(entry: SurfForecast, heightUnit: string): number {
+function computeEntryScore(
+  entry: SurfForecast,
+  heightUnit: string,
+  surfHeightDisplay?: 'face' | 'hawaiian' | null,
+): number {
+  const displayH = getDisplayHeight(entry, surfHeightDisplay ?? null);
   const raw = {
-    waveHeight:     entry.scoring?.waveHeight     ?? waveHeightScore(entry.waveHeightAtBreak, heightUnit),
+    waveHeight:     entry.scoring?.waveHeight     ?? waveHeightScore(displayH, heightUnit),
     wavePeriod:     entry.scoring?.wavePeriod     ?? periodScore(entry.period),
     windQuality:    entry.scoring?.windQuality    ?? windQualityScore(entry.windQuality),
     swellDominance: entry.scoring?.swellDominance ?? Math.max(0, Math.min(100, entry.swellDominance * 100)),
@@ -468,6 +473,59 @@ function computeEntryScore(entry: SurfForecast, heightUnit: string): number {
     Math.round(raw.windQuality    * 0.20) +
     Math.round(raw.swellDominance * 0.10);
   return Math.round(subtotal * raw.beachAlignment / 100);
+}
+
+// ---------------------------------------------------------------------------
+// SWAN+TruShore display helpers (Phase 5 T5.1 / T5.2)
+// ---------------------------------------------------------------------------
+
+/**
+ * getDisplayHeight — return the display-appropriate wave height for an entry.
+ *
+ * Uses the operator's configured surfHeightDisplay preference:
+ *   "face"     → breakingFaceHeight (trough-to-crest, standard surf scale)
+ *   "hawaiian" → breakingHawaiianHeight (back-of-wave, ~0.5× face height)
+ *   null/other → breakingFaceHeight preferred, waveHeightAtBreak as fallback
+ *
+ * Falls back to waveHeightAtBreak when TruShore fields are null — e.g. when
+ * SWAN is unavailable and WW3 provides the fallback data.
+ */
+function getDisplayHeight(
+  entry: SurfForecast,
+  surfHeightDisplay: 'face' | 'hawaiian' | null,
+): number | null {
+  if (surfHeightDisplay === 'hawaiian') {
+    return entry.breakingHawaiianHeight ?? entry.waveHeightAtBreak ?? null;
+  }
+  return entry.breakingFaceHeight ?? entry.waveHeightAtBreak ?? null;
+}
+
+/**
+ * formatRelativeTime — format a past UTC ISO-8601 timestamp as a human-readable
+ * relative string (e.g. "34 minutes ago") using Intl.RelativeTimeFormat.
+ * Returns null when dateStr is null or unparseable.
+ */
+function formatRelativeTime(dateStr: string | null | undefined, locale: string): string | null {
+  if (!dateStr) return null;
+  const then = new Date(dateStr).getTime();
+  if (isNaN(then)) return null;
+  const diffMs = then - Date.now();
+  const diffSec = Math.round(diffMs / 1000);
+  const absSec = Math.abs(diffSec);
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+  if (absSec < 60)   return rtf.format(Math.round(diffSec), 'second');
+  if (absSec < 3600) return rtf.format(Math.round(diffSec / 60), 'minute');
+  if (absSec < 86400) return rtf.format(Math.round(diffSec / 3600), 'hour');
+  return rtf.format(Math.round(diffSec / 86400), 'day');
+}
+
+/**
+ * nearshoreModelDisplayName — map the API's nearshoreModel identifier to a
+ * human-readable display name. Only "swan_trushore" is currently issued.
+ */
+function nearshoreModelDisplayName(modelId: string | null | undefined): string {
+  if (modelId === 'swan_trushore') return 'SWAN+TruShore';
+  return modelId ?? '';
 }
 
 // ---------------------------------------------------------------------------
@@ -900,6 +958,7 @@ function SurfScrollForecast({
   periodUnit,
   windUnit,
   tempUnit,
+  surfHeightDisplay,
   t,
   tCommon,
 }: {
@@ -910,6 +969,8 @@ function SurfScrollForecast({
   periodUnit: string;
   windUnit: string;
   tempUnit: string;
+  /** Operator-configured height display preference; null defaults to face height. */
+  surfHeightDisplay: 'face' | 'hawaiian' | null;
   t: (key: string, opts?: Record<string, unknown>) => string;
   tCommon: (key: string) => string;
 }) {
