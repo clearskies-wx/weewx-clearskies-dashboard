@@ -40,10 +40,10 @@ export interface BeachProfileChartProps {
 // ---------------------------------------------------------------------------
 
 const VIEW_W = 800;
-const VIEW_H = 400;       // increased from 300 for better vertical resolution
-const PAD_TOP    = 40;    // room for wave height labels above surface
-const PAD_BOTTOM = 48;    // increased from 30: room for x-axis labels + break distance labels
-const PAD_LEFT   = 55;    // increased from 10: room for y-axis depth labels
+const VIEW_H = 250;       // ~3.2:1 aspect ratio — fits ~2 grid rows at full width
+const PAD_TOP    = 25;    // room for wave height labels above surface
+const PAD_BOTTOM = 48;    // room for x-axis labels + break distance labels
+const PAD_LEFT   = 55;    // room for y-axis depth labels
 const PAD_RIGHT  = 10;
 
 const CHART_W = VIEW_W - PAD_LEFT - PAD_RIGHT;
@@ -439,36 +439,6 @@ export function BeachProfileChart({
             </g>
           );
         })}
-
-        {/* ── Shore label (right) ── */}
-        <text
-          x={xRight - 4}
-          y={surfaceY + 14}
-          textAnchor="end"
-          aria-hidden="true"
-          style={{
-            fontSize: '10px',
-            fill: 'var(--muted-foreground)',
-            fontFamily: 'var(--font-sans, sans-serif)',
-          }}
-        >
-          Shore
-        </text>
-
-        {/* ── Offshore label (left) ── */}
-        <text
-          x={xLeft + 4}
-          y={surfaceY + 14}
-          textAnchor="start"
-          aria-hidden="true"
-          style={{
-            fontSize: '10px',
-            fill: 'var(--muted-foreground)',
-            fontFamily: 'var(--font-sans, sans-serif)',
-          }}
-        >
-          Offshore
-        </text>
 
         {/* ── Distance axis label (bottom center) ── */}
         <text
