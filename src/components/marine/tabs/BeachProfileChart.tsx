@@ -8,6 +8,9 @@
 //   - Water surface line (blue)
 //   - Wave height envelope (semi-transparent blue fill)
 //   - Break point markers (vertical dashed lines + wave height labels)
+//   - Y-axis depth labels with horizontal gridlines (0m, -5m, -10m, ...)
+//   - X-axis distance labels with tick marks (0m, 250m, 500m, ...)
+//   - Break point distance-from-shore annotation below each break marker
 //
 // X-axis orientation: shore on RIGHT, offshore on LEFT (surfer's perspective).
 // Y-axis: water surface at computed SVG y; depth below as positive SVG y
@@ -37,14 +40,54 @@ export interface BeachProfileChartProps {
 // ---------------------------------------------------------------------------
 
 const VIEW_W = 800;
-const VIEW_H = 300;
-const PAD_TOP    = 40;  // room for wave height labels above surface
-const PAD_BOTTOM = 30;  // room for distance axis below chart
-const PAD_LEFT   = 10;
+const VIEW_H = 400;       // increased from 300 for better vertical resolution
+const PAD_TOP    = 40;    // room for wave height labels above surface
+const PAD_BOTTOM = 48;    // increased from 30: room for x-axis labels + break distance labels
+const PAD_LEFT   = 55;    // increased from 10: room for y-axis depth labels
 const PAD_RIGHT  = 10;
 
 const CHART_W = VIEW_W - PAD_LEFT - PAD_RIGHT;
 const CHART_H = VIEW_H - PAD_TOP  - PAD_BOTTOM;
+
+// ---------------------------------------------------------------------------
+// Axis tick computation helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Compute Y-axis depth ticks (depth below surface, in data units).
+ * Returns [0, step, 2*step, ...] up to the nearest multiple of step >= maxDepth.
+ * Step adapts to the data range.
+ */
+function computeDepthTicks(maxDepth: number): number[] {
+  const step = maxDepth <= 3 ? 1 : maxDepth <= 10 ? 2 : 5;
+  const maxTick = Math.ceil(maxDepth / step) * step;
+  const ticks: number[] = [];
+  for (let d = 0; d <= maxTick; d += step) {
+    ticks.push(d);
+  }
+  return ticks;
+}
+
+/**
+ * Compute X-axis distance ticks.
+ * Returns tick values at round-number intervals spanning [xMin, xMax].
+ */
+function computeDistanceTicks(xMin: number, xMax: number): number[] {
+  const range = xMax - xMin;
+  const step =
+    range <= 200  ? 50 :
+    range <= 500  ? 100 :
+    range <= 1000 ? 250 :
+    range <= 2000 ? 500 :
+    range <= 5000 ? 1000 : 2000;
+
+  const firstTick = Math.ceil(xMin / step) * step;
+  const ticks: number[] = [];
+  for (let d = firstTick; d <= xMax; d += step) {
+    ticks.push(d);
+  }
+  return ticks;
+}
 
 // ---------------------------------------------------------------------------
 // Coordinate helpers
@@ -158,6 +201,12 @@ export function BeachProfileChart({
   // Water surface position in SVG y: allocate space proportional to wave height
   const surfaceY = PAD_TOP + maxWaveH * unitsPerPx;
 
+  // ── Axis ticks ────────────────────────────────────────────────────────────
+  const depthTicks    = computeDepthTicks(maxDepth);
+  const distanceTicks = computeDistanceTicks(xMin, xMax);
+
+  const chartBottom = PAD_TOP + CHART_H;
+
   // ── Polygon paths ─────────────────────────────────────────────────────────
   const seafloorPoints  = buildSeafloorPolygon(transect, xMin, xMax, surfaceY, unitsPerPx);
   const waveEnvPoints   = buildWaveEnvelopePolygon(transect, xMin, xMax, surfaceY, unitsPerPx);
@@ -197,6 +246,14 @@ export function BeachProfileChart({
       ? '—'
       : n.toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
+  // ── Shared styles ─────────────────────────────────────────────────────────
+  const axisLabelStyle: React.CSSProperties = {
+    fontSize: '10px',
+    fill: 'var(--muted-foreground)',
+    fontFamily: 'var(--font-chart, var(--font-sans, sans-serif))',
+    fontFeatureSettings: '"tnum"',
+  };
+
   return (
     <>
       {/* ── SVG visualization ── */}
@@ -207,6 +264,27 @@ export function BeachProfileChart({
         aria-labelledby={titleId}
       >
         <title id={titleId}>{titleText}</title>
+
+        {/* ── 0. Y-axis horizontal gridlines (behind all chart content) ── */}
+        {depthTicks.map((d) => {
+          const y = yScale(-d, surfaceY, unitsPerPx);
+          return (
+            <line
+              key={`ygrid-${d}`}
+              x1={PAD_LEFT}
+              y1={y}
+              x2={xRight}
+              y2={y}
+              aria-hidden="true"
+              style={{
+                stroke: 'var(--border, rgba(100,100,100,0.3))',
+                strokeWidth: 0.5,
+                strokeDasharray: d === 0 ? undefined : '3,4',
+                strokeOpacity: 0.5,
+              }}
+            />
+          );
+        })}
 
         {/* ── 1. Bathymetric seafloor fill ── */}
         {seafloorPoints && (
@@ -294,6 +372,70 @@ export function BeachProfileChart({
                   {fmt1(bp.waveHeight)}{heightUnit}
                 </text>
               )}
+              {/* Distance-from-shore label in x-axis padding area below chart */}
+              <text
+                x={bpX}
+                y={chartBottom + 30}
+                textAnchor="middle"
+                style={{
+                  fontSize: '10px',
+                  fill: 'var(--destructive)',
+                  fontFamily: 'var(--font-sans, sans-serif)',
+                  fontFeatureSettings: '"tnum"',
+                  fontWeight: 600,
+                  fillOpacity: 0.85,
+                }}
+              >
+                {bp.distanceFromShore.toFixed(0)}m
+              </text>
+            </g>
+          );
+        })}
+
+        {/* ── 5. Y-axis depth labels (left of chart area) ── */}
+        {depthTicks.map((d) => {
+          const y = yScale(-d, surfaceY, unitsPerPx);
+          return (
+            <text
+              key={`ylabel-${d}`}
+              x={PAD_LEFT - 6}
+              y={y}
+              textAnchor="end"
+              dominantBaseline="middle"
+              aria-hidden="true"
+              style={axisLabelStyle}
+            >
+              {d === 0 ? '0m' : `-${d}m`}
+            </text>
+          );
+        })}
+
+        {/* ── 6. X-axis tick marks and distance labels ── */}
+        {distanceTicks.map((dist) => {
+          const x = xScale(dist, xMin, xMax);
+          return (
+            <g key={`xtick-${dist}`} aria-hidden="true">
+              {/* Tick mark */}
+              <line
+                x1={x}
+                y1={chartBottom}
+                x2={x}
+                y2={chartBottom + 5}
+                style={{
+                  stroke: 'var(--muted-foreground)',
+                  strokeWidth: 1,
+                  strokeOpacity: 0.5,
+                }}
+              />
+              {/* Distance label */}
+              <text
+                x={x}
+                y={chartBottom + 16}
+                textAnchor="middle"
+                style={axisLabelStyle}
+              >
+                {dist}m
+              </text>
             </g>
           );
         })}
