@@ -55,7 +55,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 // Recharts imports removed — WaveFaceHeightChart replaced by inline SVG trend
-import { Info, Waves, Timer, Compass, X, Thermometer, Drop, Snowflake } from '@phosphor-icons/react';
+import { Info, Waves, Timer, X, Thermometer, Drop, Snowflake } from '@phosphor-icons/react';
 import { useSurfDetail, useMarineDetail, useStation, useObservation, useForecast } from '../../../hooks/useWeatherData';
 import { WindSymbol } from '../../forecast/WindSymbol';
 import { toWmoCode } from '../../../utils/weather-code';
@@ -198,30 +198,32 @@ function scoreBarFillColor(pct: number): string {
 }
 
 
-function ScoreBar({ label, score }: { label: string; score: number }) {
+function ScoreBar({ label, score, max }: { label: string; score: number; max?: number }) {
   const isNegative = score < 0;
-  const absPct = Math.max(0, Math.min(100, Math.abs(score)));
+  const fillPct = max ? Math.min(100, (Math.abs(score) / max) * 100) : Math.min(100, Math.abs(score));
   return (
     <div className="flex flex-col gap-1">
       <div className="flex justify-between" style={{ fontSize: 'var(--text-label)' }}>
         <span className="text-muted-foreground">{label}</span>
         <span className="font-semibold text-foreground" style={{ fontFeatureSettings: '"tnum"' }}>
-          {isNegative ? `−${Math.round(absPct)}` : Math.round(score)}
+          {isNegative ? `−${Math.abs(score)}` : score}{max ? `/${max}` : ''}
         </span>
       </div>
-      <div
-        className="h-2 rounded-full overflow-hidden"
-        style={{ background: 'var(--gauge-unfill)' }}
-        aria-hidden="true"
-      >
+      {max ? (
         <div
-          className="h-full rounded-full transition-all"
-          style={{
-            width: `${absPct}%`,
-            background: isNegative ? 'var(--score-1)' : scoreBarFillColor(score),
-          }}
-        />
-      </div>
+          className="h-2 rounded-full overflow-hidden"
+          style={{ background: 'var(--gauge-unfill)' }}
+          aria-hidden="true"
+        >
+          <div
+            className="h-full rounded-full transition-all"
+            style={{
+              width: `${fillPct}%`,
+              background: scoreBarFillColor(fillPct),
+            }}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -244,11 +246,12 @@ function ScoreBar({ label, score }: { label: string; score: number }) {
 // ---------------------------------------------------------------------------
 
 const EXPLAINER_FACTORS: ReadonlyArray<{ key: string; weight: string | null }> = [
-  { key: 'waveHeight',     weight: '35%' },
-  { key: 'wavePeriod',     weight: '35%' },
-  { key: 'windQuality',    weight: '20%' },
-  { key: 'swellDominance', weight: '10%' },
-  { key: 'beachAlignment', weight: null  }, // penalty, not a weighted factor
+  { key: 'waveHeight',         weight: '35%' },
+  { key: 'wavePeriod',         weight: '35%' },
+  { key: 'waveOrganization',   weight: '30%' },
+  { key: 'beachAlignment',     weight: null  }, // penalty
+  { key: 'directionalExposure', weight: null }, // penalty
+  { key: 'timeOfDay',          weight: null  }, // bonus/penalty
 ];
 
 function ScoringExplainerModal({ onClose }: { onClose: () => void }) {
@@ -378,102 +381,9 @@ function ScoringExplainerModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-/**
- * windQualityScore — convert API windQuality string to a 0–100 score.
- *
- * FIX (FAIL CONDITION): the API returns "Cross-shore", "Offshore", etc. with
- * capital first letter and hyphens. The previous implementation used
- * `case 'cross':` which NEVER matched. Normalize before switching:
- *   quality.toLowerCase().replace(/-/g, '_')
- * so "Cross-shore" → "cross_shore" and "Cross-offshore" → "cross_offshore".
- */
-function windQualityScore(quality: string | null): number {
-  if (quality === null) return 0;
-  const normalized = quality.toLowerCase().replace(/-/g, '_');
-  switch (normalized) {
-    case 'offshore':      return 100;
-    case 'cross_offshore': return 80;
-    case 'cross_shore':   return 50;
-    case 'cross_onshore': return 30;
-    case 'onshore':       return 10;
-    default:              return 0;
-  }
-}
-
-/** Period scoring: <6s poor, 6-8s short-period wind swell, 8-11s mid,
- *  11-14s good groundswell, 14+ great. */
-function periodScore(period: number | null): number {
-  if (period === null) return 0;
-  if (period < 6) return 20;
-  if (period < 8) return 40;
-  if (period < 11) return 60;
-  if (period < 14) return 80;
-  return 100;
-}
-
-/**
- * waveHeightScore — graduated scale from 0ft=0 to 8ft+=100.
- *
- * FIX (FAIL CONDITION): the previous implementation scored 0 for any wave
- * ≤ 2ft, making Southern California summer surf (1–3ft) always read as
- * "no score". 1.7ft must score ~34, not 0.
- *
- * Control points: 0ft→0, 1ft→20, 2ft→40, 4ft→60, 6ft→80, 8ft→100.
- * Linear interpolation between each pair. Values ≥8ft cap at 100.
- *
- * waveHeightAtBreak is in the operator's configured display unit. The
- * 1/2/4/6/8ft thresholds are surf-culture imperial conventions, so metric
- * heights are converted back to feet before scoring.
- */
-function waveHeightScore(height: number | null, unit: string): number {
-  if (height === null) return 0;
-  const feet = unit === 'm' ? height / 0.3048 : height;
-  if (feet <= 0) return 0;
-  if (feet >= 8) return 100;
-  const breakpoints: [number, number][] = [
-    [0, 0],
-    [1, 20],
-    [2, 40],
-    [4, 60],
-    [6, 80],
-    [8, 100],
-  ];
-  for (let i = 0; i < breakpoints.length - 1; i++) {
-    const [x0, y0] = breakpoints[i];
-    const [x1, y1] = breakpoints[i + 1];
-    if (feet <= x1) {
-      return y0 + ((feet - x0) / (x1 - x0)) * (y1 - y0);
-    }
-  }
-  return 100;
-}
-
-/**
- * computeEntryScore — compute a 0-100 total score from a single SurfForecast entry.
- *
- * Uses the same weighted-factor formula as the Surf Score hero card. Returns
- * the total score (XX/100) used for the forecast column score row.
- */
-function computeEntryScore(
-  entry: SurfForecast,
-  heightUnit: string,
-  surfHeightDisplay?: 'face' | 'hawaiian' | null,
-): number {
-  const displayH = getDisplayHeight(entry, surfHeightDisplay ?? null);
-  const raw = {
-    waveHeight:     entry.scoring?.waveHeight     ?? waveHeightScore(displayH, heightUnit),
-    wavePeriod:     entry.scoring?.wavePeriod     ?? periodScore(entry.period),
-    windQuality:    entry.scoring?.windQuality    ?? windQualityScore(entry.windQuality),
-    swellDominance: entry.scoring?.swellDominance ?? Math.max(0, Math.min(100, entry.swellDominance * 100)),
-    beachAlignment: entry.scoring?.beachAlignment ?? 50,
-  };
-  const subtotal =
-    Math.round(raw.waveHeight     * 0.35) +
-    Math.round(raw.wavePeriod     * 0.35) +
-    Math.round(raw.windQuality    * 0.20) +
-    Math.round(raw.swellDominance * 0.10);
-  return Math.round(subtotal * raw.beachAlignment / 100);
-}
+// NOTE: windQualityScore(), periodScore(), waveHeightScore(), computeEntryScore()
+// removed in T6.2 (Phase 6). All scoring now sourced from the API via
+// entry.scoring (SurfForecastScoring). See SWAN-CORRECTIONS-PLAN Phase 4.
 
 // ---------------------------------------------------------------------------
 // SWAN display helpers (Phase 5 T5.1 / T5.2)
@@ -1250,9 +1160,12 @@ function SurfScrollForecast({
               )}
             </div>
 
-            {/* Score */}
+            {/* Score — read directly from API entry.scoring (T6.2). */}
             {renderRow('score', SURF_ROW_H.score, (item) => {
-              const score = computeEntryScore(item.entry, heightUnit, surfHeightDisplay);
+              const s = item.entry.scoring;
+              const score = s != null
+                ? s.waveHeight + s.wavePeriod + s.waveOrganization + s.beachAlignment + s.directionalExposure + s.timeOfDay
+                : null;
               return (
                 <span aria-hidden="true" style={{
                   fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
@@ -1260,9 +1173,9 @@ function SurfScrollForecast({
                   fontWeight: 700,
                   fontFeatureSettings: '"tnum"',
                   lineHeight: 1,
-                  color: scoreBarFillColor(score),
+                  color: score != null ? scoreBarFillColor(Math.max(0, score)) : 'var(--muted-foreground)',
                 }}>
-                  {score}
+                  {score != null ? score : '—'}
                 </span>
               );
             })}
@@ -1317,8 +1230,10 @@ function SurfScrollForecast({
               return <WindSymbol bearing={hp?.windDir ?? null} speed={hp?.windSpeed != null ? Math.round(hp.windSpeed) : 0} size={20} />;
             }, { overflow: 'visible' })}
 
+            {/* T6.5: whiteSpace: 'normal' allows "Cross-Offshore" to wrap to two lines.
+             * Row height is 34px (SURF_ROW_H.windQuality) to accommodate wrapped text. */}
             {renderRow('windQuality', SURF_ROW_H.windQuality, (item) => (
-              <span style={{ ...microText, textAlign: 'center', lineHeight: 1.2, maxWidth: `${SURF_COL_W - 6}px` }}>
+              <span style={{ ...microText, textAlign: 'center', lineHeight: 1.2, maxWidth: `${SURF_COL_W - 6}px`, whiteSpace: 'normal' }}>
                 {item.entry.windQuality ?? '—'}
               </span>
             ))}
@@ -1780,41 +1695,31 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
   const swellDirCardinal = cardinalFromDegrees(primary?.direction ?? null);
   const swellDirLabel    = swellDirCardinal ? tCommon(`directions.${swellDirCardinal}`) : '—';
 
-  // ── Scoring breakdown — weighted contributions to the total score.
-  // Each factor's bar shows its weighted contribution (raw × weight/100),
-  // not the raw 0-100 score. Beach alignment is a penalty: it shows the
-  // negative amount subtracted from the weighted subtotal.
-  // totalScore = subtotal × (beachAlignment/100), displayed as XX/100.
+  // ── Scoring breakdown — 3-factor + 3-penalty structure (ADR-096 / T6.2).
+  // All values sourced directly from API scoring breakdown (SurfForecastScoring).
+  // totalScore = waveHeight + wavePeriod + waveOrganization + beachAlignment
+  //            + directionalExposure + timeOfDay. No hidden multipliers.
   const scoringBreakdown = (() => {
-    if (!primary) return { factors: [] as { key: string; weight: number | null; score: number }[], totalScore: 0 };
-
-    const raw = {
-      waveHeight: primary.scoring?.waveHeight ?? waveHeightScore(getDisplayHeight(primary, surfHeightDisplay), heightUnit),
-      wavePeriod: primary.scoring?.wavePeriod ?? periodScore(primary.period),
-      windQuality: primary.scoring?.windQuality ?? windQualityScore(primary.windQuality),
-      swellDominance: primary.scoring?.swellDominance ?? Math.max(0, Math.min(100, primary.swellDominance * 100)),
-      beachAlignment: primary.scoring?.beachAlignment ?? 50,
-    };
-
-    const weighted = {
-      waveHeight: Math.round(raw.waveHeight * 0.35),
-      wavePeriod: Math.round(raw.wavePeriod * 0.35),
-      windQuality: Math.round(raw.windQuality * 0.20),
-      swellDominance: Math.round(raw.swellDominance * 0.10),
-    };
-
-    const subtotal = weighted.waveHeight + weighted.wavePeriod + weighted.windQuality + weighted.swellDominance;
-    const alignmentMultiplier = raw.beachAlignment / 100;
-    const totalScore = Math.round(subtotal * alignmentMultiplier);
-    const penaltyAmount = totalScore - subtotal;
-
+    if (!primary?.scoring) {
+      return {
+        factors: [] as Array<{key: string; max: number; score: number}>,
+        penalties: [] as Array<{key: string; score: number}>,
+        totalScore: 0,
+      };
+    }
+    const s = primary.scoring;
+    const totalScore = s.waveHeight + s.wavePeriod + s.waveOrganization
+      + s.beachAlignment + s.directionalExposure + s.timeOfDay;
     return {
       factors: [
-        { key: 'waveHeight', weight: 35 as number | null, score: weighted.waveHeight },
-        { key: 'wavePeriod', weight: 35 as number | null, score: weighted.wavePeriod },
-        { key: 'windQuality', weight: 20 as number | null, score: weighted.windQuality },
-        { key: 'swellDominance', weight: 10 as number | null, score: weighted.swellDominance },
-        { key: 'beachAlignment', weight: null as number | null, score: penaltyAmount },
+        { key: 'waveHeight',       max: 35, score: s.waveHeight },
+        { key: 'wavePeriod',       max: 35, score: s.wavePeriod },
+        { key: 'waveOrganization', max: 30, score: s.waveOrganization },
+      ],
+      penalties: [
+        { key: 'beachAlignment',      score: s.beachAlignment },
+        { key: 'directionalExposure', score: s.directionalExposure },
+        { key: 'timeOfDay',           score: s.timeOfDay },
       ],
       totalScore,
     };
@@ -1924,22 +1829,30 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                   {primary.conditionsText}
                 </p>
 
-                {/* Scoring factor bars — weighted contributions */}
-                <div className="flex flex-col gap-3">
-                  {scoringBreakdown.factors.map((factor) => (
-                    <ScoreBar
-                      key={factor.key}
-                      label={
-                        factor.weight !== null
-                          ? t('surfing.scoring.factorLabel', {
-                              label:  t(`surfing.scoring.${factor.key}`),
-                              weight: factor.weight,
-                            })
-                          : `${t(`surfing.scoring.${factor.key}`)} (${t('surfing.scoring.penalty')})`
-                      }
-                      score={factor.score}
-                    />
-                  ))}
+                {/* Scoring breakdown — two-column layout (ADR-096 / T6.2):
+                 *  Column 1: 3 weighted factors (Wave Height 35, Wave Period 35, Organization 30)
+                 *  Column 2: 3 penalty/bonus modifiers (Beach Alignment, Exposure, Time of Day)
+                 *  Bars fill relative to each factor's own maximum, not to 100. */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                  <div className="flex flex-col gap-3">
+                    {scoringBreakdown.factors.map((f) => (
+                      <ScoreBar
+                        key={f.key}
+                        label={t(`surfing.scoring.${f.key}`)}
+                        score={f.score}
+                        max={f.max}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {scoringBreakdown.penalties.map((p) => (
+                      <ScoreBar
+                        key={p.key}
+                        label={t(`surfing.scoring.${p.key}`)}
+                        score={p.score}
+                      />
+                    ))}
+                  </div>
                 </div>
               </>
             )}
@@ -1958,13 +1871,14 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                 <span className="text-muted-foreground font-semibold" style={{ fontSize: 'var(--text-micro)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   {t('surfing.conditionsAtBreak')}
                 </span>
-                <dl className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2">
+                {/* T6.1: 3 stats only — Swell Height, Breaking Face Height, Period.
+                 *  Direction removed from top row (redundant with compass below). */}
+                <dl className="grid grid-cols-3 gap-x-4 gap-y-2">
                   {/* Icon-left stat: icon beside the value/label block */}
                   {[
                     { icon: <Waves weight="bold" />, label: t('surfing.swellHeightStatLabel', { defaultValue: 'Swell Height' }), value: formatValue(primary.swellHeight ?? primary.waveHeightAtBreak, 'default', locale), unit: heightUnit },
                     { icon: <Waves weight="bold" />, label: t('surfing.faceBreakHeightLabel', { defaultValue: 'Breaking Face Height' }), value: formatValue(getDisplayHeight(primary, surfHeightDisplay), 'default', locale), unit: heightUnit },
                     { icon: <Timer weight="bold" />, label: t('surfing.period'), value: formatValue(primary.period, 'default', locale), unit: periodUnit },
-                    { icon: <Compass weight="bold" />, label: t('surfing.direction'), value: swellDirLabel, unit: undefined },
                   ].map((s) => (
                     <div key={s.label} className="flex items-center gap-2">
                       <span aria-hidden="true" className="shrink-0 text-muted-foreground" style={{ fontSize: 'var(--text-stat-tile)' }}>

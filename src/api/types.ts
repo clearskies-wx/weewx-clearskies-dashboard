@@ -1243,13 +1243,14 @@ export interface MarineTextForecast {
 export interface SurfForecastScoring {
   waveHeight: number;
   wavePeriod: number;
-  windQuality: number;
-  swellDominance: number;
+  waveOrganization: number;
+  organizationWind: number;
+  organizationSwellDominance: number;
+  organizationDirectionalSpread: number;
+  organizationCrossSwell: number;
   beachAlignment: number;
-  waveHeightWeight: number;
-  wavePeriodWeight: number;
-  windQualityWeight: number;
-  swellDominanceWeight: number;
+  directionalExposure: number;
+  timeOfDay: number;
 }
 
 export interface SurfForecast {
@@ -1288,6 +1289,9 @@ export interface SurfForecast {
    * Null when the nearshore model is unavailable.
    */
   windSource?: string | null;
+  breakPoints?: Array<{distanceFromShore: number; depth: number; waveHeight: number}> | null;
+  directionalSpread?: number | null;
+  setup?: number | null;
 }
 
 export interface FishingForecast {

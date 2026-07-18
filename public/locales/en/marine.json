@@ -193,22 +193,26 @@
     "scoring": {
       "waveHeight": "Wave Height",
       "wavePeriod": "Wave Period",
+      "waveOrganization": "Wave Organization",
       "windQuality": "Wind Quality",
       "swellDominance": "Swell Dominance",
       "beachAlignment": "Beach Alignment",
+      "directionalExposure": "Exposure",
+      "timeOfDay": "Time of Day",
       "penalty": "penalty",
       "factorLabel": "{{label}} ({{weight}}%)"
     },
     "scoringExplainer": {
       "title": "How Surf Scoring Works",
       "close": "Close",
-      "intro": "The surf score rates current conditions from 1 (Poor) to 5 (Epic) based on four factors and a beach alignment penalty.",
-      "waveHeight": "Larger waves within a rideable range score higher. Very small or dangerously large waves score lower.",
-      "wavePeriod": "Longer swell periods produce cleaner, more powerful waves. Short-period wind chop scores poorly.",
-      "windQuality": "Offshore winds hold the wave face up and score highest. Onshore winds blow waves down and score lowest.",
-      "swellDominance": "A clean, single dominant swell system scores higher than confused, mixed wind chop.",
+      "intro": "The surf score rates conditions on a 0–100 scale based on three weighted factors and three modifiers. All values come from the SWAN nearshore model.",
+      "waveHeight": "Larger waves within the rideable range score higher (max 35 pts). Very small or dangerously large waves score lower.",
+      "wavePeriod": "Longer swell periods produce cleaner, more powerful waves (max 35 pts). Short-period wind chop scores poorly.",
+      "waveOrganization": "A composite of four sub-factors (max 30 pts): wind effect (50%), swell dominance (25%), directional spread (15%), and cross-swell interference (10%). Glassy offshore conditions with a single clean swell system score highest.",
       "beachAlignment": "How directly the swell hits the beach. Swells arriving at a steep angle lose energy and score lower.",
-      "tiers": "Score tiers: 1 Poor, 2 Fair, 3 Good, 4 Very Good, 5 Epic."
+      "directionalExposure": "Whether the beach is geographically exposed to the incoming swell direction. Blocked angles reduce the score.",
+      "timeOfDay": "Dawn and early morning conditions often score a small bonus; afternoon sea breezes may reduce the score.",
+      "tiers": "Score tiers: 1–20 Poor, 21–40 Fair, 41–60 Good, 61–80 Very Good, 81–100 Epic."
     },
     "noModelSwellData": "No swell component data available",
     "conditionsAtBreak": "Conditions at Break",
