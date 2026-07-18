@@ -216,7 +216,7 @@
     "swellType": "Type",
     "swellCardTitle": "Current Swell Conditions",
     "swellHeightStatLabel": "Swell Height",
-    "faceBreakHeightLabel": "Face Break Height",
+    "faceBreakHeightLabel": "Breaking Face Height",
     "swellBreakdownTitle": "Swell Components",
     "direction": "Direction",
     "height": "Height",

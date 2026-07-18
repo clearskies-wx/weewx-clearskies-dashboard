@@ -1460,7 +1460,7 @@ function SurfScrollForecast({
               }}
             >
               {chip(t('surfing.swellHeightStatLabel', { defaultValue: 'Swell Height' }), `${formatValue(entry.swellHeight ?? entry.waveHeightAtBreak, 'default', locale)} ${heightUnit}`)}
-              {chip(t('surfing.faceBreakHeightLabel', { defaultValue: 'Face Break Height' }), `${formatValue(getDisplayHeight(entry, surfHeightDisplay), 'default', locale)} ${heightUnit}`)}
+              {chip(t('surfing.faceBreakHeightLabel', { defaultValue: 'Breaking Face Height' }), `${formatValue(getDisplayHeight(entry, surfHeightDisplay), 'default', locale)} ${heightUnit}`)}
               {chip(t('surfing.period'), `${formatValue(entry.period, 'default', locale)} ${periodUnit}`)}
               {chip(t('surfing.direction'), swellDirLabel)}
               {chip(t('surfing.windQualityTitle'), entry.windQuality ?? '—')}
@@ -1952,7 +1952,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                   {/* Icon-left stat: icon beside the value/label block */}
                   {[
                     { icon: <Waves weight="bold" />, label: t('surfing.swellHeightStatLabel', { defaultValue: 'Swell Height' }), value: formatValue(primary.swellHeight ?? primary.waveHeightAtBreak, 'default', locale), unit: heightUnit },
-                    { icon: <Waves weight="bold" />, label: t('surfing.faceBreakHeightLabel', { defaultValue: 'Face Break Height' }), value: formatValue(getDisplayHeight(primary, surfHeightDisplay), 'default', locale), unit: heightUnit },
+                    { icon: <Waves weight="bold" />, label: t('surfing.faceBreakHeightLabel', { defaultValue: 'Breaking Face Height' }), value: formatValue(getDisplayHeight(primary, surfHeightDisplay), 'default', locale), unit: heightUnit },
                     { icon: <Timer weight="bold" />, label: t('surfing.period'), value: formatValue(primary.period, 'default', locale), unit: periodUnit },
                     { icon: <Compass weight="bold" />, label: t('surfing.direction'), value: swellDirLabel, unit: undefined },
                   ].map((s) => (
