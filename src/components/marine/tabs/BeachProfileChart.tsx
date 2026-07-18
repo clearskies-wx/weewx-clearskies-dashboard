@@ -386,14 +386,31 @@ export function BeachProfileChart({
           />
         )}
 
-        {/* ── 3. Wave height envelope fill ── */}
+        {/* ── 3a. Water column fill (between surface and seafloor) ── */}
+        {seafloorPoints && (
+          <polygon
+            points={seafloorPoints}
+            style={{
+              fill: 'rgba(59, 130, 246, 0.08)',
+              stroke: 'none',
+            }}
+            clipPath="url(#water-clip)"
+          />
+        )}
+        <defs>
+          <clipPath id="water-clip">
+            <rect x={PAD_LEFT} y={surfaceY} width={CHART_W} height={CHART_H} />
+          </clipPath>
+        </defs>
+
+        {/* ── 3b. Wave height envelope fill ── */}
         {waveEnvPoints && (
           <polygon
             points={waveEnvPoints}
             style={{
-              fill: 'rgba(59, 130, 246, 0.25)',
-              stroke: 'rgba(59, 130, 246, 0.6)',
-              strokeWidth: 1,
+              fill: 'rgba(59, 130, 246, 0.35)',
+              stroke: 'rgba(59, 130, 246, 0.8)',
+              strokeWidth: 1.5,
             }}
           />
         )}
@@ -406,14 +423,16 @@ export function BeachProfileChart({
             bp.waveHeight !== null ? yScale(bp.waveHeight, surfaceY, unitsPerPx) : surfaceY - 8;
           const labelY = Math.max(waveAtBp - 6, PAD_TOP + 2);
 
+          const seafloorY = yScale(-bp.depth, surfaceY, unitsPerPx);
+
           return (
             <g key={`bp-${i}`} aria-hidden="true">
-              {/* Dashed vertical line */}
+              {/* Dashed vertical line from wave crest to seafloor */}
               <line
                 x1={bpX}
-                y1={labelY}
+                y1={labelY + 14}
                 x2={bpX}
-                y2={yScale(-bp.depth, surfaceY, unitsPerPx)}
+                y2={seafloorY}
                 style={{
                   stroke: 'var(--destructive)',
                   strokeWidth: 1.5,
@@ -421,23 +440,27 @@ export function BeachProfileChart({
                   strokeOpacity: 0.8,
                 }}
               />
-              {/* Wave height label at top of line */}
-              {bp.waveHeight !== null && (
-                <text
-                  x={bpX}
-                  y={labelY - 2}
-                  textAnchor="middle"
-                  style={{
-                    fontSize: '11px',
-                    fill: 'var(--destructive)',
-                    fontFamily: 'var(--font-sans, sans-serif)',
-                    fontVariantNumeric: 'tabular-nums',
-                  }}
-                >
-                  {fmt1(bp.waveHeight)}{heightUnit}
-                </text>
-              )}
-              {/* Distance-from-shore label in x-axis padding area below chart */}
+              {/* Wave crest triangle marker */}
+              <polygon
+                points={`${bpX},${surfaceY - 2} ${bpX - 5},${surfaceY - 10} ${bpX + 5},${surfaceY - 10}`}
+                style={{ fill: 'var(--destructive)', fillOpacity: 0.9 }}
+              />
+              {/* Wave height + distance label above the marker */}
+              <text
+                x={bpX}
+                y={labelY}
+                textAnchor="middle"
+                style={{
+                  fontSize: '11px',
+                  fill: 'var(--destructive)',
+                  fontFamily: 'var(--font-sans, sans-serif)',
+                  fontWeight: 600,
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {bp.waveHeight !== null ? `${fmt1(bp.waveHeight)} ${heightUnit}` : ''}
+              </text>
+              {/* Distance label below the chart */}
               <text
                 x={bpX}
                 y={chartBottom + 30}
