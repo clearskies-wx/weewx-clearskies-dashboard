@@ -33,6 +33,10 @@ export interface BeachProfileChartProps {
   breakPoints: BeachProfileBreakPoint[];
   heightUnit: string;
   locale: string;
+  /** Current tidal elevation in meters relative to MSL. Positive = above MSL
+   *  (high tide), negative = below (low tide). The water surface and shore
+   *  intersection shift along the bathymetry slope accordingly. */
+  tideLevel?: number | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -205,6 +209,7 @@ export function BeachProfileChart({
   breakPoints,
   heightUnit,
   locale,
+  tideLevel = null,
 }: BeachProfileChartProps) {
   if (transect.length === 0) {
     return null;
@@ -218,13 +223,38 @@ export function BeachProfileChart({
   const xMin = 0;
   const xMax = tier.maxDistance;
 
-  const maxDepth = Math.max(...displayTransect.map((p) => p.depth), 0.1);
+  // Tide-adjusted depth: the water surface sits at tideLevel above MSL, so
+  // effective depth at each point = bathymetric_depth + tideLevel (high tide
+  // adds water, making it deeper; low tide subtracts). When no tide data is
+  // available, tideLevel = 0 (MSL).
+  const tide = tideLevel ?? 0;
+
+  const maxDepth = Math.max(...displayTransect.map((p) => p.depth + tide), 0.1);
   const maxWaveH = Math.max(...displayTransect.map((p) => p.waveHeight ?? 0), 0.1);
 
   const totalRange = maxDepth + maxWaveH;
   const unitsPerPx = CHART_H / totalRange;
 
   const surfaceY = PAD_TOP + maxWaveH * unitsPerPx;
+
+  // Dynamic tidal shoreline: find the distance where the bathymetry crosses
+  // the tide level (depth == tideLevel → submerged/exposed boundary). The
+  // shore intersection shifts right (inland) at high tide, left (seaward)
+  // at low tide. Interpolate between the two nearest transect points.
+  let shoreIntersectDist = 0;
+  if (displayTransect.length >= 2) {
+    const sorted = [...displayTransect].sort((a, b) => a.distanceFromShore - b.distanceFromShore);
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const d0 = sorted[i].depth;
+      const d1 = sorted[i + 1].depth;
+      if (d0 <= tide && d1 > tide) {
+        const frac = (tide - d0) / (d1 - d0);
+        shoreIntersectDist = sorted[i].distanceFromShore +
+          frac * (sorted[i + 1].distanceFromShore - sorted[i].distanceFromShore);
+        break;
+      }
+    }
+  }
 
   // ── Axis ticks ────────────────────────────────────────────────────────────
   const depthTicks    = computeDepthTicks(maxDepth);
@@ -334,17 +364,27 @@ export function BeachProfileChart({
           />
         )}
 
-        {/* ── 2. Water surface line ── */}
+        {/* ── 2. Water surface line (extends from offshore to tidal shoreline) ── */}
         <line
           x1={xLeft}
           y1={surfaceY}
-          x2={xRight}
+          x2={xScale(shoreIntersectDist, xMin, xMax)}
           y2={surfaceY}
           style={{
             stroke: 'var(--beach-profile-water, rgba(59, 130, 246, 0.5))',
             strokeWidth: 1.5,
           }}
         />
+        {/* Tidal shoreline marker */}
+        {shoreIntersectDist > 0 && (
+          <circle
+            cx={xScale(shoreIntersectDist, xMin, xMax)}
+            cy={surfaceY}
+            r={3}
+            aria-hidden="true"
+            style={{ fill: 'var(--beach-profile-water, rgba(59, 130, 246, 0.7))' }}
+          />
+        )}
 
         {/* ── 3. Wave height envelope fill ── */}
         {waveEnvPoints && (
@@ -411,7 +451,7 @@ export function BeachProfileChart({
                   fillOpacity: 0.85,
                 }}
               >
-                {bp.distanceFromShore.toFixed(0)}m
+                {bp.distanceFromShore.toFixed(0)}
               </text>
             </g>
           );
@@ -430,7 +470,7 @@ export function BeachProfileChart({
               aria-hidden="true"
               style={axisLabelStyle}
             >
-              {d === 0 ? '0m' : `-${d}m`}
+              {d === 0 ? '0' : `-${d}`}
             </text>
           );
         })}
@@ -459,7 +499,7 @@ export function BeachProfileChart({
                 textAnchor="middle"
                 style={axisLabelStyle}
               >
-                {dist}m
+                {dist}
               </text>
             </g>
           );
@@ -477,8 +517,27 @@ export function BeachProfileChart({
             fontFamily: 'var(--font-sans, sans-serif)',
           }}
         >
-          Distance from shore (m)
+          Distance from shore
         </text>
+
+        {/* ── Tide level indicator (top-right, when tide data available) ── */}
+        {tide !== 0 && (
+          <text
+            x={xRight}
+            y={PAD_TOP - 4}
+            textAnchor="end"
+            aria-hidden="true"
+            style={{
+              fontSize: '9px',
+              fill: 'var(--muted-foreground)',
+              fontFamily: 'var(--font-chart, var(--font-sans, sans-serif))',
+              fontFeatureSettings: '"tnum"',
+              fillOpacity: 0.7,
+            }}
+          >
+            Tide: {tide > 0 ? '+' : ''}{tide.toFixed(1)}
+          </text>
+        )}
       </svg>
 
       {/* ── Screen-reader-only data table ── */}
