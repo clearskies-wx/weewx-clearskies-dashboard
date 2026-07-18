@@ -1266,7 +1266,7 @@ export interface SurfForecast {
   /** Per-factor scoring breakdown — provided by surf_scorer.py when available.
    *  Null when the API does not yet include scoring (e.g. older server versions). */
   scoring?: SurfForecastScoring | null;
-  // SWAN+TruShore fields (ADR-093, Phase 5 T5.1). Optional — absent on older API
+  // SWAN fields (ADR-093, Phase 5 T5.1). Optional — absent on older API
   // versions and on WW3 fallback responses where SWAN has not produced output.
   /** Raw SWAN Hsig (significant wave height) before wave_transform.py supplements. */
   swellHeight?: number | null;
@@ -1284,7 +1284,7 @@ export interface SurfForecast {
   breakingHawaiianHeight?: number | null;
   /**
    * Wind data source used for this timestep's surf scoring.
-   * "hrrr_trushore" for forecast timesteps; "station" for t=0.
+   * "hrrr" for forecast timesteps; "station" for t=0.
    * Null when the nearshore model is unavailable.
    */
   windSource?: string | null;
@@ -1432,11 +1432,11 @@ export interface SurfDetailData {
   tidePredictions: TidePrediction[];
   source: string;
   generatedAt: string;
-  // SWAN+TruShore top-level fields (ADR-093, Phase 5 T5.1). Optional — absent
+  // SWAN top-level fields (ADR-093, Phase 5 T5.1). Optional — absent
   // on older API versions and when SWAN has not produced output.
   /**
    * Identifies the nearshore model in use.
-   * "swan_trushore" when SWAN+TruShore is active; absent/null for WW3 fallback.
+   * "swan" when SWAN is active; absent/null for WW3 fallback.
    */
   nearshoreModel?: string | null;
   /** UTC ISO-8601 timestamp when the last SWAN model run completed. */

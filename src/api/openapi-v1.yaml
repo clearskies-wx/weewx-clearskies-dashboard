@@ -779,12 +779,12 @@ paths:
       tags: [Marine]
       summary: Surf forecast for a location
       description: |
-        SWAN+TruShore nearshore wave data (corrected by the four wave_transform.py
+        SWAN nearshore wave data (corrected by the four wave_transform.py
         supplements: shoaling, γ correction, structure effects, topographic focusing),
         falling back to WaveWatch III offshore data when SWAN is unavailable
         (no correction applied to the fallback).
         Scored by enrichment/surf_scorer.py. `forecast` has up to 144 hourly
-        entries from SWAN+TruShore (72-hour window), or 0–1 entries when
+        entries from SWAN (72-hour window), or 0–1 entries when
         falling back to WaveWatch III. Also returns NDBC spectral swell
         decomposition, an NWS SRF zone forecast, and a CO-OPS tide overlay
         (informational, not scored).
@@ -3144,7 +3144,7 @@ components:
       description: Surf quality forecast for one spot at one timestep (post wave_transform + surf_scorer).
       properties:
         time: { type: string, format: date-time }
-        waveHeightAtBreak: { type: number, description: "group_wave_height; after SWAN+TruShore wave_transform.py supplements (shoaling, γ correction, structure effects, topographic focusing). Legacy field retained for backward compatibility." }
+        waveHeightAtBreak: { type: number, description: "group_wave_height; after SWAN wave_transform.py supplements (shoaling, γ correction, structure effects, topographic focusing). Legacy field retained for backward compatibility." }
         period: { type: number, description: "group_wave_period; dominant period" }
         direction: { type: number, description: "Degrees true north; dominant swell direction" }
         qualityStars: { type: integer, minimum: 1, maximum: 5 }
@@ -3163,7 +3163,7 @@ components:
         swellHeight: { type: number, nullable: true, description: "Raw SWAN Hsig (significant wave height) before wave_transform.py supplements. Absent on WW3 fallback responses." }
         breakingFaceHeight: { type: number, nullable: true, description: "Trough-to-crest breaking wave face height via breaker formula (Komar-Gaughan or Caldwell per per-spot config). Primary surfer-scale height; display when surfHeightDisplay='face'. Absent on WW3 fallback." }
         breakingHawaiianHeight: { type: number, nullable: true, description: "Back-of-wave (Hawaiian) scale = breakingFaceHeight × 0.5. Display when surfHeightDisplay='hawaiian'. Null when breakingFaceHeight is null." }
-        windSource: { type: string, nullable: true, description: "Wind data source for this timestep's surf scoring: 'hrrr_trushore' for forecast timesteps, 'station' for t=0. Null when nearshore model is unavailable." }
+        windSource: { type: string, nullable: true, description: "Wind data source for this timestep's surf scoring: 'hrrr' for forecast timesteps, 'station' for t=0. Null when nearshore model is unavailable." }
       required: [time, waveHeightAtBreak, period, direction, qualityStars, qualityLabel, conditionsText, windQuality, swellDominance]
 
     FishingForecast:
@@ -3384,7 +3384,7 @@ components:
         forecast:
           type: array
           items: { $ref: '#/components/schemas/SurfForecast' }
-          description: "Up to 144 hourly entries from SWAN+TruShore (72-hour window); 0 or 1 entries when falling back to WaveWatch III."
+          description: "Up to 144 hourly entries from SWAN (72-hour window); 0 or 1 entries when falling back to WaveWatch III."
         zoneForecast:
           nullable: true
           allOf: [{ $ref: '#/components/schemas/SurfZoneForecast' }]
@@ -3395,9 +3395,9 @@ components:
           type: array
           items: { $ref: '#/components/schemas/TidePrediction' }
           description: "Informational overlay, not scored. Not present on the SurfBundle Pydantic class."
-        source: { type: string, example: "swan_trushore+ndbc+coops+nws_srf" }
+        source: { type: string, example: "swan+ndbc+coops+nws_srf" }
         generatedAt: { type: string, format: date-time }
-        nearshoreModel: { type: string, nullable: true, example: "swan_trushore", description: "Identifies the nearshore model in use. 'swan_trushore' when SWAN+TruShore is active; absent/null for WW3 fallback responses." }
+        nearshoreModel: { type: string, nullable: true, example: "swan", description: "Identifies the nearshore model in use. 'swan' when SWAN is active; absent/null for WW3 fallback responses." }
         lastRunTime: { type: string, format: date-time, nullable: true, description: "UTC ISO-8601 timestamp when the last SWAN model run completed." }
         dataAge: { type: number, nullable: true, description: "Seconds elapsed since the last SWAN model run completed." }
         breakerFormula: { type: string, enum: [komar_gaughan, caldwell], nullable: true, description: "Per-spot configured breaker formula used for breakingFaceHeight calculation." }

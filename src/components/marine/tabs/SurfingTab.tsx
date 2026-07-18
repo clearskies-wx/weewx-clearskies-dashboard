@@ -476,7 +476,7 @@ function computeEntryScore(
 }
 
 // ---------------------------------------------------------------------------
-// SWAN+TruShore display helpers (Phase 5 T5.1 / T5.2)
+// SWAN display helpers (Phase 5 T5.1 / T5.2)
 // ---------------------------------------------------------------------------
 
 /**
@@ -487,7 +487,7 @@ function computeEntryScore(
  *   "hawaiian" → breakingHawaiianHeight (back-of-wave, ~0.5× face height)
  *   null/other → breakingFaceHeight preferred, waveHeightAtBreak as fallback
  *
- * Falls back to waveHeightAtBreak when TruShore fields are null — e.g. when
+ * Falls back to waveHeightAtBreak when SWAN fields are null — e.g. when
  * SWAN is unavailable and WW3 provides the fallback data.
  */
 function getDisplayHeight(
@@ -521,10 +521,10 @@ function formatRelativeTime(dateStr: string | null | undefined, locale: string):
 
 /**
  * nearshoreModelDisplayName — map the API's nearshoreModel identifier to a
- * human-readable display name. Only "swan_trushore" is currently issued.
+ * human-readable display name. Only "swan" is currently issued.
  */
 function nearshoreModelDisplayName(modelId: string | null | undefined): string {
-  if (modelId === 'swan_trushore') return 'SWAN+TruShore';
+  if (modelId === 'swan') return 'SWAN';
   return modelId ?? '';
 }
 
@@ -1364,7 +1364,7 @@ function SurfScrollForecast({
             </div>
 
             {/* Wave height values row — uses breakingFaceHeight or breakingHawaiianHeight
-                 per surfHeightDisplay; falls back to waveHeightAtBreak when TruShore
+                 per surfHeightDisplay; falls back to waveHeightAtBreak when SWAN
                  fields are absent (WW3 fallback data). */}
             {renderRow('waveValues', SURF_ROW_H.waveValues, (item) => {
               const val = getDisplayHeight(item.entry, surfHeightDisplay);
@@ -1534,8 +1534,8 @@ function WaterThermometerIcon({ size = 24 }: { size?: number }) {
 // ---------------------------------------------------------------------------
 // NearshoreModelIndicator — T5.2 data source indicator for the 72h forecast.
 //
-// Displays: "Model: SWAN+TruShore" + "Last model run: X minutes ago" + an
-// accessible info disclosure that explains what SWAN+TruShore is.
+// Displays: "Model: SWAN" + "Last model run: X minutes ago" + an
+// accessible info disclosure that explains what SWAN is.
 //
 // A11y:
 //   - All text in --text-micro, color: --muted-foreground (decorative metadata)
@@ -1580,7 +1580,7 @@ function NearshoreModelIndicator({
         gap: '0.375rem',
       }}
     >
-      {/* "Model: SWAN+TruShore" */}
+      {/* "Model: SWAN" */}
       <span style={metaStyle}>
         {t('surfing.nearshoreModel', { model: modelLabel })}
       </span>
@@ -1739,7 +1739,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
   const periodUnit = units?.period ?? t('surfing.secondsAbbr');
   const windUnit   = marineUnits?.windSpeed ?? 'kn';
 
-  // ── SWAN+TruShore display preference (T5.1) ───────────────────────────────
+  // ── SWAN display preference (T5.1) ───────────────────────────────────────
   // "face" → breakingFaceHeight (trough-to-crest)
   // "hawaiian" → breakingHawaiianHeight (back-of-wave ~0.5×)
   // null → default to "face" behavior
@@ -1759,13 +1759,23 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
       }, forecast[0])
     : null;
 
-  // ── Swell components — ONLY from multiSwell (NO spectralComponents fallback)
-  // FIX (FAIL CONDITION): `primary?.multiSwell ?? spectralComponents` was WRONG.
-  // If multiSwell is null or empty, the Swell card shows "no model data".
-  const swellComponents: SpectralWaveComponent[] = primary?.multiSwell ?? [];
+  // ── Swell components — nearest entry WITH multiSwell data.
+  // Not every forecast entry has spectral decomposition: full SWAN runs (4×/day)
+  // produce multiSwell; hourly quick updates do not. Find the entry closest to
+  // NOW that actually carries multiSwell, falling back to the first entry with it.
+  const swellSourceEntry = (() => {
+    const withSwell = forecast.filter((e) => e.multiSwell && e.multiSwell.length > 0);
+    if (withSwell.length === 0) return null;
+    const now = Date.now();
+    return withSwell.reduce((best, e) => {
+      const bestDiff = Math.abs(new Date(best.time).getTime() - now);
+      const diff = Math.abs(new Date(e.time).getTime() - now);
+      return diff < bestDiff ? e : best;
+    }, withSwell[0]);
+  })();
+  const swellComponents: SpectralWaveComponent[] = swellSourceEntry?.multiSwell ?? [];
 
   const dominantDirection = dominantSwellDirection(swellComponents);
-  // dominantSwellStats no longer used — height/period live in the component table only
 
   const swellDirCardinal = cardinalFromDegrees(primary?.direction ?? null);
   const swellDirLabel    = swellDirCardinal ? tCommon(`directions.${swellDirCardinal}`) : '—';
@@ -2210,7 +2220,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                 tCommon={tCommon}
               />
             )}
-            {/* T5.2 — SWAN+TruShore model provenance indicator */}
+            {/* T5.2 — SWAN model provenance indicator */}
             <NearshoreModelIndicator
               nearshoreModel={data.nearshoreModel}
               lastRunTime={data.lastRunTime}
