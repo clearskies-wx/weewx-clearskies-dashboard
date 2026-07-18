@@ -211,10 +211,13 @@ export function TideChart({
     <>
       <ChartContainer height={250} ariaLabel={ariaLabel}>
         {/*
-          margin.top=24  — room for midnight-boundary day labels (position: 'top')
-          margin.bottom=20 — room for Low-tide labels rendered below trough points
+          margin.top=36  — room for high-tide labels above peak (e.g. "High 1.67 ft"):
+                           label offset is 16 px above the dot + ~12 px text height,
+                           so at least ~28 px needed; 36 gives a comfortable buffer.
+          margin.bottom=36 — room for low-tide labels rendered below trough points
+                             and day-boundary labels (position: 'bottom', offset: 20).
         */}
-        <ComposedChart margin={{ top: 12, right: 12, bottom: 36, left: 12 }}>
+        <ComposedChart margin={{ top: 36, right: 12, bottom: 36, left: 12 }}>
           <XAxis
             dataKey="ts"
             type="number"
