@@ -216,7 +216,7 @@ export function MarinePage() {
               Vertical layout (T3.9, aspect < 0.8): map spans 3 of 4 cols at lg,
               cards fill col 4. Horizontal (default): map full-width, cards flow
               as tiles below. */}
-          <div className={isVerticalLayout ? 'col-span-1 md:col-span-2 lg:col-span-3 lg:row-span-6' : footprintColSpan.full}>
+          <div className={isVerticalLayout ? 'col-span-1 md:col-span-2 lg:col-span-3 lg:row-span-6 mb-[var(--gap-grid)]' : `${footprintColSpan.full} mb-[var(--gap-grid)]`}>
             <h2 className="sr-only">{t('map.ariaLabel')}</h2>
             <LocationMap
               locations={locations}
