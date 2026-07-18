@@ -50,14 +50,50 @@ const CHART_W = VIEW_W - PAD_LEFT - PAD_RIGHT;
 const CHART_H = VIEW_H - PAD_TOP  - PAD_BOTTOM;
 
 // ---------------------------------------------------------------------------
+// 3-tier X-axis scale (preserves spatial intuition across spots)
+//
+// Short   (0–100m):  shorebreaks, wedge waves, tight beach breaks
+// Standard (0–300m): 90% of beach breaks, reefs, point breaks (default)
+// Extended (0–1000m): big-wave outer reefs, long point breaks
+//
+// Tier auto-selected from the outermost break point distance. A fully
+// dynamic (fluid) scale destroys visual memory — sandbars and reef slopes
+// stretch or squash, making it impossible to compare spots.
+// ---------------------------------------------------------------------------
+
+interface ScaleTier {
+  maxDistance: number;
+  tickStep: number;
+}
+
+const TIER_SHORT:    ScaleTier = { maxDistance: 100,  tickStep: 25 };
+const TIER_STANDARD: ScaleTier = { maxDistance: 300,  tickStep: 50 };
+const TIER_EXTENDED: ScaleTier = { maxDistance: 1000, tickStep: 200 };
+
+function selectTier(
+  breakPoints: BeachProfileBreakPoint[],
+  transect: BeachProfileTransectPoint[],
+): ScaleTier {
+  const outerBreakDist = breakPoints.length > 0
+    ? Math.max(...breakPoints.map((bp) => bp.distanceFromShore))
+    : 0;
+
+  if (outerBreakDist > 0 && outerBreakDist <= 100) return TIER_SHORT;
+  if (outerBreakDist > 0 && outerBreakDist <= 300) return TIER_STANDARD;
+  if (outerBreakDist > 300) return TIER_EXTENDED;
+
+  // No breaks detected — pick tier from the transect's shallowest meaningful
+  // range (where depth < 10m, i.e. the nearshore zone).
+  const maxDist = Math.max(...transect.map((p) => p.distanceFromShore), 0);
+  if (maxDist <= 100) return TIER_SHORT;
+  if (maxDist <= 300) return TIER_STANDARD;
+  return TIER_EXTENDED;
+}
+
+// ---------------------------------------------------------------------------
 // Axis tick computation helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Compute Y-axis depth ticks (depth below surface, in data units).
- * Returns [0, step, 2*step, ...] up to the nearest multiple of step >= maxDepth.
- * Step adapts to the data range.
- */
 function computeDepthTicks(maxDepth: number): number[] {
   const step = maxDepth <= 3 ? 1 : maxDepth <= 10 ? 2 : 5;
   const maxTick = Math.ceil(maxDepth / step) * step;
@@ -68,22 +104,9 @@ function computeDepthTicks(maxDepth: number): number[] {
   return ticks;
 }
 
-/**
- * Compute X-axis distance ticks.
- * Returns tick values at round-number intervals spanning [xMin, xMax].
- */
-function computeDistanceTicks(xMin: number, xMax: number): number[] {
-  const range = xMax - xMin;
-  const step =
-    range <= 200  ? 50 :
-    range <= 500  ? 100 :
-    range <= 1000 ? 250 :
-    range <= 2000 ? 500 :
-    range <= 5000 ? 1000 : 2000;
-
-  const firstTick = Math.ceil(xMin / step) * step;
+function computeDistanceTicks(tier: ScaleTier): number[] {
   const ticks: number[] = [];
-  for (let d = firstTick; d <= xMax; d += step) {
+  for (let d = 0; d <= tier.maxDistance; d += tier.tickStep) {
     ticks.push(d);
   }
   return ticks;
@@ -187,30 +210,32 @@ export function BeachProfileChart({
     return null;
   }
 
-  // ── Data extents ──────────────────────────────────────────────────────────
-  const xMin = Math.min(...transect.map((p) => p.distanceFromShore));
-  const xMax = Math.max(...transect.map((p) => p.distanceFromShore));
+  // ── Tier selection and data clipping ────────────────────────────────────
+  const tier = selectTier(breakPoints, transect);
+  const clipped = transect.filter((p) => p.distanceFromShore <= tier.maxDistance);
+  const displayTransect = clipped.length >= 2 ? clipped : transect;
 
-  const maxDepth = Math.max(...transect.map((p) => p.depth), 0.1);
-  const maxWaveH = Math.max(...transect.map((p) => p.waveHeight ?? 0), 0.1);
+  const xMin = 0;
+  const xMax = tier.maxDistance;
 
-  // Total y range covers depth below + wave height above the surface.
+  const maxDepth = Math.max(...displayTransect.map((p) => p.depth), 0.1);
+  const maxWaveH = Math.max(...displayTransect.map((p) => p.waveHeight ?? 0), 0.1);
+
   const totalRange = maxDepth + maxWaveH;
   const unitsPerPx = CHART_H / totalRange;
 
-  // Water surface position in SVG y: allocate space proportional to wave height
   const surfaceY = PAD_TOP + maxWaveH * unitsPerPx;
 
   // ── Axis ticks ────────────────────────────────────────────────────────────
   const depthTicks    = computeDepthTicks(maxDepth);
-  const distanceTicks = computeDistanceTicks(xMin, xMax);
+  const distanceTicks = computeDistanceTicks(tier);
 
   const chartBottom = PAD_TOP + CHART_H;
 
   // ── Polygon paths ─────────────────────────────────────────────────────────
-  const seafloorPoints  = buildSeafloorPolygon(transect, xMin, xMax, surfaceY, unitsPerPx);
-  const waveEnvPoints   = buildWaveEnvelopePolygon(transect, xMin, xMax, surfaceY, unitsPerPx);
-  const seafloorPolyline = transect
+  const seafloorPoints  = buildSeafloorPolygon(displayTransect, xMin, xMax, surfaceY, unitsPerPx);
+  const waveEnvPoints   = buildWaveEnvelopePolygon(displayTransect, xMin, xMax, surfaceY, unitsPerPx);
+  const seafloorPolyline = displayTransect
     .map(
       (p) =>
         `${xScale(p.distanceFromShore, xMin, xMax).toFixed(1)},${yScale(-p.depth, surfaceY, unitsPerPx).toFixed(1)}`,
@@ -469,7 +494,7 @@ export function BeachProfileChart({
           </tr>
         </thead>
         <tbody>
-          {transect.map((p, i) => (
+          {displayTransect.map((p, i) => (
             <tr key={i}>
               <td>{p.distanceFromShore.toFixed(0)}</td>
               <td>{p.depth.toFixed(1)}</td>
