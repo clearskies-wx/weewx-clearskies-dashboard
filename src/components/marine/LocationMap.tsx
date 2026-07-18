@@ -172,16 +172,17 @@ export function LocationMap({
   const bounds: LatLngBoundsExpression = useMemo(() => {
     if (locations.length === 0) {
       const [lat, lon] = fallbackCenter;
-      return [[lat - 5, lon - 5], [lat + 5, lon + 5]];
+      return [[lat - 0.05, lon - 0.05], [lat + 0.05, lon + 0.05]];
     }
     const lats = locations.map((l) => l.coordinates.lat);
     const lons = locations.map((l) => l.coordinates.lon);
-    const pad = 0.15;
     return [
-      [Math.min(...lats) - pad, Math.min(...lons) - pad],
-      [Math.max(...lats) + pad, Math.max(...lons) + pad],
+      [Math.min(...lats), Math.min(...lons)],
+      [Math.max(...lats), Math.max(...lons)],
     ];
   }, [locations, fallbackCenter]);
+
+  const boundsOptions = useMemo(() => ({ padding: [40, 40] as [number, number] }), []);
 
   // Hero center (T5.2): the selected location's coordinates, falling back
   // to fallbackCenter only for the (non-visible-in-practice) case where
@@ -212,6 +213,7 @@ export function LocationMap({
         center={isHero ? heroCenter : undefined}
         zoom={isHero ? HERO_ZOOM : undefined}
         bounds={isHero ? undefined : bounds}
+        boundsOptions={isHero ? undefined : boundsOptions}
         className="h-full w-full"
         scrollWheelZoom={!isHero}
         dragging={!isHero}
