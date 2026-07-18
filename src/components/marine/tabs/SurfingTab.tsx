@@ -915,7 +915,7 @@ const SURF_ROW_H = {
   airTemp:     24,
   precip:      22,
   wind:        40,
-  windQuality: 22,
+  windQuality: 34,
   waterTemp:   22,
   waveValues:  22,
   trendSvg:    WAVE_CHART_H,
@@ -1318,7 +1318,7 @@ function SurfScrollForecast({
             }, { overflow: 'visible' })}
 
             {renderRow('windQuality', SURF_ROW_H.windQuality, (item) => (
-              <span style={{ ...microText, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: `${SURF_COL_W - 6}px` }}>
+              <span style={{ ...microText, textAlign: 'center', lineHeight: 1.2, maxWidth: `${SURF_COL_W - 6}px` }}>
                 {item.entry.windQuality ?? '—'}
               </span>
             ))}
@@ -1459,7 +1459,8 @@ function SurfScrollForecast({
                 marginBottom: periodSwellComponents.length > 0 ? '0.75rem' : 0,
               }}
             >
-              {chip(t('waveHeight'), `${formatValue(getDisplayHeight(entry, surfHeightDisplay), 'default', locale)} ${heightUnit}`)}
+              {chip(t('surfing.swellHeightStatLabel', { defaultValue: 'Swell Height' }), `${formatValue(entry.swellHeight ?? entry.waveHeightAtBreak, 'default', locale)} ${heightUnit}`)}
+              {chip(t('surfing.faceBreakHeightLabel', { defaultValue: 'Face Break Height' }), `${formatValue(getDisplayHeight(entry, surfHeightDisplay), 'default', locale)} ${heightUnit}`)}
               {chip(t('surfing.period'), `${formatValue(entry.period, 'default', locale)} ${periodUnit}`)}
               {chip(t('surfing.direction'), swellDirLabel)}
               {chip(t('surfing.windQualityTitle'), entry.windQuality ?? '—')}
@@ -1749,8 +1750,14 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
   const windDirCardinal = cardinalFromDegrees(observation?.windDirection ?? null);
   const windDirLabel   = windDirCardinal ? tCommon(`directions.${windDirCardinal}`) : '—';
 
-  // ── Primary forecast entry (now-ish conditions) ───────────────────────────
-  const primary = forecast[0] ?? null;
+  // ── Primary forecast entry (closest to NOW, not time 0 from model start) ──
+  const primary = forecast.length > 0
+    ? forecast.reduce((best, entry) => {
+        const bestDiff = Math.abs(new Date(best.time).getTime() - Date.now());
+        const diff = Math.abs(new Date(entry.time).getTime() - Date.now());
+        return diff < bestDiff ? entry : best;
+      }, forecast[0])
+    : null;
 
   // ── Swell components — ONLY from multiSwell (NO spectralComponents fallback)
   // FIX (FAIL CONDITION): `primary?.multiSwell ?? spectralComponents` was WRONG.
@@ -1929,7 +1936,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
           </CardContent>
         </Card>
 
-        {/* ── Card 3: Swell — 2×2 fixed ─────────────────────────────── */}
+        {/* ── Card 3: Current Swell Conditions — 2×2 fixed ────────── */}
         <Card footprint="wide" rowSpan={2}>
           <CardHeader>
             <CardTitle as="h3">{t('surfing.swellCardTitle')}</CardTitle>
@@ -1941,10 +1948,11 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                 <span className="text-muted-foreground font-semibold" style={{ fontSize: 'var(--text-micro)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   {t('surfing.conditionsAtBreak')}
                 </span>
-                <dl className="grid grid-cols-3 gap-x-4">
+                <dl className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2">
                   {/* Icon-left stat: icon beside the value/label block */}
                   {[
-                    { icon: <Waves weight="bold" />, label: t('waveHeight'), value: formatValue(getDisplayHeight(primary, surfHeightDisplay), 'default', locale), unit: heightUnit },
+                    { icon: <Waves weight="bold" />, label: t('surfing.swellHeightStatLabel', { defaultValue: 'Swell Height' }), value: formatValue(primary.swellHeight ?? primary.waveHeightAtBreak, 'default', locale), unit: heightUnit },
+                    { icon: <Waves weight="bold" />, label: t('surfing.faceBreakHeightLabel', { defaultValue: 'Face Break Height' }), value: formatValue(getDisplayHeight(primary, surfHeightDisplay), 'default', locale), unit: heightUnit },
                     { icon: <Timer weight="bold" />, label: t('surfing.period'), value: formatValue(primary.period, 'default', locale), unit: periodUnit },
                     { icon: <Compass weight="bold" />, label: t('surfing.direction'), value: swellDirLabel, unit: undefined },
                   ].map((s) => (
