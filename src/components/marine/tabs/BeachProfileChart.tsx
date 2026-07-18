@@ -173,7 +173,6 @@ export function BeachProfileChart({
   const xRight = PAD_LEFT + CHART_W;
 
   // ── Break point markers ───────────────────────────────────────────────────
-  const chartBottom = PAD_TOP + CHART_H;
 
   // ── Aria label text ───────────────────────────────────────────────────────
   const bpCount     = breakPoints.length;

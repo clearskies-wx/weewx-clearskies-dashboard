@@ -1697,7 +1697,6 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
   const dominantDirection = dominantSwellDirection(swellComponents);
 
   const swellDirCardinal = cardinalFromDegrees(primary?.direction ?? null);
-  const swellDirLabel    = swellDirCardinal ? tCommon(`directions.${swellDirCardinal}`) : '—';
 
   // ── Scoring breakdown — 3-factor + 3-penalty structure (ADR-096 / T6.2).
   // All values sourced directly from API scoring breakdown (SurfForecastScoring).
