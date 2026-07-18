@@ -1500,3 +1500,43 @@ export interface BeachSafetyDetailData {
   source: string;
   generatedAt: string;
 }
+
+// ---------------------------------------------------------------------------
+// Beach Profile — returned by GET /surf/{locationId}/profile (ADR-097 / T5.1)
+// ---------------------------------------------------------------------------
+
+/** One cross-shore transect point — depth, wave height, and breaking metrics. */
+export interface BeachProfileTransectPoint {
+  /** Distance from the shoreline in meters (0 = shore, larger = further offshore). */
+  distanceFromShore: number;
+  /** Depth below the water surface in meters (positive = deeper). */
+  depth: number;
+  /** Significant wave height at this point, in display units (may be null if no data). */
+  waveHeight: number | null;
+  /** Swell height (HSWELL) at this point, in display units (may be null). */
+  swellHeight: number | null;
+  /** Breaking fraction QB (0–1): fraction of waves breaking at this point. */
+  breakingFraction: number | null;
+  /** Breaking dissipation (DISSURF) in W/m² (may be null). */
+  breakingDissipation: number | null;
+}
+
+/** A location where waves break (QB peak) along the transect. */
+export interface BeachProfileBreakPoint {
+  /** Distance from shore in meters at this break location. */
+  distanceFromShore: number;
+  /** Depth at the break location in meters. */
+  depth: number;
+  /** Wave height at this break location in display units (may be null). */
+  waveHeight: number | null;
+}
+
+/** Beach profile data — returned by GET /surf/{locationId}/profile. */
+export interface BeachProfileData {
+  /** The surf location ID this profile is for. */
+  locationId: string;
+  /** Ordered cross-shore transect, from offshore (index 0) toward shore (last index). */
+  transect: BeachProfileTransectPoint[];
+  /** QB-peak break locations; multiple entries for multi-break spots (outer + inner bar). */
+  breakPoints: BeachProfileBreakPoint[];
+}

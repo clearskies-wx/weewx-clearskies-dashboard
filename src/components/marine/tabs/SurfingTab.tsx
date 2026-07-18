@@ -56,7 +56,8 @@ import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 // Recharts imports removed — WaveFaceHeightChart replaced by inline SVG trend
 import { Info, Waves, Timer, X, Thermometer, Drop, Snowflake } from '@phosphor-icons/react';
-import { useSurfDetail, useMarineDetail, useStation, useObservation, useForecast } from '../../../hooks/useWeatherData';
+import { useSurfDetail, useBeachProfile, useMarineDetail, useStation, useObservation, useForecast } from '../../../hooks/useWeatherData';
+import { BeachProfileChart } from './BeachProfileChart';
 import { WindSymbol } from '../../forecast/WindSymbol';
 import { toWmoCode } from '../../../utils/weather-code';
 import { selectWeatherIcon } from '../../../utils/icon-selection';
@@ -1583,6 +1584,9 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
   }, []);
 
   const { data, units, loading: surfLoading, error: surfError, refetch: refetchSurf } = useSurfDetail(locationId);
+  // Beach profile — /surf/{id}/profile (T6.3). Does not gate the loading spinner;
+  // the card renders "unavailable" gracefully while data is loading or absent.
+  const { data: profileData } = useBeachProfile(locationId);
   const { data: marine, units: marineUnits, loading: marineLoading } = useMarineDetail(locationId);
   const { data: station } = useStation();
   const stationTz = station?.timezone ?? 'UTC';
@@ -2107,6 +2111,27 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
               </div>
 
             </div>
+          </CardContent>
+        </Card>
+
+        {/* ── Beach Profile — full width (T6.3) ── */}
+        <Card footprint="full">
+          <CardHeader>
+            <CardTitle as="h3">{t('surfing.beachProfileTitle')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {profileData && profileData.transect.length > 0 ? (
+              <BeachProfileChart
+                transect={profileData.transect}
+                breakPoints={profileData.breakPoints}
+                heightUnit={heightUnit}
+                locale={locale}
+              />
+            ) : (
+              <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
+                {t('surfing.beachProfileNoData')}
+              </p>
+            )}
           </CardContent>
         </Card>
 

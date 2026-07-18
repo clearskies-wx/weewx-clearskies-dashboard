@@ -39,6 +39,7 @@ import type {
   SurfDetailData,
   FishingDetailData,
   BeachSafetyDetailData,
+  BeachProfileData,
   SolunarTimes,
 } from './types';
 // ---------------------------------------------------------------------------
@@ -474,6 +475,13 @@ export function getSurfDetail(
   signal?: AbortSignal,
 ): Promise<ApiResponse<SurfDetailData>> {
   return fetchApi<ApiResponse<SurfDetailData>>(`/surf/${encodeURIComponent(locationId)}`, undefined, signal);
+}
+
+export function getBeachProfile(
+  locationId: string,
+  signal?: AbortSignal,
+): Promise<ApiResponse<BeachProfileData>> {
+  return fetchApi<ApiResponse<BeachProfileData>>(`/surf/${encodeURIComponent(locationId)}/profile`, undefined, signal);
 }
 
 export function getFishingDetail(

@@ -255,7 +255,10 @@
     "nearshoreModel": "Model: {{model}}",
     "lastModelRun": "Last model run: {{time}}",
     "modelTooltipTitle": "About SWAN",
-    "modelTooltip": "SWAN is the Clear Skies nearshore wave model, running on an hourly schedule independent of NWS operations."
+    "modelTooltip": "SWAN is the Clear Skies nearshore wave model, running on an hourly schedule independent of NWS operations.",
+    "beachProfileTitle": "Beach Profile",
+    "beachProfileAriaLabel": "Cross-shore beach profile showing bathymetry, wave height, and breaking locations for {{location}}",
+    "beachProfileNoData": "Beach profile data unavailable"
   },
   "fishing": {
     "loading": "Loading fishing data…",

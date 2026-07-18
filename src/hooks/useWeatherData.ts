@@ -40,6 +40,7 @@ import {
   getMarineDetail,
   getTideDetail,
   getSurfDetail,
+  getBeachProfile,
   getFishingDetail,
   getBeachSafetyDetail,
 } from '../api/client';
@@ -106,6 +107,7 @@ import type {
   MarineBundle,
   TideBundle,
   SurfDetailData,
+  BeachProfileData,
   FishingDetailData,
   BeachSafetyDetailData,
 } from '../api/types';
@@ -1267,6 +1269,30 @@ export function useSurfDetail(locationId: string | null): HookResult<SurfDetailD
 
   if (isMockMode()) {
     return mockResult<SurfDetailData | null>(null) as HookResult<SurfDetailData>;
+  }
+
+  return {
+    data: data?.data ?? null,
+    units: data?.units ?? undefined,
+    loading,
+    error,
+    refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
+  };
+}
+
+// useBeachProfile — /surf/{locationId}/profile
+export function useBeachProfile(locationId: string | null): HookResult<BeachProfileData> {
+  const skip = isMockMode() || locationId === null;
+
+  const { data, loading, error, refetch } = useApiQuery<{ data: BeachProfileData; units?: UnitsBlock }>(
+    (signal) => getBeachProfile(locationId as string, signal),
+    { skip, deps: [locationId] },
+  );
+
+  if (isMockMode()) {
+    return mockResult<BeachProfileData | null>(null) as HookResult<BeachProfileData>;
   }
 
   return {
