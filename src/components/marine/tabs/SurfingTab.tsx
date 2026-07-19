@@ -1654,9 +1654,10 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
   if (!data) return null;
 
   // ── Unit labels ───────────────────────────────────────────────────────────
-  const heightUnit = units?.waveHeightAtBreak ?? units?.waveHeight ?? units?.height ?? 'ft';
-  const periodUnit = units?.period ?? t('surfing.secondsAbbr');
-  const windUnit   = marineUnits?.windSpeed ?? 'kn';
+  const heightUnit   = units?.waveHeightAtBreak ?? units?.waveHeight ?? units?.height ?? 'ft';
+  const distanceUnit = units?.distance ?? 'm';
+  const periodUnit   = units?.period ?? t('surfing.secondsAbbr');
+  const windUnit     = marineUnits?.windSpeed ?? 'kn';
 
   // ── SWAN display preference (T5.1) ───────────────────────────────────────
   // "face" → breakingFaceHeight (trough-to-crest)
@@ -2122,6 +2123,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                 transect={profileData.transect}
                 breakPoints={profileData.breakPoints}
                 heightUnit={heightUnit}
+                distanceUnit={distanceUnit}
                 locale={locale}
               />
             ) : (

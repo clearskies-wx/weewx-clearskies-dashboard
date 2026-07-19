@@ -32,6 +32,10 @@ export interface BeachProfileChartProps {
   transect: BeachProfileTransectPoint[];
   breakPoints: BeachProfileBreakPoint[];
   heightUnit: string;
+  /** Unit label for horizontal distance and depth axes (e.g. "ft" or "m").
+   *  The API converts distanceFromShore and depth to operator display units —
+   *  this prop carries the matching label and drives tier threshold scaling. */
+  distanceUnit: string;
   locale: string;
   /** Current tidal elevation in meters relative to MSL. Positive = above MSL
    *  (high tide), negative = below (low tide). The water surface and shore
@@ -56,13 +60,17 @@ const CHART_H = VIEW_H - PAD_TOP  - PAD_BOTTOM;
 // ---------------------------------------------------------------------------
 // 3-tier X-axis scale (preserves spatial intuition across spots)
 //
-// Short   (0–100m):  shorebreaks, wedge waves, tight beach breaks
-// Standard (0–300m): 90% of beach breaks, reefs, point breaks (default)
-// Extended (0–1000m): big-wave outer reefs, long point breaks
+// Short   (0–100m  / 0–328ft):  shorebreaks, wedge waves, tight beach breaks
+// Standard (0–300m / 0–984ft): 90% of beach breaks, reefs, point breaks (default)
+// Extended (0–1000m / 0–3281ft): big-wave outer reefs, long point breaks
 //
 // Tier auto-selected from the outermost break point distance. A fully
 // dynamic (fluid) scale destroys visual memory — sandbars and reef slopes
 // stretch or squash, making it impossible to compare spots.
+//
+// Base boundaries are in meters; each render scales them to operator display
+// units via METER_TO_UNIT (computed from the distanceUnit prop). selectTier
+// receives pre-scaled ScaleTier objects so it stays unit-agnostic.
 // ---------------------------------------------------------------------------
 
 interface ScaleTier {
@@ -70,28 +78,26 @@ interface ScaleTier {
   tickStep: number;
 }
 
-const TIER_SHORT:    ScaleTier = { maxDistance: 100,  tickStep: 25 };
-const TIER_STANDARD: ScaleTier = { maxDistance: 300,  tickStep: 50 };
-const TIER_EXTENDED: ScaleTier = { maxDistance: 1000, tickStep: 200 };
-
 function selectTier(
   breakPoints: BeachProfileBreakPoint[],
   transect: BeachProfileTransectPoint[],
+  tierShort: ScaleTier,
+  tierStandard: ScaleTier,
+  tierExtended: ScaleTier,
 ): ScaleTier {
   const outerBreakDist = breakPoints.length > 0
     ? Math.max(...breakPoints.map((bp) => bp.distanceFromShore))
     : 0;
 
-  if (outerBreakDist > 0 && outerBreakDist <= 100) return TIER_SHORT;
-  if (outerBreakDist > 0 && outerBreakDist <= 300) return TIER_STANDARD;
-  if (outerBreakDist > 300) return TIER_EXTENDED;
+  if (outerBreakDist > 0 && outerBreakDist <= tierShort.maxDistance) return tierShort;
+  if (outerBreakDist > 0 && outerBreakDist <= tierStandard.maxDistance) return tierStandard;
+  if (outerBreakDist > tierStandard.maxDistance) return tierExtended;
 
-  // No breaks detected — pick tier from the transect's shallowest meaningful
-  // range (where depth < 10m, i.e. the nearshore zone).
+  // No breaks detected — pick tier from the transect extent.
   const maxDist = Math.max(...transect.map((p) => p.distanceFromShore), 0);
-  if (maxDist <= 100) return TIER_SHORT;
-  if (maxDist <= 300) return TIER_STANDARD;
-  return TIER_EXTENDED;
+  if (maxDist <= tierShort.maxDistance) return tierShort;
+  if (maxDist <= tierStandard.maxDistance) return tierStandard;
+  return tierExtended;
 }
 
 // ---------------------------------------------------------------------------
@@ -208,6 +214,7 @@ export function BeachProfileChart({
   transect,
   breakPoints,
   heightUnit,
+  distanceUnit = 'm',
   locale,
   tideLevel = null,
 }: BeachProfileChartProps) {
@@ -215,8 +222,17 @@ export function BeachProfileChart({
     return null;
   }
 
+  // ── Distance unit scaling ──────────────────────────────────────────────────
+  // The API converts distanceFromShore and depth to operator display units.
+  // Scale tier boundaries proportionally so tier selection and tick marks
+  // remain correct in feet (US) as well as meters (metric).
+  const METER_TO_UNIT = distanceUnit === 'ft' ? 3.28084 : 1;
+  const tierShort    = { maxDistance: Math.round(100  * METER_TO_UNIT), tickStep: Math.round(25  * METER_TO_UNIT) };
+  const tierStandard = { maxDistance: Math.round(300  * METER_TO_UNIT), tickStep: Math.round(50  * METER_TO_UNIT) };
+  const tierExtended = { maxDistance: Math.round(1000 * METER_TO_UNIT), tickStep: Math.round(200 * METER_TO_UNIT) };
+
   // ── Tier selection and data clipping ────────────────────────────────────
-  const tier = selectTier(breakPoints, transect);
+  const tier = selectTier(breakPoints, transect, tierShort, tierStandard, tierExtended);
   const clipped = transect.filter((p) => p.distanceFromShore <= tier.maxDistance);
   const displayTransect = clipped.length >= 2 ? clipped : transect;
 
@@ -282,14 +298,14 @@ export function BeachProfileChart({
   const bpCount     = breakPoints.length;
   const bpDescriptions = breakPoints
     .map((bp, i) =>
-      `Break point ${i + 1}: ${bp.distanceFromShore.toFixed(0)} m from shore${
+      `Break point ${i + 1}: ${bp.distanceFromShore.toFixed(0)} ${distanceUnit} from shore${
         bp.waveHeight !== null
           ? `, wave height ${bp.waveHeight.toFixed(1)} ${heightUnit}`
           : ''
       }.`,
     )
     .join(' ');
-  const titleText = `Cross-shore beach profile. Seafloor depth and wave height across ${(xMax - xMin).toFixed(0)} m of ocean.${
+  const titleText = `Cross-shore beach profile. Seafloor depth and wave height across ${(xMax - xMin).toFixed(0)} ${distanceUnit} of ocean.${
     bpCount > 0 ? ` ${bpCount} break location${bpCount > 1 ? 's' : ''} marked. ${bpDescriptions}` : ''
   }`;
 
@@ -568,8 +584,8 @@ export function BeachProfileChart({
         <caption>Cross-shore beach profile: depth and wave height at each transect point</caption>
         <thead>
           <tr>
-            <th scope="col">Distance from shore (m)</th>
-            <th scope="col">Depth (m)</th>
+            <th scope="col">Distance from shore ({distanceUnit})</th>
+            <th scope="col">Depth ({distanceUnit})</th>
             <th scope="col">Wave Height ({heightUnit})</th>
             <th scope="col">Swell Height ({heightUnit})</th>
             <th scope="col">Breaking Fraction</th>
