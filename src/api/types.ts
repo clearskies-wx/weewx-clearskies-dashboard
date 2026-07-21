@@ -1675,16 +1675,44 @@ export interface BeachProfileData {
 
 // ─── T7.1 Heat Map types ────────────────────────────────────────────────────
 
+/**
+ * One cross-shore point in the Hs envelope for a heat map transect row.
+ * Field names match the beach_profile API response for transect_index=all.
+ */
+export interface HeatMapEnvelopePoint {
+  /** Cross-shore distance from the shoreline in meters (0 = shore, larger = further offshore). */
+  distance: number;
+  /** Depth below the water surface in meters (positive = deeper). */
+  depth: number;
+  /** Significant wave height at this point in display units (may be null if no data). */
+  hs: number | null;
+}
+
+/**
+ * A break location within a heat map transect row.
+ * Field names match the beach_profile API response for transect_index=all.
+ */
+export interface HeatMapBreakPoint {
+  /** Cross-shore distance from the shoreline at the break location in display units. */
+  distance: number;
+  /** Depth at the break location in display units. */
+  depth: number;
+  /** Significant wave height at this break location in display units (may be null). */
+  hs: number | null;
+  /** Breaker type from the 1D model's Iribarren classification. */
+  breakerType?: 'spilling' | 'plunging' | 'surging' | null;
+}
+
 /** One transect row for the heat map (returned by profile?transect_index=all). */
 export interface HeatMapTransectData {
   /** Zero-based transect index (0 = center/primary). */
-  index: number;
-  /** True when the transect is not obscured by a structure (pier, jetty, etc.). */
-  isOpen: boolean;
-  /** Cross-shore transect points for this row. */
-  transect: BeachProfileTransectPoint[];
+  transectIndex: number;
+  /** True when the transect IS obscured by a structure (pier, jetty, etc.). Opposite of isOpen. */
+  isStructureAffected: boolean;
+  /** Cross-shore Hs envelope points for this row. */
+  hsEnvelope: HeatMapEnvelopePoint[];
   /** Break locations along this transect; multiple entries for multi-bar spots. */
-  breakPoints: BeachProfileBreakPoint[];
+  breakPoints: HeatMapBreakPoint[];
   /** Classified surf zones for this transect row. Null when model unavailable. */
   surfZones?: BeachProfileSurfZones | null;
 }
@@ -1694,7 +1722,7 @@ export interface HeatMapProfileData {
   /** The surf location ID this data is for. */
   locationId: string;
   /** All transect rows ordered by index, from southernmost to northernmost. */
-  allTransects: HeatMapTransectData[];
+  profiles: HeatMapTransectData[];
   /** Vertical datum for depth values (e.g., "NAVD88", "MSL", "MLLW"). */
   datum?: string | null;
 }

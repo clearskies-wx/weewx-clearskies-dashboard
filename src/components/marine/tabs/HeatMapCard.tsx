@@ -28,7 +28,7 @@
 import { useMemo, useId } from 'react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { HeatMapProfileData, HeatMapTransectData, BeachProfileBreakPoint } from '../../../api/types';
+import type { HeatMapProfileData, HeatMapTransectData, HeatMapBreakPoint } from '../../../api/types';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -115,8 +115,8 @@ function hsToColor(hs: number, maxHs: number, opacity = 0.85): string {
 function maxDistance(allTransects: HeatMapTransectData[]): number {
   let max = 0;
   for (const row of allTransects) {
-    for (const pt of row.transect) {
-      if (pt.distanceFromShore > max) max = pt.distanceFromShore;
+    for (const pt of row.hsEnvelope) {
+      if (pt.distance > max) max = pt.distance;
     }
   }
   return max === 0 ? 1 : max;
@@ -135,15 +135,15 @@ function rowToY(idx: number, rowH: number): number {
 /**
  * Split break points by distance so the farther ones (outer bar) and closer ones
  * (inner bar / beach) can be rendered as distinct break-zone bands.
- * BeachProfileBreakPoint has no explicit "location" tag, so we sort by distanceFromShore
+ * HeatMapBreakPoint has no explicit "location" tag, so we sort by distance
  * descending and treat the farthest as "outer" and the rest as "inner".
  */
-function splitBreakPoints(breakPoints: BeachProfileBreakPoint[]): {
-  outer: BeachProfileBreakPoint[];
-  inner: BeachProfileBreakPoint[];
+function splitBreakPoints(breakPoints: HeatMapBreakPoint[]): {
+  outer: HeatMapBreakPoint[];
+  inner: HeatMapBreakPoint[];
 } {
   if (breakPoints.length <= 1) return { outer: breakPoints, inner: [] };
-  const sorted = [...breakPoints].sort((a, b) => b.distanceFromShore - a.distanceFromShore);
+  const sorted = [...breakPoints].sort((a, b) => b.distance - a.distance);
   return { outer: [sorted[0]], inner: sorted.slice(1) };
 }
 
@@ -283,9 +283,9 @@ export function HeatMapCard({ data, loading, heightUnit, distanceUnit, locale }:
 
   // Compute derived geometry once.
   const geometry = useMemo(() => {
-    if (!data || data.allTransects.length === 0) return null;
+    if (!data || data.profiles.length === 0) return null;
 
-    const rows = data.allTransects;
+    const rows = data.profiles;
     const N = rows.length;
     const rowH = Math.min(ROW_H_MAX, Math.max(ROW_H_MIN, Math.floor(300 / N)));
     const chartH = N * rowH;
@@ -297,10 +297,10 @@ export function HeatMapCard({ data, loading, heightUnit, distanceUnit, locale }:
     let maxHs = 0;
     for (const row of rows) {
       for (const bp of row.breakPoints) {
-        if (bp.waveHeight !== null && bp.waveHeight !== undefined && bp.waveHeight > maxHs) maxHs = bp.waveHeight;
+        if (bp.hs !== null && bp.hs !== undefined && bp.hs > maxHs) maxHs = bp.hs;
       }
-      for (const pt of row.transect) {
-        if (pt.waveHeight !== null && pt.waveHeight !== undefined && pt.waveHeight > maxHs) maxHs = pt.waveHeight;
+      for (const pt of row.hsEnvelope) {
+        if (pt.hs !== null && pt.hs !== undefined && pt.hs > maxHs) maxHs = pt.hs;
       }
     }
     if (maxHs <= 0) maxHs = 1;
@@ -361,16 +361,16 @@ export function HeatMapCard({ data, loading, heightUnit, distanceUnit, locale }:
   for (let ri = 0; ri < rows.length; ri++) {
     const row = rows[ri];
     const y = rowToY(ri, rowH);
-    const rowOpacity = row.isOpen ? 1 : 0.35;
+    const rowOpacity = row.isStructureAffected ? 0.35 : 1;
 
-    // Transect segments: each consecutive pair of transect points forms a cell.
-    // Colour = waveHeight at the midpoint, or the leftmost point.
-    const pts = row.transect;
+    // Transect segments: each consecutive pair of envelope points forms a cell.
+    // Colour = hs at the midpoint, or the leftmost point.
+    const pts = row.hsEnvelope;
 
     if (pts.length >= 2) {
       for (let pi = 0; pi < pts.length - 1; pi++) {
-        const d0 = pts[pi].distanceFromShore;
-        const d1 = pts[pi + 1].distanceFromShore;
+        const d0 = pts[pi].distance;
+        const d1 = pts[pi + 1].distance;
         const x0 = distToX(d0, maxDist);
         const x1 = distToX(d1, maxDist);
         const xLeft  = Math.min(x0, x1);
@@ -378,22 +378,22 @@ export function HeatMapCard({ data, loading, heightUnit, distanceUnit, locale }:
         const w = xRight - xLeft;
         if (w < 0.5) continue;
 
-        // Prefer transect point waveHeight. Fall back to break-point proximity model.
+        // Prefer envelope point hs. Fall back to break-point proximity model.
         let segHs = 0;
-        const ptHs = pts[pi].waveHeight;
+        const ptHs = pts[pi].hs;
         if (ptHs !== null && ptHs !== undefined) {
           segHs = ptHs;
         } else if (row.breakPoints.length > 0) {
           const midDist = (d0 + d1) / 2;
           // Find nearest break point.
           let closest = row.breakPoints[0];
-          let minGap = Math.abs(midDist - closest.distanceFromShore);
+          let minGap = Math.abs(midDist - closest.distance);
           for (const bp of row.breakPoints) {
-            const gap = Math.abs(midDist - bp.distanceFromShore);
+            const gap = Math.abs(midDist - bp.distance);
             if (gap < minGap) { minGap = gap; closest = bp; }
           }
-          const bpHs = closest.waveHeight ?? 0;
-          const bpDist = closest.distanceFromShore;
+          const bpHs = closest.hs ?? 0;
+          const bpDist = closest.distance;
           // Model: Hs rises to break, then decays toward shore.
           if (midDist >= bpDist) {
             const distRatio = bpDist > 0 ? midDist / bpDist : 0;
@@ -416,8 +416,8 @@ export function HeatMapCard({ data, loading, heightUnit, distanceUnit, locale }:
         );
       }
     } else if (pts.length === 0 && row.breakPoints.length > 0) {
-      // No transect points — draw a single flat row coloured by the max break height.
-      const rowHs = Math.max(...row.breakPoints.map(bp => bp.waveHeight ?? 0));
+      // No envelope points — draw a single flat row coloured by the max break height.
+      const rowHs = Math.max(...row.breakPoints.map(bp => bp.hs ?? 0));
       colorCells.push(
         <rect
           key={`cell-flat-${ri}`}
@@ -477,12 +477,12 @@ export function HeatMapCard({ data, loading, heightUnit, distanceUnit, locale }:
     for (const bpList of [outerBPs, innerBPs]) {
       if (bpList.length === 0) continue;
       for (const bp of bpList) {
-        const bx = distToX(bp.distanceFromShore, maxDist);
+        const bx = distToX(bp.distance, maxDist);
         // Break zone extent: 10% of CHART_W in each direction.
         const halfW = CHART_W * 0.05;
         zoneFills.push(
           <rect
-            key={`bzone-${ri}-${bp.distanceFromShore}`}
+            key={`bzone-${ri}-${bp.distance}`}
             x={bx - halfW}
             y={y}
             width={halfW * 2}
@@ -496,11 +496,11 @@ export function HeatMapCard({ data, loading, heightUnit, distanceUnit, locale }:
     // 4. Breaker type glyphs.
     for (const bp of row.breakPoints) {
       if (!bp.breakerType) continue;
-      const bx = distToX(bp.distanceFromShore, maxDist);
+      const bx = distToX(bp.distance, maxDist);
       const cy = y + rowH / 2;
       breakGlyphs.push(
         <BreakerGlyph
-          key={`glyph-${ri}-${bp.distanceFromShore}`}
+          key={`glyph-${ri}-${bp.distance}`}
           cx={bx}
           cy={cy}
           type={bp.breakerType}
@@ -509,14 +509,14 @@ export function HeatMapCard({ data, loading, heightUnit, distanceUnit, locale }:
       );
     }
 
-    // 5. Structure hatching overlay for non-open transects.
+    // 5. Structure hatching overlay for structure-affected transects.
     // (rendered below as a <rect fill=url(#hatch)> — collected via separate pass)
   }
 
   // Structure overlay rects — separate pass so they render on top of colour cells.
   const structureOverlays: ReactElement[] = [];
   for (let ri = 0; ri < rows.length; ri++) {
-    if (rows[ri].isOpen) continue;
+    if (!rows[ri].isStructureAffected) continue;
     const y = rowToY(ri, rowH);
     structureOverlays.push(
       <rect
@@ -547,17 +547,17 @@ export function HeatMapCard({ data, loading, heightUnit, distanceUnit, locale }:
       </thead>
       <tbody>
         {rows.map((row) => (
-          <tr key={row.index}>
-            <th scope="row">{row.index}</th>
-            <td>{row.isOpen ? t('yes', 'Yes') : t('no', 'No')}</td>
+          <tr key={row.transectIndex}>
+            <th scope="row">{row.transectIndex}</th>
+            <td>{!row.isStructureAffected ? t('yes', 'Yes') : t('no', 'No')}</td>
             <td>
               {row.breakPoints.length > 0
-                ? row.breakPoints.map(bp => bp.waveHeight !== null && bp.waveHeight !== undefined ? fmtNum(bp.waveHeight) : '—').join(', ')
+                ? row.breakPoints.map(bp => bp.hs !== null && bp.hs !== undefined ? fmtNum(bp.hs) : '—').join(', ')
                 : '—'}
             </td>
             <td>
               {row.breakPoints.length > 0
-                ? row.breakPoints.map(bp => fmtNum(bp.distanceFromShore)).join(', ')
+                ? row.breakPoints.map(bp => fmtNum(bp.distance)).join(', ')
                 : '—'}
             </td>
             <td>
@@ -663,7 +663,7 @@ export function HeatMapCard({ data, loading, heightUnit, distanceUnit, locale }:
               textAnchor="end"
               aria-hidden="true"
             >
-              {row.index}
+              {row.transectIndex}
             </text>
           ))}
 
@@ -737,7 +737,7 @@ export function HeatMapCard({ data, loading, heightUnit, distanceUnit, locale }:
           />
 
           {/* Structure affected legend note */}
-          {rows.some(r => !r.isOpen) && (
+          {rows.some(r => r.isStructureAffected) && (
             <g>
               <rect
                 x={PAD_LEFT}
