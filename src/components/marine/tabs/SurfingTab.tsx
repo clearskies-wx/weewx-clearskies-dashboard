@@ -1459,7 +1459,7 @@ function SurfScrollForecast({
               {chip(t('surfing.windDirection'), windDirLabel)}
               {tideEvent && chip(
                 tideEvent.type === 'high' ? t('tide.tideHigh') : t('tide.tideLow'),
-                `${formatValue(tideEvent.height, 'default', locale)} ${units?.waterLevel ?? units?.tideHeight ?? heightUnit} · ${formatTime(new Date(tideEvent.time), locale, stationTz)}`,
+                `${formatValue(tideEvent.height, 'default', locale)} ${heightUnit} · ${formatTime(new Date(tideEvent.time), locale, stationTz)}`,
               )}
             </div>
 
