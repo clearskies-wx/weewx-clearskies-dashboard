@@ -85,6 +85,7 @@ import type {
   MarineAlertSummary,
   MarineForecastPoint,
   HourlyForecastPoint,
+  DailyForecastPoint,
   TidePrediction,
 } from '../../../api/types';
 
@@ -773,6 +774,28 @@ function nearestHourlyPoint(ts: number, hours: HourlyForecastPoint[]): HourlyFor
   return best;
 }
 
+/**
+ * Returns true when the given UTC timestamp (ms) falls outside the
+ * sunrise–sunset window for the station timezone.
+ *
+ * Data source: DailyForecastPoint.sunrise / .sunset (format: date-time).
+ * Defaults to false (daytime) when daily data is absent or the matching
+ * day entry has no sunrise/sunset — safer than incorrectly showing night.
+ *
+ * DASHBOARD-MANUAL §7: day/night checks must use station timezone, not UTC.
+ */
+function computeIsNight(ts: number, daily: DailyForecastPoint[], tz: string): boolean {
+  if (daily.length === 0) return false;
+  // Derive the station-local YYYY-MM-DD to match against validDate.
+  // 'sv-SE' locale produces "YYYY-MM-DD" (ISO 8601 date) — stable cross-platform.
+  const localDate = new Intl.DateTimeFormat('sv-SE', { timeZone: tz }).format(new Date(ts));
+  const dayEntry = daily.find((d) => d.validDate === localDate);
+  if (!dayEntry?.sunrise || !dayEntry?.sunset) return false;
+  const sunrise = new Date(dayEntry.sunrise).getTime();
+  const sunset  = new Date(dayEntry.sunset).getTime();
+  return ts < sunrise || ts >= sunset;
+}
+
 /** Station-local YYYY-MM-DD key for grouping. Uses 'en-US' only for the
  *  internal Map key — never rendered. Avoids toISOString() which gives UTC
  *  date, misgroups entries near local midnight. */
@@ -792,6 +815,8 @@ interface EnrichedForecastEntry {
   /** Nearest HourlyForecastPoint within 1.5h — for weather icon, air temp, precip, wind rows. */
   hourlyPoint: HourlyForecastPoint | null;
   tideEvent: TidePrediction | null;
+  /** True when this forecast timestep falls outside sunrise–sunset for the station. */
+  isNight: boolean;
 }
 
 interface ForecastDayGroup {
@@ -1242,7 +1267,7 @@ function SurfScrollForecast({
                     weatherCode: toWmoCode(hp.weatherCode),
                     precipProbability: hp.precipProbability,
                     cloudCover: hp.cloudCover,
-                    isNight: false,
+                    isNight: item.isNight,
                   })
                 : null;
               return iconResult
@@ -1662,6 +1687,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
     const mf = marine?.forecast      ?? [];
     const tp = data?.tidePredictions ?? [];
     const hf = forecastData?.hourly  ?? [];
+    const df = forecastData?.daily   ?? [];
     return fc.map((entry) => {
       const ts = new Date(entry.time).getTime();
       return {
@@ -1669,9 +1695,10 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
         windPoint:   nearestForecastPoint(ts, mf),
         hourlyPoint: nearestHourlyPoint(ts, hf),
         tideEvent:   nearestTideEvent(ts, tp),
+        isNight:     computeIsNight(ts, df, stationTz),
       };
     });
-  }, [data, marine, forecastData]);
+  }, [data, marine, forecastData, stationTz]);
 
   // ── Loading state ─────────────────────────────────────────────────────────
   // Both surf and marine data needed (Wind card depends on marine bundle).
@@ -1784,7 +1811,9 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
   // UV: from station Observation.UV (ConvertedValue | number | null).
   // waterTemp: from marine observation (already fetched for Wind card).
   const currentConditionCode  = obsData.data?.weatherCode ?? null;
-  const currentDaytime        = obsData.scene?.daytime ?? true;
+  // Match the Now page pattern (current-conditions-card.tsx:654): default to NOT night
+  // (daytime) when scene is unavailable, so the icon is never stuck at the wrong glyph.
+  const currentIsNight        = obsData.scene ? !obsData.scene.daytime : false;
   const airTempCV             = asConverted(obsData.data?.outTemp ?? null);
   const airTempValue          = airTempCV?.value != null ? airTempCV.formatted : '—';
   const airTempUnit           = airTempCV?.value != null ? (airTempCV.label ?? '') : '';
@@ -2066,7 +2095,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                 <span aria-hidden="true">
                   <WeatherIcon
                     code={currentConditionCode ?? 0}
-                    isNight={!currentDaytime}
+                    isNight={currentIsNight}
                     size={36}
                   />
                 </span>
