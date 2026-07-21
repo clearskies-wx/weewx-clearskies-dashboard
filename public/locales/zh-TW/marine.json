@@ -1,4 +1,4 @@
-{
+﻿{
   "title": "Marine Activities",
   "unableToLoad": "Unable to load marine data",
   "selectLocation": "Select a location to view details",
@@ -190,6 +190,51 @@
       "factorLabel": "{{label}} ({{weight}}%)"
     },
     "swellBreakdownTitle": "Swell Components",
+    "incomingSwellLabel": "INCOMING SWELL (offshore)",
+    "partitionBreaksTitle": "AT BREAK",
+    "partitionBreakInfo": {
+      "groundswell": "groundswell",
+      "swell": "swell",
+      "wind_swell": "wind swell",
+      "outer_bar": "outer bar",
+      "inner_bar": "inner bar",
+      "middle_bar": "middle bar",
+      "beach": "beach"
+    },
+    "surfHeightLabel": "Surf Height",
+    "swellHeightLabel": "Swell Height",
+    "beachProfileTitle": "Beach Profile",
+    "beachProfileNoData": "Beach profile data unavailable",
+    "beachProfile": {
+      "depthAxisLabel": "Depth ({{unit}}, {{datum}})",
+      "depthAxisLabelNoDatum": "Depth ({{unit}})",
+      "distanceAxisLabel": "Distance from shore ({{unit}})",
+      "impactZone": "IMPACT ZONE",
+      "foamZone": "FOAM ZONE",
+      "jackingAnnotation": "{{factor}}× jacking",
+      "transectSelectorLabel": "Transect",
+      "bestPeakLabel": "Best Peak",
+      "averageLabel": "Average",
+      "structureAffected": "structure-affected",
+      "showWaveShapes": "Show wave shapes",
+      "waveShapesAriaLabel": "Show wave surface cross-sections",
+      "breakType": {
+        "spilling": "spilling",
+        "plunging": "plunging",
+        "surging": "surging"
+      },
+      "breakPointAria": "Break point {{n}}:",
+      "ariaTitle": "Cross-shore beach profile covering {{range}} {{unit}}",
+      "tideIndicator": "Tide: {{sign}}{{value}}",
+      "srTableLabel": "Beach profile data table",
+      "srTableCaption": "Cross-shore transect data showing depth, wave height, and breaking fraction",
+      "srColDistance": "Distance from shore ({{unit}})",
+      "srColDepth": "Depth ({{unit}})",
+      "srColWaveHeight": "Wave height ({{unit}})",
+      "srColSwellHeight": "Swell height ({{unit}})",
+      "srColBreakingFraction": "Breaking fraction",
+      "srBreakPoints": "Breaking zones:"
+    },
     "height": "Height",
     "period": "Period",
     "energy": "Energy",

@@ -1292,6 +1292,12 @@ export interface SurfForecast {
   breakPoints?: Array<{distanceFromShore: number; depth: number; waveHeight: number}> | null;
   directionalSpread?: number | null;
   setup?: number | null;
+  /**
+   * Per-partition break info — what each incoming swell component does at the beach.
+   * Present when 1D model per-partition pipeline is active (T5.2/T5.4).
+   * Each entry corresponds to one swell partition from SPECOUT decomposition.
+   */
+  partitionBreakInfo?: PartitionBreakInfo[] | null;
 }
 
 export interface FishingForecast {
@@ -1502,8 +1508,19 @@ export interface BeachSafetyDetailData {
 }
 
 // ---------------------------------------------------------------------------
-// Beach Profile — returned by GET /surf/{locationId}/profile (ADR-097 / T5.1)
+// Beach Profile — returned by GET /surf/{locationId}/profile (ADR-097 / T5.2)
 // ---------------------------------------------------------------------------
+
+/**
+ * One sample of a wave surface profile (cross-section of a single wave).
+ * Used for the optional wave shapes overlay (T5.3 element 4).
+ * `phase` is the position within one wave period (0 to ~2π).
+ * `elevation` is surface displacement relative to still water level, in display units.
+ */
+export interface WaveShapePoint {
+  phase: number;
+  elevation: number;
+}
 
 /** One cross-shore transect point — depth, wave height, and breaking metrics. */
 export interface BeachProfileTransectPoint {
@@ -1519,16 +1536,95 @@ export interface BeachProfileTransectPoint {
   breakingFraction: number | null;
   /** Breaking dissipation (DISSURF) in W/m² (may be null). */
   breakingDissipation: number | null;
+  /**
+   * Wave surface profile at this point from the 1D model (Stokes/cnoidal/bore).
+   * Optional — present only when the 1D model's analytical wave shape output
+   * is available (T5.2/T5.3 wave shapes feature). Null when unavailable.
+   */
+  waveShape?: WaveShapePoint[] | null;
 }
 
-/** A location where waves break (QB peak) along the transect. */
+/** A location where waves break along the transect. */
 export interface BeachProfileBreakPoint {
-  /** Distance from shore in meters at this break location. */
+  /** Distance from shore in display units at this break location. */
   distanceFromShore: number;
-  /** Depth at the break location in meters. */
+  /** Depth at the break location in display units. */
   depth: number;
-  /** Wave height at this break location in display units (may be null). */
+  /** Significant wave height at this break location in display units (may be null). */
   waveHeight: number | null;
+  /**
+   * Breaker type from the 1D model's Iribarren classification.
+   * Optional — present only when 1D model output is available (T5.2).
+   */
+  breakerType?: 'spilling' | 'plunging' | 'surging' | null;
+  /**
+   * Face height (K-G/Caldwell H1/10) at this break point, in display units.
+   * Optional — present only when 1D model output is available (T5.2).
+   */
+  faceHeight?: number | null;
+  /**
+   * Per-partition annotation, e.g. "14s S groundswell".
+   * Present when multi-partition decomposition identifies which swell breaks here.
+   */
+  partitionLabel?: string | null;
+  /**
+   * Jacking factor at this break point: Hs_bar_crest / Hs_approach.
+   * Values > 1.3 indicate significant focusing over a sandbar.
+   */
+  jackingFactor?: number | null;
+}
+
+/** Extent of a surf zone along the cross-shore transect. */
+export interface SurfZoneExtent {
+  /** Start of the zone, in display units from shore (outer boundary, farther from shore). */
+  startDistance: number;
+  /** End of the zone, in display units from shore (inner boundary, closer to shore). */
+  endDistance: number;
+  /** Water depth at the start of the zone, in display units. */
+  startDepth?: number | null;
+  /** Water depth at the end of the zone, in display units. */
+  endDepth?: number | null;
+}
+
+/**
+ * Classified surf zones along the transect.
+ * Returned by the beach profile endpoint when 1D model output is available (T5.2).
+ */
+export interface BeachProfileSurfZones {
+  /**
+   * Impact zone: from the outermost break point to 50% energy loss.
+   * Where the heaviest whitewater is — wipeout territory.
+   */
+  impactZone?: SurfZoneExtent | null;
+  /**
+   * Foam zone: from 50% energy loss to the bore propagation minimum.
+   * Manageable whitewater, the reform/whitewash zone.
+   */
+  foamZone?: SurfZoneExtent | null;
+  /**
+   * Reform trough: gap between outer and inner break zones on multi-bar beaches.
+   * Waves re-form here before breaking again on the inner bar.
+   */
+  reformTrough?: SurfZoneExtent | null;
+  /**
+   * Total surf zone: outer break to the swash line.
+   */
+  totalSurfZone?: SurfZoneExtent | null;
+}
+
+/**
+ * Metadata for one available transect in the multi-transect array.
+ * Used to populate the transect selector dropdown (T5.3 element 9).
+ */
+export interface BeachProfileTransectInfo {
+  /** Transect index (0-based) as accepted by the API's `transect_index` query param. */
+  index: number;
+  /** Human-readable label, e.g. "Transect 1", "Best Peak". */
+  label: string;
+  /** True when this transect is clear of OBSTACLE structures. */
+  isOpen: boolean;
+  /** Meters from the segment center (positive = north/right along the shore). */
+  distanceFromCenter?: number | null;
 }
 
 /** Beach profile data — returned by GET /surf/{locationId}/profile. */
@@ -1537,6 +1633,45 @@ export interface BeachProfileData {
   locationId: string;
   /** Ordered cross-shore transect, from offshore (index 0) toward shore (last index). */
   transect: BeachProfileTransectPoint[];
-  /** QB-peak break locations; multiple entries for multi-break spots (outer + inner bar). */
+  /** Break locations along the transect; multiple entries for multi-bar spots. */
   breakPoints: BeachProfileBreakPoint[];
+  /**
+   * Vertical datum for depth values (e.g., "NAVD88", "MSL", "MLLW").
+   * Present when the DEM source includes datum metadata (T5.2).
+   */
+  datum?: string | null;
+  /**
+   * Classified surf zones. Present when 1D model output is available (T5.2).
+   */
+  surfZones?: BeachProfileSurfZones | null;
+  /**
+   * Available transects for the selector dropdown.
+   * Present when multi-transect architecture is active (T5.2).
+   * Null for single-transect spots.
+   */
+  transects?: BeachProfileTransectInfo[] | null;
+}
+
+/**
+ * Per-partition break info — what one swell component does at the beach.
+ * Part of the T5.4 swell display showing incoming swell → breaking behavior.
+ */
+export interface PartitionBreakInfo {
+  /** Dominant period of this partition in seconds. */
+  period: number;
+  /** Dominant direction of this partition in degrees (met convention). */
+  direction: number;
+  /** Classification: "groundswell" | "swell" | "wind_swell". */
+  classification: string;
+  /** Cross-shore distance of the break point in display units from shore. */
+  breakDistance: number;
+  /** Face height at the break point in display units. Null when unavailable. */
+  faceHeight: number | null;
+  /** Breaker type at this partition's break point. Null when unavailable. */
+  breakerType: 'spilling' | 'plunging' | 'surging' | null;
+  /**
+   * Location category: "outer_bar" | "inner_bar" | "middle_bar" | "beach".
+   * Null when the 1D model has not classified the break location.
+   */
+  breakLocation: string | null;
 }

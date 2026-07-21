@@ -87,6 +87,7 @@ import type {
   HourlyForecastPoint,
   DailyForecastPoint,
   TidePrediction,
+  PartitionBreakInfo,
 } from '../../../api/types';
 
 // ---------------------------------------------------------------------------
@@ -904,6 +905,8 @@ const SURF_ROW_H = {
   windQuality: 34,
   waterTemp:   22,
   waveValues:  22,
+  /** T5.4: incoming offshore swell height (HSWELL) row, below Surf Height. */
+  swellHeight: 22,
   trendSvg:    WAVE_CHART_H,
   direction:   22,
   period:      22,
@@ -1163,7 +1166,10 @@ function SurfScrollForecast({
                 </span>
               ))}
             </div>
-            {rowHeader(SURF_ROW_H.waveValues, t('surfing.swellHeightLabel', { defaultValue: 'Swell Height' }))}
+            {/* T5.4: waveValues row shows surf height (face/Hawaiian). Label renamed → "Surf Height". */}
+            {rowHeader(SURF_ROW_H.waveValues, t('surfing.surfHeightLabel', { defaultValue: 'Surf Height' }))}
+            {/* T5.4: new swellHeight row shows raw offshore Hsig from SWAN. */}
+            {rowHeader(SURF_ROW_H.swellHeight, t('surfing.swellHeightLabel', { defaultValue: 'Swell Height' }))}
             {rowHeader(SURF_ROW_H.direction, t('surfing.directionLabel', { defaultValue: 'Direction' }))}
             {rowHeader(SURF_ROW_H.period, t('surfing.periodLabel', { defaultValue: 'Period' }))}
             {rowHeader(SURF_ROW_H.energy, t('surfing.energyLabel', { defaultValue: 'Power' }))}
@@ -1354,9 +1360,9 @@ function SurfScrollForecast({
               </svg>
             </div>
 
-            {/* Wave height values row — uses breakingFaceHeight or breakingHawaiianHeight
-                 per surfHeightDisplay; falls back to waveHeightAtBreak when SWAN
-                 fields are absent (WW3 fallback data). */}
+            {/* Surf height row (T5.4 renamed: was "Swell Height", now "Surf Height").
+                 Shows breakingFaceHeight or breakingHawaiianHeight per surfHeightDisplay;
+                 falls back to waveHeightAtBreak on WW3 fallback (SWAN absent). */}
             {renderRow('waveValues', SURF_ROW_H.waveValues, (item) => {
               const val = getDisplayHeight(item.entry, surfHeightDisplay);
               return (
@@ -1366,6 +1372,23 @@ function SurfScrollForecast({
                   fontWeight: 600,
                   fontFeatureSettings: '"tnum"',
                   color: 'var(--foreground)',
+                  lineHeight: 1,
+                }}>
+                  {val != null && !isNaN(val) ? `${formatValue(val, 'default', locale)} ${heightUnit}` : '—'}
+                </span>
+              );
+            })}
+
+            {/* T5.4: Incoming swell (offshore) height row — raw SWAN Hsig.
+                 Shows the offshore swell that the 1D model transforms. */}
+            {renderRow('swellHeight', SURF_ROW_H.swellHeight, (item) => {
+              const val = item.entry.swellHeight ?? null;
+              return (
+                <span style={{
+                  fontFamily: 'var(--font-chart, var(--font-sans, sans-serif))',
+                  fontSize: 'var(--text-micro)',
+                  fontFeatureSettings: '"tnum"',
+                  color: 'var(--muted-foreground)',
                   lineHeight: 1,
                 }}>
                   {val != null && !isNaN(val) ? `${formatValue(val, 'default', locale)} ${heightUnit}` : '—'}
@@ -1651,6 +1674,12 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
 
   // ── Scoring explainer modal ───────────────────────────────────────────────
   const [showExplainer, setShowExplainer] = useState(false);
+  // ── Beach profile transect selector (T5.3 element 9) ─────────────────────
+  // Controlled state; the selected transect is passed to BeachProfileChart.
+  // NOTE: API re-fetch is NOT wired up — useBeachProfile does not yet accept
+  // a transectIndex parameter (out of scope per T5.3 lead call 3). This state
+  // controls only the UI; the displayed data remains the default transect.
+  const [selectedTransect, setSelectedTransect] = useState<number | 'best_peak' | 'average'>('best_peak');
   const infoButtonRef = useRef<HTMLButtonElement>(null);
   const handleCloseExplainer = useCallback(() => {
     setShowExplainer(false);
@@ -2000,10 +2029,12 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
 
             {/* Row 2: Swell components table (left 2/3) + compass (right 1/3) */}
             <div className="flex flex-row gap-4 flex-1 min-h-0">
-              {/* Left: component table */}
+              {/* Left: INCOMING SWELL (offshore) component table (T5.4).
+                  Label updated from generic "Swell Components" → "INCOMING SWELL (offshore)"
+                  to clarify this shows offshore/deep-water values, not at-break values. */}
               <div className="flex flex-col gap-1 flex-[2] min-w-0">
                 <span className="text-muted-foreground font-semibold" style={{ fontSize: 'var(--text-micro)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  {t('surfing.swellBreakdownTitle')}
+                  {t('surfing.incomingSwellLabel', { defaultValue: 'INCOMING SWELL (offshore)' })}
                 </span>
                 <SwellBreakdown
                   components={swellComponents}
@@ -2013,6 +2044,68 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                   t={t}
                   tCommon={tCommon}
                 />
+
+                {/* T5.4: Per-partition break info — what each incoming swell does at the beach.
+                    Renders only when the 1D model pipeline provides partitionBreakInfo
+                    (T5.2 API). Gracefully absent when data is unavailable. */}
+                {primary?.partitionBreakInfo && primary.partitionBreakInfo.length > 0 && (
+                  <div className="flex flex-col gap-1 mt-2">
+                    <span className="text-muted-foreground font-semibold" style={{ fontSize: 'var(--text-micro)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      {t('surfing.partitionBreaksTitle', { defaultValue: 'AT BREAK' })}
+                    </span>
+                    <ul className="flex flex-col gap-0.5" aria-label={t('surfing.partitionBreaksTitle', { defaultValue: 'AT BREAK' })}>
+                      {(primary.partitionBreakInfo as PartitionBreakInfo[]).map((pbi, idx) => {
+                        const dirCardinal = cardinalFromDegrees(pbi.direction);
+                        const dirLabel = dirCardinal ? tCommon(`directions.${dirCardinal}`) : `${pbi.direction}°`;
+                        const classLabel = t(`surfing.partitionBreakInfo.${pbi.classification}`, { defaultValue: pbi.classification });
+                        const breakLocLabel = pbi.breakLocation
+                          ? t(`surfing.partitionBreakInfo.${pbi.breakLocation}`, { defaultValue: pbi.breakLocation.replace(/_/g, ' ') })
+                          : null;
+                        const breakerTypeLabel = pbi.breakerType
+                          ? t(`surfing.beachProfile.breakType.${pbi.breakerType}`)
+                          : null;
+                        const distStr = pbi.breakDistance != null
+                          ? new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(pbi.breakDistance)
+                          : null;
+                        const heightStr = pbi.faceHeight != null
+                          ? new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(pbi.faceHeight)
+                          : null;
+                        return (
+                          <li
+                            key={idx}
+                            style={{
+                              fontSize: 'var(--text-micro)',
+                              color: 'var(--muted-foreground)',
+                              lineHeight: 1.4,
+                              fontFamily: 'var(--font-sans, sans-serif)',
+                              listStyle: 'none',
+                            }}
+                          >
+                            <span style={{ fontFeatureSettings: '"tnum"', color: 'var(--foreground)', fontWeight: 500 }}>
+                              {Math.round(pbi.period)}s {dirLabel} {classLabel}
+                            </span>
+                            {' → '}
+                            {breakLocLabel && (
+                              <span>{breakLocLabel}</span>
+                            )}
+                            {distStr && (
+                              <span> ({distStr} {distanceUnit})</span>
+                            )}
+                            {heightStr && (
+                              <span>
+                                {', '}
+                                <span style={{ color: 'var(--foreground)', fontWeight: 500, fontFeatureSettings: '"tnum"' }}>
+                                  {heightStr} {heightUnit}
+                                </span>
+                                {breakerTypeLabel && <span> {breakerTypeLabel}</span>}
+                              </span>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
               </div>
 
               {/* Right: compass — max-width 80% of its flex-1 slot (~20% smaller) */}
@@ -2224,6 +2317,11 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                 heightUnit={heightUnit}
                 distanceUnit={distanceUnit}
                 locale={locale}
+                datum={profileData.datum}
+                surfZones={profileData.surfZones}
+                transects={profileData.transects}
+                selectedTransect={selectedTransect}
+                onTransectChange={setSelectedTransect}
               />
             ) : (
               <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
