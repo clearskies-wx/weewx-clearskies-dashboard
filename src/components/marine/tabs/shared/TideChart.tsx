@@ -315,14 +315,14 @@ export function TideChart({
           {nowTs >= minTs && nowTs <= maxTs && (
             <ReferenceLine
               x={nowTs}
-              stroke="var(--foreground)"
-              strokeDasharray="2 4"
-              strokeWidth={1}
+              stroke="#dc2626"
+              strokeDasharray="2 2"
+              strokeWidth={1.25}
               label={{
                 value: t('tide.now', { defaultValue: 'Now' }),
                 position: 'top',
                 fontSize: 11,
-                fill: 'var(--foreground)',
+                fill: '#dc2626',
               }}
             />
           )}

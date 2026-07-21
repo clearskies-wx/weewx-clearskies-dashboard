@@ -1075,7 +1075,7 @@ function SurfScrollForecast({
             {rowHeader(SURF_ROW_H.icon)}
             {rowHeader(SURF_ROW_H.airTemp, t('surfing.airTempLabel', { defaultValue: 'Air Temp' }))}
             {rowHeader(SURF_ROW_H.precip, t('surfing.precipLabel', { defaultValue: 'Precip' }))}
-            {rowHeader(SURF_ROW_H.wind, t('surfing.windLabel', { defaultValue: 'Wind' }))}
+            {rowHeader(SURF_ROW_H.wind, `${t('surfing.windLabel', { defaultValue: 'Wind' })} (${windUnit})`)}
             {rowHeader(SURF_ROW_H.windQuality, t('surfing.windQualityLabel', { defaultValue: 'Quality' }))}
             <div style={SECTION_DIVIDER} />
             {/* Swells */}
@@ -1304,7 +1304,7 @@ function SurfScrollForecast({
             })}
 
             {renderRow('period', SURF_ROW_H.period, (item) => (
-              <span style={microText}>{item.entry.period != null ? `${Math.round(item.entry.period)}s` : '—'}</span>
+              <span style={microText}>{item.entry.period != null ? `${Math.round(item.entry.period)}${periodUnit}` : '—'}</span>
             ))}
 
             {renderRow('energy', SURF_ROW_H.energy, (item) => {
@@ -1384,7 +1384,7 @@ function SurfScrollForecast({
               {chip(t('surfing.windDirection'), windDirLabel)}
               {tideEvent && chip(
                 tideEvent.type === 'high' ? t('tide.tideHigh') : t('tide.tideLow'),
-                `${formatValue(tideEvent.height, 'default', locale)} ${heightUnit} · ${formatTime(new Date(tideEvent.time), locale, stationTz)}`,
+                `${formatValue(tideEvent.height, 'default', locale)} ${units?.waterLevel ?? units?.tideHeight ?? heightUnit} · ${formatTime(new Date(tideEvent.time), locale, stationTz)}`,
               )}
             </div>
 
@@ -1654,10 +1654,10 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
   if (!data) return null;
 
   // ── Unit labels ───────────────────────────────────────────────────────────
-  const heightUnit   = units?.waveHeightAtBreak ?? units?.waveHeight ?? units?.height ?? 'ft';
-  const distanceUnit = units?.distance ?? 'm';
+  const heightUnit   = units?.waveHeightAtBreak ?? units?.waveHeight ?? units?.height ?? t('units.feet', { defaultValue: 'ft' });
+  const distanceUnit = units?.distance ?? t('units.meters', { defaultValue: 'm' });
   const periodUnit   = units?.period ?? t('surfing.secondsAbbr');
-  const windUnit     = marineUnits?.windSpeed ?? 'kn';
+  const windUnit     = marineUnits?.windSpeed ?? t('units.knots', { defaultValue: 'kn' });
 
   // ── SWAN display preference (T5.1) ───────────────────────────────────────
   // "face" → breakingFaceHeight (trough-to-crest)
@@ -1916,13 +1916,13 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                 />
               </div>
 
-              {/* Right: compass */}
+              {/* Right: compass — max-width 80% of its flex-1 slot (~20% smaller) */}
               {swellComponents.length > 0 && (
                 <div className="flex-1 flex flex-col items-center gap-1">
                   <span className="text-muted-foreground font-semibold self-center" style={{ fontSize: 'var(--text-micro)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     {t('surfing.dominantDirection')}
                   </span>
-                  <div className="flex-1 flex items-center justify-center w-full">
+                  <div className="flex-1 flex items-center justify-center" style={{ width: '80%' }}>
                     <SwellDirectionCompass
                       directionDeg={dominantDirection}
                       t={t}
