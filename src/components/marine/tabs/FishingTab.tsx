@@ -943,14 +943,24 @@ function arcProgressFraction(startIso: string | null, endIso: string | null, atM
 // display").
 // ---------------------------------------------------------------------------
 
-function SolunarCard({ day, locale, stationTz, t, tAlmanac }: { day: FishingDay; locale: string; stationTz: string; t: TFn; tAlmanac: TFn }) {
+function SolunarCard({ day, nextDay, prevDay, locale, stationTz, t, tAlmanac }: { day: FishingDay; nextDay?: FishingDay; prevDay?: FishingDay; locale: string; stationTz: string; t: TFn; tAlmanac: TFn }) {
   const [nowMs, setNowMs] = useState(Date.now());
   useEffect(() => {
     const id = setInterval(() => setNowMs(Date.now()), 60_000);
     return () => clearInterval(id);
   }, []);
 
-  const solunar = day.solunar;
+  const rawSolunar = day.solunar;
+  // Patch null moonrise/moonset from adjacent days (same pattern as useSmartAlmanac).
+  const solunar = useMemo(() => {
+    if (!rawSolunar.moonset && nextDay?.solunar.moonset) {
+      return { ...rawSolunar, moonset: nextDay.solunar.moonset };
+    }
+    if (!rawSolunar.moonrise && prevDay?.solunar.moonrise) {
+      return { ...rawSolunar, moonrise: prevDay.solunar.moonrise };
+    }
+    return rawSolunar;
+  }, [rawSolunar, nextDay?.solunar.moonset, prevDay?.solunar.moonrise]);
   const timeWindow = dayWindow(day);
 
   // Horizontal timeline — full day span, major/minor segments + now marker.
@@ -1431,7 +1441,7 @@ export function FishingTab({ locationId, alerts = [] }: FishingTabProps) {
       </Card>
 
       {/* 5. Solunar Calendar */}
-      {data.days[0] && <SolunarCard day={data.days[0]} locale={locale} stationTz={stationTz} t={t} tAlmanac={tAlmanac} />}
+      {data.days[0] && <SolunarCard day={data.days[0]} nextDay={data.days[1]} locale={locale} stationTz={stationTz} t={t} tAlmanac={tAlmanac} />}
 
       {/* 6. Species Forecast */}
       <SpeciesTable period={currentPeriod} species={data.species} locale={locale} t={t} />

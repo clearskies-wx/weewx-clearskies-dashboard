@@ -79,15 +79,31 @@ export function useSmartAlmanac(): SmartAlmanacResult {
     moonSetMs !== null &&
     now > moonSetMs;
 
+  // --- Null-event cases: one event doesn't occur on this calendar day ---
+  // The moon shifts ~50 min later each day, so every few days moonset
+  // "falls off" the calendar day (null set) or moonrise hasn't happened
+  // yet (null rise).  Without these cases the arc can't render.
+
+  // Moon rises today but doesn't set until tomorrow.
+  const moonSetMissing = moonRiseMs !== null && moonSetMs === null;
+
+  // Moon set today but didn't rise today (rose yesterday).
+  const moonRiseMissing = moonRiseMs === null && moonSetMs !== null;
+  // Before today's set: moon is still up from yesterday's rise.
+  const moonRiseMissingBeforeSet = moonRiseMissing && now <= moonSetMs!;
+  // After today's set: moon is down, next rise is tomorrow.
+  const moonRiseMissingPastSet = moonRiseMissing && now > moonSetMs!;
+
   // --- Sun: after sunset + 2h buffer, show tomorrow's sun data ---
   // The buffer keeps today's data visible briefly so the card doesn't
   // snap to tomorrow the instant the sun dips below the horizon.
   const sunNeedsTomorrow =
     sunSetMs !== null && now > sunSetMs + TWO_HOURS_MS;
 
-  const needsYesterday = moonInYesterdayTransit;
+  const needsYesterday = moonInYesterdayTransit || moonRiseMissingBeforeSet;
   const needsTomorrow =
-    sunNeedsTomorrow || moonNeedsTomorrowForSet || moonPastSimpleSet;
+    sunNeedsTomorrow || moonNeedsTomorrowForSet || moonPastSimpleSet ||
+    moonSetMissing || moonRiseMissingPastSet;
 
   // Hooks are always called (React rules); pass undefined to get today's
   // default data when the adjacent day isn't needed (harmless duplicate).
@@ -106,7 +122,16 @@ export function useSmartAlmanac(): SmartAlmanacResult {
     // --- Moon: construct a valid transit pair ---
     let moonData = today.data.moon;
 
-    if (moonInYesterdayTransit && yesterday.data) {
+    if (moonSetMissing && tomorrow.data) {
+      // Rise today, no set today → pair with tomorrow's set.
+      moonData = { ...today.data.moon, set: tomorrow.data.moon.set };
+    } else if (moonRiseMissingBeforeSet && yesterday.data) {
+      // No rise today, set still ahead → moon up from yesterday's rise.
+      moonData = { ...today.data.moon, rise: yesterday.data.moon.rise };
+    } else if (moonRiseMissingPastSet && tomorrow.data) {
+      // No rise today, past today's set → show tomorrow's transit.
+      moonData = tomorrow.data.moon;
+    } else if (moonInYesterdayTransit && yesterday.data) {
       // Active transit from yesterday: yesterday's rise + today's set.
       // Keep today's phase/illumination (they're "now" values).
       moonData = { ...today.data.moon, rise: yesterday.data.moon.rise };
@@ -124,6 +149,9 @@ export function useSmartAlmanac(): SmartAlmanacResult {
     yesterday.data,
     tomorrow.data,
     sunNeedsTomorrow,
+    moonSetMissing,
+    moonRiseMissingBeforeSet,
+    moonRiseMissingPastSet,
     moonInYesterdayTransit,
     moonNeedsTomorrowForSet,
     moonPastSimpleSet,
