@@ -304,7 +304,57 @@
       "srColSwellHeight": "Swell height ({{unit}})",
       "srColBreakingFraction": "Breaking fraction",
       "srBreakPoints": "Breaking zones:"
-    }
+    },
+    "shore": "Shore",
+    "offshore": "Offshore",
+    "heatMapTitle": "Surf Height Map",
+    "heatMapNoData": "No heat map data available",
+    "heatMapAriaLabel": "Wave height heat map across all transects",
+    "heatMapDesc": "2D grid showing significant wave height across {{n}} along-shore transects. Colour scale from blue (small) to red (large).",
+    "heatMap": {
+      "transectIndex": "Transect",
+      "openTransect": "Open",
+      "breakHeight": "Break height ({{unit}})",
+      "breakDistance": "Break distance ({{unit}})",
+      "breakerType": "Breaker type",
+      "shadowedTransect": "Structure-affected",
+      "breakerType.spilling": "Spilling",
+      "breakerType.plunging": "Plunging",
+      "breakerType.surging": "Surging",
+      "colorScaleLow": "Small",
+      "colorScaleMedium": "Medium",
+      "colorScaleHigh": "Large"
+    },
+    "peelAngle": "Peel Angle",
+    "peelAngleLabel": "Peel",
+    "peelDirection": {
+      "right": "Right",
+      "left": "Left",
+      "closeout": "Closeout"
+    },
+    "peelClassification": {
+      "closeout": "Closeout",
+      "fast_right": "Fast Right",
+      "fast_left": "Fast Left",
+      "good_right": "Good Right",
+      "good_left": "Good Left",
+      "mellow_right": "Mellow Right",
+      "mellow_left": "Mellow Left"
+    },
+    "closeoutWarning": "CLOSEOUT",
+    "waveShapeLabel": "Shape",
+    "waveShapeClassification": {
+      "hollow_plunging": "Hollow & Plunging",
+      "steep_crumbly": "Steep & Crumbly",
+      "walled_closeout": "Walled Closeout",
+      "mushy_slow": "Mushy & Slow"
+    },
+    "bestPeakLabel": "Best peak",
+    "avgLabel": "Avg",
+    "shadowLabel": "shadow",
+    "peelAngleRowLabel": "Peel",
+    "waveShapeRowLabel": "Shape",
+    "bestPeakRowLabel": "Best Peak"
   },
   "fishing": {
     "loading": "Loading fishing data…",

@@ -40,6 +40,7 @@ import type {
   FishingDetailData,
   BeachSafetyDetailData,
   BeachProfileData,
+  HeatMapProfileData,
   SolunarTimes,
 } from './types';
 // ---------------------------------------------------------------------------
@@ -482,6 +483,18 @@ export function getBeachProfile(
   signal?: AbortSignal,
 ): Promise<ApiResponse<BeachProfileData>> {
   return fetchApi<ApiResponse<BeachProfileData>>(`/surf/${encodeURIComponent(locationId)}/profile`, undefined, signal);
+}
+
+/** Fetch beach profile data for all transects (T7.1 heat map). */
+export function getBeachProfileAll(
+  locationId: string,
+  signal?: AbortSignal,
+): Promise<ApiResponse<HeatMapProfileData>> {
+  return fetchApi<ApiResponse<HeatMapProfileData>>(
+    `/surf/${encodeURIComponent(locationId)}/profile?transect_index=all`,
+    undefined,
+    signal,
+  );
 }
 
 export function getFishingDetail(

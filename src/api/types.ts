@@ -1298,6 +1298,27 @@ export interface SurfForecast {
    * Each entry corresponds to one swell partition from SPECOUT decomposition.
    */
   partitionBreakInfo?: PartitionBreakInfo[] | null;
+  // T7.2: Peel angle fields — derived from multi-transect break-point lateral variation.
+  /** Peel angle in degrees; null when insufficient transect data. */
+  peelAngle?: number | null;
+  /** Peel classification: closeout|fast_right|fast_left|good_right|good_left|mellow_right|mellow_left */
+  peelClassification?: string | null;
+  // T7.3: Best-peak / average face height across open transects.
+  /** Best-peak face height (maximum across open transects) in display units. */
+  bestPeakFaceHeight?: number | null;
+  /** Spot-average face height (mean across open transects) in display units. */
+  spotAverageFaceHeight?: number | null;
+  // T7.1: Transect counts for heat map display.
+  /** Total number of transects (open + structure-affected). */
+  transectCount?: number | null;
+  /** Number of open (structure-free) transects. */
+  openTransectCount?: number | null;
+  // T7.3: Shadow area height — null when no structure shadow present.
+  /** Face height in the structure shadow zone. Null when no shadow. */
+  shadowFaceHeight?: number | null;
+  // T7.2b: Wave shape classification from waveform + Iribarren analysis.
+  /** Dominant wave shape: hollow_plunging|steep_crumbly|walled_closeout|mushy_slow */
+  waveShapeClassification?: string | null;
 }
 
 export interface FishingForecast {
@@ -1651,6 +1672,34 @@ export interface BeachProfileData {
    */
   transects?: BeachProfileTransectInfo[] | null;
 }
+
+// ─── T7.1 Heat Map types ────────────────────────────────────────────────────
+
+/** One transect row for the heat map (returned by profile?transect_index=all). */
+export interface HeatMapTransectData {
+  /** Zero-based transect index (0 = center/primary). */
+  index: number;
+  /** True when the transect is not obscured by a structure (pier, jetty, etc.). */
+  isOpen: boolean;
+  /** Cross-shore transect points for this row. */
+  transect: BeachProfileTransectPoint[];
+  /** Break locations along this transect; multiple entries for multi-bar spots. */
+  breakPoints: BeachProfileBreakPoint[];
+  /** Classified surf zones for this transect row. Null when model unavailable. */
+  surfZones?: BeachProfileSurfZones | null;
+}
+
+/** Response for GET /surf/{locationId}/profile?transect_index=all (T7.1). */
+export interface HeatMapProfileData {
+  /** The surf location ID this data is for. */
+  locationId: string;
+  /** All transect rows ordered by index, from southernmost to northernmost. */
+  allTransects: HeatMapTransectData[];
+  /** Vertical datum for depth values (e.g., "NAVD88", "MSL", "MLLW"). */
+  datum?: string | null;
+}
+
+// ────────────────────────────────────────────────────────────────────────────
 
 /**
  * Per-partition break info — what one swell component does at the beach.

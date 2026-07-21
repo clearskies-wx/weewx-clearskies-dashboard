@@ -56,8 +56,9 @@ import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 // Recharts imports removed — WaveFaceHeightChart replaced by inline SVG trend
 import { Info, Waves, Timer, X, Thermometer, Drop, Snowflake } from '@phosphor-icons/react';
-import { useSurfDetail, useBeachProfile, useMarineDetail, useStation, useObservation, useForecast } from '../../../hooks/useWeatherData';
+import { useSurfDetail, useBeachProfile, useBeachProfileAll, useMarineDetail, useStation, useObservation, useForecast } from '../../../hooks/useWeatherData';
 import { BeachProfileChart } from './BeachProfileChart';
+import { HeatMapCard } from './HeatMapCard';
 import { WindSymbol } from '../../forecast/WindSymbol';
 import { toWmoCode } from '../../../utils/weather-code';
 import { selectWeatherIcon } from '../../../utils/icon-selection';
@@ -911,6 +912,12 @@ const SURF_ROW_H = {
   direction:   22,
   period:      22,
   energy:      22,
+  /** T7.3: best-peak face height row in 72h forecast scroll. */
+  bestPeak:    22,
+  /** T7.2: peel angle row in 72h forecast scroll. */
+  peelAngle:   22,
+  /** T7.2b: wave shape classification row in 72h forecast scroll. */
+  waveShape:   22,
 } as const;
 
 const ROW_HEADER_STYLE: React.CSSProperties = {
@@ -1173,6 +1180,12 @@ function SurfScrollForecast({
             {rowHeader(SURF_ROW_H.direction, t('surfing.directionLabel', { defaultValue: 'Direction' }))}
             {rowHeader(SURF_ROW_H.period, t('surfing.periodLabel', { defaultValue: 'Period' }))}
             {rowHeader(SURF_ROW_H.energy, t('surfing.energyLabel', { defaultValue: 'Power' }))}
+            {/* T7.3: best-peak face height */}
+            {rowHeader(SURF_ROW_H.bestPeak, t('surfing.bestPeakRowLabel', { defaultValue: 'Best Peak' }))}
+            {/* T7.2: peel angle */}
+            {rowHeader(SURF_ROW_H.peelAngle, t('surfing.peelAngleRowLabel', { defaultValue: 'Peel' }))}
+            {/* T7.2b: wave shape */}
+            {rowHeader(SURF_ROW_H.waveShape, t('surfing.waveShapeRowLabel', { defaultValue: 'Shape' }))}
           </div>
 
           {/* ── Scrollable data columns ── */}
@@ -1408,6 +1421,52 @@ function SurfScrollForecast({
             {renderRow('energy', SURF_ROW_H.energy, (item) => {
               const energy = Math.round(item.entry.swellDominance * 100);
               return <span style={microText}>{energy}%</span>;
+            })}
+
+            {/* T7.3: Best-peak face height row */}
+            {renderRow('bestPeak', SURF_ROW_H.bestPeak, (item) => {
+              const val = item.entry.bestPeakFaceHeight ?? null;
+              return (
+                <span style={microText}>
+                  {val != null ? `${formatValue(val, 'default', locale)} ${heightUnit}` : '—'}
+                </span>
+              );
+            })}
+
+            {/* T7.2: Peel angle row — closeout highlighted in warning color */}
+            {renderRow('peelAngle', SURF_ROW_H.peelAngle, (item) => {
+              const angle = item.entry.peelAngle ?? null;
+              const cls = item.entry.peelClassification ?? null;
+              const isCloseout = angle !== null && angle < 30;
+              if (angle === null && cls === null) return <span style={microText}>—</span>;
+              // Show abbreviated classification (first char of last word).
+              const clsAbbr = cls
+                ? cls.replace('_right', '→').replace('_left', '←').replace('_', ' ')
+                : null;
+              return (
+                <span style={{
+                  ...microText,
+                  color: isCloseout ? 'var(--destructive, #dc2626)' : 'var(--muted-foreground)',
+                  fontWeight: isCloseout ? 600 : undefined,
+                }}>
+                  {angle !== null ? `${Math.round(angle)}°` : ''}
+                  {clsAbbr && <span aria-hidden="true"> {clsAbbr}</span>}
+                </span>
+              );
+            })}
+
+            {/* T7.2b: Wave shape row */}
+            {renderRow('waveShape', SURF_ROW_H.waveShape, (item) => {
+              const shape = item.entry.waveShapeClassification ?? null;
+              if (!shape) return <span style={microText}>—</span>;
+              // Short abbreviation for the narrow cell.
+              const abbr: Record<string, string> = {
+                hollow_plunging: 'Hollow',
+                steep_crumbly: 'Crmbly',
+                walled_closeout: 'Walled',
+                mushy_slow: 'Mushy',
+              };
+              return <span style={microText}>{abbr[shape] ?? shape}</span>;
             })}
           </div>
         </div>
@@ -1691,6 +1750,8 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
   // Beach profile — /surf/{id}/profile (T6.3). Does not gate the loading spinner;
   // the card renders "unavailable" gracefully while data is loading or absent.
   const { data: profileData } = useBeachProfile(locationId);
+  // Heat map — /surf/{id}/profile?transect_index=all (T7.1). Does not gate loading.
+  const { data: heatMapData, loading: heatMapLoading } = useBeachProfileAll(locationId);
   const { data: marine, units: marineUnits, loading: marineLoading } = useMarineDetail(locationId);
   const { data: station } = useStation();
   const stationTz = station?.timezone ?? 'UTC';
@@ -2001,6 +2062,51 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                 <span className="text-muted-foreground font-semibold" style={{ fontSize: 'var(--text-micro)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   {t('surfing.conditionsAtBreak')}
                 </span>
+
+                {/* T7.3: Best peak / average headline */}
+                {(primary.bestPeakFaceHeight != null || primary.spotAverageFaceHeight != null) && (
+                  <p
+                    className="text-foreground font-semibold"
+                    style={{ fontSize: 'var(--text-label)', fontFeatureSettings: '"tnum"', margin: '0.1rem 0' }}
+                    aria-label={[
+                      primary.bestPeakFaceHeight != null
+                        ? `${t('surfing.bestPeakLabel', { defaultValue: 'Best peak' })}: ${formatValue(primary.bestPeakFaceHeight, 'default', locale)} ${heightUnit}`
+                        : null,
+                      primary.spotAverageFaceHeight != null
+                        ? `${t('surfing.avgLabel', { defaultValue: 'Average' })}: ${formatValue(primary.spotAverageFaceHeight, 'default', locale)} ${heightUnit}`
+                        : null,
+                      primary.shadowFaceHeight != null
+                        ? `${t('surfing.shadowLabel', { defaultValue: 'In shadow' })}: ${formatValue(primary.shadowFaceHeight, 'default', locale)} ${heightUnit}`
+                        : null,
+                    ].filter(Boolean).join(', ')}
+                  >
+                    {primary.bestPeakFaceHeight != null && (
+                      <span>
+                        {t('surfing.bestPeakLabel', { defaultValue: 'Best peak' })}{': '}
+                        <span style={{ fontFeatureSettings: '"tnum"' }}>
+                          {formatValue(primary.bestPeakFaceHeight, 'default', locale)} {heightUnit}
+                        </span>
+                      </span>
+                    )}
+                    {primary.bestPeakFaceHeight != null && primary.spotAverageFaceHeight != null && (
+                      <span className="text-muted-foreground font-normal" aria-hidden="true"> / </span>
+                    )}
+                    {primary.spotAverageFaceHeight != null && (
+                      <span>
+                        <span className="text-muted-foreground font-normal">{t('surfing.avgLabel', { defaultValue: 'Avg' })}{': '}</span>
+                        <span style={{ fontFeatureSettings: '"tnum"' }}>
+                          {formatValue(primary.spotAverageFaceHeight, 'default', locale)} {heightUnit}
+                        </span>
+                      </span>
+                    )}
+                    {primary.shadowFaceHeight != null && (
+                      <span className="text-muted-foreground font-normal ml-2" style={{ fontSize: 'var(--text-micro)' }}>
+                        {' ('}{t('surfing.shadowLabel', { defaultValue: 'shadow' })}{': '}{formatValue(primary.shadowFaceHeight, 'default', locale)} {heightUnit}{')'}
+                      </span>
+                    )}
+                  </p>
+                )}
+
                 {/* T6.1: 3 stats only — Swell Height, Breaking Face Height, Period.
                  *  Direction removed from top row (redundant with compass below). */}
                 <dl className="grid grid-cols-3 gap-x-4 gap-y-2">
@@ -2024,6 +2130,72 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                     </div>
                   ))}
                 </dl>
+
+                {/* T7.2: Peel angle row */}
+                {primary.peelAngle != null && (
+                  <div
+                    className="flex items-center gap-2 mt-1"
+                    style={{ fontSize: 'var(--text-label)' }}
+                  >
+                    <span className="text-muted-foreground" style={{ fontSize: 'var(--text-micro)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', flexShrink: 0 }}>
+                      {t('surfing.peelAngleLabel', { defaultValue: 'Peel' })}
+                    </span>
+                    {/* Angle value */}
+                    <span
+                      className="font-semibold"
+                      style={{
+                        fontFeatureSettings: '"tnum"',
+                        color: primary.peelAngle < 30 ? 'var(--destructive, #dc2626)' : 'var(--foreground)',
+                      }}
+                      aria-label={`${t('surfing.peelAngleLabel', { defaultValue: 'Peel angle' })}: ${Math.round(primary.peelAngle)}°`}
+                    >
+                      {Math.round(primary.peelAngle)}°
+                    </span>
+                    {/* Classification label */}
+                    {primary.peelClassification != null && (
+                      <span
+                        className="text-muted-foreground"
+                        style={{ fontSize: 'var(--text-micro)' }}
+                      >
+                        {t(`surfing.peelClassification.${primary.peelClassification}`, { defaultValue: primary.peelClassification.replace(/_/g, ' ') })}
+                      </span>
+                    )}
+                    {/* Directional indicator — not rendered for closeout */}
+                    {primary.peelClassification != null && primary.peelClassification.includes('right') && (
+                      <span aria-hidden="true" style={{ color: 'var(--foreground)', fontWeight: 700 }}>›</span>
+                    )}
+                    {primary.peelClassification != null && primary.peelClassification.includes('left') && (
+                      <span aria-hidden="true" style={{ color: 'var(--foreground)', fontWeight: 700 }}>‹</span>
+                    )}
+                    {/* Closeout warning alert */}
+                    {primary.peelAngle < 30 && (
+                      <span
+                        role="alert"
+                        className="font-semibold"
+                        style={{ fontSize: 'var(--text-micro)', color: 'var(--destructive, #dc2626)' }}
+                      >
+                        {t('surfing.closeoutWarning', { defaultValue: 'CLOSEOUT' })}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* T7.2b: Wave shape indicator */}
+                {primary.waveShapeClassification != null && (
+                  <div
+                    className="flex items-center gap-2"
+                    style={{ fontSize: 'var(--text-label)' }}
+                  >
+                    <span className="text-muted-foreground" style={{ fontSize: 'var(--text-micro)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', flexShrink: 0 }}>
+                      {t('surfing.waveShapeLabel', { defaultValue: 'Shape' })}
+                    </span>
+                    <span className="text-foreground font-semibold">
+                      {t(`surfing.waveShapeClassification.${primary.waveShapeClassification}`, {
+                        defaultValue: primary.waveShapeClassification.replace(/_/g, ' '),
+                      })}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
 
@@ -2328,6 +2500,19 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                 {t('surfing.beachProfileNoData')}
               </p>
             )}
+          </CardContent>
+        </Card>
+
+        {/* ── T7.1: Heat Map — full width ── */}
+        <Card footprint="full">
+          <CardContent className="pt-[var(--card-pad)]">
+            <HeatMapCard
+              data={heatMapData}
+              loading={heatMapLoading}
+              heightUnit={heightUnit}
+              distanceUnit={distanceUnit}
+              locale={locale}
+            />
           </CardContent>
         </Card>
 

@@ -41,6 +41,7 @@ import {
   getTideDetail,
   getSurfDetail,
   getBeachProfile,
+  getBeachProfileAll,
   getFishingDetail,
   getBeachSafetyDetail,
 } from '../api/client';
@@ -108,6 +109,7 @@ import type {
   TideBundle,
   SurfDetailData,
   BeachProfileData,
+  HeatMapProfileData,
   FishingDetailData,
   BeachSafetyDetailData,
 } from '../api/types';
@@ -1293,6 +1295,30 @@ export function useBeachProfile(locationId: string | null): HookResult<BeachProf
 
   if (isMockMode()) {
     return mockResult<BeachProfileData | null>(null) as HookResult<BeachProfileData>;
+  }
+
+  return {
+    data: data?.data ?? null,
+    units: data?.units ?? undefined,
+    loading,
+    error,
+    refetch,
+    stationClock: (data as any)?.stationClock,
+    freshness: (data as any)?.freshness,
+  };
+}
+
+// useBeachProfileAll — /surf/{locationId}/profile?transect_index=all (T7.1 heat map)
+export function useBeachProfileAll(locationId: string | null): HookResult<HeatMapProfileData> {
+  const skip = isMockMode() || locationId === null;
+
+  const { data, loading, error, refetch } = useApiQuery<{ data: HeatMapProfileData; units?: UnitsBlock }>(
+    (signal) => getBeachProfileAll(locationId as string, signal),
+    { skip, deps: [locationId] },
+  );
+
+  if (isMockMode()) {
+    return mockResult<HeatMapProfileData | null>(null) as HookResult<HeatMapProfileData>;
   }
 
   return {
