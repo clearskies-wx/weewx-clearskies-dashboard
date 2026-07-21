@@ -191,6 +191,9 @@
     "srWaveFaceHeightColumn": "Wave Face Height ({{unit}})",
     "scoringBreakdownTitle": "Scoring Breakdown",
     "scoring": {
+      "componentsHeader": "Components",
+      "adjustmentsHeader": "Adjustments",
+      "pts": "pts",
       "waveHeight": "Wave Height",
       "wavePeriod": "Wave Period",
       "waveOrganization": "Wave Organization",

@@ -199,32 +199,82 @@ function scoreBarFillColor(pct: number): string {
 }
 
 
-function ScoreBar({ label, score, max }: { label: string; score: number; max?: number }) {
-  const isNegative = score < 0;
-  const fillPct = max ? Math.min(100, (Math.abs(score) / max) * 100) : Math.min(100, Math.abs(score));
+function ScoreBar({
+  label,
+  score,
+  max,
+  mode = 'factor',
+}: {
+  label: string;
+  score: number;
+  max?: number;
+  mode?: 'factor' | 'adjustment';
+}) {
+  const { t } = useTranslation('marine');
+
+  // Width fills relative to 100 for both factors and adjustments (SURF-1 §3).
+  // Shared scale makes bar widths additive: factor bars + adjustment bars sum to total.
+  const fillPct = Math.min(100, Math.abs(score));
+
+  // Fill color (SURF-1 §4):
+  // - Adjustment, negative (penalty) → --score-1 (orange)
+  // - Adjustment, positive (bonus)   → --score-3 (lime/green)
+  // - Adjustment, zero               → transparent (no fill, track only)
+  // - Factor → tier color based on relative performance within category (score/max)
+  let fillColor: string;
+  if (mode === 'adjustment') {
+    if (score < 0) {
+      fillColor = 'var(--score-1)';
+    } else if (score > 0) {
+      fillColor = 'var(--score-3)';
+    } else {
+      fillColor = 'transparent';
+    }
+  } else {
+    // Factor: tier color reflects relative performance within the category, not vs. 100.
+    // e.g., Wave Height 35/35 → 100% relative → purple; 21/35 → 60% → lime.
+    const relPct = max ? (score / max) * 100 : Math.min(100, score);
+    fillColor = scoreBarFillColor(relPct);
+  }
+
+  // Score label (SURF-1 §5):
+  // - Factor:     "35/35", "21/35", "26/30"
+  // - Adjustment: "−16 pts", "0 pts", "+5 pts"
+  let scoreDisplay: string;
+  if (mode === 'adjustment') {
+    const pts = t('surfing.scoring.pts', { defaultValue: 'pts' });
+    if (score < 0) {
+      scoreDisplay = `−${Math.abs(score)} ${pts}`;
+    } else if (score > 0) {
+      scoreDisplay = `+${score} ${pts}`;
+    } else {
+      scoreDisplay = `0 ${pts}`;
+    }
+  } else {
+    scoreDisplay = max ? `${score}/${max}` : String(score);
+  }
+
   return (
     <div className="flex flex-col gap-1">
       <div className="flex justify-between" style={{ fontSize: 'var(--text-label)' }}>
         <span className="text-muted-foreground">{label}</span>
         <span className="font-semibold text-foreground" style={{ fontFeatureSettings: '"tnum"' }}>
-          {isNegative ? `−${Math.abs(score)}` : score}{max ? `/${max}` : ''}
+          {scoreDisplay}
         </span>
       </div>
-      {max ? (
+      <div
+        className="h-2 rounded-full overflow-hidden"
+        style={{ background: 'var(--gauge-unfill)' }}
+        aria-hidden="true"
+      >
         <div
-          className="h-2 rounded-full overflow-hidden"
-          style={{ background: 'var(--gauge-unfill)' }}
-          aria-hidden="true"
-        >
-          <div
-            className="h-full rounded-full transition-all"
-            style={{
-              width: `${fillPct}%`,
-              background: scoreBarFillColor(fillPct),
-            }}
-          />
-        </div>
-      ) : null}
+          className="h-full rounded-full transition-all"
+          style={{
+            width: `${fillPct}%`,
+            background: fillColor,
+          }}
+        />
+      </div>
     </div>
   );
 }
@@ -1831,29 +1881,49 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                   {primary.conditionsText}
                 </p>
 
-                {/* Scoring breakdown — two-column layout (ADR-096 / T6.2):
-                 *  Column 1: 3 weighted factors (Wave Height 35, Wave Period 35, Organization 30)
-                 *  Column 2: 3 penalty/bonus modifiers (Beach Alignment, Exposure, Time of Day)
-                 *  Bars fill relative to each factor's own maximum, not to 100. */}
+                {/* Scoring breakdown — two-column layout (SURF-1 / ADR-096):
+                 *  Column 1 "Components":  3 weighted factors (Wave Height 35, Wave Period 35, Organization 30)
+                 *  Column 2 "Adjustments": 3 penalty/bonus modifiers (Beach Alignment, Exposure, Time of Day)
+                 *  Bars fill relative to 100 (SURF-1 §3): width = |value| / 100.
+                 *  Factor bar color reflects relative performance within the category (score/max).
+                 *  Penalty bars use --score-1 (orange); bonus bars use --score-3 (lime). */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
-                  <div className="flex flex-col gap-3">
-                    {scoringBreakdown.factors.map((f) => (
-                      <ScoreBar
-                        key={f.key}
-                        label={t(`surfing.scoring.${f.key}`)}
-                        score={f.score}
-                        max={f.max}
-                      />
-                    ))}
+                  <div className="flex flex-col gap-2">
+                    <span
+                      className="text-muted-foreground font-semibold"
+                      style={{ fontSize: 'var(--text-micro)', textTransform: 'uppercase', letterSpacing: '0.04em' }}
+                    >
+                      {t('surfing.scoring.componentsHeader')}
+                    </span>
+                    <div className="flex flex-col gap-3">
+                      {scoringBreakdown.factors.map((f) => (
+                        <ScoreBar
+                          key={f.key}
+                          label={t(`surfing.scoring.${f.key}`)}
+                          score={f.score}
+                          max={f.max}
+                          mode="factor"
+                        />
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-3">
-                    {scoringBreakdown.penalties.map((p) => (
-                      <ScoreBar
-                        key={p.key}
-                        label={t(`surfing.scoring.${p.key}`)}
-                        score={p.score}
-                      />
-                    ))}
+                  <div className="flex flex-col gap-2">
+                    <span
+                      className="text-muted-foreground font-semibold"
+                      style={{ fontSize: 'var(--text-micro)', textTransform: 'uppercase', letterSpacing: '0.04em' }}
+                    >
+                      {t('surfing.scoring.adjustmentsHeader')}
+                    </span>
+                    <div className="flex flex-col gap-3">
+                      {scoringBreakdown.penalties.map((p) => (
+                        <ScoreBar
+                          key={p.key}
+                          label={t(`surfing.scoring.${p.key}`)}
+                          score={p.score}
+                          mode="adjustment"
+                        />
+                      ))}
+                    </div>
                   </div>
                 </div>
               </>
