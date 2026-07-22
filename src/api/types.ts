@@ -1320,6 +1320,13 @@ export interface SurfForecast {
   // T7.2b: Wave shape classification from waveform + Iribarren analysis.
   /** Dominant wave shape: hollow_plunging|steep_crumbly|walled_closeout|mushy_slow */
   waveShapeClassification?: string | null;
+  // T4.1/T4.2: SurfBeat IG output fields. Null when SurfBeat disabled or unavailable.
+  /** SurfBeat set timing — minutes between wave sets (IG spectral peak). Null when SurfBeat disabled. */
+  setTimingMinutes?: number | null;
+  /** SurfBeat set amplitude — IG wave height in display units (already unit-converted by API despite name). Null when SurfBeat disabled. */
+  setAmplitudeM?: number | null;
+  /** SurfBeat infragravity wave height in display units (already unit-converted by API despite name). Null when SurfBeat disabled. */
+  igWaveHeightM?: number | null;
 }
 
 export interface FishingForecast {
