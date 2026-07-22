@@ -1482,7 +1482,7 @@ function SurfScrollForecast({
               const n = item.entry.setTimingMinutes;
               return (
                 <span style={microText}>
-                  {n != null ? t('surfing.setTimingCellFormat', { n: Math.round(n), defaultValue: `~${Math.round(n)}min` }) : '—'}
+                  {n != null ? t('surfing.setTimingCellFormat', { n: Math.round(n), defaultValue: '~{{n}}min' }) : '—'}
                 </span>
               );
             })}
