@@ -3397,7 +3397,7 @@ components:
           description: "Informational overlay, not scored. Not present on the SurfBundle Pydantic class."
         source: { type: string, example: "swan+ndbc+coops+nws_srf" }
         generatedAt: { type: string, format: date-time }
-        nearshoreModel: { type: string, nullable: true, example: "swan", description: "Identifies the nearshore model in use. 'swan' when SWAN is active; absent/null for WW3 fallback responses." }
+        nearshoreModel: { type: string, nullable: true, example: "SWAN + SwellTrack", description: "Identifies the nearshore model in use. 'SWAN + SwellTrack' when active; absent/null for WW3 fallback responses." }
         lastRunTime: { type: string, format: date-time, nullable: true, description: "UTC ISO-8601 timestamp when the last SWAN model run completed." }
         dataAge: { type: number, nullable: true, description: "Seconds elapsed since the last SWAN model run completed." }
         breakerFormula: { type: string, enum: [komar_gaughan, caldwell], nullable: true, description: "Per-spot configured breaker formula used for breakingFaceHeight calculation." }
