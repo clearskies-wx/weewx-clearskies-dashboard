@@ -362,6 +362,7 @@ export interface AlertRecord {
   event: string;
   effective: string;
   expires: string | null;
+  ends: string | null;
   senderName: string | null;
   areaDesc: string | null;
   category: string | null;

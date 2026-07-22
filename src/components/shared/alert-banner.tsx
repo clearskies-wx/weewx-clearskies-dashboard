@@ -75,20 +75,24 @@ function ariaLive(role: 'alert' | 'status'): 'assertive' | 'polite' {
 }
 
 /**
- * formatExpiry — produces a human-readable "until X" string from an ISO
- * expires timestamp. Falls back to "ongoing" when expires is null or invalid.
+ * formatEventEnd — produces a human-readable "until X" string from alert
+ * time fields. Prefers `ends` (expected event end) over `expires` (CAP
+ * message expiry) per NWS CAP semantics. Falls back to "ongoing" when
+ * neither is available or valid.
  *
  * ADR-075 T3.7: uses stationTz so "today" and time display are determined
  * in the station's local timezone, not the browser's.
  */
-function formatExpiry(
+function formatEventEnd(
+  ends: string | null | undefined,
   expires: string | null,
   t: (key: string, opts?: Record<string, unknown>) => string,
   stationTz: string,
 ): string {
-  if (!expires) return t('alertBanner.ongoing');
+  const timestamp = ends ?? expires;
+  if (!timestamp) return t('alertBanner.ongoing');
 
-  const expiresDate = new Date(expires);
+  const expiresDate = new Date(timestamp);
   if (isNaN(expiresDate.getTime())) return t('alertBanner.ongoing');
 
   // Determine "today" in the station's timezone using Intl (ADR-075 T3.7).
@@ -223,7 +227,7 @@ export function AlertBanner({ alerts, stationTz }: AlertBannerProps) {
   const role       = ariaRole(alert.severityLevel);
   const multiAlert = sorted.length > 1;
 
-  const expiryText = formatExpiry(alert.expires, t, stationTz);
+  const expiryText = formatEventEnd(alert.ends, alert.expires, t, stationTz);
 
   // Provider attribution (ADR-080) — capabilities-driven, no hardcoded
   // provider name mapping. NWS-sourced alerts show no attribution line
@@ -246,6 +250,9 @@ export function AlertBanner({ alerts, stationTz }: AlertBannerProps) {
   // Metadata grid items for expanded state.
   const metadata: Array<{ label: string; value: string }> = [
     { label: t('alertBanner.effective'),    value: formatDateTime(alert.effective, stationTz) },
+    ...(alert.ends
+      ? [{ label: t('alertBanner.ends'),    value: formatDateTime(alert.ends, stationTz) }]
+      : []),
     { label: t('alertBanner.expires'),      value: formatDateTime(alert.expires, stationTz) },
     ...(alert.urgency
       ? [{ label: t('alertBanner.urgency'),   value: alert.urgency }]

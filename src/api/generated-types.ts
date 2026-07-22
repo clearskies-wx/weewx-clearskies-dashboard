@@ -795,6 +795,8 @@ export interface components {
             effective: string;
             /** Format: date-time */
             expires?: string | null;
+            /** Format: date-time */
+            ends?: string | null;
             senderName?: string | null;
             areaDesc?: string | null;
             category?: string | null;
