@@ -198,6 +198,20 @@
         }
       ],
       "thumbnail": "/card-thumbnails/webcam.png"
+    },
+    {
+      "type": "marine-summary",
+      "displayNameKey": "cards.marineSummary",
+      "apiEndpoints": [
+        "/api/v1/marine"
+      ],
+      "allowedLayouts": [
+        {
+          "footprint": "tile",
+          "rowSpan": 1
+        }
+      ],
+      "thumbnail": "/card-thumbnails/marine-summary.png"
     }
   ]
 }
