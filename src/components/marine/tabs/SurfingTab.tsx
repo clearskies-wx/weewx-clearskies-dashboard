@@ -57,8 +57,8 @@ import { useTranslation } from 'react-i18next';
 // Recharts imports removed — WaveFaceHeightChart replaced by inline SVG trend
 import { Info, Waves, Timer, X, Thermometer, Drop, Snowflake } from '@phosphor-icons/react';
 import { useSurfDetail, useBeachProfile, useBeachProfileAll, useMarineDetail, useStation, useObservation, useForecast } from '../../../hooks/useWeatherData';
-import { BeachProfileChart } from './BeachProfileChart';
 import { HeatMapCard } from './HeatMapCard';
+import { BeachProfileCardBody, computeBeachProfileState } from './BeachProfileCardBody';
 import { WindSymbol } from '../../forecast/WindSymbol';
 import { toWmoCode } from '../../../utils/weather-code';
 import { selectWeatherIcon } from '../../../utils/icon-selection';
@@ -1783,10 +1783,23 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
 
   const { data, units, loading: surfLoading, error: surfError, refetch: refetchSurf } = useSurfDetail(locationId);
   // Beach profile — /surf/{id}/profile (T6.3). Does not gate the loading spinner;
-  // the card renders "unavailable" gracefully while data is loading or absent.
-  const { data: profileData } = useBeachProfile(locationId);
+  // the card renders an honest error/unavailable/empty state while data is
+  // loading or absent (SURF-PUBLISH-RESULTS-ONLY §3.6, 2026-07-25) — a fetch
+  // error (404 config error, network failure) must look different from the
+  // model producing no answer for this hour (200, modelStatus: "unavailable").
+  const { data: profileData, error: profileError, refetch: refetchProfile } = useBeachProfile(locationId);
   // Heat map — /surf/{id}/profile?transect_index=all (T7.1). Does not gate loading.
-  const { data: heatMapData, loading: heatMapLoading } = useBeachProfileAll(locationId);
+  // Same error vs. modelStatus distinction as the beach profile above.
+  const { data: heatMapData, loading: heatMapLoading, error: heatMapError, refetch: refetchHeatMap } = useBeachProfileAll(locationId);
+
+  // ── Beach profile render state (SURF-PUBLISH-RESULTS-ONLY §3.6, 2026-07-25) ──
+  // computeBeachProfileState/BeachProfileCardBody live in their own module
+  // (BeachProfileCardBody.tsx) so the error-first/modelStatus/data branch
+  // order is unit-testable without mounting this whole tab and its seven
+  // data hooks. See that file for the ordering rationale.
+  const profileState = computeBeachProfileState(profileData, profileError);
+  const profileOk = profileData && profileData.modelStatus === 'ok' ? profileData : null;
+
   const { data: marine, units: marineUnits, loading: marineLoading } = useMarineDetail(locationId);
   const { data: station } = useStation();
   const stationTz = station?.timezone ?? 'UTC';
@@ -2576,26 +2589,16 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
             <CardTitle as="h3">{t('surfing.beachProfileTitle')}</CardTitle>
           </CardHeader>
           <CardContent>
-            {profileData && profileData.transect.length > 0 ? (
-              <BeachProfileChart
-                transect={profileData.transect}
-                breakPoints={profileData.breakPoints}
-                heightUnit={heightUnit}
-                distanceUnit={distanceUnit}
-                locale={locale}
-                datum={profileData.metadata?.verticalDatum}
-                surfZones={profileData.surfZones}
-                transects={profileData.transects}
-                waveShapes={profileData.waveShapes}
-                jackingFactors={profileData.jackingFactors}
-                selectedTransect={selectedTransect}
-                onTransectChange={setSelectedTransect}
-              />
-            ) : (
-              <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
-                {t('surfing.beachProfileNoData')}
-              </p>
-            )}
+            <BeachProfileCardBody
+              state={profileState}
+              profile={profileOk}
+              heightUnit={heightUnit}
+              distanceUnit={distanceUnit}
+              locale={locale}
+              selectedTransect={selectedTransect}
+              onTransectChange={setSelectedTransect}
+              onRetry={refetchProfile}
+            />
           </CardContent>
         </Card>
 
@@ -2605,6 +2608,8 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
             <HeatMapCard
               data={heatMapData}
               loading={heatMapLoading}
+              error={heatMapError}
+              onRetry={refetchHeatMap}
               heightUnit={heightUnit}
               distanceUnit={distanceUnit}
               locale={locale}

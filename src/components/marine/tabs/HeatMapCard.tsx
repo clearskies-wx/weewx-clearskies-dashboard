@@ -28,6 +28,7 @@
 import { useMemo, useId } from 'react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Warning } from '@phosphor-icons/react';
 import type { HeatMapProfileData, HeatMapTransectData, HeatMapBreakPoint } from '../../../api/types';
 
 // ---------------------------------------------------------------------------
@@ -37,6 +38,17 @@ import type { HeatMapProfileData, HeatMapTransectData, HeatMapBreakPoint } from 
 export interface HeatMapCardProps {
   data: HeatMapProfileData | null;
   loading: boolean;
+  /**
+   * Fetch error (404 config error, network failure, etc.) — SURF-PUBLISH-
+   * RESULTS-ONLY §3.6, 2026-07-25. Distinct from `data.modelStatus ===
+   * "unavailable"` (the model ran the request successfully but produced no
+   * answer for this hour): an error means the request itself failed and
+   * must render visibly differently (role="alert", destructive styling)
+   * from the honest "model has no result" state.
+   */
+  error?: Error | null;
+  /** Retry callback shown alongside the error state. */
+  onRetry?: () => void;
   /** Height unit label (e.g. "ft" or "m"). */
   heightUnit: string;
   /** Distance unit label (e.g. "ft" or "m"). */
@@ -276,14 +288,18 @@ function ColorLegend({ maxHs, heightUnit, locale, svgY }: LegendProps): ReactEle
 // Main component
 // ---------------------------------------------------------------------------
 
-export function HeatMapCard({ data, loading, heightUnit, distanceUnit, locale }: HeatMapCardProps): ReactElement | null {
+export function HeatMapCard({ data, loading, error, onRetry, heightUnit, distanceUnit, locale }: HeatMapCardProps): ReactElement | null {
   const { t } = useTranslation('marine');
+  const { t: tCommon } = useTranslation('common');
   const titleId = useId();
   const descId  = useId();
 
   // Compute derived geometry once.
+  // SURF-PUBLISH-RESULTS-ONLY §3.6 (2026-07-25): `data.profiles` is null,
+  // not an empty array, when `modelStatus === "unavailable"` — guard on
+  // `!data.profiles` (not `.length`) so a null payload never throws here.
   const geometry = useMemo(() => {
-    if (!data || data.profiles.length === 0) return null;
+    if (!data || !data.profiles || data.profiles.length === 0) return null;
 
     const rows = data.profiles;
     const N = rows.length;
@@ -333,6 +349,41 @@ export function HeatMapCard({ data, loading, heightUnit, distanceUnit, locale }:
         <span className="text-[var(--muted-foreground)] text-sm" aria-live="polite">
           {t('loading', 'Loading…')}
         </span>
+      </div>
+    );
+  }
+
+  // SURF-PUBLISH-RESULTS-ONLY §3.6 (2026-07-25): check order matters — the
+  // fetch error FIRST (a response never arrived; reading `data.modelStatus`
+  // off it would be wrong), THEN `modelStatus`, THEN the geometry/no-data
+  // path. A 404 (config error) and a 200-with-null (genuine model gap) must
+  // look visibly different — not both collapse into one "no data" message.
+  if (error) {
+    return (
+      <div className="rounded-xl bg-[var(--card-glass)] p-[var(--card-pad)] flex items-center justify-center min-h-[200px]">
+        <div role="alert" className="flex items-start gap-2">
+          <Warning size={20} aria-hidden="true" className="text-destructive shrink-0 mt-0.5" />
+          <div className="flex flex-col gap-2 items-start">
+            <p className="text-destructive text-sm">{t('surfing.heatMap.loadError')}</p>
+            {onRetry && (
+              <button
+                type="button"
+                onClick={onRetry}
+                className="text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded text-sm"
+              >
+                {tCommon('retry')}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (data?.modelStatus === 'unavailable') {
+    return (
+      <div className="rounded-xl bg-[var(--card-glass)] p-[var(--card-pad)] flex items-center justify-center min-h-[200px]">
+        <p className="text-[var(--muted-foreground)] text-sm" aria-live="polite">{t('surfing.heatMap.modelUnavailable')}</p>
       </div>
     );
   }
