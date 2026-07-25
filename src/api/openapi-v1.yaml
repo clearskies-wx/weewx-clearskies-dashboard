@@ -3595,7 +3595,7 @@ components:
           type: object
           properties: { x: { type: string }, y: { type: string } }
           required: [x, y]
-        verticalDatum: { type: string, example: "NAVD88", description: "Currently hardcoded 'NAVD88' by beach_profile.py, not read from DEM metadata — a real defect, tracked as T4A.3/B2's job (LC-R2-14), not fixed by T4A.6. T4A.6 item (f) fixed the SHAPE side: the dashboard's BeachProfileData TS type now reads verticalDatum from here (metadata.verticalDatum) instead of a phantom top-level `datum` field the API never produced." }
+        verticalDatum: { type: string, nullable: true, example: "NAVD88", description: "F3 (reopened 2026-07-25): read from the per-spot profile cache B2's apply-time chain writes (endpoints/setup.py). Null (not a fabricated literal) when that cache is missing, unreadable, or its own datum resolution failed — HB is covered by DEM tiles in two different datums (NAVD88 and MHW), so a hardcoded default would silently mislabel depths from the MHW tile." }
         transectCount: { type: integer }
         openTransectCount: { type: integer }
         handoffDepthM: { type: number, nullable: true, description: "T4A.6 item (g) / LC-R2-13. Per-hour handoff depth (1.3 x Hs(hour) / gamma) actually used, for the response's representative (best-peak) transect, in display units. Null until B1's T4A.9/T4A.10 lands handoff_depth_m on the pipeline's TransectResult — beach_profile.py degrades to null via getattr() rather than erroring in the interim." }

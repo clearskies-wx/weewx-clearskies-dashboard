@@ -1831,13 +1831,14 @@ export interface BeachProfileMetadata {
   axisUnits: { x: string; y: string };
   /**
    * Vertical datum for depth values (e.g., "NAVD88", "MSL", "MLLW").
-   * Currently hardcoded "NAVD88" by beach_profile.py rather than read from
-   * DEM metadata — a real defect, owned by T4A.3/B2 (LC-R2-14), not fixed by
-   * T4A.6. T4A.6 item (f) fixed the SHAPE: this is the API's one real
-   * location for datum — read it from here, not from a top-level sibling of
-   * `transect`/`breakPoints` (the API has never produced one).
+   * F3 (reopened 2026-07-25): read from the per-spot profile cache B2's
+   * apply-time chain writes. Null when that cache is missing, unreadable,
+   * or its own datum resolution failed — never a fabricated default (HB is
+   * covered by DEM tiles in two different datums, NAVD88 and MHW).
+   * BeachProfileChart's `datum` prop already renders the no-datum axis
+   * label correctly for null, same as it always has for `undefined`.
    */
-  verticalDatum: string;
+  verticalDatum: string | null;
   transectCount: number;
   openTransectCount: number;
   /**
