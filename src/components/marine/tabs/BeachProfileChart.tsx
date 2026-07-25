@@ -982,7 +982,7 @@ export function BeachProfileChart({
               <td>{fmt1(p.depth)}</td>
               <td>{fmt1(p.hs)}</td>
               <td>{fmt1(p.swellHeight)}</td>
-              <td>{p.breakingFraction !== null ? `${(p.breakingFraction * 100).toFixed(0)}%` : '—'}</td>
+              <td>{p.breakingFraction != null ? `${(p.breakingFraction * 100).toFixed(0)}%` : '—'}</td>
             </tr>
           ))}
         </tbody>
