@@ -235,7 +235,9 @@
       "srColSwellHeight": "Swell height ({{unit}})",
       "srColBreakingFraction": "Breaking fraction",
       "srBreakPoints": "Breaking zones:",
-      "srJackingFactors": "Jacking factors:"
+      "srJackingFactors": "Jacking factors:",
+      "modelUnavailable": "The wave model has no result for this hour yet.",
+      "loadError": "Unable to load the beach profile."
     },
     "height": "Height",
     "period": "Period",
@@ -291,7 +293,9 @@
       "breakerType.surging": "Surging",
       "colorScaleLow": "Small",
       "colorScaleMedium": "Medium",
-      "colorScaleHigh": "Large"
+      "colorScaleHigh": "Large",
+      "modelUnavailable": "The wave model has no result for this hour yet.",
+      "loadError": "Unable to load the surf height map."
     },
     "peelAngle": "Peel Angle",
     "peelAngleLabel": "Peel",
