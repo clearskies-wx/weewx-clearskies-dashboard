@@ -801,6 +801,51 @@ paths:
           description: Location not found among `surf`-enabled locations, or has no surf spot configuration
         default: { $ref: '#/components/responses/Problem' }
 
+  /surf/{locationId}/profile:
+    get:
+      tags: [Marine]
+      summary: Cross-shore beach profile with 1D model output
+      description: |
+        Full cross-shore output of the per-partition 1D SwellTrack pipeline
+        for the forecast timestep closest to now (ADR-097, T5.2; vocabulary
+        unified T4A.1 — Marine Service Separation Plan Phase 4A). Hs envelope
+        at 3-5m resolution (`distance`/`depth`/`hs`), break points with
+        breaker type and face height, wave shapes, classified surf zones,
+        jacking factors, and per-partition break overlay.
+
+        `transect_index` selects the response shape:
+        - `best` (default) or a non-negative integer index: single-transect
+          response, `data` matches BeachProfileData.
+        - `all`: array of every transect's profile, `data` matches
+          BeachProfileAllData (`profiles[]` instead of the spread-in
+          per-transect fields).
+
+        404 when the location doesn't exist or lacks `surf` activity, has no
+        surf spot configuration, no SWAN data is cached, or the 1D pipeline
+        is degraded (no bathymetric profiles loaded yet).
+      operationId: getBeachProfile
+      parameters:
+        - { $ref: '#/components/parameters/LocationId' }
+        - name: transect_index
+          in: query
+          required: false
+          description: "'best' (default, highest-face-height open transect), 'all' (all transect profiles), or a non-negative integer transect index."
+          schema: { type: string, default: best }
+      responses:
+        '200':
+          description: Single-transect or all-transect beach profile, depending on transect_index
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - { $ref: '#/components/schemas/BeachProfileResponse' }
+                  - { $ref: '#/components/schemas/BeachProfileAllResponse' }
+        '404':
+          description: Location/surf-spot not found, no SWAN data cached, no transects available, or 1D pipeline degraded
+        '422':
+          description: Invalid transect_index (not 'best', 'all', or a non-negative integer)
+        default: { $ref: '#/components/responses/Problem' }
+
   /fishing:
     get:
       tags: [Marine]
@@ -3163,6 +3208,7 @@ components:
         swellHeight: { type: number, nullable: true, description: "Raw SWAN Hsig (significant wave height) before wave_transform.py supplements. Absent on WW3 fallback responses." }
         breakingFaceHeight: { type: number, nullable: true, description: "Trough-to-crest breaking wave face height via breaker formula (Komar-Gaughan or Caldwell per per-spot config). Primary surfer-scale height; display when surfHeightDisplay='face'. Absent on WW3 fallback." }
         breakingHawaiianHeight: { type: number, nullable: true, description: "Back-of-wave (Hawaiian) scale = breakingFaceHeight × 0.5. Display when surfHeightDisplay='hawaiian'. Null when breakingFaceHeight is null." }
+        modelStatus: { type: string, nullable: true, enum: [ok, no_breaking, unavailable, degraded_bulk], description: "T4A.4 (Phase 4A): replaces the removed boolean 'degraded' flag. 'ok' = full SwellTrack pipeline ran; 'no_breaking' = model ran, genuinely flat (breakingFaceHeight=0.0); 'unavailable' = model failed (breakingFaceHeight=null) — never render null as flat; 'degraded_bulk' = SPECOUT unavailable, bulk Hs/Tp/Dir used." }
         windSource: { type: string, nullable: true, description: "Wind data source for this timestep's surf scoring: 'hrrr' for forecast timesteps, 'station' for t=0. Null when nearshore model is unavailable." }
       required: [time, waveHeightAtBreak, period, direction, qualityStars, qualityLabel, conditionsText, windQuality, swellDominance]
 
@@ -3403,6 +3449,251 @@ components:
         breakerFormula: { type: string, enum: [komar_gaughan, caldwell], nullable: true, description: "Per-spot configured breaker formula used for breakingFaceHeight calculation." }
         surfHeightDisplay: { type: string, enum: [face, hawaiian], nullable: true, description: "Operator-configured height display preference: 'face' for trough-to-crest, 'hawaiian' for back-of-wave scale." }
       required: [locationId, locationName, coordinates, forecast, spectralComponents, tidePredictions, source, generatedAt]
+
+    # ---------- Beach profile (GET /surf/{locationId}/profile, T4A.1) ----------
+    #
+    # Ground-truth shapes read directly from endpoints/beach_profile.py
+    # (_build_transect_profile() and get_beach_profile()), post T4A.1 rename.
+    # Unified vocabulary: distance/depth/hs everywhere (Marine Service
+    # Separation Plan Phase 4A). Some fields below are emitted by the API but
+    # NOT YET consumed by the dashboard TS types/components — see the
+    # "T4A.6 tracked gaps" notes on each; those are a follow-up task, not
+    # fixed by this schema addition.
+
+    BeachProfilePoint:
+      type: object
+      description: One cross-shore transect point. Field names match BeachProfilePoint (dashboard types.ts) and the model's own vocabulary (Analytical1DResult).
+      properties:
+        distance: { type: number, description: "Cross-shore distance from shore, in display units (0 = shore, larger = further offshore)." }
+        depth: { type: number, description: "Depth below the water surface, in display units (positive = deeper)." }
+        hs: { type: number, nullable: true, description: "Significant wave height at this point, in display units." }
+        swellHeight: { type: number, nullable: true, description: "Swell height (HSWELL) at this point, in display units." }
+        breakingFraction: { type: number, nullable: true, minimum: 0, maximum: 1, description: "Fraction of waves breaking at this point (QB)." }
+        breakingDissipation: { type: number, nullable: true, description: "Breaking dissipation (DISSURF) in W/m²." }
+      required: [distance, depth, hs]
+
+    BeachProfilePartitionInfo:
+      type: object
+      description: Per-partition metadata attached to a break point (which incoming swell component broke here). Nested inside BeachProfileBreakPoint.partitionInfo — NOT the same shape as the dashboard's flat `partitionLabel` string (T4A.6 tracked gap, see finding notes).
+      nullable: true
+      properties:
+        partitionIndex: { type: integer }
+        periodS: { type: number, nullable: true }
+        directionDeg: { type: number, nullable: true }
+        classification: { type: string, nullable: true, description: "groundswell | swell | wind_swell" }
+        heightM: { type: number, description: "NOTE: field name keeps the 'M' (meter) suffix from the internal dataclass despite being unit-converted to the operator's display unit — a pre-existing naming quirk, not part of T4A.1." }
+
+    BeachProfileBreakPoint:
+      type: object
+      description: One break location along a transect. Field names match BeachProfileBreakPoint (dashboard types.ts).
+      properties:
+        distance: { type: number, description: "Distance from shore at this break location, in display units." }
+        depth: { type: number, description: "Depth at the break location, in display units." }
+        hs: { type: number, nullable: true, description: "Significant wave height at this break location, in display units." }
+        faceHeight: { type: number, nullable: true, description: "Face height (K-G/Caldwell H1/10 or pipeline-computed) at this break point, in display units." }
+        breakerType: { type: string, nullable: true, enum: [spilling, plunging, surging], description: "Iribarren classification." }
+        iribarren: { type: number, description: "Iribarren number (surf similarity parameter). NOT in the dashboard TS type — T4A.6 tracked gap." }
+        partitionInfo:
+          allOf: [{ $ref: '#/components/schemas/BeachProfilePartitionInfo' }]
+          nullable: true
+          description: "NOT in the dashboard TS type, which instead has a flat `partitionLabel` string on BeachProfileBreakPoint — T4A.6 tracked gap: the dashboard has never consumed this nested object."
+      required: [distance, depth, hs]
+
+    BeachProfileWaveShapePoint:
+      type: object
+      description: |
+        One point of the dominant-partition wave-surface cross-section
+        (Stokes/cnoidal/bore), returned as a TOP-LEVEL array on the transect
+        result (`waveShapes`). T4A.6 tracked gap: the dashboard TS type
+        instead expects a `waveShape` (singular) array NESTED inside each
+        BeachProfilePoint — a shape the API has never produced. The chart's
+        "show wave shapes" toggle is consequently non-functional against real
+        API responses today.
+      properties:
+        distance: { type: number }
+        depth: { type: number }
+        regime: { type: string, description: "e.g. Stokes, cnoidal, bore — from run_1d_analytical()." }
+        surface:
+          type: array
+          nullable: true
+          description: "[phase, elevation] pairs, both in display units / radians."
+          items:
+            type: array
+            items: { type: number }
+            minItems: 2
+            maxItems: 2
+      required: [distance, depth, regime]
+
+    BeachProfileJackingFactor:
+      type: object
+      description: |
+        One bar's jacking factor (Hs at bar crest / approach Hs), returned as
+        a TOP-LEVEL array on the transect result (`jackingFactors`). T4A.6
+        tracked gap: the dashboard TS type instead expects `jackingFactor`
+        as a scalar ON each BeachProfileBreakPoint — a shape the API has
+        never produced, so the chart's jacking annotations never render
+        against real API responses today.
+      properties:
+        barIndex: { type: integer }
+        distance: { type: number }
+        factor: { type: number }
+      required: [barIndex, distance, factor]
+
+    BeachProfileSurfZoneExtent:
+      type: object
+      description: Extent of one classified surf zone along the transect. Field set mirrors SurfZoneExtent (dashboard types.ts); `widthM` is emitted by the API for some zone types and has no TS counterpart (T4A.6 tracked gap — unconfirmed which zones populate it; not verified against services/surf_1d_analytical.py's SurfZones dataclass in this round).
+      properties:
+        startDistance: { type: number, description: "Outer boundary, farther from shore, display units." }
+        endDistance: { type: number, description: "Inner boundary, closer to shore, display units." }
+        startDepth: { type: number, nullable: true }
+        endDepth: { type: number, nullable: true }
+        widthM: { type: number, nullable: true, description: "Not present on all zone types; not in the dashboard TS SurfZoneExtent type — T4A.6 tracked gap." }
+      required: [startDistance, endDistance]
+
+    BeachProfileSurfZones:
+      type: object
+      nullable: true
+      description: Classified surf zones for one transect. Null (or omitted — API returns None rather than an all-null object) when the 1D model has not classified any zone.
+      properties:
+        impactZone: { allOf: [{ $ref: '#/components/schemas/BeachProfileSurfZoneExtent' }], nullable: true }
+        foamZone: { allOf: [{ $ref: '#/components/schemas/BeachProfileSurfZoneExtent' }], nullable: true }
+        totalSurfZone: { allOf: [{ $ref: '#/components/schemas/BeachProfileSurfZoneExtent' }], nullable: true }
+        reformTrough: { allOf: [{ $ref: '#/components/schemas/BeachProfileSurfZoneExtent' }], nullable: true }
+
+    BeachProfilePerPartitionBreak:
+      type: object
+      description: |
+        Per-partition break overlay — what each incoming swell component does
+        at the beach, common to both single-transect and all-transect
+        responses (`perPartitionBreaks`). T4A.6 tracked gap: structurally
+        different from the dashboard's `PartitionBreakInfo` TS type (which is
+        populated by surf.py for SurfForecast.partitionBreakInfo, a related
+        but separate field with its own period/direction/breakDistance/
+        faceHeight/breakerType/breakLocation shape) — this schema is NOT
+        currently referenced by any BeachProfileData TS field at all (see
+        BeachProfileData note below).
+      properties:
+        partitionIndex: { type: integer }
+        periodS: { type: number, nullable: true }
+        directionDeg: { type: number, nullable: true }
+        heightM: { type: number, description: "Unit-converted to display units despite the 'M' suffix (see BeachProfilePartitionInfo note)." }
+        classification: { type: string, nullable: true }
+        meanBreakDistanceM: { type: number, nullable: true, description: "Unit-converted to display units." }
+        meanFaceHeightM: { type: number, nullable: true, description: "Unit-converted to display units." }
+        peakFaceHeightM: { type: number, nullable: true, description: "Unit-converted to display units." }
+        meanBreakDepthM: { type: number, nullable: true, description: "Unit-converted to display units." }
+        dominantBreakerType: { type: string, nullable: true, enum: [spilling, plunging, surging] }
+      required: [partitionIndex, heightM]
+
+    BeachProfileMetadata:
+      type: object
+      description: Common metadata block, present on both single-transect and all-transect responses.
+      properties:
+        axisUnits:
+          type: object
+          properties: { x: { type: string }, y: { type: string } }
+          required: [x, y]
+        verticalDatum: { type: string, example: "NAVD88", description: "Currently hardcoded 'NAVD88' by beach_profile.py, not read from DEM metadata. T4A.6 tracked gap: the dashboard's top-level BeachProfileData.datum TS field is NEVER populated by the real API response — the API only exposes datum here, nested under metadata, not as a sibling of `transect`/`breakPoints`. BeachProfileChart's Y-axis datum label is consequently always rendered in its no-datum form against real data." }
+        transectCount: { type: integer }
+        openTransectCount: { type: integer }
+      required: [axisUnits, verticalDatum, transectCount, openTransectCount]
+
+    BeachProfileTransectResult:
+      type: object
+      description: |
+        One transect's full 1D-model output. Used both as the spread-in
+        fields of the single-transect response `data` object, and as each
+        item of the all-transect response's `profiles` array
+        (_build_transect_profile() is the single builder for both — T4A.1
+        Decision: "both responses come from the same builder").
+      properties:
+        transectIndex: { type: integer, description: "Zero-based transect index." }
+        isStructureAffected: { type: boolean }
+        transectBearingDeg: { type: number, nullable: true }
+        transect:
+          type: array
+          items: { $ref: '#/components/schemas/BeachProfilePoint' }
+          description: "Ordered cross-shore transect, offshore (index 0) toward shore. Array key renamed hsEnvelope -> transect at some point before this round (T4A.1 pre-round verification); already correct on the API side."
+        breakPoints:
+          type: array
+          items: { $ref: '#/components/schemas/BeachProfileBreakPoint' }
+        waveShapes:
+          type: array
+          items: { $ref: '#/components/schemas/BeachProfileWaveShapePoint' }
+          description: "T4A.6 tracked gap — see BeachProfileWaveShapePoint."
+        surfZones: { $ref: '#/components/schemas/BeachProfileSurfZones' }
+        jackingFactors:
+          type: array
+          items: { $ref: '#/components/schemas/BeachProfileJackingFactor' }
+          description: "T4A.6 tracked gap — see BeachProfileJackingFactor."
+      required: [transectIndex, isStructureAffected, transect, breakPoints, waveShapes, jackingFactors]
+
+    BeachProfileData:
+      type: object
+      description: |
+        `data` shape for GET /surf/{locationId}/profile with transect_index
+        = "best" (default) or an explicit integer index. T4A.6 tracked gap:
+        `perPartitionBreaks` and `metadata` are real top-level response
+        fields with no corresponding properties on the dashboard's
+        BeachProfileData TS type at all (silently dropped, not just
+        mis-shaped) — also `transects` (TS: BeachProfileTransectInfo[], for
+        the transect-selector dropdown) is never populated by this endpoint;
+        no code path in beach_profile.py returns it.
+      allOf:
+        - type: object
+          properties:
+            locationId: { type: string }
+            timestep: { type: string, format: date-time, description: "The forecast timestep this profile was computed for (closest to now)." }
+        - $ref: '#/components/schemas/BeachProfileTransectResult'
+        - type: object
+          properties:
+            perPartitionBreaks:
+              type: array
+              items: { $ref: '#/components/schemas/BeachProfilePerPartitionBreak' }
+            metadata: { $ref: '#/components/schemas/BeachProfileMetadata' }
+          required: [perPartitionBreaks, metadata]
+
+    BeachProfileAllData:
+      type: object
+      description: "`data` shape for GET /surf/{locationId}/profile?transect_index=all."
+      properties:
+        locationId: { type: string }
+        timestep: { type: string, format: date-time }
+        profiles:
+          type: array
+          items: { $ref: '#/components/schemas/BeachProfileTransectResult' }
+        perPartitionBreaks:
+          type: array
+          items: { $ref: '#/components/schemas/BeachProfilePerPartitionBreak' }
+        metadata: { $ref: '#/components/schemas/BeachProfileMetadata' }
+      required: [locationId, timestep, profiles, perPartitionBreaks, metadata]
+
+    BeachProfileResponse:
+      type: object
+      properties:
+        data: { $ref: '#/components/schemas/BeachProfileData' }
+        stationClock: { $ref: '#/components/schemas/StationClock' }
+        freshness: { $ref: '#/components/schemas/FreshnessInfo' }
+        units:
+          type: object
+          description: "Keys distance/depth/hs (renamed from waveHeight -> hs, T4A.1) mapping to display-unit symbols, e.g. {distance: 'ft', depth: 'ft', hs: 'ft'}."
+          properties: { distance: { type: string }, depth: { type: string }, hs: { type: string } }
+          required: [distance, depth, hs]
+        generatedAt: { type: string, format: date-time }
+      required: [data, stationClock, freshness, units, generatedAt]
+
+    BeachProfileAllResponse:
+      type: object
+      properties:
+        data: { $ref: '#/components/schemas/BeachProfileAllData' }
+        stationClock: { $ref: '#/components/schemas/StationClock' }
+        freshness: { $ref: '#/components/schemas/FreshnessInfo' }
+        units:
+          type: object
+          properties: { distance: { type: string }, depth: { type: string }, hs: { type: string } }
+          required: [distance, depth, hs]
+        generatedAt: { type: string, format: date-time }
+      required: [data, stationClock, freshness, units, generatedAt]
 
     FishingDayEntry:
       type: object
