@@ -1839,8 +1839,14 @@ export interface BeachProfileMetadata {
    * label correctly for null, same as it always has for `undefined`.
    */
   verticalDatum: string | null;
-  transectCount: number;
-  openTransectCount: number;
+  /**
+   * SURF-PUBLISH-RESULTS-ONLY §3.6: null on the `modelStatus === "unavailable"`
+   * response — there is no transect count when the model produced nothing for
+   * this hour. Non-null whenever `modelStatus === "ok"`.
+   */
+  transectCount: number | null;
+  /** Same null-when-unavailable rule as transectCount. */
+  openTransectCount: number | null;
   /**
    * Per-hour handoff depth (T4A.6 item g / LC-R2-13) for the response's
    * representative (best-peak) transect, in display units. Null until B1's
@@ -1878,12 +1884,34 @@ export interface BeachProfileTransectResult {
   handoffSourceLevel?: 'L3' | 'L2' | null;
 }
 
-/** Beach profile data — returned by GET /surf/{locationId}/profile. */
-export interface BeachProfileData extends BeachProfileTransectResult {
+/**
+ * Beach profile data — returned by GET /surf/{locationId}/profile.
+ *
+ * SURF-PUBLISH-RESULTS-ONLY §3.6: split into a discriminated union on
+ * `modelStatus` (2026-07-25). Before this round, a missing profile raised
+ * HTTP 404 and this interface's fields were all required/non-null — that
+ * was ALREADY WRONG the moment the API started returning HTTP 200 with a
+ * null payload for "the model has no answer for this hour" instead. This
+ * endpoint only ever emits `"ok"` or `"unavailable"` (never the surf
+ * endpoint's `"no_breaking"`/`"degraded_bulk"` — see
+ * `_unavailable_profile_response()` / `get_beach_profile()` in
+ * endpoints/beach_profile.py) — do not widen this to the 4-value
+ * `SurfForecast.modelStatus` union.
+ *
+ * Consumers MUST branch on `modelStatus`, never infer "unavailable" from a
+ * null `transect`/`breakPoints` — a typed client checks the tag, not which
+ * keys happen to be null (mirrors the API-side doc comment on
+ * `_unavailable_profile_response()`).
+ */
+export type BeachProfileData = BeachProfileDataOk | BeachProfileDataUnavailable;
+
+/** The 1D model ran successfully for the requested (closest-to-now) timestep. */
+export interface BeachProfileDataOk extends BeachProfileTransectResult {
   /** The surf location ID this profile is for. */
   locationId: string;
   /** The forecast timestep this profile was computed for (closest to now). */
   timestep: string;
+  modelStatus: 'ok';
   /**
    * Available transects for the selector dropdown.
    * Present when multi-transect architecture is active (T5.2).
@@ -1895,6 +1923,37 @@ export interface BeachProfileData extends BeachProfileTransectResult {
   /** T4A.6 item (e) — per-partition break overlay, common to single- and all-transect responses. */
   perPartitionBreaks: BeachProfilePerPartitionBreak[];
   /** T4A.6 items (e)/(f)/(g) — read `metadata.verticalDatum` for the vertical datum (item f); the API has no top-level `datum` sibling field. */
+  metadata: BeachProfileMetadata;
+}
+
+/**
+ * SURF-PUBLISH-RESULTS-ONLY §3.6: HTTP 200, the model produced no answer for
+ * this hour (no cached SWAN data yet, no forecast timesteps, or the 1D
+ * pipeline yielded nothing) — a genuine model gap, NOT a configuration
+ * error (those stay HTTP 404 and never reach the dashboard as data at all).
+ * Mirrors `_unavailable_profile_response()`'s exact null key set — every
+ * per-transect field is null; only `locationId`/`timestep`/`modelStatus`/
+ * `metadata.axisUnits` carry real values. `timestep` is null in the two
+ * earliest bail-out paths (no cached SWAN data / no forecast timesteps) and
+ * a real ISO timestamp in the later one (pipeline ran, produced nothing) —
+ * always `string | null`, never assume non-null.
+ */
+export interface BeachProfileDataUnavailable {
+  locationId: string;
+  timestep: string | null;
+  modelStatus: 'unavailable';
+  transectIndex: null;
+  isStructureAffected: null;
+  transectBearingDeg: null;
+  transect: null;
+  breakPoints: null;
+  waveShapes: null;
+  surfZones: null;
+  jackingFactors: null;
+  handoffDepthM: null;
+  handoffSourceLevel: null;
+  transects?: null;
+  perPartitionBreaks: null;
   metadata: BeachProfileMetadata;
 }
 
@@ -1927,12 +1986,23 @@ export type HeatMapBreakPoint = BeachProfileBreakPoint;
  */
 export type HeatMapTransectData = BeachProfileTransectResult;
 
-/** Response for GET /surf/{locationId}/profile?transect_index=all (T7.1). */
-export interface HeatMapProfileData {
+/**
+ * Response for GET /surf/{locationId}/profile?transect_index=all (T7.1).
+ *
+ * SURF-PUBLISH-RESULTS-ONLY §3.6 (2026-07-25): same discriminated-union
+ * treatment as {@link BeachProfileData} — this endpoint only ever emits
+ * `modelStatus: "ok" | "unavailable"`. Consumers branch on `modelStatus`,
+ * never on whether `profiles` happens to be null.
+ */
+export type HeatMapProfileData = HeatMapProfileDataOk | HeatMapProfileDataUnavailable;
+
+/** The 1D model ran successfully; one row per transect. */
+export interface HeatMapProfileDataOk {
   /** The surf location ID this data is for. */
   locationId: string;
   /** The forecast timestep this profile was computed for (closest to now). */
   timestep: string;
+  modelStatus: 'ok';
   /** All transect rows ordered by index, from southernmost to northernmost. */
   profiles: HeatMapTransectData[];
   /**
@@ -1943,6 +2013,21 @@ export interface HeatMapProfileData {
    */
   perPartitionBreaks: BeachProfilePerPartitionBreak[];
   /** T4A.6 items (e)/(f)/(g) — read `metadata.verticalDatum` for the vertical datum; the API has no top-level `datum` sibling field on this response either. */
+  metadata: BeachProfileMetadata;
+}
+
+/**
+ * SURF-PUBLISH-RESULTS-ONLY §3.6: HTTP 200, the model produced no answer for
+ * this hour. Same null-key-set mirroring as {@link BeachProfileDataUnavailable}
+ * — `_unavailable_profile_response()` sets `data["profiles"] = None` (not an
+ * empty array) for `ti_mode == "all"`, and always nulls `perPartitionBreaks`.
+ */
+export interface HeatMapProfileDataUnavailable {
+  locationId: string;
+  timestep: string | null;
+  modelStatus: 'unavailable';
+  profiles: null;
+  perPartitionBreaks: null;
   metadata: BeachProfileMetadata;
 }
 

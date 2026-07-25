@@ -820,9 +820,21 @@ paths:
           BeachProfileAllData (`profiles[]` instead of the spread-in
           per-transect fields).
 
-        404 when the location doesn't exist or lacks `surf` activity, has no
-        surf spot configuration, no SWAN data is cached, or the 1D pipeline
-        is degraded (no bathymetric profiles loaded yet).
+        SURF-PUBLISH-RESULTS-ONLY §3.6 (2026-07-25): the 404-for-everything
+        behavior above is superseded. A missing profile used to raise 404,
+        which read as "wrong URL" when the truth was "the model has no
+        answer for this hour." Now:
+        - **200 with `modelStatus: "unavailable"` and every per-transect
+          field null** (or `profiles: null` in `all` mode) when no SWAN data
+          is cached yet, no forecast timesteps exist, or the 1D pipeline
+          produced nothing for the requested timestep. This is a model gap,
+          not an error — the response envelope (stationClock/freshness/
+          units/generatedAt) is still fully populated.
+        - **404** stays reserved for genuine configuration errors: the
+          location doesn't exist or lacks `surf` activity, no surf spot
+          configuration is present, or no transects are available (segment
+          has zero length). These are NOT model gaps and must stay
+          distinguishable from the 200-with-null case on the client.
       operationId: getBeachProfile
       parameters:
         - { $ref: '#/components/parameters/LocationId' }
@@ -833,7 +845,11 @@ paths:
           schema: { type: string, default: best }
       responses:
         '200':
-          description: Single-transect or all-transect beach profile, depending on transect_index
+          description: |
+            Single-transect or all-transect beach profile, depending on
+            transect_index. `data.modelStatus` distinguishes a successful
+            run ("ok") from a model gap ("unavailable", every per-transect
+            field null) — see the operation description.
           content:
             application/json:
               schema:
@@ -841,7 +857,7 @@ paths:
                   - { $ref: '#/components/schemas/BeachProfileResponse' }
                   - { $ref: '#/components/schemas/BeachProfileAllResponse' }
         '404':
-          description: Location/surf-spot not found, no SWAN data cached, no transects available, or 1D pipeline degraded
+          description: "Configuration error only (SURF-PUBLISH-RESULTS-ONLY §3.6) — location/surf-spot not found, or no transects available. No cached SWAN data / no forecast timesteps / a degraded 1D pipeline are NOT 404s anymore; they are 200 responses with modelStatus: \"unavailable\"."
         '422':
           description: Invalid transect_index (not 'best', 'all', or a non-negative integer)
         default: { $ref: '#/components/responses/Problem' }
@@ -3596,8 +3612,8 @@ components:
           properties: { x: { type: string }, y: { type: string } }
           required: [x, y]
         verticalDatum: { type: string, nullable: true, example: "NAVD88", description: "F3 (reopened 2026-07-25): read from the per-spot profile cache B2's apply-time chain writes (endpoints/setup.py). Null (not a fabricated literal) when that cache is missing, unreadable, or its own datum resolution failed — HB is covered by DEM tiles in two different datums (NAVD88 and MHW), so a hardcoded default would silently mislabel depths from the MHW tile." }
-        transectCount: { type: integer }
-        openTransectCount: { type: integer }
+        transectCount: { type: integer, nullable: true, description: "SURF-PUBLISH-RESULTS-ONLY §3.6: null when modelStatus is \"unavailable\" — there is no transect count when the model produced nothing for this hour." }
+        openTransectCount: { type: integer, nullable: true, description: "Same null-when-unavailable rule as transectCount (§3.6)." }
         handoffDepthM: { type: number, nullable: true, description: "T4A.6 item (g) / LC-R2-13. Per-hour handoff depth (1.3 x Hs(hour) / gamma) actually used, for the response's representative (best-peak) transect, in display units. Null until B1's T4A.9/T4A.10 lands handoff_depth_m on the pipeline's TransectResult — beach_profile.py degrades to null via getattr() rather than erroring in the interim." }
         handoffSourceLevel: { type: string, nullable: true, enum: [L3, L2], description: "T4A.6 item (g) / LC-R2-13. Which SWAN level the handoff spectrum for the representative transect actually came from. Same null-until-B1-lands caveat as handoffDepthM." }
       required: [axisUnits, verticalDatum, transectCount, openTransectCount]
@@ -3645,34 +3661,60 @@ components:
         (TS: BeachProfileTransectInfo[], for the transect-selector dropdown)
         is never populated by this endpoint — no code path in
         beach_profile.py returns it.
+
+        SURF-PUBLISH-RESULTS-ONLY §3.6 (2026-07-25): `modelStatus` is the
+        discriminant. When `"ok"`, every field below is populated exactly as
+        described. When `"unavailable"` (the model has no answer for this
+        hour — HTTP 200, not 404), `transectIndex`/`isStructureAffected`/
+        `transectBearingDeg`/`transect`/`breakPoints`/`waveShapes`/
+        `surfZones`/`jackingFactors`/`handoffDepthM`/`handoffSourceLevel`/
+        `perPartitionBreaks` are ALL null, and `metadata` carries only
+        `axisUnits` (its own fields are null too — see BeachProfileMetadata).
+        Only `locationId`/`timestep`/`modelStatus`/`metadata` are guaranteed
+        non-null; `timestep` itself may be null (see
+        `_unavailable_profile_response()`). Dashboard TS types this as a
+        discriminated union (`BeachProfileDataOk` | `BeachProfileDataUnavailable`)
+        rather than an all-nullable flat shape — branch on `modelStatus`,
+        never infer the unavailable case from a null `transect`.
       allOf:
         - type: object
           properties:
             locationId: { type: string }
-            timestep: { type: string, format: date-time, description: "The forecast timestep this profile was computed for (closest to now)." }
+            timestep: { type: string, format: date-time, nullable: true, description: "The forecast timestep this profile was computed for (closest to now). Null when modelStatus is \"unavailable\" and no forecast timesteps were found at all." }
+            modelStatus: { type: string, enum: [ok, unavailable], description: "SURF-PUBLISH-RESULTS-ONLY §3.6. This endpoint only emits these two values — never the surf endpoint's \"no_breaking\"/\"degraded_bulk\"." }
         - $ref: '#/components/schemas/BeachProfileTransectResult'
         - type: object
           properties:
             perPartitionBreaks:
               type: array
+              nullable: true
               items: { $ref: '#/components/schemas/BeachProfilePerPartitionBreak' }
             metadata: { $ref: '#/components/schemas/BeachProfileMetadata' }
-          required: [perPartitionBreaks, metadata]
+          required: [metadata]
+      required: [locationId, modelStatus]
 
     BeachProfileAllData:
       type: object
-      description: "`data` shape for GET /surf/{locationId}/profile?transect_index=all."
+      description: |
+        `data` shape for GET /surf/{locationId}/profile?transect_index=all.
+
+        SURF-PUBLISH-RESULTS-ONLY §3.6 (2026-07-25): same `modelStatus`
+        discriminant as BeachProfileData. When `"unavailable"`, `profiles`
+        is null (not an empty array) and `perPartitionBreaks` is null too.
       properties:
         locationId: { type: string }
-        timestep: { type: string, format: date-time }
+        timestep: { type: string, format: date-time, nullable: true, description: "Null when modelStatus is \"unavailable\" and no forecast timesteps were found at all." }
+        modelStatus: { type: string, enum: [ok, unavailable] }
         profiles:
           type: array
+          nullable: true
           items: { $ref: '#/components/schemas/BeachProfileTransectResult' }
         perPartitionBreaks:
           type: array
+          nullable: true
           items: { $ref: '#/components/schemas/BeachProfilePerPartitionBreak' }
         metadata: { $ref: '#/components/schemas/BeachProfileMetadata' }
-      required: [locationId, timestep, profiles, perPartitionBreaks, metadata]
+      required: [locationId, modelStatus, metadata]
 
     BeachProfileResponse:
       type: object
