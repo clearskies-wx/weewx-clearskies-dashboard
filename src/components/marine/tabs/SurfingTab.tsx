@@ -449,19 +449,36 @@ function ScoringExplainerModal({ onClose }: { onClose: () => void }) {
  * Uses the operator's configured surfHeightDisplay preference:
  *   "face"     → breakingFaceHeight (trough-to-crest, standard surf scale)
  *   "hawaiian" → breakingHawaiianHeight (back-of-wave, ~0.5× face height)
- *   null/other → breakingFaceHeight preferred, waveHeightAtBreak as fallback
  *
- * Falls back to waveHeightAtBreak when SWAN fields are null — e.g. when
- * SWAN is unavailable and WW3 provides the fallback data.
+ * T4A.4 (Phase 4A): breakingFaceHeight/breakingHawaiianHeight are explicitly
+ * `null` when the 1D model FAILED this timestep (modelStatus === "unavailable")
+ * and `0.0` when it ran and found genuinely flat conditions
+ * (modelStatus === "no_breaking"). This function short-circuits to null
+ * whenever the field is nullish — one condition, no dependency on
+ * `modelStatus` that could drift out of sync with it.
+ *
+ * REMOVED (2026-07-24, per coordinator LC-19 + this round's lead call): the
+ * previous `?? entry.waveHeightAtBreak` fallback. History check via
+ * `git log -S` traced it to commit 57f0ddf (2026-07-17), where its ONLY
+ * documented purpose was "Falls back to waveHeightAtBreak when TruShore
+ * fields are null — e.g. when SWAN is unavailable and WW3 provides the
+ * fallback data" — an older API shape. Per LC-19, `waveHeightAtBreak` is
+ * also becoming SwellTrack-derived and goes null exactly when
+ * breakingFaceHeight does, so the two fields can no longer diverge and the
+ * fallback cannot serve a live case. Falling back here would otherwise mask
+ * a `modelStatus === "degraded_bulk"` null the same way the old code masked
+ * `"unavailable"` — same bug, different status value.
+ * Callers already render null through the existing no-data treatment
+ * (formatValue → "--", or the literal "—" fallback used in this file).
  */
 function getDisplayHeight(
   entry: SurfForecast,
   surfHeightDisplay: 'face' | 'hawaiian' | null,
 ): number | null {
   if (surfHeightDisplay === 'hawaiian') {
-    return entry.breakingHawaiianHeight ?? entry.waveHeightAtBreak ?? null;
+    return entry.breakingHawaiianHeight ?? null;
   }
-  return entry.breakingFaceHeight ?? entry.waveHeightAtBreak ?? null;
+  return entry.breakingFaceHeight ?? null;
 }
 
 /**

@@ -98,12 +98,12 @@ function selectTier(
   tierExtended: ScaleTier,
 ): ScaleTier {
   const outerBreakDist = breakPoints.length > 0
-    ? Math.max(...breakPoints.map((bp) => bp.distanceFromShore))
+    ? Math.max(...breakPoints.map((bp) => bp.distance))
     : 0;
   if (outerBreakDist > 0 && outerBreakDist <= tierShort.maxDistance)    return tierShort;
   if (outerBreakDist > 0 && outerBreakDist <= tierStandard.maxDistance) return tierStandard;
   if (outerBreakDist > tierStandard.maxDistance)                         return tierExtended;
-  const maxDist = Math.max(...transect.map((p) => p.distanceFromShore), 0);
+  const maxDist = Math.max(...transect.map((p) => p.distance), 0);
   if (maxDist <= tierShort.maxDistance)    return tierShort;
   if (maxDist <= tierStandard.maxDistance) return tierStandard;
   return tierExtended;
@@ -155,11 +155,11 @@ function buildSeafloorPolygon(
 ): string {
   if (transect.length === 0) return '';
   const floor = transect.map(
-    (p) => `${xScale(p.distanceFromShore, xMin, xMax).toFixed(1)},${yScale(-p.depth, surfaceY, unitsPerPx).toFixed(1)}`,
+    (p) => `${xScale(p.distance, xMin, xMax).toFixed(1)},${yScale(-p.depth, surfaceY, unitsPerPx).toFixed(1)}`,
   );
   const chartBottom = PAD_TOP + CHART_H;
-  const rightEdge = xScale(transect[transect.length - 1].distanceFromShore, xMin, xMax).toFixed(1);
-  const leftEdge  = xScale(transect[0].distanceFromShore, xMin, xMax).toFixed(1);
+  const rightEdge = xScale(transect[transect.length - 1].distance, xMin, xMax).toFixed(1);
+  const leftEdge  = xScale(transect[0].distance, xMin, xMax).toFixed(1);
   return [...floor, `${rightEdge},${chartBottom}`, `${leftEdge},${chartBottom}`].join(' ');
 }
 
@@ -167,13 +167,13 @@ function buildWaveEnvelopePolygon(
   transect: BeachProfileTransectPoint[],
   xMin: number, xMax: number, surfaceY: number, unitsPerPx: number,
 ): string {
-  const withWave = transect.filter((p) => p.waveHeight !== null && p.waveHeight > 0);
+  const withWave = transect.filter((p) => p.hs !== null && p.hs > 0);
   if (withWave.length < 2) return '';
   const crests = withWave.map(
-    (p) => `${xScale(p.distanceFromShore, xMin, xMax).toFixed(1)},${yScale(p.waveHeight as number, surfaceY, unitsPerPx).toFixed(1)}`,
+    (p) => `${xScale(p.distance, xMin, xMax).toFixed(1)},${yScale(p.hs as number, surfaceY, unitsPerPx).toFixed(1)}`,
   );
-  const rightX = xScale(withWave[withWave.length - 1].distanceFromShore, xMin, xMax).toFixed(1);
-  const leftX  = xScale(withWave[0].distanceFromShore, xMin, xMax).toFixed(1);
+  const rightX = xScale(withWave[withWave.length - 1].distance, xMin, xMax).toFixed(1);
+  const leftX  = xScale(withWave[0].distance, xMin, xMax).toFixed(1);
   return [...crests, `${rightX},${surfaceY.toFixed(1)}`, `${leftX},${surfaceY.toFixed(1)}`].join(' ');
 }
 
@@ -229,7 +229,7 @@ export function BeachProfileChart({
   const tierExtended = { maxDistance: Math.round(1000 * METER_TO_UNIT), tickStep: Math.round(200 * METER_TO_UNIT) };
 
   const tier = selectTier(breakPoints, transect, tierShort, tierStandard, tierExtended);
-  const clipped = transect.filter((p) => p.distanceFromShore <= tier.maxDistance);
+  const clipped = transect.filter((p) => p.distance <= tier.maxDistance);
   const displayTransect = clipped.length >= 2 ? clipped : transect;
 
   const xMin = 0;
@@ -237,7 +237,7 @@ export function BeachProfileChart({
 
   const tide = tideLevel ?? 0;
   const maxDepth = Math.max(...displayTransect.map((p) => p.depth + tide), 0.1);
-  const maxWaveH = Math.max(...displayTransect.map((p) => p.waveHeight ?? 0), 0.1);
+  const maxWaveH = Math.max(...displayTransect.map((p) => p.hs ?? 0), 0.1);
 
   const totalRange = maxDepth + maxWaveH;
   const unitsPerPx = CHART_H / totalRange;
@@ -246,14 +246,14 @@ export function BeachProfileChart({
   // Dynamic tidal shoreline
   let shoreIntersectDist = 0;
   if (displayTransect.length >= 2) {
-    const sorted = [...displayTransect].sort((a, b) => a.distanceFromShore - b.distanceFromShore);
+    const sorted = [...displayTransect].sort((a, b) => a.distance - b.distance);
     for (let i = 0; i < sorted.length - 1; i++) {
       const d0 = sorted[i].depth;
       const d1 = sorted[i + 1].depth;
       if (d0 <= tide && d1 > tide) {
         const frac = (tide - d0) / (d1 - d0);
-        shoreIntersectDist = sorted[i].distanceFromShore +
-          frac * (sorted[i + 1].distanceFromShore - sorted[i].distanceFromShore);
+        shoreIntersectDist = sorted[i].distance +
+          frac * (sorted[i + 1].distance - sorted[i].distance);
         break;
       }
     }
@@ -268,7 +268,7 @@ export function BeachProfileChart({
   const seafloorPoints  = buildSeafloorPolygon(displayTransect, xMin, xMax, surfaceY, unitsPerPx);
   const waveEnvPoints   = buildWaveEnvelopePolygon(displayTransect, xMin, xMax, surfaceY, unitsPerPx);
   const seafloorPolyline = displayTransect.map(
-    (p) => `${xScale(p.distanceFromShore, xMin, xMax).toFixed(1)},${yScale(-p.depth, surfaceY, unitsPerPx).toFixed(1)}`,
+    (p) => `${xScale(p.distance, xMin, xMax).toFixed(1)},${yScale(-p.depth, surfaceY, unitsPerPx).toFixed(1)}`,
   ).join(' ');
 
   const xLeft  = PAD_LEFT;
@@ -286,8 +286,8 @@ export function BeachProfileChart({
     const typeStr = bp.breakerType
       ? ` (${t(`surfing.beachProfile.breakType.${bp.breakerType}`)})`
       : '';
-    const heightVal = bp.faceHeight ?? bp.waveHeight;
-    return `${t('surfing.beachProfile.breakPointAria', { n: i + 1 })} ${bp.distanceFromShore.toFixed(0)} ${distanceUnit} from shore${heightVal !== null ? `, ${heightVal!.toFixed(1)} ${heightUnit} face height${typeStr}` : ''}.`;
+    const heightVal = bp.faceHeight ?? bp.hs;
+    return `${t('surfing.beachProfile.breakPointAria', { n: i + 1 })} ${bp.distance.toFixed(0)} ${distanceUnit} from shore${heightVal !== null ? `, ${heightVal!.toFixed(1)} ${heightUnit} face height${typeStr}` : ''}.`;
   }).join(' ');
   const zoneDesc = surfZones?.impactZone
     ? ` ${t('surfing.beachProfile.impactZone')} from ${surfZones.impactZone.startDistance.toFixed(0)} to ${surfZones.impactZone.endDistance.toFixed(0)} ${distanceUnit} from shore.`
@@ -347,7 +347,7 @@ export function BeachProfileChart({
       let closest = -1;
       let closestDiff = Infinity;
       displayTransect.forEach((p, i) => {
-        const diff = Math.abs(p.distanceFromShore - bp.distanceFromShore);
+        const diff = Math.abs(p.distance - bp.distance);
         if (diff < closestDiff) { closestDiff = diff; closest = i; }
       });
       if (closest >= 0 && displayTransect[closest]?.waveShape?.length && !waveShapeTargets.includes(closest)) {
@@ -546,7 +546,7 @@ export function BeachProfileChart({
         {showWaveShapes && waveShapeTargets.map((idx) => {
           const pt = displayTransect[idx];
           if (!pt?.waveShape?.length) return null;
-          const cx = xScale(pt.distanceFromShore, xMin, xMax);
+          const cx = xScale(pt.distance, xMin, xMax);
           const pts = buildWaveShapePolyline(cx, pt.waveShape);
           if (!pts) return null;
           return (
@@ -671,8 +671,8 @@ export function BeachProfileChart({
 
         {/* ── 6. Break point markers ── */}
         {breakPoints.map((bp, i) => {
-          const bpX = xScale(bp.distanceFromShore, xMin, xMax);
-          const displayHeight = bp.faceHeight ?? bp.waveHeight;
+          const bpX = xScale(bp.distance, xMin, xMax);
+          const displayHeight = bp.faceHeight ?? bp.hs;
           const waveAtBp = displayHeight !== null
             ? yScale(displayHeight, surfaceY, unitsPerPx)
             : surfaceY - 8;
@@ -740,7 +740,7 @@ export function BeachProfileChart({
                   fillOpacity: 0.85,
                 }}
               >
-                {new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(bp.distanceFromShore)}
+                {new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(bp.distance)}
                 {' '}{distanceUnit}
               </text>
 
@@ -785,7 +785,7 @@ export function BeachProfileChart({
         {/* ── 7. Jacking annotations ── */}
         {breakPoints.map((bp, i) => {
           if (!bp.jackingFactor || bp.jackingFactor <= 1.3) return null;
-          const bpX = xScale(bp.distanceFromShore, xMin, xMax);
+          const bpX = xScale(bp.distance, xMin, xMax);
           const jackY = PAD_TOP + 2;
           const label = t('surfing.beachProfile.jackingAnnotation', {
             factor: new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(bp.jackingFactor),
@@ -922,9 +922,9 @@ export function BeachProfileChart({
         <tbody>
           {displayTransect.map((p, i) => (
             <tr key={i}>
-              <td>{new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(p.distanceFromShore)}</td>
+              <td>{new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(p.distance)}</td>
               <td>{fmt1(p.depth)}</td>
-              <td>{fmt1(p.waveHeight)}</td>
+              <td>{fmt1(p.hs)}</td>
               <td>{fmt1(p.swellHeight)}</td>
               <td>{p.breakingFraction !== null ? `${(p.breakingFraction * 100).toFixed(0)}%` : '—'}</td>
             </tr>
@@ -937,9 +937,9 @@ export function BeachProfileChart({
             </tr>
             {breakPoints.map((bp, i) => (
               <tr key={`foot-bp-${i}`}>
-                <td>{new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(bp.distanceFromShore)}</td>
+                <td>{new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(bp.distance)}</td>
                 <td>{fmt1(bp.depth)}</td>
-                <td>{fmt1(bp.faceHeight ?? bp.waveHeight)}</td>
+                <td>{fmt1(bp.faceHeight ?? bp.hs)}</td>
                 <td colSpan={2}>
                   {bp.breakerType ? t(`surfing.beachProfile.breakType.${bp.breakerType}`) : ''}
                   {bp.jackingFactor && bp.jackingFactor > 1.3

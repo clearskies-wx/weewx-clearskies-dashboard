@@ -115,7 +115,7 @@ function hsToColor(hs: number, maxHs: number, opacity = 0.85): string {
 function maxDistance(allTransects: HeatMapTransectData[]): number {
   let max = 0;
   for (const row of allTransects) {
-    for (const pt of row.hsEnvelope) {
+    for (const pt of row.transect) {
       if (pt.distance > max) max = pt.distance;
     }
   }
@@ -299,7 +299,7 @@ export function HeatMapCard({ data, loading, heightUnit, distanceUnit, locale }:
       for (const bp of row.breakPoints) {
         if (bp.hs !== null && bp.hs !== undefined && bp.hs > maxHs) maxHs = bp.hs;
       }
-      for (const pt of row.hsEnvelope) {
+      for (const pt of row.transect) {
         if (pt.hs !== null && pt.hs !== undefined && pt.hs > maxHs) maxHs = pt.hs;
       }
     }
@@ -365,7 +365,7 @@ export function HeatMapCard({ data, loading, heightUnit, distanceUnit, locale }:
 
     // Transect segments: each consecutive pair of envelope points forms a cell.
     // Colour = hs at the midpoint, or the leftmost point.
-    const pts = row.hsEnvelope;
+    const pts = row.transect;
 
     if (pts.length >= 2) {
       for (let pi = 0; pi < pts.length - 1; pi++) {

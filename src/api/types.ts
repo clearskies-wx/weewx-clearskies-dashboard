@@ -1276,21 +1276,49 @@ export interface SurfForecast {
    * Trough-to-crest breaking wave face height computed via the per-spot breaker
    * formula (Komar-Gaughan or Caldwell). This is the primary surfer-scale height
    * for display when surfHeightDisplay === "face".
+   *
+   * Nullability (T4A.4, Phase 4A): `null` means the 1D model FAILED to produce
+   * a result this timestep (exception, missing profile, pipeline degraded) —
+   * see `modelStatus === "unavailable"`. `0.0` means the model ran and found
+   * genuinely flat conditions (`modelStatus === "no_breaking"`). Never treat
+   * null as 0 — that would silently tell a surfer the ocean is flat when the
+   * model actually failed.
    */
   breakingFaceHeight?: number | null;
   /**
    * Back-of-wave (Hawaiian) scale = breakingFaceHeight × 0.5.
    * Use for display when surfHeightDisplay === "hawaiian".
-   * Null when breakingFaceHeight is null.
+   * Null when breakingFaceHeight is null (see breakingFaceHeight nullability note).
    */
   breakingHawaiianHeight?: number | null;
+  /**
+   * Distinguishes why breakingFaceHeight/breakingHawaiianHeight are zero or
+   * null (T4A.4, Phase 4A). Replaces the removed boolean `degraded` flag,
+   * which could not distinguish "model ran, no breaking" from "model failed."
+   *   "ok"            — full SwellTrack per-partition pipeline ran normally.
+   *   "no_breaking"   — model ran; genuinely flat conditions (breakingFaceHeight = 0.0).
+   *   "unavailable"   — model failed; breakingFaceHeight is null. Never render
+   *                     null as flat/zero — show the existing no-data treatment.
+   *   "degraded_bulk" — SPECOUT unavailable; bulk Hs/Tp/Dir used instead of
+   *                     full spectral decomposition.
+   * Optional/nullable — absent on older API versions.
+   */
+  modelStatus?: 'ok' | 'no_breaking' | 'unavailable' | 'degraded_bulk' | null;
   /**
    * Wind data source used for this timestep's surf scoring.
    * "hrrr" for forecast timesteps; "station" for t=0.
    * Null when the nearshore model is unavailable.
    */
   windSource?: string | null;
-  breakPoints?: Array<{distanceFromShore: number; depth: number; waveHeight: number}> | null;
+  /**
+   * QB-peak break locations along the reference transect at this timestep
+   * (surf.py per-timestep pipeline scan — distinct from the beach-profile
+   * endpoint's per-transect break points, but same cross-shore vocabulary).
+   * Unified vocabulary (T4A.1): distance/depth/hs, same shape as
+   * BeachProfileBreakPoint. faceHeight/breakerType/partitionLabel/jackingFactor
+   * are not populated by this pipeline (always absent here).
+   */
+  breakPoints?: BeachProfileBreakPoint[] | null;
   directionalSpread?: number | null;
   setup?: number | null;
   /**
@@ -1551,20 +1579,29 @@ export interface WaveShapePoint {
   elevation: number;
 }
 
-/** One cross-shore transect point — depth, wave height, and breaking metrics. */
-export interface BeachProfileTransectPoint {
-  /** Distance from the shoreline in meters (0 = shore, larger = further offshore). */
-  distanceFromShore: number;
-  /** Depth below the water surface in meters (positive = deeper). */
+/**
+ * One cross-shore transect point — depth, wave height, and breaking metrics.
+ *
+ * Unified vocabulary (T4A.1, Phase 4A marine separation): `distance`/`depth`/
+ * `hs` match the 1D analytical model's own terminology (`Analytical1DResult`)
+ * and the beach_profile API response for BOTH the single-transect and
+ * `transect_index=all` paths — one shape, no parallel type systems.
+ * `BeachProfileTransectPoint` and `HeatMapEnvelopePoint` are aliases of this
+ * type (below) — kept so existing imports don't need to change.
+ */
+export interface BeachProfilePoint {
+  /** Cross-shore distance from the shoreline, in display units (0 = shore, larger = further offshore). */
+  distance: number;
+  /** Depth below the water surface, in display units (positive = deeper). */
   depth: number;
   /** Significant wave height at this point, in display units (may be null if no data). */
-  waveHeight: number | null;
+  hs: number | null;
   /** Swell height (HSWELL) at this point, in display units (may be null). */
-  swellHeight: number | null;
+  swellHeight?: number | null;
   /** Breaking fraction QB (0–1): fraction of waves breaking at this point. */
-  breakingFraction: number | null;
+  breakingFraction?: number | null;
   /** Breaking dissipation (DISSURF) in W/m² (may be null). */
-  breakingDissipation: number | null;
+  breakingDissipation?: number | null;
   /**
    * Wave surface profile at this point from the 1D model (Stokes/cnoidal/bore).
    * Optional — present only when the 1D model's analytical wave shape output
@@ -1573,14 +1610,28 @@ export interface BeachProfileTransectPoint {
   waveShape?: WaveShapePoint[] | null;
 }
 
-/** A location where waves break along the transect. */
+/**
+ * Beach-profile-page consumer alias for {@link BeachProfilePoint} (T4A.1).
+ * Kept so `BeachProfileChart.tsx` / `SurfingTab.tsx` imports don't need to
+ * change — the underlying type is the single unified shape above.
+ */
+export type BeachProfileTransectPoint = BeachProfilePoint;
+
+/**
+ * A location where waves break along the transect.
+ *
+ * Unified vocabulary (T4A.1): `distance`/`depth`/`hs`/`faceHeight`/
+ * `breakerType` match the 1D model's own terminology and the beach_profile
+ * API response for both single-transect and `transect_index=all` paths.
+ * `HeatMapBreakPoint` is an alias of this type (below).
+ */
 export interface BeachProfileBreakPoint {
   /** Distance from shore in display units at this break location. */
-  distanceFromShore: number;
+  distance: number;
   /** Depth at the break location in display units. */
   depth: number;
   /** Significant wave height at this break location in display units (may be null). */
-  waveHeight: number | null;
+  hs: number | null;
   /**
    * Breaker type from the 1D model's Iribarren classification.
    * Optional — present only when 1D model output is available (T5.2).
@@ -1661,7 +1712,7 @@ export interface BeachProfileData {
   /** The surf location ID this profile is for. */
   locationId: string;
   /** Ordered cross-shore transect, from offshore (index 0) toward shore (last index). */
-  transect: BeachProfileTransectPoint[];
+  transect: BeachProfilePoint[];
   /** Break locations along the transect; multiple entries for multi-bar spots. */
   breakPoints: BeachProfileBreakPoint[];
   /**
@@ -1684,32 +1735,17 @@ export interface BeachProfileData {
 // ─── T7.1 Heat Map types ────────────────────────────────────────────────────
 
 /**
- * One cross-shore point in the Hs envelope for a heat map transect row.
- * Field names match the beach_profile API response for transect_index=all.
+ * Heat-map-page consumer alias for {@link BeachProfilePoint} (T4A.1).
+ * Field names match the beach_profile API response for transect_index=all —
+ * same unified shape used by the single-transect Beach Profile chart.
  */
-export interface HeatMapEnvelopePoint {
-  /** Cross-shore distance from the shoreline in meters (0 = shore, larger = further offshore). */
-  distance: number;
-  /** Depth below the water surface in meters (positive = deeper). */
-  depth: number;
-  /** Significant wave height at this point in display units (may be null if no data). */
-  hs: number | null;
-}
+export type HeatMapEnvelopePoint = BeachProfilePoint;
 
 /**
- * A break location within a heat map transect row.
+ * Heat-map-page consumer alias for {@link BeachProfileBreakPoint} (T4A.1).
  * Field names match the beach_profile API response for transect_index=all.
  */
-export interface HeatMapBreakPoint {
-  /** Cross-shore distance from the shoreline at the break location in display units. */
-  distance: number;
-  /** Depth at the break location in display units. */
-  depth: number;
-  /** Significant wave height at this break location in display units (may be null). */
-  hs: number | null;
-  /** Breaker type from the 1D model's Iribarren classification. */
-  breakerType?: 'spilling' | 'plunging' | 'surging' | null;
-}
+export type HeatMapBreakPoint = BeachProfileBreakPoint;
 
 /** One transect row for the heat map (returned by profile?transect_index=all). */
 export interface HeatMapTransectData {
@@ -1717,8 +1753,13 @@ export interface HeatMapTransectData {
   transectIndex: number;
   /** True when the transect IS obscured by a structure (pier, jetty, etc.). Opposite of isOpen. */
   isStructureAffected: boolean;
-  /** Cross-shore Hs envelope points for this row. */
-  hsEnvelope: HeatMapEnvelopePoint[];
+  /**
+   * Cross-shore Hs envelope points for this row.
+   * Array key renamed `hsEnvelope` → `transect` (T4A.1) to match the
+   * beach_profile API response and BeachProfileData's array key — one
+   * vocabulary for cross-shore point arrays, single- or all-transect.
+   */
+  transect: HeatMapEnvelopePoint[];
   /** Break locations along this transect; multiple entries for multi-bar spots. */
   breakPoints: HeatMapBreakPoint[];
   /** Classified surf zones for this transect row. Null when model unavailable. */
