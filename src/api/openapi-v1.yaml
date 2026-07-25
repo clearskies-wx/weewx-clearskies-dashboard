@@ -3189,14 +3189,16 @@ components:
       description: Surf quality forecast for one spot at one timestep (post wave_transform + surf_scorer).
       properties:
         time: { type: string, format: date-time }
-        waveHeightAtBreak: { type: number, description: "group_wave_height; after SWAN wave_transform.py supplements (shoaling, γ correction, structure effects, topographic focusing). Legacy field retained for backward compatibility." }
+        waveHeightAtBreak: { type: number, nullable: true, description: "group_wave_height; after SWAN wave_transform.py supplements (shoaling, γ correction, structure effects, topographic focusing). Legacy field retained for backward compatibility. Nullable (T4A.4, Phase 4A): becoming SwellTrack-derived, null exactly when breakingFaceHeight is null (model failure) — never render null as 0." }
         period: { type: number, description: "group_wave_period; dominant period" }
         direction: { type: number, description: "Degrees true north; dominant swell direction" }
-        qualityStars: { type: integer, minimum: 1, maximum: 5 }
+        qualityStars: { type: integer, nullable: true, minimum: 1, maximum: 5, description: "Nullable (T4A.4, Phase 4A): score_surf() returns no rating when the 1D model fails, rather than a confident 0/low rating. Null must render as the existing no-data treatment, never as 0 filled stars (indistinguishable from a genuine 0-star rating) or an empty star row." }
         qualityLabel:
           type: string
+          nullable: true
           enum: [Poor, Fair, Good, Very Good, Epic]
-        conditionsText: { type: string }
+          description: "Null together with qualityStars."
+        conditionsText: { type: string, description: "Always a non-null string. When the score is unavailable, the API resolves its own locale key into localized 'conditions unavailable' text rather than sending null — the dashboard renders this field as-is, with no separate no-data handling." }
         windQuality:
           type: string
           enum: [offshore, cross_offshore, cross, cross_onshore, onshore]

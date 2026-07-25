@@ -1256,11 +1256,37 @@ export interface SurfForecastScoring {
 
 export interface SurfForecast {
   time: string;
-  waveHeightAtBreak: number;
+  /**
+   * Legacy wave-height-at-break field. Nullable (T4A.4, Phase 4A): the API is
+   * making this SwellTrack-derived, going null exactly when breakingFaceHeight
+   * does (model failure). Never treat null as 0 — render the existing no-data
+   * treatment.
+   */
+  waveHeightAtBreak: number | null;
   period: number;
   direction: number;
-  qualityStars: number;
-  qualityLabel: string;
+  /**
+   * 1-5 star quality rating from surf_scorer.py. Nullable (T4A.4, Phase 4A,
+   * coordinator LC-17): when the 1D model fails, score_surf() returns no
+   * quality score rather than a confident rating — a "0 stars" render would
+   * be a false confident rating, not an absence signal. Null means no
+   * rating is available; render the existing no-data treatment, never 0
+   * stars or an empty star row (those are visually identical to a genuine
+   * 0-star rating).
+   */
+  qualityStars: number | null;
+  /**
+   * "Poor"/"Fair"/"Good"/"Very Good"/"Epic" label paired with qualityStars.
+   * Nullable for the same reason as qualityStars — null together with it.
+   */
+  qualityLabel: string | null;
+  /**
+   * Human-readable conditions summary. Stays a non-null string (API-owned
+   * per rules/coding.md §6.2) — when the score is unavailable, the API
+   * resolves its OWN locale key ("surf.conditions.unavailable" in the API's
+   * locale files) into this field rather than sending null. The dashboard
+   * must NOT add a duplicate locale key here; render this field as-is.
+   */
   conditionsText: string;
   windQuality: string;
   swellDominance: number;

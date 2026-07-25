@@ -1250,7 +1250,7 @@ function SurfScrollForecast({
                       type="button"
                       onClick={() => setExpandedIdx((prev) => (prev === flatIdx ? null : flatIdx))}
                       aria-expanded={isSelected}
-                      aria-label={`${timeLabel} — ${item.entry.qualityLabel}`}
+                      aria-label={item.entry.qualityLabel ? `${timeLabel} — ${item.entry.qualityLabel}` : timeLabel}
                       className="focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-sm"
                       style={{
                         width: SURF_COL_W,
@@ -1538,7 +1538,7 @@ function SurfScrollForecast({
               }}
             >
               {formatTime(new Date(entry.time), locale, stationTz)}
-              {' — '}{entry.qualityLabel}
+              {entry.qualityLabel && (<>{' — '}{entry.qualityLabel}</>)}
             </div>
 
             {entry.conditionsText && (
@@ -1903,12 +1903,19 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
   // All values sourced directly from API scoring breakdown (SurfForecastScoring).
   // totalScore = waveHeight + wavePeriod + waveOrganization + beachAlignment
   //            + directionalExposure + timeOfDay. No hidden multipliers.
+  //
+  // totalScore is `number | null` (T4A.4, Phase 4A): when `primary.scoring` is
+  // absent, that is the SAME "the 1D model failed, score_surf() returned no
+  // rating" event that nulls qualityStars/qualityLabel (coordinator LC-17).
+  // Defaulting to 0 here would render "0/100" next to a suppressed star
+  // rating — telling a surfer the spot scored zero out of a hundred, the
+  // exact silent-degradation lie this phase exists to delete.
   const scoringBreakdown = (() => {
     if (!primary?.scoring) {
       return {
         factors: [] as Array<{key: string; max: number; score: number}>,
         penalties: [] as Array<{key: string; score: number}>,
-        totalScore: 0,
+        totalScore: null as number | null,
       };
     }
     const s = primary.scoring;
@@ -2010,24 +2017,45 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
               </p>
             ) : (
               <>
-                {/* Star rating + total score */}
+                {/* Star rating + total score.
+                    T4A.4 (Phase 4A): qualityStars/qualityLabel/totalScore are
+                    null together when the 1D model fails and score_surf()
+                    returns no rating (coordinator LC-17). Passing null into
+                    StarRating would render 5 muted unfilled stars + a blank
+                    label — visually identical to a genuine 0-star rating.
+                    Suppress the component entirely and show the existing
+                    no-data treatment instead (ruling: apply the existing
+                    pattern, don't invent a new one; DESIGN-MANUAL's numeric-
+                    badge-only hero spec is a separate, coordinator-owned
+                    design question — not resolved here). */}
                 <div className="flex items-start justify-between">
-                  <StarRating
-                    score={primary.qualityStars}
-                    label={primary.qualityLabel}
-                    size="lg"
-                  />
-                  <span
-                    className="font-semibold text-foreground"
-                    style={{
-                      fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
-                      fontSize: 'var(--text-stat-tile)',
-                      fontFeatureSettings: '"tnum"',
-                    }}
-                  >
-                    {scoringBreakdown.totalScore}
-                    <span className="text-muted-foreground font-normal" style={{ fontSize: 'var(--text-label)' }}>/100</span>
-                  </span>
+                  {primary.qualityStars != null ? (
+                    <StarRating
+                      score={primary.qualityStars}
+                      label={primary.qualityLabel ?? ''}
+                      size="lg"
+                    />
+                  ) : (
+                    <span
+                      className="text-muted-foreground"
+                      style={{ fontSize: 'var(--text-stat-tile)' }}
+                    >
+                      —
+                    </span>
+                  )}
+                  {scoringBreakdown.totalScore != null && (
+                    <span
+                      className="font-semibold text-foreground"
+                      style={{
+                        fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
+                        fontSize: 'var(--text-stat-tile)',
+                        fontFeatureSettings: '"tnum"',
+                      }}
+                    >
+                      {scoringBreakdown.totalScore}
+                      <span className="text-muted-foreground font-normal" style={{ fontSize: 'var(--text-label)' }}>/100</span>
+                    </span>
+                  )}
                 </div>
 
                 {/* Conditions text — not bolded */}
