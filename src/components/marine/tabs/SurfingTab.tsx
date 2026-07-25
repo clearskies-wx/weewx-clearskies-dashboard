@@ -2583,9 +2583,11 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                 heightUnit={heightUnit}
                 distanceUnit={distanceUnit}
                 locale={locale}
-                datum={profileData.datum}
+                datum={profileData.metadata?.verticalDatum}
                 surfZones={profileData.surfZones}
                 transects={profileData.transects}
+                waveShapes={profileData.waveShapes}
+                jackingFactors={profileData.jackingFactors}
                 selectedTransect={selectedTransect}
                 onTransectChange={setSelectedTransect}
               />

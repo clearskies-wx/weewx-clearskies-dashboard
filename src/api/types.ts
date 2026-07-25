@@ -1341,8 +1341,9 @@ export interface SurfForecast {
    * (surf.py per-timestep pipeline scan — distinct from the beach-profile
    * endpoint's per-transect break points, but same cross-shore vocabulary).
    * Unified vocabulary (T4A.1): distance/depth/hs, same shape as
-   * BeachProfileBreakPoint. faceHeight/breakerType/partitionLabel/jackingFactor
-   * are not populated by this pipeline (always absent here).
+   * BeachProfileBreakPoint. faceHeight/breakerType/iribarren/partitionInfo
+   * are not populated by this pipeline (always absent here) — this is why
+   * those fields are optional on BeachProfileBreakPoint (T4A.6 item c).
    */
   breakPoints?: BeachProfileBreakPoint[] | null;
   directionalSpread?: number | null;
@@ -1591,18 +1592,74 @@ export interface BeachSafetyDetailData {
 }
 
 // ---------------------------------------------------------------------------
-// Beach Profile — returned by GET /surf/{locationId}/profile (ADR-097 / T5.2)
+// Beach Profile — returned by GET /surf/{locationId}/profile (ADR-097 / T5.2,
+// shape reconciled with the real API response in T4A.6 items a-g)
 // ---------------------------------------------------------------------------
 
 /**
- * One sample of a wave surface profile (cross-section of a single wave).
- * Used for the optional wave shapes overlay (T5.3 element 4).
- * `phase` is the position within one wave period (0 to ~2π).
- * `elevation` is surface displacement relative to still water level, in display units.
+ * One point of the dominant-partition wave-surface cross-section
+ * (Stokes/cnoidal/bore) — T4A.6 item (a).
+ *
+ * TOP-LEVEL array on the transect result (`waveShapes`), NOT nested inside
+ * each {@link BeachProfilePoint} — every point carries its own `distance`/
+ * `depth` because the API samples ~30 points spread across the whole
+ * transect (services/surf_1d_analytical.py `run_1d_analytical()`), not one
+ * entry per transect point.
  */
-export interface WaveShapePoint {
-  phase: number;
-  elevation: number;
+export interface BeachProfileWaveShapePoint {
+  /** Cross-shore distance from shore, in display units. */
+  distance: number;
+  /** Depth at this point, in display units. */
+  depth: number;
+  /** Wave regime at this point, e.g. "stokes" | "cnoidal" | "bore". */
+  regime: string;
+  /**
+   * `[phase, elevation]` pairs describing the wave surface cross-section.
+   * `phase` is the position within one wave period (0 to ~2π); `elevation`
+   * is surface displacement relative to still water level, in display units.
+   * Null for regimes the model doesn't produce a surface for (e.g. "bore").
+   */
+  surface: Array<[number, number]> | null;
+}
+
+/**
+ * One bar's jacking factor (Hs at bar crest / approach Hs) — T4A.6 item (b).
+ *
+ * TOP-LEVEL array on the transect result (`jackingFactors`), NOT a scalar on
+ * each {@link BeachProfileBreakPoint} — jacking happens at the bar crest,
+ * which is a different cross-shore location from where the wave actually
+ * breaks, so it is its own annotation layer.
+ */
+export interface BeachProfileJackingFactor {
+  /** Zero-based index of the bar (sandbar crest) this factor was computed at. */
+  barIndex: number;
+  /** Cross-shore distance of the bar crest, in display units. */
+  distance: number;
+  /** Hs at bar crest / approach Hs. Values > 1.3 indicate significant focusing. */
+  factor: number;
+}
+
+/**
+ * Per-partition metadata attached to a break point (which incoming swell
+ * component broke here) — T4A.6 item (c). Nested inside
+ * {@link BeachProfileBreakPoint.partitionInfo}.
+ */
+export interface BeachProfilePartitionInfo {
+  /** Zero-based index into the spectral decomposition output. */
+  partitionIndex: number;
+  /** Dominant period of this partition, in seconds. */
+  periodS: number | null;
+  /** Dominant direction of this partition, in degrees (met convention). */
+  directionDeg: number | null;
+  /** Swell classification: "groundswell" | "swell" | "wind_swell". */
+  classification: string | null;
+  /**
+   * Partition Hs at the handoff point, in display units. NOTE: field name
+   * keeps the 'M' (meter) suffix from the internal dataclass despite being
+   * unit-converted to the operator's display unit — a pre-existing naming
+   * quirk (see the same note on `PartitionBreakInfo`), not introduced here.
+   */
+  heightM: number;
 }
 
 /**
@@ -1628,12 +1685,6 @@ export interface BeachProfilePoint {
   breakingFraction?: number | null;
   /** Breaking dissipation (DISSURF) in W/m² (may be null). */
   breakingDissipation?: number | null;
-  /**
-   * Wave surface profile at this point from the 1D model (Stokes/cnoidal/bore).
-   * Optional — present only when the 1D model's analytical wave shape output
-   * is available (T5.2/T5.3 wave shapes feature). Null when unavailable.
-   */
-  waveShape?: WaveShapePoint[] | null;
 }
 
 /**
@@ -1650,6 +1701,10 @@ export type BeachProfileTransectPoint = BeachProfilePoint;
  * `breakerType` match the 1D model's own terminology and the beach_profile
  * API response for both single-transect and `transect_index=all` paths.
  * `HeatMapBreakPoint` is an alias of this type (below).
+ *
+ * `iribarren` and `partitionInfo` are optional (T4A.6 item c) because this
+ * same type also backs `SurfForecast.breakPoints` (surf.py's per-timestep
+ * QB-peak scan), which never populates either field — see the note there.
  */
 export interface BeachProfileBreakPoint {
   /** Distance from shore in display units at this break location. */
@@ -1669,15 +1724,18 @@ export interface BeachProfileBreakPoint {
    */
   faceHeight?: number | null;
   /**
-   * Per-partition annotation, e.g. "14s S groundswell".
-   * Present when multi-partition decomposition identifies which swell breaks here.
+   * Iribarren number (surf similarity parameter) at this break point.
+   * Present on every beach_profile.py break point; absent on surf.py's
+   * per-timestep breakPoints (T4A.6 item c).
    */
-  partitionLabel?: string | null;
+  iribarren?: number | null;
   /**
-   * Jacking factor at this break point: Hs_bar_crest / Hs_approach.
-   * Values > 1.3 indicate significant focusing over a sandbar.
+   * Which incoming swell partition broke here. Present on every
+   * beach_profile.py break point; absent on surf.py's per-timestep
+   * breakPoints (T4A.6 item c — replaces the old flat `partitionLabel`
+   * string, which no endpoint ever populated).
    */
-  jackingFactor?: number | null;
+  partitionInfo?: BeachProfilePartitionInfo | null;
 }
 
 /** Extent of a surf zone along the cross-shore transect. */
@@ -1690,6 +1748,14 @@ export interface SurfZoneExtent {
   startDepth?: number | null;
   /** Water depth at the end of the zone, in display units. */
   endDepth?: number | null;
+  /**
+   * Zone width, in display units. T4A.6 item (d) / LC-R2-12: verified
+   * against `services/surf_1d_analytical.py` `_classify_zones()` — this is
+   * populated ONLY on `totalSurfZone`. `impactZone`/`foamZone`/
+   * `reformTrough` never carry it (the API omits the key entirely for
+   * those, so it reads as `undefined`, not `null`).
+   */
+  widthM?: number | null;
 }
 
 /**
@@ -1733,29 +1799,102 @@ export interface BeachProfileTransectInfo {
   distanceFromCenter?: number | null;
 }
 
-/** Beach profile data — returned by GET /surf/{locationId}/profile. */
-export interface BeachProfileData {
-  /** The surf location ID this profile is for. */
-  locationId: string;
-  /** Ordered cross-shore transect, from offshore (index 0) toward shore (last index). */
-  transect: BeachProfilePoint[];
-  /** Break locations along the transect; multiple entries for multi-bar spots. */
-  breakPoints: BeachProfileBreakPoint[];
+/**
+ * Per-partition break overlay — what each incoming swell component does at
+ * the beach, common to both single-transect and all-transect responses
+ * (`perPartitionBreaks`) — T4A.6 item (e).
+ *
+ * Structurally different from {@link PartitionBreakInfo} (which backs
+ * `SurfForecast.partitionBreakInfo`, a related but separate field with its
+ * own period/direction/breakDistance/faceHeight/breakerType/breakLocation
+ * shape) — two distinct schemas for two distinct fields, not a naming gap.
+ */
+export interface BeachProfilePerPartitionBreak {
+  partitionIndex: number;
+  periodS: number | null;
+  directionDeg: number | null;
+  /** Unit-converted to display units despite the 'M' suffix — see BeachProfilePartitionInfo.heightM note. */
+  heightM: number;
+  classification: string | null;
+  meanBreakDistanceM: number | null;
+  meanFaceHeightM: number | null;
+  peakFaceHeightM: number | null;
+  meanBreakDepthM: number | null;
+  dominantBreakerType: 'spilling' | 'plunging' | 'surging' | null;
+}
+
+/**
+ * Common metadata block, present on both single-transect and all-transect
+ * beach profile responses — T4A.6 item (e)/(f)/(g).
+ */
+export interface BeachProfileMetadata {
+  axisUnits: { x: string; y: string };
   /**
    * Vertical datum for depth values (e.g., "NAVD88", "MSL", "MLLW").
-   * Present when the DEM source includes datum metadata (T5.2).
+   * Currently hardcoded "NAVD88" by beach_profile.py rather than read from
+   * DEM metadata — a real defect, owned by T4A.3/B2 (LC-R2-14), not fixed by
+   * T4A.6. T4A.6 item (f) fixed the SHAPE: this is the API's one real
+   * location for datum — read it from here, not from a top-level sibling of
+   * `transect`/`breakPoints` (the API has never produced one).
    */
-  datum?: string | null;
+  verticalDatum: string;
+  transectCount: number;
+  openTransectCount: number;
   /**
-   * Classified surf zones. Present when 1D model output is available (T5.2).
+   * Per-hour handoff depth (T4A.6 item g / LC-R2-13) for the response's
+   * representative (best-peak) transect, in display units. Null until B1's
+   * T4A.9/T4A.10 lands `handoff_depth_m` on the pipeline's TransectResult —
+   * the API degrades to null rather than erroring in the interim.
    */
+  handoffDepthM?: number | null;
+  /** Which SWAN level the representative transect's handoff came from. Same null-until-B1-lands caveat as handoffDepthM. */
+  handoffSourceLevel?: 'L3' | 'L2' | null;
+}
+
+/**
+ * One transect's full 1D-model output — the shape `_build_transect_profile()`
+ * returns, used both as the spread-in fields of the single-transect response
+ * `data` object ({@link BeachProfileData}) and as each item of the
+ * all-transect response's `profiles` array ({@link HeatMapTransectData}).
+ * One builder, one shape, per T4A.1's "both responses come from the same
+ * builder" decision — T4A.6 keeps that true for waveShapes/jackingFactors/
+ * handoff fields too, since the API emits them identically in both paths.
+ */
+export interface BeachProfileTransectResult {
+  transectIndex: number;
+  isStructureAffected: boolean;
+  transectBearingDeg: number | null;
+  transect: BeachProfilePoint[];
+  breakPoints: BeachProfileBreakPoint[];
+  /** T4A.6 item (a) — top-level wave-surface cross-sections along this transect. */
+  waveShapes: BeachProfileWaveShapePoint[];
   surfZones?: BeachProfileSurfZones | null;
+  /** T4A.6 item (b) — top-level bar-crest jacking factors along this transect. */
+  jackingFactors: BeachProfileJackingFactor[];
+  /** T4A.6 item (g) / LC-R2-13 — this transect's own per-hour handoff depth, in display units. */
+  handoffDepthM?: number | null;
+  /** T4A.6 item (g) / LC-R2-13 — which SWAN level this transect's handoff came from. */
+  handoffSourceLevel?: 'L3' | 'L2' | null;
+}
+
+/** Beach profile data — returned by GET /surf/{locationId}/profile. */
+export interface BeachProfileData extends BeachProfileTransectResult {
+  /** The surf location ID this profile is for. */
+  locationId: string;
+  /** The forecast timestep this profile was computed for (closest to now). */
+  timestep: string;
   /**
    * Available transects for the selector dropdown.
    * Present when multi-transect architecture is active (T5.2).
-   * Null for single-transect spots.
+   * Null for single-transect spots. NOT currently populated by
+   * beach_profile.py (pre-existing gap, not part of T4A.6) — always
+   * undefined against the real API today.
    */
   transects?: BeachProfileTransectInfo[] | null;
+  /** T4A.6 item (e) — per-partition break overlay, common to single- and all-transect responses. */
+  perPartitionBreaks: BeachProfilePerPartitionBreak[];
+  /** T4A.6 items (e)/(f)/(g) — read `metadata.verticalDatum` for the vertical datum (item f); the API has no top-level `datum` sibling field. */
+  metadata: BeachProfileMetadata;
 }
 
 // ─── T7.1 Heat Map types ────────────────────────────────────────────────────
@@ -1773,33 +1912,37 @@ export type HeatMapEnvelopePoint = BeachProfilePoint;
  */
 export type HeatMapBreakPoint = BeachProfileBreakPoint;
 
-/** One transect row for the heat map (returned by profile?transect_index=all). */
-export interface HeatMapTransectData {
-  /** Zero-based transect index (0 = center/primary). */
-  transectIndex: number;
-  /** True when the transect IS obscured by a structure (pier, jetty, etc.). Opposite of isOpen. */
-  isStructureAffected: boolean;
-  /**
-   * Cross-shore Hs envelope points for this row.
-   * Array key renamed `hsEnvelope` → `transect` (T4A.1) to match the
-   * beach_profile API response and BeachProfileData's array key — one
-   * vocabulary for cross-shore point arrays, single- or all-transect.
-   */
-  transect: HeatMapEnvelopePoint[];
-  /** Break locations along this transect; multiple entries for multi-bar spots. */
-  breakPoints: HeatMapBreakPoint[];
-  /** Classified surf zones for this transect row. Null when model unavailable. */
-  surfZones?: BeachProfileSurfZones | null;
-}
+/**
+ * One transect row for the heat map (returned by profile?transect_index=all).
+ * Alias of {@link BeachProfileTransectResult} (T4A.6) — `_build_transect_profile()`
+ * is the single builder for both the single-transect and all-transect
+ * responses (T4A.1 Decision), so `profiles[i]` has exactly the same shape as
+ * the single-transect `data` object's spread-in fields, waveShapes/
+ * jackingFactors/handoff fields included. HeatMapCard.tsx does not currently
+ * render waveShapes/jackingFactors, but the type carries them because the
+ * API genuinely emits them here (verified against
+ * `endpoints/beach_profile.py`'s `_ti_mode == "all"` branch, which maps
+ * `_build_transect_profile()` over every transect — not added for symmetry).
+ */
+export type HeatMapTransectData = BeachProfileTransectResult;
 
 /** Response for GET /surf/{locationId}/profile?transect_index=all (T7.1). */
 export interface HeatMapProfileData {
   /** The surf location ID this data is for. */
   locationId: string;
+  /** The forecast timestep this profile was computed for (closest to now). */
+  timestep: string;
   /** All transect rows ordered by index, from southernmost to northernmost. */
   profiles: HeatMapTransectData[];
-  /** Vertical datum for depth values (e.g., "NAVD88", "MSL", "MLLW"). */
-  datum?: string | null;
+  /**
+   * Per-partition break overlay, common to single- and all-transect
+   * responses (T4A.6 item e) — verified present on the `_ti_mode == "all"`
+   * branch of `get_beach_profile()`, same `metadata`/`per_partition_breaks_out`
+   * construction as the single-transect path.
+   */
+  perPartitionBreaks: BeachProfilePerPartitionBreak[];
+  /** T4A.6 items (e)/(f)/(g) — read `metadata.verticalDatum` for the vertical datum; the API has no top-level `datum` sibling field on this response either. */
+  metadata: BeachProfileMetadata;
 }
 
 // ────────────────────────────────────────────────────────────────────────────

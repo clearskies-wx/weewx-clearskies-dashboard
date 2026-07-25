@@ -35,6 +35,8 @@ import type {
   BeachProfileBreakPoint,
   BeachProfileSurfZones,
   BeachProfileTransectInfo,
+  BeachProfileWaveShapePoint,
+  BeachProfileJackingFactor,
 } from '../../../api/types';
 
 // ---------------------------------------------------------------------------
@@ -56,6 +58,18 @@ export interface BeachProfileChartProps {
   surfZones?: BeachProfileSurfZones | null;
   /** Available transects for the selector. Null = selector not rendered. */
   transects?: BeachProfileTransectInfo[] | null;
+  /**
+   * Wave-surface cross-sections along the transect (T4A.6 item a) — a
+   * top-level array, NOT nested per transect point. Default `[]` for
+   * graceful degradation against older API responses.
+   */
+  waveShapes?: BeachProfileWaveShapePoint[];
+  /**
+   * Bar-crest jacking factors along the transect (T4A.6 item b) — a
+   * top-level array keyed by bar, NOT a scalar on each break point. Default
+   * `[]` for graceful degradation against older API responses.
+   */
+  jackingFactors?: BeachProfileJackingFactor[];
   /** Currently selected transect (controlled by parent). */
   selectedTransect?: number | 'best_peak' | 'average';
   /** Called when the visitor selects a different transect. */
@@ -211,13 +225,18 @@ export function BeachProfileChart({
   datum = null,
   surfZones = null,
   transects = null,
+  waveShapes = [],
+  jackingFactors = [],
   selectedTransect,
   onTransectChange,
 }: BeachProfileChartProps) {
   const { t } = useTranslation('marine');
 
-  // Wave shapes toggle — internal state
-  const hasWaveShapeData = transect.some((p) => p.waveShape && p.waveShape.length > 0);
+  // Wave shapes toggle — internal state. Data source: the API's top-level
+  // waveShapes array (T4A.6 item a) — each entry carries its own
+  // distance/depth, not a per-transect-point nested field.
+  const renderableWaveShapes = waveShapes.filter((ws) => ws.surface && ws.surface.length >= 2);
+  const hasWaveShapeData = renderableWaveShapes.length > 0;
   const [showWaveShapes, setShowWaveShapes] = useState(false);
 
   if (transect.length === 0) return null;
@@ -300,6 +319,27 @@ export function BeachProfileChart({
     if (n == null) return '—';
     return new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(n);
   };
+  const fmt0 = (n: number | null | undefined): string => {
+    if (n == null) return '—';
+    return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(n);
+  };
+
+  // ── Partition annotation — full API shape (T4A.6 item c) ───────────────
+  // Replaces the old flat `partitionLabel` string (never populated by any
+  // endpoint) with a label built from the real partitionInfo + iribarren
+  // fields via a single i18next interpolation (rules/coding.md §6.1 — no
+  // template-literal concatenation of translated + untranslated parts).
+  function buildPartitionLabel(bp: BeachProfileBreakPoint): string | null {
+    if (!bp.partitionInfo && bp.iribarren == null) return null;
+    const classification = bp.partitionInfo?.classification
+      ? t(`surfing.classification.${bp.partitionInfo.classification}`)
+      : '—';
+    return t('surfing.beachProfile.partitionAnnotation', {
+      period: fmt0(bp.partitionInfo?.periodS ?? null),
+      classification,
+      iribarren: fmt1(bp.iribarren ?? null),
+    });
+  }
 
   // ── Shared styles ─────────────────────────────────────────────────────
   const axisLabelStyle: CSSProperties = {
@@ -321,38 +361,49 @@ export function BeachProfileChart({
   };
 
   // ── Wave shape helper — build polyline points for one wave cross-section ─
+  // `surface` is the API's [phase, elevation] tuple array (T4A.6 item a).
   function buildWaveShapePolyline(
     centerX: number,
-    waveShape: { phase: number; elevation: number }[],
+    surface: Array<[number, number]>,
   ): string {
-    if (waveShape.length < 2) return '';
+    if (surface.length < 2) return '';
     // Map phase (0 to max phase) to x within WAVE_SHAPE_W window
-    const maxPhase = Math.max(...waveShape.map((p) => p.phase));
+    const maxPhase = Math.max(...surface.map(([phase]) => phase));
     if (maxPhase <= 0) return '';
-    return waveShape.map((p) => {
-      const lx = centerX - WAVE_SHAPE_W / 2 + (p.phase / maxPhase) * WAVE_SHAPE_W;
-      const ly = yScale(p.elevation, surfaceY, unitsPerPx);
+    return surface.map(([phase, elevation]) => {
+      const lx = centerX - WAVE_SHAPE_W / 2 + (phase / maxPhase) * WAVE_SHAPE_W;
+      const ly = yScale(elevation, surfaceY, unitsPerPx);
       return `${lx.toFixed(1)},${ly.toFixed(1)}`;
     }).join(' ');
   }
 
-  // Points to render wave shapes at (break points + midpoint of shoaling zone)
-  const waveShapeTargets: number[] = [];
+  // Wave shape entries to render (break points + midpoint of shoaling zone).
+  // The API samples ~30 points across the whole transect (T4A.6 item a) — to
+  // keep the visual intent from the original design (a handful of
+  // cross-sections, not thirty overlapping ones), select the nearest
+  // renderable entry to each target distance rather than rendering all of them.
+  function nearestWaveShape(targetDistance: number): BeachProfileWaveShapePoint | null {
+    let best: BeachProfileWaveShapePoint | null = null;
+    let bestDiff = Infinity;
+    for (const ws of renderableWaveShapes) {
+      const diff = Math.abs(ws.distance - targetDistance);
+      if (diff < bestDiff) { bestDiff = diff; best = ws; }
+    }
+    return best;
+  }
+
+  const waveShapeTargets: BeachProfileWaveShapePoint[] = [];
   if (showWaveShapes && hasWaveShapeData) {
-    // Midpoint of transect
-    const midIdx = Math.floor(displayTransect.length / 2);
-    if (displayTransect[midIdx]?.waveShape?.length) waveShapeTargets.push(midIdx);
-    // Near each break point — find closest transect index
+    // Midpoint of the currently displayed (clipped) distance range.
+    if (displayTransect.length > 0) {
+      const midDistance = (displayTransect[0].distance + displayTransect[displayTransect.length - 1].distance) / 2;
+      const mid = nearestWaveShape(midDistance);
+      if (mid && !waveShapeTargets.includes(mid)) waveShapeTargets.push(mid);
+    }
+    // Near each break point.
     for (const bp of breakPoints) {
-      let closest = -1;
-      let closestDiff = Infinity;
-      displayTransect.forEach((p, i) => {
-        const diff = Math.abs(p.distance - bp.distance);
-        if (diff < closestDiff) { closestDiff = diff; closest = i; }
-      });
-      if (closest >= 0 && displayTransect[closest]?.waveShape?.length && !waveShapeTargets.includes(closest)) {
-        waveShapeTargets.push(closest);
-      }
+      const near = nearestWaveShape(bp.distance);
+      if (near && !waveShapeTargets.includes(near)) waveShapeTargets.push(near);
     }
   }
 
@@ -543,15 +594,14 @@ export function BeachProfileChart({
         )}
 
         {/* ── 4. Wave shape cross-sections (optional) ── */}
-        {showWaveShapes && waveShapeTargets.map((idx) => {
-          const pt = displayTransect[idx];
-          if (!pt?.waveShape?.length) return null;
-          const cx = xScale(pt.distance, xMin, xMax);
-          const pts = buildWaveShapePolyline(cx, pt.waveShape);
+        {showWaveShapes && waveShapeTargets.map((ws) => {
+          if (!ws.surface || ws.surface.length < 2) return null;
+          const cx = xScale(ws.distance, xMin, xMax);
+          const pts = buildWaveShapePolyline(cx, ws.surface);
           if (!pts) return null;
           return (
             <polyline
-              key={`wshape-${idx}`}
+              key={`wshape-${ws.distance}-${ws.regime}`}
               points={pts}
               aria-hidden="true"
               style={{
@@ -744,8 +794,8 @@ export function BeachProfileChart({
                 {' '}{distanceUnit}
               </text>
 
-              {/* ── Per-partition annotation ── */}
-              {bp.partitionLabel && (
+              {/* ── Per-partition annotation (T4A.6 item c: partitionInfo + iribarren) ── */}
+              {buildPartitionLabel(bp) && (
                 <text
                   x={bpX}
                   y={chartBottom + 33}
@@ -757,7 +807,7 @@ export function BeachProfileChart({
                     fillOpacity: 0.8,
                   }}
                 >
-                  {bp.partitionLabel}
+                  {buildPartitionLabel(bp)}
                 </text>
               )}
 
@@ -782,41 +832,47 @@ export function BeachProfileChart({
           );
         })}
 
-        {/* ── 7. Jacking annotations ── */}
-        {breakPoints.map((bp, i) => {
-          if (!bp.jackingFactor || bp.jackingFactor <= 1.3) return null;
-          const bpX = xScale(bp.distance, xMin, xMax);
-          const jackY = PAD_TOP + 2;
-          const label = t('surfing.beachProfile.jackingAnnotation', {
-            factor: new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(bp.jackingFactor),
-          });
-          return (
-            <g key={`jack-${i}`} aria-hidden="true">
-              <rect
-                x={bpX - 28}
-                y={jackY}
-                width={56}
-                height={12}
-                rx={2}
-                style={{ fill: 'rgba(234, 179, 8, 0.25)', stroke: 'rgba(234, 179, 8, 0.5)', strokeWidth: 0.5 }}
-              />
-              <text
-                x={bpX}
-                y={jackY + 9}
-                textAnchor="middle"
-                style={{
-                  fontSize: '9px',
-                  fill: 'var(--score-2, #d97706)',
-                  fontFamily: 'var(--font-sans, sans-serif)',
-                  fontWeight: 600,
-                  fontFeatureSettings: '"tnum"',
-                }}
-              >
-                {label}
-              </text>
-            </g>
-          );
-        })}
+        {/* ── 7. Jacking annotations (T4A.6 item b) ──
+             Rendered at each bar's own crest distance from the top-level
+             jackingFactors array — bar crests are a different cross-shore
+             location from break points, so this no longer piggybacks on
+             breakPoints. ── */}
+        {jackingFactors
+          .filter((jf) => jf.factor > 1.3)
+          .map((jf) => {
+            const jfX = xScale(jf.distance, xMin, xMax);
+            if (jfX < xLeft || jfX > xRight) return null; // outside the currently displayed distance range
+            const jackY = PAD_TOP + 2;
+            const label = t('surfing.beachProfile.jackingAnnotation', {
+              factor: fmt1(jf.factor),
+            });
+            return (
+              <g key={`jack-${jf.barIndex}`} aria-hidden="true">
+                <rect
+                  x={jfX - 28}
+                  y={jackY}
+                  width={56}
+                  height={12}
+                  rx={2}
+                  style={{ fill: 'rgba(234, 179, 8, 0.25)', stroke: 'rgba(234, 179, 8, 0.5)', strokeWidth: 0.5 }}
+                />
+                <text
+                  x={jfX}
+                  y={jackY + 9}
+                  textAnchor="middle"
+                  style={{
+                    fontSize: '9px',
+                    fill: 'var(--score-2, #d97706)',
+                    fontFamily: 'var(--font-sans, sans-serif)',
+                    fontWeight: 600,
+                    fontFeatureSettings: '"tnum"',
+                  }}
+                >
+                  {label}
+                </text>
+              </g>
+            );
+          })}
 
         {/* ── 8a. Y-axis depth labels ── */}
         {depthTicks.map((d) => {
@@ -930,24 +986,46 @@ export function BeachProfileChart({
             </tr>
           ))}
         </tbody>
-        {breakPoints.length > 0 && (
+        {(breakPoints.length > 0 || jackingFactors.some((jf) => jf.factor > 1.3)) && (
           <tfoot>
-            <tr>
-              <th scope="row" colSpan={5}>{t('surfing.beachProfile.srBreakPoints')}</th>
-            </tr>
-            {breakPoints.map((bp, i) => (
-              <tr key={`foot-bp-${i}`}>
-                <td>{new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(bp.distance)}</td>
-                <td>{fmt1(bp.depth)}</td>
-                <td>{fmt1(bp.faceHeight ?? bp.hs)}</td>
-                <td colSpan={2}>
-                  {bp.breakerType ? t(`surfing.beachProfile.breakType.${bp.breakerType}`) : ''}
-                  {bp.jackingFactor && bp.jackingFactor > 1.3
-                    ? ` — ${t('surfing.beachProfile.jackingAnnotation', { factor: fmt1(bp.jackingFactor) })}`
-                    : ''}
-                </td>
-              </tr>
-            ))}
+            {breakPoints.length > 0 && (
+              <>
+                <tr>
+                  <th scope="row" colSpan={5}>{t('surfing.beachProfile.srBreakPoints')}</th>
+                </tr>
+                {breakPoints.map((bp, i) => {
+                  const partitionLabel = buildPartitionLabel(bp);
+                  return (
+                    <tr key={`foot-bp-${i}`}>
+                      <td>{new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(bp.distance)}</td>
+                      <td>{fmt1(bp.depth)}</td>
+                      <td>{fmt1(bp.faceHeight ?? bp.hs)}</td>
+                      <td colSpan={2}>
+                        {bp.breakerType ? t(`surfing.beachProfile.breakType.${bp.breakerType}`) : ''}
+                        {partitionLabel ? ` — ${partitionLabel}` : ''}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </>
+            )}
+            {jackingFactors.some((jf) => jf.factor > 1.3) && (
+              <>
+                {/* T4A.6 item b — jacking factors are now their own row group:
+                    bar crests, not a per-break-point column. */}
+                <tr>
+                  <th scope="row" colSpan={5}>{t('surfing.beachProfile.srJackingFactors')}</th>
+                </tr>
+                {jackingFactors
+                  .filter((jf) => jf.factor > 1.3)
+                  .map((jf) => (
+                    <tr key={`foot-jack-${jf.barIndex}`}>
+                      <td>{new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(jf.distance)}</td>
+                      <td colSpan={4}>{t('surfing.beachProfile.jackingAnnotation', { factor: fmt1(jf.factor) })}</td>
+                    </tr>
+                  ))}
+              </>
+            )}
           </tfoot>
         )}
       </table>

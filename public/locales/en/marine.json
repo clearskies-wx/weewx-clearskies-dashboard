@@ -282,6 +282,7 @@
       "impactZone": "IMPACT ZONE",
       "foamZone": "FOAM ZONE",
       "jackingAnnotation": "{{factor}}× jacking",
+      "partitionAnnotation": "{{period}}s {{classification}} · ξ {{iribarren}}",
       "transectSelectorLabel": "Transect",
       "bestPeakLabel": "Best Peak",
       "averageLabel": "Average",
@@ -303,7 +304,8 @@
       "srColWaveHeight": "Wave height ({{unit}})",
       "srColSwellHeight": "Swell height ({{unit}})",
       "srColBreakingFraction": "Breaking fraction",
-      "srBreakPoints": "Breaking zones:"
+      "srBreakPoints": "Breaking zones:",
+      "srJackingFactors": "Jacking factors:"
     },
     "shore": "Shore",
     "offshore": "Offshore",

@@ -3452,15 +3452,16 @@ components:
         surfHeightDisplay: { type: string, enum: [face, hawaiian], nullable: true, description: "Operator-configured height display preference: 'face' for trough-to-crest, 'hawaiian' for back-of-wave scale." }
       required: [locationId, locationName, coordinates, forecast, spectralComponents, tidePredictions, source, generatedAt]
 
-    # ---------- Beach profile (GET /surf/{locationId}/profile, T4A.1) ----------
+    # ---------- Beach profile (GET /surf/{locationId}/profile, T4A.1 + T4A.6) ----------
     #
     # Ground-truth shapes read directly from endpoints/beach_profile.py
-    # (_build_transect_profile() and get_beach_profile()), post T4A.1 rename.
-    # Unified vocabulary: distance/depth/hs everywhere (Marine Service
-    # Separation Plan Phase 4A). Some fields below are emitted by the API but
-    # NOT YET consumed by the dashboard TS types/components — see the
-    # "T4A.6 tracked gaps" notes on each; those are a follow-up task, not
-    # fixed by this schema addition.
+    # (_build_transect_profile() and get_beach_profile()), post T4A.1 rename
+    # and T4A.6 shape reconciliation. Unified vocabulary: distance/depth/hs
+    # everywhere (Marine Service Separation Plan Phase 4A). T4A.6 items (a)-
+    # (g) closed every API<->dashboard shape mismatch this schema had
+    # previously documented as a gap; see each schema's description for the
+    # item it corresponds to. Remaining pre-existing gap NOT part of T4A.6:
+    # BeachProfileData.transects is never populated by beach_profile.py.
 
     BeachProfilePoint:
       type: object
@@ -3476,7 +3477,7 @@ components:
 
     BeachProfilePartitionInfo:
       type: object
-      description: Per-partition metadata attached to a break point (which incoming swell component broke here). Nested inside BeachProfileBreakPoint.partitionInfo — NOT the same shape as the dashboard's flat `partitionLabel` string (T4A.6 tracked gap, see finding notes).
+      description: Per-partition metadata attached to a break point (which incoming swell component broke here). Nested inside BeachProfileBreakPoint.partitionInfo. T4A.6 item (c) — matches dashboard types.ts BeachProfilePartitionInfo, replacing the old flat `partitionLabel` string (never populated by any endpoint) as of T4A.6.
       nullable: true
       properties:
         partitionIndex: { type: integer }
@@ -3494,11 +3495,11 @@ components:
         hs: { type: number, nullable: true, description: "Significant wave height at this break location, in display units." }
         faceHeight: { type: number, nullable: true, description: "Face height (K-G/Caldwell H1/10 or pipeline-computed) at this break point, in display units." }
         breakerType: { type: string, nullable: true, enum: [spilling, plunging, surging], description: "Iribarren classification." }
-        iribarren: { type: number, description: "Iribarren number (surf similarity parameter). NOT in the dashboard TS type — T4A.6 tracked gap." }
+        iribarren: { type: number, description: "Iribarren number (surf similarity parameter). T4A.6 item (c) — now in the dashboard TS type as an optional field (optional because this same schema also backs surf.py's per-timestep SurfForecast.breakPoints, which never populates it)." }
         partitionInfo:
           allOf: [{ $ref: '#/components/schemas/BeachProfilePartitionInfo' }]
           nullable: true
-          description: "NOT in the dashboard TS type, which instead has a flat `partitionLabel` string on BeachProfileBreakPoint — T4A.6 tracked gap: the dashboard has never consumed this nested object."
+          description: "T4A.6 item (c) — now consumed by the dashboard TS type (optional, for the same surf.py-sharing reason as iribarren above)."
       required: [distance, depth, hs]
 
     BeachProfileWaveShapePoint:
@@ -3506,11 +3507,9 @@ components:
       description: |
         One point of the dominant-partition wave-surface cross-section
         (Stokes/cnoidal/bore), returned as a TOP-LEVEL array on the transect
-        result (`waveShapes`). T4A.6 tracked gap: the dashboard TS type
-        instead expects a `waveShape` (singular) array NESTED inside each
-        BeachProfilePoint — a shape the API has never produced. The chart's
-        "show wave shapes" toggle is consequently non-functional against real
-        API responses today.
+        result (`waveShapes`). T4A.6 item (a) — the dashboard TS type now
+        matches this shape exactly (top-level array, not nested per-point);
+        the chart's "show wave shapes" toggle renders from it directly.
       properties:
         distance: { type: number }
         depth: { type: number }
@@ -3531,10 +3530,10 @@ components:
       description: |
         One bar's jacking factor (Hs at bar crest / approach Hs), returned as
         a TOP-LEVEL array on the transect result (`jackingFactors`). T4A.6
-        tracked gap: the dashboard TS type instead expects `jackingFactor`
-        as a scalar ON each BeachProfileBreakPoint — a shape the API has
-        never produced, so the chart's jacking annotations never render
-        against real API responses today.
+        item (b) — the dashboard TS type now matches this shape exactly
+        (top-level array keyed by barIndex/distance, not a scalar on each
+        break point); the chart renders jacking annotations at each bar's
+        own crest distance rather than at break-point distances.
       properties:
         barIndex: { type: integer }
         distance: { type: number }
@@ -3543,13 +3542,13 @@ components:
 
     BeachProfileSurfZoneExtent:
       type: object
-      description: Extent of one classified surf zone along the transect. Field set mirrors SurfZoneExtent (dashboard types.ts); `widthM` is emitted by the API for some zone types and has no TS counterpart (T4A.6 tracked gap — unconfirmed which zones populate it; not verified against services/surf_1d_analytical.py's SurfZones dataclass in this round).
+      description: Extent of one classified surf zone along the transect. Field set mirrors SurfZoneExtent (dashboard types.ts). T4A.6 item (d) / LC-R2-12 — verified against services/surf_1d_analytical.py `_classify_zones()`, `width_m` is populated ONLY on `total_surf_zone` (the other three zone dicts never carry the key at all, so it is simply absent from their serialized output, not null).
       properties:
         startDistance: { type: number, description: "Outer boundary, farther from shore, display units." }
         endDistance: { type: number, description: "Inner boundary, closer to shore, display units." }
         startDepth: { type: number, nullable: true }
         endDepth: { type: number, nullable: true }
-        widthM: { type: number, nullable: true, description: "Not present on all zone types; not in the dashboard TS SurfZoneExtent type — T4A.6 tracked gap." }
+        widthM: { type: number, nullable: true, description: "Only ever present on totalSurfZone (see description above); absent (not null) on impactZone/foamZone/reformTrough. Now in the dashboard TS SurfZoneExtent type as optional (T4A.6 item d)." }
       required: [startDistance, endDistance]
 
     BeachProfileSurfZones:
@@ -3567,13 +3566,14 @@ components:
       description: |
         Per-partition break overlay — what each incoming swell component does
         at the beach, common to both single-transect and all-transect
-        responses (`perPartitionBreaks`). T4A.6 tracked gap: structurally
-        different from the dashboard's `PartitionBreakInfo` TS type (which is
-        populated by surf.py for SurfForecast.partitionBreakInfo, a related
-        but separate field with its own period/direction/breakDistance/
-        faceHeight/breakerType/breakLocation shape) — this schema is NOT
-        currently referenced by any BeachProfileData TS field at all (see
-        BeachProfileData note below).
+        responses (`perPartitionBreaks`). Structurally different from the
+        dashboard's `PartitionBreakInfo` TS type (which is populated by
+        surf.py for SurfForecast.partitionBreakInfo, a related but separate
+        field with its own period/direction/breakDistance/faceHeight/
+        breakerType/breakLocation shape) — these are deliberately two
+        different schemas for two different fields, not a naming mismatch.
+        T4A.6 item (e) — now referenced by BeachProfileData.perPartitionBreaks
+        (dashboard types.ts).
       properties:
         partitionIndex: { type: integer }
         periodS: { type: number, nullable: true }
@@ -3595,9 +3595,11 @@ components:
           type: object
           properties: { x: { type: string }, y: { type: string } }
           required: [x, y]
-        verticalDatum: { type: string, example: "NAVD88", description: "Currently hardcoded 'NAVD88' by beach_profile.py, not read from DEM metadata. T4A.6 tracked gap: the dashboard's top-level BeachProfileData.datum TS field is NEVER populated by the real API response — the API only exposes datum here, nested under metadata, not as a sibling of `transect`/`breakPoints`. BeachProfileChart's Y-axis datum label is consequently always rendered in its no-datum form against real data." }
+        verticalDatum: { type: string, example: "NAVD88", description: "Currently hardcoded 'NAVD88' by beach_profile.py, not read from DEM metadata — a real defect, tracked as T4A.3/B2's job (LC-R2-14), not fixed by T4A.6. T4A.6 item (f) fixed the SHAPE side: the dashboard's BeachProfileData TS type now reads verticalDatum from here (metadata.verticalDatum) instead of a phantom top-level `datum` field the API never produced." }
         transectCount: { type: integer }
         openTransectCount: { type: integer }
+        handoffDepthM: { type: number, nullable: true, description: "T4A.6 item (g) / LC-R2-13. Per-hour handoff depth (1.3 x Hs(hour) / gamma) actually used, for the response's representative (best-peak) transect, in display units. Null until B1's T4A.9/T4A.10 lands handoff_depth_m on the pipeline's TransectResult — beach_profile.py degrades to null via getattr() rather than erroring in the interim." }
+        handoffSourceLevel: { type: string, nullable: true, enum: [L3, L2], description: "T4A.6 item (g) / LC-R2-13. Which SWAN level the handoff spectrum for the representative transect actually came from. Same null-until-B1-lands caveat as handoffDepthM." }
       required: [axisUnits, verticalDatum, transectCount, openTransectCount]
 
     BeachProfileTransectResult:
@@ -3622,25 +3624,27 @@ components:
         waveShapes:
           type: array
           items: { $ref: '#/components/schemas/BeachProfileWaveShapePoint' }
-          description: "T4A.6 tracked gap — see BeachProfileWaveShapePoint."
+          description: "T4A.6 item (a) — see BeachProfileWaveShapePoint."
         surfZones: { $ref: '#/components/schemas/BeachProfileSurfZones' }
         jackingFactors:
           type: array
           items: { $ref: '#/components/schemas/BeachProfileJackingFactor' }
-          description: "T4A.6 tracked gap — see BeachProfileJackingFactor."
+          description: "T4A.6 item (b) — see BeachProfileJackingFactor."
+        handoffDepthM: { type: number, nullable: true, description: "T4A.6 item (g) / LC-R2-13. This transect's per-hour handoff depth, in display units. See BeachProfileMetadata.handoffDepthM for the null-until-B1-lands caveat." }
+        handoffSourceLevel: { type: string, nullable: true, enum: [L3, L2], description: "T4A.6 item (g) / LC-R2-13. Which SWAN level this transect's handoff came from." }
       required: [transectIndex, isStructureAffected, transect, breakPoints, waveShapes, jackingFactors]
 
     BeachProfileData:
       type: object
       description: |
         `data` shape for GET /surf/{locationId}/profile with transect_index
-        = "best" (default) or an explicit integer index. T4A.6 tracked gap:
-        `perPartitionBreaks` and `metadata` are real top-level response
-        fields with no corresponding properties on the dashboard's
-        BeachProfileData TS type at all (silently dropped, not just
-        mis-shaped) — also `transects` (TS: BeachProfileTransectInfo[], for
-        the transect-selector dropdown) is never populated by this endpoint;
-        no code path in beach_profile.py returns it.
+        = "best" (default) or an explicit integer index. T4A.6 item (e) —
+        `perPartitionBreaks` and `metadata` are now on the dashboard's
+        BeachProfileData TS type, matching these real top-level response
+        fields. Pre-existing, separate gap NOT part of T4A.6: `transects`
+        (TS: BeachProfileTransectInfo[], for the transect-selector dropdown)
+        is never populated by this endpoint — no code path in
+        beach_profile.py returns it.
       allOf:
         - type: object
           properties:
