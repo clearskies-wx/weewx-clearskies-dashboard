@@ -3200,6 +3200,50 @@ components:
         weather: { type: string, nullable: true }
       required: [periodName, text]
 
+    SurfForecastScoring:
+      type: object
+      description: >
+        Per-factor scoring breakdown returned inside SurfForecast.scoring
+        (ADR-096). Additive identity: total = waveHeight + wavePeriod +
+        waveOrganization + beachAlignment + directionalExposure + timeOfDay.
+        Added 2026-08-02 (D4.1 contract re-reconciliation, mechanical
+        catch-up) — mirrors dashboard types.ts SurfForecastScoring, which has
+        carried this shape since Phase 4A; openapi never had it until now.
+      properties:
+        waveHeight: { type: integer, description: "Wave height factor score (0-35)." }
+        wavePeriod: { type: integer, description: "Wave period factor score (0-35+; multipliers may exceed 35)." }
+        waveOrganization: { type: integer, description: "Wave organization composite score (0-30)." }
+        organizationWind: { type: number, description: "Wind effect contribution within organization (0-~15; 50% of 30)." }
+        organizationSwellDominance: { type: number, description: "Swell dominance contribution (0-7.5; 25% of 30)." }
+        organizationDirectionalSpread: { type: number, description: "Directional spread contribution (0-4.5; 15% of 30). From SWAN DSPR." }
+        organizationCrossSwell: { type: number, description: "Cross-swell interference contribution (0-3; 10% of 30). From SPECOUT." }
+        beachAlignment: { type: integer, description: "Signed; beach angle alignment adjustment (0 = direct hit, negative = misaligned)." }
+        directionalExposure: { type: integer, description: "Signed; 0 when open, negative when blocked by headland/bathymetry." }
+        timeOfDay: { type: integer, description: "Signed; positive at dawn (bonus), negative in afternoon (penalty), 0 otherwise." }
+      required: [waveHeight, wavePeriod, waveOrganization, organizationWind, organizationSwellDominance, organizationDirectionalSpread, organizationCrossSwell, beachAlignment, directionalExposure, timeOfDay]
+
+    PartitionBreakInfo:
+      type: object
+      description: >
+        Per-partition break info — what one swell component does at the
+        beach (T5.4 swell display). Structurally different from
+        BeachProfilePerPartitionBreak (a related but separate schema for
+        BeachProfileData.perPartitionBreaks, with its own
+        partitionIndex/heightM/meanBreakDistanceM shape) — two distinct
+        schemas for two distinct fields, not a naming gap. Added 2026-08-02
+        (D4.1 contract re-reconciliation, mechanical catch-up) — mirrors
+        dashboard types.ts PartitionBreakInfo, present since Phase 4A/T5.4;
+        openapi never had it until now.
+      properties:
+        period: { type: number, description: "Dominant period of this partition in seconds." }
+        direction: { type: number, description: "Dominant direction of this partition in degrees (met convention)." }
+        classification: { type: string, description: "groundswell | swell | wind_swell" }
+        breakDistance: { type: number, description: "Cross-shore distance of the break point in display units from shore." }
+        faceHeight: { type: number, nullable: true, description: "Face height at the break point in display units. Null when unavailable." }
+        breakerType: { type: string, nullable: true, enum: [spilling, plunging, surging] }
+        breakLocation: { type: string, nullable: true, description: "outer_bar | inner_bar | middle_bar | beach. Null when the 1D model has not classified the break location." }
+      required: [period, direction, classification, breakDistance, faceHeight, breakerType, breakLocation]
+
     SurfForecast:
       type: object
       description: Surf quality forecast for one spot at one timestep (post wave_transform + surf_scorer).
@@ -3223,11 +3267,38 @@ components:
           type: array
           nullable: true
           items: { $ref: '#/components/schemas/SpectralWaveComponent' }
+        scoring:
+          allOf: [{ $ref: '#/components/schemas/SurfForecastScoring' }]
+          nullable: true
+          description: "Per-factor scoring breakdown, provided by surf_scorer.py when available. Null when the API does not yet include scoring (e.g. older server versions). Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since Phase 4A."
         swellHeight: { type: number, nullable: true, description: "Raw SWAN Hsig (significant wave height) before wave_transform.py supplements. Absent on WW3 fallback responses." }
         breakingFaceHeight: { type: number, nullable: true, description: "Trough-to-crest breaking wave face height via breaker formula (Komar-Gaughan or Caldwell per per-spot config). Primary surfer-scale height; display when surfHeightDisplay='face'. Absent on WW3 fallback." }
         breakingHawaiianHeight: { type: number, nullable: true, description: "Back-of-wave (Hawaiian) scale = breakingFaceHeight × 0.5. Display when surfHeightDisplay='hawaiian'. Null when breakingFaceHeight is null." }
         modelStatus: { type: string, nullable: true, enum: [ok, no_breaking, unavailable, degraded_bulk], description: "T4A.4 (Phase 4A): replaces the removed boolean 'degraded' flag. 'ok' = full SwellTrack pipeline ran; 'no_breaking' = model ran, genuinely flat (breakingFaceHeight=0.0); 'unavailable' = model failed (breakingFaceHeight=null) — never render null as flat; 'degraded_bulk' = SPECOUT unavailable, bulk Hs/Tp/Dir used." }
         windSource: { type: string, nullable: true, description: "Wind data source for this timestep's surf scoring: 'hrrr' for forecast timesteps, 'station' for t=0. Null when nearshore model is unavailable." }
+        breakPoints:
+          type: array
+          nullable: true
+          items: { $ref: '#/components/schemas/BeachProfileBreakPoint' }
+          description: "QB-peak break locations along the reference transect at this timestep (surf.py per-timestep pipeline scan — distinct from the beach-profile endpoint's per-transect break points, same schema/vocabulary). faceHeight/breakerType/iribarren/partitionInfo are never populated by this pipeline (always absent here). Null when no QB peak >= 0.25 detected. Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since Phase 4A."
+        directionalSpread: { type: number, nullable: true, description: "DSPR at the cross-shore transect reference point, in degrees (ADR-095). Added 2026-08-02 catch-up (D4.1)." }
+        setup: { type: number, nullable: true, description: "Wave-induced setup. Currently always null — SWAN SETUP command removed. Field retained for API contract stability. Added 2026-08-02 catch-up (D4.1)." }
+        partitionBreakInfo:
+          type: array
+          nullable: true
+          items: { $ref: '#/components/schemas/PartitionBreakInfo' }
+          description: "Per-partition break info — what each incoming swell component does at the beach. Present when the 1D model per-partition pipeline is active (T5.2/T5.4). Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since Phase 4A."
+        peelAngle: { type: number, nullable: true, description: "Peel angle in degrees, from break point spatial variation across adjacent transects. Null when insufficient transect data. Since 2026-08-01: across ALL successful transects, not just open ones (BD-8 rescinded). Added 2026-08-02 catch-up (D4.1)." }
+        peelClassification: { type: string, nullable: true, enum: [closeout, fast, good, mellow], description: "Peel angle classification: closeout (<30°), fast (30-45°), good (45-66°), mellow (>66°). Added 2026-08-02 catch-up (D4.1); the dashboard types.ts comment this schema is now aligned with had incorrectly carried stale directional-suffixed values (fast_right/fast_left/etc) that do not match the served contract — corrected in the same round (see D4.1 report)." }
+        bestPeakFaceHeight: { type: number, nullable: true, description: "Highest single-transect face height across the WHOLE study area. Since 2026-08-01: true single-transect max over ALL successful transects (BD-8 rescinded). Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T7.3." }
+        spotAverageFaceHeight: { type: number, nullable: true, description: "Mean face height across the WHOLE study area. Since 2026-08-01: mean across ALL successful transects (BD-8 rescinded). Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T7.3." }
+        transectCount: { type: integer, nullable: true, description: "Total number of transects (open + structure-affected). Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T7.1." }
+        openTransectCount: { type: integer, nullable: true, description: "Number of open (structure-free) transects. Since 2026-08-01 (BD-8 rescinded, ADR-093 Amendment 7): metadata/map-UI count ONLY, plays no role in any aggregation field. Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T7.1." }
+        shadowFaceHeight: { type: number, nullable: true, description: "Face height in the structure shadow zone. Null when no shadow present. Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T7.3." }
+        waveShapeClassification: { type: string, nullable: true, description: "Dominant wave shape from waveform + Iribarren analysis: hollow_plunging | steep_crumbly | walled_closeout | mushy_slow. Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T7.2b." }
+        setTimingMinutes: { type: number, nullable: true, description: "SurfBeat set timing — minutes between wave sets (IG spectral peak). Null when SurfBeat disabled or unavailable. Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T4.1/T4.2." }
+        setAmplitudeM: { type: number, nullable: true, description: "SurfBeat set amplitude — IG wave height in display units (already unit-converted despite the 'M' suffix). Null when SurfBeat disabled or unavailable. Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T4.1/T4.2." }
+        igWaveHeightM: { type: number, nullable: true, description: "Infragravity significant wave height at shoreline, in display units (already unit-converted despite the 'M' suffix). Null when SurfBeat disabled or unavailable. Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T4.1/T4.2." }
       required: [time, waveHeightAtBreak, period, direction, qualityStars, qualityLabel, conditionsText, windQuality, swellDominance]
 
     FishingForecast:
