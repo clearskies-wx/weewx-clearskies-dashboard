@@ -1309,6 +1309,15 @@ export interface SurfForecast {
    * genuinely flat conditions (`modelStatus === "no_breaking"`). Never treat
    * null as 0 — that would silently tell a surfer the ocean is flat when the
    * model actually failed.
+   *
+   * Semantics updated (BD-7, 2026-08-01, ADR-093 Amendment 7 / API-MANUAL
+   * height-fields table): this is now `mainBreakZoneFaceHeight` when `> 0`,
+   * else `bestPeakFaceHeight` (falls back only when nothing broke anywhere
+   * across the whole spot) — no longer simply "best peak across open
+   * transects." See `mainBreakZoneFaceHeight`/`mainBreakZoneStartIndex`/
+   * `mainBreakZoneEndIndex`/`mainBreakZoneQualifyingCount`/
+   * `representativeTransectIndex` below for the zone this headline is drawn
+   * from.
    */
   breakingFaceHeight?: number | null;
   /**
@@ -1317,6 +1326,38 @@ export interface SurfForecast {
    * Null when breakingFaceHeight is null (see breakingFaceHeight nullability note).
    */
   breakingHawaiianHeight?: number | null;
+  // BD-7/BD-9 (2026-08-01, ADR-093 Amendment 7, marine `9719db1`+`732e87d`).
+  // Main-break-zone headline + its representative transect. All five fields
+  // are additive/nullable (D4.1/D4.2, MARINE-FORWARD-PLAN) — absent on
+  // pre-Round-2 cached responses, which predate this contract; treat
+  // undefined the same as null (render nothing, never NaN/undefined text).
+  /**
+   * THE headline face height — mean of the qualifying (upper-tail, or
+   * top-5-fallback) per-transect face heights within the main break zone
+   * (the alongshore run of >= 5 contiguous transects with the highest mean
+   * face among candidates). `0.0` when nothing broke anywhere (same trigger
+   * bestPeakFaceHeight/breakingFaceHeight share). `null` only when no
+   * transects were computed at all, or on a pre-Round-2 cache entry (field
+   * absent — see comment above).
+   */
+  mainBreakZoneFaceHeight?: number | null;
+  /** Inclusive start transect index of the main break zone. `null` only when no transects were computed at all (or pre-Round-2 cache). */
+  mainBreakZoneStartIndex?: number | null;
+  /** Inclusive end transect index of the main break zone. Same nullability as mainBreakZoneStartIndex. Not guaranteed every index between start and end is a zone member in the rare scattered-failure fallback case (PROVIDER-MANUAL §14.15). */
+  mainBreakZoneEndIndex?: number | null;
+  /** Count of in-zone transects that met the qualifying threshold and fed mainBreakZoneFaceHeight. Always `>= 1` when non-null. */
+  mainBreakZoneQualifyingCount?: number | null;
+  /**
+   * The transect index whose cross-section the beach-profile endpoint
+   * renders (BD-9) — the in-zone transect whose own face height is closest
+   * to mainBreakZoneFaceHeight (deterministic tiebreak: zone-alongshore-
+   * center distance, then lower transect index). The beach-profile endpoint's
+   * `transect_index=best` default already resolves to this server-side
+   * (API-MANUAL §"Beach profile endpoint" query-parameter row) — the
+   * dashboard does not need to pass this value back to select the
+   * cross-section (D4.3, verify-only).
+   */
+  representativeTransectIndex?: number | null;
   /**
    * Distinguishes why breakingFaceHeight/breakingHawaiianHeight are zero or
    * null (T4A.4, Phase 4A). Replaces the removed boolean `degraded` flag,
@@ -1357,8 +1398,27 @@ export interface SurfForecast {
   // T7.2: Peel angle fields — derived from multi-transect break-point lateral variation.
   /** Peel angle in degrees; null when insufficient transect data. */
   peelAngle?: number | null;
-  /** Peel classification: closeout|fast_right|fast_left|good_right|good_left|mellow_right|mellow_left */
+  /**
+   * Peel classification. **Corrected 2026-08-02 (D4.1 audit)**: this
+   * previously documented directional-suffixed values
+   * (`closeout|fast_right|fast_left|good_right|good_left|mellow_right|mellow_left`)
+   * that do not match the served contract. API-MANUAL and a live capture
+   * both confirm the actual values are plain, undirected:
+   * `"closeout"` (<30°), `"fast"` (30-45°), `"good"` (45-66°), `"mellow"` (>66°).
+   * Direction is carried separately in `peelDirection` below, not as a
+   * suffix here.
+   */
   peelClassification?: string | null;
+  /**
+   * Break direction/shape descriptor, separate from peelClassification
+   * (added 2026-08-02, D4.1 audit — confirmed present on the live-served
+   * contract, previously absent from this type entirely). Only value
+   * observed so far: `"a_frame"` (peaks both directions from a single
+   * point) — other values (e.g. left/right-breaking) are expected by
+   * naming pattern but NOT yet confirmed against a live response; treat
+   * as an opaque string, not a closed enum, until more values are observed.
+   */
+  peelDirection?: string | null;
   // T7.3: Best-peak / average face height across open transects.
   /** Best-peak face height (maximum across open transects) in display units. */
   bestPeakFaceHeight?: number | null;
@@ -1673,7 +1733,15 @@ export interface BeachProfilePartitionInfo {
  * type (below) — kept so existing imports don't need to change.
  */
 export interface BeachProfilePoint {
-  /** Cross-shore distance from the shoreline, in display units (0 = shore, larger = further offshore). */
+  /**
+   * Cross-shore distance from the shoreline, in display units (0 = shore,
+   * larger = further offshore). **Can be negative** (TA-C19, confirmed live
+   * 2026-08-02, ADR-093 Amendment 4): since the HAT (highest astronomical
+   * tide) landward extension, a point can lie landward of the reference
+   * waterline and is reported as a negative distance. Consumers must accept
+   * negatives; a display should treat a negative value as "at/onshore of
+   * the shoreline," never clamp or `Math.abs()` it (API-MANUAL).
+   */
   distance: number;
   /** Depth below the water surface, in display units (positive = deeper). */
   depth: number;
@@ -1707,7 +1775,11 @@ export type BeachProfileTransectPoint = BeachProfilePoint;
  * QB-peak scan), which never populates either field — see the note there.
  */
 export interface BeachProfileBreakPoint {
-  /** Distance from shore in display units at this break location. */
+  /**
+   * Distance from shore in display units at this break location. **Can be
+   * negative** — same TA-C19 / ADR-093 Amendment 4 semantics as
+   * {@link BeachProfilePoint.distance} above.
+   */
   distance: number;
   /** Depth at the break location in display units. */
   depth: number;
@@ -1854,8 +1926,14 @@ export interface BeachProfileMetadata {
    * the API degrades to null rather than erroring in the interim.
    */
   handoffDepthM?: number | null;
-  /** Which SWAN level the representative transect's handoff came from. Same null-until-B1-lands caveat as handoffDepthM. */
-  handoffSourceLevel?: 'L3' | 'L2' | null;
+  /**
+   * Which SWAN level the representative transect's handoff came from. Same
+   * null-until-B1-lands caveat as handoffDepthM. **Widened to include
+   * `'L4'`** (2026-08-02, D4.1 audit) — confirmed live (E5 ruling D3,
+   * first-match-wins L4 → L3 → L2 per transect per hour; API-MANUAL
+   * documents all three levels, this type previously only had two).
+   */
+  handoffSourceLevel?: 'L4' | 'L3' | 'L2' | null;
 }
 
 /**
@@ -1880,8 +1958,12 @@ export interface BeachProfileTransectResult {
   jackingFactors: BeachProfileJackingFactor[];
   /** T4A.6 item (g) / LC-R2-13 — this transect's own per-hour handoff depth, in display units. */
   handoffDepthM?: number | null;
-  /** T4A.6 item (g) / LC-R2-13 — which SWAN level this transect's handoff came from. */
-  handoffSourceLevel?: 'L3' | 'L2' | null;
+  /**
+   * T4A.6 item (g) / LC-R2-13 — which SWAN level this transect's handoff
+   * came from. **Widened to include `'L4'`** (2026-08-02, D4.1 audit) — see
+   * the identical note on {@link BeachProfileMetadata.handoffSourceLevel}.
+   */
+  handoffSourceLevel?: 'L4' | 'L3' | 'L2' | null;
 }
 
 /**

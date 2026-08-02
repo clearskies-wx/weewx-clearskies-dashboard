@@ -104,6 +104,31 @@ const OK_EMPTY_RESPONSE: BeachProfileDataOk = {
   transect: [],
 };
 
+// TA-C19 (ADR-093 Amendment 4, D4.2): a live capture (profile-fixture.json,
+// huntington-city-beach-pier, 2026-08-02) had a real transect point at
+// distance -25.94 — landward of the reference waterline (HAT extension).
+// Reproduced here (not synthesized) so the negative-distance axis-domain
+// fix can be asserted against an observed value.
+const OK_RESPONSE_NEGATIVE_DISTANCE: BeachProfileDataOk = {
+  ...OK_RESPONSE,
+  transectIndex: 39,
+  transect: [
+    { distance: 68.56, depth: 1.943, hs: 0.8206, swellHeight: 0.62, breakingFraction: null },
+    { distance: 25.59, depth: 1.113, hs: 0.8125, swellHeight: 0.55, breakingFraction: 0.4 },
+    { distance: -25.94, depth: 0.01, hs: 0.0073, swellHeight: 0.01, breakingFraction: 0.9 },
+  ],
+  handoffDepthM: 1.4068,
+  handoffSourceLevel: 'L4',
+  metadata: {
+    ...OK_RESPONSE.metadata,
+    verticalDatum: 'LMSL',
+    transectCount: 143,
+    openTransectCount: 118,
+    handoffDepthM: 1.4068,
+    handoffSourceLevel: 'L4',
+  },
+};
+
 const FETCH_ERROR = new Error('404: Surf location not found');
 
 describe('computeBeachProfileState', () => {
@@ -212,5 +237,37 @@ describe('BeachProfileCardBody', () => {
     );
     expect(getByText('surfing.beachProfileNoData')).toBeDefined();
     expect(queryByRole('alert')).toBeNull();
+  });
+
+  // TA-C19 / D4.2: negative `distance` values (landward of the reference
+  // waterline, ADR-093 Amendment 4) must render INSIDE the chart's drawable
+  // area, not merely "not throw" — a negative distance previously computed
+  // an SVG x past the right edge (off-canvas) because xMin was hardcoded to
+  // 0. BeachProfileChart's layout constants: VIEW_W=820, PAD_LEFT=72,
+  // PAD_RIGHT=12 -> CHART_W=736 (not exported, restated here for the
+  // in-canvas assertion).
+  it('negative distance (TA-C19): every seafloor point stays within the drawable area', () => {
+    const PAD_LEFT = 72;
+    const CHART_W = 736;
+    const EPSILON = 0.5; // SVG coordinates are toFixed(1) — allow sub-pixel slack.
+
+    const { container } = render(
+      <BeachProfileCardBody {...baseProps} state="ok" profile={OK_RESPONSE_NEGATIVE_DISTANCE} />,
+    );
+    // The seafloor cross-shore polyline maps every transect point 1:1
+    // (buildSeafloorPolygon / the `seafloorPolyline` points string) — it is
+    // the only <polyline> rendered by default (wave-shapes toggle starts off).
+    const polyline = container.querySelector('svg polyline');
+    expect(polyline).not.toBeNull();
+    const pointsAttr = polyline!.getAttribute('points') ?? '';
+    const pairs = pointsAttr.trim().split(/\s+/).filter(Boolean);
+    expect(pairs.length).toBeGreaterThanOrEqual(3); // one per transect point above
+    for (const pair of pairs) {
+      const [xStr] = pair.split(',');
+      const x = Number(xStr);
+      expect(Number.isNaN(x)).toBe(false);
+      expect(x).toBeGreaterThanOrEqual(PAD_LEFT - EPSILON);
+      expect(x).toBeLessThanOrEqual(PAD_LEFT + CHART_W + EPSILON);
+    }
   });
 });

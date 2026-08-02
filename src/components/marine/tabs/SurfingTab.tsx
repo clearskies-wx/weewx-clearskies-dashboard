@@ -2183,6 +2183,26 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                   </p>
                 )}
 
+                {/* BD-7/BD-9 (D4.2, 2026-08-02): main break zone context for the
+                 *  breakingFaceHeight headline below — "main break zone: transects
+                 *  S–E, N qualifying". Null-safe: only renders when all three zone
+                 *  fields are present (absent on pre-Round-2 cached responses). */}
+                {primary.mainBreakZoneStartIndex != null &&
+                  primary.mainBreakZoneEndIndex != null &&
+                  primary.mainBreakZoneQualifyingCount != null && (
+                  <p
+                    className="text-muted-foreground"
+                    style={{ fontSize: 'var(--text-micro)', margin: '0 0 0.1rem 0' }}
+                  >
+                    {t('surfing.mainBreakZoneLabel', {
+                      start: primary.mainBreakZoneStartIndex,
+                      end: primary.mainBreakZoneEndIndex,
+                      qualifyingCount: primary.mainBreakZoneQualifyingCount,
+                      defaultValue: 'Main break zone: transects {{start}}–{{end}}, {{qualifyingCount}} qualifying',
+                    })}
+                  </p>
+                )}
+
                 {/* T6.1: 3 stats only — Swell Height, Breaking Face Height, Period.
                  *  Direction removed from top row (redundant with compass below). */}
                 <dl className="grid grid-cols-3 gap-x-4 gap-y-2">

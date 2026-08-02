@@ -134,9 +134,28 @@ function maxDistance(allTransects: HeatMapTransectData[]): number {
   return max === 0 ? 1 : max;
 }
 
+/**
+ * TA-C19 (ADR-093 Amendment 4, confirmed live 2026-08-02, D4.2): `distance`
+ * can be negative (a point landward of the reference waterline, since the
+ * HAT extension). Without this, `distToX()`'s implicit min=0 pushed any
+ * negative-distance point past the chart's right edge (off-canvas) — never
+ * clamp/abs() a negative distance away (API-MANUAL). Defaults to 0 when no
+ * point is negative, so the existing all-non-negative case is unaffected.
+ */
+function minDistance(allTransects: HeatMapTransectData[]): number {
+  let min = 0;
+  for (const row of allTransects) {
+    for (const pt of row.transect) {
+      if (pt.distance < min) min = pt.distance;
+    }
+  }
+  return min;
+}
+
 /** Map a cross-shore distance to SVG x (shore = RIGHT, offshore = LEFT). */
-function distToX(dist: number, maxDist: number): number {
-  return PAD_LEFT + CHART_W * (1 - dist / maxDist);
+function distToX(dist: number, minDist: number, maxDist: number): number {
+  if (maxDist === minDist) return PAD_LEFT + CHART_W / 2;
+  return PAD_LEFT + CHART_W * (1 - (dist - minDist) / (maxDist - minDist));
 }
 
 /** Map a row index to the SVG y of the top of that row. */
@@ -308,6 +327,7 @@ export function HeatMapCard({ data, loading, error, onRetry, heightUnit, distanc
     const viewH = PAD_TOP + chartH + PAD_BOTTOM;
 
     const maxDist = maxDistance(rows);
+    const minDist = minDistance(rows);
 
     // Compute max Hs across all rows for the colour scale.
     let maxHs = 0;
@@ -321,7 +341,7 @@ export function HeatMapCard({ data, loading, error, onRetry, heightUnit, distanc
     }
     if (maxHs <= 0) maxHs = 1;
 
-    return { rows, N, rowH, chartH, viewH, maxDist, maxHs };
+    return { rows, N, rowH, chartH, viewH, maxDist, minDist, maxHs };
   }, [data]);
 
   // X-axis tick values.
@@ -396,7 +416,7 @@ export function HeatMapCard({ data, loading, error, onRetry, heightUnit, distanc
     );
   }
 
-  const { rows, N, rowH, viewH, maxDist, maxHs } = geometry;
+  const { rows, N, rowH, viewH, maxDist, minDist, maxHs } = geometry;
   const hatchId = `${HATCH_BASE_ID}-${titleId.replace(/:/g, '')}`;
   const legendY = PAD_TOP + N * rowH + 28;
 
@@ -422,8 +442,8 @@ export function HeatMapCard({ data, loading, error, onRetry, heightUnit, distanc
       for (let pi = 0; pi < pts.length - 1; pi++) {
         const d0 = pts[pi].distance;
         const d1 = pts[pi + 1].distance;
-        const x0 = distToX(d0, maxDist);
-        const x1 = distToX(d1, maxDist);
+        const x0 = distToX(d0, minDist, maxDist);
+        const x1 = distToX(d1, minDist, maxDist);
         const xLeft  = Math.min(x0, x1);
         const xRight = Math.max(x0, x1);
         const w = xRight - xLeft;
@@ -486,8 +506,8 @@ export function HeatMapCard({ data, loading, error, onRetry, heightUnit, distanc
     if (row.surfZones) {
       const { impactZone, foamZone } = row.surfZones;
       if (impactZone != null) {
-        const x0 = distToX(impactZone.startDistance, maxDist);
-        const x1 = distToX(impactZone.endDistance, maxDist);
+        const x0 = distToX(impactZone.startDistance, minDist, maxDist);
+        const x1 = distToX(impactZone.endDistance, minDist, maxDist);
         const xL = Math.min(x0, x1);
         const xR = Math.max(x0, x1);
         if (xR - xL > 0.5) {
@@ -504,8 +524,8 @@ export function HeatMapCard({ data, loading, error, onRetry, heightUnit, distanc
         }
       }
       if (foamZone != null) {
-        const x0 = distToX(foamZone.startDistance, maxDist);
-        const x1 = distToX(foamZone.endDistance, maxDist);
+        const x0 = distToX(foamZone.startDistance, minDist, maxDist);
+        const x1 = distToX(foamZone.endDistance, minDist, maxDist);
         const xL = Math.min(x0, x1);
         const xR = Math.max(x0, x1);
         if (xR - xL > 0.5) {
@@ -528,7 +548,7 @@ export function HeatMapCard({ data, loading, error, onRetry, heightUnit, distanc
     for (const bpList of [outerBPs, innerBPs]) {
       if (bpList.length === 0) continue;
       for (const bp of bpList) {
-        const bx = distToX(bp.distance, maxDist);
+        const bx = distToX(bp.distance, minDist, maxDist);
         // Break zone extent: 10% of CHART_W in each direction.
         const halfW = CHART_W * 0.05;
         zoneFills.push(
@@ -547,7 +567,7 @@ export function HeatMapCard({ data, loading, error, onRetry, heightUnit, distanc
     // 4. Breaker type glyphs.
     for (const bp of row.breakPoints) {
       if (!bp.breakerType) continue;
-      const bx = distToX(bp.distance, maxDist);
+      const bx = distToX(bp.distance, minDist, maxDist);
       const cy = y + rowH / 2;
       breakGlyphs.push(
         <BreakerGlyph
@@ -720,7 +740,7 @@ export function HeatMapCard({ data, loading, error, onRetry, heightUnit, distanc
 
           {/* X axis ticks and labels */}
           {xTicks.map((v) => {
-            const x = distToX(v, maxDist);
+            const x = distToX(v, minDist, maxDist);
             return (
               <g key={`xtick-${v}`}>
                 <line

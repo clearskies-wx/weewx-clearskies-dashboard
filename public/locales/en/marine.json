@@ -224,6 +224,7 @@
     "swellCardTitle": "Current Swell Conditions",
     "swellHeightStatLabel": "Swell Height",
     "faceBreakHeightLabel": "Breaking Face Height",
+    "mainBreakZoneLabel": "Main break zone: transects {{start}}–{{end}}, {{qualifyingCount}} qualifying",
     "swellBreakdownTitle": "Swell Components",
     "incomingSwellLabel": "INCOMING SWELL (offshore)",
     "partitionBreaksTitle": "AT BREAK",

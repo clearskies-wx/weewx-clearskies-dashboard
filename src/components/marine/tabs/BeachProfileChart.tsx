@@ -251,7 +251,16 @@ export function BeachProfileChart({
   const clipped = transect.filter((p) => p.distance <= tier.maxDistance);
   const displayTransect = clipped.length >= 2 ? clipped : transect;
 
-  const xMin = 0;
+  // TA-C19 (ADR-093 Amendment 4, confirmed live 2026-08-02, D4.2): `distance`
+  // can be negative (a point landward of the reference waterline, since the
+  // HAT extension). Previously xMin was hardcoded to 0, which pushed any
+  // negative-distance point past the chart's right edge (off-canvas) — the
+  // API-MANUAL is explicit that a negative value must render as "onshore of
+  // the shoreline," never be clamped/abs()'d away. Extending xMin to the
+  // true observed minimum keeps every point inside the drawable area; shore
+  // (distance=0) simply stops being pinned to the exact right edge when a
+  // landward point exists.
+  const xMin = Math.min(0, ...displayTransect.map((p) => p.distance));
   const xMax = tier.maxDistance;
 
   const tide = tideLevel ?? 0;

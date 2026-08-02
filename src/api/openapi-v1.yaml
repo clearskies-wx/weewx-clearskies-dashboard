@@ -3206,9 +3206,9 @@ components:
         Per-factor scoring breakdown returned inside SurfForecast.scoring
         (ADR-096). Additive identity: total = waveHeight + wavePeriod +
         waveOrganization + beachAlignment + directionalExposure + timeOfDay.
-        Added 2026-08-02 (D4.1 contract re-reconciliation, mechanical
-        catch-up) — mirrors dashboard types.ts SurfForecastScoring, which has
-        carried this shape since Phase 4A; openapi never had it until now.
+        Added 2026-08-02 (D4.1 contract re-reconciliation) — mirrors
+        dashboard types.ts SurfForecastScoring, which has carried this shape
+        since Phase 4A; openapi never had it until this catch-up.
       properties:
         waveHeight: { type: integer, description: "Wave height factor score (0-35)." }
         wavePeriod: { type: integer, description: "Wave period factor score (0-35+; multipliers may exceed 35)." }
@@ -3231,9 +3231,9 @@ components:
         BeachProfileData.perPartitionBreaks, with its own
         partitionIndex/heightM/meanBreakDistanceM shape) — two distinct
         schemas for two distinct fields, not a naming gap. Added 2026-08-02
-        (D4.1 contract re-reconciliation, mechanical catch-up) — mirrors
-        dashboard types.ts PartitionBreakInfo, present since Phase 4A/T5.4;
-        openapi never had it until now.
+        (D4.1 contract re-reconciliation) — mirrors dashboard types.ts
+        PartitionBreakInfo, present since Phase 4A/T5.4; openapi never had
+        it until this catch-up.
       properties:
         period: { type: number, description: "Dominant period of this partition in seconds." }
         direction: { type: number, description: "Dominant direction of this partition in degrees (met convention)." }
@@ -3272,8 +3272,13 @@ components:
           nullable: true
           description: "Per-factor scoring breakdown, provided by surf_scorer.py when available. Null when the API does not yet include scoring (e.g. older server versions). Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since Phase 4A."
         swellHeight: { type: number, nullable: true, description: "Raw SWAN Hsig (significant wave height) before wave_transform.py supplements. Absent on WW3 fallback responses." }
-        breakingFaceHeight: { type: number, nullable: true, description: "Trough-to-crest breaking wave face height via breaker formula (Komar-Gaughan or Caldwell per per-spot config). Primary surfer-scale height; display when surfHeightDisplay='face'. Absent on WW3 fallback." }
+        breakingFaceHeight: { type: number, nullable: true, description: "Trough-to-crest breaking wave face height. Primary surfer-scale height; display when surfHeightDisplay='face'. Absent on WW3 fallback. Since 2026-08-01 (BD-7, ADR-093 Amendment 7): mainBreakZoneFaceHeight when > 0, else bestPeakFaceHeight — no longer simply 'best peak across open transects' (formula description corrected 2026-08-02, D4.1)." }
         breakingHawaiianHeight: { type: number, nullable: true, description: "Back-of-wave (Hawaiian) scale = breakingFaceHeight × 0.5. Display when surfHeightDisplay='hawaiian'. Null when breakingFaceHeight is null." }
+        mainBreakZoneFaceHeight: { type: number, nullable: true, description: "NEW 2026-08-01 (BD-7, ADR-093 Amendment 7). THE headline face height — mean of the qualifying per-transect face heights within the main break zone. 0.0 when nothing broke anywhere; null only when no transects were computed at all, or absent entirely on a pre-Round-2 cache entry. Added to this schema 2026-08-02 (D4.1/D4.2 catch-up)." }
+        mainBreakZoneStartIndex: { type: integer, nullable: true, description: "NEW 2026-08-01 (BD-7). Inclusive start transect index of the main break zone. Added 2026-08-02 (D4.1/D4.2)." }
+        mainBreakZoneEndIndex: { type: integer, nullable: true, description: "NEW 2026-08-01 (BD-7). Inclusive end transect index of the main break zone. Not guaranteed every index between start and end is a zone member in the rare scattered-failure fallback case (PROVIDER-MANUAL §14.15). Added 2026-08-02 (D4.1/D4.2)." }
+        mainBreakZoneQualifyingCount: { type: integer, nullable: true, description: "NEW 2026-08-01 (BD-7). Count of in-zone transects that met the qualifying threshold and fed mainBreakZoneFaceHeight; always >= 1 when non-null. Added 2026-08-02 (D4.1/D4.2)." }
+        representativeTransectIndex: { type: integer, nullable: true, description: "NEW 2026-08-01 (BD-9). The transect index whose cross-section the beach-profile endpoint renders (transect_index=best default already resolves this server-side — the dashboard does not pass it back). Added 2026-08-02 (D4.1/D4.2)." }
         modelStatus: { type: string, nullable: true, enum: [ok, no_breaking, unavailable, degraded_bulk], description: "T4A.4 (Phase 4A): replaces the removed boolean 'degraded' flag. 'ok' = full SwellTrack pipeline ran; 'no_breaking' = model ran, genuinely flat (breakingFaceHeight=0.0); 'unavailable' = model failed (breakingFaceHeight=null) — never render null as flat; 'degraded_bulk' = SPECOUT unavailable, bulk Hs/Tp/Dir used." }
         windSource: { type: string, nullable: true, description: "Wind data source for this timestep's surf scoring: 'hrrr' for forecast timesteps, 'station' for t=0. Null when nearshore model is unavailable." }
         breakPoints:
@@ -3289,7 +3294,8 @@ components:
           items: { $ref: '#/components/schemas/PartitionBreakInfo' }
           description: "Per-partition break info — what each incoming swell component does at the beach. Present when the 1D model per-partition pipeline is active (T5.2/T5.4). Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since Phase 4A."
         peelAngle: { type: number, nullable: true, description: "Peel angle in degrees, from break point spatial variation across adjacent transects. Null when insufficient transect data. Since 2026-08-01: across ALL successful transects, not just open ones (BD-8 rescinded). Added 2026-08-02 catch-up (D4.1)." }
-        peelClassification: { type: string, nullable: true, enum: [closeout, fast, good, mellow], description: "Peel angle classification: closeout (<30°), fast (30-45°), good (45-66°), mellow (>66°). Added 2026-08-02 catch-up (D4.1); the dashboard types.ts comment this schema is now aligned with had incorrectly carried stale directional-suffixed values (fast_right/fast_left/etc) that do not match the served contract — corrected in the same round (see D4.1 report)." }
+        peelClassification: { type: string, nullable: true, enum: [closeout, fast, good, mellow], description: "Peel angle classification: closeout (<30°), fast (30-45°), good (45-66°), mellow (>66°). Corrected 2026-08-02 (D4.1 audit) — previously undocumented in this schema; the dashboard types.ts comment this schema is now aligned with had incorrectly carried stale directional-suffixed values (fast_right/fast_left/etc) that do not match the served contract." }
+        peelDirection: { type: string, nullable: true, description: "Break direction/shape descriptor, separate from peelClassification. Added 2026-08-02 (D4.1 audit) — confirmed present on the live-served contract, previously absent from this schema and from dashboard types.ts entirely. Only value observed so far: 'a_frame' (peaks both directions from a single point); not modeled as a closed enum pending more observed values." }
         bestPeakFaceHeight: { type: number, nullable: true, description: "Highest single-transect face height across the WHOLE study area. Since 2026-08-01: true single-transect max over ALL successful transects (BD-8 rescinded). Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T7.3." }
         spotAverageFaceHeight: { type: number, nullable: true, description: "Mean face height across the WHOLE study area. Since 2026-08-01: mean across ALL successful transects (BD-8 rescinded). Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T7.3." }
         transectCount: { type: integer, nullable: true, description: "Total number of transects (open + structure-affected). Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T7.1." }
@@ -3554,7 +3560,7 @@ components:
       type: object
       description: One cross-shore transect point. Field names match BeachProfilePoint (dashboard types.ts) and the model's own vocabulary (Analytical1DResult).
       properties:
-        distance: { type: number, description: "Cross-shore distance from shore, in display units (0 = shore, larger = further offshore)." }
+        distance: { type: number, description: "Cross-shore distance from shore, in display units (0 = shore, larger = further offshore). Can be negative (TA-C19, ADR-093 Amendment 4): since the HAT landward extension, a point can lie landward of the reference waterline and is reported as a negative distance. Consumers must accept negatives; treat a negative value as at/onshore of the shoreline, never clamp or abs() it. Note added 2026-08-02 (D4.1/D4.2) — confirmed live." }
         depth: { type: number, description: "Depth below the water surface, in display units (positive = deeper)." }
         hs: { type: number, nullable: true, description: "Significant wave height at this point, in display units." }
         swellHeight: { type: number, nullable: true, description: "Swell height (HSWELL) at this point, in display units." }
@@ -3577,7 +3583,7 @@ components:
       type: object
       description: One break location along a transect. Field names match BeachProfileBreakPoint (dashboard types.ts).
       properties:
-        distance: { type: number, description: "Distance from shore at this break location, in display units." }
+        distance: { type: number, description: "Distance from shore at this break location, in display units. Can be negative — same TA-C19 / ADR-093 Amendment 4 semantics as BeachProfilePoint.distance above. Note added 2026-08-02 (D4.1/D4.2)." }
         depth: { type: number, description: "Depth at the break location, in display units." }
         hs: { type: number, nullable: true, description: "Significant wave height at this break location, in display units." }
         faceHeight: { type: number, nullable: true, description: "Face height (K-G/Caldwell H1/10 or pipeline-computed) at this break point, in display units." }
@@ -3686,7 +3692,7 @@ components:
         transectCount: { type: integer, nullable: true, description: "SURF-PUBLISH-RESULTS-ONLY §3.6: null when modelStatus is \"unavailable\" — there is no transect count when the model produced nothing for this hour." }
         openTransectCount: { type: integer, nullable: true, description: "Same null-when-unavailable rule as transectCount (§3.6)." }
         handoffDepthM: { type: number, nullable: true, description: "T4A.6 item (g) / LC-R2-13. Per-hour handoff depth (1.3 x Hs(hour) / gamma) actually used, for the response's representative (best-peak) transect, in display units. Null until B1's T4A.9/T4A.10 lands handoff_depth_m on the pipeline's TransectResult — beach_profile.py degrades to null via getattr() rather than erroring in the interim." }
-        handoffSourceLevel: { type: string, nullable: true, enum: [L3, L2], description: "T4A.6 item (g) / LC-R2-13. Which SWAN level the handoff spectrum for the representative transect actually came from. Same null-until-B1-lands caveat as handoffDepthM." }
+        handoffSourceLevel: { type: string, nullable: true, enum: [L4, L3, L2], description: "T4A.6 item (g) / LC-R2-13. Which SWAN level the handoff spectrum for the representative transect actually came from. Same null-until-B1-lands caveat as handoffDepthM. Widened to include L4 2026-08-02 (D4.1 audit) — confirmed live (E5 ruling D3, first-match-wins L4 -> L3 -> L2)." }
       required: [axisUnits, verticalDatum, transectCount, openTransectCount]
 
     BeachProfileTransectResult:
@@ -3718,7 +3724,7 @@ components:
           items: { $ref: '#/components/schemas/BeachProfileJackingFactor' }
           description: "T4A.6 item (b) — see BeachProfileJackingFactor."
         handoffDepthM: { type: number, nullable: true, description: "T4A.6 item (g) / LC-R2-13. This transect's per-hour handoff depth, in display units. See BeachProfileMetadata.handoffDepthM for the null-until-B1-lands caveat." }
-        handoffSourceLevel: { type: string, nullable: true, enum: [L3, L2], description: "T4A.6 item (g) / LC-R2-13. Which SWAN level this transect's handoff came from." }
+        handoffSourceLevel: { type: string, nullable: true, enum: [L4, L3, L2], description: "T4A.6 item (g) / LC-R2-13. Which SWAN level this transect's handoff came from. Widened to include L4 2026-08-02 (D4.1 audit) — see the identical note above." }
       required: [transectIndex, isStructureAffected, transect, breakPoints, waveShapes, jackingFactors]
 
     BeachProfileData:
