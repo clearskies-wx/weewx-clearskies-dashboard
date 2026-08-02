@@ -231,6 +231,42 @@ const OK_RESPONSE_5_ROWS: HeatMapProfileDataOk = {
   },
 };
 
+// D5-audit MAJOR remediation KAT (auditor's exact gap scenario): 20
+// conceptual transects (0..19) with #5 MISSING — marine filters failed
+// transects out of per_transect entirely (surf_1d_pipeline.py:1683), so
+// `rows` here has 19 entries, not 20, and `rows[i].transectIndex !== i`
+// for every i >= 5. Zone [10, 12], representative 11. Expected (worked by
+// hand, matching the auditor's own numbers): representative transectIndex
+// 11 sits at ARRAY POSITION 10 (positions: 0->tI0, 1->tI1, ..., 4->tI4,
+// 5->tI6, 6->tI7, 7->tI8, 8->tI9, 9->tI10, 10->tI11, 11->tI12, ...) — NOT
+// position 11 (which is what the pre-remediation value-as-position bug
+// would have used). Zone members (transectIndex 10, 11, 12) sit at
+// positions 9, 10, 11.
+const GAP_ROWS: HeatMapTransectData[] = [0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19].map(buildRow);
+const OK_RESPONSE_GAP: HeatMapProfileDataOk = {
+  locationId: 'huntington-city-beach-pier',
+  timestep: '2026-08-02T00:00:00Z',
+  modelStatus: 'ok',
+  profiles: GAP_ROWS,
+  perPartitionBreaks: [],
+  metadata: {
+    axisUnits: { x: 'm', y: 'm' },
+    verticalDatum: 'LMSL',
+    transectCount: 20,
+    openTransectCount: 19,
+    handoffDepthM: 2,
+    handoffSourceLevel: 'L3',
+  },
+};
+// Mirrors HeatMapCard.tsx's rowToY()/PAD_TOP/ROW_H_MIN/ROW_H_MAX — not
+// exported, restated here so the gap-KAT can assert exact pixel positions
+// rather than just "some rect exists somewhere".
+const GAP_PAD_TOP = 28;
+const GAP_ROW_H = Math.min(48, Math.max(8, Math.floor(300 / GAP_ROWS.length))); // 19 rows -> 15
+function gapRowToY(pos: number): number {
+  return GAP_PAD_TOP + pos * GAP_ROW_H;
+}
+
 const FETCH_ERROR = new Error('404: Surf location not found');
 
 const baseProps = {
@@ -397,23 +433,63 @@ describe('HeatMapCard', () => {
       const texts = Array.from(container.querySelectorAll('svg text'));
       const boldLabel = texts.find((el) => el.textContent === '2' && el.getAttribute('font-weight') === '700');
       expect(boldLabel).toBeDefined();
-      // Every other row label stays unbolded.
+      // Every other row label stays unbolded — D5-audit MINOR remediation:
+      // `font-weight` must be OMITTED entirely (not `"400"`) for non-
+      // representative rows, restoring byte-identity with the pre-D5.2
+      // render for the no-overlay case (asserted separately below too).
       const otherLabels = texts.filter((el) => ['0', '1', '3', '4'].includes(el.textContent ?? ''));
       expect(otherLabels.length).toBeGreaterThan(0);
       for (const el of otherLabels) {
-        expect(el.getAttribute('font-weight')).not.toBe('700');
+        expect(el.getAttribute('font-weight')).toBeNull();
       }
     });
 
-    it('range-guard: an out-of-bounds mainBreakZoneEndIndex does not crash and does not render the band', () => {
+    // D5-audit MAJOR remediation: range-guards are now MEMBERSHIP-based
+    // (does any row's transectIndex fall in [start..end]?), not a bounds
+    // check against N. A huge endIndex (e.g. 999) is NOT automatically
+    // invalid — if the zone's lower bound still overlaps real rows, the
+    // visible portion of the zone legitimately renders (this is correct:
+    // the zone conceptually extends beyond what this response's own
+    // transect set covers). The only genuinely "no band" case is when
+    // NO row's transectIndex falls in the range at all.
+    it('a partially out-of-range zone (huge endIndex) still renders the band over the rows that DO fall in range', () => {
       expect(() => render(
         <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS} loading={false} mainBreakZoneStartIndex={1} mainBreakZoneEndIndex={999} />,
       )).not.toThrow();
       const { container } = render(
         <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS} loading={false} mainBreakZoneStartIndex={1} mainBreakZoneEndIndex={999} />,
       );
+      // OK_RESPONSE_5_ROWS has transectIndex 0..4 — rows 1,2,3,4 fall in
+      // [1, 999], row 0 does not. Band should cover array positions 1..4.
+      const bandRects = Array.from(container.querySelectorAll('svg rect'))
+        .filter((r) => r.getAttribute('fill') === MAIN_BREAK_ZONE_FILL && r.getAttribute('width') === '6');
+      expect(bandRects.length).toBe(1);
+    });
+
+    it('range-guard: a zone range that matches NO row does not crash and does not render the band', () => {
+      expect(() => render(
+        <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS} loading={false} mainBreakZoneStartIndex={500} mainBreakZoneEndIndex={999} />,
+      )).not.toThrow();
+      const { container } = render(
+        <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS} loading={false} mainBreakZoneStartIndex={500} mainBreakZoneEndIndex={999} />,
+      );
       const bandRects = Array.from(container.querySelectorAll('svg rect')).filter((r) => r.getAttribute('fill') === MAIN_BREAK_ZONE_FILL);
       expect(bandRects.length).toBe(0);
+    });
+
+    it('byte-identity (D5-audit MINOR remediation): no row label carries a font-weight attribute when no overlay is present at all', () => {
+      const { container } = render(
+        <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS} loading={false} />,
+      );
+      // Scope to row labels specifically (text-anchor="end") — X-axis tick
+      // labels (text-anchor="middle") can coincidentally share the same
+      // digit text ("0"..."4") and would otherwise over-count matches.
+      const texts = Array.from(container.querySelectorAll('svg text[text-anchor="end"]'));
+      const labelled = texts.filter((el) => ['0', '1', '2', '3', '4'].includes(el.textContent ?? ''));
+      expect(labelled.length).toBe(5);
+      for (const el of labelled) {
+        expect(el.hasAttribute('font-weight')).toBe(false);
+      }
     });
 
     it('range-guard: an out-of-bounds representativeTransectIndex does not crash and renders no bold label', () => {
@@ -468,6 +544,69 @@ describe('HeatMapCard', () => {
       );
       expect(within(noOverlayContainer).queryAllByText('surfing.heatMap.mainBreakZoneLegend').length).toBe(0);
       expect(within(noOverlayContainer).queryByText(/representativeSuffix/)).toBeNull();
+    });
+
+    // D5-audit MAJOR remediation KAT — the auditor's exact gap scenario.
+    // Falsifiable: reverting the fix (using rowToY(mainBreakZoneStartIndex,
+    // ...) / rowToY(representativeTransectIndex, ...) directly, i.e. VALUE
+    // as POSITION) would place the triangle at position 11 (transectIndex
+    // 12's row) instead of position 10, and the band at positions 10..12
+    // instead of 9..11 — every assertion below would fail.
+    it('gap KAT: 20 conceptual transects, #5 missing (19 rows), zone [10,12] representative 11 — SVG positions and sr-only table agree by construction', () => {
+      const { container } = render(
+        <HeatMapCard
+          {...baseProps}
+          data={OK_RESPONSE_GAP}
+          loading={false}
+          mainBreakZoneStartIndex={10}
+          mainBreakZoneEndIndex={12}
+          representativeTransectIndex={11}
+        />,
+      );
+
+      // ── Triangle marker: must land at array position 10 (transectIndex
+      // 11's row), not position 11 (transectIndex 12's row — where the
+      // value-as-position bug would have put it). ──
+      const expectedCy = gapRowToY(10) + GAP_ROW_H / 2;
+      const triangle = Array.from(container.querySelectorAll('svg polygon'))
+        .find((p) => p.getAttribute('fill') === 'var(--foreground)');
+      expect(triangle).toBeDefined();
+      const pointsAttr = triangle!.getAttribute('points') ?? '';
+      // points format: "16,{cy-4} 22,{cy} 16,{cy+4}" — extract the middle y (the polygon's vertical center).
+      const coords = pointsAttr.trim().split(/\s+/).map((pair) => pair.split(',').map(Number));
+      const midY = coords[1][1];
+      expect(midY).toBeCloseTo(expectedCy, 5);
+
+      // ── Band: must cover exactly array positions 9..11 (the rows whose
+      // transectIndex values are 10, 11, 12), not positions 10..12 (where
+      // the value-as-position bug would have put it — one row's height too
+      // low and covering the wrong transects entirely). ──
+      const expectedBandY = gapRowToY(9);
+      const expectedBandHeight = gapRowToY(11 + 1) - gapRowToY(9); // 3 rows tall
+      const bandRect = Array.from(container.querySelectorAll('svg rect'))
+        .find((r) => r.getAttribute('fill') === MAIN_BREAK_ZONE_FILL && r.getAttribute('width') === '6');
+      expect(bandRect).toBeDefined();
+      expect(Number(bandRect!.getAttribute('y'))).toBeCloseTo(expectedBandY, 5);
+      expect(Number(bandRect!.getAttribute('height'))).toBeCloseTo(expectedBandHeight, 5);
+
+      // ── sr-only table agreement: the same three transects (VALUES 10,
+      // 11, 12) are flagged "Yes" in the Main break zone column, and ONLY
+      // transectIndex 11's row carries the representative suffix — proving
+      // the SVG (position-based) and the table (value-based) describe the
+      // SAME underlying rows, not merely "some band exists somewhere". ──
+      const rows = Array.from(container.querySelectorAll('table.sr-only tbody tr'));
+      expect(rows.length).toBe(19);
+      for (const row of rows) {
+        const th = row.querySelector('th[scope="row"]');
+        const cells = row.querySelectorAll('td');
+        const inZoneCell = cells[cells.length - 1]; // last column = "Main break zone"
+        const transectIndexText = th?.textContent ?? '';
+        const isRepresentativeRow = transectIndexText.includes('representativeSuffix');
+        const rowValue = parseInt(transectIndexText, 10);
+        const shouldBeInZone = rowValue >= 10 && rowValue <= 12;
+        expect(inZoneCell.textContent).toBe(shouldBeInZone ? 'yes' : 'no');
+        expect(isRepresentativeRow).toBe(rowValue === 11);
+      }
     });
   });
 });

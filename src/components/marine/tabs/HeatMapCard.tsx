@@ -457,19 +457,39 @@ export function HeatMapCard({
 
   const { rows, N, rowH, viewH, maxDist, minDist, maxHs } = geometry;
 
-  // Range-validated overlay flags (D5.2) — `hasZoneOverlay`/
-  // `hasRepresentativeOverlay` above only check non-null (used for the
-  // PAD_BOTTOM sizing decision before N is known). These ALSO validate the
-  // index against this response's actual transect count, so the band/
-  // marker, their legend entries, the sr-only table column, and the <desc>
-  // text all agree on whether the overlay is real — a stale/mismatched
-  // index (e.g. from a different spot's cached /surf response) renders
-  // nothing anywhere, rather than a band that doesn't match its own legend.
-  const zoneBandValid = hasZoneOverlay &&
-    mainBreakZoneStartIndex! >= 0 && mainBreakZoneEndIndex! < N &&
-    mainBreakZoneStartIndex! <= mainBreakZoneEndIndex!;
-  const representativeValid = hasRepresentativeOverlay &&
-    representativeTransectIndex! >= 0 && representativeTransectIndex! < N;
+  // Value-vs-position fix (D5 audit remediation, MAJOR finding): `rows` is
+  // an ARRAY indexed by POSITION, but `mainBreakZoneStartIndex`/`EndIndex`/
+  // `representativeTransectIndex` are `SurfForecast` TRANSECT-INDEX VALUES
+  // from a DIFFERENT endpoint. The two only coincide when `rows[i].
+  // transectIndex === i` for every row — true only when the marine service
+  // published every transect with no gaps. Marine filters FAILED transects
+  // out of `per_transect` entirely (surf_1d_pipeline.py:1683) — a real,
+  // observed behavior, not a hypothetical — so a gap shifts every position
+  // after it. Positioning the SVG overlay by VALUE (the old `rowToY
+  // (mainBreakZoneStartIndex!, rowH)` etc.) would mark the wrong rows the
+  // moment a gap exists, while the sr-only table (which already compared
+  // `row.transectIndex` VALUES per row) stayed correct — a sighted/screen-
+  // reader divergence in exactly the failure mode the a11y pairing exists
+  // to prevent. Fixed by construction: derive POSITIONS from values the
+  // same way the table does, so the SVG and the table agree on any data,
+  // gaps or not.
+  const representativePos = hasRepresentativeOverlay
+    ? rows.findIndex((r) => r.transectIndex === representativeTransectIndex)
+    : -1;
+  const representativeValid = representativePos !== -1;
+
+  const zoneMemberPositions: number[] = hasZoneOverlay
+    ? rows.reduce<number[]>((acc, r, i) => {
+        if (r.transectIndex >= mainBreakZoneStartIndex! && r.transectIndex <= mainBreakZoneEndIndex!) acc.push(i);
+        return acc;
+      }, [])
+    : [];
+  const zoneBandValid = zoneMemberPositions.length > 0;
+  // Band spans the array-position range covering every member row found —
+  // NOT the raw index values, and not assumed contiguous (BD-7's own
+  // scattered-failure-fallback caveat, PROVIDER-MANUAL §14.15).
+  const zoneBandStartPos = zoneBandValid ? Math.min(...zoneMemberPositions) : -1;
+  const zoneBandEndPos = zoneBandValid ? Math.max(...zoneMemberPositions) : -1;
   const hatchId = `${HATCH_BASE_ID}-${titleId.replace(/:/g, '')}`;
   const legendY = PAD_TOP + N * rowH + 28;
 
@@ -796,33 +816,37 @@ export function HeatMapCard({
           {/* Breaker glyphs */}
           {breakGlyphs}
 
-          {/* ── BD-7 main-break-zone gutter band (D5.2) ──
+          {/* ── BD-7 main-break-zone gutter band (D5.2, D5-audit remediation) ──
            *  Y-axis gutter is otherwise empty except the row-index labels
            *  (drawn below, right-aligned at x=PAD_LEFT-4 — text extends
            *  leftward from there but stays clear of x<24 for up to 3-digit
            *  indices at this font size). Placed at x=6..12, well clear.
-           *  Range-guarded against a stale/mismatched index from the /surf
-           *  endpoint not matching this response's own transect count. */}
+           *  Positioned by zoneBandStartPos/EndPos (ARRAY POSITIONS derived
+           *  from matching row.transectIndex VALUES, not the raw index
+           *  values themselves — see the comment above where they're
+           *  computed). Membership-based: no band when no row matches. */}
           {zoneBandValid && (
             <rect
               x={6}
-              y={rowToY(mainBreakZoneStartIndex!, rowH)}
+              y={rowToY(zoneBandStartPos, rowH)}
               width={6}
-              height={rowToY(mainBreakZoneEndIndex! + 1, rowH) - rowToY(mainBreakZoneStartIndex!, rowH)}
+              height={rowToY(zoneBandEndPos + 1, rowH) - rowToY(zoneBandStartPos, rowH)}
               rx={2}
               fill={MAIN_BREAK_ZONE_FILL}
               aria-hidden="true"
             />
           )}
 
-          {/* ── BD-9 representative-transect marker (D5.2) ──
+          {/* ── BD-9 representative-transect marker (D5.2, D5-audit remediation) ──
            *  Small triangle in the gutter, x=16..22, left of the row label.
            *  Icon + bolded label together (never colour alone, DESIGN-
-           *  MANUAL "Row treatment"). Range-guarded same as the band above. */}
+           *  MANUAL "Row treatment"). Positioned by representativePos (the
+           *  array position of the row whose transectIndex equals
+           *  representativeTransectIndex) — not the raw index value. */}
           {representativeValid && (
             <polygon
               points={(() => {
-                const cy = rowToY(representativeTransectIndex!, rowH) + rowH / 2;
+                const cy = rowToY(representativePos, rowH) + rowH / 2;
                 return `16,${cy - 4} 22,${cy} 16,${cy + 4}`;
               })()}
               fill="var(--foreground)"
@@ -840,7 +864,7 @@ export function HeatMapCard({
                 y={rowToY(ri, rowH) + rowH / 2 + 3.5}
                 fontSize={Math.min(10, rowH * 0.7)}
                 fill={isRepresentative ? 'var(--foreground)' : 'var(--muted-foreground)'}
-                fontWeight={isRepresentative ? 700 : 400}
+                {...(isRepresentative ? { fontWeight: 700 } : {})}
                 textAnchor="end"
                 aria-hidden="true"
               >
