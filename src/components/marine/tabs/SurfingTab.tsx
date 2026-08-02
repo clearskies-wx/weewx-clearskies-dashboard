@@ -1463,8 +1463,16 @@ function SurfScrollForecast({
               const isCloseout = angle !== null && angle < 30;
               if (angle === null && cls === null) return <span style={microText}>—</span>;
               // Show abbreviated classification (first char of last word).
+              // D8 gap fix (2026-08-02): `_a_frame` didn't match either
+              // directional-arrow branch and fell through to the generic
+              // `_` -> ' ' replace, leaving a stray underscore
+              // ("fast_a_frame" -> "fast a_frame"). Handled explicitly
+              // before the generic fallback, same string-matching approach
+              // as the existing right/left branches (still correct per the
+              // corrected server truth — peelClassification genuinely
+              // carries the direction suffix when determined).
               const clsAbbr = cls
-                ? cls.replace('_right', '→').replace('_left', '←').replace('_', ' ')
+                ? cls.replace('_right', '→').replace('_left', '←').replace('_a_frame', ' A-frame').replace('_', ' ')
                 : null;
               return (
                 <span style={{
@@ -2204,8 +2212,16 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                 )}
 
                 {/* T6.1: 3 stats only — Swell Height, Breaking Face Height, Period.
-                 *  Direction removed from top row (redundant with compass below). */}
-                <dl className="grid grid-cols-3 gap-x-4 gap-y-2">
+                 *  Direction removed from top row (redundant with compass below).
+                 *  D9 (2026-08-02, a11y fix): was a single <dl> with dt/dd nested
+                 *  two <div> levels deep, sharing the wrapper div with a decorative
+                 *  icon span — axe `definition-list` + `dlitem` (serious x2). Each
+                 *  stat is now its OWN <dl> (semantically sound — 3 unrelated
+                 *  term/definition pairs, not one 3-item list); the icon moves to
+                 *  a sibling of the dl instead of inside it. Same classes, same
+                 *  visual result — only the outer <dl>→<div> and inner <div>→<dl>
+                 *  element names changed. */}
+                <div className="grid grid-cols-3 gap-x-4 gap-y-2">
                   {/* Icon-left stat: icon beside the value/label block */}
                   {[
                     { icon: <Waves weight="bold" />, label: t('surfing.swellHeightStatLabel', { defaultValue: 'Swell Height' }), value: formatValue(primary.swellHeight ?? primary.waveHeightAtBreak, 'default', locale), unit: heightUnit },
@@ -2216,16 +2232,16 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                       <span aria-hidden="true" className="shrink-0 text-muted-foreground" style={{ fontSize: 'var(--text-stat-tile)' }}>
                         {s.icon}
                       </span>
-                      <div className="flex flex-col">
+                      <dl className="flex flex-col">
                         <dt className="text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>{s.label}</dt>
                         <dd className="text-foreground font-semibold" style={{ fontSize: 'var(--text-stat-tile)', fontFeatureSettings: '"tnum"' }}>
                           {s.value}
                           {s.unit && <span className="text-muted-foreground font-normal ml-1" style={{ fontSize: 'var(--text-label)' }}>{s.unit}</span>}
                         </dd>
-                      </div>
+                      </dl>
                     </div>
                   ))}
-                </dl>
+                </div>
 
                 {/* T7.2: Peel angle row */}
                 {primary.peelAngle != null && (
@@ -2256,13 +2272,38 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                         {t(`surfing.peelClassification.${primary.peelClassification}`, { defaultValue: primary.peelClassification.replace(/_/g, ' ') })}
                       </span>
                     )}
-                    {/* Directional indicator — not rendered for closeout */}
-                    {primary.peelClassification != null && primary.peelClassification.includes('right') && (
-                      <span aria-hidden="true" style={{ color: 'var(--foreground)', fontWeight: 700 }}>›</span>
-                    )}
-                    {primary.peelClassification != null && primary.peelClassification.includes('left') && (
-                      <span aria-hidden="true" style={{ color: 'var(--foreground)', fontWeight: 700 }}>‹</span>
-                    )}
+                    {/* Directional indicator (D8, 2026-08-02) — driven by peelDirection,
+                     *  not string-matching peelClassification (that was dead for
+                     *  `a_frame` and for a plain undirected classification). Closeout
+                     *  gates OFF first, regardless of peelDirection: peelDirection is
+                     *  computed INDEPENDENTLY of classification and is served even on
+                     *  closeout hours (a geometry descriptor, not a peel-quality
+                     *  signal) — checking it without the gate would show a chevron on
+                     *  a wave that doesn't peel. Opaque-string tolerant: an
+                     *  unrecognized/future peelDirection value renders nothing, never
+                     *  garbage. Sr-only phrase pairs with the aria-hidden glyph so
+                     *  screen-reader users get the same information (never color/
+                     *  glyph-only). */}
+                    {primary.peelClassification !== 'closeout' && (() => {
+                      const dir = primary.peelDirection;
+                      const glyph =
+                        dir === 'right' ? '›' :
+                        dir === 'left' ? '‹' :
+                        dir === 'a_frame' ? '‹›' : null;
+                      if (glyph === null) return null;
+                      const phrase = t(`surfing.peelDirection.${dir}`, {
+                        defaultValue:
+                          dir === 'right' ? 'peels right' :
+                          dir === 'left' ? 'peels left' :
+                          'A-frame — peels both ways',
+                      });
+                      return (
+                        <>
+                          <span aria-hidden="true" style={{ color: 'var(--foreground)', fontWeight: 700 }}>{glyph}</span>
+                          <span className="sr-only">{phrase}</span>
+                        </>
+                      );
+                    })()}
                     {/* Closeout warning alert */}
                     {primary.peelAngle < 30 && (
                       <span

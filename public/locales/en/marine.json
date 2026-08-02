@@ -341,18 +341,25 @@
     "peelAngle": "Peel Angle",
     "peelAngleLabel": "Peel",
     "peelDirection": {
-      "right": "Right",
-      "left": "Left",
+      "right": "peels right",
+      "left": "peels left",
+      "a_frame": "A-frame — peels both ways",
       "closeout": "Closeout"
     },
     "peelClassification": {
       "closeout": "Closeout",
+      "fast": "Fast",
       "fast_right": "Fast Right",
       "fast_left": "Fast Left",
+      "fast_a_frame": "Fast A-frame",
+      "good": "Good",
       "good_right": "Good Right",
       "good_left": "Good Left",
+      "good_a_frame": "Good A-frame",
+      "mellow": "Mellow",
       "mellow_right": "Mellow Right",
-      "mellow_left": "Mellow Left"
+      "mellow_left": "Mellow Left",
+      "mellow_a_frame": "Mellow A-frame"
     },
     "closeoutWarning": "CLOSEOUT",
     "waveShapeLabel": "Shape",

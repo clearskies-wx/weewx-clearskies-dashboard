@@ -264,3 +264,125 @@ describe('SurfingTab — HeatMapCard BD-7/9 overlay prop-threading (D5.2)', () =
     expect(boldLabels.length).toBe(0);
   });
 });
+
+// D8 (2026-08-02) — peel direction chevron, re-wired to consume
+// `peelDirection` (not string-matching `peelClassification`, which is dead
+// for `a_frame` and for a plain undirected classification). Lead decision
+// table, one test per row. The chevron block only renders at all when
+// `primary.peelAngle != null` (T7.2's wrapping condition) — every case
+// below sets a peelAngle so the block mounts.
+describe('SurfingTab — peel direction chevron (D8, 2026-08-02)', () => {
+  it('closeout gates the chevron OFF regardless of peelDirection (peelDirection served even on closeout hours)', () => {
+    surfData = buildSurfData(buildEntry({
+      peelAngle: 45,
+      peelClassification: 'closeout',
+      peelDirection: 'a_frame', // live-confirmed real combination (36/36 hours today)
+    }));
+    const { container, queryByText } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    expect(container.textContent).not.toMatch(/[›‹]/);
+    expect(queryByText(/peels|A-frame/)).toBeNull();
+  });
+
+  it('peelDirection "right" (non-closeout class): renders › + sr-only "peels right"', () => {
+    surfData = buildSurfData(buildEntry({
+      peelAngle: 45,
+      peelClassification: 'fast_right',
+      peelDirection: 'right',
+    }));
+    const { container, getByText } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    expect(container.textContent).toContain('›');
+    expect(container.textContent).not.toContain('‹');
+    const srText = getByText('peels right');
+    expect(srText.className).toContain('sr-only');
+  });
+
+  it('peelDirection "left": renders ‹ + sr-only "peels left"', () => {
+    surfData = buildSurfData(buildEntry({
+      peelAngle: 45,
+      peelClassification: 'good_left',
+      peelDirection: 'left',
+    }));
+    const { container, getByText } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    expect(container.textContent).toContain('‹');
+    expect(container.textContent).not.toContain('›');
+    const srText = getByText('peels left');
+    expect(srText.className).toContain('sr-only');
+  });
+
+  it('peelDirection "a_frame": renders ‹› + sr-only "A-frame — peels both ways"', () => {
+    surfData = buildSurfData(buildEntry({
+      peelAngle: 45,
+      peelClassification: 'mellow_a_frame',
+      peelDirection: 'a_frame',
+    }));
+    const { container, getByText } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    expect(container.textContent).toContain('‹›');
+    const srText = getByText('A-frame — peels both ways');
+    expect(srText.className).toContain('sr-only');
+  });
+
+  it('peelDirection null: no chevron, no sr-text', () => {
+    surfData = buildSurfData(buildEntry({
+      peelAngle: 45,
+      peelClassification: 'fast',
+      peelDirection: null,
+    }));
+    const { container, queryByText } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    expect(container.textContent).not.toMatch(/[›‹]/);
+    expect(queryByText(/peels|A-frame/)).toBeNull();
+  });
+
+  it('peelDirection unrecognized (opaque-string tolerance): no chevron, no crash', () => {
+    surfData = buildSurfData(buildEntry({
+      peelAngle: 45,
+      peelClassification: 'fast',
+      // @ts-expect-error — deliberately an unrecognized value to prove tolerance; the real field is typed 'right'|'left'|'a_frame'|null but the server is not compile-time-guaranteed to only ever send those.
+      peelDirection: 'diagonal',
+    }));
+    expect(() => render(<SurfingTab locationId="huntington-city-beach-pier" />)).not.toThrow();
+    const { container, queryByText } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    expect(container.textContent).not.toMatch(/[›‹]/);
+    expect(queryByText(/peels|A-frame/)).toBeNull();
+  });
+
+  // D8 folded-in gap fix: the 72-hour forecast timeline's peel-angle row
+  // abbreviates `peelClassification` by direct string replacement (a
+  // DIFFERENT, untouched code path from the chevron above) — `_a_frame`
+  // previously fell through to the generic `_` -> ' ' replace, leaving a
+  // stray underscore ("fast_a_frame" -> "fast a_frame").
+  it('72h forecast row: "_a_frame" suffix renders cleanly ("A-frame"), no stray underscore', () => {
+    surfData = buildSurfData(buildEntry({
+      peelAngle: 45,
+      peelClassification: 'fast_a_frame',
+    }));
+    const { container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    expect(container.textContent).toMatch(/fast A-frame/);
+    expect(container.textContent).not.toMatch(/a_frame/);
+  });
+});
+
+// D9 (2026-08-02) — "T6.1: 3 stats" block restructured from one <dl> with
+// dt/dd nested two <div> levels deep (axe definition-list + dlitem,
+// serious x2) into 3 independent mini-<dl>s, each with dt/dd as direct
+// children. Grid classes preserved (visual layout unchanged); icon moved
+// to a sibling of the dl instead of inside it.
+describe('SurfingTab — 3-stat dl structure (D9, 2026-08-02)', () => {
+  it('renders exactly 3 <dl> elements for the T6.1 stats, each with exactly one direct dt + dd child', () => {
+    surfData = buildSurfData(buildEntry({}));
+    const { container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    const dls = Array.from(container.querySelectorAll('dl'));
+    // The Wind card also has a <dl> (unrelated, untouched, already-compliant
+    // pattern) — filter to the ones with a single dt+dd pair (this round's
+    // restructure target), not the Wind card's 4-stat single dl.
+    const miniDls = dls.filter((dl) => dl.children.length === 2 && dl.children[0].tagName === 'DT' && dl.children[1].tagName === 'DD');
+    expect(miniDls.length).toBe(3);
+  });
+
+  it('the outer stats container is a plain <div> (grid classes preserved), not a <dl>', () => {
+    surfData = buildSurfData(buildEntry({}));
+    const { container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    const gridDiv = container.querySelector('div.grid.grid-cols-3.gap-x-4.gap-y-2');
+    expect(gridDiv).not.toBeNull();
+    expect(gridDiv?.tagName).toBe('DIV');
+  });
+});

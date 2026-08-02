@@ -1399,26 +1399,36 @@ export interface SurfForecast {
   /** Peel angle in degrees; null when insufficient transect data. */
   peelAngle?: number | null;
   /**
-   * Peel classification. **Corrected 2026-08-02 (D4.1 audit)**: this
-   * previously documented directional-suffixed values
-   * (`closeout|fast_right|fast_left|good_right|good_left|mellow_right|mellow_left`)
-   * that do not match the served contract. API-MANUAL and a live capture
-   * both confirm the actual values are plain, undirected:
-   * `"closeout"` (<30°), `"fast"` (30-45°), `"good"` (45-66°), `"mellow"` (>66°).
-   * Direction is carried separately in `peelDirection` below, not as a
-   * suffix here.
+   * Peel classification. **Re-corrected 2026-08-02 (D8, supersedes the
+   * D4.1 audit comment)**: the D4.1 correction over-corrected — that
+   * capture was all-closeout hours, and closeout happens to be the ONE
+   * class that is always plain. The as-built truth (marine
+   * `surf_1d_pipeline.py:750-786`, live-confirmed 2026-08-02): the base
+   * quality class (`closeout|fast|good|mellow`) gets a DIRECTION SUFFIX
+   * appended whenever direction is determined and the class isn't
+   * closeout — e.g. `fast_right`, `good_left`, `mellow_a_frame`. Plain
+   * base (`fast`/`good`/`mellow`) when direction is undetermined.
+   * `closeout` is ALWAYS plain — never suffixed, because closeouts don't
+   * peel in a direction. Direction is ALSO available independently via
+   * `peelDirection` below (served even on closeout hours), which is the
+   * field to read for "which way does it peel" — do not parse this field
+   * for direction.
    */
   peelClassification?: string | null;
   /**
-   * Break direction/shape descriptor, separate from peelClassification
-   * (added 2026-08-02, D4.1 audit — confirmed present on the live-served
-   * contract, previously absent from this type entirely). Only value
-   * observed so far: `"a_frame"` (peaks both directions from a single
-   * point) — other values (e.g. left/right-breaking) are expected by
-   * naming pattern but NOT yet confirmed against a live response; treat
-   * as an opaque string, not a closed enum, until more values are observed.
+   * Break direction descriptor — computed INDEPENDENTLY of
+   * `peelClassification` (re-corrected 2026-08-02, D8, supersedes the
+   * D4.1 audit comment: that comment called this "opaque, not a closed
+   * enum" before the direction values were confirmed). As-built and
+   * live-confirmed 2026-08-02 (marine `surf_1d_pipeline.py:750-786`):
+   * `"right" | "left" | "a_frame" | null`. Served even on closeout hours
+   * — it is a geometry descriptor, not gated by whether the wave
+   * qualifies as peeling quality-wise (confirmed live: 36/36 hours
+   * `closeout` + `a_frame` on the same day). A consumer that wants "does
+   * this wave peel" must still check `peelClassification !== 'closeout'`
+   * separately — this field alone does not encode that.
    */
-  peelDirection?: string | null;
+  peelDirection?: 'right' | 'left' | 'a_frame' | null;
   // T7.3: Best-peak / average face height across open transects.
   /** Best-peak face height (maximum across open transects) in display units. */
   bestPeakFaceHeight?: number | null;
