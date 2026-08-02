@@ -2633,6 +2633,13 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
               heightUnit={heightUnit}
               distanceUnit={distanceUnit}
               locale={locale}
+              /* BD-7/BD-9 overlays (D5.2) — sourced from `primary` (the
+               * current SurfForecast entry), same source as the D4 zone-
+               * context line above; HeatMapCard's own `data` prop (the
+               * profile?transect_index=all response) has no BD-7/9 fields. */
+              mainBreakZoneStartIndex={primary?.mainBreakZoneStartIndex ?? null}
+              mainBreakZoneEndIndex={primary?.mainBreakZoneEndIndex ?? null}
+              representativeTransectIndex={primary?.representativeTransectIndex ?? null}
             />
           </CardContent>
         </Card>

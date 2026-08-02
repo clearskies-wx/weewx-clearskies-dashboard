@@ -11,10 +11,10 @@
 // component already handles gracefully (verified by BeachProfileCardBody.test.tsx
 // / HeatMapCard.test.tsx for those sub-components independently).
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import { SurfingTab } from './SurfingTab';
-import type { SurfDetailData, SurfForecast } from '../../../api/types';
+import type { SurfDetailData, SurfForecast, HeatMapProfileData, HeatMapProfileDataOk } from '../../../api/types';
 
 // jsdom (vitest's default test environment here) has no ResizeObserver.
 // SurfingTab renders horizontal-scroll-nav.tsx (72-hour forecast scroll),
@@ -48,11 +48,17 @@ vi.mock('react-i18next', () => ({
 const HOOK_RESULT_NULL = { data: null, units: undefined, loading: false, error: null, refetch: vi.fn() };
 
 let surfData: SurfDetailData | null = null;
+// D5.2 prop-threading test — mutable so a single test can supply real heat
+// map data and observe the BD-7/9 overlay (sourced from `surfData.forecast`
+// primary entry, threaded into HeatMapCard's `data` prop's SIBLING props)
+// actually reaching the rendered SVG. Defaults to null (no heat map data)
+// for the D4.2 zone-context-line tests above, which don't need it.
+let heatMapData: HeatMapProfileData | null = null;
 
 vi.mock('../../../hooks/useWeatherData', () => ({
   useSurfDetail: () => ({ data: surfData, units: { waveHeightAtBreak: 'ft', distance: 'ft' }, loading: false, error: null, refetch: vi.fn() }),
   useBeachProfile: () => HOOK_RESULT_NULL,
-  useBeachProfileAll: () => ({ ...HOOK_RESULT_NULL, loading: false }),
+  useBeachProfileAll: () => ({ data: heatMapData, units: undefined, loading: false, error: null, refetch: vi.fn() }),
   useMarineDetail: () => HOOK_RESULT_NULL,
   useStation: () => HOOK_RESULT_NULL,
   useObservation: () => ({
@@ -111,6 +117,13 @@ function buildSurfData(entry: SurfForecast): SurfDetailData {
   };
 }
 
+// Reset shared mutable mock state between tests — heatMapData is only set
+// by the D5.2 prop-threading test below; resetting it here keeps that test
+// from leaking heat map data into any test that runs after it.
+beforeEach(() => {
+  heatMapData = null;
+});
+
 describe('SurfingTab — main break zone context (D4.2, BD-7/BD-9)', () => {
   it('renders the zone-context line when all three zone fields are present', () => {
     surfData = buildSurfData(buildEntry({
@@ -164,5 +177,90 @@ describe('SurfingTab — main break zone context (D4.2, BD-7/BD-9)', () => {
     }));
     const { queryByText } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
     expect(queryByText(/Main break zone/)).toBeNull();
+  });
+});
+
+// D5.2 — HeatMapCard's BD-7/9 overlay data (mainBreakZoneStartIndex/EndIndex/
+// representativeTransectIndex) lives on `SurfForecast` (the /surf endpoint,
+// already read as `primary` for the D4.2 tests above) — NOT on
+// HeatMapCard's own `data` prop (the /profile?transect_index=all response
+// has no BD-7/9 fields). This proves the actual prop-threading wire at
+// SurfingTab.tsx's `<HeatMapCard ...>` call site, end to end: `primary`'s
+// zone fields reach the rendered SVG's overlay, not just that the values
+// are read somewhere.
+describe('SurfingTab — HeatMapCard BD-7/9 overlay prop-threading (D5.2)', () => {
+  const HEATMAP_ROW = (transectIndex: number) => ({
+    transectIndex,
+    isStructureAffected: false,
+    transectBearingDeg: 245,
+    transect: [
+      { distance: 100, depth: 3, hs: 1.2 },
+      { distance: 10, depth: 0.5, hs: 0.8 },
+    ],
+    breakPoints: [],
+    waveShapes: [],
+    surfZones: null,
+    jackingFactors: [],
+    handoffDepthM: 2,
+    handoffSourceLevel: 'L3' as const,
+  });
+
+  const HEATMAP_OK: HeatMapProfileDataOk = {
+    locationId: 'huntington-city-beach-pier',
+    timestep: new Date().toISOString(),
+    modelStatus: 'ok',
+    profiles: [0, 1, 2, 3, 4].map(HEATMAP_ROW),
+    perPartitionBreaks: [],
+    metadata: {
+      axisUnits: { x: 'm', y: 'm' },
+      verticalDatum: 'LMSL',
+      transectCount: 5,
+      openTransectCount: 5,
+      handoffDepthM: 2,
+      handoffSourceLevel: 'L3',
+    },
+  };
+
+  it('threads mainBreakZoneStartIndex/EndIndex from `primary` into HeatMapCard — the purple band renders', () => {
+    surfData = buildSurfData(buildEntry({
+      mainBreakZoneStartIndex: 1,
+      mainBreakZoneEndIndex: 3,
+      representativeTransectIndex: null,
+    }));
+    heatMapData = HEATMAP_OK;
+    const { container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    // HeatMapCard.tsx's MAIN_BREAK_ZONE_FILL constant, restated (not exported).
+    const bandRects = Array.from(container.querySelectorAll('svg rect'))
+      .filter((r) => r.getAttribute('fill') === 'rgba(168, 85, 247, 0.75)' && r.getAttribute('width') === '6');
+    expect(bandRects.length).toBe(1);
+  });
+
+  it('threads representativeTransectIndex from `primary` into HeatMapCard — the bold row label renders', () => {
+    surfData = buildSurfData(buildEntry({
+      mainBreakZoneStartIndex: null,
+      mainBreakZoneEndIndex: null,
+      representativeTransectIndex: 2,
+    }));
+    heatMapData = HEATMAP_OK;
+    const { container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    const boldLabel = Array.from(container.querySelectorAll('svg text'))
+      .find((el) => el.textContent === '2' && el.getAttribute('font-weight') === '700');
+    expect(boldLabel).toBeDefined();
+  });
+
+  it('null-safety: no overlay renders when `primary` carries no BD-7/9 fields (pre-Round-2 cache)', () => {
+    surfData = buildSurfData(buildEntry({
+      mainBreakZoneStartIndex: undefined,
+      mainBreakZoneEndIndex: undefined,
+      representativeTransectIndex: undefined,
+    }));
+    heatMapData = HEATMAP_OK;
+    const { container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    const bandRects = Array.from(container.querySelectorAll('svg rect'))
+      .filter((r) => r.getAttribute('fill') === 'rgba(168, 85, 247, 0.75)');
+    expect(bandRects.length).toBe(0);
+    const boldLabels = Array.from(container.querySelectorAll('svg text'))
+      .filter((el) => el.getAttribute('font-weight') === '700');
+    expect(boldLabels.length).toBe(0);
   });
 });

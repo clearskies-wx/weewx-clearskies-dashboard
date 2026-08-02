@@ -129,6 +129,70 @@ const OK_RESPONSE_NEGATIVE_DISTANCE: BeachProfileDataOk = {
   },
 };
 
+// D5.1 pinning fixture — REAL live data (profile-all-fixture.json,
+// huntington-city-beach-pier, 2026-08-02, transectIndex 4), not
+// synthesized: a genuine double-break transect (two breakPoints, same
+// partition — outer bar at 42.06m, inner bar at 24.87m) that ALSO carries
+// negative-distance points. Used as a single-transect "best" response
+// here (BeachProfileChart doesn't care which endpoint mode produced the
+// data it's given) to prove double-break rendering was already correct
+// pre-D5 (no code change) on a real multi-bar transect.
+const OK_RESPONSE_DOUBLE_BREAK_LIVE: BeachProfileDataOk = {
+  locationId: 'huntington-city-beach-pier',
+  timestep: '2026-08-02T00:00:00Z',
+  modelStatus: 'ok',
+  transectIndex: 4,
+  isStructureAffected: true,
+  transectBearingDeg: 239.99309346343887,
+  transect: [
+    { distance: 67.84, depth: 1.456, hs: 0.7552867151844674 },
+    { distance: 59.25, depth: 1.296, hs: 0.7635210153288052 },
+    { distance: 50.65, depth: 1.133, hs: 0.7615883379327697 },
+    { distance: 42.06, depth: 0.973, hs: 0.71029 },
+    { distance: 33.46, depth: 0.819, hs: 0.5978699999999999 },
+    { distance: 24.87, depth: 0.6639999999999999, hs: 0.48471999999999993 },
+    { distance: 16.27, depth: 0.514, hs: 0.37522 },
+    { distance: 7.68, depth: 0.371, hs: 0.27083 },
+    { distance: -0.92, depth: 0.24, hs: 0.1752 },
+    { distance: -9.5, depth: 0.10200000000000001, hs: 0.07446 },
+    { distance: -18.08, depth: 0.01, hs: 0.0073 },
+    { distance: -26.66, depth: 0.01, hs: 0.0073 },
+    { distance: -35.24, depth: 0.01, hs: 0.0073 },
+  ],
+  breakPoints: [
+    {
+      distance: 42.06, depth: 0.973, hs: 0.71029, faceHeight: 0.9020682999999999,
+      breakerType: 'spilling', iribarren: 0.337,
+      partitionInfo: { partitionIndex: 0, periodS: 13.0539, directionDeg: 196.902, classification: 'groundswell', heightM: 0.4955 },
+    },
+    {
+      distance: 24.87, depth: 0.6639999999999999, hs: 0.48471999999999993, faceHeight: 0.6155943999999999,
+      breakerType: 'spilling', iribarren: 0.327,
+      partitionInfo: { partitionIndex: 0, periodS: 13.0539, directionDeg: 196.902, classification: 'groundswell', heightM: 0.4955 },
+    },
+  ],
+  waveShapes: [],
+  surfZones: {
+    impactZone: { startDistance: 50.65, endDistance: 33.46, startDepth: 0.879, endDepth: 0.565 },
+    foamZone: { startDistance: 33.46, endDistance: 24.87, startDepth: 0.565, endDepth: 0.41 },
+    totalSurfZone: { widthM: 25.779999999999998, startDistance: 50.65, endDistance: 24.87 },
+    reformTrough: null,
+  },
+  jackingFactors: [],
+  handoffDepthM: 1.2287671232876711,
+  handoffSourceLevel: 'L4',
+  transects: null,
+  perPartitionBreaks: [],
+  metadata: {
+    axisUnits: { x: 'm', y: 'm' },
+    verticalDatum: 'LMSL',
+    transectCount: 143,
+    openTransectCount: 114,
+    handoffDepthM: 1.2287671232876711,
+    handoffSourceLevel: 'L4',
+  },
+};
+
 const FETCH_ERROR = new Error('404: Surf location not found');
 
 describe('computeBeachProfileState', () => {
@@ -269,5 +333,59 @@ describe('BeachProfileCardBody', () => {
       expect(x).toBeGreaterThanOrEqual(PAD_LEFT - EPSILON);
       expect(x).toBeLessThanOrEqual(PAD_LEFT + CHART_W + EPSILON);
     }
+  });
+
+  // D5.1 — real live double-break transect (transectIndex 4, also carries
+  // negative-distance points). BeachProfileChart's break-point rendering
+  // (`breakPoints.map(...)`, both the SVG markers and the sr-only <tfoot>
+  // rows) already iterates every entry generically — this pins that against
+  // genuine multi-bar data for the first time, and confirms the negative-
+  // distance fix holds simultaneously.
+  it('double-break (D5.1, live transectIndex 4): both break points appear as separate sr-only table rows', () => {
+    const { container } = render(
+      <BeachProfileCardBody {...baseProps} state="ok" profile={OK_RESPONSE_DOUBLE_BREAK_LIVE} />,
+    );
+    const breakRows = container.querySelectorAll('table.sr-only tfoot tr');
+    // First tfoot row is the "Break points" section header (colSpan=5); the
+    // rest are one row per breakPoints entry.
+    expect(breakRows.length).toBe(1 + 2);
+  });
+
+  // ── D5.2 — BD-9 representative-transect header (BeachProfileCardBody) ──
+  describe('D5.2 — representative-transect header', () => {
+    it('shows the header when selectedTransect is undefined (default)', () => {
+      const { getByText } = render(
+        <BeachProfileCardBody {...baseProps} state="ok" profile={OK_RESPONSE} />,
+      );
+      expect(getByText(/representativeTransectHeader/)).toBeDefined();
+    });
+
+    it('shows the header when selectedTransect is explicitly "best_peak"', () => {
+      const { getByText } = render(
+        <BeachProfileCardBody {...baseProps} state="ok" profile={OK_RESPONSE} selectedTransect="best_peak" />,
+      );
+      expect(getByText(/representativeTransectHeader/)).toBeDefined();
+    });
+
+    it('hides the header when a specific numbered transect is selected', () => {
+      const { queryByText } = render(
+        <BeachProfileCardBody {...baseProps} state="ok" profile={OK_RESPONSE} selectedTransect={7} />,
+      );
+      expect(queryByText(/representativeTransectHeader/)).toBeNull();
+    });
+
+    it('hides the header when "average" is selected', () => {
+      const { queryByText } = render(
+        <BeachProfileCardBody {...baseProps} state="ok" profile={OK_RESPONSE} selectedTransect="average" />,
+      );
+      expect(queryByText(/representativeTransectHeader/)).toBeNull();
+    });
+
+    it('never shows the header outside the "ok" state', () => {
+      const { queryByText } = render(
+        <BeachProfileCardBody {...baseProps} state="empty" profile={null} />,
+      );
+      expect(queryByText(/representativeTransectHeader/)).toBeNull();
+    });
   });
 });

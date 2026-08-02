@@ -106,21 +106,40 @@ export function BeachProfileCardBody({
   }
 
   if (state === 'ok' && profile) {
+    // BD-9 header (D5.2, 2026-08-02): states when the rendered cross-section
+    // is the pipeline's own representative transect (BD-9) — self-contained,
+    // no new prop: `selectedTransect` is already a prop, and the actual
+    // transect number is already on `profile.transectIndex`. Only shown when
+    // the visitor hasn't picked a specific numbered transect or "average"
+    // (i.e. the default/"best peak" selection, which server-side now
+    // resolves to representativeTransectIndex — API-MANUAL "Beach profile
+    // endpoint" query-parameter row).
+    const isRepresentative = selectedTransect === undefined || selectedTransect === 'best_peak';
     return (
-      <BeachProfileChart
-        transect={profile.transect}
-        breakPoints={profile.breakPoints}
-        heightUnit={heightUnit}
-        distanceUnit={distanceUnit}
-        locale={locale}
-        datum={profile.metadata?.verticalDatum}
-        surfZones={profile.surfZones}
-        transects={profile.transects}
-        waveShapes={profile.waveShapes}
-        jackingFactors={profile.jackingFactors}
-        selectedTransect={selectedTransect}
-        onTransectChange={onTransectChange}
-      />
+      <div className="flex flex-col gap-2">
+        {isRepresentative && (
+          <p className="text-muted-foreground" style={{ fontSize: 'var(--text-micro)', margin: 0 }}>
+            {t('surfing.beachProfile.representativeTransectHeader', {
+              n: profile.transectIndex,
+              defaultValue: 'Showing the representative transect (transect {{n}})',
+            })}
+          </p>
+        )}
+        <BeachProfileChart
+          transect={profile.transect}
+          breakPoints={profile.breakPoints}
+          heightUnit={heightUnit}
+          distanceUnit={distanceUnit}
+          locale={locale}
+          datum={profile.metadata?.verticalDatum}
+          surfZones={profile.surfZones}
+          transects={profile.transects}
+          waveShapes={profile.waveShapes}
+          jackingFactors={profile.jackingFactors}
+          selectedTransect={selectedTransect}
+          onTransectChange={onTransectChange}
+        />
+      </div>
     );
   }
 

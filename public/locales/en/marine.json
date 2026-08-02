@@ -280,6 +280,7 @@
       "depthAxisLabel": "Depth ({{unit}}, {{datum}})",
       "depthAxisLabelNoDatum": "Depth ({{unit}})",
       "distanceAxisLabel": "Distance from shore ({{unit}})",
+      "representativeTransectHeader": "Showing the representative transect (transect {{n}})",
       "impactZone": "IMPACT ZONE",
       "foamZone": "FOAM ZONE",
       "jackingAnnotation": "{{factor}}× jacking",
@@ -330,7 +331,12 @@
       "colorScaleMedium": "Medium",
       "colorScaleHigh": "Large",
       "modelUnavailable": "The wave model has no result for this hour yet.",
-      "loadError": "Unable to load the surf height map."
+      "loadError": "Unable to load the surf height map.",
+      "mainBreakZoneLegend": "Main break zone",
+      "representativeLegend": "Representative transect",
+      "representativeSuffix": "(representative)",
+      "mainBreakZoneDesc": "Main break zone spans transects {{start}} to {{end}}.",
+      "representativeDesc": "Transect {{n}} is the representative transect."
     },
     "peelAngle": "Peel Angle",
     "peelAngleLabel": "Peel",

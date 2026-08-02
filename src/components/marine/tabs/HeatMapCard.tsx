@@ -54,6 +54,24 @@ export interface HeatMapCardProps {
   /** Distance unit label (e.g. "ft" or "m"). */
   distanceUnit: string;
   locale: string;
+  /**
+   * BD-7 main-break-zone inclusive transect-index bounds (D5.2, 2026-08-02).
+   * Sourced from the CURRENT primary `SurfForecast` entry (the `/surf`
+   * endpoint) — NOT present on this card's own `data` prop (the
+   * `/profile?transect_index=all` response has no BD-7/9 fields). Both
+   * must be non-null to render the band; absent/null on pre-Round-2 cached
+   * forecasts — no overlay renders then, chart is byte-identical to before
+   * this round.
+   */
+  mainBreakZoneStartIndex?: number | null;
+  /** See {@link mainBreakZoneStartIndex}. */
+  mainBreakZoneEndIndex?: number | null;
+  /**
+   * BD-9 representative-transect index (D5.2, 2026-08-02) — same sourcing
+   * note as {@link mainBreakZoneStartIndex}. Null-safe: absent/null renders
+   * no marker.
+   */
+  representativeTransectIndex?: number | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -75,6 +93,17 @@ const ROW_H_MAX = 48;
 const ZONE_IMPACT_FILL = 'rgba(220, 38, 38, 0.18)';
 const ZONE_FOAM_FILL   = 'rgba(234, 179, 8, 0.18)';
 const ZONE_BREAK_FILL  = 'rgba(59, 130, 246, 0.12)';
+// BD-7 main-break-zone gutter band colour (D5.2, 2026-08-02, lead-approved
+// 2026-08-02) — purple-500, distinct from the red/amber/blue zone fills
+// above so it reads as a different kind of annotation (a transect-index
+// RANGE marker in the Y-axis gutter, not a cross-shore zone fill).
+const MAIN_BREAK_ZONE_FILL = 'rgba(168, 85, 247, 0.75)';
+
+// Extra bottom padding when the BD-7/9 overlay legend row is shown
+// (D5.2). Only applied when at least one overlay is present, so a
+// pre-Round-2 payload (no mainBreakZone*/representativeTransectIndex)
+// renders byte-identical to before this round.
+const PAD_BOTTOM_WITH_OVERLAY_LEGEND = PAD_BOTTOM + 22;
 
 // Hatching pattern ID is stable per component instance (prefixed below).
 const HATCH_BASE_ID = 'heatmap-structure-hatch';
@@ -307,7 +336,10 @@ function ColorLegend({ maxHs, heightUnit, locale, svgY }: LegendProps): ReactEle
 // Main component
 // ---------------------------------------------------------------------------
 
-export function HeatMapCard({ data, loading, error, onRetry, heightUnit, distanceUnit, locale }: HeatMapCardProps): ReactElement | null {
+export function HeatMapCard({
+  data, loading, error, onRetry, heightUnit, distanceUnit, locale,
+  mainBreakZoneStartIndex = null, mainBreakZoneEndIndex = null, representativeTransectIndex = null,
+}: HeatMapCardProps): ReactElement | null {
   const { t } = useTranslation('marine');
   const { t: tCommon } = useTranslation('common');
   const titleId = useId();
@@ -317,6 +349,12 @@ export function HeatMapCard({ data, loading, error, onRetry, heightUnit, distanc
   // SURF-PUBLISH-RESULTS-ONLY §3.6 (2026-07-25): `data.profiles` is null,
   // not an empty array, when `modelStatus === "unavailable"` — guard on
   // `!data.profiles` (not `.length`) so a null payload never throws here.
+  // BD-7/BD-9 overlay applicability (D5.2) — computed outside the memo so
+  // both the memo and the render body can use it; cheap (three comparisons).
+  const hasZoneOverlay = mainBreakZoneStartIndex != null && mainBreakZoneEndIndex != null;
+  const hasRepresentativeOverlay = representativeTransectIndex != null;
+  const showOverlayLegend = hasZoneOverlay || hasRepresentativeOverlay;
+
   const geometry = useMemo(() => {
     if (!data || !data.profiles || data.profiles.length === 0) return null;
 
@@ -324,7 +362,8 @@ export function HeatMapCard({ data, loading, error, onRetry, heightUnit, distanc
     const N = rows.length;
     const rowH = Math.min(ROW_H_MAX, Math.max(ROW_H_MIN, Math.floor(300 / N)));
     const chartH = N * rowH;
-    const viewH = PAD_TOP + chartH + PAD_BOTTOM;
+    const bottomPad = showOverlayLegend ? PAD_BOTTOM_WITH_OVERLAY_LEGEND : PAD_BOTTOM;
+    const viewH = PAD_TOP + chartH + bottomPad;
 
     const maxDist = maxDistance(rows);
     const minDist = minDistance(rows);
@@ -342,7 +381,7 @@ export function HeatMapCard({ data, loading, error, onRetry, heightUnit, distanc
     if (maxHs <= 0) maxHs = 1;
 
     return { rows, N, rowH, chartH, viewH, maxDist, minDist, maxHs };
-  }, [data]);
+  }, [data, showOverlayLegend]);
 
   // X-axis tick values.
   const xTicks = useMemo(() => {
@@ -417,6 +456,20 @@ export function HeatMapCard({ data, loading, error, onRetry, heightUnit, distanc
   }
 
   const { rows, N, rowH, viewH, maxDist, minDist, maxHs } = geometry;
+
+  // Range-validated overlay flags (D5.2) — `hasZoneOverlay`/
+  // `hasRepresentativeOverlay` above only check non-null (used for the
+  // PAD_BOTTOM sizing decision before N is known). These ALSO validate the
+  // index against this response's actual transect count, so the band/
+  // marker, their legend entries, the sr-only table column, and the <desc>
+  // text all agree on whether the overlay is real — a stale/mismatched
+  // index (e.g. from a different spot's cached /surf response) renders
+  // nothing anywhere, rather than a band that doesn't match its own legend.
+  const zoneBandValid = hasZoneOverlay &&
+    mainBreakZoneStartIndex! >= 0 && mainBreakZoneEndIndex! < N &&
+    mainBreakZoneStartIndex! <= mainBreakZoneEndIndex!;
+  const representativeValid = hasRepresentativeOverlay &&
+    representativeTransectIndex! >= 0 && representativeTransectIndex! < N;
   const hatchId = `${HATCH_BASE_ID}-${titleId.replace(/:/g, '')}`;
   const legendY = PAD_TOP + N * rowH + 28;
 
@@ -614,34 +667,48 @@ export function HeatMapCard({ data, loading, error, onRetry, heightUnit, distanc
           <th scope="col">{t('surfing.heatMap.breakHeight', 'Break height ({{unit}})', { unit: heightUnit })}</th>
           <th scope="col">{t('surfing.heatMap.breakDistance', 'Break distance ({{unit}})', { unit: distanceUnit })}</th>
           <th scope="col">{t('surfing.heatMap.breakerType', 'Breaker type')}</th>
+          {/* BD-7 column — same non-color-only equivalent as the gutter band (D5.2). Only present when the zone data is present AND valid for this response (avoids a misleading all-"No" column, and keeps this column in agreement with whether the band itself actually rendered). */}
+          {zoneBandValid && (
+            <th scope="col">{t('surfing.heatMap.mainBreakZoneLegend', 'Main break zone')}</th>
+          )}
         </tr>
       </thead>
       <tbody>
-        {rows.map((row) => (
-          <tr key={row.transectIndex}>
-            <th scope="row">{row.transectIndex}</th>
-            <td>{!row.isStructureAffected ? t('yes', 'Yes') : t('no', 'No')}</td>
-            <td>
-              {row.breakPoints.length > 0
-                ? row.breakPoints.map(bp => bp.hs !== null && bp.hs !== undefined ? fmtNum(bp.hs) : '—').join(', ')
-                : '—'}
-            </td>
-            <td>
-              {row.breakPoints.length > 0
-                ? row.breakPoints.map(bp => fmtNum(bp.distance)).join(', ')
-                : '—'}
-            </td>
-            <td>
-              {row.breakPoints.length > 0
-                ? row.breakPoints.map(bp =>
-                    bp.breakerType
-                      ? t(`surfing.heatMap.breakerType.${bp.breakerType}`, bp.breakerType)
-                      : '—'
-                  ).join(', ')
-                : '—'}
-            </td>
-          </tr>
-        ))}
+        {rows.map((row) => {
+          const isRepresentative = representativeValid && row.transectIndex === representativeTransectIndex;
+          const isInZone = zoneBandValid && row.transectIndex >= mainBreakZoneStartIndex! && row.transectIndex <= mainBreakZoneEndIndex!;
+          return (
+            <tr key={row.transectIndex}>
+              <th scope="row">
+                {row.transectIndex}
+                {isRepresentative && ` ${t('surfing.heatMap.representativeSuffix', '(representative)')}`}
+              </th>
+              <td>{!row.isStructureAffected ? t('yes', 'Yes') : t('no', 'No')}</td>
+              <td>
+                {row.breakPoints.length > 0
+                  ? row.breakPoints.map(bp => bp.hs !== null && bp.hs !== undefined ? fmtNum(bp.hs) : '—').join(', ')
+                  : '—'}
+              </td>
+              <td>
+                {row.breakPoints.length > 0
+                  ? row.breakPoints.map(bp => fmtNum(bp.distance)).join(', ')
+                  : '—'}
+              </td>
+              <td>
+                {row.breakPoints.length > 0
+                  ? row.breakPoints.map(bp =>
+                      bp.breakerType
+                        ? t(`surfing.heatMap.breakerType.${bp.breakerType}`, bp.breakerType)
+                        : '—'
+                    ).join(', ')
+                  : '—'}
+              </td>
+              {zoneBandValid && (
+                <td>{isInZone ? t('yes', 'Yes') : t('no', 'No')}</td>
+              )}
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );
@@ -672,6 +739,12 @@ export function HeatMapCard({ data, loading, error, onRetry, heightUnit, distanc
               '2D grid showing significant wave height (Hs) across {{n}} along-shore transects. Colour scale from blue (small) to red (large).',
               { n: N }
             )}
+            {zoneBandValid && ` ${t('surfing.heatMap.mainBreakZoneDesc',
+              'Main break zone spans transects {{start}} to {{end}}.',
+              { start: mainBreakZoneStartIndex, end: mainBreakZoneEndIndex })}`}
+            {representativeValid && ` ${t('surfing.heatMap.representativeDesc',
+              'Transect {{n}} is the representative transect.',
+              { n: representativeTransectIndex })}`}
           </desc>
 
           {/* Defs: hatching pattern for structure-affected rows */}
@@ -723,20 +796,58 @@ export function HeatMapCard({ data, loading, error, onRetry, heightUnit, distanc
           {/* Breaker glyphs */}
           {breakGlyphs}
 
-          {/* Y axis — transect index labels (only render if space allows) */}
-          {rowH >= 12 && rows.map((row, ri) => (
-            <text
-              key={`ylabel-${ri}`}
-              x={PAD_LEFT - 4}
-              y={rowToY(ri, rowH) + rowH / 2 + 3.5}
-              fontSize={Math.min(10, rowH * 0.7)}
-              fill="var(--muted-foreground)"
-              textAnchor="end"
+          {/* ── BD-7 main-break-zone gutter band (D5.2) ──
+           *  Y-axis gutter is otherwise empty except the row-index labels
+           *  (drawn below, right-aligned at x=PAD_LEFT-4 — text extends
+           *  leftward from there but stays clear of x<24 for up to 3-digit
+           *  indices at this font size). Placed at x=6..12, well clear.
+           *  Range-guarded against a stale/mismatched index from the /surf
+           *  endpoint not matching this response's own transect count. */}
+          {zoneBandValid && (
+            <rect
+              x={6}
+              y={rowToY(mainBreakZoneStartIndex!, rowH)}
+              width={6}
+              height={rowToY(mainBreakZoneEndIndex! + 1, rowH) - rowToY(mainBreakZoneStartIndex!, rowH)}
+              rx={2}
+              fill={MAIN_BREAK_ZONE_FILL}
               aria-hidden="true"
-            >
-              {row.transectIndex}
-            </text>
-          ))}
+            />
+          )}
+
+          {/* ── BD-9 representative-transect marker (D5.2) ──
+           *  Small triangle in the gutter, x=16..22, left of the row label.
+           *  Icon + bolded label together (never colour alone, DESIGN-
+           *  MANUAL "Row treatment"). Range-guarded same as the band above. */}
+          {representativeValid && (
+            <polygon
+              points={(() => {
+                const cy = rowToY(representativeTransectIndex!, rowH) + rowH / 2;
+                return `16,${cy - 4} 22,${cy} 16,${cy + 4}`;
+              })()}
+              fill="var(--foreground)"
+              aria-hidden="true"
+            />
+          )}
+
+          {/* Y axis — transect index labels (only render if space allows) */}
+          {rowH >= 12 && rows.map((row, ri) => {
+            const isRepresentative = representativeValid && row.transectIndex === representativeTransectIndex;
+            return (
+              <text
+                key={`ylabel-${ri}`}
+                x={PAD_LEFT - 4}
+                y={rowToY(ri, rowH) + rowH / 2 + 3.5}
+                fontSize={Math.min(10, rowH * 0.7)}
+                fill={isRepresentative ? 'var(--foreground)' : 'var(--muted-foreground)'}
+                fontWeight={isRepresentative ? 700 : 400}
+                textAnchor="end"
+                aria-hidden="true"
+              >
+                {row.transectIndex}
+              </text>
+            );
+          })}
 
           {/* X axis ticks and labels */}
           {xTicks.map((v) => {
@@ -827,6 +938,53 @@ export function HeatMapCard({ data, loading, error, onRetry, heightUnit, distanc
               >
                 {t('surfing.heatMap.shadowedTransect', 'Structure-affected')}
               </text>
+            </g>
+          )}
+
+          {/* ── BD-7/BD-9 overlay legend row (D5.2) — new row below the
+           *  existing legend line; only reserves the extra vertical space
+           *  (PAD_BOTTOM_WITH_OVERLAY_LEGEND, see geometry above) when at
+           *  least one overlay is actually shown. ── */}
+          {(zoneBandValid || representativeValid) && (
+            <g>
+              {zoneBandValid && (
+                <>
+                  <rect
+                    x={PAD_LEFT}
+                    y={legendY + 20}
+                    width={14}
+                    height={10}
+                    rx={2}
+                    fill={MAIN_BREAK_ZONE_FILL}
+                  />
+                  <text
+                    x={PAD_LEFT + 18}
+                    y={legendY + 29}
+                    fontSize={9}
+                    fill="var(--muted-foreground)"
+                    aria-hidden="true"
+                  >
+                    {t('surfing.heatMap.mainBreakZoneLegend', 'Main break zone')}
+                  </text>
+                </>
+              )}
+              {representativeValid && (
+                <>
+                  <polygon
+                    points={`${PAD_LEFT + 170},${legendY + 21} ${PAD_LEFT + 178},${legendY + 25} ${PAD_LEFT + 170},${legendY + 29}`}
+                    fill="var(--foreground)"
+                  />
+                  <text
+                    x={PAD_LEFT + 184}
+                    y={legendY + 29}
+                    fontSize={9}
+                    fill="var(--muted-foreground)"
+                    aria-hidden="true"
+                  >
+                    {t('surfing.heatMap.representativeLegend', 'Representative transect')}
+                  </text>
+                </>
+              )}
             </g>
           )}
         </svg>
