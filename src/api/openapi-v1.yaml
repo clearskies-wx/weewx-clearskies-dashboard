@@ -3222,28 +3222,6 @@ components:
         timeOfDay: { type: integer, description: "Signed; positive at dawn (bonus), negative in afternoon (penalty), 0 otherwise." }
       required: [waveHeight, wavePeriod, waveOrganization, organizationWind, organizationSwellDominance, organizationDirectionalSpread, organizationCrossSwell, beachAlignment, directionalExposure, timeOfDay]
 
-    PartitionBreakInfo:
-      type: object
-      description: >
-        Per-partition break info — what one swell component does at the
-        beach (T5.4 swell display). Structurally different from
-        BeachProfilePerPartitionBreak (a related but separate schema for
-        BeachProfileData.perPartitionBreaks, with its own
-        partitionIndex/heightM/meanBreakDistanceM shape) — two distinct
-        schemas for two distinct fields, not a naming gap. Added 2026-08-02
-        (D4.1 contract re-reconciliation) — mirrors dashboard types.ts
-        PartitionBreakInfo, present since Phase 4A/T5.4; openapi never had
-        it until this catch-up.
-      properties:
-        period: { type: number, description: "Dominant period of this partition in seconds." }
-        direction: { type: number, description: "Dominant direction of this partition in degrees (met convention)." }
-        classification: { type: string, description: "groundswell | swell | wind_swell" }
-        breakDistance: { type: number, description: "Cross-shore distance of the break point in display units from shore." }
-        faceHeight: { type: number, nullable: true, description: "Face height at the break point in display units. Null when unavailable." }
-        breakerType: { type: string, nullable: true, enum: [spilling, plunging, surging] }
-        breakLocation: { type: string, nullable: true, description: "outer_bar | inner_bar | middle_bar | beach. Null when the 1D model has not classified the break location." }
-      required: [period, direction, classification, breakDistance, faceHeight, breakerType, breakLocation]
-
     SurfForecast:
       type: object
       description: Surf quality forecast for one spot at one timestep (post wave_transform + surf_scorer).
@@ -3288,11 +3266,6 @@ components:
           description: "QB-peak break locations along the reference transect at this timestep (surf.py per-timestep pipeline scan — distinct from the beach-profile endpoint's per-transect break points, same schema/vocabulary). faceHeight/breakerType/iribarren/partitionInfo are never populated by this pipeline (always absent here). Null when no QB peak >= 0.25 detected. Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since Phase 4A."
         directionalSpread: { type: number, nullable: true, description: "DSPR at the cross-shore transect reference point, in degrees (ADR-095). Added 2026-08-02 catch-up (D4.1)." }
         setup: { type: number, nullable: true, description: "Wave-induced setup. Currently always null — SWAN SETUP command removed. Field retained for API contract stability. Added 2026-08-02 catch-up (D4.1)." }
-        partitionBreakInfo:
-          type: array
-          nullable: true
-          items: { $ref: '#/components/schemas/PartitionBreakInfo' }
-          description: "Per-partition break info — what each incoming swell component does at the beach. Present when the 1D model per-partition pipeline is active (T5.2/T5.4). Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since Phase 4A."
         peelAngle: { type: number, nullable: true, description: "Peel angle in degrees, from break point spatial variation across adjacent transects. Null when insufficient transect data. Since 2026-08-01: across ALL successful transects, not just open ones (BD-8 rescinded). Added 2026-08-02 catch-up (D4.1)." }
         peelClassification: { type: string, nullable: true, enum: [closeout, fast, fast_right, fast_left, fast_a_frame, good, good_right, good_left, good_a_frame, mellow, mellow_right, mellow_left, mellow_a_frame], description: "Peel angle classification: base quality class closeout (<30°) / fast (30-45°) / good (45-66°) / mellow (>66°), with a direction suffix (_right/_left/_a_frame) appended when direction is determined AND the class is not closeout — plain base when direction is undetermined. closeout is ALWAYS plain, never suffixed. Re-corrected 2026-08-02 (D8, supersedes the D4.1 audit description) — that pass's 'plain, undirected' correction was a sampling artifact from an all-closeout-hours capture; live-confirmed against marine surf_1d_pipeline.py:750-786 2026-08-02. Direction is ALSO available independently via peelDirection below (served even on closeout hours) — do not parse this field for direction." }
         peelDirection: { type: string, nullable: true, enum: [right, left, a_frame], description: "Break direction descriptor, computed INDEPENDENTLY of peelClassification — served even on closeout hours (a geometry descriptor, not gated by peel quality; live-confirmed 2026-08-02: 36/36 hours closeout + a_frame on the same day). Re-corrected 2026-08-02 (D8, supersedes the D4.1 audit description, which called this an open/opaque string pending more observed values) — as-built enum closed to right/left/a_frame, live-confirmed against marine surf_1d_pipeline.py:750-786. A consumer that wants 'does this wave peel' must still check peelClassification != 'closeout' separately." }
@@ -3300,7 +3273,6 @@ components:
         spotAverageFaceHeight: { type: number, nullable: true, description: "Mean face height across the WHOLE study area. Since 2026-08-01: mean across ALL successful transects (BD-8 rescinded). Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T7.3." }
         transectCount: { type: integer, nullable: true, description: "Total number of transects (open + structure-affected). Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T7.1." }
         openTransectCount: { type: integer, nullable: true, description: "Number of open (structure-free) transects. Since 2026-08-01 (BD-8 rescinded, ADR-093 Amendment 7): metadata/map-UI count ONLY, plays no role in any aggregation field. Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T7.1." }
-        shadowFaceHeight: { type: number, nullable: true, description: "Face height in the structure shadow zone. Null when no shadow present. Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T7.3." }
         waveShapeClassification: { type: string, nullable: true, description: "Dominant wave shape from waveform + Iribarren analysis: hollow_plunging | steep_crumbly | walled_closeout | mushy_slow. Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T7.2b." }
         setTimingMinutes: { type: number, nullable: true, description: "SurfBeat set timing — minutes between wave sets (IG spectral peak). Null when SurfBeat disabled or unavailable. Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T4.1/T4.2." }
         setAmplitudeM: { type: number, nullable: true, description: "SurfBeat set amplitude — IG wave height in display units (already unit-converted despite the 'M' suffix). Null when SurfBeat disabled or unavailable. Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T4.1/T4.2." }
@@ -3659,14 +3631,8 @@ components:
       description: |
         Per-partition break overlay — what each incoming swell component does
         at the beach, common to both single-transect and all-transect
-        responses (`perPartitionBreaks`). Structurally different from the
-        dashboard's `PartitionBreakInfo` TS type (which is populated by
-        surf.py for SurfForecast.partitionBreakInfo, a related but separate
-        field with its own period/direction/breakDistance/faceHeight/
-        breakerType/breakLocation shape) — these are deliberately two
-        different schemas for two different fields, not a naming mismatch.
-        T4A.6 item (e) — now referenced by BeachProfileData.perPartitionBreaks
-        (dashboard types.ts).
+        responses (`perPartitionBreaks`). T4A.6 item (e) — now referenced by
+        BeachProfileData.perPartitionBreaks (dashboard types.ts).
       properties:
         partitionIndex: { type: integer }
         periodS: { type: number, nullable: true }

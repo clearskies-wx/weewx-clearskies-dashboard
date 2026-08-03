@@ -88,7 +88,6 @@ import type {
   HourlyForecastPoint,
   DailyForecastPoint,
   TidePrediction,
-  PartitionBreakInfo,
 } from '../../../api/types';
 
 // ---------------------------------------------------------------------------
@@ -2159,9 +2158,6 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                       primary.spotAverageFaceHeight != null
                         ? `${t('surfing.avgLabel', { defaultValue: 'Average' })}: ${formatValue(primary.spotAverageFaceHeight, 'default', locale)} ${heightUnit}`
                         : null,
-                      primary.shadowFaceHeight != null
-                        ? `${t('surfing.shadowLabel', { defaultValue: 'In shadow' })}: ${formatValue(primary.shadowFaceHeight, 'default', locale)} ${heightUnit}`
-                        : null,
                     ].filter(Boolean).join(', ')}
                   >
                     {primary.bestPeakFaceHeight != null && (
@@ -2181,11 +2177,6 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                         <span style={{ fontFeatureSettings: '"tnum"' }}>
                           {formatValue(primary.spotAverageFaceHeight, 'default', locale)} {heightUnit}
                         </span>
-                      </span>
-                    )}
-                    {primary.shadowFaceHeight != null && (
-                      <span className="text-muted-foreground font-normal ml-2" style={{ fontSize: 'var(--text-micro)' }}>
-                        {' ('}{t('surfing.shadowLabel', { defaultValue: 'shadow' })}{': '}{formatValue(primary.shadowFaceHeight, 'default', locale)} {heightUnit}{')'}
                       </span>
                     )}
                   </p>
@@ -2384,68 +2375,6 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                   t={t}
                   tCommon={tCommon}
                 />
-
-                {/* T5.4: Per-partition break info — what each incoming swell does at the beach.
-                    Renders only when the 1D model pipeline provides partitionBreakInfo
-                    (T5.2 API). Gracefully absent when data is unavailable. */}
-                {primary?.partitionBreakInfo && primary.partitionBreakInfo.length > 0 && (
-                  <div className="flex flex-col gap-1 mt-2">
-                    <span className="text-muted-foreground font-semibold" style={{ fontSize: 'var(--text-micro)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                      {t('surfing.partitionBreaksTitle', { defaultValue: 'AT BREAK' })}
-                    </span>
-                    <ul className="flex flex-col gap-0.5" aria-label={t('surfing.partitionBreaksTitle', { defaultValue: 'AT BREAK' })}>
-                      {(primary.partitionBreakInfo as PartitionBreakInfo[]).map((pbi, idx) => {
-                        const dirCardinal = cardinalFromDegrees(pbi.direction);
-                        const dirLabel = dirCardinal ? tCommon(`directions.${dirCardinal}`) : `${pbi.direction}°`;
-                        const classLabel = t(`surfing.partitionBreakInfo.${pbi.classification}`, { defaultValue: pbi.classification });
-                        const breakLocLabel = pbi.breakLocation
-                          ? t(`surfing.partitionBreakInfo.${pbi.breakLocation}`, { defaultValue: pbi.breakLocation.replace(/_/g, ' ') })
-                          : null;
-                        const breakerTypeLabel = pbi.breakerType
-                          ? t(`surfing.beachProfile.breakType.${pbi.breakerType}`)
-                          : null;
-                        const distStr = pbi.breakDistance != null
-                          ? new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(pbi.breakDistance)
-                          : null;
-                        const heightStr = pbi.faceHeight != null
-                          ? new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(pbi.faceHeight)
-                          : null;
-                        return (
-                          <li
-                            key={idx}
-                            style={{
-                              fontSize: 'var(--text-micro)',
-                              color: 'var(--muted-foreground)',
-                              lineHeight: 1.4,
-                              fontFamily: 'var(--font-sans, sans-serif)',
-                              listStyle: 'none',
-                            }}
-                          >
-                            <span style={{ fontFeatureSettings: '"tnum"', color: 'var(--foreground)', fontWeight: 500 }}>
-                              {Math.round(pbi.period)}s {dirLabel} {classLabel}
-                            </span>
-                            {' → '}
-                            {breakLocLabel && (
-                              <span>{breakLocLabel}</span>
-                            )}
-                            {distStr && (
-                              <span> ({distStr} {distanceUnit})</span>
-                            )}
-                            {heightStr && (
-                              <span>
-                                {', '}
-                                <span style={{ color: 'var(--foreground)', fontWeight: 500, fontFeatureSettings: '"tnum"' }}>
-                                  {heightStr} {heightUnit}
-                                </span>
-                                {breakerTypeLabel && <span> {breakerTypeLabel}</span>}
-                              </span>
-                            )}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                )}
               </div>
 
               {/* Right: compass — max-width 80% of its flex-1 slot (~20% smaller) */}

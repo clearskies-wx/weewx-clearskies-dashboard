@@ -1389,12 +1389,6 @@ export interface SurfForecast {
   breakPoints?: BeachProfileBreakPoint[] | null;
   directionalSpread?: number | null;
   setup?: number | null;
-  /**
-   * Per-partition break info — what each incoming swell component does at the beach.
-   * Present when 1D model per-partition pipeline is active (T5.2/T5.4).
-   * Each entry corresponds to one swell partition from SPECOUT decomposition.
-   */
-  partitionBreakInfo?: PartitionBreakInfo[] | null;
   // T7.2: Peel angle fields — derived from multi-transect break-point lateral variation.
   /** Peel angle in degrees; null when insufficient transect data. */
   peelAngle?: number | null;
@@ -1439,9 +1433,6 @@ export interface SurfForecast {
   transectCount?: number | null;
   /** Number of open (structure-free) transects. */
   openTransectCount?: number | null;
-  // T7.3: Shadow area height — null when no structure shadow present.
-  /** Face height in the structure shadow zone. Null when no shadow. */
-  shadowFaceHeight?: number | null;
   // T7.2b: Wave shape classification from waveform + Iribarren analysis.
   /** Dominant wave shape: hollow_plunging|steep_crumbly|walled_closeout|mushy_slow */
   waveShapeClassification?: string | null;
@@ -1727,7 +1718,7 @@ export interface BeachProfilePartitionInfo {
    * Partition Hs at the handoff point, in display units. NOTE: field name
    * keeps the 'M' (meter) suffix from the internal dataclass despite being
    * unit-converted to the operator's display unit — a pre-existing naming
-   * quirk (see the same note on `PartitionBreakInfo`), not introduced here.
+   * quirk, not introduced here.
    */
   heightM: number;
 }
@@ -1885,11 +1876,6 @@ export interface BeachProfileTransectInfo {
  * Per-partition break overlay — what each incoming swell component does at
  * the beach, common to both single-transect and all-transect responses
  * (`perPartitionBreaks`) — T4A.6 item (e).
- *
- * Structurally different from {@link PartitionBreakInfo} (which backs
- * `SurfForecast.partitionBreakInfo`, a related but separate field with its
- * own period/direction/breakDistance/faceHeight/breakerType/breakLocation
- * shape) — two distinct schemas for two distinct fields, not a naming gap.
  */
 export interface BeachProfilePerPartitionBreak {
   partitionIndex: number;
@@ -2121,30 +2107,4 @@ export interface HeatMapProfileDataUnavailable {
   profiles: null;
   perPartitionBreaks: null;
   metadata: BeachProfileMetadata;
-}
-
-// ────────────────────────────────────────────────────────────────────────────
-
-/**
- * Per-partition break info — what one swell component does at the beach.
- * Part of the T5.4 swell display showing incoming swell → breaking behavior.
- */
-export interface PartitionBreakInfo {
-  /** Dominant period of this partition in seconds. */
-  period: number;
-  /** Dominant direction of this partition in degrees (met convention). */
-  direction: number;
-  /** Classification: "groundswell" | "swell" | "wind_swell". */
-  classification: string;
-  /** Cross-shore distance of the break point in display units from shore. */
-  breakDistance: number;
-  /** Face height at the break point in display units. Null when unavailable. */
-  faceHeight: number | null;
-  /** Breaker type at this partition's break point. Null when unavailable. */
-  breakerType: 'spilling' | 'plunging' | 'surging' | null;
-  /**
-   * Location category: "outer_bar" | "inner_bar" | "middle_bar" | "beach".
-   * Null when the 1D model has not classified the break location.
-   */
-  breakLocation: string | null;
 }
