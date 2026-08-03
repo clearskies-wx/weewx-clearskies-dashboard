@@ -491,7 +491,12 @@ describe('HeatMapCard', () => {
     }
   });
 
-  // ── D5.2 — BD-7/BD-9 overlays ─────────────────────────────────────────
+  // ── D5.2 — BD-7 overlay (BD-9 representative-transect marker removed
+  //    from the render, operator ruling 2026-08-02 — "the user of the site
+  //    will not [know what that means]"). BD-9-specific tests below were
+  //    updated to assert the marker/label/legend/suffix does NOT render
+  //    even when `representativeTransectIndex` is still passed — proving
+  //    the now-unused prop is harmlessly ignored, not that it crashes. ──
   describe('D5.2 — BD-7/BD-9 overlays', () => {
     it('renders the main-break-zone band (purple rect) spanning the given row range when both bounds are present', () => {
       const { container } = render(
@@ -531,20 +536,22 @@ describe('HeatMapCard', () => {
         .toBe(withoutOverlayProp.container.querySelector('svg')?.getAttribute('viewBox'));
     });
 
-    it('renders the representative-transect marker + bolds that row\'s label when present', () => {
+    // BD-9 removed from the render (operator ruling 2026-08-02) — the
+    // triangle marker and bolded row label no longer appear, even when
+    // representativeTransectIndex is passed. `representativeTransectIndex`
+    // stays in HeatMapCardProps for caller compatibility; the component
+    // just never reads it now.
+    it('ignores representativeTransectIndex: no triangle marker, no bolded row label', () => {
       const { container } = render(
         <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS} loading={false} representativeTransectIndex={2} />,
       );
+      const triangle = Array.from(container.querySelectorAll('svg polygon'))
+        .find((p) => p.getAttribute('fill') === 'var(--foreground)');
+      expect(triangle).toBeUndefined();
       const texts = Array.from(container.querySelectorAll('svg text'));
-      const boldLabel = texts.find((el) => el.textContent === '2' && el.getAttribute('font-weight') === '700');
-      expect(boldLabel).toBeDefined();
-      // Every other row label stays unbolded — D5-audit MINOR remediation:
-      // `font-weight` must be OMITTED entirely (not `"400"`) for non-
-      // representative rows, restoring byte-identity with the pre-D5.2
-      // render for the no-overlay case (asserted separately below too).
-      const otherLabels = texts.filter((el) => ['0', '1', '3', '4'].includes(el.textContent ?? ''));
-      expect(otherLabels.length).toBeGreaterThan(0);
-      for (const el of otherLabels) {
+      const allLabels = texts.filter((el) => ['0', '1', '2', '3', '4'].includes(el.textContent ?? ''));
+      expect(allLabels.length).toBeGreaterThan(0);
+      for (const el of allLabels) {
         expect(el.getAttribute('font-weight')).toBeNull();
       }
     });
@@ -597,7 +604,7 @@ describe('HeatMapCard', () => {
       }
     });
 
-    it('range-guard: an out-of-bounds representativeTransectIndex does not crash and renders no bold label', () => {
+    it('an out-of-bounds representativeTransectIndex does not crash and renders no bold label (prop ignored regardless of value)', () => {
       const { container } = render(
         <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS} loading={false} representativeTransectIndex={999} />,
       );
@@ -605,7 +612,7 @@ describe('HeatMapCard', () => {
       expect(texts.some((el) => el.getAttribute('font-weight') === '700')).toBe(false);
     });
 
-    it('legend text (key names) present only when the corresponding overlay is shown', () => {
+    it('legend text (key names): main-break-zone legend present only when that overlay is shown; representative legend never renders', () => {
       // "mainBreakZoneLegend" is deliberately reused for BOTH the SVG
       // legend label and the sr-only table's column header (same phrase,
       // two locations) — getAllByText/queryAllByText for it, not the
@@ -620,10 +627,12 @@ describe('HeatMapCard', () => {
       expect(within(zoneContainer).getAllByText('surfing.heatMap.mainBreakZoneLegend').length).toBe(2);
       expect(within(zoneContainer).queryByText('surfing.heatMap.representativeLegend')).toBeNull();
 
+      // BD-9 removed (operator ruling 2026-08-02) — representativeLegend
+      // never renders, even when representativeTransectIndex is passed.
       const { container: repContainer } = render(
         <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS} loading={false} representativeTransectIndex={2} />,
       );
-      expect(within(repContainer).getByText('surfing.heatMap.representativeLegend')).toBeDefined();
+      expect(within(repContainer).queryByText('surfing.heatMap.representativeLegend')).toBeNull();
       expect(within(repContainer).queryAllByText('surfing.heatMap.mainBreakZoneLegend').length).toBe(0);
 
       const { container: noOverlayContainer } = render(
@@ -633,16 +642,15 @@ describe('HeatMapCard', () => {
       expect(within(noOverlayContainer).queryByText('surfing.heatMap.representativeLegend')).toBeNull();
     });
 
-    it('sr-only table: "Main break zone" column present only with zone data; representative row gets the suffix', () => {
+    it('sr-only table: "Main break zone" column present only with zone data; representative suffix never renders (BD-9 removed)', () => {
       const { container: withOverlayContainer } = render(
         <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS} loading={false} mainBreakZoneStartIndex={1} mainBreakZoneEndIndex={3} representativeTransectIndex={2} />,
       );
       // Column header present (+ the SVG legend label — same key, 2 matches).
       expect(within(withOverlayContainer).getAllByText('surfing.heatMap.mainBreakZoneLegend').length).toBe(2);
-      // Representative row suffix — shares a <th> with the transect index
-      // number ("2 surfing.heatMap.representativeSuffix"), so match by
-      // substring (regex), not an exact single-node string match.
-      expect(within(withOverlayContainer).getByText(/representativeSuffix/)).toBeDefined();
+      // BD-9 removed (operator ruling 2026-08-02) — the "(representative)"
+      // suffix never renders, even with representativeTransectIndex passed.
+      expect(within(withOverlayContainer).queryByText(/representativeSuffix/)).toBeNull();
 
       const { container: noOverlayContainer } = render(
         <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS} loading={false} />,
@@ -652,12 +660,14 @@ describe('HeatMapCard', () => {
     });
 
     // D5-audit MAJOR remediation KAT — the auditor's exact gap scenario.
-    // Falsifiable: reverting the fix (using rowToY(mainBreakZoneStartIndex,
-    // ...) / rowToY(representativeTransectIndex, ...) directly, i.e. VALUE
-    // as POSITION) would place the triangle at position 11 (transectIndex
-    // 12's row) instead of position 10, and the band at positions 10..12
-    // instead of 9..11 — every assertion below would fail.
-    it('gap KAT: 20 conceptual transects, #5 missing (19 rows), zone [10,12] representative 11 — SVG positions and sr-only table agree by construction', () => {
+    // Falsifiable (BD-7 band): reverting the fix (using
+    // rowToY(mainBreakZoneStartIndex, ...) directly, i.e. VALUE as
+    // POSITION) would place the band at positions 10..12 instead of 9..11 —
+    // every band assertion below would fail. Also still passes
+    // representativeTransectIndex={11} (harmlessly ignored, BD-9 removed —
+    // operator ruling 2026-08-02) to prove an old caller's prop doesn't
+    // resurrect any rendering or break the BD-7 gap-position fix.
+    it('gap KAT: 20 conceptual transects, #5 missing (19 rows), zone [10,12] — SVG band position and sr-only table agree by construction; no BD-9 marker', () => {
       const { container } = render(
         <HeatMapCard
           {...baseProps}
@@ -669,18 +679,10 @@ describe('HeatMapCard', () => {
         />,
       );
 
-      // ── Triangle marker: must land at array position 10 (transectIndex
-      // 11's row), not position 11 (transectIndex 12's row — where the
-      // value-as-position bug would have put it). ──
-      const expectedCy = gapRowToY(10) + GAP_ROW_H / 2;
+      // BD-9 removed — no triangle marker at all, regardless of the prop.
       const triangle = Array.from(container.querySelectorAll('svg polygon'))
         .find((p) => p.getAttribute('fill') === 'var(--foreground)');
-      expect(triangle).toBeDefined();
-      const pointsAttr = triangle!.getAttribute('points') ?? '';
-      // points format: "16,{cy-4} 22,{cy} 16,{cy+4}" — extract the middle y (the polygon's vertical center).
-      const coords = pointsAttr.trim().split(/\s+/).map((pair) => pair.split(',').map(Number));
-      const midY = coords[1][1];
-      expect(midY).toBeCloseTo(expectedCy, 5);
+      expect(triangle).toBeUndefined();
 
       // ── Band: must cover exactly array positions 9..11 (the rows whose
       // transectIndex values are 10, 11, 12), not positions 10..12 (where
@@ -695,10 +697,10 @@ describe('HeatMapCard', () => {
       expect(Number(bandRect!.getAttribute('height'))).toBeCloseTo(expectedBandHeight, 5);
 
       // ── sr-only table agreement: the same three transects (VALUES 10,
-      // 11, 12) are flagged "Yes" in the Main break zone column, and ONLY
-      // transectIndex 11's row carries the representative suffix — proving
+      // 11, 12) are flagged "Yes" in the Main break zone column — proving
       // the SVG (position-based) and the table (value-based) describe the
-      // SAME underlying rows, not merely "some band exists somewhere". ──
+      // SAME underlying rows, not merely "some band exists somewhere". No
+      // row carries the representative suffix (BD-9 removed). ──
       const rows = Array.from(container.querySelectorAll('table.sr-only tbody tr'));
       expect(rows.length).toBe(19);
       for (const row of rows) {
@@ -706,11 +708,10 @@ describe('HeatMapCard', () => {
         const cells = row.querySelectorAll('td');
         const inZoneCell = cells[cells.length - 1]; // last column = "Main break zone"
         const transectIndexText = th?.textContent ?? '';
-        const isRepresentativeRow = transectIndexText.includes('representativeSuffix');
+        expect(transectIndexText).not.toContain('representativeSuffix');
         const rowValue = parseInt(transectIndexText, 10);
         const shouldBeInZone = rowValue >= 10 && rowValue <= 12;
         expect(inZoneCell.textContent).toBe(shouldBeInZone ? 'yes' : 'no');
-        expect(isRepresentativeRow).toBe(rowValue === 11);
       }
     });
   });

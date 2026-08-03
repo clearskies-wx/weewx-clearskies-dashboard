@@ -68,8 +68,11 @@ export interface HeatMapCardProps {
   mainBreakZoneEndIndex?: number | null;
   /**
    * BD-9 representative-transect index (D5.2, 2026-08-02) — same sourcing
-   * note as {@link mainBreakZoneStartIndex}. Null-safe: absent/null renders
-   * no marker.
+   * note as {@link mainBreakZoneStartIndex}. NOT rendered (operator ruling
+   * 2026-08-02: the representative-transect marker is developer/operator
+   * context, meaningless to an end user — removed from the default render).
+   * Kept in the prop interface for caller compatibility; the component
+   * accepts and ignores this value.
    */
   representativeTransectIndex?: number | null;
 }
@@ -99,10 +102,11 @@ const ZONE_BREAK_FILL  = 'rgba(59, 130, 246, 0.12)';
 // RANGE marker in the Y-axis gutter, not a cross-shore zone fill).
 const MAIN_BREAK_ZONE_FILL = 'rgba(168, 85, 247, 0.75)';
 
-// Extra bottom padding when the BD-7/9 overlay legend row is shown
-// (D5.2). Only applied when at least one overlay is present, so a
-// pre-Round-2 payload (no mainBreakZone*/representativeTransectIndex)
-// renders byte-identical to before this round.
+// Extra bottom padding when the BD-7 overlay legend row is shown (D5.2).
+// Only applied when the zone overlay is present, so a pre-Round-2 payload
+// (no mainBreakZoneStartIndex/EndIndex) renders byte-identical to before
+// this round. (Originally also gated by the BD-9 representative-transect
+// overlay; that overlay is no longer rendered — operator ruling 2026-08-02.)
 const PAD_BOTTOM_WITH_OVERLAY_LEGEND = PAD_BOTTOM + 22;
 
 // Hatching pattern ID is stable per component instance (prefixed below).
@@ -382,7 +386,7 @@ function ColorLegend({ maxHs, heightUnit, locale, svgY }: LegendProps): ReactEle
 
 export function HeatMapCard({
   data, loading, error, onRetry, heightUnit, distanceUnit, locale,
-  mainBreakZoneStartIndex = null, mainBreakZoneEndIndex = null, representativeTransectIndex = null,
+  mainBreakZoneStartIndex = null, mainBreakZoneEndIndex = null,
 }: HeatMapCardProps): ReactElement | null {
   const { t } = useTranslation('marine');
   const { t: tCommon } = useTranslation('common');
@@ -393,11 +397,12 @@ export function HeatMapCard({
   // SURF-PUBLISH-RESULTS-ONLY §3.6 (2026-07-25): `data.profiles` is null,
   // not an empty array, when `modelStatus === "unavailable"` — guard on
   // `!data.profiles` (not `.length`) so a null payload never throws here.
-  // BD-7/BD-9 overlay applicability (D5.2) — computed outside the memo so
-  // both the memo and the render body can use it; cheap (three comparisons).
+  // BD-7 overlay applicability (D5.2) — computed outside the memo so both
+  // the memo and the render body can use it; cheap (two comparisons).
+  // BD-9 representative-transect marker removed from the render (operator
+  // ruling 2026-08-02) — `showOverlayLegend` no longer factors it in.
   const hasZoneOverlay = mainBreakZoneStartIndex != null && mainBreakZoneEndIndex != null;
-  const hasRepresentativeOverlay = representativeTransectIndex != null;
-  const showOverlayLegend = hasZoneOverlay || hasRepresentativeOverlay;
+  const showOverlayLegend = hasZoneOverlay;
 
   const geometry = useMemo(() => {
     if (!data || !data.profiles || data.profiles.length === 0) return null;
@@ -517,26 +522,23 @@ export function HeatMapCard({
   const { rows, N, rowH, viewH, maxDist, minDist, maxHs, displayTransects } = geometry;
 
   // Value-vs-position fix (D5 audit remediation, MAJOR finding): `rows` is
-  // an ARRAY indexed by POSITION, but `mainBreakZoneStartIndex`/`EndIndex`/
-  // `representativeTransectIndex` are `SurfForecast` TRANSECT-INDEX VALUES
-  // from a DIFFERENT endpoint. The two only coincide when `rows[i].
-  // transectIndex === i` for every row — true only when the marine service
-  // published every transect with no gaps. Marine filters FAILED transects
-  // out of `per_transect` entirely (surf_1d_pipeline.py:1683) — a real,
-  // observed behavior, not a hypothetical — so a gap shifts every position
-  // after it. Positioning the SVG overlay by VALUE (the old `rowToY
-  // (mainBreakZoneStartIndex!, rowH)` etc.) would mark the wrong rows the
-  // moment a gap exists, while the sr-only table (which already compared
-  // `row.transectIndex` VALUES per row) stayed correct — a sighted/screen-
-  // reader divergence in exactly the failure mode the a11y pairing exists
-  // to prevent. Fixed by construction: derive POSITIONS from values the
-  // same way the table does, so the SVG and the table agree on any data,
-  // gaps or not.
-  const representativePos = hasRepresentativeOverlay
-    ? rows.findIndex((r) => r.transectIndex === representativeTransectIndex)
-    : -1;
-  const representativeValid = representativePos !== -1;
-
+  // an ARRAY indexed by POSITION, but `mainBreakZoneStartIndex`/`EndIndex`
+  // are `SurfForecast` TRANSECT-INDEX VALUES from a DIFFERENT endpoint. The
+  // two only coincide when `rows[i].transectIndex === i` for every row —
+  // true only when the marine service published every transect with no
+  // gaps. Marine filters FAILED transects out of `per_transect` entirely
+  // (surf_1d_pipeline.py:1683) — a real, observed behavior, not a
+  // hypothetical — so a gap shifts every position after it. Positioning the
+  // SVG overlay by VALUE (the old `rowToY(mainBreakZoneStartIndex!, rowH)`
+  // etc.) would mark the wrong rows the moment a gap exists, while the
+  // sr-only table (which already compared `row.transectIndex` VALUES per
+  // row) stayed correct — a sighted/screen-reader divergence in exactly the
+  // failure mode the a11y pairing exists to prevent. Fixed by construction:
+  // derive POSITIONS from values the same way the table does, so the SVG
+  // and the table agree on any data, gaps or not. (Originally covered both
+  // BD-7 zone and BD-9 representative-transect overlays; BD-9 removed from
+  // the render entirely, operator ruling 2026-08-02 — this note now
+  // describes BD-7 only.)
   const zoneMemberPositions: number[] = hasZoneOverlay
     ? rows.reduce<number[]>((acc, r, i) => {
         if (r.transectIndex >= mainBreakZoneStartIndex! && r.transectIndex <= mainBreakZoneEndIndex!) acc.push(i);
@@ -757,13 +759,11 @@ export function HeatMapCard({
       </thead>
       <tbody>
         {rows.map((row) => {
-          const isRepresentative = representativeValid && row.transectIndex === representativeTransectIndex;
           const isInZone = zoneBandValid && row.transectIndex >= mainBreakZoneStartIndex! && row.transectIndex <= mainBreakZoneEndIndex!;
           return (
             <tr key={row.transectIndex}>
               <th scope="row">
                 {row.transectIndex}
-                {isRepresentative && ` ${t('surfing.heatMap.representativeSuffix', '(representative)')}`}
               </th>
               <td>{!row.isStructureAffected ? t('yes', 'Yes') : t('no', 'No')}</td>
               <td>
@@ -824,9 +824,6 @@ export function HeatMapCard({
             {zoneBandValid && ` ${t('surfing.heatMap.mainBreakZoneDesc',
               'Main break zone spans transects {{start}} to {{end}}.',
               { start: mainBreakZoneStartIndex, end: mainBreakZoneEndIndex })}`}
-            {representativeValid && ` ${t('surfing.heatMap.representativeDesc',
-              'Transect {{n}} is the representative transect.',
-              { n: representativeTransectIndex })}`}
           </desc>
 
           {/* Defs: hatching pattern for structure-affected rows */}
@@ -899,41 +896,24 @@ export function HeatMapCard({
             />
           )}
 
-          {/* ── BD-9 representative-transect marker (D5.2, D5-audit remediation) ──
-           *  Small triangle in the gutter, x=16..22, left of the row label.
-           *  Icon + bolded label together (never colour alone, DESIGN-
-           *  MANUAL "Row treatment"). Positioned by representativePos (the
-           *  array position of the row whose transectIndex equals
-           *  representativeTransectIndex) — not the raw index value. */}
-          {representativeValid && (
-            <polygon
-              points={(() => {
-                const cy = rowToY(representativePos, rowH) + rowH / 2;
-                return `16,${cy - 4} 22,${cy} 16,${cy + 4}`;
-              })()}
-              fill="var(--foreground)"
-              aria-hidden="true"
-            />
-          )}
+          {/* BD-9 representative-transect marker (triangle + bolded row
+           *  label) removed from the render — operator ruling 2026-08-02:
+           *  developer/operator context, meaningless to an end user. */}
 
           {/* Y axis — transect index labels (only render if space allows) */}
-          {rowH >= 12 && rows.map((row, ri) => {
-            const isRepresentative = representativeValid && row.transectIndex === representativeTransectIndex;
-            return (
-              <text
-                key={`ylabel-${ri}`}
-                x={PAD_LEFT - 4}
-                y={rowToY(ri, rowH) + rowH / 2 + 3.5}
-                fontSize={Math.min(10, rowH * 0.7)}
-                fill={isRepresentative ? 'var(--foreground)' : 'var(--muted-foreground)'}
-                {...(isRepresentative ? { fontWeight: 700 } : {})}
-                textAnchor="end"
-                aria-hidden="true"
-              >
-                {row.transectIndex}
-              </text>
-            );
-          })}
+          {rowH >= 12 && rows.map((row, ri) => (
+            <text
+              key={`ylabel-${ri}`}
+              x={PAD_LEFT - 4}
+              y={rowToY(ri, rowH) + rowH / 2 + 3.5}
+              fontSize={Math.min(10, rowH * 0.7)}
+              fill="var(--muted-foreground)"
+              textAnchor="end"
+              aria-hidden="true"
+            >
+              {row.transectIndex}
+            </text>
+          ))}
 
           {/* X axis ticks and labels */}
           {xTicks.map((v) => {
@@ -1027,50 +1007,30 @@ export function HeatMapCard({
             </g>
           )}
 
-          {/* ── BD-7/BD-9 overlay legend row (D5.2) — new row below the
-           *  existing legend line; only reserves the extra vertical space
-           *  (PAD_BOTTOM_WITH_OVERLAY_LEGEND, see geometry above) when at
-           *  least one overlay is actually shown. ── */}
-          {(zoneBandValid || representativeValid) && (
+          {/* ── BD-7 overlay legend row (D5.2) — new row below the existing
+           *  legend line; only reserves the extra vertical space
+           *  (PAD_BOTTOM_WITH_OVERLAY_LEGEND, see geometry above) when the
+           *  zone overlay is actually shown. BD-9 representative-transect
+           *  legend entry removed (operator ruling 2026-08-02). ── */}
+          {zoneBandValid && (
             <g>
-              {zoneBandValid && (
-                <>
-                  <rect
-                    x={PAD_LEFT}
-                    y={legendY + 20}
-                    width={14}
-                    height={10}
-                    rx={2}
-                    fill={MAIN_BREAK_ZONE_FILL}
-                  />
-                  <text
-                    x={PAD_LEFT + 18}
-                    y={legendY + 29}
-                    fontSize={9}
-                    fill="var(--muted-foreground)"
-                    aria-hidden="true"
-                  >
-                    {t('surfing.heatMap.mainBreakZoneLegend', 'Main break zone')}
-                  </text>
-                </>
-              )}
-              {representativeValid && (
-                <>
-                  <polygon
-                    points={`${PAD_LEFT + 170},${legendY + 21} ${PAD_LEFT + 178},${legendY + 25} ${PAD_LEFT + 170},${legendY + 29}`}
-                    fill="var(--foreground)"
-                  />
-                  <text
-                    x={PAD_LEFT + 184}
-                    y={legendY + 29}
-                    fontSize={9}
-                    fill="var(--muted-foreground)"
-                    aria-hidden="true"
-                  >
-                    {t('surfing.heatMap.representativeLegend', 'Representative transect')}
-                  </text>
-                </>
-              )}
+              <rect
+                x={PAD_LEFT}
+                y={legendY + 20}
+                width={14}
+                height={10}
+                rx={2}
+                fill={MAIN_BREAK_ZONE_FILL}
+              />
+              <text
+                x={PAD_LEFT + 18}
+                y={legendY + 29}
+                fontSize={9}
+                fill="var(--muted-foreground)"
+                aria-hidden="true"
+              >
+                {t('surfing.heatMap.mainBreakZoneLegend', 'Main break zone')}
+              </text>
             </g>
           )}
         </svg>

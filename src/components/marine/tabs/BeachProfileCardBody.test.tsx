@@ -403,34 +403,35 @@ describe('BeachProfileCardBody', () => {
     expect(Math.max(...tickTexts)).toBe(300);
   });
 
-  // ── D5.2 — BD-9 representative-transect header (BeachProfileCardBody) ──
-  describe('D5.2 — representative-transect header', () => {
-    it('shows the header when selectedTransect is undefined (default)', () => {
-      const { getByText } = render(
+  // ── D5.2 — BD-9 representative-transect header removed (operator ruling
+  //    2026-08-02): "the user of the site will not [know what that means]"
+  //    — same class of developer/operator-only marker as the heatmap's
+  //    BD-9 triangle (HeatMapCard.tsx), removed in the same round. This
+  //    describe block previously asserted the header DID show for several
+  //    selectedTransect values; now asserts it never shows, for any of
+  //    them, including the "ok" state where it used to conditionally
+  //    render. ──
+  describe('D5.2 — representative-transect header (removed)', () => {
+    it('never shows the header, regardless of selectedTransect', () => {
+      const undefinedCase = render(
         <BeachProfileCardBody {...baseProps} state="ok" profile={OK_RESPONSE} />,
       );
-      expect(getByText(/representativeTransectHeader/)).toBeDefined();
-    });
+      expect(undefinedCase.queryByText(/representativeTransectHeader/)).toBeNull();
 
-    it('shows the header when selectedTransect is explicitly "best_peak"', () => {
-      const { getByText } = render(
+      const bestPeakCase = render(
         <BeachProfileCardBody {...baseProps} state="ok" profile={OK_RESPONSE} selectedTransect="best_peak" />,
       );
-      expect(getByText(/representativeTransectHeader/)).toBeDefined();
-    });
+      expect(bestPeakCase.queryByText(/representativeTransectHeader/)).toBeNull();
 
-    it('hides the header when a specific numbered transect is selected', () => {
-      const { queryByText } = render(
+      const numberedCase = render(
         <BeachProfileCardBody {...baseProps} state="ok" profile={OK_RESPONSE} selectedTransect={7} />,
       );
-      expect(queryByText(/representativeTransectHeader/)).toBeNull();
-    });
+      expect(numberedCase.queryByText(/representativeTransectHeader/)).toBeNull();
 
-    it('hides the header when "average" is selected', () => {
-      const { queryByText } = render(
+      const averageCase = render(
         <BeachProfileCardBody {...baseProps} state="ok" profile={OK_RESPONSE} selectedTransect="average" />,
       );
-      expect(queryByText(/representativeTransectHeader/)).toBeNull();
+      expect(averageCase.queryByText(/representativeTransectHeader/)).toBeNull();
     });
 
     it('never shows the header outside the "ok" state', () => {

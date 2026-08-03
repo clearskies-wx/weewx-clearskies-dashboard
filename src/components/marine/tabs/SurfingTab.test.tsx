@@ -235,7 +235,13 @@ describe('SurfingTab — HeatMapCard BD-7/9 overlay prop-threading (D5.2)', () =
     expect(bandRects.length).toBe(1);
   });
 
-  it('threads representativeTransectIndex from `primary` into HeatMapCard — the bold row label renders', () => {
+  // BD-9 removed from the render (operator ruling 2026-08-02): "the user of
+  // the site will not [know what that means]" — the bold row label never
+  // renders now, even when `primary.representativeTransectIndex` is
+  // threaded through. representativeTransectIndex stays on HeatMapCardProps
+  // for caller compatibility; SurfingTab.tsx still passes it, the component
+  // just no longer reads it.
+  it('representativeTransectIndex threaded from `primary` into HeatMapCard is ignored — no bold row label renders', () => {
     surfData = buildSurfData(buildEntry({
       mainBreakZoneStartIndex: null,
       mainBreakZoneEndIndex: null,
@@ -245,7 +251,7 @@ describe('SurfingTab — HeatMapCard BD-7/9 overlay prop-threading (D5.2)', () =
     const { container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
     const boldLabel = Array.from(container.querySelectorAll('svg text'))
       .find((el) => el.textContent === '2' && el.getAttribute('font-weight') === '700');
-    expect(boldLabel).toBeDefined();
+    expect(boldLabel).toBeUndefined();
   });
 
   it('null-safety: no overlay renders when `primary` carries no BD-7/9 fields (pre-Round-2 cache)', () => {
