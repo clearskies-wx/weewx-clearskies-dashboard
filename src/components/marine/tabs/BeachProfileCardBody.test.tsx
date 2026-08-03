@@ -193,6 +193,33 @@ const OK_RESPONSE_DOUBLE_BREAK_LIVE: BeachProfileDataOk = {
   },
 };
 
+// Tier-selection bug fix (2026-08-02): reproduces the reported Huntington
+// Beach scenario — BOTH break points landward of the reference waterline
+// (TA-C19/ADR-093 Amendment 4 negative distance), transect extending far
+// offshore. Before the Math.abs() fix, Math.max on signed break distances
+// picked the least-negative break (-223), which still failed the
+// `outerBreakDist > 0` gate and fell through to the full-transect-extent
+// fallback — Extended tier (1000m) — compressing the whole surf zone into
+// a sliver. distanceUnit: 'm' here (not the file's usual 'ft' convention)
+// so the fixture's literal distances line up 1:1 with the tier thresholds
+// (100/300/1000m) as described in the bug report.
+const OK_RESPONSE_ALL_NEGATIVE_BREAKS: BeachProfileDataOk = {
+  ...OK_RESPONSE,
+  transectIndex: 39,
+  transect: [
+    { distance: 2227, depth: 15, hs: 3.5, swellHeight: 3.2, breakingFraction: null },
+    { distance: 1000, depth: 8, hs: 3.0, swellHeight: 2.8, breakingFraction: null },
+    { distance: 300, depth: 3, hs: 1.5, swellHeight: 1.3, breakingFraction: 0.4 },
+    { distance: 0, depth: 0.5, hs: 0.3, swellHeight: 0.2, breakingFraction: 0.8 },
+    { distance: -223, depth: 0.05, hs: 0.02, swellHeight: 0.01, breakingFraction: 0.9 },
+    { distance: -240, depth: 0.02, hs: 0.01, swellHeight: 0.01, breakingFraction: 0.9 },
+  ],
+  breakPoints: [
+    { distance: -223, depth: 0.05, hs: 0.02, breakerType: 'spilling', faceHeight: 0.03, iribarren: 0.3 },
+    { distance: -240, depth: 0.02, hs: 0.01, breakerType: 'spilling', faceHeight: 0.02, iribarren: 0.3 },
+  ],
+};
+
 const FETCH_ERROR = new Error('404: Surf location not found');
 
 describe('computeBeachProfileState', () => {
@@ -349,6 +376,31 @@ describe('BeachProfileCardBody', () => {
     // First tfoot row is the "Break points" section header (colSpan=5); the
     // rest are one row per breakPoints entry.
     expect(breakRows.length).toBe(1 + 2);
+  });
+
+  // Tier-selection bug fix (2026-08-02): all break points negative must
+  // still select the Standard tier (300m) by break MAGNITUDE, not fall
+  // through to Extended (1000m) via the full-transect-extent fallback.
+  it('tier selection (all-negative breaks): picks Standard tier (max tick 300), not Extended (1000)', () => {
+    const { container } = render(
+      <BeachProfileCardBody
+        {...baseProps}
+        distanceUnit="m"
+        state="ok"
+        profile={OK_RESPONSE_ALL_NEGATIVE_BREAKS}
+      />,
+    );
+    // X-axis distance tick labels are the only <text> content that is a
+    // plain integer in this render (locale 'en' comma-groups >= 1000, e.g.
+    // "1,000" — stripped here so a >=1000 tier's ticks are still comparable
+    // integers, not silently excluded by the digit-only regex) — read them
+    // all and take the max, which is the tier's own maxDistance.
+    const tickTexts = Array.from(container.querySelectorAll('svg text'))
+      .map((el) => (el.textContent ?? '').replace(/,/g, ''))
+      .filter((s) => /^\d+$/.test(s))
+      .map(Number);
+    expect(tickTexts.length).toBeGreaterThan(0);
+    expect(Math.max(...tickTexts)).toBe(300);
   });
 
   // ── D5.2 — BD-9 representative-transect header (BeachProfileCardBody) ──

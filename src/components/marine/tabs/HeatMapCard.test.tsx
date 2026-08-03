@@ -267,6 +267,67 @@ function gapRowToY(pos: number): number {
   return GAP_PAD_TOP + pos * GAP_ROW_H;
 }
 
+// Tier-selection parity fix (2026-08-02) — see the test using this fixture,
+// below, for the full rationale. Two rows, each with ONE negative break
+// point (-223, -240 — same real Huntington Beach numbers as the
+// BeachProfileChart fixture), transects extending out to 2227m offshore
+// (the pre-fix full-extent fallback distance from the bug report).
+const ROW_NEG_A: HeatMapTransectData = {
+  transectIndex: 0,
+  isStructureAffected: false,
+  transectBearingDeg: 245,
+  transect: [
+    { distance: 2227, depth: 15, hs: 3.5 },
+    { distance: 300, depth: 3, hs: 1.5 },
+    { distance: 0, depth: 0.5, hs: 0.3 },
+    { distance: -223, depth: 0.05, hs: 0.02 },
+  ],
+  breakPoints: [
+    { distance: -223, depth: 0.05, hs: 0.02, breakerType: 'spilling' },
+  ],
+  waveShapes: [],
+  surfZones: null,
+  jackingFactors: [],
+  handoffDepthM: 0.05,
+  handoffSourceLevel: 'L4',
+};
+
+const ROW_NEG_B: HeatMapTransectData = {
+  transectIndex: 1,
+  isStructureAffected: false,
+  transectBearingDeg: 245,
+  transect: [
+    { distance: 2227, depth: 15, hs: 3.5 },
+    { distance: 300, depth: 3, hs: 1.5 },
+    { distance: 0, depth: 0.5, hs: 0.3 },
+    { distance: -240, depth: 0.02, hs: 0.01 },
+  ],
+  breakPoints: [
+    { distance: -240, depth: 0.02, hs: 0.01, breakerType: 'spilling' },
+  ],
+  waveShapes: [],
+  surfZones: null,
+  jackingFactors: [],
+  handoffDepthM: 0.02,
+  handoffSourceLevel: 'L4',
+};
+
+const OK_RESPONSE_ALL_NEGATIVE_BREAKS: HeatMapProfileDataOk = {
+  locationId: 'huntington-city-beach-pier',
+  timestep: '2026-08-02T00:00:00Z',
+  modelStatus: 'ok',
+  profiles: [ROW_NEG_A, ROW_NEG_B],
+  perPartitionBreaks: [],
+  metadata: {
+    axisUnits: { x: 'm', y: 'm' },
+    verticalDatum: 'LMSL',
+    transectCount: 2,
+    openTransectCount: 2,
+    handoffDepthM: 0.05,
+    handoffSourceLevel: 'L4',
+  },
+};
+
 const FETCH_ERROR = new Error('404: Surf location not found');
 
 const baseProps = {
@@ -377,6 +438,50 @@ describe('HeatMapCard', () => {
 
     const EPSILON = 0.5;
     const rects = container.querySelectorAll('svg rect');
+    expect(rects.length).toBeGreaterThan(0);
+    for (const rect of Array.from(rects)) {
+      const x = Number(rect.getAttribute('x'));
+      const width = Number(rect.getAttribute('width'));
+      expect(x).toBeGreaterThanOrEqual(PAD_LEFT - EPSILON);
+      expect(x + width).toBeLessThanOrEqual(PAD_LEFT + CHART_W + EPSILON);
+    }
+  });
+
+  // Tier-selection parity fix (2026-08-02): mirrors BeachProfileChart's
+  // Math.abs() fix (BeachProfileCardBody.test.tsx
+  // OK_RESPONSE_ALL_NEGATIVE_BREAKS — same Huntington Beach numbers, -223
+  // and -240), generalized ACROSS ROWS — the outermost break's MAGNITUDE,
+  // from ANY row, drives the one shared x-axis, not just one row's own
+  // breaks. Before this fix, HeatMapCard had no tier concept at all (always
+  // full transect extent, ~2227m); now it must pick the same Standard tier
+  // (300m) BeachProfileChart would for the same break distances.
+  it('tier selection parity (all-negative breaks, cross-row): picks Standard tier (max tick 300)', () => {
+    const { container } = render(
+      <HeatMapCard {...baseProps} distanceUnit="m" data={OK_RESPONSE_ALL_NEGATIVE_BREAKS} loading={false} />,
+    );
+    // Locale 'en' comma-groups >= 1000 (e.g. "1,000") — stripped here so a
+    // >=1000 tier's ticks are still comparable integers, not silently
+    // excluded by the digit-only regex.
+    const tickTexts = Array.from(container.querySelectorAll('svg text'))
+      .map((el) => (el.textContent ?? '').replace(/,/g, ''))
+      .filter((s) => /^\d+$/.test(s))
+      .map(Number);
+    expect(tickTexts.length).toBeGreaterThan(0);
+    expect(Math.max(...tickTexts)).toBe(300);
+
+    // Clipping parity: the color cell reaching all the way to 2227 (the
+    // pre-fix full extent) must NOT be present — every COLOR CELL stays
+    // within the tier-clipped drawable area. Excludes the break-zone-band
+    // rect (fill=ZONE_BREAK_FILL): that's a PRE-EXISTING, unrelated overflow
+    // in break-point rendering (bx +/- a fixed 5%-of-chart-width halfW, no
+    // edge clamp) that reproduces even against the OLD unclamped domain
+    // whenever a break sits this close to the domain's negative minimum —
+    // not introduced by this fix, and break-point rendering is out of scope
+    // for this task (MUST NOT TOUCH).
+    const ZONE_BREAK_FILL = 'rgba(59, 130, 246, 0.12)';
+    const EPSILON = 0.5;
+    const rects = Array.from(container.querySelectorAll('svg rect'))
+      .filter((r) => r.getAttribute('fill') !== ZONE_BREAK_FILL);
     expect(rects.length).toBeGreaterThan(0);
     for (const rect of Array.from(rects)) {
       const x = Number(rect.getAttribute('x'));

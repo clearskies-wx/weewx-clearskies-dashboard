@@ -111,8 +111,16 @@ function selectTier(
   tierStandard: ScaleTier,
   tierExtended: ScaleTier,
 ): ScaleTier {
+  // Tier-selection bug fix (2026-08-02): `distance` can be negative (TA-C19,
+  // ADR-093 Amendment 4 — landward of the reference waterline). Math.max on
+  // signed distances picked the LEAST-negative break when every break was
+  // negative, which still failed the `outerBreakDist > 0` gates below and
+  // fell through to the full-transect-extent fallback (line 120) — Extended
+  // tier compressed the whole surf zone into a sliver. Math.abs() restores
+  // "outermost break, magnitude only" as the tier-selection criterion; sign
+  // still flows through untouched everywhere else (xMin/rendering).
   const outerBreakDist = breakPoints.length > 0
-    ? Math.max(...breakPoints.map((bp) => bp.distance))
+    ? Math.max(...breakPoints.map((bp) => Math.abs(bp.distance)))
     : 0;
   if (outerBreakDist > 0 && outerBreakDist <= tierShort.maxDistance)    return tierShort;
   if (outerBreakDist > 0 && outerBreakDist <= tierStandard.maxDistance) return tierStandard;

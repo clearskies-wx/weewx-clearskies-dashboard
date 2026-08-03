@@ -29,7 +29,7 @@ import { useMemo, useId } from 'react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Warning } from '@phosphor-icons/react';
-import type { HeatMapProfileData, HeatMapTransectData, HeatMapBreakPoint } from '../../../api/types';
+import type { HeatMapProfileData, HeatMapTransectData, HeatMapBreakPoint, HeatMapEnvelopePoint } from '../../../api/types';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -150,8 +150,9 @@ function hsToColor(hs: number, maxHs: number, opacity = 0.85): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Compute the maximum cross-shore distance across all transects so the X axis
- * is consistent.
+ * Compute the maximum cross-shore distance across all transects. Used both
+ * as the historical "no tier" full-extent scan and as the tier-selection
+ * fallback (selectHeatMapTier below) when no break points are present.
  */
 function maxDistance(allTransects: HeatMapTransectData[]): number {
   let max = 0;
@@ -163,6 +164,45 @@ function maxDistance(allTransects: HeatMapTransectData[]): number {
   return max === 0 ? 1 : max;
 }
 
+// ---------------------------------------------------------------------------
+// 3-tier X-axis scale — parity with BeachProfileChart.tsx (2026-08-02).
+// Same thresholds/tick steps (100 / 300 / 1000 m, scaled by distanceUnit),
+// same Math.abs(distance) break-magnitude selection criterion. Duplicated
+// locally rather than shared/exported — lead ruling 2026-08-02: fine for
+// now, a shared util is a separate task, not over-engineering this one.
+// ---------------------------------------------------------------------------
+
+interface ScaleTier { maxDistance: number; tickStep: number; }
+
+/**
+ * Mirrors BeachProfileChart's selectTier(), generalized to ALL rows: the
+ * outermost break across every transect (not just one) drives tier choice,
+ * so every row's break points land inside the chosen tier by construction
+ * (each row's max abs-distance break is <= the cross-row max used here).
+ * Math.abs() fix (2026-08-02): breakpoint distances can be negative
+ * (TA-C19/ADR-093 Amendment 4) — Math.max on signed values previously would
+ * have picked the least-negative break and always missed the `> 0` gates,
+ * same bug BeachProfileChart had.
+ */
+function selectHeatMapTier(
+  allBreakPoints: HeatMapBreakPoint[],
+  allTransects: HeatMapTransectData[],
+  tierShort: ScaleTier,
+  tierStandard: ScaleTier,
+  tierExtended: ScaleTier,
+): ScaleTier {
+  const outerBreakDist = allBreakPoints.length > 0
+    ? Math.max(...allBreakPoints.map((bp) => Math.abs(bp.distance)))
+    : 0;
+  if (outerBreakDist > 0 && outerBreakDist <= tierShort.maxDistance)    return tierShort;
+  if (outerBreakDist > 0 && outerBreakDist <= tierStandard.maxDistance) return tierStandard;
+  if (outerBreakDist > tierStandard.maxDistance)                         return tierExtended;
+  const maxDist = maxDistance(allTransects);
+  if (maxDist <= tierShort.maxDistance)    return tierShort;
+  if (maxDist <= tierStandard.maxDistance) return tierStandard;
+  return tierExtended;
+}
+
 /**
  * TA-C19 (ADR-093 Amendment 4, confirmed live 2026-08-02, D4.2): `distance`
  * can be negative (a point landward of the reference waterline, since the
@@ -170,11 +210,15 @@ function maxDistance(allTransects: HeatMapTransectData[]): number {
  * negative-distance point past the chart's right edge (off-canvas) — never
  * clamp/abs() a negative distance away (API-MANUAL). Defaults to 0 when no
  * point is negative, so the existing all-non-negative case is unaffected.
+ * Since the 2026-08-02 tier-clipping fix, this scans the tier-CLIPPED
+ * per-row transects (`displayTransects`), not the raw full transects —
+ * consistent with BeachProfileChart's `xMin` (computed from its own
+ * `displayTransect`, not the raw `transect` prop).
  */
-function minDistance(allTransects: HeatMapTransectData[]): number {
+function minDistanceClipped(displayTransects: HeatMapEnvelopePoint[][]): number {
   let min = 0;
-  for (const row of allTransects) {
-    for (const pt of row.transect) {
+  for (const dt of displayTransects) {
+    for (const pt of dt) {
       if (pt.distance < min) min = pt.distance;
     }
   }
@@ -365,8 +409,24 @@ export function HeatMapCard({
     const bottomPad = showOverlayLegend ? PAD_BOTTOM_WITH_OVERLAY_LEGEND : PAD_BOTTOM;
     const viewH = PAD_TOP + chartH + bottomPad;
 
-    const maxDist = maxDistance(rows);
-    const minDist = minDistance(rows);
+    // Tier-clipped X axis (2026-08-02, parity with BeachProfileChart's
+    // 3-tier scale — see selectHeatMapTier above).
+    const METER_TO_UNIT = distanceUnit === 'ft' ? 3.28084 : 1;
+    const tierShort    = { maxDistance: Math.round(100  * METER_TO_UNIT), tickStep: Math.round(25  * METER_TO_UNIT) };
+    const tierStandard = { maxDistance: Math.round(300  * METER_TO_UNIT), tickStep: Math.round(50  * METER_TO_UNIT) };
+    const tierExtended = { maxDistance: Math.round(1000 * METER_TO_UNIT), tickStep: Math.round(200 * METER_TO_UNIT) };
+    const allBreakPoints = rows.flatMap((row) => row.breakPoints);
+    const tier = selectHeatMapTier(allBreakPoints, rows, tierShort, tierStandard, tierExtended);
+
+    const maxDist = tier.maxDistance;
+    // Per-row clipped transect — mirrors BeachProfileChart's `clipped`/
+    // `displayTransect` fallback: keep the full row when clipping would
+    // leave fewer than 2 points to draw a segment from.
+    const displayTransects: HeatMapEnvelopePoint[][] = rows.map((row) => {
+      const clipped = row.transect.filter((p) => p.distance <= maxDist);
+      return clipped.length >= 2 ? clipped : row.transect;
+    });
+    const minDist = minDistanceClipped(displayTransects);
 
     // Compute max Hs across all rows for the colour scale.
     let maxHs = 0;
@@ -380,19 +440,18 @@ export function HeatMapCard({
     }
     if (maxHs <= 0) maxHs = 1;
 
-    return { rows, N, rowH, chartH, viewH, maxDist, minDist, maxHs };
-  }, [data, showOverlayLegend]);
+    return { rows, N, rowH, chartH, viewH, maxDist, minDist, maxHs, tier, displayTransects };
+  }, [data, showOverlayLegend, distanceUnit]);
 
-  // X-axis tick values.
+  // X-axis tick values — tier's own tickStep (2026-08-02, parity with
+  // BeachProfileChart's computeDistanceTicks: 0..tier.maxDistance stepping
+  // by tier.tickStep), replacing the old "round to a nice number" scheme
+  // that was independent of tier selection.
   const xTicks = useMemo(() => {
     if (!geometry) return [];
-    const { maxDist } = geometry;
-    const roughStep = maxDist / 4;
-    // Round to a nice number.
-    const magnitude = Math.pow(10, Math.floor(Math.log10(roughStep)));
-    const step = Math.ceil(roughStep / magnitude) * magnitude;
+    const { tier } = geometry;
     const ticks: number[] = [];
-    for (let v = 0; v <= maxDist; v += step) ticks.push(v);
+    for (let v = 0; v <= tier.maxDistance; v += tier.tickStep) ticks.push(v);
     return ticks;
   }, [geometry]);
 
@@ -455,7 +514,7 @@ export function HeatMapCard({
     );
   }
 
-  const { rows, N, rowH, viewH, maxDist, minDist, maxHs } = geometry;
+  const { rows, N, rowH, viewH, maxDist, minDist, maxHs, displayTransects } = geometry;
 
   // Value-vs-position fix (D5 audit remediation, MAJOR finding): `rows` is
   // an ARRAY indexed by POSITION, but `mainBreakZoneStartIndex`/`EndIndex`/
@@ -508,8 +567,11 @@ export function HeatMapCard({
     const rowOpacity = row.isStructureAffected ? 0.35 : 1;
 
     // Transect segments: each consecutive pair of envelope points forms a cell.
-    // Colour = hs at the midpoint, or the leftmost point.
-    const pts = row.transect;
+    // Colour = hs at the midpoint, or the leftmost point. Tier-clipped
+    // (2026-08-02, parity with BeachProfileChart) — displayTransects[ri],
+    // not the raw row.transect, so cells don't paint past the tier's
+    // (possibly much smaller) x-axis bound.
+    const pts = displayTransects[ri];
 
     if (pts.length >= 2) {
       for (let pi = 0; pi < pts.length - 1; pi++) {
