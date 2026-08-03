@@ -1366,11 +1366,16 @@ export interface SurfForecast {
    *   "no_breaking"   — model ran; genuinely flat conditions (breakingFaceHeight = 0.0).
    *   "unavailable"   — model failed; breakingFaceHeight is null. Never render
    *                     null as flat/zero — show the existing no-data treatment.
-   *   "degraded_bulk" — SPECOUT unavailable; bulk Hs/Tp/Dir used instead of
-   *                     full spectral decomposition.
+   *   "partial"       — (C4/G7.5, 2026-08-03) a minority (<25%) of transects
+   *                     ran on bulk Hs/Tp/Dir instead of measured spectra, and
+   *                     none of them feed the headline (main-break-zone
+   *                     qualifying set). Data usable; minor-caveat state.
+   *   "degraded_bulk" — ≥25% of transects on bulk parameters, OR a headline-
+   *                     feeding (qualifying-zone) transect is; the headline's
+   *                     trustworthiness is degraded.
    * Optional/nullable — absent on older API versions.
    */
-  modelStatus?: 'ok' | 'no_breaking' | 'unavailable' | 'degraded_bulk' | null;
+  modelStatus?: 'ok' | 'no_breaking' | 'unavailable' | 'partial' | 'degraded_bulk' | null;
   /**
    * Wind data source used for this timestep's surf scoring.
    * "hrrr" for forecast timesteps; "station" for t=0.
