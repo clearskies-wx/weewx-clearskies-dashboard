@@ -3240,7 +3240,7 @@ components:
         windQuality:
           type: string
           enum: [offshore, cross_offshore, cross, cross_onshore, onshore]
-        swellDominance: { type: number, minimum: 0, maximum: 1, description: "Ratio of primary swell energy to total energy" }
+        swellDominance: { type: number, minimum: 0, maximum: 1, description: "Continuous ratio (marine a751c9a): energy of ALL spectral components with period > 10s over total spectral energy, not just the primary component" }
         multiSwell:
           type: array
           nullable: true
