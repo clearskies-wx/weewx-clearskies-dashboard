@@ -2113,3 +2113,48 @@ export interface HeatMapProfileDataUnavailable {
   perPartitionBreaks: null;
   metadata: BeachProfileMetadata;
 }
+
+// ─── Imagery (Phase LM, 2026-08-03) ────────────────────────────────────────
+// GET /api/v1/imagery/config?lat=&lon= — orthophoto background imagery for
+// DISPLAY-ONLY geographic context (PROVIDER-MANUAL §16, API-MANUAL §12a).
+// Consumed by HeatMapCard.tsx (LM-2) as a background layer behind the Hs
+// heat map. Never feeds SWAN, the 1D model, transect selection, or any
+// physics path — display rendering only.
+
+/** Approximate lat/lon bounding rectangle for a provider's coverage area. */
+export interface ImageryBounds {
+  south: number;
+  west: number;
+  north: number;
+  east: number;
+}
+
+/**
+ * Response for GET /api/v1/imagery/config?lat=&lon=.
+ *
+ * **Flat shape — NOT the usual `ApiResponse<T>` data+envelope wrapper**
+ * (intentional deviation per the plan's pinned contract sketch; API-MANUAL
+ * §12a notes the same on the response model's docstring). No `units` block,
+ * no `freshness` block, no `stationClock`.
+ */
+export interface ImageryConfigResponse {
+  provider: 'naip' | 'esri';
+  /**
+   * NAIP (`proxyMode: "api"`): our own proxy path template
+   * (`/api/v1/imagery/tiles/{z}/{x}/{y}`) — never the upstream USGS URL.
+   * ESRI (`proxyMode: "direct"`): the ESRI XYZ URL template for the browser
+   * to fetch directly. Both use `{z}`/`{x}`/`{y}` placeholder tokens, but
+   * NOT necessarily in that path order (ESRI's own template places `{y}`
+   * before `{x}`) — substitute by token, never assume position.
+   */
+  tileUrl: string;
+  /**
+   * ToS-mandated attribution text. Render verbatim — this is NOT translatable
+   * (DASHBOARD-MANUAL §7 / API-MANUAL §12: `textTranslatable` is `false` for
+   * every imagery provider in v0.1), never pass through `t()`.
+   */
+  attribution: string;
+  proxyMode: 'api' | 'direct';
+  /** NAIP: CONUS bounding rectangle. ESRI (global coverage): always null. */
+  bounds: ImageryBounds | null;
+}

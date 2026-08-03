@@ -2610,6 +2610,11 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
               mainBreakZoneStartIndex={primary?.mainBreakZoneStartIndex ?? null}
               mainBreakZoneEndIndex={primary?.mainBreakZoneEndIndex ?? null}
               representativeTransectIndex={primary?.representativeTransectIndex ?? null}
+              /* LM-2 (2026-08-03) — spot coordinates for the ortho background
+               * imagery fetch. Sourced from `data` (already fetched above via
+               * useSurfDetail) — no new fetch. */
+              spotLat={data?.coordinates?.lat ?? null}
+              spotLon={data?.coordinates?.lon ?? null}
             />
           </CardContent>
         </Card>

@@ -11,13 +11,14 @@
 //   - Error takes priority over modelStatus/data, matching the ordering
 //     rule applied to BeachProfileCardBody.
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, within } from '@testing-library/react';
 import { HeatMapCard } from './HeatMapCard';
 import type {
   HeatMapProfileDataOk,
   HeatMapProfileDataUnavailable,
   HeatMapTransectData,
+  ImageryConfigResponse,
 } from '../../../api/types';
 
 vi.mock('react-i18next', () => ({
@@ -26,6 +27,60 @@ vi.mock('react-i18next', () => ({
     i18n: { language: 'en', changeLanguage: vi.fn() },
   }),
 }));
+
+// LM-2 (2026-08-03): HeatMapCard now calls useImageryConfig() unconditionally
+// (React hooks rule). Mocked at the module level (not the underlying
+// useApiQuery/fetchApi chain) so: (a) every PRE-EXISTING test in this file
+// keeps its exact byte-identical render — the default mock return below
+// (`data: null`) is exactly what the real hook would resolve to for
+// baseProps, which never sets spotLat/spotLon; (b) the new imagery KATs
+// below get full, synchronous control over the imagery config without
+// needing a real fetch or an IdleDetectorProvider ancestor.
+const mockUseImageryConfig = vi.fn();
+vi.mock('../../../hooks/useImageryConfig', () => ({
+  useImageryConfig: (...args: unknown[]) => mockUseImageryConfig(...args),
+}));
+
+beforeEach(() => {
+  mockUseImageryConfig.mockReset();
+  mockUseImageryConfig.mockReturnValue({ data: null, loading: false });
+});
+
+const NAIP_CONFIG: ImageryConfigResponse = {
+  provider: 'naip',
+  tileUrl: '/api/v1/imagery/tiles/{z}/{x}/{y}',
+  attribution: 'USGS National Agriculture Imagery Program (NAIP) — public domain',
+  proxyMode: 'api',
+  bounds: { south: 24.396308, west: -125.0, north: 49.384358, east: -66.93457 },
+};
+
+const ESRI_CONFIG: ImageryConfigResponse = {
+  provider: 'esri',
+  tileUrl: 'https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  attribution: 'Source: Esri, Vantor, Earthstar Geographics, and the GIS User Community',
+  proxyMode: 'direct',
+  bounds: null,
+};
+
+// React's useId() prefixes its id string with an internal render-root
+// counter that increments across EVERY render() call within a single test
+// process (not reset per test/render root) — so the exact `_r_XX_` suffix
+// captured from a standalone one-render golden snapshot never matches the
+// same component rendered later in a full suite run, even though nothing
+// about the component's actual output changed. Normalizes every distinct
+// `_r_..._` token to a stable positional placeholder (same raw id -> same
+// placeholder everywhere it recurs, e.g. titleId used in both
+// `aria-labelledby` and the hatch pattern's id prefix) before comparing —
+// every other byte (tags, attributes, coordinates, fills, text) is still
+// compared exactly.
+function normalizeReactIds(html: string): string {
+  const seen = new Map<string, string>();
+  let counter = 0;
+  return html.replace(/_r_[0-9a-zA-Z]+_/g, (match) => {
+    if (!seen.has(match)) seen.set(match, `_ID${counter++}_`);
+    return seen.get(match)!;
+  });
+}
 
 const ROW: HeatMapTransectData = {
   transectIndex: 0,
@@ -713,6 +768,194 @@ describe('HeatMapCard', () => {
         const shouldBeInZone = rowValue >= 10 && rowValue <= 12;
         expect(inZoneCell.textContent).toBe(shouldBeInZone ? 'yes' : 'no');
       }
+    });
+  });
+
+  // ── LM-2 (2026-08-03) — orthophoto background imagery. Plan §LM-2 KATs
+  //    (a)-(d) plus plan item (e) null-safety, verbatim from the brief. ──
+  describe('LM-2 — orthophoto background imagery', () => {
+    // Mirrors HeatMapCard.tsx's IMAGERY_ZOOM_MIN/MAX/MOSAIC_MAX_TILES_PER_SIDE
+    // and HEATMAP_CELL_OPACITY_ON_ORTHO/DEFAULT — not exported, restated here
+    // (same convention this file already uses for PAD_LEFT/CHART_W/etc.).
+    const IMAGERY_ZOOM_MIN = 14;
+    const IMAGERY_ZOOM_MAX = 19;
+    const IMAGERY_MOSAIC_MAX_TILES_PER_SIDE = 4;
+    const HEATMAP_CELL_OPACITY_ON_ORTHO = 0.55;
+
+    const SPOT_LAT = 33.6595;
+    const SPOT_LON = -118.0064;
+
+    // KAT (b) golden fixture — captured from the git HEAD (pre-LM-2)
+    // HeatMapCard.tsx rendering OK_RESPONSE_5_ROWS with baseProps, via a
+    // throwaway `git show HEAD:...` copy rendered once and diffed byte-for-
+    // byte against this literal (see LM-2 closeout for the capture method).
+    // A REAL DOM-identity comparison, not a "renders without crashing" smoke
+    // test — any change to the no-imagery render path, however small, fails
+    // this immediately.
+    const GOLDEN_NO_IMAGERY_HTML = '<div class="rounded-xl bg-[var(--card-glass)] p-[var(--card-pad)]"><h3 class="font-semibold text-[var(--foreground)] mb-3 text-sm">surfing.heatMapTitle</h3><div class="w-full overflow-x-auto"><svg role="img" aria-labelledby="_r_0_ _r_1_" viewBox="0 0 820 320" width="100%" style="display: block; min-width: 260px;"><title id="_r_0_">surfing.heatMapAriaLabel</title><desc id="_r_1_">surfing.heatMapDesc</desc><defs><pattern id="heatmap-structure-hatch-_r_0_" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="var(--muted-foreground)" stroke-width="1.5" stroke-opacity="0.35"></line></pattern></defs><rect x="60" y="28" width="748" height="240" fill="var(--card-glass)" opacity="0.3"></rect><line x1="60" y1="28" x2="808" y2="28" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="76" x2="808" y2="76" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="124" x2="808" y2="124" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="172" x2="808" y2="172" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="220" x2="808" y2="220" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="268" x2="808" y2="268" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><rect x="579.951219512195" y="28" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"></rect><rect x="579.951219512195" y="76" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"></rect><rect x="579.951219512195" y="124" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"></rect><rect x="579.951219512195" y="172" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"></rect><rect x="579.951219512195" y="220" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"></rect><text x="56" y="55.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">0</text><text x="56" y="103.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">1</text><text x="56" y="151.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">2</text><text x="56" y="199.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">3</text><text x="56" y="247.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">4</text><g><line x1="808" y1="268" x2="808" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="808" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">0</text></g><g><line x1="621" y1="268" x2="621" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="621" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">82</text></g><g><line x1="434" y1="268" x2="434" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="434" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">164</text></g><g><line x1="247" y1="268" x2="247" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="247" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">246</text></g><g><line x1="60" y1="268" x2="60" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="60" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">328</text></g><text x="434" y="294" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">surfing.beachProfile.distanceAxisLabel</text><text x="806" y="22" font-size="9" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">surfing.shore</text><text x="62" y="22" font-size="9" fill="var(--muted-foreground)" text-anchor="start" aria-hidden="true">surfing.offshore</text><defs><linearGradient id="heatmap-legend-gradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgb(59,130,246)"></stop><stop offset="25%" stop-color="rgb(13,148,159)"></stop><stop offset="50%" stop-color="rgb(34,197,94)"></stop><stop offset="75%" stop-color="rgb(234,179,8)"></stop><stop offset="100%" stop-color="rgb(220,38,38)"></stop></linearGradient></defs><rect x="648" y="296" width="160" height="10" fill="url(#heatmap-legend-gradient)" rx="3" opacity="0.85"></rect><text x="648" y="318" font-size="9" fill="var(--muted-foreground)" text-anchor="start">0 ft</text><text x="808" y="318" font-size="9" fill="var(--muted-foreground)" text-anchor="end">1.2 ft</text></svg></div><table class="sr-only"><caption>surfing.heatMapAriaLabel</caption><thead><tr><th scope="col">surfing.heatMap.transectIndex</th><th scope="col">surfing.heatMap.openTransect</th><th scope="col">surfing.heatMap.breakHeight</th><th scope="col">surfing.heatMap.breakDistance</th><th scope="col">surfing.heatMap.breakerType</th></tr></thead><tbody><tr><th scope="row">0</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">1</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">2</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">3</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">4</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr></tbody></table></div>';
+
+    it('KAT (a): fixture WITH imagery config -> ortho tiles render behind the heat map, colour cells at reduced opacity', () => {
+      mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
+      const { container } = render(
+        <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
+      );
+
+      const images = Array.from(container.querySelectorAll('svg image'));
+      expect(images.length).toBeGreaterThan(0);
+      expect(images.length).toBeLessThanOrEqual(IMAGERY_MOSAIC_MAX_TILES_PER_SIDE ** 2);
+      for (const img of images) {
+        const href = img.getAttribute('href') ?? '';
+        const m = href.match(/^\/api\/v1\/imagery\/tiles\/(\d+)\/(\d+)\/(\d+)$/);
+        expect(m).not.toBeNull();
+        const z = Number(m![1]);
+        expect(z).toBeGreaterThanOrEqual(IMAGERY_ZOOM_MIN);
+        expect(z).toBeLessThanOrEqual(IMAGERY_ZOOM_MAX);
+        // Decorative — described by the outer <desc>, not individually alt-texted.
+        expect(img.closest('[aria-hidden="true"]')).not.toBeNull();
+      }
+
+      // Tiles render BEHIND (before, in SVG paint order) the colour cells.
+      const svgHtml = container.querySelector('svg')!.innerHTML;
+      const firstImageIdx = svgHtml.indexOf('<image');
+      const firstReducedOpacityCellIdx = svgHtml.indexOf(`,${HEATMAP_CELL_OPACITY_ON_ORTHO})`);
+      expect(firstImageIdx).toBeGreaterThanOrEqual(0);
+      expect(firstReducedOpacityCellIdx).toBeGreaterThan(firstImageIdx);
+
+      // Colour cells render at the REDUCED opacity (0.55), not the default (0.85).
+      const cellRects = Array.from(container.querySelectorAll('svg rect[fill^="rgba("]'));
+      expect(cellRects.length).toBeGreaterThan(0);
+      for (const r of cellRects) {
+        expect(r.getAttribute('fill')).toMatch(/,0\.55\)$/);
+      }
+
+      // Attribution renders verbatim (never through t()).
+      expect(container.textContent).toContain(NAIP_CONFIG.attribution);
+    });
+
+    it('KAT (b): fixture WITHOUT imagery config -> byte-identical DOM to the pre-LM-2 render', () => {
+      // mockUseImageryConfig default from beforeEach: { data: null, loading: false }. No spotLat/spotLon passed either.
+      const { container } = render(
+        <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS} loading={false} />,
+      );
+      expect(normalizeReactIds(container.innerHTML)).toBe(normalizeReactIds(GOLDEN_NO_IMAGERY_HTML));
+    });
+
+    it('plan item (e) null-safety: imagery fetch failure (404/network — useImageryConfig itself resolves this to data:null, see useImageryConfig.test.ts) renders the SAME byte-identical DOM as KAT (b), even though spotLat/spotLon ARE set', () => {
+      mockUseImageryConfig.mockReturnValue({ data: null, loading: false });
+      const { container } = render(
+        <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
+      );
+      expect(normalizeReactIds(container.innerHTML)).toBe(normalizeReactIds(GOLDEN_NO_IMAGERY_HTML));
+    });
+
+    it('null-safety: imagery config present but heat map data is null (not fetched yet) -> pre-existing empty state, no crash, no tiles/attribution', () => {
+      mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
+      expect(() => render(
+        <HeatMapCard {...baseProps} data={null} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
+      )).not.toThrow();
+      const { container } = render(
+        <HeatMapCard {...baseProps} data={null} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
+      );
+      expect(within(container).getByText('surfing.heatMapNoData')).toBeDefined();
+      expect(container.querySelectorAll('svg image').length).toBe(0);
+      expect(container.textContent).not.toContain(NAIP_CONFIG.attribution);
+    });
+
+    it('KAT (c): ESRI provider active -> ESRI attribution text renders, tile hrefs use the ESRI XYZ template with tokens substituted (z/y/x order, not z/x/y)', () => {
+      mockUseImageryConfig.mockReturnValue({ data: ESRI_CONFIG, loading: false });
+      const { container } = render(
+        <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS} loading={false} spotLat={51.5} spotLon={-0.12} />,
+      );
+      expect(container.textContent).toContain(ESRI_CONFIG.attribution);
+
+      const images = Array.from(container.querySelectorAll('svg image'));
+      expect(images.length).toBeGreaterThan(0);
+      for (const img of images) {
+        const href = img.getAttribute('href') ?? '';
+        expect(href.startsWith(
+          'https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/',
+        )).toBe(true);
+        expect(href).not.toContain('{z}');
+        expect(href).not.toContain('{x}');
+        expect(href).not.toContain('{y}');
+        // Token-based substitution, not position-based — ESRI's own path
+        // order is {z}/{y}/{x}, distinguishing it from NAIP's {z}/{x}/{y}.
+        const tail = href.replace(
+          'https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/',
+          '',
+        );
+        expect(tail).toMatch(/^\d+\/\d+\/\d+$/);
+      }
+    });
+
+    it('KAT (d) a11y: decorative tile group is aria-hidden, attribution is visible accessible text (not sr-only), svg role/labelling unchanged', () => {
+      mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
+      const { container, getByText } = render(
+        <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
+      );
+      const svg = container.querySelector('svg')!;
+      expect(svg.getAttribute('role')).toBe('img');
+      expect(svg.getAttribute('aria-labelledby')).toBeTruthy();
+
+      const desc = container.querySelector('desc')!;
+      expect(desc.textContent).toContain('surfing.heatMap.orthoImageryDesc');
+
+      const images = Array.from(container.querySelectorAll('svg image'));
+      expect(images.length).toBeGreaterThan(0);
+      for (const img of images) {
+        expect(img.closest('[aria-hidden="true"]')).not.toBeNull();
+      }
+
+      // Attribution: real, visible DOM text (findable by AT and sighted users alike).
+      const attribution = getByText(NAIP_CONFIG.attribution);
+      expect(attribution.closest('[aria-hidden="true"]')).toBeNull();
+      expect(attribution.className).not.toContain('sr-only');
+    });
+
+    it('mosaic tile cap: never fetches more than IMAGERY_MOSAIC_MAX_TILES_PER_SIDE^2 tiles even for a very large study radius', () => {
+      // Extended-tier fixture — tier maxDistance 1000m -> radius far larger
+      // than a single-zoom-level mosaic can cover within the tile-count cap
+      // without the cap binding (lead ruling: binding must be logged, not
+      // silently under-cover without a trace — see console.debug in
+      // computeImageryTiles(); not re-asserted here as a spy, covered by
+      // code review + the closeout note).
+      const bigRow: HeatMapTransectData = {
+        transectIndex: 0,
+        isStructureAffected: false,
+        transectBearingDeg: 245,
+        transect: [
+          { distance: 2200, depth: 15, hs: 3.5 },
+          { distance: 10, depth: 0.5, hs: 0.8 },
+        ],
+        breakPoints: [],
+        waveShapes: [],
+        surfZones: null,
+        jackingFactors: [],
+        handoffDepthM: 2,
+        handoffSourceLevel: 'L4',
+      };
+      const bigResponse: HeatMapProfileDataOk = {
+        locationId: 'huntington-city-beach-pier',
+        timestep: '2026-08-02T00:00:00Z',
+        modelStatus: 'ok',
+        profiles: [bigRow],
+        perPartitionBreaks: [],
+        metadata: {
+          axisUnits: { x: 'm', y: 'm' },
+          verticalDatum: 'LMSL',
+          transectCount: 1,
+          openTransectCount: 1,
+          handoffDepthM: 2,
+          handoffSourceLevel: 'L4',
+        },
+      };
+      mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
+      const { container } = render(
+        <HeatMapCard {...baseProps} distanceUnit="m" data={bigResponse} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
+      );
+      const images = Array.from(container.querySelectorAll('svg image'));
+      expect(images.length).toBeGreaterThan(0);
+      expect(images.length).toBeLessThanOrEqual(IMAGERY_MOSAIC_MAX_TILES_PER_SIDE ** 2);
     });
   });
 });

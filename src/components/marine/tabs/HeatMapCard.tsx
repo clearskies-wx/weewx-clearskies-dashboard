@@ -30,6 +30,7 @@ import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Warning } from '@phosphor-icons/react';
 import type { HeatMapProfileData, HeatMapTransectData, HeatMapBreakPoint, HeatMapEnvelopePoint } from '../../../api/types';
+import { useImageryConfig } from '../../../hooks/useImageryConfig';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -75,6 +76,17 @@ export interface HeatMapCardProps {
    * accepts and ignores this value.
    */
   representativeTransectIndex?: number | null;
+  /**
+   * LM-2 (2026-08-03): the spot's latitude, used ONLY to fetch orthophoto
+   * background imagery config (`GET /api/v1/imagery/config`) — DISPLAY
+   * ONLY, never feeds SWAN/the 1D model/transect selection. Sourced from
+   * data SurfingTab already fetches (`useSurfDetail`'s `coordinates`), not
+   * a new fetch. Null/undefined → no imagery fetch, byte-identical render
+   * to before this round.
+   */
+  spotLat?: number | null;
+  /** See {@link spotLat}. */
+  spotLon?: number | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -147,6 +159,200 @@ function hsToColor(hs: number, maxHs: number, opacity = 0.85): string {
   const frac = segment - idx;
   const [r, g, b] = lerpColor(COLOR_STOPS[idx], COLOR_STOPS[idx + 1], frac);
   return `rgba(${r},${g},${b},${opacity})`;
+}
+
+// ---------------------------------------------------------------------------
+// LM-2 (2026-08-03): Orthophoto background imagery — DISPLAY ONLY. Never
+// feeds SWAN, the 1D model, transect selection, or any physics path.
+//
+// ALIGNMENT ASSUMPTION (operator eyeball step — expect a tweak round):
+// transects are a radial fan from the spot's own location (this codebase's
+// "72-ray fan" design elsewhere) — each row's `transect[].distance` is a
+// cross-shore distance along THAT row's own `transectBearingDeg`, all
+// sharing one shared origin at approximately the spot's coordinates. A
+// bounding circle of radius = the largest tier-clipped cross-shore distance
+// (the SAME `minDist`/`maxDist` already driving the X axis) around
+// `spotLat`/`spotLon` therefore contains every transect point regardless of
+// each row's own bearing. The fetched tile mosaic covering that circle is
+// stretched (north-up, unrotated) to fill the EXISTING chart rectangle
+// (PAD_LEFT..PAD_LEFT+CHART_W horizontally, PAD_TOP..PAD_TOP+N*rowH
+// vertically). This is NOT a per-cell geographic warp and does NOT rotate
+// the mosaic to the beach's own facing direction — the Y axis (row/transect
+// index) has no along-shore metric spacing in the data this card receives,
+// consistent with the "quasi-2D birdseye" framing DASHBOARD-MANUAL already
+// uses for this chart (not claimed-precise today either). Per-row bearing
+// is used only to justify the radial/circular bound, not for mosaic
+// rotation this round — a possible future refinement.
+// ---------------------------------------------------------------------------
+
+/** Max tiles fetched per mosaic side (4 -> up to 4x4=16 tiles). Named/documented, easily tuned. */
+const IMAGERY_MOSAIC_MAX_TILES_PER_SIDE = 4;
+/** Zoom clamp — within the API's own supported range [0, 20] (API-MANUAL §12a). */
+const IMAGERY_ZOOM_MIN = 14;
+const IMAGERY_ZOOM_MAX = 19;
+/**
+ * Heat-map colour-cell fill opacity multiplier when an ortho background is
+ * present — low enough the photo reads through, high enough the Hs colours
+ * stay legible. Named/documented, easily tuned at the operator eyeball step.
+ */
+const HEATMAP_CELL_OPACITY_ON_ORTHO = 0.55;
+/** Base heat-map colour-cell fill opacity with no ortho background — UNCHANGED from pre-LM-2 (0.85), preserves KAT (b) byte-identity. */
+const HEATMAP_CELL_OPACITY_DEFAULT = 0.85;
+
+const METERS_PER_DEGREE_LAT = 111320;
+
+/** Converts a display-unit distance (ft or m) to meters. */
+function toMeters(v: number, distanceUnit: string): number {
+  const METER_TO_UNIT = distanceUnit === 'ft' ? 3.28084 : 1;
+  return v / METER_TO_UNIT;
+}
+
+interface GeoBBox { south: number; west: number; north: number; east: number; }
+
+/** Lat/lon bounding box centered on (lat, lon) with half-extent radiusM in both directions. */
+function boundingBoxAroundPoint(lat: number, lon: number, radiusM: number): GeoBBox {
+  const dLat = radiusM / METERS_PER_DEGREE_LAT;
+  const cosLat = Math.cos((lat * Math.PI) / 180);
+  const dLon = radiusM / (METERS_PER_DEGREE_LAT * Math.max(Math.abs(cosLat), 0.01));
+  return { south: lat - dLat, north: lat + dLat, west: lon - dLon, east: lon + dLon };
+}
+
+// Standard slippy-map (Web Mercator) tile <-> lon/lat math. Pure arithmetic,
+// no library — see https://en.wikipedia.org/wiki/Tiled_web_map (the same
+// convention the API's NAIP proxy and ESRI's own XYZ template both use).
+function lonToTileX(lon: number, z: number): number {
+  return Math.floor(((lon + 180) / 360) * 2 ** z);
+}
+function latToTileY(lat: number, z: number): number {
+  const latRad = (lat * Math.PI) / 180;
+  return Math.floor(
+    ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * 2 ** z,
+  );
+}
+function tileXToLon(x: number, z: number): number {
+  return (x / 2 ** z) * 360 - 180;
+}
+function tileYToLat(y: number, z: number): number {
+  const n = Math.PI - (2 * Math.PI * y) / 2 ** z;
+  return (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+}
+
+/** Approximate ground size (meters) of one 256px slippy tile at zoom z, latitude lat. */
+function tileGroundSizeM(z: number, lat: number): number {
+  const cosLat = Math.abs(Math.cos((lat * Math.PI) / 180));
+  return (156543.03392 * Math.max(cosLat, 0.01) * 256) / 2 ** z;
+}
+
+/**
+ * Picks the highest zoom (best resolution) within [IMAGERY_ZOOM_MIN,
+ * IMAGERY_ZOOM_MAX] whose mosaic still fits within
+ * IMAGERY_MOSAIC_MAX_TILES_PER_SIDE tiles per side for the given diameter.
+ * Falls back to IMAGERY_ZOOM_MIN when even the minimum zoom's mosaic would
+ * exceed the cap (the cap then binds in computeImageryTiles below, which
+ * logs that condition — never silently under-covers without a trace).
+ */
+function selectImageryZoom(diameterM: number, lat: number): number {
+  for (let z = IMAGERY_ZOOM_MAX; z >= IMAGERY_ZOOM_MIN; z--) {
+    const tilesPerSide = diameterM / tileGroundSizeM(z, lat);
+    if (tilesPerSide <= IMAGERY_MOSAIC_MAX_TILES_PER_SIDE) return z;
+  }
+  return IMAGERY_ZOOM_MIN;
+}
+
+interface ImageryTile {
+  z: number;
+  x: number;
+  y: number;
+  /** Screen-space position/size within the SVG viewBox. */
+  sx: number;
+  sy: number;
+  sw: number;
+  sh: number;
+}
+
+/**
+ * Computes the slippy-map tiles needed to cover `bbox` at `zoom`, each
+ * positioned to fill its geographic footprint within the chart rectangle
+ * (chartX, chartY, chartW, chartH). Clamps the tile count to
+ * IMAGERY_MOSAIC_MAX_TILES_PER_SIDE per side, centered on the bbox — when
+ * clamping actually reduces coverage (the cap binds), logs a console.debug
+ * note rather than silently fetching a smaller area than `bbox` implied.
+ */
+function computeImageryTiles(
+  bbox: GeoBBox,
+  zoom: number,
+  chartX: number,
+  chartY: number,
+  chartW: number,
+  chartH: number,
+): ImageryTile[] {
+  const xMinRaw = lonToTileX(bbox.west, zoom);
+  const xMaxRaw = lonToTileX(bbox.east, zoom);
+  // North = smaller Y in Web Mercator tile coordinates.
+  const yMinRaw = latToTileY(bbox.north, zoom);
+  const yMaxRaw = latToTileY(bbox.south, zoom);
+
+  let xMin = Math.min(xMinRaw, xMaxRaw);
+  let xMax = Math.max(xMinRaw, xMaxRaw);
+  let yMin = Math.min(yMinRaw, yMaxRaw);
+  let yMax = Math.max(yMinRaw, yMaxRaw);
+
+  const exceedsCap =
+    xMax - xMin + 1 > IMAGERY_MOSAIC_MAX_TILES_PER_SIDE ||
+    yMax - yMin + 1 > IMAGERY_MOSAIC_MAX_TILES_PER_SIDE;
+  if (exceedsCap) {
+    const cx = Math.floor((xMin + xMax) / 2);
+    const cy = Math.floor((yMin + yMax) / 2);
+    const half = Math.floor((IMAGERY_MOSAIC_MAX_TILES_PER_SIDE - 1) / 2);
+    xMin = cx - half;
+    xMax = cx + (IMAGERY_MOSAIC_MAX_TILES_PER_SIDE - 1 - half);
+    yMin = cy - half;
+    yMax = cy + (IMAGERY_MOSAIC_MAX_TILES_PER_SIDE - 1 - half);
+    // Silent-coverage-cap class issue (lead ruling, LM-2) — documented and
+    // logged, not invisible: the study circle implied by the tier-clipped
+    // cross-shore extent is larger than the mosaic actually fetched at this
+    // zoom, so the ortho background covers less than the full chart at its
+    // edges. Raising IMAGERY_MOSAIC_MAX_TILES_PER_SIDE (more tiles fetched)
+    // or lowering IMAGERY_ZOOM_MIN (coarser resolution, wider coverage per
+    // tile) both widen coverage; this is the constant to tune first.
+    // eslint-disable-next-line no-console
+    console.debug(
+      `[HeatMapCard] imagery mosaic tile cap (${IMAGERY_MOSAIC_MAX_TILES_PER_SIDE}/side) bound at zoom ${zoom} — ` +
+      'study area extends beyond the fetched mosaic; only the center tiles are covered.',
+    );
+  }
+
+  const mosaicWest = tileXToLon(xMin, zoom);
+  const mosaicEast = tileXToLon(xMax + 1, zoom);
+  const mosaicNorth = tileYToLat(yMin, zoom);
+  const mosaicSouth = tileYToLat(yMax + 1, zoom);
+  const lonSpan = mosaicEast - mosaicWest;
+  const latSpan = mosaicNorth - mosaicSouth;
+  if (lonSpan <= 0 || latSpan <= 0) return [];
+
+  const lonToScreenX = (lon: number) => chartX + ((lon - mosaicWest) / lonSpan) * chartW;
+  const latToScreenY = (lat: number) => chartY + ((mosaicNorth - lat) / latSpan) * chartH;
+
+  const tiles: ImageryTile[] = [];
+  for (let x = xMin; x <= xMax; x++) {
+    for (let y = yMin; y <= yMax; y++) {
+      const sx = lonToScreenX(tileXToLon(x, zoom));
+      const sxEnd = lonToScreenX(tileXToLon(x + 1, zoom));
+      const sy = latToScreenY(tileYToLat(y, zoom));
+      const syEnd = latToScreenY(tileYToLat(y + 1, zoom));
+      tiles.push({ z: zoom, x, y, sx, sy, sw: sxEnd - sx, sh: syEnd - sy });
+    }
+  }
+  return tiles;
+}
+
+/**
+ * Substitutes `{z}`/`{x}`/`{y}` tokens in a tile URL template. Token-based,
+ * never position-based — NAIP's proxy path (`.../{z}/{x}/{y}`) and ESRI's
+ * own XYZ template (`.../{z}/{y}/{x}`) do not use the same path order.
+ */
+function substituteTileUrl(template: string, z: number, x: number, y: number): string {
+  return template.replace('{z}', String(z)).replace('{x}', String(x)).replace('{y}', String(y));
 }
 
 // ---------------------------------------------------------------------------
@@ -387,11 +593,20 @@ function ColorLegend({ maxHs, heightUnit, locale, svgY }: LegendProps): ReactEle
 export function HeatMapCard({
   data, loading, error, onRetry, heightUnit, distanceUnit, locale,
   mainBreakZoneStartIndex = null, mainBreakZoneEndIndex = null,
+  spotLat = null, spotLon = null,
 }: HeatMapCardProps): ReactElement | null {
   const { t } = useTranslation('marine');
   const { t: tCommon } = useTranslation('common');
   const titleId = useId();
   const descId  = useId();
+
+  // LM-2 (2026-08-03): orthophoto background imagery config. React hooks
+  // constraint (DASHBOARD-MANUAL §6) — called unconditionally, before any
+  // early return below. `useImageryConfig` itself skips the fetch and
+  // returns `data: null` when spotLat/spotLon are null (no plumbing yet) or
+  // on any fetch failure (404 "imagery disabled", network error) — every
+  // "no imagery" reason collapses to the same byte-identical render path.
+  const { data: imageryConfig } = useImageryConfig(spotLat, spotLon);
 
   // Compute derived geometry once.
   // SURF-PUBLISH-RESULTS-ONLY §3.6 (2026-07-25): `data.profiles` is null,
@@ -447,6 +662,22 @@ export function HeatMapCard({
 
     return { rows, N, rowH, chartH, viewH, maxDist, minDist, maxHs, tier, displayTransects };
   }, [data, showOverlayLegend, distanceUnit]);
+
+  // LM-2: ortho tile mosaic — see the ALIGNMENT ASSUMPTION comment above
+  // computeImageryTiles(). Empty array (no rendering) whenever imagery
+  // config is absent, coordinates are absent, or geometry is null — the
+  // existing no-imagery/no-data render paths are completely unaffected.
+  const imageryTiles = useMemo(() => {
+    if (!imageryConfig || !geometry || spotLat == null || spotLon == null) return [];
+    const radiusM = Math.max(
+      Math.abs(toMeters(geometry.minDist, distanceUnit)),
+      Math.abs(toMeters(geometry.maxDist, distanceUnit)),
+    );
+    if (!(radiusM > 0)) return [];
+    const bbox = boundingBoxAroundPoint(spotLat, spotLon, radiusM);
+    const zoom = selectImageryZoom(radiusM * 2, spotLat);
+    return computeImageryTiles(bbox, zoom, PAD_LEFT, PAD_TOP, CHART_W, geometry.chartH);
+  }, [imageryConfig, geometry, spotLat, spotLon, distanceUnit]);
 
   // X-axis tick values — tier's own tickStep (2026-08-02, parity with
   // BeachProfileChart's computeDistanceTicks: 0..tier.maxDistance stepping
@@ -554,6 +785,14 @@ export function HeatMapCard({
   const hatchId = `${HATCH_BASE_ID}-${titleId.replace(/:/g, '')}`;
   const legendY = PAD_TOP + N * rowH + 28;
 
+  // LM-2: whether an ortho background actually renders this pass (imagery
+  // config present AND at least one tile computed). Drives the reduced
+  // colour-cell opacity and the background-rect/tile-mosaic branch below —
+  // when false, both render EXACTLY as before this round (KAT b).
+  const hasImageryBackground = imageryTiles.length > 0;
+  const cellOpacity = hasImageryBackground ? HEATMAP_CELL_OPACITY_ON_ORTHO : HEATMAP_CELL_OPACITY_DEFAULT;
+  const imageryClipId = `heatmap-imagery-clip-${titleId.replace(/:/g, '')}`;
+
   // ── Build SVG elements ────────────────────────────────────────────────────
 
   // 1. Colour cells: for each row, subdivide the transect into segments.
@@ -611,7 +850,7 @@ export function HeatMapCard({
           }
         }
 
-        const fill = hsToColor(segHs, maxHs, rowOpacity * 0.85);
+        const fill = hsToColor(segHs, maxHs, rowOpacity * cellOpacity);
         colorCells.push(
           <rect
             key={`cell-${ri}-${pi}`}
@@ -633,7 +872,7 @@ export function HeatMapCard({
           y={y}
           width={CHART_W}
           height={rowH}
-          fill={hsToColor(rowHs, maxHs, rowOpacity * 0.85)}
+          fill={hsToColor(rowHs, maxHs, rowOpacity * cellOpacity)}
         />
       );
     }
@@ -824,6 +1063,8 @@ export function HeatMapCard({
             {zoneBandValid && ` ${t('surfing.heatMap.mainBreakZoneDesc',
               'Main break zone spans transects {{start}} to {{end}}.',
               { start: mainBreakZoneStartIndex, end: mainBreakZoneEndIndex })}`}
+            {hasImageryBackground && ` ${t('surfing.heatMap.orthoImageryDesc',
+              'An aerial photo of the beach is shown as a background for geographic context.')}`}
           </desc>
 
           {/* Defs: hatching pattern for structure-affected rows */}
@@ -837,17 +1078,47 @@ export function HeatMapCard({
             >
               <line x1={0} y1={0} x2={0} y2={6} stroke="var(--muted-foreground)" strokeWidth={1.5} strokeOpacity={0.35} />
             </pattern>
+            {/* LM-2: clip the ortho tile mosaic to the chart rectangle so
+             *  rotated/oversized tile edges never spill into the Y-axis
+             *  gutter or legend area. Only present when an ortho background
+             *  actually renders — omitted entirely otherwise (KAT b DOM
+             *  identity). */}
+            {hasImageryBackground && (
+              <clipPath id={imageryClipId}>
+                <rect x={PAD_LEFT} y={PAD_TOP} width={CHART_W} height={N * rowH} />
+              </clipPath>
+            )}
           </defs>
 
-          {/* Chart background */}
-          <rect
-            x={PAD_LEFT}
-            y={PAD_TOP}
-            width={CHART_W}
-            height={N * rowH}
-            fill="var(--card-glass)"
-            opacity={0.3}
-          />
+          {/* Chart background — LM-2: an ortho tile mosaic renders here
+           *  instead of the plain translucent rect when imagery is
+           *  available, so the semi-transparent colour cells above read as
+           *  an overlay on the real beach photo. No imagery -> the ORIGINAL
+           *  rect, unchanged (KAT b byte-identity). */}
+          {hasImageryBackground ? (
+            <g aria-hidden="true" clipPath={`url(#${imageryClipId})`}>
+              {imageryTiles.map((tile) => (
+                <image
+                  key={`ortho-${tile.z}-${tile.x}-${tile.y}`}
+                  href={substituteTileUrl(imageryConfig!.tileUrl, tile.z, tile.x, tile.y)}
+                  x={tile.sx}
+                  y={tile.sy}
+                  width={tile.sw}
+                  height={tile.sh}
+                  preserveAspectRatio="none"
+                />
+              ))}
+            </g>
+          ) : (
+            <rect
+              x={PAD_LEFT}
+              y={PAD_TOP}
+              width={CHART_W}
+              height={N * rowH}
+              fill="var(--card-glass)"
+              opacity={0.3}
+            />
+          )}
 
           {/* Row separator lines */}
           {Array.from({ length: N + 1 }, (_, i) => (
@@ -1035,6 +1306,21 @@ export function HeatMapCard({
           )}
         </svg>
       </div>
+
+      {/* LM-2: imagery attribution — ToS-mandated text, rendered verbatim
+       *  (never through t(), DASHBOARD-MANUAL §7 / API-MANUAL §12:
+       *  textTranslatable is false for every provider in v0.1). Visible
+       *  (not sr-only) — mirrors the radar card's own inline attribution
+       *  line styling (DESIGN-MANUAL §19). Absent entirely when no imagery
+       *  config (KAT b DOM identity). */}
+      {hasImageryBackground && (
+        <p
+          className="mt-1 text-[var(--muted-foreground)]"
+          style={{ fontSize: 'var(--text-micro)' }}
+        >
+          {imageryConfig!.attribution}
+        </p>
+      )}
 
       {/* sr-only data table for assistive technology */}
       {srTable}

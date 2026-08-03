@@ -90,6 +90,8 @@ tags:
     description: Operator-authored markdown content (About, Legal).
   - name: Radar
     description: Radar tile proxy and frame metadata per ADR-015.
+  - name: Imagery
+    description: Orthophoto background imagery config + NAIP tile proxy (Phase LM, display-only, API-MANUAL §12a).
   - name: Station
     description: Station identity, location, time zone, units.
   - name: Capabilities
@@ -1273,6 +1275,84 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/RadarFramesResponse' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  # -------------------------------------------------------------------
+  # Imagery (Phase LM, 2026-08-03) — orthophoto background imagery for
+  # DISPLAY-ONLY geographic context. Never feeds SWAN, the 1D model,
+  # transect selection, or any physics path (PROVIDER-MANUAL §16 /
+  # API-MANUAL §12a hard rule).
+  # -------------------------------------------------------------------
+
+  /imagery/config:
+    get:
+      tags: [Imagery]
+      summary: Active imagery provider's tile source config
+      description: |
+        Returns the active provider's tile URL template, attribution, and
+        proxy mode for the given coordinates. NAIP (US, `proxyMode: "api"`)
+        points `tileUrl` at this API's own tile proxy. ESRI (global,
+        `proxyMode: "direct"`) points `tileUrl` at ESRI's own XYZ template
+        for the browser to fetch directly — the API never proxies or
+        caches ESRI tile bytes.
+      operationId: getImageryConfig
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema: { type: number, minimum: -90, maximum: 90 }
+        - name: lon
+          in: query
+          required: true
+          schema: { type: number, minimum: -180, maximum: 180 }
+      responses:
+        '200':
+          description: Imagery provider config
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImageryConfigResponse' }
+        '404':
+          description: No `[imagery]` config / provider unset — imagery disabled.
+        default: { $ref: '#/components/responses/Problem' }
+
+  /imagery/tiles/{z}/{x}/{y}:
+    get:
+      tags: [Imagery]
+      summary: NAIP orthophoto tile proxy
+      description: |
+        NAIP only — fetches from USGS, caches, serves the tile bytes.
+        ESRI tiles never transit this endpoint (`[imagery] provider`
+        absent or `esri` → 404).
+      operationId: getImageryTile
+      parameters:
+        - name: z
+          in: path
+          required: true
+          description: Slippy-map zoom level.
+          schema: { type: integer, minimum: 0, maximum: 20 }
+        - name: x
+          in: path
+          required: true
+          description: Slippy-map tile X. Validated against [0, 2^z).
+          schema: { type: integer, minimum: 0 }
+        - name: y
+          in: path
+          required: true
+          description: Slippy-map tile Y. Validated against [0, 2^z).
+          schema: { type: integer, minimum: 0 }
+      responses:
+        '200':
+          description: Tile image bytes
+          content:
+            image/png: { schema: { type: string, format: binary } }
+        '400':
+          description: x/y outside [0, 2^z) for the given zoom.
+        '404':
+          description: Tile not available, or NAIP is not the active provider.
+        '422':
+          description: z outside [0, 20].
+        '502': { $ref: '#/components/responses/ProviderError' }
+        '503': { $ref: '#/components/responses/ProviderUnavailable' }
         default: { $ref: '#/components/responses/Problem' }
 
   # -------------------------------------------------------------------
@@ -2913,6 +2993,42 @@ components:
         data: { $ref: '#/components/schemas/RadarFrameList' }
         generatedAt: { type: string, format: date-time }
       required: [data, generatedAt]
+
+    ImageryBounds:
+      type: object
+      description: Approximate lat/lon bounding rectangle for a provider's coverage area.
+      properties:
+        south: { type: number }
+        west: { type: number }
+        north: { type: number }
+        east: { type: number }
+      required: [south, west, north, east]
+
+    ImageryConfigResponse:
+      type: object
+      description: |
+        Flat shape — NOT the usual `data`+envelope wrapper (intentional
+        deviation per Phase LM's pinned contract sketch; see the docstring
+        on the API's response model). No `units`/`freshness`/`stationClock`.
+      properties:
+        provider: { type: string, enum: [naip, esri] }
+        tileUrl:
+          type: string
+          description: |
+            NAIP (proxyMode "api"): our own proxy path template
+            (`/api/v1/imagery/tiles/{z}/{x}/{y}`). ESRI (proxyMode
+            "direct"): the ESRI XYZ URL template for the browser to fetch
+            directly. Substitute `{z}`/`{x}`/`{y}` by token — the two
+            providers do not use the same path order.
+        attribution:
+          type: string
+          description: ToS-mandated attribution text. Render verbatim, never translated.
+        proxyMode: { type: string, enum: [api, direct] }
+        bounds:
+          oneOf:
+            - { $ref: '#/components/schemas/ImageryBounds' }
+            - type: 'null'
+      required: [provider, tileUrl, attribution, proxyMode, bounds]
 
     AlmanacPlanetsResponse:
       type: object

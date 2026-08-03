@@ -76,6 +76,20 @@ vi.mock('../../../hooks/useWeatherData', () => ({
   useAlmanac: () => HOOK_RESULT_NULL,
 }));
 
+// LM-2 (2026-08-03): HeatMapCard now calls useImageryConfig() unconditionally
+// (React hooks rule) — mocked at its own module boundary to the no-imagery
+// state, NOT by unmasking the real useApiQuery/useIsIdle chain (lead ruling,
+// LM-2: mocking useIsIdle instead would un-gate a real fetch attempt inside
+// every test in this file, none of which are about imagery — nondeterminism
+// and a hidden dependency on imagery internals in unrelated suites). Every
+// pre-existing test here keeps the exact pre-LM-2 render (imagery absent),
+// since none of them set spotLat/spotLon-driving `surfData.coordinates` in a
+// way this suite asserts on. HeatMapCard.test.tsx / useImageryConfig.test.ts
+// are where the real hook chain is exercised.
+vi.mock('../../../hooks/useImageryConfig', () => ({
+  useImageryConfig: () => ({ data: null, loading: false }),
+}));
+
 // Base SurfForecast entry — required fields per types.ts, plus the BD-7/BD-9
 // zone fields under test. `time` is "now" at test-run time so this entry is
 // always selected as `primary` (closest-to-now) regardless of when the
