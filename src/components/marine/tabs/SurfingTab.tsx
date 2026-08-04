@@ -2182,6 +2182,26 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                   </p>
                 )}
 
+                {/* D10.2 (2026-08-03): shadow face height — SECONDARY, non-headline
+                 *  readout under the best-peak/average line (T7.3 intent, restored
+                 *  against the real server field). Renders only when non-null; same
+                 *  formatValue/heightUnit conversion as the headline face heights
+                 *  above (values already unit-converted to display units by the
+                 *  API). Muted styling per DESIGN-MANUAL secondary-text convention
+                 *  — never headline weight/size. */}
+                {primary.shadowFaceHeight != null && (
+                  <p
+                    className="text-muted-foreground font-normal"
+                    style={{ fontSize: 'var(--text-micro)', fontFeatureSettings: '"tnum"', margin: '0 0 0.1rem 0' }}
+                  >
+                    {t('surfing.shadowFaceHeightLabel', {
+                      height: formatValue(primary.shadowFaceHeight, 'default', locale),
+                      unit: heightUnit,
+                      defaultValue: 'In pier shadow: {{height}} {{unit}}',
+                    })}
+                  </p>
+                )}
+
                 {/* BD-7/BD-9 (D4.2, 2026-08-02): main break zone context for the
                  *  breakingFaceHeight headline below — "main break zone: transects
                  *  S–E, N qualifying". Null-safe: only renders when all three zone
@@ -2375,6 +2395,74 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                   t={t}
                   tCommon={tCommon}
                 />
+
+                {/* D10.2 (2026-08-03): per-partition break rows — what each incoming
+                    swell component does at the beach. Restored against the REAL
+                    server field (SurfForecast.perPartitionBreaks, reusing the
+                    BeachProfilePerPartitionBreak shape/serializer) at the same
+                    location the deleted, phantom-field version (D1, `54b1563`)
+                    occupied — card-resident under the incoming-swell table, not
+                    the 72h hourly detail panel (different entry granularity).
+                    Renders only when the list is non-null and non-empty; the
+                    server never sends an empty array (null covers both
+                    "pipeline unavailable" and "would be empty"). */}
+                {primary != null && primary.perPartitionBreaks && primary.perPartitionBreaks.length > 0 && (
+                  <div className="flex flex-col gap-1 mt-2">
+                    <span className="text-muted-foreground font-semibold" style={{ fontSize: 'var(--text-micro)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      {t('surfing.partitionBreaksTitle', { defaultValue: 'AT BREAK' })}
+                    </span>
+                    <ul className="flex flex-col gap-0.5" aria-label={t('surfing.partitionBreaksTitle', { defaultValue: 'AT BREAK' })}>
+                      {primary.perPartitionBreaks.map((pb) => {
+                        const dirCardinal = pb.directionDeg != null ? cardinalFromDegrees(pb.directionDeg) : null;
+                        const dirLabel = dirCardinal
+                          ? tCommon(`directions.${dirCardinal}`)
+                          : (pb.directionDeg != null ? `${Math.round(pb.directionDeg)}°` : null);
+                        const classKey = pb.classification != null
+                          ? (pb.classification in CLASSIFICATION_COLOR ? pb.classification : 'swell')
+                          : null;
+                        const classLabel = classKey ? t(`surfing.classification.${classKey}`) : null;
+                        const breakerTypeLabel = pb.dominantBreakerType
+                          ? t(`surfing.beachProfile.breakType.${pb.dominantBreakerType}`)
+                          : null;
+                        const heightVal = pb.meanFaceHeightM ?? pb.heightM;
+                        const heightStr = heightVal != null ? formatValue(heightVal, 'default', locale) : null;
+                        const distStr = pb.meanBreakDistanceM != null ? formatValue(pb.meanBreakDistanceM, 'default', locale) : null;
+                        const periodStr = pb.periodS != null ? Math.round(pb.periodS) : null;
+                        return (
+                          <li
+                            key={pb.partitionIndex}
+                            style={{
+                              fontSize: 'var(--text-micro)',
+                              color: 'var(--muted-foreground)',
+                              lineHeight: 1.4,
+                              fontFamily: 'var(--font-sans, sans-serif)',
+                              listStyle: 'none',
+                            }}
+                          >
+                            <span style={{ fontFeatureSettings: '"tnum"', color: 'var(--foreground)', fontWeight: 500 }}>
+                              {periodStr != null && `${periodStr}s `}
+                              {dirLabel && `${dirLabel} `}
+                              {classLabel}
+                            </span>
+                            {(heightStr || distStr || breakerTypeLabel) && ' → '}
+                            {distStr && (
+                              <span>{distStr} {distanceUnit}</span>
+                            )}
+                            {heightStr && (
+                              <span>
+                                {distStr && ', '}
+                                <span style={{ color: 'var(--foreground)', fontWeight: 500, fontFeatureSettings: '"tnum"' }}>
+                                  {heightStr} {heightUnit}
+                                </span>
+                                {breakerTypeLabel && <span> {breakerTypeLabel}</span>}
+                              </span>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
               </div>
 
               {/* Right: compass — max-width 80% of its flex-1 slot (~20% smaller) */}

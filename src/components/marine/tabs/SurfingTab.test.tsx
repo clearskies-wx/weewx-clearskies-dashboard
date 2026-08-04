@@ -406,3 +406,89 @@ describe('SurfingTab — 3-stat dl structure (D9, 2026-08-02)', () => {
     expect(gridDiv?.tagName).toBe('DIV');
   });
 });
+
+// D10.2 (2026-08-03) — restoring shadowFaceHeight (secondary readout, T7.3
+// intent) and perPartitionBreaks (reusing BeachProfilePerPartitionBreak,
+// same shape/serializer as the beach-profile endpoint) against the REAL
+// server contract emitted since marine `69d831a`. Both fields are new on
+// SurfForecast — falsifiability: these tests are written and run against
+// HEAD (pre-implementation) first and captured FAILING, then the feature
+// is implemented to make them pass.
+//
+// Server-context note (coordinator, D10.2 scope-ack confirmation): entry-
+// level perPartitionBreaks is null when the pipeline is unavailable OR the
+// list is empty — an empty array never actually reaches the dashboard from
+// the server. Fixtures below cover the null and populated cases only (no
+// "present but empty array" fixture, since that shape is not server-real —
+// though the render code itself still null/empty-guards defensively).
+describe('SurfingTab — shadowFaceHeight secondary readout (D10.2)', () => {
+  it('renders nothing when shadowFaceHeight is null', () => {
+    surfData = buildSurfData(buildEntry({ shadowFaceHeight: null }));
+    const { queryByText, container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    expect(queryByText(/pier shadow|In shadow/i)).toBeNull();
+    expect(container.textContent).not.toMatch(/NaN/);
+    expect(container.textContent).not.toMatch(/undefined/);
+  });
+
+  it('renders nothing when shadowFaceHeight is absent (undefined)', () => {
+    surfData = buildSurfData(buildEntry({ shadowFaceHeight: undefined }));
+    const { queryByText } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    expect(queryByText(/pier shadow|In shadow/i)).toBeNull();
+  });
+
+  it('renders the converted value when shadowFaceHeight is present, as a secondary (non-headline) readout', () => {
+    surfData = buildSurfData(buildEntry({ shadowFaceHeight: 0.6 }));
+    const { getByText } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    // formatValue(0.6, 'default', locale) -> "0.6" per the mocked t()/formatValue
+    // used elsewhere in this file for bestPeakFaceHeight/spotAverageFaceHeight.
+    const el = getByText(/0\.6 ft/);
+    expect(el).toBeDefined();
+    // Secondary styling: muted-foreground, not the headline's font-semibold
+    // text-foreground treatment used for bestPeakFaceHeight.
+    expect(el.closest('[class*="text-muted-foreground"]')).not.toBeNull();
+  });
+});
+
+describe('SurfingTab — per-partition break rows (D10.2)', () => {
+  const PARTITION_BREAK = (overrides: Partial<import('../../../api/types').BeachProfilePerPartitionBreak> = {}) => ({
+    partitionIndex: 0,
+    periodS: 12.4,
+    directionDeg: 245,
+    heightM: 1.1,
+    classification: 'groundswell',
+    meanBreakDistanceM: 42,
+    meanFaceHeightM: 1.05,
+    peakFaceHeightM: 1.3,
+    meanBreakDepthM: 1.5,
+    dominantBreakerType: 'plunging' as const,
+    ...overrides,
+  });
+
+  it('renders nothing when perPartitionBreaks is null (pipeline unavailable or empty list)', () => {
+    surfData = buildSurfData(buildEntry({ perPartitionBreaks: null }));
+    const { container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    expect(container.textContent).not.toMatch(/NaN/);
+    expect(container.textContent).not.toMatch(/undefined/);
+  });
+
+  it('renders nothing when perPartitionBreaks is absent (undefined)', () => {
+    surfData = buildSurfData(buildEntry({ perPartitionBreaks: undefined }));
+    expect(() => render(<SurfingTab locationId="huntington-city-beach-pier" />)).not.toThrow();
+  });
+
+  it('renders one row per partition with period, direction, height, classification, breaker type when present', () => {
+    surfData = buildSurfData(buildEntry({
+      perPartitionBreaks: [
+        PARTITION_BREAK({ partitionIndex: 0, periodS: 12.4, directionDeg: 245, meanFaceHeightM: 1.05, classification: 'groundswell', dominantBreakerType: 'plunging' }),
+        PARTITION_BREAK({ partitionIndex: 1, periodS: 7.2, directionDeg: 210, meanFaceHeightM: 0.6, classification: 'wind_swell', dominantBreakerType: 'spilling' }),
+      ],
+    }));
+    const { container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    // Period values render (rounded per existing partition-info display convention).
+    expect(container.textContent).toMatch(/12s|12\.4s/);
+    expect(container.textContent).toMatch(/7s|7\.2s/);
+    // Height values render (formatValue default precision).
+    expect(container.textContent).toMatch(/1\.1/);
+    expect(container.textContent).toMatch(/0\.6/);
+  });
+});

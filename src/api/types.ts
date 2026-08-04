@@ -1394,6 +1394,17 @@ export interface SurfForecast {
   breakPoints?: BeachProfileBreakPoint[] | null;
   directionalSpread?: number | null;
   setup?: number | null;
+  /**
+   * Per-partition break info — what each incoming swell component does at
+   * the beach. Restored D10.2 (2026-08-03): reuses the EXISTING
+   * `BeachProfilePerPartitionBreak` shape (same serializer the beach-profile
+   * endpoint's `perPartitionBreaks` uses) instead of the deleted bespoke
+   * `PartitionBreakInfo` type (D1, `54b1563`) — one schema for one concept,
+   * per D10.2 ruling (1). Served since marine `69d831a`. Null when the 1D
+   * model per-partition pipeline is unavailable OR the list would be empty
+   * — the server never sends an empty array here.
+   */
+  perPartitionBreaks?: BeachProfilePerPartitionBreak[] | null;
   // T7.2: Peel angle fields — derived from multi-transect break-point lateral variation.
   /** Peel angle in degrees; null when insufficient transect data. */
   peelAngle?: number | null;
@@ -1433,6 +1444,14 @@ export interface SurfForecast {
   bestPeakFaceHeight?: number | null;
   /** Spot-average face height (mean across open transects) in display units. */
   spotAverageFaceHeight?: number | null;
+  /**
+   * Face height in the structure shadow zone, in display units. Restored
+   * D10.2 (2026-08-03) as a secondary, non-headline readout (D10.2 ruling
+   * (2): a legitimate `is_structure_affected` metadata consumer under
+   * BD-8's headline-aggregation demotion). Served since marine `69d831a`.
+   * Null when no structure shadow is present at this timestep.
+   */
+  shadowFaceHeight?: number | null;
   // T7.1: Transect counts for heat map display.
   /** Total number of transects (open + structure-affected). */
   transectCount?: number | null;
