@@ -2424,7 +2424,15 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                         const breakerTypeLabel = pb.dominantBreakerType
                           ? t(`surfing.beachProfile.breakType.${pb.dominantBreakerType}`)
                           : null;
-                        const heightVal = pb.meanFaceHeightM ?? pb.heightM;
+                        // aud-d102 F1: NO fallback to pb.heightM here — that is the
+                        // partition's DEEP-WATER Hs at the handoff (marine
+                        // PartitionBreakInfo.height_m docstring), not a break-face
+                        // height. meanFaceHeightM is null exactly when no transect
+                        // recorded a break for this partition (marine _summarize
+                        // nulls all five break stats together), so the whole
+                        // "→ ..." tail below vanishes for a no-break partition
+                        // rather than presenting deep-water Hs under "AT BREAK".
+                        const heightVal = pb.meanFaceHeightM;
                         const heightStr = heightVal != null ? formatValue(heightVal, 'default', locale) : null;
                         const distStr = pb.meanBreakDistanceM != null ? formatValue(pb.meanBreakDistanceM, 'default', locale) : null;
                         const periodStr = pb.periodS != null ? Math.round(pb.periodS) : null;

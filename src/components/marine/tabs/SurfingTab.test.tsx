@@ -491,4 +491,37 @@ describe('SurfingTab — per-partition break rows (D10.2)', () => {
     expect(container.textContent).toMatch(/1\.1/);
     expect(container.textContent).toMatch(/0\.6/);
   });
+
+  // aud-d102 F1 regression: a partition with NO recorded break (marine's
+  // _summarize nulls all five break stats together; heightM — the DEEP-WATER
+  // Hs at the handoff — is still present) must render only the head
+  // (period/direction/classification) with NO "→" tail and, critically,
+  // must NOT present the deep-water heightM value under the "AT BREAK"
+  // heading as if it were a break-face height.
+  it('renders no height and no arrow for a partition with null break stats (never falls back to deep-water heightM)', () => {
+    surfData = buildSurfData(buildEntry({
+      perPartitionBreaks: [
+        PARTITION_BREAK({
+          partitionIndex: 0,
+          periodS: 14.9,
+          directionDeg: 265,
+          heightM: 2.3, // deep-water Hs — must NOT appear in the row
+          classification: 'groundswell',
+          meanFaceHeightM: null,
+          meanBreakDistanceM: null,
+          peakFaceHeightM: null,
+          meanBreakDepthM: null,
+          dominantBreakerType: null,
+        }),
+      ],
+    }));
+    const { container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    const row = container.querySelector('ul[aria-label] li');
+    expect(row).not.toBeNull();
+    // Head renders: period + classification.
+    expect(row!.textContent).toMatch(/15s|14\.9s/);
+    // No tail: no arrow, and the deep-water 2.3 value is absent.
+    expect(row!.textContent).not.toContain('→');
+    expect(row!.textContent).not.toMatch(/2\.3/);
+  });
 });
