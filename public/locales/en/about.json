@@ -46,7 +46,12 @@
       "almanac": "Astronomy",
       "baseMaps": "Base Maps",
       "seismicData": "Seismic Data",
-      "astronomical": "Astronomy"
+      "astronomical": "Astronomy",
+      "imagery": "Imagery"
+    },
+    "imagery": {
+      "naip": "NAIP",
+      "esri": "ESRI World Imagery"
     }
   },
   "photoCredits": {
