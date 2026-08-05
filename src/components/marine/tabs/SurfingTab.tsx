@@ -214,9 +214,14 @@ function ScoreBar({
 }) {
   const { t } = useTranslation('marine');
 
-  // Width fills relative to 100 for both factors and adjustments (SURF-1 §3).
-  // Shared scale makes bar widths additive: factor bars + adjustment bars sum to total.
-  const fillPct = Math.min(100, Math.abs(score));
+  // Factor bars fill relative to their own category max (ADR-096); adjustment
+  // bars keep the shared 0-100 scale (adjustments are deleted wholesale in Round S).
+  const fillPct =
+    mode === 'factor'
+      ? max
+        ? Math.min(100, (Math.abs(score) / max) * 100)
+        : Math.min(100, Math.abs(score))
+      : Math.min(100, Math.abs(score));
 
   // Fill color (SURF-1 §4):
   // - Adjustment, negative (penalty) → --score-1 (orange)
