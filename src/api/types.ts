@@ -1241,17 +1241,30 @@ export interface MarineTextForecast {
   weather: string | null;
 }
 
-export interface SurfForecastScoring {
-  waveHeight: number;
-  wavePeriod: number;
-  waveOrganization: number;
-  organizationWind: number;
-  organizationSwellDominance: number;
-  organizationDirectionalSpread: number;
-  organizationCrossSwell: number;
-  beachAlignment: number;
-  directionalExposure: number;
-  timeOfDay: number;
+/**
+ * SurfScoringBreakdown — per-factor surf score breakdown (ADR-101, Round S,
+ * 2026-08-05). Weighted geometric mean of five 0-100 components; replaces the
+ * old 3-factor + 3-adjustment shape (wave height/wave period/wave
+ * organization/organization sub-factors/beach alignment/directional
+ * exposure/time of day — all DELETED, not renamed). `weights` are the five
+ * EFFECTIVE (sum-normalized) weights
+ * actually used to compute the total this timestep — reflects operator
+ * config, defaults 0.25/0.25/0.20/0.20/0.10 (size/shape/conditions/power/
+ * consistency). See EYEBALL-FIX-PLAN-2026-08-04.md S-SPEC-1 "Wire contract v2".
+ */
+export interface SurfScoringBreakdown {
+  size: number;
+  shape: number;
+  conditions: number;
+  power: number;
+  consistency: number;
+  weights: {
+    size: number;
+    shape: number;
+    conditions: number;
+    power: number;
+    consistency: number;
+  };
 }
 
 export interface SurfForecast {
@@ -1281,6 +1294,20 @@ export interface SurfForecast {
    */
   qualityLabel: string | null;
   /**
+   * Numeric surf score, 0-100 int, rounded from the scorer's true unrounded
+   * geometric-mean total (ADR-101, Round S, 2026-08-05) — the SAME value
+   * `qualityStars` derives from (stars = score/20). Added at the
+   * `SurfForecast` level (sibling to qualityStars/qualityLabel, NOT inside
+   * `scoring`) because the five `scoring` factors no longer sum to a total
+   * under the geometric mean (ADR-101: "Bars no longer sum to the total") —
+   * reconstructing it client-side from rounded factors would not match the
+   * server's true score. Nullable for the same reason as qualityStars — null
+   * together with it (old cached payloads / pre-Round-S servers absent this
+   * field entirely; treat as null). Never reconstruct this value from
+   * `scoring.*` client-side.
+   */
+  qualityScore: number | null;
+  /**
    * Human-readable conditions summary. Stays a non-null string (API-owned
    * per rules/coding.md §6.2) — when the score is unavailable, the API
    * resolves its OWN locale key ("surf.conditions.unavailable" in the API's
@@ -1293,7 +1320,7 @@ export interface SurfForecast {
   multiSwell: SpectralWaveComponent[] | null;
   /** Per-factor scoring breakdown — provided by surf_scorer.py when available.
    *  Null when the API does not yet include scoring (e.g. older server versions). */
-  scoring?: SurfForecastScoring | null;
+  scoring?: SurfScoringBreakdown | null;
   // SWAN fields (ADR-093, Phase 5 T5.1). Optional — absent on older API
   // versions and on WW3 fallback responses where SWAN has not produced output.
   /** Raw SWAN Hsig (significant wave height) before wave_transform.py supplements. */

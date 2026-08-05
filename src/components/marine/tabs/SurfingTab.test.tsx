@@ -102,6 +102,7 @@ function buildEntry(overrides: Partial<SurfForecast> = {}): SurfForecast {
     direction: 211.2,
     qualityStars: 3,
     qualityLabel: 'Good',
+    qualityScore: 62,
     conditionsText: 'Fair conditions',
     windQuality: 'cross',
     swellDominance: 0.6,
@@ -492,30 +493,26 @@ describe('SurfingTab — per-partition break rows (D10.2)', () => {
   });
 });
 
-// A1 (EYEBALL-FIX-PLAN-2026-08-04 §2 Round A) — ScoreBar fill width regression
-// guard, standing on ADR-096: component score bars fill relative to their
-// OWN category max (denominator = max), never /100. This is drift the plan
-// records recurring more than once against a standing ruling (§5 process
-// lessons) — this guard exists so the /100 regression cannot land silently
-// again. Interim until Round S (S-SPEC-1) replaces the whole scoring card;
-// this guard covers the CURRENT (a35373d) 3-factor/3-penalty ScoreBar shape.
+// S4 (ROUND-S-LEGS-2-4-BRIEFS-2026-08-05.md LEG 3 / EYEBALL-FIX-PLAN-2026-08-04
+// S-SPEC-1) — ScoreBar fill width regression guard for the ADR-101 five-factor
+// scoring card, standing on ADR-096: component score bars fill to a FIXED
+// denominator of 100 (trivially satisfied post-rebuild — every factor's own
+// max IS 100), never a per-category max and never a signed adjustment scale.
+// REPLACES the prior 3-factor/3-penalty guard (a35373d) — that shape is
+// deleted (ADR-101 "Removed entirely"), not hidden.
 //
-// scoringBreakdown.factors max values are fixed in SurfingTab.tsx:
-// waveHeight max 35, wavePeriod max 35, waveOrganization max 30 — reading
-// `primary.scoring` fields directly exercises the real fillPct computation,
-// not a re-derivation of it.
-describe('SurfingTab — ScoreBar fill width per-category max, not /100 (A1, ADR-096)', () => {
-  const SCORING = (overrides: Partial<import('../../../api/types').SurfForecastScoring> = {}): import('../../../api/types').SurfForecastScoring => ({
-    waveHeight: 21,
-    wavePeriod: 35,
-    waveOrganization: 26,
-    organizationWind: 0,
-    organizationSwellDominance: 0,
-    organizationDirectionalSpread: 0,
-    organizationCrossSwell: 0,
-    beachAlignment: -16,
-    directionalExposure: 0,
-    timeOfDay: 0,
+// scoring.{size,shape,conditions,power,consistency} are ints 0-100 straight
+// off the wire (SurfScoringBreakdown, S-SPEC-1) — reading `primary.scoring`
+// fields directly exercises the real fillPct computation, not a
+// re-derivation of it.
+describe('SurfingTab — ScoreBar fill width, fixed 0-100 denominator (S4, ADR-096/ADR-101)', () => {
+  const SCORING = (overrides: Partial<import('../../../api/types').SurfScoringBreakdown> = {}): import('../../../api/types').SurfScoringBreakdown => ({
+    size: 60,
+    shape: 60,
+    conditions: 60,
+    power: 60,
+    consistency: 60,
+    weights: { size: 0.25, shape: 0.25, conditions: 0.20, power: 0.20, consistency: 0.10 },
     ...overrides,
   });
 
@@ -533,21 +530,88 @@ describe('SurfingTab — ScoreBar fill width per-category max, not /100 (A1, ADR
     return fill.style.width;
   }
 
-  it('factor bar: score 21 / max 35 fills to 60% (denominator = category max, NOT /100)', () => {
-    surfData = buildSurfData(buildEntry({ scoring: SCORING({ waveHeight: 21 }) }));
+  it('factor bar: score 62 fills to 62% (fixed denominator 100, NOT a per-category max)', () => {
+    surfData = buildSurfData(buildEntry({ scoring: SCORING({ size: 62 }) }));
     const { container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
-    expect(fillWidthFor(container, 'surfing.scoring.waveHeight')).toBe('60%');
+    expect(fillWidthFor(container, 'surfing.scoring.size')).toBe('62%');
   });
 
-  it('factor bar: score 35 / max 35 fills to 100%', () => {
-    surfData = buildSurfData(buildEntry({ scoring: SCORING({ wavePeriod: 35 }) }));
+  it('factor bar: score 100 fills to 100%', () => {
+    surfData = buildSurfData(buildEntry({ scoring: SCORING({ shape: 100 }) }));
     const { container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
-    expect(fillWidthFor(container, 'surfing.scoring.wavePeriod')).toBe('100%');
+    expect(fillWidthFor(container, 'surfing.scoring.shape')).toBe('100%');
   });
 
-  it('adjustment bar: score -16 fills to 16% (unchanged 0-100 scale behavior)', () => {
-    surfData = buildSurfData(buildEntry({ scoring: SCORING({ beachAlignment: -16 }) }));
+  it('factor bar: score 0 fills to 0%', () => {
+    surfData = buildSurfData(buildEntry({ scoring: SCORING({ conditions: 0 }) }));
     const { container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
-    expect(fillWidthFor(container, 'surfing.scoring.beachAlignment')).toBe('16%');
+    expect(fillWidthFor(container, 'surfing.scoring.conditions')).toBe('0%');
+  });
+
+  it('renders all five factor bars (Size/Shape/Conditions/Power/Consistency) and no others', () => {
+    surfData = buildSurfData(buildEntry({ scoring: SCORING() }));
+    const { container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    for (const key of ['size', 'shape', 'conditions', 'power', 'consistency']) {
+      expect(fillWidthFor(container, `surfing.scoring.${key}`)).toBe('60%');
+    }
+  });
+
+  // FAIL condition (S4): beachAlignment/directionalExposure/timeOfDay must
+  // never be referenced anywhere in dashboard src post-ADR-101 — the
+  // adjustments column is DELETED, not hidden.
+  it('does NOT render the deleted adjustments column (beachAlignment/directionalExposure/timeOfDay)', () => {
+    surfData = buildSurfData(buildEntry({ scoring: SCORING() }));
+    const { queryByText } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    expect(queryByText('surfing.scoring.componentsHeader')).toBeNull();
+    expect(queryByText('surfing.scoring.adjustmentsHeader')).toBeNull();
+    expect(queryByText('surfing.scoring.beachAlignment')).toBeNull();
+    expect(queryByText('surfing.scoring.directionalExposure')).toBeNull();
+    expect(queryByText('surfing.scoring.timeOfDay')).toBeNull();
+  });
+
+  // ADR-101 visitor explainer caption — the ADR's exact sentence, rendered
+  // whenever scoring data is present (via the mocked t() literal key).
+  it('renders the geometric-mean visitor explainer caption', () => {
+    surfData = buildSurfData(buildEntry({ scoring: SCORING() }));
+    const { getByText } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    // getByText throws if not found — no dedicated matcher needed (repo convention, this file).
+    getByText('surfing.scoring.geometricMeanExplainer');
+  });
+});
+
+// S4 — qualityScore (the total, ADR-101 Round S) is read directly from the
+// wire, NEVER reconstructed by summing the five scoring factors (which no
+// longer sum to the total under the geometric mean — ADR-101: "Bars no
+// longer sum to the total").
+describe('SurfingTab — total score reads qualityScore directly, never reconstructed (S4, ADR-101)', () => {
+  it('renders primary.qualityScore verbatim, not a sum of scoring factors', () => {
+    surfData = buildSurfData(buildEntry({
+      qualityScore: 47,
+      scoring: {
+        size: 90, shape: 90, conditions: 90, power: 90, consistency: 90,
+        weights: { size: 0.25, shape: 0.25, conditions: 0.20, power: 0.20, consistency: 0.10 },
+      },
+    }));
+    const { container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    // The true total (47) must render even though every factor is 90 — a
+    // naive sum-of-factors reconstruction would show something else entirely
+    // (450, the old-shape-style additive sum). Text matcher checks the FULL
+    // combined text content of the score span (numeral + nested "/100" span)
+    // since the two are separate text/element nodes under one parent.
+    expect(
+      Array.from(container.querySelectorAll('span')).some((el) => el.textContent === '47/100'),
+    ).toBe(true);
+    expect(container.textContent).not.toContain('450');
+  });
+
+  it('suppresses the numeric total (stars-only) when qualityScore is null', () => {
+    surfData = buildSurfData(buildEntry({
+      qualityStars: null,
+      qualityLabel: null,
+      qualityScore: null,
+      scoring: null,
+    }));
+    const { queryByText } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    expect(queryByText('/100')).toBeNull();
   });
 });

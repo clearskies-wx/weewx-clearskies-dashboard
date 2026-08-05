@@ -178,11 +178,14 @@ function StarRating({
 }
 
 // ---------------------------------------------------------------------------
-// Scoring breakdown — weighted factor bars.
-// The API returns qualityStars/qualityLabel (composed score) but NOT the
-// individual factor breakdown. These UI-side approximations reconstruct
-// approximate per-factor contributions from fields the API does provide.
-// Each approximation is documented inline to track against surf_scorer.py.
+// ---------------------------------------------------------------------------
+// Scoring breakdown — five factor bars (ADR-101, Round S, 2026-08-05).
+// Each factor arrives from the API pre-computed (surf_scorer.py) as an int
+// 0-100 with a fixed denominator of 100 — no UI-side reconstruction, no
+// per-category max (ADR-096's per-category rule is trivially satisfied: the
+// category max IS 100 for every factor post-rebuild). The adjustments column
+// (beach alignment / directional exposure / time of day) is DELETED, not
+// hidden — ADR-101 "Removed entirely".
 // ---------------------------------------------------------------------------
 
 /**
@@ -200,66 +203,28 @@ function scoreBarFillColor(pct: number): string {
   return scoreTierColor(Math.round(pct / 20));
 }
 
-
 function ScoreBar({
   label,
   score,
-  max,
-  mode = 'factor',
 }: {
   label: string;
   score: number;
-  max?: number;
-  mode?: 'factor' | 'adjustment';
 }) {
   const { t } = useTranslation('marine');
 
-  // Factor bars fill relative to their own category max (ADR-096); adjustment
-  // bars keep the shared 0-100 scale (adjustments are deleted wholesale in Round S).
-  const fillPct =
-    mode === 'factor'
-      ? max
-        ? Math.min(100, (Math.abs(score) / max) * 100)
-        : Math.min(100, Math.abs(score))
-      : Math.min(100, Math.abs(score));
+  // Fixed denominator of 100 (ADR-096 per-category rule trivially satisfied
+  // post-ADR-101: every factor's own max IS 100). REPLACES the old per-
+  // category-max / signed-adjustment logic — the adjustments column
+  // (beach alignment / directional exposure / time of day) is DELETED, not
+  // hidden (ADR-101 "Removed entirely").
+  const fillPct = Math.min(100, Math.max(0, score));
 
-  // Fill color (SURF-1 §4):
-  // - Adjustment, negative (penalty) → --score-1 (orange)
-  // - Adjustment, positive (bonus)   → --score-3 (lime/green)
-  // - Adjustment, zero               → transparent (no fill, track only)
-  // - Factor → tier color based on relative performance within category (score/max)
-  let fillColor: string;
-  if (mode === 'adjustment') {
-    if (score < 0) {
-      fillColor = 'var(--score-1)';
-    } else if (score > 0) {
-      fillColor = 'var(--score-3)';
-    } else {
-      fillColor = 'transparent';
-    }
-  } else {
-    // Factor: tier color reflects relative performance within the category, not vs. 100.
-    // e.g., Wave Height 35/35 → 100% relative → purple; 21/35 → 60% → lime.
-    const relPct = max ? (score / max) * 100 : Math.min(100, score);
-    fillColor = scoreBarFillColor(relPct);
-  }
+  // Fill color: tier color based on absolute score (fixed 0-100
+  // denominator, ADR-101). e.g., 82 → purple (--score-5); 45 → lime (--score-3).
+  const fillColor = scoreBarFillColor(fillPct);
 
-  // Score label (SURF-1 §5):
-  // - Factor:     "35/35", "21/35", "26/30"
-  // - Adjustment: "−16 pts", "0 pts", "+5 pts"
-  let scoreDisplay: string;
-  if (mode === 'adjustment') {
-    const pts = t('surfing.scoring.pts', { defaultValue: 'pts' });
-    if (score < 0) {
-      scoreDisplay = `−${Math.abs(score)} ${pts}`;
-    } else if (score > 0) {
-      scoreDisplay = `+${score} ${pts}`;
-    } else {
-      scoreDisplay = `0 ${pts}`;
-    }
-  } else {
-    scoreDisplay = max ? `${score}/${max}` : String(score);
-  }
+  // Score label: "82/100" (i18n interpolation — rules/coding.md §6.1).
+  const scoreDisplay = t('surfing.scoring.scoreOutOf100', { score });
 
   return (
     <div className="flex flex-col gap-1">
@@ -303,13 +268,18 @@ function ScoreBar({
 //   - Modal content: .card-glass + blur(16px) + ring-1 ring-foreground/10
 // ---------------------------------------------------------------------------
 
-const EXPLAINER_FACTORS: ReadonlyArray<{ key: string; weight: string | null }> = [
-  { key: 'waveHeight',         weight: '35%' },
-  { key: 'wavePeriod',         weight: '35%' },
-  { key: 'waveOrganization',   weight: '30%' },
-  { key: 'beachAlignment',     weight: null  }, // penalty
-  { key: 'directionalExposure', weight: null }, // penalty
-  { key: 'timeOfDay',          weight: null  }, // bonus/penalty
+// Five factors (ADR-101, Round S). Weight percentages shown are the shipped
+// DEFAULTS (0.25/0.25/0.20/0.20/0.10) — actual effective weights are
+// operator-configurable admin-side; this modal is descriptive copy, not a
+// live readout of `scoring.weights` (the bars/labels don't show weight at
+// all, matching the brief's "labeled Size/Shape/Conditions/Power/Consistency"
+// spec — no per-bar weight readout).
+const EXPLAINER_FACTORS: ReadonlyArray<{ key: string; weight: string }> = [
+  { key: 'size',        weight: '25%' },
+  { key: 'shape',       weight: '25%' },
+  { key: 'conditions',  weight: '20%' },
+  { key: 'power',       weight: '20%' },
+  { key: 'consistency', weight: '10%' },
 ];
 
 function ScoringExplainerModal({ onClose }: { onClose: () => void }) {
@@ -410,15 +380,17 @@ function ScoringExplainerModal({ onClose }: { onClose: () => void }) {
             {t('surfing.scoringExplainer.intro')}
           </p>
 
+          {/* ADR-101 visitor explainer sentence — geometric mean behavior */}
+          <p className="font-semibold text-foreground" style={{ fontSize: 'var(--text-body)' }}>
+            {t('surfing.scoring.geometricMeanExplainer')}
+          </p>
+
           <div className="flex flex-col gap-3">
             {EXPLAINER_FACTORS.map((f) => (
               <div key={f.key} className="flex flex-col gap-0.5">
                 <span className="font-semibold text-foreground" style={{ fontSize: 'var(--text-label)' }}>
                   {t(`surfing.scoring.${f.key}`)}
-                  {f.weight !== null
-                    ? <span className="text-muted-foreground font-normal"> ({f.weight})</span>
-                    : <span className="text-muted-foreground font-normal"> ({t('surfing.scoring.penalty')})</span>
-                  }
+                  <span className="text-muted-foreground font-normal"> ({f.weight})</span>
                 </span>
                 <p className="text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>
                   {t(`surfing.scoringExplainer.${f.key}`)}
@@ -441,7 +413,8 @@ function ScoringExplainerModal({ onClose }: { onClose: () => void }) {
 
 // NOTE: windQualityScore(), periodScore(), waveHeightScore(), computeEntryScore()
 // removed in T6.2 (Phase 6). All scoring now sourced from the API via
-// entry.scoring (SurfForecastScoring). See SWAN-CORRECTIONS-PLAN Phase 4.
+// entry.scoring (SurfScoringBreakdown, ADR-101 Round S) and entry.qualityScore
+// (the total). See SWAN-CORRECTIONS-PLAN Phase 4.
 
 // ---------------------------------------------------------------------------
 // SWAN display helpers (Phase 5 T5.1 / T5.2)
@@ -1282,12 +1255,13 @@ function SurfScrollForecast({
               )}
             </div>
 
-            {/* Score — read directly from API entry.scoring (T6.2). */}
+            {/* Score — read directly from API entry.qualityScore (ADR-101,
+             *  Round S). NEVER reconstructed from entry.scoring's five
+             *  factors — they no longer sum to the total under the
+             *  geometric mean (lead ruling, 2026-08-05; see the primary
+             *  scoringBreakdown comment above for the full rationale). */}
             {renderRow('score', SURF_ROW_H.score, (item) => {
-              const s = item.entry.scoring;
-              const score = s != null
-                ? s.waveHeight + s.wavePeriod + s.waveOrganization + s.beachAlignment + s.directionalExposure + s.timeOfDay
-                : null;
+              const score = item.entry.qualityScore;
               return (
                 <span aria-hidden="true" style={{
                   fontFamily: 'var(--font-display, Outfit, system-ui, sans-serif)',
@@ -1924,40 +1898,38 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
 
   const dominantDirection = dominantSwellDirection(swellComponents);
 
-  // ── Scoring breakdown — 3-factor + 3-penalty structure (ADR-096 / T6.2).
-  // All values sourced directly from API scoring breakdown (SurfForecastScoring).
-  // totalScore = waveHeight + wavePeriod + waveOrganization + beachAlignment
-  //            + directionalExposure + timeOfDay. No hidden multipliers.
+  // ── Scoring breakdown — five factors, weighted geometric mean (ADR-101,
+  // Round S). All values sourced directly from API scoring breakdown
+  // (SurfScoringBreakdown) — five bars, denominator 100 each (ADR-096
+  // per-category rule trivially satisfied). Adjustments column DELETED, not
+  // hidden (ADR-101 "Removed entirely").
   //
-  // totalScore is `number | null` (T4A.4, Phase 4A): when `primary.scoring` is
-  // absent, that is the SAME "the 1D model failed, score_surf() returned no
-  // rating" event that nulls qualityStars/qualityLabel (coordinator LC-17).
-  // Defaulting to 0 here would render "0/100" next to a suppressed star
-  // rating — telling a surfer the spot scored zero out of a hundred, the
-  // exact silent-degradation lie this phase exists to delete.
+  // totalScore reads `primary.qualityScore` directly — a dedicated top-level
+  // int (0-100), rounded from the scorer's TRUE unrounded geometric-mean
+  // total, the same value `qualityStars` derives from (stars = score/20).
+  // NEVER reconstructed client-side: summing the five `scoring` factors would
+  // be wrong (ADR-101: "Bars no longer sum to the total" — this is a
+  // geometric mean, not a sum), and recomputing the mean from already-
+  // rounded 0-100 factor ints would not exactly match the server's value
+  // (lead ruling, 2026-08-05). Null together with qualityStars/qualityLabel
+  // when the 1D model failed (T4A.4/LC-17) OR when talking to an old cached
+  // payload / pre-Round-S server that doesn't send the field — same
+  // suppress-together treatment either way.
   const scoringBreakdown = (() => {
     if (!primary?.scoring) {
       return {
-        factors: [] as Array<{key: string; max: number; score: number}>,
-        penalties: [] as Array<{key: string; score: number}>,
-        totalScore: null as number | null,
+        factors: [] as Array<{key: string; score: number}>,
       };
     }
     const s = primary.scoring;
-    const totalScore = s.waveHeight + s.wavePeriod + s.waveOrganization
-      + s.beachAlignment + s.directionalExposure + s.timeOfDay;
     return {
       factors: [
-        { key: 'waveHeight',       max: 35, score: s.waveHeight },
-        { key: 'wavePeriod',       max: 35, score: s.wavePeriod },
-        { key: 'waveOrganization', max: 30, score: s.waveOrganization },
+        { key: 'size',        score: s.size },
+        { key: 'shape',       score: s.shape },
+        { key: 'conditions',  score: s.conditions },
+        { key: 'power',       score: s.power },
+        { key: 'consistency', score: s.consistency },
       ],
-      penalties: [
-        { key: 'beachAlignment',      score: s.beachAlignment },
-        { key: 'directionalExposure', score: s.directionalExposure },
-        { key: 'timeOfDay',           score: s.timeOfDay },
-      ],
-      totalScore,
     };
   })();
 
@@ -2043,16 +2015,15 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
             ) : (
               <>
                 {/* Star rating + total score.
-                    T4A.4 (Phase 4A): qualityStars/qualityLabel/totalScore are
-                    null together when the 1D model fails and score_surf()
-                    returns no rating (coordinator LC-17). Passing null into
-                    StarRating would render 5 muted unfilled stars + a blank
-                    label — visually identical to a genuine 0-star rating.
-                    Suppress the component entirely and show the existing
-                    no-data treatment instead (ruling: apply the existing
-                    pattern, don't invent a new one; DESIGN-MANUAL's numeric-
-                    badge-only hero spec is a separate, coordinator-owned
-                    design question — not resolved here). */}
+                    qualityStars/qualityLabel/qualityScore are null together
+                    when the 1D model fails and score_surf() returns no
+                    rating (T4A.4/LC-17), OR when talking to an old cached
+                    payload / pre-Round-S server (qualityScore added ADR-101,
+                    Round S, 2026-08-05). Passing null into StarRating would
+                    render 5 muted unfilled stars + a blank label — visually
+                    identical to a genuine 0-star rating. Suppress the
+                    component entirely and show the existing no-data
+                    treatment instead. */}
                 <div className="flex items-start justify-between">
                   {primary.qualityStars != null ? (
                     <StarRating
@@ -2068,7 +2039,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                       —
                     </span>
                   )}
-                  {scoringBreakdown.totalScore != null && (
+                  {primary.qualityScore != null && (
                     <span
                       className="font-semibold text-foreground"
                       style={{
@@ -2077,7 +2048,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                         fontFeatureSettings: '"tnum"',
                       }}
                     >
-                      {scoringBreakdown.totalScore}
+                      {primary.qualityScore}
                       <span className="text-muted-foreground font-normal" style={{ fontSize: 'var(--text-label)' }}>/100</span>
                     </span>
                   )}
@@ -2088,51 +2059,31 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                   {primary.conditionsText}
                 </p>
 
-                {/* Scoring breakdown — two-column layout (SURF-1 / ADR-096):
-                 *  Column 1 "Components":  3 weighted factors (Wave Height 35, Wave Period 35, Organization 30)
-                 *  Column 2 "Adjustments": 3 penalty/bonus modifiers (Beach Alignment, Exposure, Time of Day)
-                 *  Bars fill relative to 100 (SURF-1 §3): width = |value| / 100.
-                 *  Factor bar color reflects relative performance within the category (score/max).
-                 *  Penalty bars use --score-1 (orange); bonus bars use --score-3 (lime). */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
-                  <div className="flex flex-col gap-2">
-                    <span
-                      className="text-muted-foreground font-semibold"
-                      style={{ fontSize: 'var(--text-micro)', textTransform: 'uppercase', letterSpacing: '0.04em' }}
-                    >
-                      {t('surfing.scoring.componentsHeader')}
-                    </span>
-                    <div className="flex flex-col gap-3">
-                      {scoringBreakdown.factors.map((f) => (
-                        <ScoreBar
-                          key={f.key}
-                          label={t(`surfing.scoring.${f.key}`)}
-                          score={f.score}
-                          max={f.max}
-                          mode="factor"
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <span
-                      className="text-muted-foreground font-semibold"
-                      style={{ fontSize: 'var(--text-micro)', textTransform: 'uppercase', letterSpacing: '0.04em' }}
-                    >
-                      {t('surfing.scoring.adjustmentsHeader')}
-                    </span>
-                    <div className="flex flex-col gap-3">
-                      {scoringBreakdown.penalties.map((p) => (
-                        <ScoreBar
-                          key={p.key}
-                          label={t(`surfing.scoring.${p.key}`)}
-                          score={p.score}
-                          mode="adjustment"
-                        />
-                      ))}
-                    </div>
-                  </div>
+                {/* Scoring breakdown — five factor bars (ADR-101, Round S):
+                 *  Size / Shape / Conditions / Power / Consistency, each
+                 *  denominator 100 (ADR-096 per-category rule trivially
+                 *  satisfied). Adjustments column DELETED, not hidden. */}
+                <div className="flex flex-col gap-3">
+                  {scoringBreakdown.factors.map((f) => (
+                    <ScoreBar
+                      key={f.key}
+                      label={t(`surfing.scoring.${f.key}`)}
+                      score={f.score}
+                    />
+                  ))}
                 </div>
+
+                {/* ADR-101 visitor explainer — geometric mean behavior.
+                 *  Placed as an always-visible caption (DESIGN-MANUAL card
+                 *  anatomy §6 "info affordance or caption" — caption chosen
+                 *  so it's readable without opening the modal; the existing
+                 *  info button + modal above still carries the full
+                 *  per-factor explanation). */}
+                {scoringBreakdown.factors.length > 0 && (
+                  <p className="text-muted-foreground" style={{ fontSize: 'var(--text-micro)' }}>
+                    {t('surfing.scoring.geometricMeanExplainer')}
+                  </p>
+                )}
               </>
             )}
           </CardContent>

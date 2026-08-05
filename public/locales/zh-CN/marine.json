@@ -183,11 +183,13 @@
     "srWaveFaceHeightColumn": "Wave Face Height ({{unit}})",
     "scoringBreakdownTitle": "Scoring Breakdown",
     "scoring": {
-      "waveHeight": "Wave Height",
-      "wavePeriod": "Wave Period",
-      "windQuality": "Wind Quality",
-      "swellDominance": "Swell Dominance",
-      "factorLabel": "{{label}} ({{weight}}%)"
+      "size": "Size",
+      "shape": "Shape",
+      "conditions": "Conditions",
+      "power": "Power",
+      "consistency": "Consistency",
+      "scoreOutOf100": "{{score}}/100",
+      "geometricMeanExplainer": "The score is a weighted geometric mean of the five factors — they average together, but one very poor factor sinks the whole score."
     },
     "swellBreakdownTitle": "Swell Components",
     "incomingSwellLabel": "INCOMING SWELL (offshore)",
