@@ -59,7 +59,6 @@ import type {
   BeachProfileElevationPoint,
   SurfZoneExtent,
 } from '../../../api/types';
-import { cardinalFromDegrees } from '../../../utils/wind';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -161,9 +160,14 @@ function selectTier(
   return tierExtended;
 }
 
-function computeDistanceTicks(tier: ScaleTier): number[] {
+function computeDistanceTicks(tier: ScaleTier, xMin: number): number[] {
   const ticks: number[] = [];
-  for (let d = 0; d <= tier.maxDistance; d += tier.tickStep) ticks.push(d);
+  const negFirst = Math.ceil(xMin / tier.tickStep) * tier.tickStep;
+  for (let d = negFirst; d <= tier.maxDistance; d += tier.tickStep) ticks.push(d);
+  // The dry-beach strip is narrower than one tick step — label its landward
+  // edge so the axis doesn't just stop at 0 (operator, 2026-08-05: the axis
+  // must show negative numbers over the sand).
+  if (ticks[0] >= 0 && xMin < 0) ticks.unshift(Math.ceil(xMin / 5) * 5);
   return ticks;
 }
 
@@ -261,15 +265,13 @@ interface RenderBand {
   key: string;
 }
 
-/** D6 — one band per break's own impact/foam extent, skipping zero-width bands (D5.2). */
+/** D6 — one band per break's own impact extent, skipping zero-width bands
+ * (D5.2). Foam zones removed entirely (operator, 2026-08-05: "not helping"). */
 function bandsFromPerBreakZones(perBreakZones: BeachProfilePerBreakZone[]): RenderBand[] {
   const bands: RenderBand[] = [];
   perBreakZones.forEach((pbz, i) => {
     if (zoneWidth(pbz.impactZone) > ZONE_WIDTH_EPSILON) {
       bands.push({ start: pbz.impactZone.startDistance, end: pbz.impactZone.endDistance, kind: 'impact', key: `impact-${i}` });
-    }
-    if (zoneWidth(pbz.foamZone) > ZONE_WIDTH_EPSILON) {
-      bands.push({ start: pbz.foamZone.startDistance, end: pbz.foamZone.endDistance, kind: 'foam', key: `foam-${i}` });
     }
   });
   return bands;
@@ -280,9 +282,6 @@ function bandsFromAggregateZones(zones: BeachProfileSurfZones | null | undefined
   const bands: RenderBand[] = [];
   if (zoneWidth(zones?.impactZone) > ZONE_WIDTH_EPSILON) {
     bands.push({ start: zones!.impactZone!.startDistance, end: zones!.impactZone!.endDistance, kind: 'impact', key: 'impact-agg' });
-  }
-  if (zoneWidth(zones?.foamZone) > ZONE_WIDTH_EPSILON) {
-    bands.push({ start: zones!.foamZone!.startDistance, end: zones!.foamZone!.endDistance, kind: 'foam', key: 'foam-agg' });
   }
   return bands;
 }
@@ -308,7 +307,6 @@ export function BeachProfileChart({
   onTransectChange,
 }: BeachProfileChartProps) {
   const { t } = useTranslation('marine');
-  const { t: tCommon } = useTranslation('common');
 
   if (transect.length === 0) return null;
 
@@ -449,7 +447,7 @@ export function BeachProfileChart({
   const yBottom = Math.floor(bedMin) - 1;
 
   const elevationTicks = computeElevationTicks(yTop, yBottom);
-  const distanceTicks = computeDistanceTicks(tier);
+  const distanceTicks = computeDistanceTicks(tier, xMin);
   const chartBottom = PAD_TOP + CHART_H;
   const xLeft = PAD_LEFT;
   const xRight = PAD_LEFT + CHART_W;
@@ -466,8 +464,6 @@ export function BeachProfileChart({
     if (n == null) return '—';
     return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(n);
   };
-  const fmtSigned1 = (n: number): string =>
-    new Intl.NumberFormat(locale, { signDisplay: 'exceptZero', minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(n);
 
   // ── Bed (sand/seafloor) path ─────────────────────────────────────────
   const bedLinePoints: Array<[number, number]> = bedSamples.map(([d, e]) => [xOf(d), yOf(e)]);
@@ -588,42 +584,8 @@ export function BeachProfileChart({
   }
   const breakLabelLevels = computeBreakLabelStagger(breakPoints);
 
-  // ── Caption chips (partition/face/tide/waterline) — mockup's single
-  // caption line, built from several independently-translated, fully-
-  // formed i18next strings joined with a decorative separator (not
-  // concatenating translated + untranslated text — rules/coding.md §6.1). ─
-  const primaryBreak = breakPoints.length > 0
-    ? breakPoints.reduce((a, b) => ((a.faceHeight ?? a.hs ?? 0) > (b.faceHeight ?? b.hs ?? 0) ? a : b))
-    : null;
-  const captionChips: string[] = [];
-  if (primaryBreak?.partitionInfo?.periodS != null && primaryBreak.partitionInfo.directionDeg != null && primaryBreak.partitionInfo.classification) {
-    const cardinal = cardinalFromDegrees(primaryBreak.partitionInfo.directionDeg);
-    const directionLabel = cardinal ? tCommon(`directions.${cardinal}`) : '—';
-    const classificationLabel = t(`surfing.classification.${primaryBreak.partitionInfo.classification}`);
-    captionChips.push(t('surfing.beachProfile.captionPartition', {
-      period: fmt0(primaryBreak.partitionInfo.periodS),
-      direction: directionLabel,
-      classification: classificationLabel,
-    }));
-  }
-  if (primaryBreak) {
-    const displayHeight = primaryBreak.faceHeight ?? primaryBreak.hs;
-    if (displayHeight != null) {
-      captionChips.push(t('surfing.beachProfile.captionFace', {
-        height: fmt1(displayHeight),
-        heightUnit,
-        distance: fmt0(primaryBreak.distance),
-        distanceUnit,
-      }));
-    }
-  }
-  if (tideLevel != null) {
-    captionChips.push(t('surfing.beachProfile.captionTide', { value: fmtSigned1(tideLevel), unit: distanceUnit }));
-  }
-  if (waterlineDistance != null) {
-    captionChips.push(t('surfing.beachProfile.captionWaterline', { value: fmtSigned1(waterlineDistance), unit: distanceUnit }));
-  }
-  const captionText = captionChips.join(' · ');
+  // Caption line removed (operator, 2026-08-05): the partition/face/tide/
+  // waterline chips duplicated information shown elsewhere on the tab.
 
   // ── Axis label strings ────────────────────────────────────────────────
   const yAxisTitle = datum
@@ -663,12 +625,6 @@ export function BeachProfileChart({
     fill: 'var(--muted-foreground)',
     fontFamily: 'var(--font-sans, sans-serif)',
   };
-  const datumLabelStyle: CSSProperties = {
-    fontSize: '9px',
-    fill: 'var(--muted-foreground)',
-    fontFamily: 'var(--font-sans, sans-serif)',
-    letterSpacing: '0.03em',
-  };
   const zoneLabelStyle: CSSProperties = {
     fontFamily: 'var(--font-sans, sans-serif)',
     fontWeight: 600,
@@ -683,13 +639,6 @@ export function BeachProfileChart({
 
   return (
     <div className="flex flex-col gap-2">
-      {/* ── Caption line ── */}
-      {captionText && (
-        <p className="text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>
-          {captionText}
-        </p>
-      )}
-
       {/* ── Controls row: transect selector ── */}
       {transects && transects.length > 0 && (
         <div className="flex items-center gap-4 flex-wrap" style={{ fontSize: 'var(--text-label)' }}>
@@ -802,40 +751,27 @@ export function BeachProfileChart({
           <path d={bedStrokePath} aria-hidden="true" style={{ fill: 'none', stroke: 'var(--beach-profile-sand-edge)', strokeWidth: 1.5 }} />
         </g>
 
-        {/* ── Still-water / tide datum line ── */}
+        {/* ── Still-water / tide datum line — line only; the text label was
+             removed (operator, 2026-08-05: overprinting noise). ── */}
         <line
           x1={PAD_LEFT} x2={xRight} y1={yOf(tide)} y2={yOf(tide)}
           aria-hidden="true"
           style={{ stroke: 'var(--muted-foreground)', strokeWidth: 1, strokeDasharray: '5,4', strokeOpacity: 0.6 }}
         />
-        {tideLevel != null && (
-          <text x={PAD_LEFT + 4} y={yOf(tide) + 12} aria-hidden="true" style={datumLabelStyle}>
-            {t('surfing.beachProfile.stillWaterLabel', { value: fmtSigned1(tide), unit: distanceUnit }).toUpperCase()}
-          </text>
-        )}
 
         {/* ── Waterline marker — label sits near the sand/bed height at the
              waterline (mockup: `y(bedAt(WL)) - 30`), not at a fixed chart-top
              offset, so it doesn't collide with the break-crest labels that
              live higher up near the wave surface. ── */}
+        {/* Marker line only; the "WATERLINE …" text label was removed
+             (operator, 2026-08-05: overprinting noise). */}
         {waterlineDistance != null && xOf(waterlineDistance) >= xLeft && xOf(waterlineDistance) <= xRight && (
-          <>
-            <line
-              x1={xOf(waterlineDistance)} x2={xOf(waterlineDistance)}
-              y1={PAD_TOP} y2={chartBottom + 4}
-              aria-hidden="true"
-              style={{ stroke: 'var(--beach-profile-waterline-marker)', strokeWidth: 1.2, strokeDasharray: '2,3' }}
-            />
-            <text
-              x={Math.min(xOf(waterlineDistance) - 5, xRight - 4)}
-              y={Math.max(yOf(bedAt(waterlineDistance)) - 18, PAD_TOP + 12)}
-              textAnchor="end"
-              aria-hidden="true"
-              style={{ ...datumLabelStyle, fill: 'var(--beach-profile-waterline-marker)' }}
-            >
-              {t('surfing.beachProfile.captionWaterline', { value: fmtSigned1(waterlineDistance), unit: distanceUnit }).toUpperCase()}
-            </text>
-          </>
+          <line
+            x1={xOf(waterlineDistance)} x2={xOf(waterlineDistance)}
+            y1={PAD_TOP} y2={chartBottom + 4}
+            aria-hidden="true"
+            style={{ stroke: 'var(--beach-profile-waterline-marker)', strokeWidth: 1.2, strokeDasharray: '2,3' }}
+          />
         )}
 
         {/* ── D6/D5.2 zone band strip + labels below the x-axis ── */}
@@ -961,10 +897,6 @@ export function BeachProfileChart({
         <span className="inline-flex items-center gap-1.5" style={{ color: 'var(--beach-profile-impact-ink)', fontWeight: 600 }}>
           <span aria-hidden="true" style={{ width: 12, height: 12, borderRadius: 3, display: 'inline-block', background: 'var(--beach-profile-impact)' }} />
           {t('surfing.beachProfile.impactZone')}
-        </span>
-        <span className="inline-flex items-center gap-1.5" style={{ color: 'var(--beach-profile-foam-ink)', fontWeight: 600 }}>
-          <span aria-hidden="true" style={{ width: 12, height: 12, borderRadius: 3, display: 'inline-block', background: 'var(--beach-profile-foam)' }} />
-          {t('surfing.beachProfile.foamZone')}
         </span>
         <span className="inline-flex items-center gap-1.5 text-muted-foreground">
           <span aria-hidden="true" style={{ width: 12, height: 12, borderRadius: 3, display: 'inline-block', background: 'var(--beach-profile-sand)' }} />
