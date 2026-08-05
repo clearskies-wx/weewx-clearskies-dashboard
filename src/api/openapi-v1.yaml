@@ -3319,24 +3319,36 @@ components:
     SurfForecastScoring:
       type: object
       description: >
-        Per-factor scoring breakdown returned inside SurfForecast.scoring
-        (ADR-096). Additive identity: total = waveHeight + wavePeriod +
-        waveOrganization + beachAlignment + directionalExposure + timeOfDay.
-        Added 2026-08-02 (D4.1 contract re-reconciliation) — mirrors
-        dashboard types.ts SurfForecastScoring, which has carried this shape
-        since Phase 4A; openapi never had it until this catch-up.
+        Per-factor scoring breakdown returned inside SurfForecast.scoring.
+        RESHAPED 2026-08-05 (Round S, ADR-101 — BREAKING wire change; audit
+        F1 sync). Weighted geometric mean of five 0-100 components:
+        score = 100 x size^w1 x shape^w2 x conditions^w3 x power^w4 x
+        consistency^w5, weights normalized by their sum at computation time
+        (shipped defaults 0.25/0.25/0.20/0.20/0.10, operator-configurable
+        system-wide). Bars do NOT sum to the total; any factor at 0 -> total
+        0. Deleted with this reshape (no longer on the wire): waveHeight,
+        wavePeriod, waveOrganization, organizationWind,
+        organizationSwellDominance, organizationDirectionalSpread,
+        organizationCrossSwell, beachAlignment, directionalExposure,
+        timeOfDay — the adjustments concept itself is gone, not renamed.
+        See API-MANUAL.md #SurfScoringBreakdown and ADR-101.
       properties:
-        waveHeight: { type: integer, description: "Wave height factor score (0-35)." }
-        wavePeriod: { type: integer, description: "Wave period factor score (0-35+; multipliers may exceed 35)." }
-        waveOrganization: { type: integer, description: "Wave organization composite score (0-30)." }
-        organizationWind: { type: number, description: "Wind effect contribution within organization (0-~15; 50% of 30)." }
-        organizationSwellDominance: { type: number, description: "Swell dominance contribution (0-7.5; 25% of 30)." }
-        organizationDirectionalSpread: { type: number, description: "Directional spread contribution (0-4.5; 15% of 30). From SWAN DSPR." }
-        organizationCrossSwell: { type: number, description: "Cross-swell interference contribution (0-3; 10% of 30). From SPECOUT." }
-        beachAlignment: { type: integer, description: "Signed; beach angle alignment adjustment (0 = direct hit, negative = misaligned)." }
-        directionalExposure: { type: integer, description: "Signed; 0 when open, negative when blocked by headland/bathymetry." }
-        timeOfDay: { type: integer, description: "Signed; positive at dawn (bonus), negative in afternoon (penalty), 0 otherwise." }
-      required: [waveHeight, wavePeriod, waveOrganization, organizationWind, organizationSwellDominance, organizationDirectionalSpread, organizationCrossSwell, beachAlignment, directionalExposure, timeOfDay]
+        size: { type: integer, minimum: 0, maximum: 100, description: "Wave Size component. Face-height band curve; beach alignment + directional exposure act inside it as internal modifiers (never displayed separately)." }
+        shape: { type: integer, minimum: 0, maximum: 100, description: "Wave Shape component. Peel angle (0.6) + breaker type/Iribarren (0.4). Closeout ruin pin <= 10 (shape = min(blend, 0.10) when peel < 15 deg, S-SPEC-1/S1c)." }
+        conditions: { type: integer, minimum: 0, maximum: 100, description: "Conditions component. Wind (0.6) + DSPR (0.25) + cross-swell (0.15). Blown-out ruin pin <= 5." }
+        power: { type: integer, minimum: 0, maximum: 100, description: "Swell Power component. Dominant multiSwell partition period (0.7) + height-as-energy-expression (0.3). Never Tm01." }
+        consistency: { type: integer, minimum: 0, maximum: 100, description: "Consistency component. SurfBeat set timing (0.6) + amplitude (0.4); swell-dominance ratio substitutes when SurfBeat unavailable." }
+        weights:
+          type: object
+          description: "The five EFFECTIVE (sum-normalized) weights actually used to compute the total this timestep — reflects operator config."
+          properties:
+            size: { type: number, minimum: 0, maximum: 1 }
+            shape: { type: number, minimum: 0, maximum: 1 }
+            conditions: { type: number, minimum: 0, maximum: 1 }
+            power: { type: number, minimum: 0, maximum: 1 }
+            consistency: { type: number, minimum: 0, maximum: 1 }
+          required: [size, shape, conditions, power, consistency]
+      required: [size, shape, conditions, power, consistency, weights]
 
     SurfForecast:
       type: object
@@ -3352,6 +3364,7 @@ components:
           nullable: true
           enum: [Poor, Fair, Good, Very Good, Epic]
           description: "Null together with qualityStars."
+        qualityScore: { type: integer, nullable: true, minimum: 0, maximum: 100, description: "Added 2026-08-05 (Round S, ADR-101 — audit F1 sync). The scorer's true geometric-mean total, rounded to an int. NOT derivable from qualityStars — qualityStars is stars = round(score/20) floored at 1, an independent rounding of the same underlying float, so reconstructing qualityScore from qualityStars (e.g. stars*20) can be off by up to 19. Consumers needing the numeric total must read this field directly, never reconstruct it by summing scoring.{size,shape,conditions,power,consistency} (those no longer sum to the total under the geometric mean). Null together with qualityStars/qualityLabel when the 1D model failed, or absent on a pre-Round-S server." }
         conditionsText: { type: string, description: "Always a non-null string. When the score is unavailable, the API resolves its own locale key into localized 'conditions unavailable' text rather than sending null — the dashboard renders this field as-is, with no separate no-data handling." }
         windQuality:
           type: string
