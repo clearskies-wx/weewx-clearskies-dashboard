@@ -444,48 +444,6 @@ export function BeachProfileChart({
   const foamRect    = zoneRect(surfZones?.foamZone);
   const reformRect  = zoneRect(surfZones?.reformTrough);
 
-  // ── Break-point label collision avoidance (S-SPEC-3, item 9d) ──────────
-  // Adjacent break points can land close enough together cross-shore that
-  // their label clusters (face height, distance, partition annotation,
-  // breaker type) overprint each other. 2-pass greedy stagger, processed
-  // from seaward (offshore — the LEFT edge, smallest x, per the xScale
-  // convention above) toward shore: break points whose x lands within
-  // BP_LABEL_MIN_GAP_PX of their seaward neighbor get bumped to the next
-  // vertical stagger level so their labels separate by BP_LABEL_STAGGER_PX.
-  const BP_LABEL_MIN_GAP_PX = 56;
-  const BP_LABEL_STAGGER_PX = 14;
-  const BP_LABEL_MAX_LEVELS = 3;
-
-  function computeBreakPointStagger(bps: BeachProfileBreakPoint[]): number[] {
-    const points = bps.map((bp, index) => ({ index, x: xScale(bp.distance, xMin, xMax) }));
-    const levels = new Array(bps.length).fill(0);
-    const seaward = [...points].sort((a, b) => a.x - b.x); // seaward (small x) first
-
-    // Pass 1: forward sweep — bump a point's level when it lands within
-    // the minimum gap of its already-placed seaward neighbor.
-    for (let i = 1; i < seaward.length; i++) {
-      const prev = seaward[i - 1];
-      const cur = seaward[i];
-      if (cur.x - prev.x < BP_LABEL_MIN_GAP_PX) {
-        levels[cur.index] = (levels[prev.index] + 1) % BP_LABEL_MAX_LEVELS;
-      }
-    }
-
-    // Pass 2: backward sweep — catches conflicts pass 1's forward-only
-    // assignment leaves behind (two neighbors converging on the same level).
-    for (let i = seaward.length - 2; i >= 0; i--) {
-      const cur = seaward[i];
-      const next = seaward[i + 1];
-      if (next.x - cur.x < BP_LABEL_MIN_GAP_PX && levels[cur.index] === levels[next.index]) {
-        levels[cur.index] = (levels[cur.index] + 1) % BP_LABEL_MAX_LEVELS;
-      }
-    }
-
-    return levels;
-  }
-
-  const bpStaggerLevels = computeBreakPointStagger(breakPoints);
-
   // Background-rect treatment for break-point text labels — same rounded
   // rect, card-glass fill as the zone labels above (:656-670 pattern).
   // Width is estimated from character count (no DOM text measurement is
@@ -497,6 +455,115 @@ export function BeachProfileChart({
   }
 
   const labelBackgroundFill: CSSProperties = { fill: 'var(--card, white)', opacity: 0.75 };
+
+  // ── Break-point label collision avoidance (S-SPEC-3, item 9d) ──────────
+  // A break point's label cluster is 4 rows (face height above the marker;
+  // distance / partition annotation / breaker type below the chart). All
+  // four rows move together as a unit, by the SAME vertical stagger
+  // (level * BP_LABEL_STAGGER_PX) — the cluster is one visual object, not
+  // four independently-placed ones.
+  //
+  // Collision is measured on ACTUAL label bounding boxes (estimated text
+  // width x row height at the candidate level), not just bpX proximity —
+  // the row-internal spacing (~13-15px) is close enough to a single
+  // BP_LABEL_STAGGER_PX step that a naive "gap < 56px -> bump 1 level"
+  // rule aliases one point's row onto an adjacent point's DIFFERENT row.
+  // Processing seaward (offshore, small-x) toward shore, each point is
+  // checked against the boxes of EVERY already-placed point (not just its
+  // immediate neighbor) and bumped a level at a time until none of its 4
+  // boxes overlaps any box already placed.
+  const BP_LABEL_STAGGER_PX = 14;
+  const BP_LABEL_MAX_LEVELS = 6;
+  // Clipping safety net: the card clips overflow (CSS `overflow-hidden` on
+  // Card/CardContent), so a stagger that pushes the lowest row (breaker
+  // type) past the SVG viewBox height gets visually cut off instead of
+  // just looking crowded. Clamp every below-chart row's Y to stay inside
+  // the viewBox, with a small margin -- used both when placing labels (so
+  // the collision math below matches what actually renders) and at render.
+  const BP_LABEL_MAX_Y = VIEW_H - 4;
+
+  interface LabelBox { x1: number; x2: number; y1: number; y2: number }
+
+  function boxesOverlap(a: LabelBox, b: LabelBox): boolean {
+    return a.x1 < b.x2 && a.x2 > b.x1 && a.y1 < b.y2 && a.y2 > b.y1;
+  }
+
+  function breakPointLabelBoxes(
+    bpX: number,
+    waveAtBp: number,
+    level: number,
+    texts: { height: string; distance: string; partition: string | null; breaker: string | null },
+  ): LabelBox[] {
+    const stagger = level * BP_LABEL_STAGGER_PX;
+    const boxes: LabelBox[] = [];
+    if (texts.height) {
+      const w = estimateLabelWidth(texts.height, 11);
+      const y = Math.max(waveAtBp - 6 - stagger, PAD_TOP + 4);
+      boxes.push({ x1: bpX - w / 2, x2: bpX + w / 2, y1: y - 10, y2: y + 3 });
+    }
+    {
+      const w = estimateLabelWidth(texts.distance, 10);
+      const y = Math.min(chartBottom + 18 + stagger, BP_LABEL_MAX_Y);
+      boxes.push({ x1: bpX - w / 2, x2: bpX + w / 2, y1: y - 9, y2: y + 3 });
+    }
+    if (texts.partition) {
+      const w = estimateLabelWidth(texts.partition, 9);
+      const y = Math.min(chartBottom + 33 + stagger, BP_LABEL_MAX_Y);
+      boxes.push({ x1: bpX - w / 2, x2: bpX + w / 2, y1: y - 8, y2: y + 3 });
+    }
+    if (texts.breaker) {
+      const w = estimateLabelWidth(texts.breaker, 9);
+      const y = Math.min(chartBottom + 46 + stagger, BP_LABEL_MAX_Y);
+      boxes.push({ x1: bpX - w / 2, x2: bpX + w / 2, y1: y - 8, y2: y + 3 });
+    }
+    return boxes;
+  }
+
+  function breakPointLabelTexts(bp: BeachProfileBreakPoint) {
+    const displayHeight = bp.faceHeight ?? bp.hs;
+    return {
+      height: displayHeight !== null ? `${fmt1(displayHeight)} ${heightUnit}` : '',
+      distance: `${new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(bp.distance)} ${distanceUnit}`,
+      partition: buildPartitionLabel(bp),
+      breaker: bp.breakerType ? t(`surfing.beachProfile.breakType.${bp.breakerType}`) : null,
+    };
+  }
+
+  function computeBreakPointStagger(bps: BeachProfileBreakPoint[]): number[] {
+    const order = bps
+      .map((bp, index) => ({ index, x: xScale(bp.distance, xMin, xMax) }))
+      .sort((a, b) => a.x - b.x); // seaward (small x) first
+
+    const levels = new Array(bps.length).fill(0);
+    const placedBoxes: LabelBox[][] = [];
+
+    for (const { index } of order) {
+      const bp = bps[index];
+      const bpX = xScale(bp.distance, xMin, xMax);
+      const displayHeight = bp.faceHeight ?? bp.hs;
+      const waveAtBp = displayHeight !== null
+        ? yScale(displayHeight, surfaceY, unitsPerPx)
+        : surfaceY - 8;
+      const texts = breakPointLabelTexts(bp);
+
+      let level = 0;
+      let candidateBoxes = breakPointLabelBoxes(bpX, waveAtBp, level, texts);
+      while (
+        level < BP_LABEL_MAX_LEVELS &&
+        placedBoxes.some((existing) => candidateBoxes.some((cb) => existing.some((eb) => boxesOverlap(cb, eb))))
+      ) {
+        level += 1;
+        candidateBoxes = breakPointLabelBoxes(bpX, waveAtBp, level, texts);
+      }
+
+      levels[index] = level;
+      placedBoxes.push(candidateBoxes);
+    }
+
+    return levels;
+  }
+
+  const bpStaggerLevels = computeBreakPointStagger(breakPoints);
 
   return (
     <div className="flex flex-col gap-2">
@@ -801,17 +868,14 @@ export function BeachProfileChart({
           const labelY = Math.max(waveAtBp - 6 - stagger, PAD_TOP + 4);
           const seafloorY = yScale(-bp.depth, surfaceY, unitsPerPx);
 
-          const heightLabelText = displayHeight !== null ? `${fmt1(displayHeight)} ${heightUnit}` : '';
-          const distanceLabelText =
-            `${new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(bp.distance)} ${distanceUnit}`;
-          const partitionLabelText = buildPartitionLabel(bp);
-          const breakerTypeLabelText = bp.breakerType
-            ? t(`surfing.beachProfile.breakType.${bp.breakerType}`)
-            : null;
+          const { height: heightLabelText, distance: distanceLabelText, partition: partitionLabelText, breaker: breakerTypeLabelText } =
+            breakPointLabelTexts(bp);
 
-          const distanceLabelY = chartBottom + 18 + stagger;
-          const partitionLabelY = chartBottom + 33 + stagger;
-          const breakerTypeLabelY = chartBottom + 46 + stagger;
+          // Clamp: keep every row inside the card's visible area even at a
+          // high stagger level (the card clips overflow — see BP_LABEL_MAX_Y).
+          const distanceLabelY = Math.min(chartBottom + 18 + stagger, BP_LABEL_MAX_Y);
+          const partitionLabelY = Math.min(chartBottom + 33 + stagger, BP_LABEL_MAX_Y);
+          const breakerTypeLabelY = Math.min(chartBottom + 46 + stagger, BP_LABEL_MAX_Y);
 
           return (
             <g key={`bp-${i}`} aria-hidden="true">
