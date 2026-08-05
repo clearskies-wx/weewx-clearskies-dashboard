@@ -444,6 +444,60 @@ export function BeachProfileChart({
   const foamRect    = zoneRect(surfZones?.foamZone);
   const reformRect  = zoneRect(surfZones?.reformTrough);
 
+  // ── Break-point label collision avoidance (S-SPEC-3, item 9d) ──────────
+  // Adjacent break points can land close enough together cross-shore that
+  // their label clusters (face height, distance, partition annotation,
+  // breaker type) overprint each other. 2-pass greedy stagger, processed
+  // from seaward (offshore — the LEFT edge, smallest x, per the xScale
+  // convention above) toward shore: break points whose x lands within
+  // BP_LABEL_MIN_GAP_PX of their seaward neighbor get bumped to the next
+  // vertical stagger level so their labels separate by BP_LABEL_STAGGER_PX.
+  const BP_LABEL_MIN_GAP_PX = 56;
+  const BP_LABEL_STAGGER_PX = 14;
+  const BP_LABEL_MAX_LEVELS = 3;
+
+  function computeBreakPointStagger(bps: BeachProfileBreakPoint[]): number[] {
+    const points = bps.map((bp, index) => ({ index, x: xScale(bp.distance, xMin, xMax) }));
+    const levels = new Array(bps.length).fill(0);
+    const seaward = [...points].sort((a, b) => a.x - b.x); // seaward (small x) first
+
+    // Pass 1: forward sweep — bump a point's level when it lands within
+    // the minimum gap of its already-placed seaward neighbor.
+    for (let i = 1; i < seaward.length; i++) {
+      const prev = seaward[i - 1];
+      const cur = seaward[i];
+      if (cur.x - prev.x < BP_LABEL_MIN_GAP_PX) {
+        levels[cur.index] = (levels[prev.index] + 1) % BP_LABEL_MAX_LEVELS;
+      }
+    }
+
+    // Pass 2: backward sweep — catches conflicts pass 1's forward-only
+    // assignment leaves behind (two neighbors converging on the same level).
+    for (let i = seaward.length - 2; i >= 0; i--) {
+      const cur = seaward[i];
+      const next = seaward[i + 1];
+      if (next.x - cur.x < BP_LABEL_MIN_GAP_PX && levels[cur.index] === levels[next.index]) {
+        levels[cur.index] = (levels[cur.index] + 1) % BP_LABEL_MAX_LEVELS;
+      }
+    }
+
+    return levels;
+  }
+
+  const bpStaggerLevels = computeBreakPointStagger(breakPoints);
+
+  // Background-rect treatment for break-point text labels — same rounded
+  // rect, card-glass fill as the zone labels above (:656-670 pattern).
+  // Width is estimated from character count (no DOM text measurement is
+  // available at SVG render time); the multiplier/padding keep the rect
+  // comfortably larger than the glyphs it sits behind for typical
+  // sans-serif tabular-nums / label text at these font sizes.
+  function estimateLabelWidth(text: string, fontSizePx: number): number {
+    return text.length * fontSizePx * 0.62 + 8;
+  }
+
+  const labelBackgroundFill: CSSProperties = { fill: 'var(--card, white)', opacity: 0.75 };
+
   return (
     <div className="flex flex-col gap-2">
       {/* ── Controls row: transect selector + wave shapes toggle ── */}
@@ -743,8 +797,21 @@ export function BeachProfileChart({
           const waveAtBp = displayHeight !== null
             ? yScale(displayHeight, surfaceY, unitsPerPx)
             : surfaceY - 8;
-          const labelY = Math.max(waveAtBp - 6, PAD_TOP + 4);
+          const stagger = bpStaggerLevels[i] * BP_LABEL_STAGGER_PX;
+          const labelY = Math.max(waveAtBp - 6 - stagger, PAD_TOP + 4);
           const seafloorY = yScale(-bp.depth, surfaceY, unitsPerPx);
+
+          const heightLabelText = displayHeight !== null ? `${fmt1(displayHeight)} ${heightUnit}` : '';
+          const distanceLabelText =
+            `${new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(bp.distance)} ${distanceUnit}`;
+          const partitionLabelText = buildPartitionLabel(bp);
+          const breakerTypeLabelText = bp.breakerType
+            ? t(`surfing.beachProfile.breakType.${bp.breakerType}`)
+            : null;
+
+          const distanceLabelY = chartBottom + 18 + stagger;
+          const partitionLabelY = chartBottom + 33 + stagger;
+          const breakerTypeLabelY = chartBottom + 46 + stagger;
 
           return (
             <g key={`bp-${i}`} aria-hidden="true">
@@ -759,21 +826,34 @@ export function BeachProfileChart({
                 style={{ fill: 'var(--destructive)', fillOpacity: 0.9 }}
               />
 
-              {/* ── Face height or wave height label above marker ── */}
-              <text
-                x={bpX}
-                y={labelY}
-                textAnchor="middle"
-                style={{
-                  fontSize: '11px',
-                  fill: 'var(--destructive)',
-                  fontFamily: 'var(--font-sans, sans-serif)',
-                  fontWeight: 600,
-                  fontVariantNumeric: 'tabular-nums',
-                }}
-              >
-                {displayHeight !== null ? `${fmt1(displayHeight)} ${heightUnit}` : ''}
-              </text>
+              {/* ── Face height or wave height label above marker (S-SPEC-3:
+                   background rect + collision stagger, same as zone labels) ── */}
+              {heightLabelText && (
+                <>
+                  <rect
+                    x={bpX - estimateLabelWidth(heightLabelText, 11) / 2}
+                    y={labelY - 10}
+                    width={estimateLabelWidth(heightLabelText, 11)}
+                    height={13}
+                    rx={2}
+                    style={labelBackgroundFill}
+                  />
+                  <text
+                    x={bpX}
+                    y={labelY}
+                    textAnchor="middle"
+                    style={{
+                      fontSize: '11px',
+                      fill: 'var(--destructive)',
+                      fontFamily: 'var(--font-sans, sans-serif)',
+                      fontWeight: 600,
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >
+                    {heightLabelText}
+                  </text>
+                </>
+              )}
 
               {/* ── Breaker type mini-icon + label ── */}
               {bp.breakerType && (
@@ -793,10 +873,19 @@ export function BeachProfileChart({
                 </g>
               )}
 
-              {/* ── Distance from shore label ── */}
+              {/* ── Distance from shore label (S-SPEC-3: background rect +
+                   collision stagger, same as zone labels) ── */}
+              <rect
+                x={bpX - estimateLabelWidth(distanceLabelText, 10) / 2}
+                y={distanceLabelY - 9}
+                width={estimateLabelWidth(distanceLabelText, 10)}
+                height={12}
+                rx={2}
+                style={labelBackgroundFill}
+              />
               <text
                 x={bpX}
-                y={chartBottom + 18}
+                y={distanceLabelY}
                 textAnchor="middle"
                 style={{
                   fontSize: '10px',
@@ -807,43 +896,62 @@ export function BeachProfileChart({
                   fillOpacity: 0.85,
                 }}
               >
-                {new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(bp.distance)}
-                {' '}{distanceUnit}
+                {distanceLabelText}
               </text>
 
               {/* ── Per-partition annotation (T4A.6 item c: partitionInfo + iribarren) ── */}
-              {buildPartitionLabel(bp) && (
-                <text
-                  x={bpX}
-                  y={chartBottom + 33}
-                  textAnchor="middle"
-                  style={{
-                    fontSize: '9px',
-                    fill: 'var(--muted-foreground)',
-                    fontFamily: 'var(--font-sans, sans-serif)',
-                    fillOpacity: 0.8,
-                  }}
-                >
-                  {buildPartitionLabel(bp)}
-                </text>
+              {partitionLabelText && (
+                <>
+                  <rect
+                    x={bpX - estimateLabelWidth(partitionLabelText, 9) / 2}
+                    y={partitionLabelY - 8}
+                    width={estimateLabelWidth(partitionLabelText, 9)}
+                    height={11}
+                    rx={2}
+                    style={labelBackgroundFill}
+                  />
+                  <text
+                    x={bpX}
+                    y={partitionLabelY}
+                    textAnchor="middle"
+                    style={{
+                      fontSize: '9px',
+                      fill: 'var(--muted-foreground)',
+                      fontFamily: 'var(--font-sans, sans-serif)',
+                      fillOpacity: 0.8,
+                    }}
+                  >
+                    {partitionLabelText}
+                  </text>
+                </>
               )}
 
               {/* ── Breaker type text label ── */}
-              {bp.breakerType && (
-                <text
-                  x={bpX}
-                  y={chartBottom + 46}
-                  textAnchor="middle"
-                  style={{
-                    fontSize: '9px',
-                    fill: 'var(--destructive)',
-                    fontFamily: 'var(--font-sans, sans-serif)',
-                    fillOpacity: 0.7,
-                    textTransform: 'capitalize',
-                  }}
-                >
-                  {t(`surfing.beachProfile.breakType.${bp.breakerType}`)}
-                </text>
+              {breakerTypeLabelText && (
+                <>
+                  <rect
+                    x={bpX - estimateLabelWidth(breakerTypeLabelText, 9) / 2}
+                    y={breakerTypeLabelY - 8}
+                    width={estimateLabelWidth(breakerTypeLabelText, 9)}
+                    height={11}
+                    rx={2}
+                    style={labelBackgroundFill}
+                  />
+                  <text
+                    x={bpX}
+                    y={breakerTypeLabelY}
+                    textAnchor="middle"
+                    style={{
+                      fontSize: '9px',
+                      fill: 'var(--destructive)',
+                      fontFamily: 'var(--font-sans, sans-serif)',
+                      fillOpacity: 0.7,
+                      textTransform: 'capitalize',
+                    }}
+                  >
+                    {breakerTypeLabelText}
+                  </text>
+                </>
               )}
             </g>
           );
