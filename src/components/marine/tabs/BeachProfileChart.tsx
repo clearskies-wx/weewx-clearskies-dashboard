@@ -457,9 +457,11 @@ export function BeachProfileChart({
   const labelBackgroundFill: CSSProperties = { fill: 'var(--card, white)', opacity: 0.75 };
 
   // ── Break-point label collision avoidance (S-SPEC-3, item 9d) ──────────
-  // A break point's label cluster is 4 rows (face height above the marker;
-  // distance / partition annotation / breaker type below the chart). All
-  // four rows move together as a unit, by the SAME vertical stagger
+  // A break point's label cluster is 2 rows (face height above the marker;
+  // distance below the chart — the partition-annotation and breaker-type
+  // rows were removed per the operator's 2026-08-04 A3/F1 disposition,
+  // matching the approved D5 redesign's information diet). The rows move
+  // together as a unit, by the SAME vertical stagger
   // (level * BP_LABEL_STAGGER_PX) — the cluster is one visual object, not
   // four independently-placed ones.
   //
@@ -506,16 +508,8 @@ export function BeachProfileChart({
       const y = Math.min(chartBottom + 18 + stagger, BP_LABEL_MAX_Y);
       boxes.push({ x1: bpX - w / 2, x2: bpX + w / 2, y1: y - 9, y2: y + 3 });
     }
-    if (texts.partition) {
-      const w = estimateLabelWidth(texts.partition, 9);
-      const y = Math.min(chartBottom + 33 + stagger, BP_LABEL_MAX_Y);
-      boxes.push({ x1: bpX - w / 2, x2: bpX + w / 2, y1: y - 8, y2: y + 3 });
-    }
-    if (texts.breaker) {
-      const w = estimateLabelWidth(texts.breaker, 9);
-      const y = Math.min(chartBottom + 46 + stagger, BP_LABEL_MAX_Y);
-      boxes.push({ x1: bpX - w / 2, x2: bpX + w / 2, y1: y - 8, y2: y + 3 });
-    }
+    // Partition-annotation and breaker-type rows no longer render (operator
+    // 2026-08-04, A3/F1 disposition) — no boxes for them.
     return boxes;
   }
 
@@ -868,14 +862,12 @@ export function BeachProfileChart({
           const labelY = Math.max(waveAtBp - 6 - stagger, PAD_TOP + 4);
           const seafloorY = yScale(-bp.depth, surfaceY, unitsPerPx);
 
-          const { height: heightLabelText, distance: distanceLabelText, partition: partitionLabelText, breaker: breakerTypeLabelText } =
+          const { height: heightLabelText, distance: distanceLabelText } =
             breakPointLabelTexts(bp);
 
           // Clamp: keep every row inside the card's visible area even at a
           // high stagger level (the card clips overflow — see BP_LABEL_MAX_Y).
           const distanceLabelY = Math.min(chartBottom + 18 + stagger, BP_LABEL_MAX_Y);
-          const partitionLabelY = Math.min(chartBottom + 33 + stagger, BP_LABEL_MAX_Y);
-          const breakerTypeLabelY = Math.min(chartBottom + 46 + stagger, BP_LABEL_MAX_Y);
 
           return (
             <g key={`bp-${i}`} aria-hidden="true">
@@ -963,60 +955,10 @@ export function BeachProfileChart({
                 {distanceLabelText}
               </text>
 
-              {/* ── Per-partition annotation (T4A.6 item c: partitionInfo + iribarren) ── */}
-              {partitionLabelText && (
-                <>
-                  <rect
-                    x={bpX - estimateLabelWidth(partitionLabelText, 9) / 2}
-                    y={partitionLabelY - 8}
-                    width={estimateLabelWidth(partitionLabelText, 9)}
-                    height={11}
-                    rx={2}
-                    style={labelBackgroundFill}
-                  />
-                  <text
-                    x={bpX}
-                    y={partitionLabelY}
-                    textAnchor="middle"
-                    style={{
-                      fontSize: '9px',
-                      fill: 'var(--muted-foreground)',
-                      fontFamily: 'var(--font-sans, sans-serif)',
-                      fillOpacity: 0.8,
-                    }}
-                  >
-                    {partitionLabelText}
-                  </text>
-                </>
-              )}
-
-              {/* ── Breaker type text label ── */}
-              {breakerTypeLabelText && (
-                <>
-                  <rect
-                    x={bpX - estimateLabelWidth(breakerTypeLabelText, 9) / 2}
-                    y={breakerTypeLabelY - 8}
-                    width={estimateLabelWidth(breakerTypeLabelText, 9)}
-                    height={11}
-                    rx={2}
-                    style={labelBackgroundFill}
-                  />
-                  <text
-                    x={bpX}
-                    y={breakerTypeLabelY}
-                    textAnchor="middle"
-                    style={{
-                      fontSize: '9px',
-                      fill: 'var(--destructive)',
-                      fontFamily: 'var(--font-sans, sans-serif)',
-                      fillOpacity: 0.7,
-                      textTransform: 'capitalize',
-                    }}
-                  >
-                    {breakerTypeLabelText}
-                  </text>
-                </>
-              )}
+              {/* Per-partition annotation + breaker-type text rows removed
+                  (operator 2026-08-04, A3/F1 disposition): the interim chart
+                  carries face-height + distance chips only — the same
+                  information diet as the approved D5 redesign. */}
             </g>
           );
         })}
