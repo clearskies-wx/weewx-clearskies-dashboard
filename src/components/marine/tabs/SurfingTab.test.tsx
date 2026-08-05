@@ -139,7 +139,16 @@ beforeEach(() => {
 });
 
 describe('SurfingTab — main break zone context (D4.2, BD-7/BD-9)', () => {
-  it('renders the zone-context line when all three zone fields are present', () => {
+  // The zone-context TEXT line ("Main break zone: transects …") is one of
+  // the items S-SPEC-2 explicitly lists in the operator-ruled Current Swell
+  // card strip (ca0689e) — this positive-render assertion pinned behavior
+  // that ruling removed and is stale by the same authority that killed the
+  // D10.2 rows below. Reconciled per lead ruling (S-SPEC-2 strip,
+  // lead-authorized 2026-08-04): the zone fields still exist on the wire and
+  // still thread into HeatMapCard's overlay (see the untouched D5.2 describe
+  // block above, which covers that prop-threading independently) — only the
+  // text line inside THIS card is gone, so the guard below asserts absence.
+  it('does NOT render the zone-context text line even when all three zone fields are present (S-SPEC-2 strip, lead-authorized 2026-08-04)', () => {
     surfData = buildSurfData(buildEntry({
       mainBreakZoneFaceHeight: 1.097,
       mainBreakZoneStartIndex: 19,
@@ -147,10 +156,8 @@ describe('SurfingTab — main break zone context (D4.2, BD-7/BD-9)', () => {
       mainBreakZoneQualifyingCount: 10,
       representativeTransectIndex: 39,
     }));
-    const { getByText } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
-    // Real locale string is "Main break zone: transects 19–54, 10 qualifying"
-    // via the mocked t()'s defaultValue interpolation above.
-    expect(getByText(/Main break zone: transects 19–54, 10 qualifying/)).toBeDefined();
+    const { queryByText } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    expect(queryByText(/Main break zone: transects/)).toBeNull();
   });
 
   it('null-safety: renders NOTHING for the zone line when the fields are absent (pre-Round-2 cache) — no NaN/undefined text', () => {
@@ -407,20 +414,20 @@ describe('SurfingTab — 3-stat dl structure (D9, 2026-08-02)', () => {
   });
 });
 
-// D10.2 (2026-08-03) — restoring shadowFaceHeight (secondary readout, T7.3
-// intent) and perPartitionBreaks (reusing BeachProfilePerPartitionBreak,
-// same shape/serializer as the beach-profile endpoint) against the REAL
-// server contract emitted since marine `69d831a`. Both fields are new on
-// SurfForecast — falsifiability: these tests are written and run against
-// HEAD (pre-implementation) first and captured FAILING, then the feature
-// is implemented to make them pass.
+// D2 ruling 2026-08-04, S-SPEC-2 — the Current Swell card's shadow-face-height
+// secondary line and AT BREAK per-partition rows are REMOVED from this card's
+// render (ca0689e): "no user will know what the hell that is… these were
+// computed for other parts of the dashboard, NOT for the Current Swell
+// conditions card" (operator chat, 2026-08-04). This replaces the D10.2
+// (2026-08-03) describe blocks below, which pinned the now-removed render —
+// those "renders the value/rows when present" assertions are stale by the
+// same ruling and are deleted; the null/undefined absence assertions still
+// hold (nothing rendered before OR after) and are kept unchanged.
 //
-// Server-context note (coordinator, D10.2 scope-ack confirmation): entry-
-// level perPartitionBreaks is null when the pipeline is unavailable OR the
-// list is empty — an empty array never actually reaches the dashboard from
-// the server. Fixtures below cover the null and populated cases only (no
-// "present but empty array" fixture, since that shape is not server-real —
-// though the render code itself still null/empty-guards defensively).
+// Render-only removal — shadowFaceHeight and perPartitionBreaks stay on the
+// wire (SurfForecast type, OpenAPI spec) for other dashboard consumers
+// (BeachProfileCardBody, HeatMapCard); these guards assert the CARD omits
+// them even when the mocked payload carries non-null values for both.
 describe('SurfingTab — shadowFaceHeight secondary readout (D10.2)', () => {
   it('renders nothing when shadowFaceHeight is null', () => {
     surfData = buildSurfData(buildEntry({ shadowFaceHeight: null }));
@@ -436,16 +443,12 @@ describe('SurfingTab — shadowFaceHeight secondary readout (D10.2)', () => {
     expect(queryByText(/pier shadow|In shadow/i)).toBeNull();
   });
 
-  it('renders the converted value when shadowFaceHeight is present, as a secondary (non-headline) readout', () => {
+  it('does NOT render the shadow face-height secondary line even when shadowFaceHeight is present (D2 ruling 2026-08-04, S-SPEC-2)', () => {
     surfData = buildSurfData(buildEntry({ shadowFaceHeight: 0.6 }));
-    const { getByText } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
-    // formatValue(0.6, 'default', locale) -> "0.6" per the mocked t()/formatValue
-    // used elsewhere in this file for bestPeakFaceHeight/spotAverageFaceHeight.
-    const el = getByText(/0\.6 ft/);
-    expect(el).toBeDefined();
-    // Secondary styling: muted-foreground, not the headline's font-semibold
-    // text-foreground treatment used for bestPeakFaceHeight.
-    expect(el.closest('[class*="text-muted-foreground"]')).not.toBeNull();
+    const { queryByText, container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    expect(queryByText(/pier shadow|In shadow/i)).toBeNull();
+    expect(container.textContent).not.toMatch(/NaN/);
+    expect(container.textContent).not.toMatch(/undefined/);
   });
 });
 
@@ -476,52 +479,75 @@ describe('SurfingTab — per-partition break rows (D10.2)', () => {
     expect(() => render(<SurfingTab locationId="huntington-city-beach-pier" />)).not.toThrow();
   });
 
-  it('renders one row per partition with period, direction, height, classification, breaker type when present', () => {
+  it('does NOT render an "AT BREAK" heading or any per-partition rows even when perPartitionBreaks is present and non-empty (D2 ruling 2026-08-04, S-SPEC-2)', () => {
     surfData = buildSurfData(buildEntry({
       perPartitionBreaks: [
         PARTITION_BREAK({ partitionIndex: 0, periodS: 12.4, directionDeg: 245, meanFaceHeightM: 1.05, classification: 'groundswell', dominantBreakerType: 'plunging' }),
         PARTITION_BREAK({ partitionIndex: 1, periodS: 7.2, directionDeg: 210, meanFaceHeightM: 0.6, classification: 'wind_swell', dominantBreakerType: 'spilling' }),
       ],
     }));
-    const { container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
-    // Period values render (rounded per existing partition-info display convention).
-    expect(container.textContent).toMatch(/12s|12\.4s/);
-    expect(container.textContent).toMatch(/7s|7\.2s/);
-    // Height values render (formatValue default precision).
-    expect(container.textContent).toMatch(/1\.1/);
-    expect(container.textContent).toMatch(/0\.6/);
+    const { container, queryByText } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    expect(queryByText(/AT BREAK/i)).toBeNull();
+    expect(container.querySelector('ul[aria-label] li')).toBeNull();
+  });
+});
+
+// A1 (EYEBALL-FIX-PLAN-2026-08-04 §2 Round A) — ScoreBar fill width regression
+// guard, standing on ADR-096: component score bars fill relative to their
+// OWN category max (denominator = max), never /100. This is drift the plan
+// records recurring more than once against a standing ruling (§5 process
+// lessons) — this guard exists so the /100 regression cannot land silently
+// again. Interim until Round S (S-SPEC-1) replaces the whole scoring card;
+// this guard covers the CURRENT (a35373d) 3-factor/3-penalty ScoreBar shape.
+//
+// scoringBreakdown.factors max values are fixed in SurfingTab.tsx:
+// waveHeight max 35, wavePeriod max 35, waveOrganization max 30 — reading
+// `primary.scoring` fields directly exercises the real fillPct computation,
+// not a re-derivation of it.
+describe('SurfingTab — ScoreBar fill width per-category max, not /100 (A1, ADR-096)', () => {
+  const SCORING = (overrides: Partial<import('../../../api/types').SurfForecastScoring> = {}): import('../../../api/types').SurfForecastScoring => ({
+    waveHeight: 21,
+    wavePeriod: 35,
+    waveOrganization: 26,
+    organizationWind: 0,
+    organizationSwellDominance: 0,
+    organizationDirectionalSpread: 0,
+    organizationCrossSwell: 0,
+    beachAlignment: -16,
+    directionalExposure: 0,
+    timeOfDay: 0,
+    ...overrides,
   });
 
-  // aud-d102 F1 regression: a partition with NO recorded break (marine's
-  // _summarize nulls all five break stats together; heightM — the DEEP-WATER
-  // Hs at the handoff — is still present) must render only the head
-  // (period/direction/classification) with NO "→" tail and, critically,
-  // must NOT present the deep-water heightM value under the "AT BREAK"
-  // heading as if it were a break-face height.
-  it('renders no height and no arrow for a partition with null break stats (never falls back to deep-water heightM)', () => {
-    surfData = buildSurfData(buildEntry({
-      perPartitionBreaks: [
-        PARTITION_BREAK({
-          partitionIndex: 0,
-          periodS: 14.9,
-          directionDeg: 265,
-          heightM: 2.3, // deep-water Hs — must NOT appear in the row
-          classification: 'groundswell',
-          meanFaceHeightM: null,
-          meanBreakDistanceM: null,
-          peakFaceHeightM: null,
-          meanBreakDepthM: null,
-          dominantBreakerType: null,
-        }),
-      ],
-    }));
+  // Locates a single ScoreBar's fill element by its (mocked-t, literal-key)
+  // label text, scoped to that bar's own wrapper — not a global style/width
+  // grep, so this fails correctly if a DIFFERENT bar's width happens to
+  // collide with the expected percentage.
+  function fillWidthFor(container: HTMLElement, labelKey: string): string {
+    const labelEl = Array.from(container.querySelectorAll('span')).find((el) => el.textContent === labelKey);
+    if (!labelEl) throw new Error(`ScoreBar label not found: ${labelKey}`);
+    const barWrap = labelEl.closest('div.flex.flex-col.gap-1');
+    if (!barWrap) throw new Error(`ScoreBar wrapper not found for: ${labelKey}`);
+    const fill = barWrap.querySelector('[aria-hidden="true"] > div') as HTMLElement | null;
+    if (!fill) throw new Error(`ScoreBar fill element not found for: ${labelKey}`);
+    return fill.style.width;
+  }
+
+  it('factor bar: score 21 / max 35 fills to 60% (denominator = category max, NOT /100)', () => {
+    surfData = buildSurfData(buildEntry({ scoring: SCORING({ waveHeight: 21 }) }));
     const { container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
-    const row = container.querySelector('ul[aria-label] li');
-    expect(row).not.toBeNull();
-    // Head renders: period + classification.
-    expect(row!.textContent).toMatch(/15s|14\.9s/);
-    // No tail: no arrow, and the deep-water 2.3 value is absent.
-    expect(row!.textContent).not.toContain('→');
-    expect(row!.textContent).not.toMatch(/2\.3/);
+    expect(fillWidthFor(container, 'surfing.scoring.waveHeight')).toBe('60%');
+  });
+
+  it('factor bar: score 35 / max 35 fills to 100%', () => {
+    surfData = buildSurfData(buildEntry({ scoring: SCORING({ wavePeriod: 35 }) }));
+    const { container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    expect(fillWidthFor(container, 'surfing.scoring.wavePeriod')).toBe('100%');
+  });
+
+  it('adjustment bar: score -16 fills to 16% (unchanged 0-100 scale behavior)', () => {
+    surfData = buildSurfData(buildEntry({ scoring: SCORING({ beachAlignment: -16 }) }));
+    const { container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    expect(fillWidthFor(container, 'surfing.scoring.beachAlignment')).toBe('16%');
   });
 });
