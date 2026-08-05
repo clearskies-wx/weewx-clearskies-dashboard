@@ -322,15 +322,9 @@ export function BeachProfileChart({
   const clipped = transect.filter((p) => p.distance <= tier.maxDistance);
   const displayTransect = clipped.length >= 2 ? clipped : transect;
 
-  // TA-C19 (ADR-093 Amendment 4): `distance` can be negative — xMin extends
-  // to the true observed minimum so no point renders off-canvas.
-  const xMin = Math.min(0, ...displayTransect.map((p) => p.distance));
   const xMax = tier.maxDistance;
 
   const tide = tideLevel ?? 0;
-  const transectDesc = [...displayTransect].sort((a, b) => b.distance - a.distance);
-  const depthAt = (d: number) => interpTransectValue(transectDesc, d, 'depth');
-  const hsAt = (d: number) => interpTransectValue(transectDesc, d, 'hs');
 
   // Dynamic tidal shoreline (pre-Round-P fallback waterline) — unchanged
   // from the pre-D5 chart's own computation.
@@ -348,6 +342,21 @@ export function BeachProfileChart({
     }
   }
   const waterlineD = waterlineDistance ?? shoreIntersectDist;
+
+  // TA-C19 (ADR-093 Amendment 4): `distance` can be negative — xMin extends
+  // landward so no point renders off-canvas — but capped (operator,
+  // 2026-08-05): the raw beachElevation series runs hundreds of feet inland
+  // and the sand dominated the chart. Show at most ~50 ft of dry sand
+  // landward of the waterline.
+  const DRY_BEACH_MARGIN = 15.24 * METER_TO_UNIT; // 50 ft
+  const xMin = Math.max(
+    Math.min(0, ...displayTransect.map((p) => p.distance)),
+    Math.min(0, waterlineD - DRY_BEACH_MARGIN),
+  );
+
+  const transectDesc = [...displayTransect].sort((a, b) => b.distance - a.distance);
+  const depthAt = (d: number) => interpTransectValue(transectDesc, d, 'depth');
+  const hsAt = (d: number) => interpTransectValue(transectDesc, d, 'hs');
 
   // ── Bed (sand + seafloor) curve — one continuous elevation function,
   // exactly like the mockup's bedAt(): depth-derived seaward of the
