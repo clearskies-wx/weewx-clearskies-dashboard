@@ -120,11 +120,13 @@ export function BeachProfileCardBody({
           heightUnit={heightUnit}
           distanceUnit={distanceUnit}
           locale={locale}
+          tideLevel={profile.tideLevel}
           datum={profile.metadata?.verticalDatum}
           surfZones={profile.surfZones}
+          perBreakZones={profile.perBreakZones}
+          waterlineDistance={profile.waterlineDistance}
+          beachElevation={profile.beachElevation}
           transects={profile.transects}
-          waveShapes={profile.waveShapes}
-          jackingFactors={profile.jackingFactors}
           selectedTransect={selectedTransect}
           onTransectChange={onTransectChange}
         />

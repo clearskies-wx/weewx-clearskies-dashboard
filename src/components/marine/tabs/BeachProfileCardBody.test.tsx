@@ -65,6 +65,10 @@ const UNAVAILABLE_RESPONSE: BeachProfileDataUnavailable = {
     handoffDepthM: null,
     handoffSourceLevel: null,
   },
+  perBreakZones: null,
+  waterlineDistance: null,
+  beachElevation: null,
+  tideLevel: null,
 };
 
 const OK_RESPONSE: BeachProfileDataOk = {
@@ -220,6 +224,129 @@ const OK_RESPONSE_ALL_NEGATIVE_BREAKS: BeachProfileDataOk = {
   ],
 };
 
+// ---------------------------------------------------------------------------
+// D5.1/D5.2/D6 fixtures — per-break zones (Round Z Z3), zero-width skip,
+// 1-break and 3-break rendering. Distances/depths follow the same
+// meter-scale style as OK_RESPONSE_DOUBLE_BREAK_LIVE (a real live
+// double-break transect) — shape fidelity matters here, not literal ft/m
+// realism (the component treats every distance/depth as already-converted
+// display units regardless of the `distanceUnit` prop passed by the test).
+// ---------------------------------------------------------------------------
+
+const SHARED_TRANSECT_13PT = [
+  { distance: 67.84, depth: 1.456, hs: 0.7553 },
+  { distance: 59.25, depth: 1.296, hs: 0.7635 },
+  { distance: 50.65, depth: 1.133, hs: 0.7616 },
+  { distance: 42.06, depth: 0.973, hs: 0.7103 },
+  { distance: 33.46, depth: 0.819, hs: 0.5979 },
+  { distance: 24.87, depth: 0.664, hs: 0.4847 },
+  { distance: 16.27, depth: 0.514, hs: 0.3752 },
+  { distance: 7.68, depth: 0.371, hs: 0.2708 },
+  { distance: -0.92, depth: 0.24, hs: 0.1752 },
+  { distance: -9.5, depth: 0.102, hs: 0.0745 },
+  { distance: -18.08, depth: 0.01, hs: 0.0073 },
+  { distance: -26.66, depth: 0.01, hs: 0.0073 },
+  { distance: -35.24, depth: 0.01, hs: 0.0073 },
+];
+
+// D6 — a single published break, one perBreakZones entry, both bands
+// non-zero width.
+const OK_RESPONSE_1_BREAK_PER_BREAK_ZONES: BeachProfileDataOk = {
+  ...OK_RESPONSE,
+  transectIndex: 4,
+  transect: SHARED_TRANSECT_13PT,
+  breakPoints: [
+    {
+      distance: 42.06, depth: 0.973, hs: 0.7103, faceHeight: 0.9021,
+      breakerType: 'spilling', iribarren: 0.337,
+      partitionInfo: { partitionIndex: 0, periodS: 13.05, directionDeg: 196.9, classification: 'groundswell', heightM: 0.4955 },
+    },
+  ],
+  perBreakZones: [
+    {
+      breakDistance: 42.06, breakerType: 'spilling',
+      impactZone: { startDistance: 50.65, endDistance: 33.46, startDepth: 0.879, endDepth: 0.565 },
+      foamZone: { startDistance: 33.46, endDistance: -0.92, startDepth: 0.565, endDepth: 0.24 },
+    },
+  ],
+  waterlineDistance: -0.92,
+  tideLevel: -1.2,
+  surfZones: null,
+};
+
+// D6 — three published breaks (outermost-first), three perBreakZones
+// entries, every band non-zero width.
+const OK_RESPONSE_3_BREAKS_PER_BREAK_ZONES: BeachProfileDataOk = {
+  ...OK_RESPONSE,
+  transectIndex: 4,
+  transect: SHARED_TRANSECT_13PT,
+  breakPoints: [
+    {
+      distance: 59.25, depth: 1.296, hs: 0.7635, faceHeight: 0.95,
+      breakerType: 'plunging', iribarren: 0.5,
+      partitionInfo: { partitionIndex: 0, periodS: 13.05, directionDeg: 196.9, classification: 'groundswell', heightM: 0.4955 },
+    },
+    {
+      distance: 42.06, depth: 0.973, hs: 0.7103, faceHeight: 0.9021,
+      breakerType: 'spilling', iribarren: 0.337,
+      partitionInfo: { partitionIndex: 0, periodS: 13.05, directionDeg: 196.9, classification: 'groundswell', heightM: 0.4955 },
+    },
+    {
+      distance: 16.27, depth: 0.514, hs: 0.3752, faceHeight: 0.42,
+      breakerType: 'spilling', iribarren: 0.3,
+      partitionInfo: { partitionIndex: 0, periodS: 13.05, directionDeg: 196.9, classification: 'groundswell', heightM: 0.4955 },
+    },
+  ],
+  perBreakZones: [
+    {
+      breakDistance: 59.25, breakerType: 'plunging',
+      impactZone: { startDistance: 63, endDistance: 50, startDepth: 1.1, endDepth: 0.9 },
+      foamZone: { startDistance: 50, endDistance: 42.06, startDepth: 0.9, endDepth: 0.7 },
+    },
+    {
+      breakDistance: 42.06, breakerType: 'spilling',
+      impactZone: { startDistance: 40, endDistance: 30, startDepth: 0.85, endDepth: 0.6 },
+      foamZone: { startDistance: 30, endDistance: 16.27, startDepth: 0.6, endDepth: 0.4 },
+    },
+    {
+      breakDistance: 16.27, breakerType: 'spilling',
+      impactZone: { startDistance: 14, endDistance: 8, startDepth: 0.45, endDepth: 0.3 },
+      foamZone: { startDistance: 8, endDistance: -0.92, startDepth: 0.3, endDepth: 0.24 },
+    },
+  ],
+  waterlineDistance: -0.92,
+  tideLevel: -1.2,
+  surfZones: null,
+};
+
+// D5.2 — outer break's foam zone legitimately collapses to zero width
+// (audit F3: two breaks closer than the impact zone's decay length). Must
+// render NO fill/strip/label for that specific band; the outer impact band
+// and the inner break's own bands still render normally.
+const OK_RESPONSE_ZERO_WIDTH_FOAM: BeachProfileDataOk = {
+  ...OK_RESPONSE,
+  transectIndex: 4,
+  transect: SHARED_TRANSECT_13PT,
+  breakPoints: [
+    {
+      distance: 42.06, depth: 0.973, hs: 0.7103, faceHeight: 0.9021,
+      breakerType: 'spilling', iribarren: 0.337,
+      partitionInfo: { partitionIndex: 0, periodS: 13.05, directionDeg: 196.9, classification: 'groundswell', heightM: 0.4955 },
+    },
+  ],
+  perBreakZones: [
+    {
+      breakDistance: 42.06, breakerType: 'spilling',
+      impactZone: { startDistance: 50.65, endDistance: 33.46, startDepth: 0.879, endDepth: 0.565 },
+      // Zero-width: start === end (audit F3 collapse case).
+      foamZone: { startDistance: 33.46, endDistance: 33.46, startDepth: 0.565, endDepth: 0.565 },
+    },
+  ],
+  waterlineDistance: -0.92,
+  tideLevel: -1.2,
+  surfZones: null,
+};
+
 const FETCH_ERROR = new Error('404: Surf location not found');
 
 describe('computeBeachProfileState', () => {
@@ -337,7 +464,15 @@ describe('BeachProfileCardBody', () => {
   // 0. BeachProfileChart's layout constants: VIEW_W=820, PAD_LEFT=72,
   // PAD_RIGHT=12 -> CHART_W=736 (not exported, restated here for the
   // in-canvas assertion).
-  it('negative distance (TA-C19): every seafloor point stays within the drawable area', () => {
+  //
+  // D5.1 rebuild note: the seafloor/beach boundary is no longer a raw
+  // per-transect-point <polyline> — it's a densely-resampled <path> (the
+  // "bed" curve, blended depth-derived + beachElevation-derived — see
+  // BeachProfileChart's `bedStrokePath`), identified here by its
+  // `--beach-profile-sand-edge` stroke token. The invariant under test is
+  // unchanged (xMin correctly extends to include negative distances so
+  // nothing renders off-canvas); only the DOM element carrying it changed.
+  it('negative distance (TA-C19): every seafloor/beach point stays within the drawable area', () => {
     const PAD_LEFT = 72;
     const CHART_W = 736;
     const EPSILON = 0.5; // SVG coordinates are toFixed(1) — allow sub-pixel slack.
@@ -345,16 +480,14 @@ describe('BeachProfileCardBody', () => {
     const { container } = render(
       <BeachProfileCardBody {...baseProps} state="ok" profile={OK_RESPONSE_NEGATIVE_DISTANCE} />,
     );
-    // The seafloor cross-shore polyline maps every transect point 1:1
-    // (buildSeafloorPolygon / the `seafloorPolyline` points string) — it is
-    // the only <polyline> rendered by default (wave-shapes toggle starts off).
-    const polyline = container.querySelector('svg polyline');
-    expect(polyline).not.toBeNull();
-    const pointsAttr = polyline!.getAttribute('points') ?? '';
-    const pairs = pointsAttr.trim().split(/\s+/).filter(Boolean);
-    expect(pairs.length).toBeGreaterThanOrEqual(3); // one per transect point above
-    for (const pair of pairs) {
-      const [xStr] = pair.split(',');
+    const paths = Array.from(container.querySelectorAll('svg path'));
+    const seafloorPath = paths.find((p) => (p.getAttribute('style') ?? '').includes('beach-profile-sand-edge'));
+    expect(seafloorPath).not.toBeUndefined();
+    const d = seafloorPath!.getAttribute('d') ?? '';
+    const coordTokens = d.match(/[ML]-?\d+(?:\.\d+)?\s-?\d+(?:\.\d+)?/g) ?? [];
+    expect(coordTokens.length).toBeGreaterThan(2);
+    for (const token of coordTokens) {
+      const [xStr] = token.slice(1).trim().split(/\s+/);
       const x = Number(xStr);
       expect(Number.isNaN(x)).toBe(false);
       expect(x).toBeGreaterThanOrEqual(PAD_LEFT - EPSILON);
@@ -401,6 +534,84 @@ describe('BeachProfileCardBody', () => {
       .map(Number);
     expect(tickTexts.length).toBeGreaterThan(0);
     expect(Math.max(...tickTexts)).toBe(300);
+  });
+
+  // ── D6 — per-break zones render by default, no toggle ──────────────────
+  describe('D6 — per-break zones (perBreakZones default rendering)', () => {
+    it('1 break: renders exactly one break-point sr-only row and one impact + one foam band fill', () => {
+      const { container } = render(
+        <BeachProfileCardBody {...baseProps} state="ok" profile={OK_RESPONSE_1_BREAK_PER_BREAK_ZONES} />,
+      );
+      const breakRows = container.querySelectorAll('table.sr-only tfoot tr');
+      expect(breakRows.length).toBe(1 + 1); // header + 1 break point
+
+      const styled = Array.from(container.querySelectorAll('svg [style]'));
+      const impactCount = styled.filter((el) => (el.getAttribute('style') ?? '').includes('var(--beach-profile-impact)')).length;
+      const foamCount = styled.filter((el) => (el.getAttribute('style') ?? '').includes('var(--beach-profile-foam)')).length;
+      // One band each => one plot fill + one strip rect per band = 2 elements.
+      expect(impactCount).toBe(2);
+      expect(foamCount).toBe(2);
+    });
+
+    it('3 breaks: renders three break-point sr-only rows and three impact + three foam band fills', () => {
+      const { container } = render(
+        <BeachProfileCardBody {...baseProps} state="ok" profile={OK_RESPONSE_3_BREAKS_PER_BREAK_ZONES} />,
+      );
+      const breakRows = container.querySelectorAll('table.sr-only tfoot tr');
+      expect(breakRows.length).toBe(1 + 3); // header + 3 break points
+
+      const styled = Array.from(container.querySelectorAll('svg [style]'));
+      const impactCount = styled.filter((el) => (el.getAttribute('style') ?? '').includes('var(--beach-profile-impact)')).length;
+      const foamCount = styled.filter((el) => (el.getAttribute('style') ?? '').includes('var(--beach-profile-foam)')).length;
+      expect(impactCount).toBe(3 * 2);
+      expect(foamCount).toBe(3 * 2);
+    });
+
+    it('0 breaks: renders no impact/foam band fills and does not throw', () => {
+      const zeroBreakProfile: BeachProfileDataOk = {
+        ...OK_RESPONSE_1_BREAK_PER_BREAK_ZONES,
+        breakPoints: [],
+        perBreakZones: [],
+        surfZones: null,
+      };
+      const { container } = render(
+        <BeachProfileCardBody {...baseProps} state="ok" profile={zeroBreakProfile} />,
+      );
+      const styled = Array.from(container.querySelectorAll('svg [style]'));
+      const impactCount = styled.filter((el) => (el.getAttribute('style') ?? '').includes('var(--beach-profile-impact)')).length;
+      const foamCount = styled.filter((el) => (el.getAttribute('style') ?? '').includes('var(--beach-profile-foam)')).length;
+      expect(impactCount).toBe(0);
+      expect(foamCount).toBe(0);
+      expect(container.querySelector('svg[role="img"]')).not.toBeNull();
+    });
+  });
+
+  // ── D5.2 — zero-width band skip (audit F3 collapse case) ───────────────
+  describe('D5.2 — zero-width band skip', () => {
+    it('a zero-width foam zone (start === end) renders no fill, no strip, no label artifact for that band', () => {
+      const { container, queryByText } = render(
+        <BeachProfileCardBody {...baseProps} state="ok" profile={OK_RESPONSE_ZERO_WIDTH_FOAM} />,
+      );
+      const styled = Array.from(container.querySelectorAll('svg [style]'));
+      const impactCount = styled.filter((el) => (el.getAttribute('style') ?? '').includes('var(--beach-profile-impact)')).length;
+      const foamCount = styled.filter((el) => (el.getAttribute('style') ?? '').includes('var(--beach-profile-foam)')).length;
+      // The non-zero impact band still renders (fill + strip = 2); the
+      // zero-width foam band renders NOTHING (not even a 0-width artifact).
+      expect(impactCount).toBe(2);
+      expect(foamCount).toBe(0);
+
+      // sr-only table caption enumerates impact but not foam (no zone data
+      // to describe for a band that was never rendered).
+      const caption = container.querySelector('table.sr-only caption');
+      expect(caption?.textContent ?? '').toContain('surfing.beachProfile.impactZone');
+      expect(caption?.textContent ?? '').not.toContain('surfing.beachProfile.foamZone');
+
+      // Legend itself is unconditional (mockup: static legend row, not a
+      // per-band artifact) — "Foam zone" legend entry still shows even
+      // though no foam band rendered this time; this proves the skip is
+      // per-band, not a global "hide foam" toggle.
+      expect(queryByText('surfing.beachProfile.legendSand')).not.toBeNull();
+    });
   });
 
   // ── D5.2 — BD-9 representative-transect header removed (operator ruling

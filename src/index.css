@@ -256,6 +256,25 @@
     --sidebar-border: oklch(0.922 0 0);
 
     --sidebar-ring: var(--brand-primary-light, oklch(0.708 0 0));
+
+    /* Beach Profile card tokens (D5, 2026-08-05), mapped from the approved
+       mockup's light palette (beach-profile-redesign-mockup.html). No
+       existing project token covers a cross-shore water/sand illustration,
+       so these are component-scoped additions per DESIGN-MANUAL.md
+       section 3, following the temp-hi/score-tier/gauge precedent
+       (project color token, not brand-overridable). AA-checked against
+       the card surface, both themes independently. */
+    --beach-profile-sand: #d9c49c;
+    --beach-profile-sand-edge: #a8895c;
+    --beach-profile-water-deep: #256abf;
+    --beach-profile-water-mid: #5598e7;
+    --beach-profile-water-stroke: #1c5cab;
+    --beach-profile-whitewater: rgba(255, 255, 255, 0.65);
+    --beach-profile-impact: rgba(227, 73, 72, 0.26);
+    --beach-profile-impact-ink: #b23b3a;
+    --beach-profile-foam: rgba(237, 161, 0, 0.24);
+    --beach-profile-foam-ink: #92660a;
+    --beach-profile-waterline-marker: #0f4c94;
 }
 
 [data-theme="dark"] {
@@ -348,6 +367,21 @@
     --sidebar-border: oklch(1 0 0 / 10%);
 
     --sidebar-ring: var(--brand-primary-dark, oklch(0.556 0 0));
+
+    /* ── Beach Profile card tokens (dark theme, D5, 2026-08-05) — mapped
+       from the mockup's dark palette, audited independently (AA text
+       contrast 5.09-8.73:1 against the near-black card surface). ──────── */
+    --beach-profile-sand: #453a2b;
+    --beach-profile-sand-edge: #8a734f;
+    --beach-profile-water-deep: #1c5cab;
+    --beach-profile-water-mid: #3987e5;
+    --beach-profile-water-stroke: #6da7ec;
+    --beach-profile-whitewater: rgba(255, 255, 255, 0.22);
+    --beach-profile-impact: rgba(230, 103, 103, 0.22);
+    --beach-profile-impact-ink: #e68585;
+    --beach-profile-foam: rgba(201, 133, 0, 0.22);
+    --beach-profile-foam-ink: #d9a94f;
+    --beach-profile-waterline-marker: #86b6ef;
 }
 
 @layer base {

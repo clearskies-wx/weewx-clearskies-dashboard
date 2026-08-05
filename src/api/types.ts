@@ -1957,6 +1957,44 @@ export interface BeachProfileMetadata {
 }
 
 /**
+ * One raw signed beach-elevation sample (D5.1/API-MANUAL "beachElevation",
+ * Round P, 2026-08-05). `elevation = -signed_depth` from the CUDEM survey —
+ * positive up, LMSL datum, native resolution, unclamped (land carries
+ * positive elevation, per ADR-093 Amendment 4 signed sampling). This is the
+ * only field that publishes the real dry-beach geometry landward of the
+ * water — `BeachProfilePoint.depth` stays solver-input depths clamped at
+ * 0.01 m.
+ */
+export interface BeachProfileElevationPoint {
+  /** Cross-shore distance from shore, in display units. Same sign convention as {@link BeachProfilePoint.distance}. */
+  distance: number;
+  /** Elevation relative to LMSL, in display units. Positive = above datum (dry land); negative = below (submerged). */
+  elevation: number;
+}
+
+/**
+ * One published break's own impact/foam zone pair (D6, API-MANUAL
+ * "perBreakZones", Round Z Z3, marine `b551d03`, 2026-08-05). One entry per
+ * published break point, outermost-first. Impact end uses the 50%-energy
+ * decay criterion (clamped so it never crosses the next break); each outer
+ * break's foam ends at the next break; the innermost break's foam ends at
+ * the waterline. **Consumer note (audit F3):** when two breaks sit closer
+ * than the impact zone's decay length, the outer entry's `foamZone`
+ * legitimately collapses to zero width (`startDistance === endDistance`) —
+ * renderers must skip zero-width bands (operator ruling 2026-08-05, D5.2).
+ */
+export interface BeachProfilePerBreakZone {
+  /** This break's own distance from shore, in display units. Matches the corresponding {@link BeachProfileBreakPoint.distance}. */
+  breakDistance: number;
+  /** Breaker type at this break, same vocabulary as {@link BeachProfileBreakPoint.breakerType}. */
+  breakerType: 'spilling' | 'plunging' | 'surging' | null;
+  /** This break's own impact-zone extent. Width can legitimately be zero — see the F3 consumer note above. */
+  impactZone: SurfZoneExtent;
+  /** This break's own foam-zone extent. Width can legitimately be zero — see the F3 consumer note above. */
+  foamZone: SurfZoneExtent;
+}
+
+/**
  * One transect's full 1D-model output — the shape `_build_transect_profile()`
  * returns, used both as the spread-in fields of the single-transect response
  * `data` object ({@link BeachProfileData}) and as each item of the
@@ -1984,6 +2022,34 @@ export interface BeachProfileTransectResult {
    * the identical note on {@link BeachProfileMetadata.handoffSourceLevel}.
    */
   handoffSourceLevel?: 'L4' | 'L3' | 'L2' | null;
+  /**
+   * D6 (2026-08-05, Round Z Z3, operator-approved contract addition) —
+   * one entry per published break, outermost-first. Empty list when the
+   * model is available but no breaks exist; null (or absent, pre-Round-Z
+   * cache) when the field was never populated — consumers fall back to the
+   * aggregate `surfZones` bands in that case (API-MANUAL: "Aggregate
+   * `surfZones` is retained unchanged for back-compat").
+   */
+  perBreakZones?: BeachProfilePerBreakZone[] | null;
+  /**
+   * NEW 2026-08-05 (Round P) — cross-shore distance of the actual
+   * (tide-aware) waterline, in display units. Positive = seaward of the
+   * LMSL zero-depth anchor, negative = landward. `null` when the profile
+   * never reaches `-tideLevel` landward.
+   */
+  waterlineDistance?: number | null;
+  /**
+   * NEW 2026-08-05 (Round P) — the raw signed CUDEM beach-elevation
+   * profile, native resolution, covering all points with
+   * `distance <= max(transect distances)`. Null when unavailable.
+   */
+  beachElevation?: BeachProfileElevationPoint[] | null;
+  /**
+   * NEW 2026-08-05 (Round P) — the tide level (relative to LMSL) the
+   * pipeline used for this timestep, in display units. Negative when the
+   * tide is below datum. Null when unavailable.
+   */
+  tideLevel?: number | null;
 }
 
 /**
@@ -2057,6 +2123,10 @@ export interface BeachProfileDataUnavailable {
   transects?: null;
   perPartitionBreaks: null;
   metadata: BeachProfileMetadata;
+  perBreakZones: null;
+  waterlineDistance: null;
+  beachElevation: null;
+  tideLevel: null;
 }
 
 // ─── T7.1 Heat Map types ────────────────────────────────────────────────────

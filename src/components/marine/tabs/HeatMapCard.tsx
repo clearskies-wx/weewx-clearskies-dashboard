@@ -24,6 +24,17 @@
 //
 // X-axis: shore on RIGHT, offshore on LEFT (surfer's perspective; matches BeachProfileChart).
 // Y-axis: transect rows, top = first transect (index 0).
+//
+// D7s (ROUND-D5-BEACH-PROFILE-CARD-BRIEF-2026-08-05, standing operator
+// request — "this is why i want the smoothing on the heat map, so a few
+// transects zeroing out does not make a difference"): display-side median
+// filter over a 5-transect window (centered on each row, clamped at the
+// row-count edge), applied at RENDER time only. Raw `data`/`row.transect`
+// values are never mutated — `smoothedHsAt()` below reads them and returns
+// a derived value used solely for the colour cell fill and its `<title>`
+// tooltip. See `smoothedHsAt()` for the exact alignment method (same
+// positional index across the row window, clamped per-row at that row's
+// own point-array-length edge).
 
 import { useMemo, useId } from 'react';
 import type { ReactElement } from 'react';
@@ -441,6 +452,41 @@ function distToX(dist: number, minDist: number, maxDist: number): number {
   return PAD_LEFT + CHART_W * (1 - (dist - minDist) / (maxDist - minDist));
 }
 
+// D7s smoothing window radius — 5-transect window = 2 rows on each side of
+// the current row, centered.
+const SMOOTHING_WINDOW_RADIUS = 2;
+
+/**
+ * D7s — centered median filter over a 5-transect window, applied at RENDER
+ * time only (`data`/`row.transect` are never mutated). Alignment method
+ * (lead-approved 2026-08-05): for row `ri`, point-array position `pi`,
+ * gather the Hs value at the SAME positional index from each row in
+ * `[ri-2 .. ri+2]` (clamped at the row-count edge), and within each of
+ * those rows clamp `pi` to that row's own point-array-length edge (a
+ * shorter neighboring row contributes its last point rather than being
+ * skipped outright — rows are sampled at consistent resolution from the
+ * same tier-clipped domain, so positional alignment is a reasonable,
+ * simple choice here per the brief's own instruction to propose one).
+ * Returns `null` only when every row in the window has zero points (or all
+ * null Hs) — callers fall back to the pre-existing break-point proximity
+ * model in that case, unchanged from before D7s.
+ */
+function smoothedHsAt(displayTransects: HeatMapEnvelopePoint[][], ri: number, pi: number): number | null {
+  const n = displayTransects.length;
+  const values: number[] = [];
+  for (let r = Math.max(0, ri - SMOOTHING_WINDOW_RADIUS); r <= Math.min(n - 1, ri + SMOOTHING_WINDOW_RADIUS); r++) {
+    const rowPts = displayTransects[r];
+    if (rowPts.length === 0) continue;
+    const idx = Math.min(pi, rowPts.length - 1);
+    const hs = rowPts[idx].hs;
+    if (hs !== null && hs !== undefined) values.push(hs);
+  }
+  if (values.length === 0) return null;
+  values.sort((a, b) => a - b);
+  const mid = Math.floor(values.length / 2);
+  return values.length % 2 === 0 ? (values[mid - 1] + values[mid]) / 2 : values[mid];
+}
+
 /** Map a row index to the SVG y of the top of that row. */
 function rowToY(idx: number, rowH: number): number {
   return PAD_TOP + idx * rowH;
@@ -825,11 +871,16 @@ export function HeatMapCard({
         const w = xRight - xLeft;
         if (w < 0.5) continue;
 
-        // Prefer envelope point hs. Fall back to break-point proximity model.
+        // D7s: prefer the median-5-smoothed Hs at this row/position (falls
+        // back to the pre-existing break-point proximity model only when
+        // every row in the smoothing window has no usable Hs here — the
+        // same "no data at all" case the pre-D7s code handled). Raw
+        // `pts[pi].hs` is read only inside smoothedHsAt(); it is never
+        // written back.
         let segHs = 0;
-        const ptHs = pts[pi].hs;
-        if (ptHs !== null && ptHs !== undefined) {
-          segHs = ptHs;
+        const smoothedHs = smoothedHsAt(displayTransects, ri, pi);
+        if (smoothedHs !== null) {
+          segHs = smoothedHs;
         } else if (row.breakPoints.length > 0) {
           const midDist = (d0 + d1) / 2;
           // Find nearest break point.
@@ -859,7 +910,12 @@ export function HeatMapCard({
             width={w}
             height={rowH}
             fill={fill}
-          />
+          >
+            {/* D7s: native SVG tooltip shows the smoothed value only (one
+                value shown, no raw/smoothed pair — keep it simple, per the
+                brief). */}
+            <title>{`${fmtNum(segHs)} ${heightUnit}`}</title>
+          </rect>
         );
       }
     } else if (pts.length === 0 && row.breakPoints.length > 0) {
@@ -1321,6 +1377,11 @@ export function HeatMapCard({
           {imageryConfig!.attribution}
         </p>
       )}
+
+      {/* D7s — plain-words smoothing note (standing operator request). */}
+      <p className="mt-1 text-[var(--muted-foreground)]" style={{ fontSize: 'var(--text-micro)' }}>
+        {t('surfing.heatMap.smoothingNote', "Values are smoothed across neighboring transects so isolated model dropouts don't appear as gaps.")}
+      </p>
 
       {/* sr-only data table for assistive technology */}
       {srTable}

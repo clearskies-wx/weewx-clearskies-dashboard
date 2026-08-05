@@ -199,6 +199,8 @@
     "beachProfile": {
       "depthAxisLabel": "Depth ({{unit}}, {{datum}})",
       "depthAxisLabelNoDatum": "Depth ({{unit}})",
+      "elevationAxisLabel": "Elevation ({{unit}}, {{datum}})",
+      "elevationAxisLabelNoDatum": "Elevation ({{unit}})",
       "distanceAxisLabel": "Distance from shore ({{unit}})",
       "impactZone": "IMPACT ZONE",
       "foamZone": "FOAM ZONE",
@@ -228,7 +230,15 @@
       "srBreakPoints": "Breaking zones:",
       "srJackingFactors": "Jacking factors:",
       "modelUnavailable": "The wave model has no result for this hour yet.",
-      "loadError": "Unable to load the beach profile."
+      "loadError": "Unable to load the beach profile.",
+      "legendWater": "Water",
+      "legendWhitewater": "Whitewater",
+      "legendSand": "Sand",
+      "captionPartition": "{{period}} s {{direction}} {{classification}}",
+      "captionFace": "faces {{height}} {{heightUnit}} at {{distance}} {{distanceUnit}}",
+      "captionTide": "tide {{value}} {{unit}}",
+      "captionWaterline": "waterline {{value}} {{unit}} (tide-aware)",
+      "stillWaterLabel": "still water · tide {{value}} {{unit}}"
     },
     "height": "Height",
     "period": "Period",
@@ -286,7 +296,8 @@
       "colorScaleMedium": "Medium",
       "colorScaleHigh": "Large",
       "modelUnavailable": "The wave model has no result for this hour yet.",
-      "loadError": "Unable to load the surf height map."
+      "loadError": "Unable to load the surf height map.",
+      "smoothingNote": "Values are smoothed across neighboring transects so isolated model dropouts don't appear as gaps."
     },
     "peelAngle": "Peel Angle",
     "peelAngleLabel": "Peel",

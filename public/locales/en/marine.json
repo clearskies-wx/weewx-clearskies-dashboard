@@ -270,6 +270,8 @@
     "beachProfile": {
       "depthAxisLabel": "Depth ({{unit}}, {{datum}})",
       "depthAxisLabelNoDatum": "Depth ({{unit}})",
+      "elevationAxisLabel": "Elevation ({{unit}}, {{datum}})",
+      "elevationAxisLabelNoDatum": "Elevation ({{unit}})",
       "distanceAxisLabel": "Distance from shore ({{unit}})",
       "representativeTransectHeader": "Showing the representative transect (transect {{n}})",
       "impactZone": "IMPACT ZONE",
@@ -300,7 +302,15 @@
       "srBreakPoints": "Breaking zones:",
       "srJackingFactors": "Jacking factors:",
       "modelUnavailable": "The wave model has no result for this hour yet.",
-      "loadError": "Unable to load the beach profile."
+      "loadError": "Unable to load the beach profile.",
+      "legendWater": "Water",
+      "legendWhitewater": "Whitewater",
+      "legendSand": "Sand",
+      "captionPartition": "{{period}} s {{direction}} {{classification}}",
+      "captionFace": "faces {{height}} {{heightUnit}} at {{distance}} {{distanceUnit}}",
+      "captionTide": "tide {{value}} {{unit}}",
+      "captionWaterline": "waterline {{value}} {{unit}} (tide-aware)",
+      "stillWaterLabel": "still water · tide {{value}} {{unit}}"
     },
     "shore": "Shore",
     "offshore": "Offshore",
@@ -328,7 +338,8 @@
       "representativeSuffix": "(representative)",
       "mainBreakZoneDesc": "Main break zone spans transects {{start}} to {{end}}.",
       "representativeDesc": "Transect {{n}} is the representative transect.",
-      "orthoImageryDesc": "An aerial photo of the beach is shown as a background for geographic context."
+      "orthoImageryDesc": "An aerial photo of the beach is shown as a background for geographic context.",
+      "smoothingNote": "Values are smoothed across neighboring transects so isolated model dropouts don't appear as gaps."
     },
     "peelAngle": "Peel Angle",
     "peelAngleLabel": "Peel",

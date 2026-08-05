@@ -286,6 +286,52 @@ const OK_RESPONSE_5_ROWS: HeatMapProfileDataOk = {
   },
 };
 
+// D7s median-5 smoothing fixture — 5 rows, one segment per row (2 transect
+// points each, same shape as buildRow above). Row 2 is "zeroed out" (a real
+// model-failure pattern per the operator's standing request: "so a few
+// transects zeroing out does not make a difference"). Hand-computed
+// expected medians (radius-2 window, clamped at the row-count edge, values
+// sorted ascending):
+//   row0 window=[row0,row1,row2]           hs=[0.0,1.0,1.1]      -> median 1.0
+//   row2 window=[row0,row1,row2,row3,row4] hs=[0.0,1.0,1.1,1.3,1.4] -> median 1.1
+//   row4 window=[row2,row3,row4]           hs=[0.0,1.3,1.4]      -> median 1.3
+// (row1/row3 fall on an even-count window with a fractional midpoint —
+// intentionally not asserted here to avoid Intl rounding ambiguity; row0/
+// row2/row4 give unambiguous single-value medians.)
+const SMOOTHING_HS = [1.0, 1.1, 0.0, 1.3, 1.4];
+function buildSmoothingRow(transectIndex: number, hsOffshore: number): HeatMapTransectData {
+  return {
+    transectIndex,
+    isStructureAffected: false,
+    transectBearingDeg: 245,
+    transect: [
+      { distance: 100, depth: 3, hs: hsOffshore },
+      { distance: 10, depth: 0.5, hs: hsOffshore * 0.8 },
+    ],
+    breakPoints: [],
+    waveShapes: [],
+    surfZones: null,
+    jackingFactors: [],
+    handoffDepthM: 2,
+    handoffSourceLevel: 'L3',
+  };
+}
+const OK_RESPONSE_SMOOTHING: HeatMapProfileDataOk = {
+  locationId: 'huntington-city-beach-pier',
+  timestep: '2026-08-05T00:00:00Z',
+  modelStatus: 'ok',
+  profiles: SMOOTHING_HS.map((hs, i) => buildSmoothingRow(i, hs)),
+  perPartitionBreaks: [],
+  metadata: {
+    axisUnits: { x: 'ft', y: 'ft' },
+    verticalDatum: 'NAVD88',
+    transectCount: 5,
+    openTransectCount: 5,
+    handoffDepthM: 2,
+    handoffSourceLevel: 'L3',
+  },
+};
+
 // D5-audit MAJOR remediation KAT (auditor's exact gap scenario): 20
 // conceptual transects (0..19) with #5 MISSING — marine filters failed
 // transects out of per_transect entirely (surf_1d_pipeline.py:1683), so
@@ -789,10 +835,20 @@ describe('HeatMapCard', () => {
     // HeatMapCard.tsx rendering OK_RESPONSE_5_ROWS with baseProps, via a
     // throwaway `git show HEAD:...` copy rendered once and diffed byte-for-
     // byte against this literal (see LM-2 closeout for the capture method).
+    //
+    // D7s update (ROUND-D5-BEACH-PROFILE-CARD-BRIEF-2026-08-05): the median-5
+    // smoothing note (`<p>...smoothingNote</p>`) and each colour cell's
+    // `<title>` tooltip are NEW, intentional, unconditional additions — this
+    // fixture is not "the pre-D7s render" anymore, only "the pre-LM-2
+    // imagery-path render plus D7s's two additions." Re-verified byte-for-
+    // byte against the actual rendered output for this exact fixture
+    // (OK_RESPONSE_5_ROWS's 5 rows each produce one flat cell with an
+    // identical median-5 value of 1.2, matching the pre-existing legend max
+    // of "1.2 ft" already in this string) — not hand-typed.
     // A REAL DOM-identity comparison, not a "renders without crashing" smoke
     // test — any change to the no-imagery render path, however small, fails
     // this immediately.
-    const GOLDEN_NO_IMAGERY_HTML = '<div class="rounded-xl bg-[var(--card-glass)] p-[var(--card-pad)]"><h3 class="font-semibold text-[var(--foreground)] mb-3 text-sm">surfing.heatMapTitle</h3><div class="w-full overflow-x-auto"><svg role="img" aria-labelledby="_r_0_ _r_1_" viewBox="0 0 820 320" width="100%" style="display: block; min-width: 260px;"><title id="_r_0_">surfing.heatMapAriaLabel</title><desc id="_r_1_">surfing.heatMapDesc</desc><defs><pattern id="heatmap-structure-hatch-_r_0_" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="var(--muted-foreground)" stroke-width="1.5" stroke-opacity="0.35"></line></pattern></defs><rect x="60" y="28" width="748" height="240" fill="var(--card-glass)" opacity="0.3"></rect><line x1="60" y1="28" x2="808" y2="28" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="76" x2="808" y2="76" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="124" x2="808" y2="124" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="172" x2="808" y2="172" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="220" x2="808" y2="220" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="268" x2="808" y2="268" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><rect x="579.951219512195" y="28" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"></rect><rect x="579.951219512195" y="76" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"></rect><rect x="579.951219512195" y="124" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"></rect><rect x="579.951219512195" y="172" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"></rect><rect x="579.951219512195" y="220" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"></rect><text x="56" y="55.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">0</text><text x="56" y="103.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">1</text><text x="56" y="151.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">2</text><text x="56" y="199.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">3</text><text x="56" y="247.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">4</text><g><line x1="808" y1="268" x2="808" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="808" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">0</text></g><g><line x1="621" y1="268" x2="621" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="621" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">82</text></g><g><line x1="434" y1="268" x2="434" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="434" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">164</text></g><g><line x1="247" y1="268" x2="247" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="247" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">246</text></g><g><line x1="60" y1="268" x2="60" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="60" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">328</text></g><text x="434" y="294" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">surfing.beachProfile.distanceAxisLabel</text><text x="806" y="22" font-size="9" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">surfing.shore</text><text x="62" y="22" font-size="9" fill="var(--muted-foreground)" text-anchor="start" aria-hidden="true">surfing.offshore</text><defs><linearGradient id="heatmap-legend-gradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgb(59,130,246)"></stop><stop offset="25%" stop-color="rgb(13,148,159)"></stop><stop offset="50%" stop-color="rgb(34,197,94)"></stop><stop offset="75%" stop-color="rgb(234,179,8)"></stop><stop offset="100%" stop-color="rgb(220,38,38)"></stop></linearGradient></defs><rect x="648" y="296" width="160" height="10" fill="url(#heatmap-legend-gradient)" rx="3" opacity="0.85"></rect><text x="648" y="318" font-size="9" fill="var(--muted-foreground)" text-anchor="start">0 ft</text><text x="808" y="318" font-size="9" fill="var(--muted-foreground)" text-anchor="end">1.2 ft</text></svg></div><table class="sr-only"><caption>surfing.heatMapAriaLabel</caption><thead><tr><th scope="col">surfing.heatMap.transectIndex</th><th scope="col">surfing.heatMap.openTransect</th><th scope="col">surfing.heatMap.breakHeight</th><th scope="col">surfing.heatMap.breakDistance</th><th scope="col">surfing.heatMap.breakerType</th></tr></thead><tbody><tr><th scope="row">0</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">1</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">2</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">3</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">4</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr></tbody></table></div>';
+    const GOLDEN_NO_IMAGERY_HTML = '<div class="rounded-xl bg-[var(--card-glass)] p-[var(--card-pad)]"><h3 class="font-semibold text-[var(--foreground)] mb-3 text-sm">surfing.heatMapTitle</h3><div class="w-full overflow-x-auto"><svg role="img" aria-labelledby="_r_0_ _r_1_" viewBox="0 0 820 320" width="100%" style="display: block; min-width: 260px;"><title id="_r_0_">surfing.heatMapAriaLabel</title><desc id="_r_1_">surfing.heatMapDesc</desc><defs><pattern id="heatmap-structure-hatch-_r_0_" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="var(--muted-foreground)" stroke-width="1.5" stroke-opacity="0.35"></line></pattern></defs><rect x="60" y="28" width="748" height="240" fill="var(--card-glass)" opacity="0.3"></rect><line x1="60" y1="28" x2="808" y2="28" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="76" x2="808" y2="76" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="124" x2="808" y2="124" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="172" x2="808" y2="172" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="220" x2="808" y2="220" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="268" x2="808" y2="268" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><rect x="579.951219512195" y="28" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="579.951219512195" y="76" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="579.951219512195" y="124" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="579.951219512195" y="172" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="579.951219512195" y="220" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><text x="56" y="55.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">0</text><text x="56" y="103.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">1</text><text x="56" y="151.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">2</text><text x="56" y="199.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">3</text><text x="56" y="247.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">4</text><g><line x1="808" y1="268" x2="808" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="808" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">0</text></g><g><line x1="621" y1="268" x2="621" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="621" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">82</text></g><g><line x1="434" y1="268" x2="434" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="434" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">164</text></g><g><line x1="247" y1="268" x2="247" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="247" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">246</text></g><g><line x1="60" y1="268" x2="60" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="60" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">328</text></g><text x="434" y="294" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">surfing.beachProfile.distanceAxisLabel</text><text x="806" y="22" font-size="9" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">surfing.shore</text><text x="62" y="22" font-size="9" fill="var(--muted-foreground)" text-anchor="start" aria-hidden="true">surfing.offshore</text><defs><linearGradient id="heatmap-legend-gradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgb(59,130,246)"></stop><stop offset="25%" stop-color="rgb(13,148,159)"></stop><stop offset="50%" stop-color="rgb(34,197,94)"></stop><stop offset="75%" stop-color="rgb(234,179,8)"></stop><stop offset="100%" stop-color="rgb(220,38,38)"></stop></linearGradient></defs><rect x="648" y="296" width="160" height="10" fill="url(#heatmap-legend-gradient)" rx="3" opacity="0.85"></rect><text x="648" y="318" font-size="9" fill="var(--muted-foreground)" text-anchor="start">0 ft</text><text x="808" y="318" font-size="9" fill="var(--muted-foreground)" text-anchor="end">1.2 ft</text></svg></div><p class="mt-1 text-[var(--muted-foreground)]" style="font-size: var(--text-micro);">surfing.heatMap.smoothingNote</p><table class="sr-only"><caption>surfing.heatMapAriaLabel</caption><thead><tr><th scope="col">surfing.heatMap.transectIndex</th><th scope="col">surfing.heatMap.openTransect</th><th scope="col">surfing.heatMap.breakHeight</th><th scope="col">surfing.heatMap.breakDistance</th><th scope="col">surfing.heatMap.breakerType</th></tr></thead><tbody><tr><th scope="row">0</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">1</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">2</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">3</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">4</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr></tbody></table></div>';
 
     it('KAT (a): fixture WITH imagery config -> ortho tiles render behind the heat map, colour cells at reduced opacity', () => {
       mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
@@ -956,6 +1012,38 @@ describe('HeatMapCard', () => {
       const images = Array.from(container.querySelectorAll('svg image'));
       expect(images.length).toBeGreaterThan(0);
       expect(images.length).toBeLessThanOrEqual(IMAGERY_MOSAIC_MAX_TILES_PER_SIDE ** 2);
+    });
+  });
+
+  // ── D7s — median-5 display smoothing (standing operator request) ───────
+  describe('D7s — median-5 smoothing', () => {
+    it('a zeroed-out transect (row 2) is smoothed to the window median, not left showing its raw 0 value', () => {
+      const { container } = render(
+        <HeatMapCard {...baseProps} data={OK_RESPONSE_SMOOTHING} loading={false} />,
+      );
+      // One <title> tooltip per row's single colour cell (each row has
+      // exactly 2 transect points => 1 segment), in row order.
+      const titles = Array.from(container.querySelectorAll('svg rect > title')).map((el) => el.textContent);
+      expect(titles.length).toBe(5);
+      expect(titles[0]).toBe('1 ft');    // row0: median([0.0,1.0,1.1]) = 1.0
+      expect(titles[2]).toBe('1.1 ft');  // row2: median([0.0,1.0,1.1,1.3,1.4]) = 1.1 — NOT "0 ft"
+      expect(titles[4]).toBe('1.3 ft');  // row4: median([0.0,1.3,1.4]) = 1.3
+    });
+
+    it('the smoothing note renders in plain words', () => {
+      const { getByText } = render(
+        <HeatMapCard {...baseProps} data={OK_RESPONSE_SMOOTHING} loading={false} />,
+      );
+      expect(getByText('surfing.heatMap.smoothingNote')).toBeDefined();
+    });
+
+    it('raw profile data is never mutated by the smoothing pass (display-only, per the brief)', () => {
+      const before = JSON.parse(JSON.stringify(OK_RESPONSE_SMOOTHING));
+      render(<HeatMapCard {...baseProps} data={OK_RESPONSE_SMOOTHING} loading={false} />);
+      expect(OK_RESPONSE_SMOOTHING).toEqual(before);
+      // The raw zeroed-out value is still exactly 0 in the untouched prop —
+      // only the rendered colour/tooltip changed, not the source data.
+      expect(OK_RESPONSE_SMOOTHING.profiles![2].transect[0].hs).toBe(0);
     });
   });
 });
