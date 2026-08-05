@@ -167,6 +167,14 @@ export function useApiQuery<T>(
   // Timer ref for the freshness-based refetch (setTimeout).
   const freshnessTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Error-retry backoff (S-SPEC-4): timer for the next scheduled retry, and
+  // the delay (ms) that retry will use. A successful fetch resets the delay
+  // back to the floor; each consecutive failure doubles it up to the cap.
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const RETRY_DELAY_FLOOR_MS = 5000;
+  const RETRY_DELAY_CAP_MS = 60000;
+  const retryDelayRef = useRef(RETRY_DELAY_FLOOR_MS);
+
   // Stable refetch callback — increments the counter to trigger the fetch effect.
   const refetch = useCallback(() => {
     setRefetchCounter((c) => c + 1);
@@ -229,6 +237,16 @@ export function useApiQuery<T>(
         setLoading(false);
         setRefreshing(false);
 
+        // A successful fetch resets the error-retry backoff (S-SPEC-4) and
+        // cancels any retry that was still pending from an earlier failure
+        // (e.g. the normal poll timer or a manual refetch already succeeded
+        // before the scheduled retry fired).
+        retryDelayRef.current = RETRY_DELAY_FLOOR_MS;
+        if (retryTimerRef.current !== null) {
+          clearTimeout(retryTimerRef.current);
+          retryTimerRef.current = null;
+        }
+
         // Freshness-driven refetch scheduling (ADR-075).
         // Use duck typing — T may or may not carry a freshness block.
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -266,6 +284,20 @@ export function useApiQuery<T>(
         setError(err instanceof Error ? err : new Error(String(err)));
         setLoading(false);
         setRefreshing(false);
+
+        // Error-retry backoff (S-SPEC-4): 5s -> 10 -> 20 -> 40 -> cap 60s.
+        // The normal poll timer (below) keeps running independently; this
+        // retry exists so a transient failure self-heals without waiting
+        // out a long poll interval or requiring the visitor to reload.
+        if (retryTimerRef.current !== null) {
+          clearTimeout(retryTimerRef.current);
+        }
+        const delay = retryDelayRef.current;
+        retryTimerRef.current = setTimeout(() => {
+          retryTimerRef.current = null;
+          refetchRef.current();
+        }, delay);
+        retryDelayRef.current = Math.min(delay * 2, RETRY_DELAY_CAP_MS);
       })
       .finally(() => {
         // Once settled, this key is no longer "in flight" — a later mount
@@ -287,6 +319,11 @@ export function useApiQuery<T>(
       if (freshnessTimerRef.current !== null) {
         clearTimeout(freshnessTimerRef.current);
         freshnessTimerRef.current = null;
+      }
+      // Clear any pending error-retry timer for the same reason.
+      if (retryTimerRef.current !== null) {
+        clearTimeout(retryTimerRef.current);
+        retryTimerRef.current = null;
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -1194,7 +1194,7 @@ export function useMarineLocations(): HookResult<MarineLocationSummary[]> {
         throw err;
       }
     },
-    { skip: isMockMode() },
+    { skip: isMockMode(), pollInterval: 120 },
   );
 
   if (isMockMode()) {
@@ -1218,7 +1218,7 @@ export function useMarineDetail(locationId: string | null): HookResult<MarineBun
 
   const { data, loading, error, refetch } = useApiQuery<{ data: MarineBundle; units?: UnitsBlock }>(
     (signal) => getMarineDetail(locationId as string, signal),
-    { skip, deps: [locationId] },
+    { skip, deps: [locationId], pollInterval: 120 },
   );
 
   if (isMockMode()) {
@@ -1242,7 +1242,7 @@ export function useTideDetail(locationId: string | null): HookResult<TideBundle>
 
   const { data, loading, error, refetch } = useApiQuery<{ data: TideBundle; units?: UnitsBlock }>(
     (signal) => getTideDetail(locationId as string, signal),
-    { skip, deps: [locationId] },
+    { skip, deps: [locationId], pollInterval: 120 },
   );
 
   if (isMockMode()) {
@@ -1266,7 +1266,7 @@ export function useSurfDetail(locationId: string | null): HookResult<SurfDetailD
 
   const { data, loading, error, refetch } = useApiQuery<{ data: SurfDetailData; units?: UnitsBlock }>(
     (signal) => getSurfDetail(locationId as string, signal),
-    { skip, deps: [locationId] },
+    { skip, deps: [locationId], pollInterval: 120 },
   );
 
   if (isMockMode()) {
@@ -1290,7 +1290,7 @@ export function useBeachProfile(locationId: string | null): HookResult<BeachProf
 
   const { data, loading, error, refetch } = useApiQuery<{ data: BeachProfileData; units?: UnitsBlock }>(
     (signal) => getBeachProfile(locationId as string, signal),
-    { skip, deps: [locationId] },
+    { skip, deps: [locationId], pollInterval: 120 },
   );
 
   if (isMockMode()) {
@@ -1314,7 +1314,7 @@ export function useBeachProfileAll(locationId: string | null): HookResult<HeatMa
 
   const { data, loading, error, refetch } = useApiQuery<{ data: HeatMapProfileData; units?: UnitsBlock }>(
     (signal) => getBeachProfileAll(locationId as string, signal),
-    { skip, deps: [locationId] },
+    { skip, deps: [locationId], pollInterval: 120 },
   );
 
   if (isMockMode()) {
@@ -1338,7 +1338,7 @@ export function useFishingDetail(locationId: string | null): HookResult<FishingD
 
   const { data, loading, error, refetch } = useApiQuery<{ data: FishingDetailData; units?: UnitsBlock }>(
     (signal) => getFishingDetail(locationId as string, signal),
-    { skip, deps: [locationId] },
+    { skip, deps: [locationId], pollInterval: 120 },
   );
 
   if (isMockMode()) {
@@ -1362,7 +1362,7 @@ export function useBeachSafetyDetail(locationId: string | null): HookResult<Beac
 
   const { data, loading, error, refetch } = useApiQuery<{ data: BeachSafetyDetailData; units?: UnitsBlock }>(
     (signal) => getBeachSafetyDetail(locationId as string, signal),
-    { skip, deps: [locationId] },
+    { skip, deps: [locationId], pollInterval: 120 },
   );
 
   if (isMockMode()) {
