@@ -461,6 +461,13 @@ export function AlertBanner({ alerts, stationTz }: AlertBannerProps) {
         <div style={{ minHeight: 0, overflow: 'hidden' }}>
           <div className="card-glass border-t border-foreground/10 px-4 py-3">
 
+            {/* UI-1: Full areas-affected text — always visible when expanded */}
+            {alert.areaDesc && (
+              <p className="mb-3 font-heading text-[length:var(--text-body)] font-semibold leading-relaxed text-card-foreground">
+                {alert.areaDesc}
+              </p>
+            )}
+
             {/* Full description — collapse hard line wraps, keep paragraph breaks */}
             {alert.description && (
               <div className="mb-3 space-y-3">
