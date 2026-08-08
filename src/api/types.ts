@@ -1353,6 +1353,19 @@ export interface SurfForecast {
    * Null when breakingFaceHeight is null (see breakingFaceHeight nullability note).
    */
   breakingHawaiianHeight?: number | null;
+  /**
+   * WC-D3 (2026-08-07): smallest per-partition face height across the main
+   * break zone's qualifying transects (Tp >= 5s). Use with modelSurfHeightMax
+   * to display a surf height range (e.g. "2-3 ft"). Null when no qualifying
+   * partition has break data. Distinct from NWS SRF surfHeightMin.
+   */
+  modelSurfHeightMin?: number | null;
+  /**
+   * WC-D3 (2026-08-07): largest per-partition face height across the main
+   * break zone's qualifying transects. Same value as breakingFaceHeight
+   * (backward compatibility). Null when no qualifying partition has break data.
+   */
+  modelSurfHeightMax?: number | null;
   // BD-7/BD-9 (2026-08-01, ADR-093 Amendment 7, marine `9719db1`+`732e87d`).
   // Main-break-zone headline + its representative transect. All five fields
   // are additive/nullable (D4.1/D4.2, MARINE-FORWARD-PLAN) — absent on

@@ -582,7 +582,16 @@ export function BeachProfileChart({
     }
     return levels;
   }
-  const breakLabelLevels = computeBreakLabelStagger(breakPoints);
+  // WC-D3: show only the dominant partition's break annotation — drawing
+  // multiple breaks at the same bar location is confusing, not informative.
+  // The surf height range (modelSurfHeightMin–Max) communicates "multiple
+  // swells breaking here" on the Current Swell Conditions card instead.
+  const dominantBreakPoints = breakPoints.length > 0
+    ? [breakPoints.reduce((best, bp) =>
+        (bp.faceHeight ?? 0) > (best.faceHeight ?? 0) ? bp : best
+      )]
+    : [];
+  const breakLabelLevels = computeBreakLabelStagger(dominantBreakPoints);
 
   // Caption line removed (operator, 2026-08-05): the partition/face/tide/
   // waterline chips duplicated information shown elsewhere on the tab.
@@ -604,8 +613,8 @@ export function BeachProfileChart({
   // ARE fixed to use the file's own locale-aware fmt0/fmt1 (this text
   // reaches assistive technology, so it's "display text" per §6.4, not the
   // SVG-path-coordinate exception).
-  const bpCount = breakPoints.length;
-  const bpDescriptions = breakPoints.map((bp, i) => {
+  const bpCount = dominantBreakPoints.length;
+  const bpDescriptions = dominantBreakPoints.map((bp, i) => {
     const typeStr = bp.breakerType ? ` (${t(`surfing.beachProfile.breakType.${bp.breakerType}`)})` : '';
     const heightVal = bp.faceHeight ?? bp.hs;
     return `${t('surfing.beachProfile.breakPointAria', { n: i + 1 })} ${fmt0(bp.distance)} ${distanceUnit} from shore${heightVal !== null ? `, ${fmt1(heightVal)} ${heightUnit} face height${typeStr}` : ''}.`;
@@ -799,7 +808,7 @@ export function BeachProfileChart({
         })}
 
         {/* ── Break-point crest labels ── */}
-        {breakPoints.map((bp, i) => {
+        {dominantBreakPoints.map((bp, i) => {
           const bpX = xOf(bp.distance);
           const crestY = yOf(crestElevationAt(bp.distance));
           const stagger = breakLabelLevels[i] * BP_LABEL_STAGGER_PX;

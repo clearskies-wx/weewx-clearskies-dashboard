@@ -455,7 +455,10 @@ function getDisplayHeight(
   if (surfHeightDisplay === 'hawaiian') {
     return entry.breakingHawaiianHeight ?? null;
   }
-  return entry.breakingFaceHeight ?? null;
+  // WC-D3: prefer modelSurfHeightMax (max of qualifying per-partition face
+  // heights) when available; fall back to breakingFaceHeight for backward
+  // compat with cached responses that predate WC-D3.
+  return entry.modelSurfHeightMax ?? entry.breakingFaceHeight ?? null;
 }
 
 /**
@@ -1554,7 +1557,12 @@ function SurfScrollForecast({
               }}
             >
               {chip(t('surfing.swellHeightStatLabel', { defaultValue: 'Swell Height' }), `${formatValue(entry.swellHeight ?? entry.waveHeightAtBreak, 'default', locale)} ${heightUnit}`)}
-              {chip(t('surfing.faceBreakHeightLabel', { defaultValue: 'Breaking Face Height' }), `${formatValue(getDisplayHeight(entry, surfHeightDisplay), 'default', locale)} ${heightUnit}`)}
+              {chip(
+                t('surfing.faceBreakHeightLabel', { defaultValue: 'Breaking Face Height' }),
+                entry.modelSurfHeightMin != null && entry.modelSurfHeightMax != null && entry.modelSurfHeightMin !== entry.modelSurfHeightMax
+                  ? `${formatValue(entry.modelSurfHeightMin, 'default', locale)}–${formatValue(entry.modelSurfHeightMax, 'default', locale)} ${heightUnit}`
+                  : `${formatValue(getDisplayHeight(entry, surfHeightDisplay), 'default', locale)} ${heightUnit}`
+              )}
               {chip(t('surfing.period'), `${formatValue(entry.period, 'default', locale)} ${periodUnit}`)}
               {chip(t('surfing.direction'), swellDirLabel)}
               {chip(t('surfing.windQualityTitle'), entry.windQuality ?? '—')}
@@ -2116,7 +2124,14 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                   {/* Icon-left stat: icon beside the value/label block */}
                   {[
                     { icon: <Waves weight="bold" />, label: t('surfing.swellHeightStatLabel', { defaultValue: 'Swell Height' }), value: formatValue(primary.swellHeight ?? primary.waveHeightAtBreak, 'default', locale), unit: heightUnit },
-                    { icon: <Waves weight="bold" />, label: t('surfing.faceBreakHeightLabel', { defaultValue: 'Breaking Face Height' }), value: formatValue(getDisplayHeight(primary, surfHeightDisplay), 'default', locale), unit: heightUnit },
+                    {
+                      icon: <Waves weight="bold" />,
+                      label: t('surfing.faceBreakHeightLabel', { defaultValue: 'Breaking Face Height' }),
+                      value: primary.modelSurfHeightMin != null && primary.modelSurfHeightMax != null && primary.modelSurfHeightMin !== primary.modelSurfHeightMax
+                        ? `${formatValue(primary.modelSurfHeightMin, 'default', locale)}–${formatValue(primary.modelSurfHeightMax, 'default', locale)}`
+                        : formatValue(getDisplayHeight(primary, surfHeightDisplay), 'default', locale),
+                      unit: heightUnit,
+                    },
                     { icon: <Timer weight="bold" />, label: t('surfing.period'), value: formatValue(primary.period, 'default', locale), unit: periodUnit },
                   ].map((s) => (
                     <div key={s.label} className="flex items-center gap-2">
