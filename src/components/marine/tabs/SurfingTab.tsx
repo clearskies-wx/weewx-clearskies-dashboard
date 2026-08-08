@@ -1559,7 +1559,7 @@ function SurfScrollForecast({
               {chip(t('surfing.swellHeightStatLabel', { defaultValue: 'Swell Height' }), `${formatValue(entry.swellHeight ?? entry.waveHeightAtBreak, 'default', locale)} ${heightUnit}`)}
               {chip(
                 t('surfing.faceBreakHeightLabel', { defaultValue: 'Breaking Face Height' }),
-                entry.modelSurfHeightMin != null && entry.modelSurfHeightMax != null && entry.modelSurfHeightMin !== entry.modelSurfHeightMax
+                surfHeightDisplay !== 'hawaiian' && entry.modelSurfHeightMin != null && entry.modelSurfHeightMax != null && entry.modelSurfHeightMin !== entry.modelSurfHeightMax
                   ? `${formatValue(entry.modelSurfHeightMin, 'default', locale)}–${formatValue(entry.modelSurfHeightMax, 'default', locale)} ${heightUnit}`
                   : `${formatValue(getDisplayHeight(entry, surfHeightDisplay), 'default', locale)} ${heightUnit}`
               )}
@@ -2127,7 +2127,7 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                     {
                       icon: <Waves weight="bold" />,
                       label: t('surfing.faceBreakHeightLabel', { defaultValue: 'Breaking Face Height' }),
-                      value: primary.modelSurfHeightMin != null && primary.modelSurfHeightMax != null && primary.modelSurfHeightMin !== primary.modelSurfHeightMax
+                      value: surfHeightDisplay !== 'hawaiian' && primary.modelSurfHeightMin != null && primary.modelSurfHeightMax != null && primary.modelSurfHeightMin !== primary.modelSurfHeightMax
                         ? `${formatValue(primary.modelSurfHeightMin, 'default', locale)}–${formatValue(primary.modelSurfHeightMax, 'default', locale)}`
                         : formatValue(getDisplayHeight(primary, surfHeightDisplay), 'default', locale),
                       unit: heightUnit,

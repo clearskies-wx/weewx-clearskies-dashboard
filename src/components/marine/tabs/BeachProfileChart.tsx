@@ -588,7 +588,7 @@ export function BeachProfileChart({
   // swells breaking here" on the Current Swell Conditions card instead.
   const dominantBreakPoints = breakPoints.length > 0
     ? [breakPoints.reduce((best, bp) =>
-        (bp.faceHeight ?? 0) > (best.faceHeight ?? 0) ? bp : best
+        (bp.faceHeight ?? bp.hs ?? 0) > (best.faceHeight ?? best.hs ?? 0) ? bp : best
       )]
     : [];
   const breakLabelLevels = computeBreakLabelStagger(dominantBreakPoints);
