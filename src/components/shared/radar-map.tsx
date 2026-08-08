@@ -158,7 +158,12 @@ function pointInGeoJsonPolygon(lat: number, lng: number, geometry: Geometry): bo
 // These are display preferences that belong in the dashboard, not the API.
 // The CAPABILITY template keeps the placeholders generic; we resolve them here
 // so Leaflet never sees an unknown {variable} and throws.
-const RAINVIEWER_TILE_SIZE = 512;
+// Radar requests 256 to match LibreWXR's tile warmer, which pre-renders
+// radar geometry at 256 only — a 512 request always misses the warm cache
+// and pays a full server-side render (~150 ms/tile, ~20 s first playback).
+// Satellite stays at 512: its warmer pre-renders 512 webp, so 512 hits.
+const RADAR_TILE_SIZE = 256;
+const SATELLITE_TILE_SIZE = 512;
 const RAINVIEWER_COLOR = 2;
 const RAINVIEWER_OPTIONS = '0_0';
 
@@ -179,7 +184,7 @@ function buildTileUrl(
     // Resolve RainViewer-specific placeholders that Leaflet doesn't know about.
     // Leaflet's getTileUrl throws "No value provided for variable {X}" for any
     // {placeholder} it cannot expand from its built-in set ({x},{y},{z},{s},{r}).
-    url = url.replace('{size}', String(RAINVIEWER_TILE_SIZE));
+    url = url.replace('{size}', String(RADAR_TILE_SIZE));
     url = url.replace('{color}', String(colorScheme));
     url = url.replace('{options}', RAINVIEWER_OPTIONS);
     // Wind arrows via ?arrows= query parameter (LibreWxR only).
@@ -1300,7 +1305,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
               starts using the shared play/pause state. */}
           {showSatellite && caddyPrefix && satelliteFrameCount > 0 && satelliteFrames.map((frame, i) => {
             if (!frame.path) return null;
-            const satUrl = `${caddyPrefix}${frame.path}/${RAINVIEWER_TILE_SIZE}/{z}/{x}/{y}/0/0_0.webp`;
+            const satUrl = `${caddyPrefix}${frame.path}/${SATELLITE_TILE_SIZE}/{z}/{x}/{y}/0/0_0.webp`;
             const satInitialOpacity = i === 0 ? effectiveMaxOpacity : 0;
             return (
               <TileLayer
