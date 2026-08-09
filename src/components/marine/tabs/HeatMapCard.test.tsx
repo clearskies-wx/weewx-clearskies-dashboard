@@ -13,7 +13,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, within } from '@testing-library/react';
-import { HeatMapCard } from './HeatMapCard';
+import { HeatMapCard, computeImageryRotationDeg } from './HeatMapCard';
 import type {
   HeatMapProfileDataOk,
   HeatMapProfileDataUnavailable,
@@ -848,7 +848,7 @@ describe('HeatMapCard', () => {
     // A REAL DOM-identity comparison, not a "renders without crashing" smoke
     // test — any change to the no-imagery render path, however small, fails
     // this immediately.
-    const GOLDEN_NO_IMAGERY_HTML = '<div class="rounded-xl bg-[var(--card-glass)] p-[var(--card-pad)]"><h3 class="font-semibold text-[var(--foreground)] mb-3 text-sm">surfing.heatMapTitle</h3><div class="w-full overflow-x-auto"><svg role="img" aria-labelledby="_r_0_ _r_1_" viewBox="0 0 820 320" width="100%" style="display: block; min-width: 260px;"><title id="_r_0_">surfing.heatMapAriaLabel</title><desc id="_r_1_">surfing.heatMapDesc</desc><defs><pattern id="heatmap-structure-hatch-_r_0_" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="var(--muted-foreground)" stroke-width="1.5" stroke-opacity="0.35"></line></pattern></defs><rect x="60" y="28" width="748" height="240" fill="var(--card-glass)" opacity="0.3"></rect><line x1="60" y1="28" x2="808" y2="28" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="76" x2="808" y2="76" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="124" x2="808" y2="124" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="172" x2="808" y2="172" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="220" x2="808" y2="220" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="268" x2="808" y2="268" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><rect x="579.951219512195" y="28" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="579.951219512195" y="76" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="579.951219512195" y="124" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="579.951219512195" y="172" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="579.951219512195" y="220" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><text x="56" y="55.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">0</text><text x="56" y="103.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">1</text><text x="56" y="151.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">2</text><text x="56" y="199.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">3</text><text x="56" y="247.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">4</text><g><line x1="808" y1="268" x2="808" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="808" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">0</text></g><g><line x1="621" y1="268" x2="621" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="621" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">82</text></g><g><line x1="434" y1="268" x2="434" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="434" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">164</text></g><g><line x1="247" y1="268" x2="247" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="247" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">246</text></g><g><line x1="60" y1="268" x2="60" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="60" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">328</text></g><text x="434" y="294" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">surfing.beachProfile.distanceAxisLabel</text><text x="806" y="22" font-size="9" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">surfing.shore</text><text x="62" y="22" font-size="9" fill="var(--muted-foreground)" text-anchor="start" aria-hidden="true">surfing.offshore</text><defs><linearGradient id="heatmap-legend-gradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgb(59,130,246)"></stop><stop offset="25%" stop-color="rgb(13,148,159)"></stop><stop offset="50%" stop-color="rgb(34,197,94)"></stop><stop offset="75%" stop-color="rgb(234,179,8)"></stop><stop offset="100%" stop-color="rgb(220,38,38)"></stop></linearGradient></defs><rect x="648" y="296" width="160" height="10" fill="url(#heatmap-legend-gradient)" rx="3" opacity="0.85"></rect><text x="648" y="318" font-size="9" fill="var(--muted-foreground)" text-anchor="start">0 ft</text><text x="808" y="318" font-size="9" fill="var(--muted-foreground)" text-anchor="end">1.2 ft</text></svg></div><p class="mt-1 text-[var(--muted-foreground)]" style="font-size: var(--text-micro);">surfing.heatMap.smoothingNote</p><table class="sr-only"><caption>surfing.heatMapAriaLabel</caption><thead><tr><th scope="col">surfing.heatMap.transectIndex</th><th scope="col">surfing.heatMap.openTransect</th><th scope="col">surfing.heatMap.breakHeight</th><th scope="col">surfing.heatMap.breakDistance</th><th scope="col">surfing.heatMap.breakerType</th></tr></thead><tbody><tr><th scope="row">0</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">1</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">2</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">3</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">4</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr></tbody></table></div>';
+    const GOLDEN_NO_IMAGERY_HTML = '<div class="rounded-xl bg-[var(--card-glass)] p-[var(--card-pad)]"><h3 class="font-semibold text-[var(--foreground)] mb-3 text-sm">surfing.heatMapTitle</h3><div class="w-full overflow-x-auto"><svg role="img" aria-labelledby="_r_0_ _r_1_" viewBox="0 0 820 320" width="100%" style="display: block; min-width: 260px;"><title id="_r_0_">surfing.heatMapAriaLabel</title><desc id="_r_1_">surfing.heatMapDesc</desc><defs></defs><rect x="60" y="28" width="748" height="240" fill="var(--card-glass)" opacity="0.3"></rect><line x1="60" y1="28" x2="808" y2="28" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="76" x2="808" y2="76" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="124" x2="808" y2="124" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="172" x2="808" y2="172" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="220" x2="808" y2="220" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="268" x2="808" y2="268" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><rect x="579.951219512195" y="28" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="579.951219512195" y="76" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="579.951219512195" y="124" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="579.951219512195" y="172" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="579.951219512195" y="220" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><text x="56" y="55.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">0</text><text x="56" y="103.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">1</text><text x="56" y="151.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">2</text><text x="56" y="199.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">3</text><text x="56" y="247.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">4</text><text transform="rotate(-90)" x="-148" y="10" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">surfing.heatMap.transectAxisLabel</text><g><line x1="808" y1="268" x2="808" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="808" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">0</text></g><g><line x1="621" y1="268" x2="621" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="621" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">82</text></g><g><line x1="434" y1="268" x2="434" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="434" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">164</text></g><g><line x1="247" y1="268" x2="247" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="247" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">246</text></g><g><line x1="60" y1="268" x2="60" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="60" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">328</text></g><text x="434" y="294" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">surfing.beachProfile.distanceAxisLabel</text><text x="806" y="22" font-size="9" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">surfing.shore</text><text x="62" y="22" font-size="9" fill="var(--muted-foreground)" text-anchor="start" aria-hidden="true">surfing.offshore</text><defs><linearGradient id="heatmap-legend-gradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgb(59,130,246)"></stop><stop offset="25%" stop-color="rgb(13,148,159)"></stop><stop offset="50%" stop-color="rgb(34,197,94)"></stop><stop offset="75%" stop-color="rgb(234,179,8)"></stop><stop offset="100%" stop-color="rgb(220,38,38)"></stop></linearGradient></defs><rect x="648" y="296" width="160" height="10" fill="url(#heatmap-legend-gradient)" rx="3" opacity="0.85"></rect><text x="648" y="318" font-size="9" fill="var(--muted-foreground)" text-anchor="start">0 ft</text><text x="808" y="318" font-size="9" fill="var(--muted-foreground)" text-anchor="end">1.2 ft</text></svg></div><p class="mt-1 text-[var(--muted-foreground)]" style="font-size: var(--text-micro);">surfing.heatMap.smoothingNote</p><table class="sr-only"><caption>surfing.heatMapAriaLabel</caption><thead><tr><th scope="col">surfing.heatMap.transectIndex</th><th scope="col">surfing.heatMap.openTransect</th><th scope="col">surfing.heatMap.breakHeight</th><th scope="col">surfing.heatMap.breakDistance</th><th scope="col">surfing.heatMap.breakerType</th></tr></thead><tbody><tr><th scope="row">0</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">1</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">2</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">3</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">4</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr></tbody></table></div>';
 
     it('KAT (a): fixture WITH imagery config -> ortho tiles render behind the heat map, colour cells at reduced opacity', () => {
       mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
@@ -1044,6 +1044,127 @@ describe('HeatMapCard', () => {
       // The raw zeroed-out value is still exactly 0 in the untouched prop —
       // only the rendered colour/tooltip changed, not the source data.
       expect(OK_RESPONSE_SMOOTHING.profiles![2].transect[0].hs).toBe(0);
+    });
+  });
+
+  // ── C3 (2026-08-08, L1-BOUNDARY-REBUILD-PLAN Phase C, P15) — ortho
+  //    rotation, 50m visible buffer, y-axis title, structure-overlay
+  //    removal. ──
+  describe('C3 — ortho rotation / buffer / y-axis / structure-overlay removal', () => {
+    const SPOT_LAT = 33.6595;
+    const SPOT_LON = -118.0064;
+    const PAD_TOP = 28;
+
+    describe('computeImageryRotationDeg', () => {
+      // Falsifiable: a sign flip (e.g. `bearingDeg - 270` instead of
+      // `270 - bearingDeg`) fails every case here except the two where the
+      // formula is symmetric (0 and 180 map to the same result either way
+      // are NOT included below — every case here distinguishes the sign).
+      it.each([
+        [0, 270],     // offshore due north -> rotate 270° so north swings to chart-left
+        [90, 180],
+        [180, 90],
+        [270, 0],     // offshore already due west -> already chart-left, no rotation
+        [245, 25],
+        [350, 280],
+      ])('bearing %i° -> rotation %i°', (bearing, expected) => {
+        expect(computeImageryRotationDeg(bearing)).toBeCloseTo(expected, 6);
+      });
+    });
+
+    it('rotates the imagery tile group by the computed angle about the core chart-rectangle center', () => {
+      mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
+      // OK_RESPONSE_5_ROWS: 5 rows, every row's transectBearingDeg = 245 ->
+      // rotation = computeImageryRotationDeg(245) = 25°, regardless of which
+      // row is picked as the reference (representative or middle-row
+      // fallback both land on the same bearing here).
+      const { container } = render(
+        <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
+      );
+      const rotatedGroup = Array.from(container.querySelectorAll('svg g')).find((g) =>
+        (g.getAttribute('transform') ?? '').startsWith('rotate('),
+      );
+      expect(rotatedGroup).toBeDefined();
+      // Core chart rect center: PAD_LEFT + CHART_W/2 = 60 + 374 = 434;
+      // PAD_TOP + chartH/2 = 28 + 240/2 = 148 (N=5, rowH=48, chartH=240).
+      expect(rotatedGroup!.getAttribute('transform')).toBe('rotate(25 434 148)');
+      // The rotated group actually contains the tile <image> elements.
+      expect(rotatedGroup!.querySelectorAll('image').length).toBeGreaterThan(0);
+    });
+
+    it('falls back to no rotation (0°) when no row carries a bearing', () => {
+      mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
+      const noBearingRow: HeatMapTransectData = { ...buildRow(0), transectBearingDeg: null };
+      const noBearingResponse: HeatMapProfileDataOk = {
+        ...OK_RESPONSE_5_ROWS,
+        profiles: [noBearingRow],
+      };
+      const { container } = render(
+        <HeatMapCard {...baseProps} data={noBearingResponse} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
+      );
+      const rotatedGroup = Array.from(container.querySelectorAll('svg g')).find((g) =>
+        (g.getAttribute('transform') ?? '').startsWith('rotate('),
+      );
+      expect(rotatedGroup).toBeDefined();
+      expect(rotatedGroup!.getAttribute('transform')).toMatch(/^rotate\(0 /);
+    });
+
+    it('50m visible buffer: the imagery clip rect extends beyond the core plot rectangle on all four sides', () => {
+      mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
+      const { container } = render(
+        <HeatMapCard {...baseProps} distanceUnit="m" data={OK_RESPONSE_5_ROWS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
+      );
+      const clipRect = container.querySelector('clipPath rect');
+      expect(clipRect).not.toBeNull();
+      const x = Number(clipRect!.getAttribute('x'));
+      const y = Number(clipRect!.getAttribute('y'));
+      const w = Number(clipRect!.getAttribute('width'));
+      const h = Number(clipRect!.getAttribute('height'));
+      const CHART_W = 748;
+      const CORE_CHART_H = 240; // N=5, rowH=48
+      expect(x).toBeLessThan(PAD_LEFT);
+      expect(y).toBeLessThan(PAD_TOP);
+      expect(x + w).toBeGreaterThan(PAD_LEFT + CHART_W);
+      expect(y + h).toBeGreaterThan(PAD_TOP + CORE_CHART_H);
+    });
+
+    it('y-axis title renders (rotated text, distinct from the row-index tick labels)', () => {
+      const { container, getByText } = render(
+        <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS} loading={false} />,
+      );
+      const title = getByText('surfing.heatMap.transectAxisLabel');
+      expect(title.getAttribute('transform')).toBe('rotate(-90)');
+      expect(container.querySelector('svg')!.contains(title)).toBe(true);
+    });
+
+    it('structure-affected-area overlay is gone: no hatch pattern, no legend text, structure-affected rows render at the SAME colour-cell opacity as open rows', () => {
+      const { container, queryByText } = render(
+        <HeatMapCard {...baseProps} data={OK_RESPONSE_DOUBLE_BREAK} loading={false} />,
+      );
+      // ROW_DOUBLE_BREAK_LIVE.isStructureAffected === true — this is the
+      // exact fixture the pre-C3 hatch overlay would have rendered for.
+      expect(container.querySelector('pattern')).toBeNull();
+      expect(queryByText('surfing.heatMap.shadowedTransect')).toBeNull();
+      // Colour cells (hsToColor output, no spaces: "rgba(r,g,b,a)") — distinct
+      // from the zone-fill rects (ZONE_IMPACT_FILL etc., "rgba(r, g, b, a)"
+      // WITH spaces), which this fixture also renders (its surfZones).
+      const cellRects = Array.from(container.querySelectorAll('svg rect'))
+        .filter((r) => /^rgba\(\d+,\d+,\d+,[\d.]+\)$/.test(r.getAttribute('fill') ?? ''));
+      expect(cellRects.length).toBeGreaterThan(0);
+      for (const r of cellRects) {
+        // Default (no-imagery) cell opacity is 0.85 — pre-C3 a structure-
+        // affected row would have multiplied this by 0.35 (-> ~0.30).
+        expect(r.getAttribute('fill')).toMatch(/,0\.85\)$/);
+      }
+    });
+
+    it('sr-only table "Open" column (isStructureAffected data) still reflects structure-affected rows — data survives, only the visual overlay is removed', () => {
+      const { container } = render(
+        <HeatMapCard {...baseProps} data={OK_RESPONSE_DOUBLE_BREAK} loading={false} />,
+      );
+      const headerCell = within(container).getByText('4', { selector: 'table.sr-only th[scope="row"]' });
+      const row = headerCell.closest('tr')!;
+      expect(within(row).getByText('no').tagName).toBe('TD'); // isStructureAffected true -> "Open" = no
     });
   });
 });

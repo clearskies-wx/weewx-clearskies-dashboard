@@ -9,17 +9,23 @@
 //   2. Zone polygons       — outer-bar break zone (outer edge follows sandbar
 //                            contour per row), impact zone (red/orange fill),
 //                            foam zone (amber fill).
-//   3. Structure shadow    — structure-affected rows shown at reduced opacity (0.35)
-//                            with a hatching pattern overlay.
-//   4. Breaker-type glyphs — spilling (horizontal line), plunging (curl arc),
+//   3. Breaker-type glyphs — spilling (horizontal line), plunging (curl arc),
 //                            surging (vertical line) at each row's break point(s).
-//   5. Multi-bar support   — two break-zone curves when rows have outer + inner bars.
+//   4. Multi-bar support   — two break-zone curves when rows have outer + inner bars.
+//
+// C3 (2026-08-08, L1-BOUNDARY-REBUILD-PLAN Phase C, P15) removed the
+// structure-affected-area overlay (reduced-opacity rows + hatching pattern +
+// legend entry) — operator ruling: confusing, and the structure's physical
+// effect is already carried by the wave action itself (SWAN L4), which this
+// card's Hs colour already reflects. `row.isStructureAffected` still backs
+// the sr-only table's "Open" column (data, not a visual overlay) and stays
+// available on each transect entry for a consumer that wants it.
 //
 // A11y (rules/coding.md §5):
 //   - SVG: role="img" + aria-labelledby → <title> + <desc>
 //   - sr-only <table> carries per-row Hs values and zone info for AT
 //   - No colour-only signals: zone fills paired with text labels; break glyphs have
-//     distinct shapes; structure rows annotated with aria-label text.
+//     distinct shapes.
 //   - Focus: interactive SVG is aria-hidden; all data exposed via sr-only table.
 //
 // X-axis: shore on RIGHT, offshore on LEFT (surfer's perspective; matches BeachProfileChart).
@@ -80,11 +86,15 @@ export interface HeatMapCardProps {
   mainBreakZoneEndIndex?: number | null;
   /**
    * BD-9 representative-transect index (D5.2, 2026-08-02) — same sourcing
-   * note as {@link mainBreakZoneStartIndex}. NOT rendered (operator ruling
-   * 2026-08-02: the representative-transect marker is developer/operator
-   * context, meaningless to an end user — removed from the default render).
-   * Kept in the prop interface for caller compatibility; the component
-   * accepts and ignores this value.
+   * note as {@link mainBreakZoneStartIndex}. NOT rendered as a marker
+   * (operator ruling 2026-08-02: the triangle/bold-label marker was
+   * developer/operator context, meaningless to an end user — stays removed
+   * from the default render). **Repurposed by C3 (2026-08-08,
+   * L1-BOUNDARY-REBUILD-PLAN Phase C, P15):** when present and its row's
+   * `transectBearingDeg` is non-null, this is the "beach bearing" reference
+   * the orthophoto imagery layer rotates by — the closest single
+   * beach-frame bearing the data carries (falls back to the middle row's
+   * bearing, then no rotation, when absent — see `beachBearingDeg` below).
    */
   representativeTransectIndex?: number | null;
   /**
@@ -132,9 +142,6 @@ const MAIN_BREAK_ZONE_FILL = 'rgba(168, 85, 247, 0.75)';
 // overlay; that overlay is no longer rendered — operator ruling 2026-08-02.)
 const PAD_BOTTOM_WITH_OVERLAY_LEGEND = PAD_BOTTOM + 22;
 
-// Hatching pattern ID is stable per component instance (prefixed below).
-const HATCH_BASE_ID = 'heatmap-structure-hatch';
-
 // ---------------------------------------------------------------------------
 // Colour scale: Hs → CSS rgb string (blue→teal→green→amber→red)
 // ---------------------------------------------------------------------------
@@ -176,24 +183,31 @@ function hsToColor(hs: number, maxHs: number, opacity = 0.85): string {
 // LM-2 (2026-08-03): Orthophoto background imagery — DISPLAY ONLY. Never
 // feeds SWAN, the 1D model, transect selection, or any physics path.
 //
-// ALIGNMENT ASSUMPTION (operator eyeball step — expect a tweak round):
-// transects are a radial fan from the spot's own location (this codebase's
-// "72-ray fan" design elsewhere) — each row's `transect[].distance` is a
-// cross-shore distance along THAT row's own `transectBearingDeg`, all
-// sharing one shared origin at approximately the spot's coordinates. A
-// bounding circle of radius = the largest tier-clipped cross-shore distance
-// (the SAME `minDist`/`maxDist` already driving the X axis) around
+// FOOTPRINT MODEL (unchanged since LM-2, C3 rotation added on top —
+// 2026-08-08, L1-BOUNDARY-REBUILD-PLAN Phase C, P15): transects are a radial
+// fan from the spot's own location (this codebase's "72-ray fan" design
+// elsewhere) — each row's `transect[].distance` is a cross-shore distance
+// along THAT row's own `transectBearingDeg`, all sharing one shared origin
+// at approximately the spot's coordinates. A bounding CIRCLE of radius =
+// the largest tier-clipped cross-shore distance (the SAME `minDist`/
+// `maxDist` already driving the X axis) + the C3 buffer around
 // `spotLat`/`spotLon` therefore contains every transect point regardless of
-// each row's own bearing. The fetched tile mosaic covering that circle is
-// stretched (north-up, unrotated) to fill the EXISTING chart rectangle
-// (PAD_LEFT..PAD_LEFT+CHART_W horizontally, PAD_TOP..PAD_TOP+N*rowH
-// vertically). This is NOT a per-cell geographic warp and does NOT rotate
-// the mosaic to the beach's own facing direction — the Y axis (row/transect
-// index) has no along-shore metric spacing in the data this card receives,
-// consistent with the "quasi-2D birdseye" framing DASHBOARD-MANUAL already
-// uses for this chart (not claimed-precise today either). Per-row bearing
-// is used only to justify the radial/circular bound, not for mosaic
-// rotation this round — a possible future refinement.
+// each row's own bearing — and, being a circle, its own rotation is a
+// no-op, so "the north-up enclosing box of the rotated footprint" (the
+// plan's P15 wording) reduces to the same box a circle always has. The Y
+// axis (row/transect index) still has no along-shore metric spacing in the
+// data this card receives, consistent with the "quasi-2D birdseye" framing
+// DASHBOARD-MANUAL uses for this chart — a rectangular (beach-frame)
+// footprint isn't derivable from available data without fabricating an
+// along-shore spacing value, so the circle stays the fetch-bbox model.
+//
+// C3 ROTATION (display only, does not change the fetch bbox above): the
+// mosaic image itself is drawn rotated about the chart-rectangle center so
+// the beach's own cross-shore direction (offshore = chart-left, per this
+// card's existing X-axis convention) lines up with the real-world compass
+// bearing the transects actually point along — "so that way it matches" an
+// ortho landmark (operator instruction). See `beachBearingDeg` /
+// `computeImageryRotationDeg()` below.
 // ---------------------------------------------------------------------------
 
 /** Max tiles fetched per mosaic side (4 -> up to 4x4=16 tiles). Named/documented, easily tuned. */
@@ -201,6 +215,15 @@ const IMAGERY_MOSAIC_MAX_TILES_PER_SIDE = 4;
 /** Zoom clamp — within the API's own supported range [0, 20] (API-MANUAL §12a). */
 const IMAGERY_ZOOM_MIN = 14;
 const IMAGERY_ZOOM_MAX = 19;
+/**
+ * C3 (2026-08-08, P15) — visible ortho buffer beyond the heatmap's own
+ * cross-shore/row extent, on all four sides, so a visitor can orient
+ * against a landmark (pier, jetty) outside the modeled area. Folded into
+ * both the fetch radius (more area requested) and the on-screen tile
+ * placement (image drawn larger than the core plot rectangle, clipped at
+ * the buffered — not the core — bound).
+ */
+const IMAGERY_VISIBLE_BUFFER_M = 50;
 /**
  * Heat-map colour-cell fill opacity multiplier when an ortho background is
  * present — low enough the photo reads through, high enough the Hs colours
@@ -226,6 +249,27 @@ function boundingBoxAroundPoint(lat: number, lon: number, radiusM: number): GeoB
   const cosLat = Math.cos((lat * Math.PI) / 180);
   const dLon = radiusM / (METERS_PER_DEGREE_LAT * Math.max(Math.abs(cosLat), 0.01));
   return { south: lat - dLat, north: lat + dLat, west: lon - dLon, east: lon + dLon };
+}
+
+/**
+ * C3 (2026-08-08, P15) — the SVG `rotate()` angle (degrees, clockwise on
+ * screen) that turns a north-up mosaic image so the OFFSHORE compass
+ * direction (`bearingDeg`, met/compass convention: 0=N, 90=E, 180=S, 270=W)
+ * points chart-LEFT — this card's existing offshore convention (shore
+ * right, offshore left, matching BeachProfileChart).
+ *
+ * Derivation: an unrotated north-up image maps compass bearing β to screen
+ * unit vector `(sin β, -cos β)` (β=0/N -> up, β=90/E -> right). Applying
+ * SVG's `rotate(θ)` transform (standard rotation matrix; appears clockwise
+ * on screen since SVG's y-axis points down) to that vector and solving for
+ * the θ that lands it on `(-1, 0)` (chart-left) reduces to `θ = 270 - β`
+ * (mod 360). Sanity checks: β=270 (offshore already due west, i.e. already
+ * chart-left in an unrotated north-up image) -> θ=0, no rotation needed.
+ * β=0 (offshore due north, "up" in an unrotated image) -> θ=270, rotating
+ * the image 270° clockwise so its "up" edge swings around to point left.
+ */
+export function computeImageryRotationDeg(bearingDeg: number): number {
+  return ((270 - bearingDeg) % 360 + 360) % 360;
 }
 
 // Standard slippy-map (Web Mercator) tile <-> lon/lat math. Pure arithmetic,
@@ -640,6 +684,7 @@ export function HeatMapCard({
   data, loading, error, onRetry, heightUnit, distanceUnit, locale,
   mainBreakZoneStartIndex = null, mainBreakZoneEndIndex = null,
   spotLat = null, spotLon = null,
+  representativeTransectIndex = null,
 }: HeatMapCardProps): ReactElement | null {
   const { t } = useTranslation('marine');
   const { t: tCommon } = useTranslation('common');
@@ -706,23 +751,63 @@ export function HeatMapCard({
     }
     if (maxHs <= 0) maxHs = 1;
 
-    return { rows, N, rowH, chartH, viewH, maxDist, minDist, maxHs, tier, displayTransects };
-  }, [data, showOverlayLegend, distanceUnit]);
+    // C3 (2026-08-08, P15) — the single "beach bearing" reference the
+    // imagery layer rotates by: the representative row's own bearing when
+    // available, else the middle row's, else null (no rotation — see the
+    // render body). Computed here (not a new prop) from data this card
+    // already receives.
+    let beachBearingDeg: number | null = null;
+    const repRow = representativeTransectIndex != null
+      ? rows.find((r) => r.transectIndex === representativeTransectIndex)
+      : undefined;
+    if (repRow && repRow.transectBearingDeg != null) {
+      beachBearingDeg = repRow.transectBearingDeg;
+    } else {
+      const midRow = rows[Math.floor(rows.length / 2)];
+      beachBearingDeg = midRow?.transectBearingDeg ?? null;
+    }
 
-  // LM-2: ortho tile mosaic — see the ALIGNMENT ASSUMPTION comment above
-  // computeImageryTiles(). Empty array (no rendering) whenever imagery
-  // config is absent, coordinates are absent, or geometry is null — the
-  // existing no-imagery/no-data render paths are completely unaffected.
-  const imageryTiles = useMemo(() => {
-    if (!imageryConfig || !geometry || spotLat == null || spotLon == null) return [];
+    return { rows, N, rowH, chartH, viewH, maxDist, minDist, maxHs, tier, displayTransects, beachBearingDeg };
+  }, [data, showOverlayLegend, distanceUnit, representativeTransectIndex]);
+
+  // LM-2/C3: ortho tile mosaic — see the FOOTPRINT MODEL / C3 ROTATION
+  // comment above computeImageryTiles(). `null` (no rendering) whenever
+  // imagery config is absent, coordinates are absent, or geometry is null —
+  // the existing no-imagery/no-data render paths are completely unaffected.
+  const imageryLayer = useMemo(() => {
+    if (!imageryConfig || !geometry || spotLat == null || spotLon == null) return null;
     const radiusM = Math.max(
       Math.abs(toMeters(geometry.minDist, distanceUnit)),
       Math.abs(toMeters(geometry.maxDist, distanceUnit)),
     );
-    if (!(radiusM > 0)) return [];
-    const bbox = boundingBoxAroundPoint(spotLat, spotLon, radiusM);
-    const zoom = selectImageryZoom(radiusM * 2, spotLat);
-    return computeImageryTiles(bbox, zoom, PAD_LEFT, PAD_TOP, CHART_W, geometry.chartH);
+    if (!(radiusM > 0)) return null;
+
+    // C3 — fetch radius includes the visible buffer, so the fetched mosaic
+    // actually covers the buffered on-screen area computed below.
+    const bufferedRadiusM = radiusM + IMAGERY_VISIBLE_BUFFER_M;
+    const bbox = boundingBoxAroundPoint(spotLat, spotLon, bufferedRadiusM);
+    const zoom = selectImageryZoom(bufferedRadiusM * 2, spotLat);
+
+    // C3 — on-screen placement rect, enlarged beyond the core chart
+    // rectangle by the buffer's own share of the core radius (so the buffer
+    // renders at the SAME meters-per-pixel scale as the core plot, on each
+    // axis independently — the core plot's own X/Y scales already differ,
+    // consistent with this chart's pre-existing "not a per-cell geographic
+    // warp" approximation).
+    const bufferFraction = IMAGERY_VISIBLE_BUFFER_M / radiusM;
+    const bufferPxX = bufferFraction * (CHART_W / 2);
+    const bufferPxY = bufferFraction * (geometry.chartH / 2);
+    const screenX = PAD_LEFT - bufferPxX;
+    const screenY = PAD_TOP - bufferPxY;
+    const screenW = CHART_W + 2 * bufferPxX;
+    const screenH = geometry.chartH + 2 * bufferPxY;
+
+    const tiles = computeImageryTiles(bbox, zoom, screenX, screenY, screenW, screenH);
+    const rotationDeg = geometry.beachBearingDeg != null
+      ? computeImageryRotationDeg(geometry.beachBearingDeg)
+      : 0;
+
+    return { tiles, rotationDeg, screenX, screenY, screenW, screenH };
   }, [imageryConfig, geometry, spotLat, spotLon, distanceUnit]);
 
   // X-axis tick values — tier's own tickStep (2026-08-02, parity with
@@ -796,7 +881,7 @@ export function HeatMapCard({
     );
   }
 
-  const { rows, N, rowH, viewH, maxDist, minDist, maxHs, displayTransects } = geometry;
+  const { rows, N, rowH, chartH, viewH, maxDist, minDist, maxHs, displayTransects } = geometry;
 
   // Value-vs-position fix (D5 audit remediation, MAJOR finding): `rows` is
   // an ARRAY indexed by POSITION, but `mainBreakZoneStartIndex`/`EndIndex`
@@ -828,14 +913,13 @@ export function HeatMapCard({
   // scattered-failure-fallback caveat, PROVIDER-MANUAL §14.15).
   const zoneBandStartPos = zoneBandValid ? Math.min(...zoneMemberPositions) : -1;
   const zoneBandEndPos = zoneBandValid ? Math.max(...zoneMemberPositions) : -1;
-  const hatchId = `${HATCH_BASE_ID}-${titleId.replace(/:/g, '')}`;
   const legendY = PAD_TOP + N * rowH + 28;
 
-  // LM-2: whether an ortho background actually renders this pass (imagery
-  // config present AND at least one tile computed). Drives the reduced
-  // colour-cell opacity and the background-rect/tile-mosaic branch below —
-  // when false, both render EXACTLY as before this round (KAT b).
-  const hasImageryBackground = imageryTiles.length > 0;
+  // LM-2/C3: whether an ortho background actually renders this pass
+  // (imagery config present AND at least one tile computed). Drives the
+  // reduced colour-cell opacity and the background-rect/tile-mosaic branch
+  // below — when false, both render EXACTLY as before this round (KAT b).
+  const hasImageryBackground = !!imageryLayer && imageryLayer.tiles.length > 0;
   const cellOpacity = hasImageryBackground ? HEATMAP_CELL_OPACITY_ON_ORTHO : HEATMAP_CELL_OPACITY_DEFAULT;
   const imageryClipId = `heatmap-imagery-clip-${titleId.replace(/:/g, '')}`;
 
@@ -851,7 +935,6 @@ export function HeatMapCard({
   for (let ri = 0; ri < rows.length; ri++) {
     const row = rows[ri];
     const y = rowToY(ri, rowH);
-    const rowOpacity = row.isStructureAffected ? 0.35 : 1;
 
     // Transect segments: each consecutive pair of envelope points forms a cell.
     // Colour = hs at the midpoint, or the leftmost point. Tier-clipped
@@ -901,7 +984,7 @@ export function HeatMapCard({
           }
         }
 
-        const fill = hsToColor(segHs, maxHs, rowOpacity * cellOpacity);
+        const fill = hsToColor(segHs, maxHs, cellOpacity);
         colorCells.push(
           <rect
             key={`cell-${ri}-${pi}`}
@@ -928,7 +1011,7 @@ export function HeatMapCard({
           y={y}
           width={CHART_W}
           height={rowH}
-          fill={hsToColor(rowHs, maxHs, rowOpacity * cellOpacity)}
+          fill={hsToColor(rowHs, maxHs, cellOpacity)}
         />
       );
     }
@@ -1012,26 +1095,6 @@ export function HeatMapCard({
       );
     }
 
-    // 5. Structure hatching overlay for structure-affected transects.
-    // (rendered below as a <rect fill=url(#hatch)> — collected via separate pass)
-  }
-
-  // Structure overlay rects — separate pass so they render on top of colour cells.
-  const structureOverlays: ReactElement[] = [];
-  for (let ri = 0; ri < rows.length; ri++) {
-    if (!rows[ri].isStructureAffected) continue;
-    const y = rowToY(ri, rowH);
-    structureOverlays.push(
-      <rect
-        key={`struct-${ri}`}
-        x={PAD_LEFT}
-        y={y}
-        width={CHART_W}
-        height={rowH}
-        fill={`url(#${hatchId})`}
-        opacity={0.5}
-      />
-    );
   }
 
   // ── sr-only data table ────────────────────────────────────────────────────
@@ -1123,25 +1186,16 @@ export function HeatMapCard({
               'An aerial photo of the beach is shown as a background for geographic context.')}`}
           </desc>
 
-          {/* Defs: hatching pattern for structure-affected rows */}
+          {/* Defs: LM-2/C3 — clip the ortho tile mosaic to the BUFFERED chart
+           *  rectangle (core plot + the C3 50m visible buffer on all sides)
+           *  so rotated/oversized tile edges never spill past that bound
+           *  into the Y-axis gutter or legend area. Only present when an
+           *  ortho background actually renders — omitted entirely otherwise
+           *  (KAT b DOM identity). */}
           <defs>
-            <pattern
-              id={hatchId}
-              patternUnits="userSpaceOnUse"
-              width={6}
-              height={6}
-              patternTransform="rotate(45)"
-            >
-              <line x1={0} y1={0} x2={0} y2={6} stroke="var(--muted-foreground)" strokeWidth={1.5} strokeOpacity={0.35} />
-            </pattern>
-            {/* LM-2: clip the ortho tile mosaic to the chart rectangle so
-             *  rotated/oversized tile edges never spill into the Y-axis
-             *  gutter or legend area. Only present when an ortho background
-             *  actually renders — omitted entirely otherwise (KAT b DOM
-             *  identity). */}
-            {hasImageryBackground && (
+            {hasImageryBackground && imageryLayer && (
               <clipPath id={imageryClipId}>
-                <rect x={PAD_LEFT} y={PAD_TOP} width={CHART_W} height={N * rowH} />
+                <rect x={imageryLayer.screenX} y={imageryLayer.screenY} width={imageryLayer.screenW} height={imageryLayer.screenH} />
               </clipPath>
             )}
           </defs>
@@ -1150,20 +1204,28 @@ export function HeatMapCard({
            *  instead of the plain translucent rect when imagery is
            *  available, so the semi-transparent colour cells above read as
            *  an overlay on the real beach photo. No imagery -> the ORIGINAL
-           *  rect, unchanged (KAT b byte-identity). */}
-          {hasImageryBackground ? (
+           *  rect, unchanged (KAT b byte-identity). C3: the mosaic <g> is
+           *  rotated about the CORE chart rectangle's center by the beach
+           *  bearing (`imageryLayer.rotationDeg`, 0 = no rotation) so the
+           *  imagery's real-world orientation lines up with this card's
+           *  offshore-left convention — the outer clip (unrotated, on the
+           *  BUFFERED rect) stays fixed so the rotated image is contained,
+           *  not the inner rotated group. */}
+          {hasImageryBackground && imageryLayer ? (
             <g aria-hidden="true" clipPath={`url(#${imageryClipId})`}>
-              {imageryTiles.map((tile) => (
-                <image
-                  key={`ortho-${tile.z}-${tile.x}-${tile.y}`}
-                  href={substituteTileUrl(imageryConfig!.tileUrl, tile.z, tile.x, tile.y)}
-                  x={tile.sx}
-                  y={tile.sy}
-                  width={tile.sw}
-                  height={tile.sh}
-                  preserveAspectRatio="none"
-                />
-              ))}
+              <g transform={`rotate(${imageryLayer.rotationDeg} ${PAD_LEFT + CHART_W / 2} ${PAD_TOP + chartH / 2})`}>
+                {imageryLayer.tiles.map((tile) => (
+                  <image
+                    key={`ortho-${tile.z}-${tile.x}-${tile.y}`}
+                    href={substituteTileUrl(imageryConfig!.tileUrl, tile.z, tile.x, tile.y)}
+                    x={tile.sx}
+                    y={tile.sy}
+                    width={tile.sw}
+                    height={tile.sh}
+                    preserveAspectRatio="none"
+                  />
+                ))}
+              </g>
             </g>
           ) : (
             <rect
@@ -1195,9 +1257,6 @@ export function HeatMapCard({
 
           {/* Zone overlays */}
           {zoneFills}
-
-          {/* Structure hatching */}
-          {structureOverlays}
 
           {/* Breaker glyphs */}
           {breakGlyphs}
@@ -1241,6 +1300,24 @@ export function HeatMapCard({
               {row.transectIndex}
             </text>
           ))}
+
+          {/* C3 (2026-08-08, P15) — Y-axis title. The Y axis is an ORDINAL
+           *  transect index, not a physical along-shore distance (this
+           *  data carries no along-shore metric spacing — see the FOOTPRINT
+           *  MODEL comment above computeImageryTiles()), so the title names
+           *  what the axis IS ("Transect") rather than fabricate a ft/m
+           *  unit to match the X axis. */}
+          <text
+            transform="rotate(-90)"
+            x={-(PAD_TOP + chartH / 2)}
+            y={10}
+            fontSize={9}
+            fill="var(--muted-foreground)"
+            textAnchor="middle"
+            aria-hidden="true"
+          >
+            {t('surfing.heatMap.transectAxisLabel', 'Transect')}
+          </text>
 
           {/* X axis ticks and labels */}
           {xTicks.map((v) => {
@@ -1310,29 +1387,6 @@ export function HeatMapCard({
             locale={locale}
             svgY={legendY}
           />
-
-          {/* Structure affected legend note */}
-          {rows.some(r => r.isStructureAffected) && (
-            <g>
-              <rect
-                x={PAD_LEFT}
-                y={legendY}
-                width={14}
-                height={10}
-                fill={`url(#${hatchId})`}
-                opacity={0.5}
-              />
-              <text
-                x={PAD_LEFT + 18}
-                y={legendY + 9}
-                fontSize={9}
-                fill="var(--muted-foreground)"
-                aria-hidden="true"
-              >
-                {t('surfing.heatMap.shadowedTransect', 'Structure-affected')}
-              </text>
-            </g>
-          )}
 
           {/* ── BD-7 overlay legend row (D5.2) — new row below the existing
            *  legend line; only reserves the extra vertical space

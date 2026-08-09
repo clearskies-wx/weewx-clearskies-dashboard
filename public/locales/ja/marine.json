@@ -286,6 +286,7 @@
     "heatMapDesc": "2D grid showing significant wave height across {{n}} along-shore transects. Colour scale from blue (small) to red (large).",
     "heatMap": {
       "transectIndex": "Transect",
+      "transectAxisLabel": "Transect",
       "openTransect": "Open",
       "breakHeight": "Break height ({{unit}})",
       "breakDistance": "Break distance ({{unit}})",
