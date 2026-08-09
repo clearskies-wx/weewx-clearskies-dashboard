@@ -250,6 +250,46 @@ function pathFromPoints(points: Array<[number, number]>): string {
 }
 
 // ---------------------------------------------------------------------------
+// C2 (2026-08-08, L1-BOUNDARY-REBUILD-PLAN Phase C, P14) — dominant-swell
+// selection for the wave-surface synthesis. R5 (dominant-partition serving)
+// already restricts every served `breakPoints` entry to the same
+// `partitionInfo.partitionIndex`; this filter is defense-in-depth (explicit
+// selection-by-contract rather than incidental correctness from an upstream
+// invariant this component doesn't itself verify) and a no-op on live
+// post-R5 data. Dominance criterion mirrors the backend's own (largest face
+// height, faceHeight falling back to hs) — no second definition invented.
+// Entries with no `partitionInfo` at all (pre-T4A.6 cached responses) can't
+// be grouped — returned unchanged, same as before this task.
+// ---------------------------------------------------------------------------
+
+export function selectDominantPartitionBreakPoints(
+  breakPoints: BeachProfileBreakPoint[],
+): BeachProfileBreakPoint[] {
+  if (breakPoints.length === 0) return [];
+  if (breakPoints.some((bp) => bp.partitionInfo == null)) return breakPoints;
+
+  const groups = new Map<number, BeachProfileBreakPoint[]>();
+  for (const bp of breakPoints) {
+    const idx = bp.partitionInfo!.partitionIndex;
+    const group = groups.get(idx);
+    if (group) group.push(bp);
+    else groups.set(idx, [bp]);
+  }
+  if (groups.size <= 1) return breakPoints;
+
+  let dominant: BeachProfileBreakPoint[] = breakPoints;
+  let bestFace = -Infinity;
+  for (const group of groups.values()) {
+    const groupMaxFace = Math.max(...group.map((bp) => bp.faceHeight ?? bp.hs ?? 0));
+    if (groupMaxFace > bestFace) {
+      bestFace = groupMaxFace;
+      dominant = group;
+    }
+  }
+  return dominant;
+}
+
+// ---------------------------------------------------------------------------
 // D5.2 — zero-width band skip
 // ---------------------------------------------------------------------------
 
@@ -379,8 +419,12 @@ export function BeachProfileChart({
   // technique ported from the approved mockup (not a physics model output —
   // display decoration over the model's own Hs/period values). ───────────
   const maxWaveH = Math.max(...displayTransect.map((p) => p.hs ?? 0), 0.1);
-  const outerBreak = breakPoints.length > 0
-    ? breakPoints.reduce((a, b) => (Math.abs(a.distance) > Math.abs(b.distance) ? a : b))
+  // C2 — only the dominant swell's own break points drive the drawn train
+  // (anchor + secondary bumps below); see selectDominantPartitionBreakPoints
+  // above.
+  const dominantSwellBreakPoints = selectDominantPartitionBreakPoints(breakPoints);
+  const outerBreak = dominantSwellBreakPoints.length > 0
+    ? dominantSwellBreakPoints.reduce((a, b) => (Math.abs(a.distance) > Math.abs(b.distance) ? a : b))
     : null;
   const G = distanceUnit === 'ft' ? 32.174 : 9.80665;
   const periodS = outerBreak?.partitionInfo?.periodS ?? 10;
@@ -403,7 +447,7 @@ export function BeachProfileChart({
     if (broken) amp *= 0.75;
     const f = (Math.cos(theta) + 0.42 * Math.cos(2 * theta)) / 1.42;
     let eta = amp * f;
-    for (const bp of breakPoints) {
+    for (const bp of dominantSwellBreakPoints) {
       if (bp === outerBreak) continue;
       const faceH = bp.faceHeight ?? bp.hs ?? 0;
       eta += 0.55 * faceH * Math.exp(-(((d - bp.distance) / SECONDARY_BUMP_WINDOW) ** 2));
