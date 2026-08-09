@@ -788,14 +788,32 @@ export function HeatMapCard({
     const bbox = boundingBoxAroundPoint(spotLat, spotLon, bufferedRadiusM);
     const zoom = selectImageryZoom(bufferedRadiusM * 2, spotLat);
 
-    // C3 — on-screen placement rect, enlarged beyond the core chart
-    // rectangle by the buffer's own share of the core radius (so the buffer
-    // renders at the SAME meters-per-pixel scale as the core plot, on each
-    // axis independently — the core plot's own X/Y scales already differ,
-    // consistent with this chart's pre-existing "not a per-cell geographic
-    // warp" approximation).
+    // C3-fix (2026-08-09, lead-measured live-DOM defect, coordinator ruling
+    // 2026-08-09 — option (a)): the X buffer must agree with the chart's
+    // OWN real x-axis scale (`distToX`'s slope: CHART_W px maps to
+    // (maxDist-minDist) meters), not the `IMAGERY_VISIBLE_BUFFER_M /
+    // radiusM` footprint-model fraction the Y buffer below still uses — that
+    // fraction assumed CHART_W represents the full 2*radiusM diameter, but
+    // `distToX` only ever spans (maxDist-minDist), so the old formula
+    // undersized the on-screen X buffer (measured ~33m instead of 50m).
+    // Deriving directly from distToX's own slope guarantees agreement with
+    // the drawn x-axis ticks by construction.
+    const maxDistM = toMeters(geometry.maxDist, distanceUnit);
+    const minDistM = toMeters(geometry.minDist, distanceUnit);
+    const distRangeM = maxDistM - minDistM;
+    const pxPerMeterX = distRangeM > 0 ? CHART_W / distRangeM : 0;
+    const bufferPxX = IMAGERY_VISIBLE_BUFFER_M * pxPerMeterX;
+    // Y buffer — UNCHANGED, footprint-model frame only (coordinator ruling
+    // 2026-08-09): the Y axis (transect row index) has no real along-shore
+    // physical scale anywhere in this component or its data (see the
+    // FOOTPRINT MODEL comment above computeImageryTiles()) — chartH is a
+    // pure layout value (N * rowH), not a distance. "50 m of Y buffer"
+    // therefore only has meaning in the footprint model's own frame (the
+    // same `IMAGERY_VISIBLE_BUFFER_M / radiusM` fraction the whole circle
+    // footprint uses), NOT the x-axis's ruler — do not "fix" this to match
+    // pxPerMeterX above; that would mix two different, non-comparable axis
+    // frames.
     const bufferFraction = IMAGERY_VISIBLE_BUFFER_M / radiusM;
-    const bufferPxX = bufferFraction * (CHART_W / 2);
     const bufferPxY = bufferFraction * (geometry.chartH / 2);
     const screenX = PAD_LEFT - bufferPxX;
     const screenY = PAD_TOP - bufferPxY;
@@ -1286,20 +1304,33 @@ export function HeatMapCard({
            *  label) removed from the render — operator ruling 2026-08-02:
            *  developer/operator context, meaningless to an end user. */}
 
-          {/* Y axis — transect index labels (only render if space allows) */}
-          {rowH >= 12 && rows.map((row, ri) => (
-            <text
-              key={`ylabel-${ri}`}
-              x={PAD_LEFT - 4}
-              y={rowToY(ri, rowH) + rowH / 2 + 3.5}
-              fontSize={Math.min(10, rowH * 0.7)}
-              fill="var(--muted-foreground)"
-              textAnchor="end"
-              aria-hidden="true"
-            >
-              {row.transectIndex}
-            </text>
-          ))}
+          {/* Y axis — transect index labels. C3-fix (2026-08-09, lead-measured
+           *  live-DOM defect): the prior `rowH >= 12` all-or-nothing gate
+           *  suppressed EVERY label whenever rows were dense enough that a
+           *  single row was under 12px tall (e.g. 162 transects at HB ->
+           *  rowH 8px -> zero labels). Density-aware every-Nth labeling
+           *  instead: label every `labelStep`-th row (plus always the last
+           *  row, so the bottom of the axis is never unlabeled), where
+           *  `labelStep` is the smallest integer step whose rows are each
+           *  >= 12px apart on screen. rowH >= 12 (labelStep=1, every row)
+           *  renders byte-identical to before this fix. */}
+          {rows.map((row, ri) => {
+            const labelStep = Math.max(1, Math.ceil(12 / rowH));
+            if (ri % labelStep !== 0 && ri !== rows.length - 1) return null;
+            return (
+              <text
+                key={`ylabel-${ri}`}
+                x={PAD_LEFT - 4}
+                y={rowToY(ri, rowH) + rowH / 2 + 3.5}
+                fontSize={10}
+                fill="var(--muted-foreground)"
+                textAnchor="end"
+                aria-hidden="true"
+              >
+                {row.transectIndex}
+              </text>
+            );
+          })}
 
           {/* C3 (2026-08-08, P15) — Y-axis title. The Y axis is an ORDINAL
            *  transect index, not a physical along-shore distance (this

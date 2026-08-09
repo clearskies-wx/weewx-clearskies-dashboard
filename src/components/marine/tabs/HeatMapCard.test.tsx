@@ -1128,6 +1128,79 @@ describe('HeatMapCard', () => {
       expect(y + h).toBeGreaterThan(PAD_TOP + CORE_CHART_H);
     });
 
+    // ── C3-fix (2026-08-09) — X buffer derives from the real x-axis scale,
+    //    not a hardcoded/fixed-fraction radius; Y buffer stays on the
+    //    footprint-model frame, untouched (coordinator ruling, option (a)). ──
+    describe('C3-fix — buffer scale correction', () => {
+      // OK_RESPONSE_5_ROWS + distanceUnit="m": both rows carry distances
+      // 100 and 10 (buildRow) with no breakPoints, so tier selection falls
+      // through to the Standard-tier-vs-maxDistance check and lands on
+      // tierShort (maxDistance=100 at METER_TO_UNIT=1) since maxDistance
+      // (100) <= tierShort.maxDistance (100); minDistanceClipped starts at 0
+      // and only goes negative for points < 0 (none here), so minDist=0,
+      // maxDist=100 — CHART_W(748)/(100-0) = 7.48 px/m EXACTLY, giving a
+      // falsifiable expected buffer: 50 * 7.48 = 374px. A reversion to the
+      // old `IMAGERY_VISIBLE_BUFFER_M / radiusM * (CHART_W/2)` formula
+      // (radiusM=100 here) would instead give 50/100*374 = 187px — half —
+      // failing this assertion.
+      it('X buffer px matches CHART_W / (maxDist-minDist) exactly, falsifiable against the old fixed-fraction formula', () => {
+        mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
+        const { container } = render(
+          <HeatMapCard {...baseProps} distanceUnit="m" data={OK_RESPONSE_5_ROWS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
+        );
+        const clipRect = container.querySelector('clipPath rect')!;
+        const x = Number(clipRect.getAttribute('x'));
+        const expectedBufferPxX = 50 * (748 / 100); // 374
+        expect(x).toBeCloseTo(PAD_LEFT - expectedBufferPxX, 3);
+        const oldFormulaBufferPxX = (50 / 100) * (748 / 2); // 187 — must NOT match
+        expect(x).not.toBeCloseTo(PAD_LEFT - oldFormulaBufferPxX, 3);
+      });
+
+      // Scale-mutation check: doubling the cross-shore distance range must
+      // exactly halve the on-screen X buffer (px-per-meter halves too) —
+      // proves the buffer is DERIVED from the axis scale, not an independent
+      // constant that happens to produce a plausible-looking number.
+      it('X buffer scales proportionally with the x-axis meters-per-pixel ratio (mutation of distance range)', () => {
+        mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
+        const wideTransect = [
+          { distance: 1000, depth: 15, hs: 3.5 },
+          { distance: 10, depth: 0.5, hs: 0.8 },
+        ];
+        const wideRows = [0, 1, 2, 3, 4].map((i) => ({ ...buildRow(i), transect: wideTransect }));
+        const wideResponse: HeatMapProfileDataOk = {
+          ...OK_RESPONSE_5_ROWS,
+          profiles: wideRows,
+        };
+        const { container } = render(
+          <HeatMapCard {...baseProps} distanceUnit="m" data={wideResponse} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
+        );
+        const clipRect = container.querySelector('clipPath rect')!;
+        const x = Number(clipRect.getAttribute('x'));
+        // tier=Extended (maxDistance 1000), minDist=0 -> 748/1000 = 0.748 px/m -> buffer 37.4px.
+        const expectedBufferPxX = 50 * (748 / 1000);
+        expect(x).toBeCloseTo(PAD_LEFT - expectedBufferPxX, 3);
+      });
+
+      // Y buffer must stay on the pre-existing footprint-model fraction
+      // (IMAGERY_VISIBLE_BUFFER_M / radiusM applied to chartH/2) — NOT
+      // rescaled to the x-axis's px/m ratio. Falsifiable: if a future edit
+      // wrongly reused pxPerMeterX for Y, this would fail (the two ratios
+      // differ for this fixture: chartH-based fraction vs CHART_W-based).
+      it('Y buffer stays on the footprint-model fraction (unchanged), independent of the X-axis scale fix', () => {
+        mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
+        const { container } = render(
+          <HeatMapCard {...baseProps} distanceUnit="m" data={OK_RESPONSE_5_ROWS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
+        );
+        const clipRect = container.querySelector('clipPath rect')!;
+        const y = Number(clipRect.getAttribute('y'));
+        // radiusM = max(|minDist|,|maxDist|) = 100 (maxDist=100, minDist=0);
+        // chartH = 240 (N=5, rowH=48). bufferFraction = 50/100 = 0.5;
+        // bufferPxY = 0.5 * (240/2) = 60.
+        const expectedBufferPxY = (50 / 100) * (240 / 2);
+        expect(y).toBeCloseTo(PAD_TOP - expectedBufferPxY, 3);
+      });
+    });
+
     it('y-axis title renders (rotated text, distinct from the row-index tick labels)', () => {
       const { container, getByText } = render(
         <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS} loading={false} />,
@@ -1135,6 +1208,59 @@ describe('HeatMapCard', () => {
       const title = getByText('surfing.heatMap.transectAxisLabel');
       expect(title.getAttribute('transform')).toBe('rotate(-90)');
       expect(container.querySelector('svg')!.contains(title)).toBe(true);
+    });
+
+    // ── C3-fix (2026-08-09, lead-measured live-DOM defect) — the prior
+    //    `rowH >= 12` all-or-nothing gate suppressed EVERY y-axis row-index
+    //    label once row density passed one row per 12px (162 transects at a
+    //    live HB spot -> rowH=8px -> ZERO labels rendered). Density-aware
+    //    every-Nth labeling replaces it. ──
+    describe('C3-fix — Y-axis density-aware tick labels', () => {
+      // 40 rows -> rowH = min(48, max(8, floor(300/40))) = min(48, max(8,7)) = 8.
+      // labelStep = max(1, ceil(12/8)) = 2. Falsifiable against BOTH the old
+      // `rowH >= 12` gate (would render ZERO labels here — rowH=8 fails the
+      // gate) and a naive "always label every row" regression (would render
+      // 40 labels, not the expected 21: rows 0,2,4,...,38 (20) + row 39
+      // (the always-included last row) = 21).
+      const ROWS_40: HeatMapProfileDataOk = {
+        locationId: 'huntington-city-beach-pier',
+        timestep: '2026-08-09T00:00:00Z',
+        modelStatus: 'ok',
+        profiles: Array.from({ length: 40 }, (_, i) => buildRow(i)),
+        perPartitionBreaks: [],
+        metadata: {
+          axisUnits: { x: 'm', y: 'm' },
+          verticalDatum: 'LMSL',
+          transectCount: 40,
+          openTransectCount: 40,
+          handoffDepthM: 2,
+          handoffSourceLevel: 'L3',
+        },
+      };
+
+      it('dense rows (rowH=8, below the old 12px gate): renders every-2nd label plus the last row, not zero and not all 40', () => {
+        const { container } = render(
+          <HeatMapCard {...baseProps} distanceUnit="m" data={ROWS_40} loading={false} />,
+        );
+        const labels = Array.from(container.querySelectorAll('svg text[text-anchor="end"]'))
+          .map((el) => el.textContent)
+          .filter((t): t is string => t !== null && /^\d+$/.test(t))
+          .map(Number);
+        const expected = [...Array.from({ length: 20 }, (_, i) => i * 2), 39];
+        expect(labels).toEqual(expected);
+        expect(labels.length).toBe(21);
+      });
+
+      it('sparse rows (rowH>=12, e.g. 5 rows -> rowH=48): every row labeled — byte-identical to pre-fix behavior (labelStep=1)', () => {
+        const { container } = render(
+          <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS} loading={false} />,
+        );
+        const labels = Array.from(container.querySelectorAll('svg text[text-anchor="end"]'))
+          .map((el) => el.textContent)
+          .filter((t): t is string => t !== null && /^\d+$/.test(t))
+          .map(Number);
+        expect(labels).toEqual([0, 1, 2, 3, 4]);
+      });
     });
 
     it('structure-affected-area overlay is gone: no hatch pattern, no legend text, structure-affected rows render at the SAME colour-cell opacity as open rows', () => {
