@@ -415,6 +415,55 @@ describe('SurfingTab — 3-stat dl structure (D9, 2026-08-02)', () => {
   });
 });
 
+// C1 (L1-BOUNDARY-REBUILD-PLAN Phase C, P13, 2026-08-08) — Current Swell
+// Conditions card: dumb-renderer range display over server-computed
+// swellHeightMinFt/MaxFt, faceHeightMinFt/MaxFt, combinedPeriodS. No
+// client-side eligibility logic — these tests only pin the RENDER contract
+// (range text, collapse-to-one-number, null fallback), not any eligibility
+// rule (that's server-side/API-repo scope).
+describe('SurfingTab — swell-conditions card range fields (C1, P13)', () => {
+  it('renders "min–max ft" for swell height and face height, and the combined period, when all P13 fields are present', () => {
+    surfData = buildSurfData(buildEntry({
+      swellHeightMinFt: 1.1,
+      swellHeightMaxFt: 1.5,
+      faceHeightMinFt: 2.5,
+      faceHeightMaxFt: 3.1,
+      combinedPeriodS: 15.1,
+    }));
+    const { container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    expect(container.textContent).toMatch(/1\.1.{0,2}–.{0,2}1\.5/);
+    expect(container.textContent).toMatch(/2\.5.{0,2}–.{0,2}3\.1/);
+    expect(container.textContent).toContain('15.1');
+  });
+
+  it('collapses to a single number when min === max', () => {
+    surfData = buildSurfData(buildEntry({
+      swellHeightMinFt: 2.0,
+      swellHeightMaxFt: 2.0,
+    }));
+    const { container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    expect(container.textContent).not.toMatch(/2\.0.{0,2}–.{0,2}2\.0/);
+    expect(container.textContent).toMatch(/2\.0/);
+  });
+
+  it('falls back to the pre-C1 display when the P13 fields are absent (older cached response)', () => {
+    surfData = buildSurfData(buildEntry({
+      swellHeightMinFt: undefined,
+      swellHeightMaxFt: undefined,
+      faceHeightMinFt: undefined,
+      faceHeightMaxFt: undefined,
+      combinedPeriodS: undefined,
+      modelSurfHeightMin: 2.5,
+      modelSurfHeightMax: 3.1,
+    }));
+    const { container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    // Old modelSurfHeightMin/Max range still renders (pre-C1 fallback path).
+    expect(container.textContent).toMatch(/2\.5.{0,2}–.{0,2}3\.1/);
+    expect(container.textContent).not.toMatch(/undefined/);
+    expect(container.textContent).not.toMatch(/NaN/);
+  });
+});
+
 // D2 ruling 2026-08-04, S-SPEC-2 — the Current Swell card's shadow-face-height
 // secondary line and AT BREAK per-partition rows are REMOVED from this card's
 // render (ca0689e): "no user will know what the hell that is… these were

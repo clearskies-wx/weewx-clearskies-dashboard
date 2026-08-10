@@ -1888,6 +1888,21 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
       }, forecast[0])
     : null;
 
+  // ── C1 (L1-BOUNDARY-REBUILD-PLAN Phase C, P13, 2026-08-08) — dumb
+  // renderer for the server-computed swell-card aggregate range fields.
+  // "min–max ft" (equal values collapse to one number); null when either
+  // half of the pair is null (pre-C1 cached response) so the caller falls
+  // back to its pre-C1 single-value/range display. No eligibility logic
+  // here — the server has already decided which components count.
+  const formatMinMaxFt = (min: number | null | undefined, max: number | null | undefined): string | null => {
+    if (min == null || max == null) return null;
+    return min === max
+      ? formatValue(min, 'default', locale)
+      : `${formatValue(min, 'default', locale)}–${formatValue(max, 'default', locale)}`;
+  };
+  const swellHeightRangeFt = primary ? formatMinMaxFt(primary.swellHeightMinFt, primary.swellHeightMaxFt) : null;
+  const faceHeightRangeFt = primary ? formatMinMaxFt(primary.faceHeightMinFt, primary.faceHeightMaxFt) : null;
+
   // ── Swell components — nearest entry WITH multiSwell data.
   // Not every forecast entry has spectral decomposition: full SWAN runs (4×/day)
   // produce multiSwell; hourly quick updates do not. Find the entry closest to
@@ -2123,16 +2138,28 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                 <div className="grid grid-cols-3 gap-x-4 gap-y-2">
                   {/* Icon-left stat: icon beside the value/label block */}
                   {[
-                    { icon: <Waves weight="bold" />, label: t('surfing.swellHeightStatLabel', { defaultValue: 'Swell Height' }), value: formatValue(primary.swellHeight ?? primary.waveHeightAtBreak, 'default', locale), unit: heightUnit },
+                    {
+                      icon: <Waves weight="bold" />,
+                      label: t('surfing.swellHeightStatLabel', { defaultValue: 'Swell Height' }),
+                      value: swellHeightRangeFt !== null ? swellHeightRangeFt : formatValue(primary.swellHeight ?? primary.waveHeightAtBreak, 'default', locale),
+                      unit: swellHeightRangeFt !== null ? 'ft' : heightUnit,
+                    },
                     {
                       icon: <Waves weight="bold" />,
                       label: t('surfing.faceBreakHeightLabel', { defaultValue: 'Breaking Face Height' }),
-                      value: surfHeightDisplay !== 'hawaiian' && primary.modelSurfHeightMin != null && primary.modelSurfHeightMax != null && primary.modelSurfHeightMin !== primary.modelSurfHeightMax
-                        ? `${formatValue(primary.modelSurfHeightMin, 'default', locale)}–${formatValue(primary.modelSurfHeightMax, 'default', locale)}`
-                        : formatValue(getDisplayHeight(primary, surfHeightDisplay), 'default', locale),
-                      unit: heightUnit,
+                      value: faceHeightRangeFt !== null
+                        ? faceHeightRangeFt
+                        : (surfHeightDisplay !== 'hawaiian' && primary.modelSurfHeightMin != null && primary.modelSurfHeightMax != null && primary.modelSurfHeightMin !== primary.modelSurfHeightMax
+                            ? `${formatValue(primary.modelSurfHeightMin, 'default', locale)}–${formatValue(primary.modelSurfHeightMax, 'default', locale)}`
+                            : formatValue(getDisplayHeight(primary, surfHeightDisplay), 'default', locale)),
+                      unit: faceHeightRangeFt !== null ? 'ft' : heightUnit,
                     },
-                    { icon: <Timer weight="bold" />, label: t('surfing.period'), value: formatValue(primary.period, 'default', locale), unit: periodUnit },
+                    {
+                      icon: <Timer weight="bold" />,
+                      label: t('surfing.period'),
+                      value: primary.combinedPeriodS != null ? formatValue(primary.combinedPeriodS, 'default', locale) : formatValue(primary.period, 'default', locale),
+                      unit: periodUnit,
+                    },
                   ].map((s) => (
                     <div key={s.label} className="flex items-center gap-2">
                       <span aria-hidden="true" className="shrink-0 text-muted-foreground" style={{ fontSize: 'var(--text-stat-tile)' }}>
