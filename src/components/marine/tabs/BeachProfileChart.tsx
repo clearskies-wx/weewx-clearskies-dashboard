@@ -61,6 +61,15 @@ import type {
 } from '../../../api/types';
 
 // ---------------------------------------------------------------------------
+// SURF-REMEDIATION R3.2 (2026-08-09) — fixed display-window defaults. Used
+// ONLY when the API response's metadata carries no displayWindowM/
+// displayLandwardM (older/pre-R3 cached responses) — never a re-derivation
+// of the chart's own data. The Huntington-only preset named by D-R2.
+// ---------------------------------------------------------------------------
+const R3_FALLBACK_WINDOW_M = 150;
+const R3_FALLBACK_LANDWARD_M = 30;
+
+// ---------------------------------------------------------------------------
 // Props
 // ---------------------------------------------------------------------------
 
@@ -103,6 +112,15 @@ export interface BeachProfileChartProps {
   selectedTransect?: number | 'best_peak' | 'average';
   /** Called when the visitor selects a different transect. */
   onTransectChange?: (value: number | 'best_peak' | 'average') => void;
+  /**
+   * SURF-REMEDIATION R3.1/R3.2 (2026-08-09) — the spot's fixed seaward
+   * display-extent, metres (from `BeachProfileMetadata.displayWindowM`).
+   * Null/undefined (pre-R3 cached response) → the hardcoded R3 fallback
+   * preset (150 m) is used instead.
+   */
+  displayWindowM?: number | null;
+  /** See {@link displayWindowM} — fixed landward display extent, metres. Null/undefined → the 30 m fallback. */
+  displayLandwardM?: number | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -134,36 +152,33 @@ const BED_SAMPLE_COUNT = 160;
 const SURFACE_SAMPLE_COUNT = 160;
 
 // ---------------------------------------------------------------------------
-// 3-tier X-axis scale — UNCHANGED from the pre-D5 chart (tier-selection bug
-// fix 2026-08-02, Math.abs() on signed break distances). The mockup does
-// not dictate tick spacing; this logic is orthogonal to the visual rebuild.
+// SURF-REMEDIATION R3.2 (2026-08-09) — the x-domain is now fixed (from
+// metadata.displayWindowM/displayLandwardM, or the R3_FALLBACK preset), not
+// data-driven. `selectTier()` (the old outermost-break-distance-driven tier
+// picker) is DELETED per R3.2 — content beyond the fixed domain clips,
+// short content does not stretch. Tick SPACING keeps its pre-R3 step-size
+// ladder (100/25, 300/50, 1000/200 m, scaled by METER_TO_UNIT) — only which
+// tier picks the step now depends on the fixed window size, never on break
+// or transect data.
 // ---------------------------------------------------------------------------
 
 interface ScaleTier { maxDistance: number; tickStep: number; }
 
-function selectTier(
-  breakPoints: BeachProfileBreakPoint[],
-  transect: BeachProfileTransectPoint[],
+function tickStepForWindow(
+  windowUnits: number,
   tierShort: ScaleTier,
   tierStandard: ScaleTier,
   tierExtended: ScaleTier,
-): ScaleTier {
-  const outerBreakDist = breakPoints.length > 0
-    ? Math.max(...breakPoints.map((bp) => Math.abs(bp.distance)))
-    : 0;
-  if (outerBreakDist > 0 && outerBreakDist <= tierShort.maxDistance)    return tierShort;
-  if (outerBreakDist > 0 && outerBreakDist <= tierStandard.maxDistance) return tierStandard;
-  if (outerBreakDist > tierStandard.maxDistance)                         return tierExtended;
-  const maxDist = Math.max(...transect.map((p) => p.distance), 0);
-  if (maxDist <= tierShort.maxDistance)    return tierShort;
-  if (maxDist <= tierStandard.maxDistance) return tierStandard;
-  return tierExtended;
+): number {
+  if (windowUnits <= tierShort.maxDistance) return tierShort.tickStep;
+  if (windowUnits <= tierStandard.maxDistance) return tierStandard.tickStep;
+  return tierExtended.tickStep;
 }
 
-function computeDistanceTicks(tier: ScaleTier, xMin: number): number[] {
+function computeDistanceTicks(maxDistance: number, tickStep: number, xMin: number): number[] {
   const ticks: number[] = [];
-  const negFirst = Math.ceil(xMin / tier.tickStep) * tier.tickStep;
-  for (let d = negFirst; d <= tier.maxDistance; d += tier.tickStep) ticks.push(d);
+  const negFirst = Math.ceil(xMin / tickStep) * tickStep;
+  for (let d = negFirst; d <= maxDistance; d += tickStep) ticks.push(d);
   // The dry-beach strip is narrower than one tick step — label its landward
   // edge so the axis doesn't just stop at 0 (operator, 2026-08-05: the axis
   // must show negative numbers over the sand).
@@ -345,6 +360,8 @@ export function BeachProfileChart({
   transects = null,
   selectedTransect,
   onTransectChange,
+  displayWindowM = null,
+  displayLandwardM = null,
 }: BeachProfileChartProps) {
   const { t } = useTranslation('marine');
 
@@ -356,11 +373,19 @@ export function BeachProfileChart({
   const tierStandard = { maxDistance: Math.round(300  * METER_TO_UNIT), tickStep: Math.round(50  * METER_TO_UNIT) };
   const tierExtended = { maxDistance: Math.round(1000 * METER_TO_UNIT), tickStep: Math.round(200 * METER_TO_UNIT) };
 
-  const tier = selectTier(breakPoints, transect, tierShort, tierStandard, tierExtended);
-  const clipped = transect.filter((p) => p.distance <= tier.maxDistance);
-  const displayTransect = clipped.length >= 2 ? clipped : transect;
+  // SURF-REMEDIATION R3.2 — the x-domain is FIXED: exactly
+  // [+displayWindowM, -displayLandwardM] from metadata, every render,
+  // regardless of where breaks/transect/zones fall this hour. Metadata
+  // absent (older API) -> the hardcoded R3 fallback preset (never the old
+  // tier logic).
+  const windowM = displayWindowM ?? R3_FALLBACK_WINDOW_M;
+  const landwardM = displayLandwardM ?? R3_FALLBACK_LANDWARD_M;
+  const xMax = windowM * METER_TO_UNIT;
+  const xMin = -landwardM * METER_TO_UNIT;
+  const tickStep = tickStepForWindow(xMax, tierShort, tierStandard, tierExtended);
 
-  const xMax = tier.maxDistance;
+  const clipped = transect.filter((p) => p.distance <= xMax && p.distance >= xMin);
+  const displayTransect = clipped.length >= 2 ? clipped : transect;
 
   const tide = tideLevel ?? 0;
 
@@ -381,16 +406,9 @@ export function BeachProfileChart({
   }
   const waterlineD = waterlineDistance ?? shoreIntersectDist;
 
-  // TA-C19 (ADR-093 Amendment 4): `distance` can be negative — xMin extends
-  // landward so no point renders off-canvas — but capped (operator,
-  // 2026-08-05): the raw beachElevation series runs hundreds of feet inland
-  // and the sand dominated the chart. Show at most ~50 ft of dry sand
-  // landward of the waterline.
-  const DRY_BEACH_MARGIN = 15.24 * METER_TO_UNIT; // 50 ft
-  const xMin = Math.max(
-    Math.min(0, ...displayTransect.map((p) => p.distance)),
-    Math.min(0, waterlineD - DRY_BEACH_MARGIN),
-  );
+  // R3.2 — xMin is the fixed -displayLandwardM domain edge computed above;
+  // no dynamic waterline-relative margin (content short of the domain does
+  // not stretch, content beyond it clips — see bedSamples/bandPath below).
 
   const transectDesc = [...displayTransect].sort((a, b) => b.distance - a.distance);
   const depthAt = (d: number) => interpTransectValue(transectDesc, d, 'depth');
@@ -491,7 +509,7 @@ export function BeachProfileChart({
   const yBottom = Math.floor(bedMin) - 1;
 
   const elevationTicks = computeElevationTicks(yTop, yBottom);
-  const distanceTicks = computeDistanceTicks(tier, xMin);
+  const distanceTicks = computeDistanceTicks(xMax, tickStep, xMin);
   const chartBottom = PAD_TOP + CHART_H;
   const xLeft = PAD_LEFT;
   const xRight = PAD_LEFT + CHART_W;

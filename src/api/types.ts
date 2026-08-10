@@ -1994,6 +1994,16 @@ export interface BeachProfileMetadata {
    * documents all three levels, this type previously only had two).
    */
   handoffSourceLevel?: 'L4' | 'L3' | 'L2' | null;
+  /**
+   * SURF-REMEDIATION R3.1 (2026-08-08, D-R2) — the spot's fixed seaward
+   * display-extent preset, metres, assigned once at spot establishment
+   * (sticky, never re-chosen hour-to-hour). Drives BeachProfileChart's fixed
+   * x-domain (R3.2). Absent on pre-R3 cached responses — the chart falls
+   * back to the hardcoded Huntington preset (150 m) in that case.
+   */
+  displayWindowM?: number | null;
+  /** See {@link displayWindowM} — fixed landward display extent, metres (D-R2 default 30). */
+  displayLandwardM?: number | null;
 }
 
 /**

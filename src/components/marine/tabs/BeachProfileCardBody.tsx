@@ -129,6 +129,8 @@ export function BeachProfileCardBody({
           transects={profile.transects}
           selectedTransect={selectedTransect}
           onTransectChange={onTransectChange}
+          displayWindowM={profile.metadata?.displayWindowM}
+          displayLandwardM={profile.metadata?.displayLandwardM}
         />
       </div>
     );
