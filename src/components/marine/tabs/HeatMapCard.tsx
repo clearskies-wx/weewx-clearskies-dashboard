@@ -405,6 +405,26 @@ export function groundPointAt(transform: GroundTransform, alongshoreM: number, c
   return localMetersToLatLon({ east, north }, transform.refLat, transform.refLon);
 }
 
+/**
+ * Inverse of {@link groundPointAt} — given a real lat/lon point, returns its
+ * (alongshoreM, crossM) ground-frame coordinates. `tangentUnit`/
+ * `offshoreUnit` are orthonormal, so this is an exact dot-product inverse
+ * (no least-squares/approximation). C3S (coordinator correction, 2026-08-09
+ * PM) — used to project the imagery mosaic's OWN tile-snapped bbox corners
+ * into the SAME ground frame the grid itself is drawn in, so the mosaic's
+ * on-screen scale is derived from real geometry, never assumed equal to the
+ * chart's declared rect.
+ */
+export function groundFrameCoords(transform: GroundTransform, point: LatLon): { alongshoreM: number; crossM: number } {
+  const local = latLonToLocalMeters(point, transform.refLat, transform.refLon);
+  const dx = local.east - transform.origin0.east;
+  const dy = local.north - transform.origin0.north;
+  return {
+    alongshoreM: dx * transform.tangentUnit.east + dy * transform.tangentUnit.north,
+    crossM: dx * transform.offshoreUnit.east + dy * transform.offshoreUnit.north,
+  };
+}
+
 /** North-up lat/lon bbox enclosing a set of points. */
 export function bboxFromPoints(points: LatLon[]): GeoBBox {
   return points.reduce(
@@ -495,22 +515,22 @@ interface ImageryTile {
   sh: number;
 }
 
+interface SnappedMosaicBBox { xMin: number; xMax: number; yMin: number; yMax: number; mosaicWest: number; mosaicEast: number; mosaicNorth: number; mosaicSouth: number; }
+
 /**
- * Computes the slippy-map tiles needed to cover `bbox` at `zoom`, each
- * positioned to fill its geographic footprint within the chart rectangle
- * (chartX, chartY, chartW, chartH). Clamps the tile count to
+ * C3S (coordinator correction, 2026-08-09 PM) — computes the TRUE tile-
+ * snapped ground bbox the mosaic will actually cover at `zoom` (slippy tiles
+ * snap to tile boundaries, so this is generally LARGER than `bbox`).
+ * Extracted so the caller can project this REAL bbox's own corners through
+ * the same ground scale `S` (not assume it equals the requested/declared
+ * bbox — that was the "assumed rect" bug the coordinator caught: it would
+ * have let the acceptance test measure the declared value, not the real
+ * fetched-tile footprint). Clamps the tile count to
  * IMAGERY_MOSAIC_MAX_TILES_PER_SIDE per side, centered on the bbox — when
  * clamping actually reduces coverage (the cap binds), logs a console.debug
  * note rather than silently fetching a smaller area than `bbox` implied.
  */
-function computeImageryTiles(
-  bbox: GeoBBox,
-  zoom: number,
-  chartX: number,
-  chartY: number,
-  chartW: number,
-  chartH: number,
-): ImageryTile[] {
+function snapImageryBBoxToTiles(bbox: GeoBBox, zoom: number): SnappedMosaicBBox {
   const xMinRaw = lonToTileX(bbox.west, zoom);
   const xMaxRaw = lonToTileX(bbox.east, zoom);
   // North = smaller Y in Web Mercator tile coordinates.
@@ -534,12 +554,13 @@ function computeImageryTiles(
     yMin = cy - half;
     yMax = cy + (IMAGERY_MOSAIC_MAX_TILES_PER_SIDE - 1 - half);
     // Silent-coverage-cap class issue (lead ruling, LM-2) — documented and
-    // logged, not invisible: the study circle implied by the tier-clipped
-    // cross-shore extent is larger than the mosaic actually fetched at this
-    // zoom, so the ortho background covers less than the full chart at its
-    // edges. Raising IMAGERY_MOSAIC_MAX_TILES_PER_SIDE (more tiles fetched)
-    // or lowering IMAGERY_ZOOM_MIN (coarser resolution, wider coverage per
-    // tile) both widen coverage; this is the constant to tune first.
+    // logged, not invisible: the study circle implied by the requested
+    // cross-shore/alongshore extent is larger than the mosaic actually
+    // fetched at this zoom, so the ortho background covers less than the
+    // full chart at its edges. Raising IMAGERY_MOSAIC_MAX_TILES_PER_SIDE
+    // (more tiles fetched) or lowering IMAGERY_ZOOM_MIN (coarser resolution,
+    // wider coverage per tile) both widen coverage; this is the constant to
+    // tune first.
     // eslint-disable-next-line no-console
     console.debug(
       `[HeatMapCard] imagery mosaic tile cap (${IMAGERY_MOSAIC_MAX_TILES_PER_SIDE}/side) bound at zoom ${zoom} — ` +
@@ -547,10 +568,32 @@ function computeImageryTiles(
     );
   }
 
-  const mosaicWest = tileXToLon(xMin, zoom);
-  const mosaicEast = tileXToLon(xMax + 1, zoom);
-  const mosaicNorth = tileYToLat(yMin, zoom);
-  const mosaicSouth = tileYToLat(yMax + 1, zoom);
+  return {
+    xMin, xMax, yMin, yMax,
+    mosaicWest: tileXToLon(xMin, zoom),
+    mosaicEast: tileXToLon(xMax + 1, zoom),
+    mosaicNorth: tileYToLat(yMin, zoom),
+    mosaicSouth: tileYToLat(yMax + 1, zoom),
+  };
+}
+
+/**
+ * Positions each tile within the mosaic's own north-up screen rectangle
+ * (`chartX/Y/W/H` — the TRUE ground-scaled size/position of the tile-snapped
+ * mosaic bbox, per `snapImageryBBoxToTiles`, NOT an assumed chart rect: see
+ * that function's doc). The caller then rotates the whole returned group
+ * about the mosaic's own center (see imageryLayer in the component) to
+ * align true-north to this card's offshore-left convention.
+ */
+function computeImageryTiles(
+  snapped: SnappedMosaicBBox,
+  zoom: number,
+  chartX: number,
+  chartY: number,
+  chartW: number,
+  chartH: number,
+): ImageryTile[] {
+  const { xMin, xMax, yMin, yMax, mosaicWest, mosaicEast, mosaicNorth, mosaicSouth } = snapped;
   const lonSpan = mosaicEast - mosaicWest;
   const latSpan = mosaicNorth - mosaicSouth;
   if (lonSpan <= 0 || latSpan <= 0) return [];
@@ -584,86 +627,82 @@ function substituteTileUrl(template: string, z: number, x: number, y: number): s
 // Derived geometry helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Compute the maximum cross-shore distance across all transects. Used both
- * as the historical "no tier" full-extent scan and as the tier-selection
- * fallback (selectHeatMapTier below) when no break points are present.
- */
-function maxDistance(allTransects: HeatMapTransectData[]): number {
-  let max = 0;
-  for (const row of allTransects) {
+// ---------------------------------------------------------------------------
+// C3S (2026-08-09 PM, single-scale fix) — ONE ground scale `S` (px per
+// metre) drives EVERY spatial element on this chart: X cells, Y cells, the
+// imagery mosaic, glyphs, buffers. Replaces the old two-ruler system (tiered
+// X-axis normalized/stretched to fill CHART_W regardless of true span, Y
+// budgeted to an arbitrary 300/N pixel allotment, imagery fitted to a THIRD,
+// independently-derived px-per-metre) — operator-caught: the 567m pier
+// rendered shorter than ~200m transect strips, ~900ft south of its true row,
+// surf cells over downtown. Any two points' pixel distance / S now equals
+// their true ground distance, every direction, every pair.
+//
+//   S = CHART_W / frameSpanM
+//   frameSpanM = (dataMaxM + BUFFER_M) - (dataMinM - BUFFER_M)
+//   dataMinM/dataMaxM = min/max of EVERY row's real transect distance,
+//     converted to metres — the true cross-shore extent, not a tier-clipped
+//     subset.
+//
+// No more clipping: every real transect point renders at its true position;
+// nothing is ever pushed off-canvas or stretched to fill unused width. A
+// row's data naturally leaves the 50m buffer margin empty (e.g. the pier
+// clips at the frame's offshore edge with only its inner ~176m visible —
+// correct at true scale, not a bug).
+// ---------------------------------------------------------------------------
+
+/** Real cross-shore data extent (metres) across every row's raw transect points — no clipping, no tiers. */
+function computeDataExtentM(rows: HeatMapTransectData[], distanceUnit: string): { minM: number; maxM: number } {
+  let min = Infinity;
+  let max = -Infinity;
+  for (const row of rows) {
     for (const pt of row.transect) {
-      if (pt.distance > max) max = pt.distance;
+      const m = toMeters(pt.distance, distanceUnit);
+      if (m < min) min = m;
+      if (m > max) max = m;
     }
   }
-  return max === 0 ? 1 : max;
+  if (!Number.isFinite(min) || !Number.isFinite(max)) { min = 0; max = 1; }
+  return { minM: min, maxM: max };
 }
 
-// ---------------------------------------------------------------------------
-// 3-tier X-axis scale — parity with BeachProfileChart.tsx (2026-08-02).
-// Same thresholds/tick steps (100 / 300 / 1000 m, scaled by distanceUnit),
-// same Math.abs(distance) break-magnitude selection criterion. Duplicated
-// locally rather than shared/exported — lead ruling 2026-08-02: fine for
-// now, a shared util is a separate task, not over-engineering this one.
-// ---------------------------------------------------------------------------
-
-interface ScaleTier { maxDistance: number; tickStep: number; }
-
-/**
- * Mirrors BeachProfileChart's selectTier(), generalized to ALL rows: the
- * outermost break across every transect (not just one) drives tier choice,
- * so every row's break points land inside the chosen tier by construction
- * (each row's max abs-distance break is <= the cross-row max used here).
- * Math.abs() fix (2026-08-02): breakpoint distances can be negative
- * (TA-C19/ADR-093 Amendment 4) — Math.max on signed values previously would
- * have picked the least-negative break and always missed the `> 0` gates,
- * same bug BeachProfileChart had.
- */
-function selectHeatMapTier(
-  allBreakPoints: HeatMapBreakPoint[],
-  allTransects: HeatMapTransectData[],
-  tierShort: ScaleTier,
-  tierStandard: ScaleTier,
-  tierExtended: ScaleTier,
-): ScaleTier {
-  const outerBreakDist = allBreakPoints.length > 0
-    ? Math.max(...allBreakPoints.map((bp) => Math.abs(bp.distance)))
-    : 0;
-  if (outerBreakDist > 0 && outerBreakDist <= tierShort.maxDistance)    return tierShort;
-  if (outerBreakDist > 0 && outerBreakDist <= tierStandard.maxDistance) return tierStandard;
-  if (outerBreakDist > tierStandard.maxDistance)                         return tierExtended;
-  const maxDist = maxDistance(allTransects);
-  if (maxDist <= tierShort.maxDistance)    return tierShort;
-  if (maxDist <= tierStandard.maxDistance) return tierStandard;
-  return tierExtended;
+/** Cross-shore distance, in METRES already, to SVG x — the raw ground-scale primitive every X placement (grid cells AND imagery corners) goes through. */
+function crossMToX(crossM: number, frameMaxM: number, S: number): number {
+  return PAD_LEFT + (frameMaxM - crossM) * S;
 }
 
 /**
- * TA-C19 (ADR-093 Amendment 4, confirmed live 2026-08-02, D4.2): `distance`
- * can be negative (a point landward of the reference waterline, since the
- * HAT extension). Without this, `distToX()`'s implicit min=0 pushed any
- * negative-distance point past the chart's right edge (off-canvas) — never
- * clamp/abs() a negative distance away (API-MANUAL). Defaults to 0 when no
- * point is negative, so the existing all-non-negative case is unaffected.
- * Since the 2026-08-02 tier-clipping fix, this scans the tier-CLIPPED
- * per-row transects (`displayTransects`), not the raw full transects —
- * consistent with BeachProfileChart's `xMin` (computed from its own
- * `displayTransect`, not the raw `transect` prop).
+ * Map a cross-shore distance (in `distanceUnit`) to SVG x (shore = RIGHT,
+ * offshore = LEFT), through the ONE ground scale `S` and the frame's
+ * offshore-most edge (`frameMaxM`, metres) — `x = PAD_LEFT + (frameMaxM -
+ * distM) * S`.
  */
-function minDistanceClipped(displayTransects: HeatMapEnvelopePoint[][]): number {
-  let min = 0;
-  for (const dt of displayTransects) {
-    for (const pt of dt) {
-      if (pt.distance < min) min = pt.distance;
-    }
-  }
-  return min;
+function distToX(dist: number, distanceUnit: string, frameMaxM: number, S: number): number {
+  return crossMToX(toMeters(dist, distanceUnit), frameMaxM, S);
 }
 
-/** Map a cross-shore distance to SVG x (shore = RIGHT, offshore = LEFT). */
-function distToX(dist: number, minDist: number, maxDist: number): number {
-  if (maxDist === minDist) return PAD_LEFT + CHART_W / 2;
-  return PAD_LEFT + CHART_W * (1 - (dist - minDist) / (maxDist - minDist));
+/** Alongshore ground distance, in METRES already, to SVG y — the raw ground-scale primitive every Y placement (grid rows AND imagery corners) goes through. */
+function alongMToY(alongshoreM: number, alongMinM: number, S: number): number {
+  return PAD_TOP + (alongshoreM - alongMinM + IMAGERY_VISIBLE_BUFFER_M) * S;
+}
+
+/**
+ * Shared tick-step ladder (100m/25m, 300m/50m, else 200m — scaled by
+ * distanceUnit) for BOTH axes now that neither uses a tier — same numbers
+ * the old X-axis tiers and the Y-axis ticks already used independently
+ * (D5.2/C3), now the single shared source for both.
+ */
+function computeAxisTicks(minUnit: number, maxUnit: number, distanceUnit: string): number[] {
+  const METER_TO_UNIT = distanceUnit === 'ft' ? 3.28084 : 1;
+  const span = maxUnit - minUnit;
+  const tickStep = span <= 100 * METER_TO_UNIT ? 25 * METER_TO_UNIT
+    : span <= 300 * METER_TO_UNIT ? 50 * METER_TO_UNIT
+    : 200 * METER_TO_UNIT;
+  const ticks: number[] = [];
+  const first = Math.ceil(minUnit / tickStep) * tickStep;
+  for (let v = first; v <= maxUnit; v += tickStep) ticks.push(v);
+  if (ticks.length === 0 || ticks[0] > minUnit + 0.01) ticks.unshift(minUnit);
+  return ticks;
 }
 
 // D7s smoothing window radius — 5-transect window = 2 rows on each side of
@@ -679,8 +718,9 @@ const SMOOTHING_WINDOW_RADIUS = 2;
  * those rows clamp `pi` to that row's own point-array-length edge (a
  * shorter neighboring row contributes its last point rather than being
  * skipped outright — rows are sampled at consistent resolution from the
- * same tier-clipped domain, so positional alignment is a reasonable,
- * simple choice here per the brief's own instruction to propose one).
+ * same real (unclipped, C3S) domain, so positional alignment is a
+ * reasonable, simple choice here per the brief's own instruction to propose
+ * one).
  * Returns `null` only when every row in the window has zero points (or all
  * null Hs) — callers fall back to the pre-existing break-point proximity
  * model in that case, unchanged from before D7s.
@@ -709,26 +749,31 @@ function rowToY(idx: number, rowH: number): number {
 export interface RowBand { top: number; bottom: number; center: number; }
 
 /**
- * C3 — variable-height row bands from REAL alongshore ground positions
- * (`alongshoreM`), linearly scaled to [chartTop, chartBottom]. Each row's
- * band spans the midpoint gap to its neighbours (contiguous, no overlap),
- * so densely-sampled coastline renders visibly denser than sparse
- * stretches — never a uniform per-index grid. `alongshoreValues` MUST be
+ * C3S (2026-08-09 PM, single-scale fix) — variable-height row bands from
+ * REAL alongshore ground positions (`alongshoreM`), positioned through the
+ * ONE ground scale `S` (`yOf`, caller-supplied — e.g. `(v) => alongMToY(v,
+ * alongMinM, S)`), NOT linearly stretched into a fixed pixel budget. Each
+ * row's band spans the midpoint gap to its neighbours (contiguous, no
+ * overlap), so densely-sampled coastline renders visibly denser than sparse
+ * stretches. The first/last row's OUTER edge mirrors its own inner
+ * half-pitch (symmetric edge, coordinator-approved 2026-08-09 PM) rather
+ * than stretching to the frame's buffer edge — color cells stay inside the
+ * true data extent, same as the X axis (the 50m ground buffer stays an
+ * empty margin, not filled by an edge row). `alongshoreValues` MUST be
  * non-decreasing by index (the server's own monotonic-by-index contract).
  */
-export function computeRowBands(alongshoreValues: number[], chartTop: number, chartBottom: number): RowBand[] {
+export function computeRowBands(alongshoreValues: number[], yOf: (v: number) => number): RowBand[] {
   const n = alongshoreValues.length;
   if (n === 0) return [];
-  const alongMin = alongshoreValues[0];
-  const alongMax = alongshoreValues[n - 1];
-  const span = alongMax - alongMin;
-  const yOf = (v: number) => (span > 0
-    ? chartTop + ((v - alongMin) / span) * (chartBottom - chartTop)
-    : chartTop + (chartBottom - chartTop) / 2);
   const centers = alongshoreValues.map(yOf);
+  if (n === 1) return [{ top: centers[0], bottom: centers[0], center: centers[0] }];
   const bands: RowBand[] = centers.map((center, i) => {
-    const top = i === 0 ? chartTop : (centers[i - 1] + center) / 2;
-    const bottom = i === n - 1 ? chartBottom : (center + centers[i + 1]) / 2;
+    const top = i === 0
+      ? center - (centers[1] - centers[0]) / 2
+      : (centers[i - 1] + center) / 2;
+    const bottom = i === n - 1
+      ? center + (centers[n - 1] - centers[n - 2]) / 2
+      : (center + centers[i + 1]) / 2;
     return { top, bottom, center };
   });
   return bands;
@@ -913,29 +958,26 @@ export function HeatMapCard({
 
     const rows = data.profiles;
     const N = rows.length;
+    // Fallback-only row budget (pre-C3 uniform-index grid) — used ONLY when
+    // ground alongshoreM data is unavailable (see hasGroundY below). The
+    // primary ground-scale path never uses this.
     const rowH = Math.min(ROW_H_MAX, Math.max(ROW_H_MIN, Math.floor(300 / N)));
-    const chartH = N * rowH;
     const bottomPad = showOverlayLegend ? PAD_BOTTOM_WITH_OVERLAY_LEGEND : PAD_BOTTOM;
-    const viewH = PAD_TOP + chartH + bottomPad;
 
-    // Tier-clipped X axis (2026-08-02, parity with BeachProfileChart's
-    // 3-tier scale — see selectHeatMapTier above).
-    const METER_TO_UNIT = distanceUnit === 'ft' ? 3.28084 : 1;
-    const tierShort    = { maxDistance: Math.round(100  * METER_TO_UNIT), tickStep: Math.round(25  * METER_TO_UNIT) };
-    const tierStandard = { maxDistance: Math.round(300  * METER_TO_UNIT), tickStep: Math.round(50  * METER_TO_UNIT) };
-    const tierExtended = { maxDistance: Math.round(1000 * METER_TO_UNIT), tickStep: Math.round(200 * METER_TO_UNIT) };
-    const allBreakPoints = rows.flatMap((row) => row.breakPoints);
-    const tier = selectHeatMapTier(allBreakPoints, rows, tierShort, tierStandard, tierExtended);
+    // C3S (2026-08-09 PM, single-scale fix) — ONE ground scale S, from the
+    // real cross-shore data extent (ALL rows, every raw transect point, no
+    // clipping) plus the uniform 50m ground buffer on both sides. Every
+    // spatial element on this chart (X cells, Y cells, imagery) converts
+    // through this SAME S — see the module comment above.
+    const { minM: dataMinM, maxM: dataMaxM } = computeDataExtentM(rows, distanceUnit);
+    const frameMinM = dataMinM - IMAGERY_VISIBLE_BUFFER_M;
+    const frameMaxM = dataMaxM + IMAGERY_VISIBLE_BUFFER_M;
+    const frameSpanM = frameMaxM - frameMinM;
+    const S = frameSpanM > 0 ? CHART_W / frameSpanM : 1;
 
-    const maxDist = tier.maxDistance;
-    // Per-row clipped transect — mirrors BeachProfileChart's `clipped`/
-    // `displayTransect` fallback: keep the full row when clipping would
-    // leave fewer than 2 points to draw a segment from.
-    const displayTransects: HeatMapEnvelopePoint[][] = rows.map((row) => {
-      const clipped = row.transect.filter((p) => p.distance <= maxDist);
-      return clipped.length >= 2 ? clipped : row.transect;
-    });
-    const minDist = minDistanceClipped(displayTransects);
+    // No clipping, no tiers — every real transect point renders at its true
+    // position (row.transect, unmodified).
+    const displayTransects: HeatMapEnvelopePoint[][] = rows.map((row) => row.transect);
 
     // Compute max Hs across all rows for the colour scale.
     let maxHs = 0;
@@ -955,21 +997,24 @@ export function HeatMapCard({
     // uniform-index grid (never a mix of the two schemes on one chart).
     const alongshoreValues = rows.map((r) => r.alongshoreM);
     const hasGroundY = alongshoreValues.every((v): v is number => v != null);
-    const rowBands: RowBand[] = hasGroundY
-      ? computeRowBands(alongshoreValues as number[], PAD_TOP, PAD_TOP + chartH)
+    const alongMinM = hasGroundY ? Math.min(...(alongshoreValues as number[])) : null;
+    const alongMaxM = hasGroundY ? Math.max(...(alongshoreValues as number[])) : null;
+
+    // C3S — chartH is the FULL Y extent including the 50m buffer both
+    // sides, at the SAME scale S (parity with CHART_W, which is already the
+    // full buffered cross-shore frame). Fallback path keeps its own
+    // pre-existing index-budget height, unaffected by this fix.
+    const chartH = (hasGroundY && alongMinM != null && alongMaxM != null)
+      ? (alongMaxM - alongMinM + 2 * IMAGERY_VISIBLE_BUFFER_M) * S
+      : N * rowH;
+    const viewH = PAD_TOP + chartH + bottomPad;
+
+    const rowBands: RowBand[] = (hasGroundY && alongMinM != null)
+      ? computeRowBands(alongshoreValues as number[], (v) => alongMToY(v, alongMinM, S))
       : rows.map((_, i) => {
           const top = rowToY(i, rowH);
           return { top, bottom: top + rowH, center: top + rowH / 2 };
         });
-    const alongMinM = hasGroundY ? Math.min(...(alongshoreValues as number[])) : null;
-    const alongMaxM = hasGroundY ? Math.max(...(alongshoreValues as number[])) : null;
-    // Continuous alongshoreM(meters) -> screen-Y, for tick placement (the
-    // discrete `rowBands` above only give per-row positions).
-    const alongScale: ((v: number) => number) | null = (hasGroundY && alongMinM != null && alongMaxM != null)
-      ? (v: number) => (alongMaxM > alongMinM
-          ? PAD_TOP + ((v - alongMinM) / (alongMaxM - alongMinM)) * chartH
-          : PAD_TOP + chartH / 2)
-      : null;
 
     // C3 — the fitted ground transform (shoreline tangent + offshore
     // bearing) driving the imagery bbox/rotation. Needs >= 2 real origins;
@@ -982,8 +1027,9 @@ export function HeatMapCard({
     const groundTransform = origins.length >= 2 ? fitGroundTransform(origins) : null;
 
     return {
-      rows, N, rowH, chartH, viewH, maxDist, minDist, maxHs, tier, displayTransects,
-      rowBands, hasGroundY, alongMinM, alongMaxM, alongScale, groundTransform,
+      rows, N, rowH, chartH, viewH, maxHs, displayTransects,
+      rowBands, hasGroundY, alongMinM, alongMaxM, groundTransform,
+      dataMinM, dataMaxM, frameMinM, frameMaxM, S,
     };
   }, [data, showOverlayLegend, distanceUnit, representativeTransectIndex]);
 
@@ -997,92 +1043,92 @@ export function HeatMapCard({
   const imageryLayer = useMemo(() => {
     if (!imageryConfig || !geometry || !geometry.groundTransform || !geometry.hasGroundY) return null;
     const transform = geometry.groundTransform;
-
-    const minDistM = toMeters(geometry.minDist, distanceUnit);
-    const maxDistM = toMeters(geometry.maxDist, distanceUnit);
-    const alongMinM = geometry.alongMinM ?? 0;
-    const alongMaxM = geometry.alongMaxM ?? 0;
-    if (!(maxDistM > minDistM) || !(alongMaxM >= alongMinM)) return null;
+    const { S, dataMinM, dataMaxM, alongMinM, alongMaxM, frameMaxM } = geometry;
+    if (alongMinM == null || alongMaxM == null) return null;
+    if (!(dataMaxM > dataMinM) || !(alongMaxM >= alongMinM)) return null;
 
     // C3 — the buffered study rectangle, in the SAME (alongshore, cross-
     // shore) ground frame the grid itself is drawn in — a real 50 m ground
     // buffer on all four sides, not a fixed on-screen fraction.
-    const crossLo = minDistM - IMAGERY_VISIBLE_BUFFER_M;
-    const crossHi = maxDistM + IMAGERY_VISIBLE_BUFFER_M;
+    const crossLo = dataMinM - IMAGERY_VISIBLE_BUFFER_M;
+    const crossHi = dataMaxM + IMAGERY_VISIBLE_BUFFER_M;
     const alongLo = alongMinM - IMAGERY_VISIBLE_BUFFER_M;
     const alongHi = alongMaxM + IMAGERY_VISIBLE_BUFFER_M;
 
-    // The 4 corners of that rectangle, projected to real lat/lon via the
-    // ONE fitted transform, then enclosed in a north-up bbox for the tile
-    // fetch (imagery tiles are north-up; the mosaic <g> below is rotated on
-    // screen to match the beach frame).
+    // The 4 corners of the REQUESTED rectangle, projected to real lat/lon
+    // via the ONE fitted transform, then enclosed in a north-up bbox for
+    // the tile fetch (a fetch request only — see snapImageryBBoxToTiles
+    // below for the bbox actually used to PLACE the tiles).
     const corners = [
       groundPointAt(transform, alongLo, crossLo),
       groundPointAt(transform, alongLo, crossHi),
       groundPointAt(transform, alongHi, crossLo),
       groundPointAt(transform, alongHi, crossHi),
     ];
-    const bbox = bboxFromPoints(corners);
+    const requestedBbox = bboxFromPoints(corners);
     const diagonalM = Math.hypot(alongHi - alongLo, crossHi - crossLo);
     const zoom = selectImageryZoom(diagonalM, transform.refLat);
 
-    // On-screen buffer, in pixels — derived directly from each axis's OWN
-    // real scale (px-per-meter), so both buffers agree with their drawn
-    // ticks by construction (C3-fix lineage, now applied to BOTH axes
-    // since the Y axis is real ground distance too).
-    const distRangeM = maxDistM - minDistM;
-    const pxPerMeterX = distRangeM > 0 ? CHART_W / distRangeM : 0;
-    const bufferPxX = IMAGERY_VISIBLE_BUFFER_M * pxPerMeterX;
-    const alongRangeM = alongMaxM - alongMinM;
-    const pxPerMeterY = alongRangeM > 0 ? geometry.chartH / alongRangeM : 0;
-    const bufferPxY = IMAGERY_VISIBLE_BUFFER_M * pxPerMeterY;
+    // C3S (coordinator correction, 2026-08-09 PM) — the TRUE tile-snapped
+    // mosaic bbox (slippy tiles snap to tile boundaries, so this is
+    // generally LARGER than requestedBbox). Project ITS OWN corners through
+    // the SAME ground scale S (via groundFrameCoords, the exact inverse of
+    // groundPointAt) — never assume the fetched mosaic equals the requested
+    // rectangle. This is what makes the imagery's implied px/m measurably
+    // equal S: it is DERIVED from S here, not declared equal to it.
+    const snapped = snapImageryBBoxToTiles(requestedBbox, zoom);
+    const mosaicCenterLat = (snapped.mosaicNorth + snapped.mosaicSouth) / 2;
+    const mosaicCenterLon = (snapped.mosaicWest + snapped.mosaicEast) / 2;
+    const { alongshoreM: pivotAlongM, crossM: pivotCrossM } =
+      groundFrameCoords(transform, { lat: mosaicCenterLat, lon: mosaicCenterLon });
+    const pivotX = crossMToX(pivotCrossM, frameMaxM, S);
+    const pivotY = alongMToY(pivotAlongM, alongMinM, S);
 
-    const screenX = PAD_LEFT - bufferPxX;
-    const screenY = PAD_TOP - bufferPxY;
-    const screenW = CHART_W + 2 * bufferPxX;
-    const screenH = geometry.chartH + 2 * bufferPxY;
+    // The mosaic's TRUE north-up ground size (metres), at the SAME scale S
+    // — not the chart's declared rect.
+    const cosLat = Math.cos((mosaicCenterLat * Math.PI) / 180);
+    const mosaicWidthM = (snapped.mosaicEast - snapped.mosaicWest) * METERS_PER_DEGREE_LAT * Math.max(Math.abs(cosLat), 0.01);
+    const mosaicHeightM = (snapped.mosaicNorth - snapped.mosaicSouth) * METERS_PER_DEGREE_LAT;
+    const screenW = mosaicWidthM * S;
+    const screenH = mosaicHeightM * S;
+    const screenX = pivotX - screenW / 2;
+    const screenY = pivotY - screenH / 2;
 
-    const tiles = computeImageryTiles(bbox, zoom, screenX, screenY, screenW, screenH);
+    const tiles = computeImageryTiles(snapped, zoom, screenX, screenY, screenW, screenH);
     // C3 (2026-08-09 PM, coordinator ruling) — one raster, one rotation
     // angle, derived from the SAME fitted transform (never a single row's
-    // bearing).
+    // bearing). C3S: rotates about the mosaic's OWN center (`pivotX`,
+    // `pivotY` — its true S-scaled ground position), not an arbitrary chart
+    // center — a rotation-about-own-center of a true-scale, correctly
+    // north-up-placed rectangle lands its corners at the SAME positions as
+    // directly projecting the real corners through groundFrameCoords.
     const rotationDeg = computeImageryRotationDeg(transform.offshoreBearingDeg);
 
-    return { tiles, rotationDeg, screenX, screenY, screenW, screenH };
-  }, [imageryConfig, geometry, distanceUnit]);
+    return { tiles, rotationDeg, pivotX, pivotY, screenX, screenY, screenW, screenH };
+  }, [imageryConfig, geometry]);
 
-  // X-axis tick values — tier's own tickStep (2026-08-02, parity with
-  // BeachProfileChart's computeDistanceTicks: 0..tier.maxDistance stepping
-  // by tier.tickStep), replacing the old "round to a nice number" scheme
-  // that was independent of tier selection.
+  // X-axis tick values — over the REAL cross-shore data extent (dataMinM,
+  // dataMaxM), shared tick-step ladder with the Y axis (computeAxisTicks).
+  // C3S: replaces the old tier's fixed maxDistance/tickStep pair.
   const xTicks = useMemo(() => {
     if (!geometry) return [];
-    const { tier } = geometry;
-    const ticks: number[] = [];
-    for (let v = 0; v <= tier.maxDistance; v += tier.tickStep) ticks.push(v);
-    return ticks;
-  }, [geometry]);
+    const METER_TO_UNIT = distanceUnit === 'ft' ? 3.28084 : 1;
+    const minUnit = geometry.dataMinM * METER_TO_UNIT;
+    const maxUnit = geometry.dataMaxM * METER_TO_UNIT;
+    return computeAxisTicks(minUnit, maxUnit, distanceUnit);
+  }, [geometry, distanceUnit]);
 
   // C3 (2026-08-09 PM) — Y-axis ticks over the REAL alongshore ground
-  // domain, same unit family as X (distanceUnit), same tick-step ladder
-  // (100/25, 300/50, 1000/200 m scaled by METER_TO_UNIT) keyed by the
-  // along-range span instead of the cross-shore range. `null` alongScale
-  // (no ground data) -> no Y ticks at all (pre-C3 fallback renders row-
-  // index labels instead — see the render body).
+  // domain, same unit family as X (distanceUnit), same shared tick-step
+  // ladder (computeAxisTicks) keyed by the along-range span instead of the
+  // cross-shore range. No ground data -> no Y ticks at all (pre-C3 fallback
+  // renders row-index labels instead — see the render body).
   const yTicks = useMemo(() => {
-    if (!geometry || !geometry.alongScale || geometry.alongMinM == null || geometry.alongMaxM == null) return [];
+    if (!geometry || !geometry.hasGroundY || geometry.alongMinM == null || geometry.alongMaxM == null) return [];
     const METER_TO_UNIT = distanceUnit === 'ft' ? 3.28084 : 1;
     const minUnit = geometry.alongMinM * METER_TO_UNIT;
     const maxUnit = geometry.alongMaxM * METER_TO_UNIT;
-    const span = maxUnit - minUnit;
-    const tickStep = span <= 100 * METER_TO_UNIT ? 25 * METER_TO_UNIT
-      : span <= 300 * METER_TO_UNIT ? 50 * METER_TO_UNIT
-      : 200 * METER_TO_UNIT;
-    const ticks: number[] = [];
-    const first = Math.ceil(minUnit / tickStep) * tickStep;
-    for (let v = first; v <= maxUnit; v += tickStep) ticks.push(v);
-    if (ticks.length === 0 || ticks[0] > minUnit + 0.01) ticks.unshift(minUnit);
-    return ticks;
+    return computeAxisTicks(minUnit, maxUnit, distanceUnit);
   }, [geometry, distanceUnit]);
 
   // Number formatter.
@@ -1144,7 +1190,7 @@ export function HeatMapCard({
     );
   }
 
-  const { rows, N, rowH, chartH, viewH, maxDist, minDist, maxHs, displayTransects, rowBands, hasGroundY } = geometry;
+  const { rows, N, rowH, chartH, viewH, maxHs, displayTransects, rowBands, hasGroundY, frameMaxM, S } = geometry;
 
   // Value-vs-position fix (D5 audit remediation, MAJOR finding): `rows` is
   // an ARRAY indexed by POSITION, but `mainBreakZoneStartIndex`/`EndIndex`
@@ -1214,8 +1260,8 @@ export function HeatMapCard({
       for (let pi = 0; pi < pts.length - 1; pi++) {
         const d0 = pts[pi].distance;
         const d1 = pts[pi + 1].distance;
-        const x0 = distToX(d0, minDist, maxDist);
-        const x1 = distToX(d1, minDist, maxDist);
+        const x0 = distToX(d0, distanceUnit, frameMaxM, S);
+        const x1 = distToX(d1, distanceUnit, frameMaxM, S);
         const xLeft  = Math.min(x0, x1);
         const xRight = Math.max(x0, x1);
         const w = xRight - xLeft;
@@ -1288,8 +1334,8 @@ export function HeatMapCard({
     if (row.surfZones) {
       const { impactZone, foamZone } = row.surfZones;
       if (impactZone != null) {
-        const x0 = distToX(impactZone.startDistance, minDist, maxDist);
-        const x1 = distToX(impactZone.endDistance, minDist, maxDist);
+        const x0 = distToX(impactZone.startDistance, distanceUnit, frameMaxM, S);
+        const x1 = distToX(impactZone.endDistance, distanceUnit, frameMaxM, S);
         const xL = Math.min(x0, x1);
         const xR = Math.max(x0, x1);
         if (xR - xL > 0.5) {
@@ -1306,8 +1352,8 @@ export function HeatMapCard({
         }
       }
       if (foamZone != null) {
-        const x0 = distToX(foamZone.startDistance, minDist, maxDist);
-        const x1 = distToX(foamZone.endDistance, minDist, maxDist);
+        const x0 = distToX(foamZone.startDistance, distanceUnit, frameMaxM, S);
+        const x1 = distToX(foamZone.endDistance, distanceUnit, frameMaxM, S);
         const xL = Math.min(x0, x1);
         const xR = Math.max(x0, x1);
         if (xR - xL > 0.5) {
@@ -1330,7 +1376,7 @@ export function HeatMapCard({
     for (const bpList of [outerBPs, innerBPs]) {
       if (bpList.length === 0) continue;
       for (const bp of bpList) {
-        const bx = distToX(bp.distance, minDist, maxDist);
+        const bx = distToX(bp.distance, distanceUnit, frameMaxM, S);
         // Break zone extent: 10% of CHART_W in each direction.
         const halfW = CHART_W * 0.05;
         zoneFills.push(
@@ -1349,7 +1395,7 @@ export function HeatMapCard({
     // 4. Breaker type glyphs.
     for (const bp of row.breakPoints) {
       if (!bp.breakerType) continue;
-      const bx = distToX(bp.distance, minDist, maxDist);
+      const bx = distToX(bp.distance, distanceUnit, frameMaxM, S);
       const cy = y + bandH / 2;
       breakGlyphs.push(
         <BreakerGlyph
@@ -1462,7 +1508,7 @@ export function HeatMapCard({
           <defs>
             {hasImageryBackground && imageryLayer && (
               <clipPath id={imageryClipId}>
-                <rect x={imageryLayer.screenX} y={imageryLayer.screenY} width={imageryLayer.screenW} height={imageryLayer.screenH} />
+                <rect x={PAD_LEFT} y={PAD_TOP} width={CHART_W} height={chartH} />
               </clipPath>
             )}
           </defs>
@@ -1471,16 +1517,21 @@ export function HeatMapCard({
            *  instead of the plain translucent rect when imagery is
            *  available, so the semi-transparent colour cells above read as
            *  an overlay on the real beach photo. No imagery -> the ORIGINAL
-           *  rect, unchanged (KAT b byte-identity). C3: the mosaic <g> is
-           *  rotated about the CORE chart rectangle's center by the beach
-           *  bearing (`imageryLayer.rotationDeg`, 0 = no rotation) so the
-           *  imagery's real-world orientation lines up with this card's
-           *  offshore-left convention — the outer clip (unrotated, on the
-           *  BUFFERED rect) stays fixed so the rotated image is contained,
-           *  not the inner rotated group. */}
+           *  rect, unchanged (KAT b byte-identity). C3S (coordinator
+           *  correction, 2026-08-09 PM): the mosaic <g> is a TRUE-scale
+           *  (ground scale S) north-up rectangle, rotated about its OWN
+           *  center (`imageryLayer.pivotX/pivotY` — its real S-scaled
+           *  ground position, from the tile-snapped mosaic bbox, NOT the
+           *  chart's declared rect) by the beach bearing
+           *  (`imageryLayer.rotationDeg`, 0 = no rotation) — mathematically
+           *  equal to directly projecting the mosaic's real corners through
+           *  the ground frame. The outer clip (unrotated, at the CORE chart
+           *  rect — the mosaic's true extent generally exceeds it, by
+           *  design: the 50m buffer beyond the data plus tile-snap
+           *  overhang) keeps the visible photo bounded to the chart. */}
           {hasImageryBackground && imageryLayer ? (
             <g aria-hidden="true" clipPath={`url(#${imageryClipId})`}>
-              <g transform={`rotate(${imageryLayer.rotationDeg} ${PAD_LEFT + CHART_W / 2} ${PAD_TOP + chartH / 2})`}>
+              <g transform={`rotate(${imageryLayer.rotationDeg} ${imageryLayer.pivotX} ${imageryLayer.pivotY})`}>
                 {imageryLayer.tiles.map((tile) => (
                   <image
                     key={`ortho-${tile.z}-${tile.x}-${tile.y}`}
@@ -1555,18 +1606,19 @@ export function HeatMapCard({
            *  label) removed from the render — operator ruling 2026-08-02:
            *  developer/operator context, meaningless to an end user. */}
 
-          {/* Y axis — C3 (2026-08-09 PM, P15/P16 rebuild): REAL alongshore
-           *  ground-distance ticks (`yTicks`, meters converted to
-           *  distanceUnit, positioned via `geometry.alongScale`) — the
-           *  transect-INDEX labels are DELETED per the operator's ruling
-           *  ("no one gives a shit about" row numbers). Falls back to the
-           *  pre-C3 density-aware index labels ONLY when ground data is
-           *  unavailable (older cached response, no P16 fields) — same
-           *  `labelStep` density-aware logic as before in that fallback. */}
-          {hasGroundY && geometry.alongScale
+          {/* Y axis — C3S (2026-08-09 PM, single-scale rebuild): REAL
+           *  alongshore ground-distance ticks (`yTicks`, meters converted to
+           *  distanceUnit, positioned via `alongMToY` — the SAME ground
+           *  scale S the grid itself uses) — the transect-INDEX labels are
+           *  DELETED per the operator's ruling ("no one gives a shit about"
+           *  row numbers). Falls back to the pre-C3 density-aware index
+           *  labels ONLY when ground data is unavailable (older cached
+           *  response, no P16 fields) — same `labelStep` density-aware logic
+           *  as before in that fallback. */}
+          {hasGroundY && geometry.alongMinM != null
             ? yTicks.map((v) => {
                 const METER_TO_UNIT = distanceUnit === 'ft' ? 3.28084 : 1;
-                const yPix = geometry.alongScale!(v / METER_TO_UNIT);
+                const yPix = alongMToY(v / METER_TO_UNIT, geometry.alongMinM!, S);
                 return (
                   <g key={`ytick-${v}`} aria-hidden="true">
                     <line x1={PAD_LEFT - 4} y1={yPix} x2={PAD_LEFT} y2={yPix} stroke="var(--muted-foreground)" strokeOpacity={0.5} />
@@ -1614,7 +1666,7 @@ export function HeatMapCard({
 
           {/* X axis ticks and labels */}
           {xTicks.map((v) => {
-            const x = distToX(v, minDist, maxDist);
+            const x = distToX(v, distanceUnit, frameMaxM, S);
             return (
               <g key={`xtick-${v}`}>
                 <line

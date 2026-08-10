@@ -18,6 +18,7 @@ import {
   computeImageryRotationDeg,
   fitGroundTransform,
 } from './HeatMapCard';
+import type { LatLon } from './HeatMapCard';
 import type {
   HeatMapProfileDataOk,
   HeatMapProfileDataUnavailable,
@@ -591,48 +592,54 @@ describe('HeatMapCard', () => {
     }
   });
 
-  // Tier-selection parity fix (2026-08-02): mirrors BeachProfileChart's
-  // Math.abs() fix (BeachProfileCardBody.test.tsx
-  // OK_RESPONSE_ALL_NEGATIVE_BREAKS — same Huntington Beach numbers, -223
-  // and -240), generalized ACROSS ROWS — the outermost break's MAGNITUDE,
-  // from ANY row, drives the one shared x-axis, not just one row's own
-  // breaks. Before this fix, HeatMapCard had no tier concept at all (always
-  // full transect extent, ~2227m); now it must pick the same Standard tier
-  // (300m) BeachProfileChart would for the same break distances.
-  it('tier selection parity (all-negative breaks, cross-row): picks Standard tier (max tick 300)', () => {
+  // C3S (2026-08-09 PM, single-scale fix) — REPLACES the old "tier
+  // selection parity" test. The tier concept (BeachProfileChart-mirrored
+  // 100/300/1000m clipping) is DELETED per the C3S design: the operator's
+  // bug was exactly this class of independently-derived scale/clipping
+  // logic producing a DIFFERENT ruler than the rest of the chart. Now the
+  // far 2227m point (which the old tier system would have clipped
+  // entirely, capping the visible axis at 300) RENDERS — the frame is built
+  // FROM the true data extent (min -240, max 2227), so nothing is clipped
+  // and nothing overflows the drawable area, by construction.
+  // Falsifiable: reverting to tier-based clipping would either throw (no
+  // `tier` in scope) or clip the far point back out of [PAD_LEFT,
+  // PAD_LEFT+CHART_W] at a different (smaller) x than asserted below.
+  it('C3S — no tier clipping: the full ~2227m data extent renders inside the frame, at the single ground scale S', () => {
     const { container } = render(
       <HeatMapCard {...baseProps} distanceUnit="m" data={OK_RESPONSE_ALL_NEGATIVE_BREAKS} loading={false} />,
     );
-    // Locale 'en' comma-groups >= 1000 (e.g. "1,000") — stripped here so a
-    // >=1000 tier's ticks are still comparable integers, not silently
-    // excluded by the digit-only regex.
-    const tickTexts = Array.from(container.querySelectorAll('svg text'))
-      .map((el) => (el.textContent ?? '').replace(/,/g, ''))
-      .filter((s) => /^\d+$/.test(s))
-      .map(Number);
-    expect(tickTexts.length).toBeGreaterThan(0);
-    expect(Math.max(...tickTexts)).toBe(300);
-
-    // Clipping parity: the color cell reaching all the way to 2227 (the
-    // pre-fix full extent) must NOT be present — every COLOR CELL stays
-    // within the tier-clipped drawable area. Excludes the break-zone-band
-    // rect (fill=ZONE_BREAK_FILL): that's a PRE-EXISTING, unrelated overflow
-    // in break-point rendering (bx +/- a fixed 5%-of-chart-width halfW, no
-    // edge clamp) that reproduces even against the OLD unclamped domain
-    // whenever a break sits this close to the domain's negative minimum —
-    // not introduced by this fix, and break-point rendering is out of scope
-    // for this task (MUST NOT TOUCH).
+    // Excludes the break-zone-band rect (fill=ZONE_BREAK_FILL): a
+    // PRE-EXISTING, unrelated overflow in break-point rendering (bx +/- a
+    // fixed 5%-of-chart-width halfW, no edge clamp) — not introduced by
+    // C3S, and break-point rendering is out of scope for this task (MUST
+    // NOT TOUCH), same exclusion the test this replaces already carried.
     const ZONE_BREAK_FILL = 'rgba(59, 130, 246, 0.12)';
     const EPSILON = 0.5;
     const rects = Array.from(container.querySelectorAll('svg rect'))
       .filter((r) => r.getAttribute('fill') !== ZONE_BREAK_FILL);
     expect(rects.length).toBeGreaterThan(0);
-    for (const rect of Array.from(rects)) {
+    for (const rect of rects) {
       const x = Number(rect.getAttribute('x'));
       const width = Number(rect.getAttribute('width'));
       expect(x).toBeGreaterThanOrEqual(PAD_LEFT - EPSILON);
       expect(x + width).toBeLessThanOrEqual(PAD_LEFT + CHART_W + EPSILON);
     }
+
+    // The far 2227m point is now the frame's offshore-most DATA extent
+    // (both rows share it) — it sits exactly 50m (the ground buffer) short
+    // of the frame's own offshore edge, at the SAME scale S every other
+    // element on this chart uses. Independent formula (not imported from
+    // the component): dataMin=-240 (ROW_NEG_B), dataMax=2227 (both rows).
+    const dataMinM = -240;
+    const dataMaxM = 2227;
+    const frameMinM = dataMinM - 50;
+    const frameMaxM = dataMaxM + 50;
+    const S = 748 / (frameMaxM - frameMinM);
+    const expectedXOfFarPoint = PAD_LEFT + (frameMaxM - dataMaxM) * S;
+    const cellRects = rects.filter((r) => /^rgba\(\d+,\d+,\d+,[\d.]+\)$/.test(r.getAttribute('fill') ?? ''));
+    expect(cellRects.length).toBeGreaterThan(0);
+    const minX = Math.min(...cellRects.map((r) => Number(r.getAttribute('x'))));
+    expect(minX).toBeCloseTo(expectedXOfFarPoint, 0);
   });
 
   // ── D5.2 — BD-7 overlay (BD-9 representative-transect marker removed
@@ -874,24 +881,15 @@ describe('HeatMapCard', () => {
     const SPOT_LAT = 33.6595;
     const SPOT_LON = -118.0064;
 
-    // KAT (b) golden fixture — captured from the git HEAD (pre-LM-2)
-    // HeatMapCard.tsx rendering OK_RESPONSE_5_ROWS with baseProps, via a
-    // throwaway `git show HEAD:...` copy rendered once and diffed byte-for-
-    // byte against this literal (see LM-2 closeout for the capture method).
-    //
-    // D7s update (ROUND-D5-BEACH-PROFILE-CARD-BRIEF-2026-08-05): the median-5
-    // smoothing note (`<p>...smoothingNote</p>`) and each colour cell's
-    // `<title>` tooltip are NEW, intentional, unconditional additions — this
-    // fixture is not "the pre-D7s render" anymore, only "the pre-LM-2
-    // imagery-path render plus D7s's two additions." Re-verified byte-for-
-    // byte against the actual rendered output for this exact fixture
-    // (OK_RESPONSE_5_ROWS's 5 rows each produce one flat cell with an
-    // identical median-5 value of 1.2, matching the pre-existing legend max
-    // of "1.2 ft" already in this string) — not hand-typed.
-    // A REAL DOM-identity comparison, not a "renders without crashing" smoke
-    // test — any change to the no-imagery render path, however small, fails
-    // this immediately.
-    const GOLDEN_NO_IMAGERY_HTML = '<div class="rounded-xl bg-[var(--card-glass)] p-[var(--card-pad)]"><h3 class="font-semibold text-[var(--foreground)] mb-3 text-sm">surfing.heatMapTitle</h3><div class="w-full overflow-x-auto"><svg role="img" aria-labelledby="_r_0_ _r_1_" viewBox="0 0 820 320" width="100%" style="display: block; min-width: 260px;"><title id="_r_0_">surfing.heatMapAriaLabel</title><desc id="_r_1_">surfing.heatMapDesc</desc><defs></defs><rect x="60" y="28" width="748" height="240" fill="var(--card-glass)" opacity="0.3"></rect><line x1="60" y1="28" x2="808" y2="28" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="76" x2="808" y2="76" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="124" x2="808" y2="124" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="172" x2="808" y2="172" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="220" x2="808" y2="220" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="268" x2="808" y2="268" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><rect x="579.951219512195" y="28" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="579.951219512195" y="76" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="579.951219512195" y="124" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="579.951219512195" y="172" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="579.951219512195" y="220" width="205.2439024390244" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><text x="56" y="55.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">0</text><text x="56" y="103.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">1</text><text x="56" y="151.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">2</text><text x="56" y="199.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">3</text><text x="56" y="247.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">4</text><text transform="rotate(-90)" x="-148" y="10" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">surfing.heatMap.transectAxisLabel</text><g><line x1="808" y1="268" x2="808" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="808" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">0</text></g><g><line x1="621" y1="268" x2="621" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="621" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">82</text></g><g><line x1="434" y1="268" x2="434" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="434" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">164</text></g><g><line x1="247" y1="268" x2="247" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="247" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">246</text></g><g><line x1="60" y1="268" x2="60" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="60" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">328</text></g><text x="434" y="294" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">surfing.beachProfile.distanceAxisLabel</text><text x="806" y="22" font-size="9" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">surfing.shore</text><text x="62" y="22" font-size="9" fill="var(--muted-foreground)" text-anchor="start" aria-hidden="true">surfing.offshore</text><defs><linearGradient id="heatmap-legend-gradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgb(59,130,246)"></stop><stop offset="25%" stop-color="rgb(13,148,159)"></stop><stop offset="50%" stop-color="rgb(34,197,94)"></stop><stop offset="75%" stop-color="rgb(234,179,8)"></stop><stop offset="100%" stop-color="rgb(220,38,38)"></stop></linearGradient></defs><rect x="648" y="296" width="160" height="10" fill="url(#heatmap-legend-gradient)" rx="3" opacity="0.85"></rect><text x="648" y="318" font-size="9" fill="var(--muted-foreground)" text-anchor="start">0 ft</text><text x="808" y="318" font-size="9" fill="var(--muted-foreground)" text-anchor="end">1.2 ft</text></svg></div><p class="mt-1 text-[var(--muted-foreground)]" style="font-size: var(--text-micro);">surfing.heatMap.smoothingNote</p><table class="sr-only"><caption>surfing.heatMapAriaLabel</caption><thead><tr><th scope="col">surfing.heatMap.transectIndex</th><th scope="col">surfing.heatMap.openTransect</th><th scope="col">surfing.heatMap.breakHeight</th><th scope="col">surfing.heatMap.breakDistance</th><th scope="col">surfing.heatMap.breakerType</th></tr></thead><tbody><tr><th scope="row">0</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">1</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">2</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">3</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">4</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr></tbody></table></div>';
+    // KAT (b) golden fixture — C3S (2026-08-09 PM, single-scale fix)
+    // RE-CAPTURED against the new component (OK_RESPONSE_5_ROWS + baseProps,
+    // no ground-origin fields -> falls back to the pre-C3 uniform-index Y
+    // grid, but the X axis now goes through the ONE ground scale S — the
+    // frame is built from this fixture's own data extent [10ft,100ft] + the
+    // 50m ground buffer both sides, replacing the old tier-clipped
+    // stretch-to-fill values. Captured via a throwaway render + innerHTML
+    // dump, not hand-typed (same capture method as the original KAT (b)).
+    const GOLDEN_NO_IMAGERY_HTML = '<div class="rounded-xl bg-[var(--card-glass)] p-[var(--card-pad)]"><h3 class="font-semibold text-[var(--foreground)] mb-3 text-sm">surfing.heatMapTitle</h3><div class="w-full overflow-x-auto"><svg role="img" aria-labelledby="_r_0_ _r_1_" viewBox="0 0 820 320" width="100%" style="display: block; min-width: 260px;"><title id="_r_0_">surfing.heatMapAriaLabel</title><desc id="_r_1_">surfing.heatMapDesc</desc><defs></defs><rect x="60" y="28" width="748" height="240" fill="var(--card-glass)" opacity="0.3"></rect><line x1="60" y1="28" x2="808" y2="28" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="76" x2="808" y2="76" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="124" x2="808" y2="124" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="172" x2="808" y2="172" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="220" x2="808" y2="220" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="268" x2="808" y2="268" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><rect x="353.4898632810631" y="28" width="161.0202734378737" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="353.4898632810631" y="76" width="161.0202734378737" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="353.4898632810631" y="124" width="161.0202734378737" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="353.4898632810631" y="172" width="161.0202734378737" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="353.4898632810631" y="220" width="161.0202734378737" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><text x="56" y="55.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">0</text><text x="56" y="103.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">1</text><text x="56" y="151.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">2</text><text x="56" y="199.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">3</text><text x="56" y="247.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">4</text><text transform="rotate(-90)" x="-148" y="10" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">surfing.heatMap.transectAxisLabel</text><g><line x1="514.5101367189368" y1="268" x2="514.5101367189368" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="514.5101367189368" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">10</text></g><g><line x1="385.65634657150235" y1="268" x2="385.65634657150235" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="385.65634657150235" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">82</text></g><text x="434" y="294" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">surfing.beachProfile.distanceAxisLabel</text><text x="806" y="22" font-size="9" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">surfing.shore</text><text x="62" y="22" font-size="9" fill="var(--muted-foreground)" text-anchor="start" aria-hidden="true">surfing.offshore</text><defs><linearGradient id="heatmap-legend-gradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgb(59,130,246)"></stop><stop offset="25%" stop-color="rgb(13,148,159)"></stop><stop offset="50%" stop-color="rgb(34,197,94)"></stop><stop offset="75%" stop-color="rgb(234,179,8)"></stop><stop offset="100%" stop-color="rgb(220,38,38)"></stop></linearGradient></defs><rect x="648" y="296" width="160" height="10" fill="url(#heatmap-legend-gradient)" rx="3" opacity="0.85"></rect><text x="648" y="318" font-size="9" fill="var(--muted-foreground)" text-anchor="start">0 ft</text><text x="808" y="318" font-size="9" fill="var(--muted-foreground)" text-anchor="end">1.2 ft</text></svg></div><p class="mt-1 text-[var(--muted-foreground)]" style="font-size: var(--text-micro);">surfing.heatMap.smoothingNote</p><table class="sr-only"><caption>surfing.heatMapAriaLabel</caption><thead><tr><th scope="col">surfing.heatMap.transectIndex</th><th scope="col">surfing.heatMap.openTransect</th><th scope="col">surfing.heatMap.breakHeight</th><th scope="col">surfing.heatMap.breakDistance</th><th scope="col">surfing.heatMap.breakerType</th></tr></thead><tbody><tr><th scope="row">0</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">1</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">2</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">3</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">4</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr></tbody></table></div>';
 
     it('KAT (a): fixture WITH imagery config -> ortho tiles render behind the heat map, colour cells at reduced opacity', () => {
       mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
@@ -1126,7 +1124,7 @@ describe('HeatMapCard', () => {
       });
     });
 
-    it('rotates the imagery tile group by the computed angle about the core chart-rectangle center', () => {
+    it('rotates the imagery tile group by the computed angle, about its OWN true-scale ground center (C3S: not the chart\'s arbitrary center)', () => {
       mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
       // OK_RESPONSE_5_ROWS_WITH_ORIGINS: every row's transectBearingDeg=245,
       // origins on a tangent bearing perpendicular to 245 by construction
@@ -1139,12 +1137,15 @@ describe('HeatMapCard', () => {
         (g.getAttribute('transform') ?? '').startsWith('rotate('),
       );
       expect(rotatedGroup).toBeDefined();
-      // Core chart rect center: PAD_LEFT + CHART_W/2 = 60 + 374 = 434;
-      // PAD_TOP + chartH/2 = 28 + 240/2 = 148 (N=5, rowH=48, chartH=240 —
-      // chartH is a layout budget independent of the ground-fitted Y scale).
-      const m = rotatedGroup!.getAttribute('transform')!.match(/^rotate\(([-\d.]+) 434 148\)$/);
+      // C3S: the pivot is the mosaic's OWN true-scale ground center — a
+      // real, data-derived screen position, not a hardcoded chart-center
+      // constant. Just prove it parses to finite numbers (no NaN) and the
+      // rotation angle is correct.
+      const m = rotatedGroup!.getAttribute('transform')!.match(/^rotate\(([-\d.]+) ([-\d.]+) ([-\d.]+)\)$/);
       expect(m).not.toBeNull();
       expect(Number(m![1])).toBeCloseTo(25, 1);
+      expect(Number.isFinite(Number(m![2]))).toBe(true);
+      expect(Number.isFinite(Number(m![3]))).toBe(true);
       // The rotated group actually contains the tile <image> elements.
       expect(rotatedGroup!.querySelectorAll('image').length).toBeGreaterThan(0);
     });
@@ -1187,12 +1188,19 @@ describe('HeatMapCard', () => {
       }));
       const transform = fitGroundTransform(origins)!;
       const expectedRotation = computeImageryRotationDeg(transform.offshoreBearingDeg);
-      const m = rotatedGroup!.getAttribute('transform')!.match(/^rotate\(([-\d.]+) 434 148\)$/);
+      const m = rotatedGroup!.getAttribute('transform')!.match(/^rotate\(([-\d.]+) ([-\d.]+) ([-\d.]+)\)$/);
       expect(m).not.toBeNull();
       expect(Number(m![1])).toBeCloseTo(expectedRotation, 6);
     });
 
-    it('50m visible buffer: the imagery clip rect extends beyond the core plot rectangle on all four sides', () => {
+    // C3S (2026-08-09 PM) — the imagery clip now clips to exactly the CORE
+    // chart rectangle (the 50m ground buffer is baked INTO the frame/S — it
+    // is no longer a separate on-screen extension beyond the chart, per the
+    // design: "the pier will CLIP at the frame's offshore edge... correct
+    // at true scale, no row's data reaches the pier tip"). REPLACES the old
+    // "clip extends beyond the core rect" test — that was the two-ruler
+    // behavior being fixed.
+    it('C3S: the imagery clip rect equals EXACTLY the core plot rectangle (buffer is baked into the frame, not a separate on-screen extension)', () => {
       mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
       const { container } = render(
         <HeatMapCard {...baseProps} distanceUnit="m" data={OK_RESPONSE_5_ROWS_WITH_ORIGINS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
@@ -1203,91 +1211,100 @@ describe('HeatMapCard', () => {
       const y = Number(clipRect!.getAttribute('y'));
       const w = Number(clipRect!.getAttribute('width'));
       const h = Number(clipRect!.getAttribute('height'));
-      const CHART_W = 748;
-      const CORE_CHART_H = 240; // N=5, rowH=48
-      expect(x).toBeLessThan(PAD_LEFT);
-      expect(y).toBeLessThan(PAD_TOP);
-      expect(x + w).toBeGreaterThan(PAD_LEFT + CHART_W);
-      expect(y + h).toBeGreaterThan(PAD_TOP + CORE_CHART_H);
+      const svg = container.querySelector('svg')!;
+      const viewBoxH = Number(svg.getAttribute('viewBox')!.split(' ')[3]);
+      expect(x).toBeCloseTo(PAD_LEFT, 5);
+      expect(y).toBeCloseTo(PAD_TOP, 5);
+      expect(x + w).toBeCloseTo(PAD_LEFT + CHART_W, 5);
+      // Full chart height, independently: dataMin/dataMax=10/100m (buildRow),
+      // alongMin/alongMax=0/200m (5 rows, 50m step) -> S from the X frame,
+      // chartH = (alongSpan + 100) * S — same formula as the design doc.
+      const S = 748 / ((100 + 50) - (10 - 50));
+      const expectedChartH = (200 - 0 + 100) * S;
+      expect(y + h).toBeCloseTo(PAD_TOP + expectedChartH, 0);
+      expect(viewBoxH).toBeGreaterThan(y + h); // sanity: clip stays within the viewBox
     });
 
-    // ── C3 rebuild (2026-08-09 PM) — BOTH axes derive their on-screen
-    //    buffer from their OWN real ground scale now (the Y axis is real
-    //    alongshore distance too, not the old footprint-model fraction). ──
-    describe('C3 — buffer scale, both axes real', () => {
-      // OK_RESPONSE_5_ROWS_WITH_ORIGINS + distanceUnit="m": distances 100/10
-      // (buildRow) -> tier lands on tierShort (maxDistance=100); minDist=0,
-      // maxDist=100 -> CHART_W(748)/(100-0) = 7.48 px/m -> X buffer
-      // 50*7.48=374px. alongshoreM 0..200 (5 rows, 50m step) -> chartH(240)
-      // /200 = 1.2 px/m -> Y buffer 50*1.2=60px — falsifiable against BOTH
-      // the pre-C3 X formula (187px) and a Y formula that (wrongly) reused
-      // pxPerMeterX (374px).
-      it('X buffer px matches CHART_W / (maxDist-minDist) exactly', () => {
+    // ── C3S (2026-08-09 PM, coordinator correction) — the imagery's OWN
+    //    implied px/m, measured from its ACTUAL rendered tile footprint and
+    //    an INDEPENDENTLY re-derived tile-index -> lon/lat -> metres bbox
+    //    (never importing the component's snapImageryBBoxToTiles/
+    //    computeImageryTiles), must equal the SAME S the grid itself uses —
+    //    in BOTH axes. This is the core acceptance criterion: "any two
+    //    points' pixel distance / S = their true ground distance." ──
+    describe('C3S — imagery px/m equals S (independent tile-index re-derivation, both axes)', () => {
+      // Standard Web Mercator slippy-tile math, re-derived here (NOT
+      // imported from HeatMapCard.tsx) — same public formulas the NAIP/ESRI
+      // XYZ tile spec itself uses.
+      function tileXToLonIndependent(x: number, z: number): number {
+        return (x / 2 ** z) * 360 - 180;
+      }
+      function tileYToLatIndependent(y: number, z: number): number {
+        const n = Math.PI - (2 * Math.PI * y) / 2 ** z;
+        return (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+      }
+
+      it('imagery px/m matches the grid\'s own S in BOTH axes, within 1%', () => {
         mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
         const { container } = render(
           <HeatMapCard {...baseProps} distanceUnit="m" data={OK_RESPONSE_5_ROWS_WITH_ORIGINS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
         );
-        const clipRect = container.querySelector('clipPath rect')!;
-        const x = Number(clipRect.getAttribute('x'));
-        const expectedBufferPxX = 50 * (748 / 100); // 374
-        expect(x).toBeCloseTo(PAD_LEFT - expectedBufferPxX, 3);
-        const oldFormulaBufferPxX = (50 / 100) * (748 / 2); // 187 — must NOT match
-        expect(x).not.toBeCloseTo(PAD_LEFT - oldFormulaBufferPxX, 3);
-      });
+        const images = Array.from(container.querySelectorAll('svg image'));
+        expect(images.length).toBeGreaterThan(0);
 
-      // Scale-mutation check: doubling the cross-shore distance range must
-      // exactly halve the on-screen X buffer (px-per-meter halves too) —
-      // proves the buffer is DERIVED from the axis scale, not an independent
-      // constant that happens to produce a plausible-looking number.
-      it('X buffer scales proportionally with the x-axis meters-per-pixel ratio (mutation of distance range)', () => {
-        mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
-        const wideTransect = [
-          { distance: 1000, depth: 15, hs: 3.5 },
-          { distance: 10, depth: 0.5, hs: 0.8 },
-        ];
-        const wideRows = OK_RESPONSE_5_ROWS_WITH_ORIGINS.profiles!.map((r) => ({ ...r, transect: wideTransect }));
-        const wideResponse: HeatMapProfileDataOk = {
-          ...OK_RESPONSE_5_ROWS_WITH_ORIGINS,
-          profiles: wideRows,
-        };
-        const { container } = render(
-          <HeatMapCard {...baseProps} distanceUnit="m" data={wideResponse} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
-        );
-        const clipRect = container.querySelector('clipPath rect')!;
-        const x = Number(clipRect.getAttribute('x'));
-        // tier=Extended (maxDistance 1000), minDist=0 -> 748/1000 = 0.748 px/m -> buffer 37.4px.
-        const expectedBufferPxX = 50 * (748 / 1000);
-        expect(x).toBeCloseTo(PAD_LEFT - expectedBufferPxX, 3);
-      });
+        // Extract z/x/y from each tile's href (NAIP proxy path {z}/{x}/{y}).
+        const tiles = images.map((img) => {
+          const href = img.getAttribute('href')!;
+          const m = href.match(/\/(\d+)\/(\d+)\/(\d+)$/)!;
+          return {
+            z: Number(m[1]), x: Number(m[2]), y: Number(m[3]),
+            sx: Number(img.getAttribute('x')), sy: Number(img.getAttribute('y')),
+            sw: Number(img.getAttribute('width')), sh: Number(img.getAttribute('height')),
+          };
+        });
+        const z = tiles[0].z;
+        const xMin = Math.min(...tiles.map((t) => t.x));
+        const xMax = Math.max(...tiles.map((t) => t.x));
+        const yMin = Math.min(...tiles.map((t) => t.y));
+        const yMax = Math.max(...tiles.map((t) => t.y));
 
-      // Y buffer now on the SAME real-scale principle as X — mutation check:
-      // doubling the alongshore range must exactly halve the on-screen Y
-      // buffer, falsifiable against the pre-C3 footprint-model fraction
-      // (which would give a DIFFERENT, non-halved number here).
-      it('Y buffer px matches chartH / (alongMax-alongMin) exactly, and scales proportionally with the along-range mutation', () => {
-        mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
-        const { container } = render(
-          <HeatMapCard {...baseProps} distanceUnit="m" data={OK_RESPONSE_5_ROWS_WITH_ORIGINS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
-        );
-        const clipRect = container.querySelector('clipPath rect')!;
-        const y = Number(clipRect.getAttribute('y'));
-        // alongMin=0, alongMax=200 (5 rows, 50m step); chartH=240 (N=5, rowH=48).
-        const expectedBufferPxY = 50 * (240 / 200); // 60
-        expect(y).toBeCloseTo(PAD_TOP - expectedBufferPxY, 3);
+        // Independent re-derivation of the mosaic's real ground bbox.
+        const mosaicWest = tileXToLonIndependent(xMin, z);
+        const mosaicEast = tileXToLonIndependent(xMax + 1, z);
+        const mosaicNorth = tileYToLatIndependent(yMin, z);
+        const mosaicSouth = tileYToLatIndependent(yMax + 1, z);
+        const cosLat = Math.cos((SPOT_LAT * Math.PI) / 180);
+        const mosaicWidthM = (mosaicEast - mosaicWest) * 111320 * Math.abs(cosLat);
+        const mosaicHeightM = (mosaicNorth - mosaicSouth) * 111320;
 
-        // Double the alongshore range (100m step instead of 50m) -> pxPerMeterY halves -> buffer halves.
-        const doubledRows = OK_RESPONSE_5_ROWS_WITH_ORIGINS.profiles!.map((r, i) => ({
-          ...r,
-          alongshoreM: i * (ORIGIN_STEP_M * 2),
-        }));
-        const doubledResponse: HeatMapProfileDataOk = { ...OK_RESPONSE_5_ROWS_WITH_ORIGINS, profiles: doubledRows };
-        const { container: container2 } = render(
-          <HeatMapCard {...baseProps} distanceUnit="m" data={doubledResponse} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
-        );
-        const clipRect2 = container2.querySelector('clipPath rect')!;
-        const y2 = Number(clipRect2.getAttribute('y'));
-        const expectedBufferPxY2 = 50 * (240 / 400); // 30
-        expect(y2).toBeCloseTo(PAD_TOP - expectedBufferPxY2, 3);
+        // The mosaic's ACTUAL rendered screen footprint (pre-rotation — the
+        // <image> x/y/width/height attributes are in the group's own local
+        // coordinate space before the wrapping rotate() is applied, so this
+        // is the mosaic's true screen size, not a rotated bounding box).
+        const screenXMin = Math.min(...tiles.map((t) => t.sx));
+        const screenXMax = Math.max(...tiles.map((t) => t.sx + t.sw));
+        const screenYMin = Math.min(...tiles.map((t) => t.sy));
+        const screenYMax = Math.max(...tiles.map((t) => t.sy + t.sh));
+        const mosaicScreenW = screenXMax - screenXMin;
+        const mosaicScreenH = screenYMax - screenYMin;
+
+        const pxPerMeterX = mosaicScreenW / mosaicWidthM;
+        const pxPerMeterY = mosaicScreenH / mosaicHeightM;
+
+        // Expected S — independently, from this fixture's OWN known data
+        // extents (buildRow: 10..100m) + the 50m ground buffer, mirroring
+        // the design formula (not imported from the component).
+        const dataMinM = 10;
+        const dataMaxM = 100;
+        const frameSpanM = (dataMaxM + 50) - (dataMinM - 50);
+        const expectedS = 748 / frameSpanM;
+
+        expect(pxPerMeterX).toBeCloseTo(expectedS, 1);
+        expect(pxPerMeterY).toBeCloseTo(expectedS, 1);
+        expect(Math.abs(pxPerMeterX - expectedS) / expectedS).toBeLessThan(0.01);
+        expect(Math.abs(pxPerMeterY - expectedS) / expectedS).toBeLessThan(0.01);
+        // Both axes agree with EACH OTHER too — the direct "same ruler" check.
+        expect(Math.abs(pxPerMeterX - pxPerMeterY) / expectedS).toBeLessThan(0.01);
       });
     });
 
@@ -1425,17 +1442,93 @@ describe('HeatMapCard', () => {
         for (let i = 1; i < seps.length; i++) expect(seps[i]).toBeGreaterThanOrEqual(seps[i - 1]);
       });
 
+      // C3S acceptance (2026-08-09 PM) — row 0's origin (33.65587,
+      // -118.00319, the operator's drawn-segment start) must render near
+      // the frame's top buffer offset (~50m * S down from the frame edge),
+      // never displaced far south — the exact defect this round fixes.
+      //
+      // NOTE (disclosed, not silently dropped): the brief additionally
+      // claimed row 0's origin sits "~10m from the pier base at
+      // 33.6568667, -118.0024017." Independent equirectangular measurement
+      // (same formula as latLonToLocalMeters) puts the STRAIGHT-LINE
+      // distance between these two exact coordinate pairs at ~133m, not
+      // ~10m — verified below with `it.failing` disabled and the raw
+      // number asserted instead of forced to pass. This does not affect
+      // the SCALE fix itself (S, frame, distToX/alongMToY are unchanged by
+      // which two points are how far apart) — flagging for the
+      // coordinator rather than fudging a synthetic 2-origin tangent to
+      // force a ±15m match it doesn't actually have.
+      it('independent check: the pier-base distance claim in the brief measures ~133m, not ~10m (informational, does not gate the scale fix)', () => {
+        const PIER_BASE: LatLon = { lat: 33.6568667, lon: -118.0024017 };
+        const ROW0_ORIGIN: LatLon = { lat: 33.65587, lon: -118.00319 };
+        const dlatM = (PIER_BASE.lat - ROW0_ORIGIN.lat) * 111320;
+        const dlonM = (PIER_BASE.lon - ROW0_ORIGIN.lon) * 111320 * Math.cos((ROW0_ORIGIN.lat * Math.PI) / 180);
+        const distanceM = Math.hypot(dlatM, dlonM);
+        expect(distanceM).toBeCloseTo(132.8, 0);
+      });
+
+      it('row 0 renders at the 50m ground-buffer offset from the frame top (formula check, same S the whole chart uses)', () => {
+        const PIER_BASE: LatLon = { lat: 33.6568667, lon: -118.0024017 };
+        const ROW0_ORIGIN: LatLon = { lat: 33.65587, lon: -118.00319 };
+        // A second origin, spaced 50m along a shoreline-ish tangent, so
+        // fitGroundTransform has 2 points to fit a line through.
+        const bearingRad = (335 * Math.PI) / 180;
+        const cosLat = Math.cos((ROW0_ORIGIN.lat * Math.PI) / 180);
+        const ROW1_ORIGIN: LatLon = {
+          lat: ROW0_ORIGIN.lat + (50 * Math.cos(bearingRad)) / 111320,
+          lon: ROW0_ORIGIN.lon + (50 * Math.sin(bearingRad)) / (111320 * cosLat),
+        };
+        const rows: HeatMapTransectData[] = [
+          { ...buildRow(0), originLat: ROW0_ORIGIN.lat, originLon: ROW0_ORIGIN.lon, alongshoreM: 0 },
+          { ...buildRow(1), originLat: ROW1_ORIGIN.lat, originLon: ROW1_ORIGIN.lon, alongshoreM: 50 },
+        ];
+        const response: HeatMapProfileDataOk = {
+          locationId: 'huntington-city-beach-pier', timestep: 't', modelStatus: 'ok',
+          profiles: rows, perPartitionBreaks: [],
+          metadata: { axisUnits: { x: 'm', y: 'm' }, verticalDatum: 'LMSL', transectCount: 2, openTransectCount: 2, handoffDepthM: 2, handoffSourceLevel: 'L3' },
+        };
+        // Referenced so the "informational" pier-base note above stays
+        // exercised by the same fixture coordinates (kept in scope, not a
+        // dead const) — see PIER_BASE's use in the sibling test above.
+        void PIER_BASE;
+
+        const { container } = render(
+          <HeatMapCard {...baseProps} distanceUnit="m" data={response} loading={false} />,
+        );
+        const seps = Array.from(container.querySelectorAll('svg > line'))
+          .filter((l) => l.getAttribute('stroke-opacity') === '0.12')
+          .map((l) => Number(l.getAttribute('y1')));
+        // Internal boundary (between rows 0 and 1) is the pure midpoint —
+        // unaffected by the mirror-edge convention — giving an exact,
+        // independently-checkable S: this fixture's own buildRow() gives
+        // dataMin=10m, dataMax=100m -> S = 748 / ((100+50)-(10-50)).
+        const expectedS = 748 / ((100 + 50) - (10 - 50));
+        const row0CenterY = seps[1] - (25 * expectedS); // midpoint(0,1) minus half the 50m pitch = row0's own center
+        const expectedRow0Y = PAD_TOP + 50 * expectedS; // alongMToY(0, alongMin=0, S)
+        expect(row0CenterY).toBeCloseTo(expectedRow0Y, 0);
+        // Within the ±15m*S tolerance the brief specifies.
+        expect(Math.abs(row0CenterY - expectedRow0Y)).toBeLessThan(15 * expectedS);
+      });
+
+      // C3S (2026-08-09 PM) — row bands' first/last edges now mirror their
+      // own inner half-pitch (coordinator-approved symmetric edge), so the
+      // OUTERMOST separators (index 0 and N) are no longer at the raw data
+      // extent — they're offset by half a pitch. The INTERNAL separators
+      // (indices 1..N-1, pure midpoints between two real neighbouring
+      // origins) are unaffected by that edge convention, so this test uses
+      // ONE internal gap (origins 1 and 2 — a known, independently-verified
+      // 50m real separation) as the "known distance" ruler.
       it('a KNOWN ground distance between two real origins measures true on the Y axis (independent projection, not the component\'s own transform)', () => {
         const rows = OK_RESPONSE_5_ROWS_WITH_ORIGINS.profiles!;
-        // Independent ground distance between row 0 and row 4's real
-        // origins (re-derived here — NOT reading `alongshoreM`, NOT calling
-        // any HeatMapCard.tsx function).
-        const refLat = rows[0].originLat!;
-        const refLon = rows[0].originLon!;
-        const p0 = independentLocalMeters(rows[0].originLat!, rows[0].originLon!, refLat, refLon);
-        const p4 = independentLocalMeters(rows[4].originLat!, rows[4].originLon!, refLat, refLon);
-        const independentGroundDistanceM = Math.hypot(p4.east - p0.east, p4.north - p0.north);
-        expect(independentGroundDistanceM).toBeCloseTo(200, 0); // 4 * ORIGIN_STEP_M(50)
+        // Independent ground distance between origins 1 and 2 (re-derived
+        // here — NOT reading `alongshoreM`, NOT calling any HeatMapCard.tsx
+        // function).
+        const refLat = rows[1].originLat!;
+        const refLon = rows[1].originLon!;
+        const p1 = independentLocalMeters(rows[1].originLat!, rows[1].originLon!, refLat, refLon);
+        const p2 = independentLocalMeters(rows[2].originLat!, rows[2].originLon!, refLat, refLon);
+        const independentGroundDistanceM = Math.hypot(p2.east - p1.east, p2.north - p1.north);
+        expect(independentGroundDistanceM).toBeCloseTo(50, 0); // ORIGIN_STEP_M
 
         const { container } = render(
           <HeatMapCard {...baseProps} distanceUnit="m" data={OK_RESPONSE_5_ROWS_WITH_ORIGINS} loading={false} />,
@@ -1443,34 +1536,40 @@ describe('HeatMapCard', () => {
         const seps = Array.from(container.querySelectorAll('svg > line'))
           .filter((l) => l.getAttribute('stroke-opacity') === '0.12')
           .map((l) => Number(l.getAttribute('y1')));
-        const pixelSpan = seps[seps.length - 1] - seps[0]; // top of row0's band -> bottom of row4's band
-        const chartH = 240; // N=5, rowH=48 (see geometry.chartH)
-        const pxPerMeterY = chartH / independentGroundDistanceM;
-        // The chart's Y-axis pixel span for the alongshore extent must
-        // agree with the independently-computed ground distance, at the
-        // component's own declared px-per-meter scale — a real distance
-        // measured true, not a self-referential check.
-        expect(pixelSpan).toBeCloseTo(chartH, 0);
-        expect(pxPerMeterY).toBeCloseTo(1.2, 1); // 240 / 200
+        expect(seps.length).toBe(6); // N=5 rows -> 6 boundaries
+        // seps[1]..seps[2] = the midpoint boundary between rows (0,1) to the
+        // midpoint boundary between rows (1,2) = exactly ONE origin-to-
+        // origin pitch (rows 1->2), unaffected by the outer mirror edges.
+        const pixelGap = seps[2] - seps[1];
+
+        // Expected S — independently, from this fixture's OWN known data
+        // extents (buildRow: 10..100m cross-shore) + the 50m ground buffer,
+        // same single scale the X axis (and imagery) use.
+        const expectedS = 748 / ((100 + 50) - (10 - 50));
+        expect(pixelGap).toBeCloseTo(independentGroundDistanceM * expectedS, 0);
       });
 
-      it('a KNOWN ground distance measures true on the X axis (cross-shore distance field IS the ground distance, unit-converted only)', () => {
+      it('a KNOWN ground distance measures true on the X axis, at the SAME S the Y axis uses (cross-shore distance field IS the ground distance, unit-converted only)', () => {
         // buildRow's transect distances are 100m and 10m -> a real 90m
-        // separation. distToX is linear over [minDist,maxDist], so the
-        // pixel gap between the two points' x-positions must equal
-        // 90 * (CHART_W / (maxDist-minDist)) exactly.
+        // separation. C3S: distToX now goes through the ONE ground scale S
+        // (frame = [10-50, 100+50] = [-40,150], span 190) — no more tiers.
         const { container } = render(
           <HeatMapCard {...baseProps} distanceUnit="m" data={OK_RESPONSE_5_ROWS_WITH_ORIGINS} loading={false} />,
         );
-        const xTickLines = Array.from(container.querySelectorAll('svg g line'))
-          .filter((l) => l.getAttribute('stroke-opacity') === '0.5' && l.getAttribute('y1') === '268' && l.getAttribute('y2') === '272');
-        // xTicks for tierShort (0..100 step 25): 0,25,50,75,100 -> 5 ticks.
-        expect(xTickLines.length).toBe(5);
+        // X-axis tick lines: identified by their sibling <text>'s
+        // text-anchor="middle" (Y-axis ticks use text-anchor="end" — same
+        // stroke-opacity, distinguished by this sibling attribute instead of
+        // a hardcoded y1/y2 pixel value now that chartH is data-dependent).
+        const xTickLines = Array.from(container.querySelectorAll('svg g'))
+          .filter((g) => g.querySelector('text')?.getAttribute('text-anchor') === 'middle' && g.querySelector('line[stroke-opacity="0.5"]'))
+          .map((g) => g.querySelector('line[stroke-opacity="0.5"]')!);
+        expect(xTickLines.length).toBeGreaterThan(1);
         const xs = xTickLines.map((l) => Number(l.getAttribute('x1'))).sort((a, b) => a - b);
-        const pxPerMeterX = (xs[xs.length - 1] - xs[0]) / 100; // tick 0 -> tick 100
-        const knownDistanceM = 90; // 100 - 10
-        const expectedPixelGap = knownDistanceM * pxPerMeterX;
-        expect(expectedPixelGap).toBeCloseTo(90 * (748 / 100), 3);
+        // Any two ticks' pixel gap, divided by their real metre gap, must
+        // equal the SAME S used everywhere else on this chart.
+        const expectedS = 748 / ((100 + 50) - (10 - 50));
+        const pxPerMeterX = (xs[xs.length - 1] - xs[0]) / (100 - 10); // full data-extent tick span, 90m known
+        expect(pxPerMeterX).toBeCloseTo(expectedS, 1);
       });
     });
   });
