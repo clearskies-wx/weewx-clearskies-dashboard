@@ -167,3 +167,33 @@ describe('R3.2 — fixed x-domain', () => {
     expect(xTickPositions(withoutMeta)).toEqual(xTickPositions(withMeta));
   });
 });
+// ---------------------------------------------------------------------------
+// SURF-REMEDIATION LABELS (2026-08-09 PM) — every served break point gets
+// its own crest label (the WC-D3 dominant-only filter is deleted).
+// ---------------------------------------------------------------------------
+
+describe('LABELS — every served break point gets a label', () => {
+  it('renders one crest height label per served break point (not just the dominant)', () => {
+    const points = [
+      breakPoint({ distance: 100, faceHeight: 4.0 }),
+      breakPoint({ distance: 40, faceHeight: 2.5 }),
+      breakPoint({ distance: -5, faceHeight: 1.1 }),
+    ];
+    const { container } = render(
+      <BeachProfileChart
+        transect={BASE_TRANSECT}
+        breakPoints={points}
+        heightUnit="ft"
+        distanceUnit="m"
+        locale="en-US"
+        displayWindowM={150}
+        displayLandwardM={30}
+      />,
+    );
+    // Each break's height label renders "<fmt1> ft" — three distinct texts.
+    const texts = Array.from(container.querySelectorAll('text')).map((t) => t.textContent);
+    expect(texts).toContain('4.0 ft');
+    expect(texts).toContain('2.5 ft');
+    expect(texts).toContain('1.1 ft');
+  });
+});
