@@ -314,6 +314,7 @@
     "heatMap": {
       "transectIndex": "Transect",
       "transectAxisLabel": "Transect",
+      "alongshoreAxisLabel": "Alongshore distance ({{unit}})",
       "openTransect": "Open",
       "breakHeight": "Break height ({{unit}})",
       "breakDistance": "Break distance ({{unit}})",

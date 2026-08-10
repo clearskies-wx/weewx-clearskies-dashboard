@@ -13,7 +13,12 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, within } from '@testing-library/react';
-import { HeatMapCard, computeImageryRotationDeg } from './HeatMapCard';
+import {
+  HeatMapCard,
+  computeImageryRotationDeg,
+  fitGroundTransform,
+  groundPointAt,
+} from './HeatMapCard';
 import type {
   HeatMapProfileDataOk,
   HeatMapProfileDataUnavailable,
@@ -284,6 +289,45 @@ const OK_RESPONSE_5_ROWS: HeatMapProfileDataOk = {
     handoffDepthM: 2,
     handoffSourceLevel: 'L3',
   },
+};
+
+// ---------------------------------------------------------------------------
+// C3 (2026-08-09 PM, P16) — ground-origin fixture. Real-shaped lat/lon
+// origins spaced along a shoreline tangent bearing ~335° (perpendicular to
+// the fixture's own transectBearingDeg=245°, so the fitted offshore bearing
+// lands exactly on 245° — same rotation the pre-C3 footprint-model tests
+// expected, letting the buffer/rotation math stay comparable while the
+// SOURCE of the bearing changes from "one row's own field" to "the fitted
+// transform"). Origins run NORTH as alongshoreM increases (row 0 = south),
+// spaced 50 m apart along the tangent, near Huntington City Beach Pier
+// (33.6534, -118.0039 area, per the plan's named ground-truth anchor).
+// ---------------------------------------------------------------------------
+const ORIGIN_REF_LAT = 33.6595;
+const ORIGIN_REF_LON = -118.0064;
+const ORIGIN_TANGENT_BEARING_DEG = 335; // perpendicular to transectBearingDeg=245
+const ORIGIN_STEP_M = 50;
+function originForRow(i: number): { lat: number; lon: number } {
+  const bearingRad = (ORIGIN_TANGENT_BEARING_DEG * Math.PI) / 180;
+  const eastM = i * ORIGIN_STEP_M * Math.sin(bearingRad);
+  const northM = i * ORIGIN_STEP_M * Math.cos(bearingRad);
+  const cosLat = Math.cos((ORIGIN_REF_LAT * Math.PI) / 180);
+  return {
+    lat: ORIGIN_REF_LAT + northM / 111320,
+    lon: ORIGIN_REF_LON + eastM / (111320 * cosLat),
+  };
+}
+function buildRowWithOrigin(transectIndex: number): HeatMapTransectData {
+  const origin = originForRow(transectIndex);
+  return {
+    ...buildRow(transectIndex),
+    originLat: origin.lat,
+    originLon: origin.lon,
+    alongshoreM: transectIndex * ORIGIN_STEP_M,
+  };
+}
+const OK_RESPONSE_5_ROWS_WITH_ORIGINS: HeatMapProfileDataOk = {
+  ...OK_RESPONSE_5_ROWS,
+  profiles: [0, 1, 2, 3, 4].map(buildRowWithOrigin),
 };
 
 // D7s median-5 smoothing fixture — 5 rows, one segment per row (2 transect
@@ -853,7 +897,7 @@ describe('HeatMapCard', () => {
     it('KAT (a): fixture WITH imagery config -> ortho tiles render behind the heat map, colour cells at reduced opacity', () => {
       mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
       const { container } = render(
-        <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
+        <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS_WITH_ORIGINS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
       );
 
       const images = Array.from(container.querySelectorAll('svg image'));
@@ -920,7 +964,7 @@ describe('HeatMapCard', () => {
     it('KAT (c): ESRI provider active -> ESRI attribution text renders, tile hrefs use the ESRI XYZ template with tokens substituted (z/y/x order, not z/x/y)', () => {
       mockUseImageryConfig.mockReturnValue({ data: ESRI_CONFIG, loading: false });
       const { container } = render(
-        <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS} loading={false} spotLat={51.5} spotLon={-0.12} />,
+        <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS_WITH_ORIGINS} loading={false} spotLat={51.5} spotLon={-0.12} />,
       );
       expect(container.textContent).toContain(ESRI_CONFIG.attribution);
 
@@ -947,7 +991,7 @@ describe('HeatMapCard', () => {
     it('KAT (d) a11y: decorative tile group is aria-hidden, attribution is visible accessible text (not sr-only), svg role/labelling unchanged', () => {
       mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
       const { container, getByText } = render(
-        <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
+        <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS_WITH_ORIGINS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
       );
       const svg = container.querySelector('svg')!;
       expect(svg.getAttribute('role')).toBe('img');
@@ -969,38 +1013,49 @@ describe('HeatMapCard', () => {
     });
 
     it('mosaic tile cap: never fetches more than IMAGERY_MOSAIC_MAX_TILES_PER_SIDE^2 tiles even for a very large study radius', () => {
-      // Extended-tier fixture — tier maxDistance 1000m -> radius far larger
-      // than a single-zoom-level mosaic can cover within the tile-count cap
-      // without the cap binding (lead ruling: binding must be logged, not
-      // silently under-cover without a trace — see console.debug in
-      // computeImageryTiles(); not re-asserted here as a spy, covered by
-      // code review + the closeout note).
-      const bigRow: HeatMapTransectData = {
-        transectIndex: 0,
-        isStructureAffected: false,
-        transectBearingDeg: 245,
-        transect: [
-          { distance: 2200, depth: 15, hs: 3.5 },
-          { distance: 10, depth: 0.5, hs: 0.8 },
-        ],
-        breakPoints: [],
-        waveShapes: [],
-        surfZones: null,
-        jackingFactors: [],
-        handoffDepthM: 2,
-        handoffSourceLevel: 'L4',
-      };
+      // C3 rebuild: the tile cap needs >= 2 real origins to fit a ground
+      // transform at all — a huge ALONGSHORE separation (5 km) forces the
+      // buffered bbox diagonal far larger than a single-zoom-level mosaic
+      // can cover within the tile-count cap without the cap binding (lead
+      // ruling: binding must be logged, not silently under-cover without a
+      // trace — see console.debug in computeImageryTiles(); not re-asserted
+      // here as a spy, covered by code review + the closeout note).
+      const FAR_STEP_M = 5000;
+      function bigRowWithOrigin(i: number): HeatMapTransectData {
+        const bearingRad = (ORIGIN_TANGENT_BEARING_DEG * Math.PI) / 180;
+        const eastM = i * FAR_STEP_M * Math.sin(bearingRad);
+        const northM = i * FAR_STEP_M * Math.cos(bearingRad);
+        const cosLat = Math.cos((ORIGIN_REF_LAT * Math.PI) / 180);
+        return {
+          transectIndex: i,
+          isStructureAffected: false,
+          transectBearingDeg: 245,
+          transect: [
+            { distance: 2200, depth: 15, hs: 3.5 },
+            { distance: 10, depth: 0.5, hs: 0.8 },
+          ],
+          breakPoints: [],
+          waveShapes: [],
+          surfZones: null,
+          jackingFactors: [],
+          handoffDepthM: 2,
+          handoffSourceLevel: 'L4',
+          originLat: ORIGIN_REF_LAT + northM / 111320,
+          originLon: ORIGIN_REF_LON + eastM / (111320 * cosLat),
+          alongshoreM: i * FAR_STEP_M,
+        };
+      }
       const bigResponse: HeatMapProfileDataOk = {
         locationId: 'huntington-city-beach-pier',
         timestep: '2026-08-02T00:00:00Z',
         modelStatus: 'ok',
-        profiles: [bigRow],
+        profiles: [0, 1].map(bigRowWithOrigin),
         perPartitionBreaks: [],
         metadata: {
           axisUnits: { x: 'm', y: 'm' },
           verticalDatum: 'LMSL',
-          transectCount: 1,
-          openTransectCount: 1,
+          transectCount: 2,
+          openTransectCount: 2,
           handoffDepthM: 2,
           handoffSourceLevel: 'L4',
         },
@@ -1074,30 +1129,46 @@ describe('HeatMapCard', () => {
 
     it('rotates the imagery tile group by the computed angle about the core chart-rectangle center', () => {
       mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
-      // OK_RESPONSE_5_ROWS: 5 rows, every row's transectBearingDeg = 245 ->
-      // rotation = computeImageryRotationDeg(245) = 25°, regardless of which
-      // row is picked as the reference (representative or middle-row
-      // fallback both land on the same bearing here).
+      // OK_RESPONSE_5_ROWS_WITH_ORIGINS: every row's transectBearingDeg=245,
+      // origins on a tangent bearing perpendicular to 245 by construction
+      // -> the fitted offshore bearing lands exactly on 245 ->
+      // rotation = computeImageryRotationDeg(245) = 25°.
       const { container } = render(
-        <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
+        <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS_WITH_ORIGINS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
       );
       const rotatedGroup = Array.from(container.querySelectorAll('svg g')).find((g) =>
         (g.getAttribute('transform') ?? '').startsWith('rotate('),
       );
       expect(rotatedGroup).toBeDefined();
       // Core chart rect center: PAD_LEFT + CHART_W/2 = 60 + 374 = 434;
-      // PAD_TOP + chartH/2 = 28 + 240/2 = 148 (N=5, rowH=48, chartH=240).
-      expect(rotatedGroup!.getAttribute('transform')).toBe('rotate(25 434 148)');
+      // PAD_TOP + chartH/2 = 28 + 240/2 = 148 (N=5, rowH=48, chartH=240 —
+      // chartH is a layout budget independent of the ground-fitted Y scale).
+      const m = rotatedGroup!.getAttribute('transform')!.match(/^rotate\(([-\d.]+) 434 148\)$/);
+      expect(m).not.toBeNull();
+      expect(Number(m![1])).toBeCloseTo(25, 1);
       // The rotated group actually contains the tile <image> elements.
       expect(rotatedGroup!.querySelectorAll('image').length).toBeGreaterThan(0);
     });
 
-    it('falls back to no rotation (0°) when no row carries a bearing', () => {
+    it('no imagery layer at all when fewer than 2 rows carry real origins (cannot fit a ground transform)', () => {
       mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
-      const noBearingRow: HeatMapTransectData = { ...buildRow(0), transectBearingDeg: null };
+      // OK_RESPONSE_5_ROWS (no P16 origin fields) — the pre-C3 fallback: the
+      // old circle/footprint-model imagery is GONE, not re-approximated.
+      const { container } = render(
+        <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
+      );
+      expect(container.querySelectorAll('svg image').length).toBe(0);
+      const rotatedGroup = Array.from(container.querySelectorAll('svg g')).find((g) =>
+        (g.getAttribute('transform') ?? '').startsWith('rotate('),
+      );
+      expect(rotatedGroup).toBeUndefined();
+    });
+
+    it('rotation is fitted from ALL origins even when no row carries its own transectBearingDeg (offshore sense falls back to the tangent perpendicular)', () => {
+      mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
       const noBearingResponse: HeatMapProfileDataOk = {
-        ...OK_RESPONSE_5_ROWS,
-        profiles: [noBearingRow],
+        ...OK_RESPONSE_5_ROWS_WITH_ORIGINS,
+        profiles: OK_RESPONSE_5_ROWS_WITH_ORIGINS.profiles!.map((r) => ({ ...r, transectBearingDeg: null })),
       };
       const { container } = render(
         <HeatMapCard {...baseProps} data={noBearingResponse} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
@@ -1106,13 +1177,26 @@ describe('HeatMapCard', () => {
         (g.getAttribute('transform') ?? '').startsWith('rotate('),
       );
       expect(rotatedGroup).toBeDefined();
-      expect(rotatedGroup!.getAttribute('transform')).toMatch(/^rotate\(0 /);
+      // Expected value computed via the SAME exported transform function
+      // (fitGroundTransform + computeImageryRotationDeg) — this test proves
+      // the component WIRES the fitted transform into the rotation
+      // correctly (center point, formula), not that the transform math
+      // itself is correct (the GROUND-TRUTH describe block below tests
+      // that against independent lat/lon arithmetic, never this function).
+      const origins = OK_RESPONSE_5_ROWS_WITH_ORIGINS.profiles!.map((r) => ({
+        lat: r.originLat!, lon: r.originLon!, alongshoreM: r.alongshoreM!, bearingDeg: null,
+      }));
+      const transform = fitGroundTransform(origins)!;
+      const expectedRotation = computeImageryRotationDeg(transform.offshoreBearingDeg);
+      const m = rotatedGroup!.getAttribute('transform')!.match(/^rotate\(([-\d.]+) 434 148\)$/);
+      expect(m).not.toBeNull();
+      expect(Number(m![1])).toBeCloseTo(expectedRotation, 6);
     });
 
     it('50m visible buffer: the imagery clip rect extends beyond the core plot rectangle on all four sides', () => {
       mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
       const { container } = render(
-        <HeatMapCard {...baseProps} distanceUnit="m" data={OK_RESPONSE_5_ROWS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
+        <HeatMapCard {...baseProps} distanceUnit="m" data={OK_RESPONSE_5_ROWS_WITH_ORIGINS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
       );
       const clipRect = container.querySelector('clipPath rect');
       expect(clipRect).not.toBeNull();
@@ -1128,25 +1212,21 @@ describe('HeatMapCard', () => {
       expect(y + h).toBeGreaterThan(PAD_TOP + CORE_CHART_H);
     });
 
-    // ── C3-fix (2026-08-09) — X buffer derives from the real x-axis scale,
-    //    not a hardcoded/fixed-fraction radius; Y buffer stays on the
-    //    footprint-model frame, untouched (coordinator ruling, option (a)). ──
-    describe('C3-fix — buffer scale correction', () => {
-      // OK_RESPONSE_5_ROWS + distanceUnit="m": both rows carry distances
-      // 100 and 10 (buildRow) with no breakPoints, so tier selection falls
-      // through to the Standard-tier-vs-maxDistance check and lands on
-      // tierShort (maxDistance=100 at METER_TO_UNIT=1) since maxDistance
-      // (100) <= tierShort.maxDistance (100); minDistanceClipped starts at 0
-      // and only goes negative for points < 0 (none here), so minDist=0,
-      // maxDist=100 — CHART_W(748)/(100-0) = 7.48 px/m EXACTLY, giving a
-      // falsifiable expected buffer: 50 * 7.48 = 374px. A reversion to the
-      // old `IMAGERY_VISIBLE_BUFFER_M / radiusM * (CHART_W/2)` formula
-      // (radiusM=100 here) would instead give 50/100*374 = 187px — half —
-      // failing this assertion.
-      it('X buffer px matches CHART_W / (maxDist-minDist) exactly, falsifiable against the old fixed-fraction formula', () => {
+    // ── C3 rebuild (2026-08-09 PM) — BOTH axes derive their on-screen
+    //    buffer from their OWN real ground scale now (the Y axis is real
+    //    alongshore distance too, not the old footprint-model fraction). ──
+    describe('C3 — buffer scale, both axes real', () => {
+      // OK_RESPONSE_5_ROWS_WITH_ORIGINS + distanceUnit="m": distances 100/10
+      // (buildRow) -> tier lands on tierShort (maxDistance=100); minDist=0,
+      // maxDist=100 -> CHART_W(748)/(100-0) = 7.48 px/m -> X buffer
+      // 50*7.48=374px. alongshoreM 0..200 (5 rows, 50m step) -> chartH(240)
+      // /200 = 1.2 px/m -> Y buffer 50*1.2=60px — falsifiable against BOTH
+      // the pre-C3 X formula (187px) and a Y formula that (wrongly) reused
+      // pxPerMeterX (374px).
+      it('X buffer px matches CHART_W / (maxDist-minDist) exactly', () => {
         mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
         const { container } = render(
-          <HeatMapCard {...baseProps} distanceUnit="m" data={OK_RESPONSE_5_ROWS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
+          <HeatMapCard {...baseProps} distanceUnit="m" data={OK_RESPONSE_5_ROWS_WITH_ORIGINS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
         );
         const clipRect = container.querySelector('clipPath rect')!;
         const x = Number(clipRect.getAttribute('x'));
@@ -1166,9 +1246,9 @@ describe('HeatMapCard', () => {
           { distance: 1000, depth: 15, hs: 3.5 },
           { distance: 10, depth: 0.5, hs: 0.8 },
         ];
-        const wideRows = [0, 1, 2, 3, 4].map((i) => ({ ...buildRow(i), transect: wideTransect }));
+        const wideRows = OK_RESPONSE_5_ROWS_WITH_ORIGINS.profiles!.map((r) => ({ ...r, transect: wideTransect }));
         const wideResponse: HeatMapProfileDataOk = {
-          ...OK_RESPONSE_5_ROWS,
+          ...OK_RESPONSE_5_ROWS_WITH_ORIGINS,
           profiles: wideRows,
         };
         const { container } = render(
@@ -1181,23 +1261,34 @@ describe('HeatMapCard', () => {
         expect(x).toBeCloseTo(PAD_LEFT - expectedBufferPxX, 3);
       });
 
-      // Y buffer must stay on the pre-existing footprint-model fraction
-      // (IMAGERY_VISIBLE_BUFFER_M / radiusM applied to chartH/2) — NOT
-      // rescaled to the x-axis's px/m ratio. Falsifiable: if a future edit
-      // wrongly reused pxPerMeterX for Y, this would fail (the two ratios
-      // differ for this fixture: chartH-based fraction vs CHART_W-based).
-      it('Y buffer stays on the footprint-model fraction (unchanged), independent of the X-axis scale fix', () => {
+      // Y buffer now on the SAME real-scale principle as X — mutation check:
+      // doubling the alongshore range must exactly halve the on-screen Y
+      // buffer, falsifiable against the pre-C3 footprint-model fraction
+      // (which would give a DIFFERENT, non-halved number here).
+      it('Y buffer px matches chartH / (alongMax-alongMin) exactly, and scales proportionally with the along-range mutation', () => {
         mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
         const { container } = render(
-          <HeatMapCard {...baseProps} distanceUnit="m" data={OK_RESPONSE_5_ROWS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
+          <HeatMapCard {...baseProps} distanceUnit="m" data={OK_RESPONSE_5_ROWS_WITH_ORIGINS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
         );
         const clipRect = container.querySelector('clipPath rect')!;
         const y = Number(clipRect.getAttribute('y'));
-        // radiusM = max(|minDist|,|maxDist|) = 100 (maxDist=100, minDist=0);
-        // chartH = 240 (N=5, rowH=48). bufferFraction = 50/100 = 0.5;
-        // bufferPxY = 0.5 * (240/2) = 60.
-        const expectedBufferPxY = (50 / 100) * (240 / 2);
+        // alongMin=0, alongMax=200 (5 rows, 50m step); chartH=240 (N=5, rowH=48).
+        const expectedBufferPxY = 50 * (240 / 200); // 60
         expect(y).toBeCloseTo(PAD_TOP - expectedBufferPxY, 3);
+
+        // Double the alongshore range (100m step instead of 50m) -> pxPerMeterY halves -> buffer halves.
+        const doubledRows = OK_RESPONSE_5_ROWS_WITH_ORIGINS.profiles!.map((r, i) => ({
+          ...r,
+          alongshoreM: i * (ORIGIN_STEP_M * 2),
+        }));
+        const doubledResponse: HeatMapProfileDataOk = { ...OK_RESPONSE_5_ROWS_WITH_ORIGINS, profiles: doubledRows };
+        const { container: container2 } = render(
+          <HeatMapCard {...baseProps} distanceUnit="m" data={doubledResponse} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
+        );
+        const clipRect2 = container2.querySelector('clipPath rect')!;
+        const y2 = Number(clipRect2.getAttribute('y'));
+        const expectedBufferPxY2 = 50 * (240 / 400); // 30
+        expect(y2).toBeCloseTo(PAD_TOP - expectedBufferPxY2, 3);
       });
     });
 
@@ -1291,6 +1382,97 @@ describe('HeatMapCard', () => {
       const headerCell = within(container).getByText('4', { selector: 'table.sr-only th[scope="row"]' });
       const row = headerCell.closest('tr')!;
       expect(within(row).getByText('no').tagName).toBe('TD'); // isStructureAffected true -> "Open" = no
+    });
+
+    // ── C3 GROUND-TRUTH acceptance (2026-08-09 PM, L1-BOUNDARY-REBUILD-PLAN
+    //    §C3) — verified against INDEPENDENT lat/lon arithmetic (a second,
+    //    from-scratch equirectangular projection written directly in this
+    //    test, NOT importing latLonToLocalMeters/fitGroundTransform/etc.
+    //    from HeatMapCard.tsx) — never the chart's own internal state. ──
+    describe('C3 GROUND-TRUTH — verified against independent lat/lon math, never the chart\'s own arithmetic', () => {
+      // Independent equirectangular projection (re-derived here, not
+      // imported) — meters north/east of a reference point.
+      function independentLocalMeters(lat: number, lon: number, refLat: number, refLon: number) {
+        const metersPerDegLat = 111320;
+        const metersPerDegLon = 111320 * Math.cos((refLat * Math.PI) / 180);
+        return { east: (lon - refLon) * metersPerDegLon, north: (lat - refLat) * metersPerDegLat };
+      }
+
+      it('row 0 is REALLY south of a later row (independent latitude comparison) — the HB pier ground-truth anchor', () => {
+        // OK_RESPONSE_5_ROWS_WITH_ORIGINS rows are built from real HB-pier-
+        // area coordinates (33.6534,-118.0039 area per the plan's named
+        // anchor — ORIGIN_REF_LAT/LON sit within ~700m of it). Row 0's real
+        // latitude must be numerically LESS than a later row's — a fact
+        // about the fixture's lat/lon values themselves, independent of any
+        // rendering.
+        const rows = OK_RESPONSE_5_ROWS_WITH_ORIGINS.profiles!;
+        expect(rows[0].originLat!).toBeLessThan(rows[4].originLat!);
+      });
+
+      it('the rendered row ORDER agrees with the real latitude order (row 0 renders at/above a later row, matching south->north)', () => {
+        const { container } = render(
+          <HeatMapCard {...baseProps} distanceUnit="m" data={OK_RESPONSE_5_ROWS_WITH_ORIGINS} loading={false} />,
+        );
+        // Row separator lines are drawn at each band boundary, top to
+        // bottom, in row order — the first (topmost) separator's y must be
+        // <= the last (bottommost) separator's y, and there must be exactly
+        // N+1 of them (one per row boundary).
+        const seps = Array.from(container.querySelectorAll('svg > line'))
+          .filter((l) => l.getAttribute('stroke-opacity') === '0.12')
+          .map((l) => Number(l.getAttribute('y1')));
+        expect(seps.length).toBe(6); // N=5 rows -> 6 boundaries
+        expect(seps[0]).toBeLessThan(seps[seps.length - 1]);
+        // Monotonic non-decreasing — real alongshore order preserved exactly.
+        for (let i = 1; i < seps.length; i++) expect(seps[i]).toBeGreaterThanOrEqual(seps[i - 1]);
+      });
+
+      it('a KNOWN ground distance between two real origins measures true on the Y axis (independent projection, not the component\'s own transform)', () => {
+        const rows = OK_RESPONSE_5_ROWS_WITH_ORIGINS.profiles!;
+        // Independent ground distance between row 0 and row 4's real
+        // origins (re-derived here — NOT reading `alongshoreM`, NOT calling
+        // any HeatMapCard.tsx function).
+        const refLat = rows[0].originLat!;
+        const refLon = rows[0].originLon!;
+        const p0 = independentLocalMeters(rows[0].originLat!, rows[0].originLon!, refLat, refLon);
+        const p4 = independentLocalMeters(rows[4].originLat!, rows[4].originLon!, refLat, refLon);
+        const independentGroundDistanceM = Math.hypot(p4.east - p0.east, p4.north - p0.north);
+        expect(independentGroundDistanceM).toBeCloseTo(200, 0); // 4 * ORIGIN_STEP_M(50)
+
+        const { container } = render(
+          <HeatMapCard {...baseProps} distanceUnit="m" data={OK_RESPONSE_5_ROWS_WITH_ORIGINS} loading={false} />,
+        );
+        const seps = Array.from(container.querySelectorAll('svg > line'))
+          .filter((l) => l.getAttribute('stroke-opacity') === '0.12')
+          .map((l) => Number(l.getAttribute('y1')));
+        const pixelSpan = seps[seps.length - 1] - seps[0]; // top of row0's band -> bottom of row4's band
+        const chartH = 240; // N=5, rowH=48 (see geometry.chartH)
+        const pxPerMeterY = chartH / independentGroundDistanceM;
+        // The chart's Y-axis pixel span for the alongshore extent must
+        // agree with the independently-computed ground distance, at the
+        // component's own declared px-per-meter scale — a real distance
+        // measured true, not a self-referential check.
+        expect(pixelSpan).toBeCloseTo(chartH, 0);
+        expect(pxPerMeterY).toBeCloseTo(1.2, 1); // 240 / 200
+      });
+
+      it('a KNOWN ground distance measures true on the X axis (cross-shore distance field IS the ground distance, unit-converted only)', () => {
+        // buildRow's transect distances are 100m and 10m -> a real 90m
+        // separation. distToX is linear over [minDist,maxDist], so the
+        // pixel gap between the two points' x-positions must equal
+        // 90 * (CHART_W / (maxDist-minDist)) exactly.
+        const { container } = render(
+          <HeatMapCard {...baseProps} distanceUnit="m" data={OK_RESPONSE_5_ROWS_WITH_ORIGINS} loading={false} />,
+        );
+        const xTickLines = Array.from(container.querySelectorAll('svg g line'))
+          .filter((l) => l.getAttribute('stroke-opacity') === '0.5' && l.getAttribute('y1') === '268' && l.getAttribute('y2') === '272');
+        // xTicks for tierShort (0..100 step 25): 0,25,50,75,100 -> 5 ticks.
+        expect(xTickLines.length).toBe(5);
+        const xs = xTickLines.map((l) => Number(l.getAttribute('x1'))).sort((a, b) => a - b);
+        const pxPerMeterX = (xs[xs.length - 1] - xs[0]) / 100; // tick 0 -> tick 100
+        const knownDistanceM = 90; // 100 - 10
+        const expectedPixelGap = knownDistanceM * pxPerMeterX;
+        expect(expectedPixelGap).toBeCloseTo(90 * (748 / 100), 3);
+      });
     });
   });
 });

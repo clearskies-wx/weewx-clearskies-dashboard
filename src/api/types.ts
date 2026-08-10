@@ -2120,6 +2120,26 @@ export interface BeachProfileTransectResult {
    * tide is below datum. Null when unavailable.
    */
   tideLevel?: number | null;
+  /**
+   * P16 / L1-BOUNDARY-REBUILD-PLAN Phase C3 (2026-08-09 PM, operator
+   * C3-COORDS ruling Option A) — this transect's REAL origin (WGS84),
+   * sourced from the pipeline's existing `transect_origins`, no new
+   * computation. Present on the `transect_index=all` (heat map) response;
+   * additive/nullable everywhere else. Null when the marine service
+   * predates this field (older cached response) — HeatMapCard falls back
+   * to its pre-C3 rendering in that case (no ground-truth transform without
+   * real coordinates).
+   */
+  originLat?: number | null;
+  /** See {@link originLat}. */
+  originLon?: number | null;
+  /**
+   * P16 — cumulative alongshore distance (metres) from row 0's origin,
+   * monotonic by transect index. The heat map's real Y-axis coordinate
+   * (C3) — never derived client-side, always the server's own alongshore
+   * bookkeeping.
+   */
+  alongshoreM?: number | null;
 }
 
 /**
