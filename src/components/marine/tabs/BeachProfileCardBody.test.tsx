@@ -511,10 +511,14 @@ describe('BeachProfileCardBody', () => {
     expect(breakRows.length).toBe(1 + 2);
   });
 
-  // Tier-selection bug fix (2026-08-02): all break points negative must
-  // still select the Standard tier (300m) by break MAGNITUDE, not fall
-  // through to Extended (1000m) via the full-transect-extent fallback.
-  it('tier selection (all-negative breaks): picks Standard tier (max tick 300), not Extended (1000)', () => {
+  // SURF-REMEDIATION R3.2 (2026-08-09) — SUPERSEDES the pre-R3 "tier
+  // selection" test this replaces (deleted `selectTier()` was chosen by
+  // outermost-break MAGNITUDE; that whole mechanism is gone). The x-domain
+  // is now FIXED from `metadata.displayWindowM`/`displayLandwardM` (absent
+  // here -> the hardcoded 150m/30m fallback), regardless of where breaks
+  // fall — this fixture's breaks at -223/-240 render OFF the fixed
+  // 98.4ft-landward domain and simply clip, they do not widen it.
+  it('fixed x-domain (R3.2): metadata-absent fallback (150m/30m) applies regardless of break location, never re-derived from break distance', () => {
     const { container } = render(
       <BeachProfileCardBody
         {...baseProps}
@@ -525,15 +529,19 @@ describe('BeachProfileCardBody', () => {
     );
     // X-axis distance tick labels are the only <text> content that is a
     // plain integer in this render (locale 'en' comma-groups >= 1000, e.g.
-    // "1,000" — stripped here so a >=1000 tier's ticks are still comparable
-    // integers, not silently excluded by the digit-only regex) — read them
-    // all and take the max, which is the tier's own maxDistance.
+    // "1,000" — stripped here so ticks stay comparable integers, not
+    // silently excluded by the digit-only regex).
     const tickTexts = Array.from(container.querySelectorAll('svg text'))
       .map((el) => (el.textContent ?? '').replace(/,/g, ''))
-      .filter((s) => /^\d+$/.test(s))
+      .filter((s) => /^-?\d+$/.test(s))
       .map(Number);
     expect(tickTexts.length).toBeGreaterThan(0);
-    expect(Math.max(...tickTexts)).toBe(300);
+    // distanceUnit="m" here -> METER_TO_UNIT=1 -> fallback window=150,
+    // landward=30 exactly; tickStepForWindow(150) lands on the Standard
+    // tier's 50m step (150 > tierShort.maxDistance(100)) -> ticks
+    // 0,50,100,150 plus the negative dry-sand tick at ceil(-30/5)*5=-30.
+    expect(Math.max(...tickTexts)).toBe(150);
+    expect(Math.min(...tickTexts)).toBe(-30);
   });
 
   // ── D6 — per-break zones render by default, no toggle ──────────────────
