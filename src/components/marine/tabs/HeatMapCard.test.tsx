@@ -17,7 +17,6 @@ import {
   HeatMapCard,
   computeImageryRotationDeg,
   fitGroundTransform,
-  groundPointAt,
 } from './HeatMapCard';
 import type {
   HeatMapProfileDataOk,
