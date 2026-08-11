@@ -534,6 +534,55 @@ const H0_RESPONSE: HeatMapProfileDataOk = {
   },
 };
 
+// ---------------------------------------------------------------------------
+// H-ACCEPT-STRUCK fix (2026-08-1x) — operator: "waves breaking in the
+// middle of the beach". Root cause (verified against the live payload, row
+// transectIndex 81): served transect points run to distance -235.7m
+// (landward of the waterline), carrying residual near-zero hs (~0.013m at
+// 0.03m depth) — the 1D model's domain runs to HAT, so this dry-beach
+// padding exists on every row. Reproduces the LIVE numbers (not a
+// synthetic guess), with "wet" points (hs 0.3-1.5) all at/seaward of
+// waterlineDistance=0, and two dry-beach padding points landward of it
+// mirroring the live shape (-50m/hs 0.05, -235.7m/hs 0.013 — the exact
+// live distance/depth pairing).
+// ---------------------------------------------------------------------------
+function buildDryPaddingRow(transectIndex: number): HeatMapTransectData {
+  return {
+    transectIndex,
+    isStructureAffected: false,
+    transectBearingDeg: 245,
+    transect: [
+      { distance: 100, depth: 5, hs: 1.5 },
+      { distance: 20, depth: 1, hs: 0.8 },
+      { distance: 0, depth: 0.5, hs: 0.3 },
+      { distance: -50, depth: 0.1, hs: 0.05 },
+      { distance: -235.7, depth: 0.03, hs: 0.013 },
+    ],
+    breakPoints: [],
+    waveShapes: [],
+    surfZones: null,
+    jackingFactors: [],
+    handoffDepthM: 2,
+    handoffSourceLevel: 'L3',
+    waterlineDistance: 0,
+  };
+}
+const OK_RESPONSE_DRY_PADDING: HeatMapProfileDataOk = {
+  locationId: 'huntington-city-beach-pier',
+  timestep: '2026-08-11T00:00:00Z',
+  modelStatus: 'ok',
+  profiles: [0, 1].map(buildDryPaddingRow),
+  perPartitionBreaks: [],
+  metadata: {
+    axisUnits: { x: 'm', y: 'm' },
+    verticalDatum: 'LMSL',
+    transectCount: 2,
+    openTransectCount: 2,
+    handoffDepthM: 2,
+    handoffSourceLevel: 'L3',
+  },
+};
+
 const FETCH_ERROR = new Error('404: Surf location not found');
 
 const baseProps = {
@@ -1242,6 +1291,59 @@ describe('HeatMapCard', () => {
       // The raw zeroed-out value is still exactly 0 in the untouched prop —
       // only the rendered colour/tooltip changed, not the source data.
       expect(OK_RESPONSE_SMOOTHING.profiles![2].transect[0].hs).toBe(0);
+    });
+  });
+
+  // ── H-ACCEPT-STRUCK fix (2026-08-1x) — operator: "waves breaking in the
+  //    middle of the beach". See OK_RESPONSE_DRY_PADDING's doc comment for
+  //    the live-payload numbers this fixture reproduces. ──
+  describe('H-ACCEPT-STRUCK — dry-beach padding never paints as surf', () => {
+    it('no colour cell renders landward of the row\'s own waterlineDistance — the dry-beach padding points (hs 0.05/0.013) never surface as a colour value', () => {
+      const { container } = render(
+        <HeatMapCard {...baseProps} distanceUnit="m" data={OK_RESPONSE_DRY_PADDING} loading={false} />,
+      );
+      const titles = Array.from(container.querySelectorAll('svg rect > title'))
+        .map((el) => parseFloat(el.textContent ?? '0'));
+      expect(titles.length).toBeGreaterThan(0);
+      // Every rendered cell is bilinear-interpolated ONLY from the wet
+      // segment [0m, 100m] (hs range 0.3-1.5) — the dry-beach padding
+      // segments [-235.7m,-50m] and [-50m,0m] (hs 0.013-0.05) are never
+      // sampled at all, so no title can read anywhere near those values.
+      for (const value of titles) {
+        expect(value).toBeGreaterThanOrEqual(0.3);
+      }
+    });
+
+    it('the cross-shore frame\'s shoreward edge stops at the waterline, not 235m further landward at the raw served minimum', () => {
+      const { container } = render(
+        <HeatMapCard {...baseProps} distanceUnit="m" data={OK_RESPONSE_DRY_PADDING} loading={false} />,
+      );
+      // X-axis tick VALUES are computed from geometry.dataMinM (the fixed
+      // frame extent) — independently, the fix caps dataMinM at
+      // max(waterlineDistance)=0 across rows instead of the raw served
+      // min (-235.7m). No rendered X tick should read anywhere near
+      // -235.7 (a huge negative number the old frame would have needed to
+      // span); the smallest tick should be close to 0, not far negative.
+      const xTickTexts = Array.from(container.querySelectorAll('svg g text[text-anchor="middle"]'))
+        .map((el) => parseFloat(el.textContent ?? 'NaN'))
+        .filter((v) => !Number.isNaN(v));
+      expect(xTickTexts.length).toBeGreaterThan(0);
+      const minTick = Math.min(...xTickTexts);
+      expect(minTick).toBeGreaterThan(-50);
+    });
+
+    it('a row with NO waterlineDistance (older cached response) falls back to the pre-fix raw-minimum framing — byte-identical to before this fix for that case', () => {
+      // OK_RESPONSE_5_ROWS_WITH_ORIGINS rows carry no waterlineDistance at
+      // all -> every row.waterlineDistance is undefined -> both the
+      // colour-cell clip and the frame-extent clip take their documented
+      // fallback (raw served minimum), unchanged from pre-fix behavior.
+      // This is the SAME fixture the pre-existing GOLDEN/ground-truth
+      // tests already assert byte-identical output against — no new
+      // assertion needed here beyond confirming it still renders without
+      // throwing (the golden-DOM tests elsewhere are the real pin).
+      expect(() => render(
+        <HeatMapCard {...baseProps} distanceUnit="m" data={OK_RESPONSE_5_ROWS_WITH_ORIGINS} loading={false} />,
+      )).not.toThrow();
     });
   });
 

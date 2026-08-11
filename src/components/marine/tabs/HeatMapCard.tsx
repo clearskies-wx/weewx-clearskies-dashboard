@@ -692,6 +692,26 @@ function computeDataExtentM(rows: HeatMapTransectData[], distanceUnit: string): 
     }
   }
   if (!Number.isFinite(min) || !Number.isFinite(max)) { min = 0; max = 1; }
+
+  // H-ACCEPT-STRUCK fix (operator: "waves breaking in the middle of the
+  // beach") — the raw served min above can include dry-beach padding
+  // points landward of the waterline (the 1D model's domain runs to HAT).
+  // The frame's SHOREWARD edge now stops at the FARTHEST-offshore served
+  // waterline across all rows — wide enough that every row's own waterline
+  // still fits inside the frame (a row whose own waterline sits shoreward
+  // of this shared edge is handled by the per-cell paint clip at the
+  // colour-cell render loop, not by widening the frame further). Falls
+  // back to the raw transect min (pre-existing behavior) when no row
+  // carries `waterlineDistance` (older cached response).
+  let waterlineMaxM = -Infinity;
+  for (const row of rows) {
+    if (row.waterlineDistance != null) {
+      const wM = toMeters(row.waterlineDistance, distanceUnit);
+      if (wM > waterlineMaxM) waterlineMaxM = wM;
+    }
+  }
+  if (Number.isFinite(waterlineMaxM)) min = waterlineMaxM;
+
   return { minM: min, maxM: max };
 }
 
@@ -1549,11 +1569,25 @@ export function HeatMapCard({
       // regardless of order (ascending or descending, both observed in
       // real fixtures).
       const distValues = pts.map((p) => p.distance);
-      const distMin = Math.min(...distValues);
+      const rawDistMin = Math.min(...distValues);
       const distMax = Math.max(...distValues);
+      // H-ACCEPT-STRUCK fix (operator: "waves breaking in the middle of
+      // the beach") — the 1D model's domain runs to HAT, so `pts` can
+      // carry dry-beach padding points landward of this row's own
+      // waterline, with residual near-zero Hs. Never paint landward of
+      // `row.waterlineDistance` — falls back to the raw served minimum
+      // (pre-existing behavior) only when this row has no
+      // waterlineDistance at all (older cached response).
+      const distMin = row.waterlineDistance != null
+        ? Math.max(rawDistMin, row.waterlineDistance)
+        : rawDistMin;
       const distSpan = distMax - distMin;
-
-      for (let sx = 0; sx < SMOOTHING_SUBDIV_X; sx++) {
+      // distSpan <= 0 means this row's entire served extent is landward of
+      // its own waterline (degenerate edge case) — skip the colour-cell
+      // raster only; zone overlays/break glyphs below (a SEPARATE step for
+      // this same row) are unaffected, not skipped via an outer-loop
+      // `continue`.
+      for (let sx = 0; distSpan > 0 && sx < SMOOTHING_SUBDIV_X; sx++) {
         const dist0 = distMin + (distSpan * sx) / SMOOTHING_SUBDIV_X;
         const dist1 = distMin + (distSpan * (sx + 1)) / SMOOTHING_SUBDIV_X;
         const distMid = (dist0 + dist1) / 2;
