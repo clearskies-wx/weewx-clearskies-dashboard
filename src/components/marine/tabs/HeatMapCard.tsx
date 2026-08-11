@@ -36,16 +36,16 @@
 // alongshoreM renders further down. See "GROUND->CHART TRANSFORM" below.
 //
 
-// D7s (ROUND-D5-BEACH-PROFILE-CARD-BRIEF-2026-08-05, standing operator
-// request — "this is why i want the smoothing on the heat map, so a few
-// transects zeroing out does not make a difference"): display-side median
-// filter over a 5-transect window (centered on each row, clamped at the
-// row-count edge), applied at RENDER time only. Raw `data`/`row.transect`
-// values are never mutated — `smoothedHsAt()` below reads them and returns
+// H2 (2026-08-10, MARINE-PAGE-FIXIT-PLAN §H2, fixit log Item 5) — REPLACES
+// the D7s median-5-window filter (ROUND-D5-BEACH-PROFILE-CARD-BRIEF-2026-
+// 08-05) with a bilinear smoothing raster: colour blends cross-shore
+// (along each transect) and alongshore (between adjacent transect row
+// bands) simultaneously, at RENDER time only. Raw `data`/`row.transect`
+// values are never mutated — `bilinearHsAt()` below reads them and returns
 // a derived value used solely for the colour cell fill and its `<title>`
-// tooltip. See `smoothedHsAt()` for the exact alignment method (same
-// positional index across the row window, clamped per-row at that row's
-// own point-array-length edge).
+// tooltip. Cells with no data stay unpainted (never invents surf beyond
+// the data extent). See `bilinearHsAt()`/`findBracketSegment()` for the
+// exact interpolation method.
 
 import { useMemo, useId, useState, useRef, useEffect } from 'react';
 import type { ReactElement } from 'react';
@@ -239,8 +239,15 @@ function hsToColor(hs: number, maxHs: number, opacity = 0.85): string {
 // to the pre-C3 chart (KAT b lineage).
 // ---------------------------------------------------------------------------
 
-/** Max tiles fetched per mosaic side (4 -> up to 4x4=16 tiles). Named/documented, easily tuned. */
-const IMAGERY_MOSAIC_MAX_TILES_PER_SIDE = 4;
+/**
+ * Max tiles fetched per mosaic side (8 -> up to 8x8=64 tiles). H1
+ * (2026-08-10, MARINE-PAGE-FIXIT-PLAN §H1, fixit log Item 5) raised this
+ * from 4 to 8 — the tile-budget half of the C3S strike remedy (target
+ * background resolution <=1.5 m/pixel at default card size); the
+ * companion frame-seaward-edge change is HELD pending the operator's Q2
+ * ruling (coordinator instruction 2026-08-10) and lands separately.
+ */
+const IMAGERY_MOSAIC_MAX_TILES_PER_SIDE = 8;
 /** Zoom clamp — within the API's own supported range [0, 20] (API-MANUAL §12a). */
 const IMAGERY_ZOOM_MIN = 14;
 const IMAGERY_ZOOM_MAX = 19;
@@ -780,40 +787,104 @@ function computeAxisTicks(minUnit: number, maxUnit: number, distanceUnit: string
   return ticks;
 }
 
-// D7s smoothing window radius — 5-transect window = 2 rows on each side of
-// the current row, centered.
-const SMOOTHING_WINDOW_RADIUS = 2;
+// H2 (2026-08-10, MARINE-PAGE-FIXIT-PLAN §H2, fixit log Item 5) — radar-
+// style smoothing raster, REPLACES the D7s median-5 `smoothedHsAt()` it
+// used to be (function renamed/rewritten below, same call site). Colour
+// blends CROSS-SHORE (along each transect — linear between the two served
+// points bracketing a sampled position, in real distance space, not
+// index-count space) AND ALONGSHORE (between adjacent transect row bands —
+// linear between this row's own value and its neighbour row's value at the
+// SAME cross-shore position) simultaneously — a true bilinear blend, not a
+// median filter. Sampled at a FIXED sub-cell resolution per row
+// (SMOOTHING_SUBDIV_X/Y below), independent of how many points the row's
+// own transect actually carries, so the rendered cell count stays bounded
+// regardless of live data density (a dense real spot can carry ~150+
+// points per transect — subdividing per-SERVED-SEGMENT instead of per-row
+// would multiply cell count unboundedly). `row.transect`/`row.alongshoreM`
+// and the ground transform are untouched — render-time-only, same rule the
+// D7s filter it replaces already followed. Returns `null` (no paint, no
+// invented surf) only when THIS row's own value at the sampled cross-shore
+// position is unavailable — a neighbour's data never substitutes for a
+// missing value at this row's own position, it only ever blends alongside
+// it once this row's own value exists.
+const SMOOTHING_SUBDIV_X = 16; // fixed cross-shore samples per row (not per served point). Tunable at the eyeball step.
+const SMOOTHING_SUBDIV_Y = 2;  // fixed alongshore samples per row band. Tunable at the eyeball step.
 
 /**
- * D7s — centered median filter over a 5-transect window, applied at RENDER
- * time only (`data`/`row.transect` are never mutated). Alignment method
- * (lead-approved 2026-08-05): for row `ri`, point-array position `pi`,
- * gather the Hs value at the SAME positional index from each row in
- * `[ri-2 .. ri+2]` (clamped at the row-count edge), and within each of
- * those rows clamp `pi` to that row's own point-array-length edge (a
- * shorter neighboring row contributes its last point rather than being
- * skipped outright — rows are sampled at consistent resolution from the
- * same real (unclipped, C3S) domain, so positional alignment is a
- * reasonable, simple choice here per the brief's own instruction to propose
- * one).
- * Returns `null` only when every row in the window has zero points (or all
- * null Hs) — callers fall back to the pre-existing break-point proximity
- * model in that case, unchanged from before D7s.
+ * Cross-shore linear interpolation of Hs within row `pts`' segment
+ * `[pi, pi+1]`, at real-distance fraction `fracX` (0 = pts[pi], 1 =
+ * pts[pi+1], both real-distance-space, not index-space). Null when either
+ * endpoint's Hs is unavailable, or `pi` is out of bounds.
  */
-function smoothedHsAt(displayTransects: HeatMapEnvelopePoint[][], ri: number, pi: number): number | null {
-  const n = displayTransects.length;
-  const values: number[] = [];
-  for (let r = Math.max(0, ri - SMOOTHING_WINDOW_RADIUS); r <= Math.min(n - 1, ri + SMOOTHING_WINDOW_RADIUS); r++) {
-    const rowPts = displayTransects[r];
-    if (rowPts.length === 0) continue;
-    const idx = Math.min(pi, rowPts.length - 1);
-    const hs = rowPts[idx].hs;
-    if (hs !== null && hs !== undefined) values.push(hs);
+function hsAtFraction(pts: HeatMapEnvelopePoint[], pi: number, fracX: number): number | null {
+  if (pi < 0 || pi + 1 >= pts.length) return null;
+  const a = pts[pi].hs;
+  const b = pts[pi + 1].hs;
+  if (a === null || a === undefined || b === null || b === undefined) return null;
+  return a + (b - a) * fracX;
+}
+
+/**
+ * Finds the segment `[pi, pi+1]` in `pts` bracketing real-distance `dist`
+ * (pts may be served in ascending OR descending distance order — both
+ * observed in real fixtures — so this checks both orderings) and returns
+ * `{ pi, fracX }` (`fracX` in [0,1], real-distance-space). Returns null
+ * when `pts` has fewer than 2 points or `dist` falls outside every
+ * segment's span (clamped rather than extrapolated — never invents a
+ * position beyond the row's own served extent).
+ */
+function findBracketSegment(pts: HeatMapEnvelopePoint[], dist: number): { pi: number; fracX: number } | null {
+  if (pts.length < 2) return null;
+  for (let pi = 0; pi < pts.length - 1; pi++) {
+    const d0 = pts[pi].distance;
+    const d1 = pts[pi + 1].distance;
+    const lo = Math.min(d0, d1);
+    const hi = Math.max(d0, d1);
+    if (dist >= lo - 1e-9 && dist <= hi + 1e-9) {
+      const span = d1 - d0;
+      const fracX = span === 0 ? 0 : (dist - d0) / span;
+      return { pi, fracX: Math.min(1, Math.max(0, fracX)) };
+    }
   }
-  if (values.length === 0) return null;
-  values.sort((a, b) => a - b);
-  const mid = Math.floor(values.length / 2);
-  return values.length % 2 === 0 ? (values[mid - 1] + values[mid]) / 2 : values[mid];
+  return null;
+}
+
+/**
+ * H2 bilinear sample — this row's own cross-shore-interpolated value,
+ * blended with the corresponding value from the row ABOVE or BELOW
+ * (positional-index alignment, clamped to that neighbour's own point-array
+ * bounds — same simplifying convention the D7s filter it replaces already
+ * used for aligning transects with different point counts) at the SAME
+ * `(pi, fracX)` position. `fracY` in [0,1] is this sample's position within
+ * the row's own band (0 = band top, 0.5 = band center, 1 = band bottom).
+ * At the band center the value is this row's own value, undiluted; moving
+ * toward either edge blends up to 50% with that neighbour — a smooth
+ * transition across the row boundary. Never returns a value when this
+ * row's OWN value is unavailable, regardless of whether a neighbour has one.
+ */
+function bilinearHsAt(
+  displayTransects: HeatMapEnvelopePoint[][],
+  ri: number, pi: number, fracX: number, fracY: number,
+): number | null {
+  const own = hsAtFraction(displayTransects[ri], pi, fracX);
+  if (own === null) return null;
+  if (fracY < 0.5) {
+    const aboveRow = displayTransects[ri - 1];
+    if (!aboveRow || aboveRow.length < 2) return own;
+    const clampedPi = Math.min(pi, aboveRow.length - 2);
+    const above = hsAtFraction(aboveRow, clampedPi, fracX);
+    if (above === null) return own;
+    const w = 0.5 - fracY; // 0.5 at band top -> 0 at band center
+    return own + (above - own) * w;
+  } else {
+    const belowRow = displayTransects[ri + 1];
+    if (!belowRow || belowRow.length < 2) return own;
+    const clampedPi = Math.min(pi, belowRow.length - 2);
+    const below = hsAtFraction(belowRow, clampedPi, fracX);
+    if (below === null) return own;
+    const w = fracY - 0.5; // 0 at band center -> 0.5 at band bottom
+    return own + (below - own) * w;
+  }
 }
 
 /** Map a row index to the SVG y of the top of that row (pre-C3 uniform fallback, used only when P16 ground data is unavailable). */
@@ -1471,62 +1542,86 @@ export function HeatMapCard({
     const pts = displayTransects[ri];
 
     if (pts.length >= 2) {
-      for (let pi = 0; pi < pts.length - 1; pi++) {
-        const d0 = pts[pi].distance;
-        const d1 = pts[pi + 1].distance;
-        const x0 = distToX(d0, distanceUnit, frameMaxM, S);
-        const x1 = distToX(d1, distanceUnit, frameMaxM, S);
-        const xLeft  = Math.min(x0, x1);
+      // H2 — fixed-resolution bilinear raster over this row's OWN real
+      // cross-shore extent (SMOOTHING_SUBDIV_X columns x SMOOTHING_SUBDIV_Y
+      // rows per row band), replacing the old one-rect-per-served-segment
+      // layout. distMin/distMax span the row's actual served points
+      // regardless of order (ascending or descending, both observed in
+      // real fixtures).
+      const distValues = pts.map((p) => p.distance);
+      const distMin = Math.min(...distValues);
+      const distMax = Math.max(...distValues);
+      const distSpan = distMax - distMin;
+
+      for (let sx = 0; sx < SMOOTHING_SUBDIV_X; sx++) {
+        const dist0 = distMin + (distSpan * sx) / SMOOTHING_SUBDIV_X;
+        const dist1 = distMin + (distSpan * (sx + 1)) / SMOOTHING_SUBDIV_X;
+        const distMid = (dist0 + dist1) / 2;
+        const x0 = distToX(dist0, distanceUnit, frameMaxM, S);
+        const x1 = distToX(dist1, distanceUnit, frameMaxM, S);
+        const xLeft = Math.min(x0, x1);
         const xRight = Math.max(x0, x1);
         const w = xRight - xLeft;
-        if (w < 0.5) continue;
+        if (w < 0.25) continue;
 
-        // D7s: prefer the median-5-smoothed Hs at this row/position (falls
-        // back to the pre-existing break-point proximity model only when
-        // every row in the smoothing window has no usable Hs here — the
-        // same "no data at all" case the pre-D7s code handled). Raw
-        // `pts[pi].hs` is read only inside smoothedHsAt(); it is never
-        // written back.
-        let segHs = 0;
-        const smoothedHs = smoothedHsAt(displayTransects, ri, pi);
-        if (smoothedHs !== null) {
-          segHs = smoothedHs;
-        } else if (row.breakPoints.length > 0) {
-          const midDist = (d0 + d1) / 2;
-          // Find nearest break point.
-          let closest = row.breakPoints[0];
-          let minGap = Math.abs(midDist - closest.distance);
-          for (const bp of row.breakPoints) {
-            const gap = Math.abs(midDist - bp.distance);
-            if (gap < minGap) { minGap = gap; closest = bp; }
-          }
-          const bpHs = closest.hs ?? 0;
-          const bpDist = closest.distance;
-          // Model: Hs rises to break, then decays toward shore.
-          if (midDist >= bpDist) {
-            const distRatio = bpDist > 0 ? midDist / bpDist : 0;
-            segHs = bpHs * Math.min(distRatio, 1.2);
+        const bracket = findBracketSegment(pts, distMid);
+
+        for (let sy = 0; sy < SMOOTHING_SUBDIV_Y; sy++) {
+          const fracY0 = sy / SMOOTHING_SUBDIV_Y;
+          const fracY1 = (sy + 1) / SMOOTHING_SUBDIV_Y;
+          const fracYMid = (fracY0 + fracY1) / 2;
+          const subY = y + fracY0 * bandH;
+          const subH = (fracY1 - fracY0) * bandH;
+
+          // H2: this row's own bilinear-blended value at (distMid, fracYMid)
+          // — falls back to the pre-existing break-point proximity model
+          // only when this row has NO usable Hs at this position at all
+          // (same "no data" case the pre-H2 code handled; a neighbour's
+          // data is never invented in place of this row's own missing
+          // value — see bilinearHsAt's doc comment).
+          let segHs = 0;
+          const bilinearHs = bracket ? bilinearHsAt(displayTransects, ri, bracket.pi, bracket.fracX, fracYMid) : null;
+          if (bilinearHs !== null) {
+            segHs = bilinearHs;
+          } else if (row.breakPoints.length > 0) {
+            // Find nearest break point.
+            let closest = row.breakPoints[0];
+            let minGap = Math.abs(distMid - closest.distance);
+            for (const bp of row.breakPoints) {
+              const gap = Math.abs(distMid - bp.distance);
+              if (gap < minGap) { minGap = gap; closest = bp; }
+            }
+            const bpHs = closest.hs ?? 0;
+            const bpDist = closest.distance;
+            // Model: Hs rises to break, then decays toward shore.
+            if (distMid >= bpDist) {
+              const distRatio = bpDist > 0 ? distMid / bpDist : 0;
+              segHs = bpHs * Math.min(distRatio, 1.2);
+            } else {
+              segHs = bpHs * (bpDist > 0 ? distMid / bpDist : 0) * 0.6;
+            }
           } else {
-            segHs = bpHs * (bpDist > 0 ? midDist / bpDist : 0) * 0.6;
+            // H2: no bilinear value AND no break-point fallback available
+            // — stays UNPAINTED (never invents surf beyond the data
+            // extent), unlike the pre-H2 code which always drew a rect
+            // (defaulting segHs to 0, a fabricated "flat calm" colour).
+            continue;
           }
-        }
 
-        const fill = hsToColor(segHs, maxHs, cellOpacity);
-        colorCells.push(
-          <rect
-            key={`cell-${ri}-${pi}`}
-            x={xLeft}
-            y={y}
-            width={w}
-            height={bandH}
-            fill={fill}
-          >
-            {/* D7s: native SVG tooltip shows the smoothed value only (one
-                value shown, no raw/smoothed pair — keep it simple, per the
-                brief). */}
-            <title>{`${fmtNum(segHs)} ${heightUnit}`}</title>
-          </rect>
-        );
+          const fill = hsToColor(segHs, maxHs, cellOpacity);
+          colorCells.push(
+            <rect
+              key={`cell-${ri}-${sx}-${sy}`}
+              x={xLeft}
+              y={subY}
+              width={w}
+              height={subH}
+              fill={fill}
+            >
+              <title>{`${fmtNum(segHs)} ${heightUnit}`}</title>
+            </rect>
+          );
+        }
       }
     } else if (pts.length === 0 && row.breakPoints.length > 0) {
       // No envelope points — draw a single flat row coloured by the max break height.
