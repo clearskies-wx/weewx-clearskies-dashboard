@@ -1932,18 +1932,25 @@ export interface SurfZoneExtent {
  */
 export interface BeachProfileSurfZones {
   /**
-   * Impact zone: from the outermost break point to 50% energy loss.
-   * Where the heaviest whitewater is — wipeout territory.
+   * Impact zone (PA4, ADR-106, Phase K 2026-08-11): a fixed-width crash band
+   * per break marker — from the marker's distance shoreward by the
+   * operator-configured `[surf] impact_zone_width_m` (default 25 m), clipped
+   * at the waterline. This aggregate field keys to the OUTERMOST marker's
+   * band; `perBreakZones[]` carries one band per marker (bands may overlap,
+   * served as computed). Where the heaviest whitewater is — wipeout
+   * territory. (Replaces the pre-K "outermost break point to 50% energy
+   * loss" energy-scan definition.)
    */
   impactZone?: SurfZoneExtent | null;
   /**
-   * Foam zone: from 50% energy loss to the bore propagation minimum.
-   * Manageable whitewater, the reform/whitewash zone.
+   * Foam zone (PA4, Phase K): pure geometry — from the shoreward edge of the
+   * most shoreward crash band to the waterline. No roller-energy term.
    */
   foamZone?: SurfZoneExtent | null;
   /**
-   * Reform trough: gap between outer and inner break zones on multi-bar beaches.
-   * Waves re-form here before breaking again on the inner bar.
+   * Reform trough: ALWAYS null since Phase K (ADR-106 R3/R4 — the
+   * roller-energy zone scan left the published path; the field is retained
+   * on the wire for shape stability only, hardcoded null server-side).
    */
   reformTrough?: SurfZoneExtent | null;
   /**
