@@ -686,6 +686,59 @@ function alongMToY(alongshoreM: number, alongMinM: number, S: number): number {
   return PAD_TOP + (alongshoreM - alongMinM + IMAGERY_VISIBLE_BUFFER_M) * S;
 }
 
+// ---------------------------------------------------------------------------
+// H0 FIX (2026-08-10, MARINE-PAGE-FIXIT-PLAN §H0 — the confirmed registration
+// defect the C3S strike suspected): a real aerial photo can only be
+// ROTATED, never mirrored, to align with the chart. A single rotation
+// (computeImageryRotationDeg) can align the OFFSHORE direction to chart-left
+// AND the ALONGSHORE/tangent direction to chart-down SIMULTANEOUSLY only
+// when the served geometry's fitted (offshoreUnit, tangentUnit) pair has one
+// specific handedness. Verified directly (script + transcript in the H0 KAT
+// closeout): with offshoreUnit = tangentUnit rotated -90° (compass terms),
+// the SAME rotation that correctly lands offshore on chart-left lands
+// tangent on chart-UP, not chart-down — a genuine ~180° mismatch on the
+// alongshore axis alone, not a scale/pivot/rotation-angle bug (all of
+// those already measured exact). This is a real, unavoidable ~50% case
+// across real coastlines (depends on which side of the shoreline tangent
+// the ocean sits, and which way the server numbers transects) — not a
+// fixture artifact.
+//
+// FIX: when the served geometry has the "flip needed" handedness, flip
+// WHICH END of the alongshore range renders at the chart TOP — applied
+// identically to the data-grid rows and the imagery pivot, so the single,
+// UNCHANGED rotation formula keeps working and the two layers register.
+// Served row order / indices / alongshoreM values / the sr-only table are
+// completely unaffected — this only changes which SCREEN Y a given
+// alongshoreM maps to. A visitor sees: for beaches of this handedness, the
+// row order flips top<->bottom on screen to match the photo's true
+// orientation (rows now mirror along the beach so cell position and photo
+// position agree) — colour cells, break markers, Y-axis tick labels, and
+// the imagery mosaic all move together (the WHOLE Y axis flips, not just
+// the imagery), so relative registration between data and photo is
+// unaffected by this fix; only the absolute top/bottom orientation is.
+//
+// The determining fact is the sign of the 2D cross product of the fitted
+// offshore/tangent unit vectors — derived, not guessed: rotating a
+// tangent-bearing vector by the SAME angle that correctly lands
+// offshore-bearing on chart-left (270°) lands tangent-bearing on chart-down
+// (180°) exactly when offshoreUnit = tangentUnit rotated +90° (compass
+// terms), i.e. cross2D(offshoreUnit, tangentUnit) = +1; the "wrong" case
+// (offshoreUnit = tangentUnit rotated -90°) gives cross2D = -1.
+// ---------------------------------------------------------------------------
+
+/** True when the fitted transform's handedness requires flipping which end of the alongshore range renders at the chart top (see the block comment above). */
+function alongshoreFlipNeeded(transform: GroundTransform | null): boolean {
+  if (!transform) return false;
+  const cross = transform.offshoreUnit.east * transform.tangentUnit.north
+    - transform.offshoreUnit.north * transform.tangentUnit.east;
+  return cross < 0;
+}
+
+/** Reflects an alongshoreM value about the midpoint of [alongMinM, alongMaxM] when a flip is needed — a no-op otherwise. Values outside [alongMinM, alongMaxM] (e.g. the imagery mosaic's own buffered pivot) reflect correctly too, since this is a full linear reflection, not a clamp. */
+function foldAlongM(alongshoreM: number, alongMinM: number, alongMaxM: number, flipNeeded: boolean): number {
+  return flipNeeded ? (alongMinM + alongMaxM - alongshoreM) : alongshoreM;
+}
+
 /**
  * Shared tick-step ladder (100m/25m, 300m/50m, else 200m — scaled by
  * distanceUnit) for BOTH axes now that neither uses a tier — same numbers
@@ -1000,6 +1053,20 @@ export function HeatMapCard({
     const alongMinM = hasGroundY ? Math.min(...(alongshoreValues as number[])) : null;
     const alongMaxM = hasGroundY ? Math.max(...(alongshoreValues as number[])) : null;
 
+    // C3 — the fitted ground transform (shoreline tangent + offshore
+    // bearing) driving the imagery bbox/rotation. Needs >= 2 real origins;
+    // falls back to no imagery transform (imagery layer omitted entirely)
+    // otherwise — see imageryLayer below. Computed BEFORE rowBands/chartH
+    // (moved up, H0 fix) so `alongshoreFlipNeeded` can gate the Y direction
+    // both the data-grid rows and the imagery pivot use.
+    const origins: GroundOrigin[] = rows
+      .filter((r): r is HeatMapTransectData & { originLat: number; originLon: number; alongshoreM: number } =>
+        r.originLat != null && r.originLon != null && r.alongshoreM != null)
+      .map((r) => ({ lat: r.originLat, lon: r.originLon, alongshoreM: r.alongshoreM, bearingDeg: r.transectBearingDeg }));
+    const groundTransform = origins.length >= 2 ? fitGroundTransform(origins) : null;
+    // H0 fix — see the block comment above alongshoreFlipNeeded/foldAlongM.
+    const alongFlip = alongshoreFlipNeeded(groundTransform);
+
     // C3S — chartH is the FULL Y extent including the 50m buffer both
     // sides, at the SAME scale S (parity with CHART_W, which is already the
     // full buffered cross-shore frame). Fallback path keeps its own
@@ -1009,26 +1076,16 @@ export function HeatMapCard({
       : N * rowH;
     const viewH = PAD_TOP + chartH + bottomPad;
 
-    const rowBands: RowBand[] = (hasGroundY && alongMinM != null)
-      ? computeRowBands(alongshoreValues as number[], (v) => alongMToY(v, alongMinM, S))
+    const rowBands: RowBand[] = (hasGroundY && alongMinM != null && alongMaxM != null)
+      ? computeRowBands(alongshoreValues as number[], (v) => alongMToY(foldAlongM(v, alongMinM, alongMaxM, alongFlip), alongMinM, S))
       : rows.map((_, i) => {
           const top = rowToY(i, rowH);
           return { top, bottom: top + rowH, center: top + rowH / 2 };
         });
 
-    // C3 — the fitted ground transform (shoreline tangent + offshore
-    // bearing) driving the imagery bbox/rotation. Needs >= 2 real origins;
-    // falls back to no imagery transform (imagery layer omitted entirely)
-    // otherwise — see imageryLayer below.
-    const origins: GroundOrigin[] = rows
-      .filter((r): r is HeatMapTransectData & { originLat: number; originLon: number; alongshoreM: number } =>
-        r.originLat != null && r.originLon != null && r.alongshoreM != null)
-      .map((r) => ({ lat: r.originLat, lon: r.originLon, alongshoreM: r.alongshoreM, bearingDeg: r.transectBearingDeg }));
-    const groundTransform = origins.length >= 2 ? fitGroundTransform(origins) : null;
-
     return {
       rows, N, rowH, chartH, viewH, maxHs, displayTransects,
-      rowBands, hasGroundY, alongMinM, alongMaxM, groundTransform,
+      rowBands, hasGroundY, alongMinM, alongMaxM, groundTransform, alongFlip,
       dataMinM, dataMaxM, frameMinM, frameMaxM, S,
     };
   }, [data, showOverlayLegend, distanceUnit, representativeTransectIndex]);
@@ -1082,7 +1139,9 @@ export function HeatMapCard({
     const { alongshoreM: pivotAlongM, crossM: pivotCrossM } =
       groundFrameCoords(transform, { lat: mosaicCenterLat, lon: mosaicCenterLon });
     const pivotX = crossMToX(pivotCrossM, frameMaxM, S);
-    const pivotY = alongMToY(pivotAlongM, alongMinM, S);
+    // H0 fix — SAME fold the data-grid rows use, so the imagery pivot and
+    // the data cells agree on which end of the alongshore range is "up".
+    const pivotY = alongMToY(foldAlongM(pivotAlongM, alongMinM, alongMaxM, geometry.alongFlip), alongMinM, S);
 
     // The mosaic's TRUE north-up ground size (metres), at the SAME scale S
     // — not the chart's declared rect.
@@ -1615,10 +1674,12 @@ export function HeatMapCard({
            *  labels ONLY when ground data is unavailable (older cached
            *  response, no P16 fields) — same `labelStep` density-aware logic
            *  as before in that fallback. */}
-          {hasGroundY && geometry.alongMinM != null
+          {hasGroundY && geometry.alongMinM != null && geometry.alongMaxM != null
             ? yTicks.map((v) => {
                 const METER_TO_UNIT = distanceUnit === 'ft' ? 3.28084 : 1;
-                const yPix = alongMToY(v / METER_TO_UNIT, geometry.alongMinM!, S);
+                // H0 fix — same fold the rows/imagery pivot use, so tick
+                // labels sit next to the rows they actually label.
+                const yPix = alongMToY(foldAlongM(v / METER_TO_UNIT, geometry.alongMinM!, geometry.alongMaxM!, geometry.alongFlip), geometry.alongMinM!, S);
                 return (
                   <g key={`ytick-${v}`} aria-hidden="true">
                     <line x1={PAD_LEFT - 4} y1={yPix} x2={PAD_LEFT} y2={yPix} stroke="var(--muted-foreground)" strokeOpacity={0.5} />

@@ -17,6 +17,7 @@ import {
   HeatMapCard,
   computeImageryRotationDeg,
   fitGroundTransform,
+  groundFrameCoords,
 } from './HeatMapCard';
 import type { LatLon } from './HeatMapCard';
 import type {
@@ -470,6 +471,66 @@ const OK_RESPONSE_ALL_NEGATIVE_BREAKS: HeatMapProfileDataOk = {
     openTransectCount: 2,
     handoffDepthM: 0.05,
     handoffSourceLevel: 'L4',
+  },
+};
+
+// ---------------------------------------------------------------------------
+// H0 (2026-08-10, MARINE-PAGE-FIXIT-PLAN §H0, the C3S recorded next-session
+// action) — registration known-answer fixture. PIER_BASE is the same
+// pier-base coordinate the C3 GROUND-TRUTH block below already treats as the
+// operator's named ground-truth anchor (see that block's "independent check"
+// test) — used HERE as the served `originLat`/`originLon` of row 0 (the
+// "pier-base transect origin served by the profile endpoint"), so the KAT
+// exercises a REAL served ground anchor, not a synthetic point unrelated to
+// the data contract.
+// ---------------------------------------------------------------------------
+const H0_PIER_BASE: LatLon = { lat: 33.6568667, lon: -118.0024017 };
+const H0_TANGENT_BEARING_DEG = 335; // perpendicular to transectBearingDeg=245, same convention as ORIGIN_TANGENT_BEARING_DEG above
+const H0_STEP_M = 50;
+function h0OriginForRow(i: number): { lat: number; lon: number } {
+  const bearingRad = (H0_TANGENT_BEARING_DEG * Math.PI) / 180;
+  const cosLat = Math.cos((H0_PIER_BASE.lat * Math.PI) / 180);
+  return {
+    lat: H0_PIER_BASE.lat + (i * H0_STEP_M * Math.cos(bearingRad)) / 111320,
+    lon: H0_PIER_BASE.lon + (i * H0_STEP_M * Math.sin(bearingRad)) / (111320 * cosLat),
+  };
+}
+function h0BuildRow(i: number): HeatMapTransectData {
+  const origin = h0OriginForRow(i);
+  return {
+    transectIndex: i,
+    isStructureAffected: false,
+    transectBearingDeg: 245,
+    transect: [
+      { distance: 100, depth: 3, hs: 1.2 },
+      { distance: 10, depth: 0.5, hs: 0.8 },
+    ],
+    breakPoints: [],
+    waveShapes: [],
+    surfZones: null,
+    jackingFactors: [],
+    handoffDepthM: 2,
+    handoffSourceLevel: 'L3',
+    originLat: origin.lat,
+    originLon: origin.lon,
+    alongshoreM: i * H0_STEP_M,
+  };
+}
+// Row 0's origin is h0OriginForRow(0) === H0_PIER_BASE exactly (i=0 -> zero
+// offset) — the served anchor IS the pier-base point.
+const H0_RESPONSE: HeatMapProfileDataOk = {
+  locationId: 'huntington-city-beach-pier',
+  timestep: '2026-08-10T00:00:00Z',
+  modelStatus: 'ok',
+  profiles: [0, 1].map(h0BuildRow),
+  perPartitionBreaks: [],
+  metadata: {
+    axisUnits: { x: 'm', y: 'm' },
+    verticalDatum: 'LMSL',
+    transectCount: 2,
+    openTransectCount: 2,
+    handoffDepthM: 2,
+    handoffSourceLevel: 'L3',
   },
 };
 
@@ -1414,6 +1475,31 @@ describe('HeatMapCard', () => {
         return { east: (lon - refLon) * metersPerDegLon, north: (lat - refLat) * metersPerDegLat };
       }
 
+      // H0 FIX (2026-08-10, MARINE-PAGE-FIXIT-PLAN §H0) — "row 0 always
+      // renders at the chart TOP" was never a general rule; it only held
+      // for THIS fixture's PARTICULAR handedness by accident. A real photo
+      // can only be rotated, never mirrored, so a single rotation aligning
+      // the offshore direction to chart-left can only ALSO align the
+      // alongshore/tangent direction to chart-down for ONE of the two real,
+      // physically-occurring handednesses of the fitted (offshoreUnit,
+      // tangentUnit) pair (depends on which side of the shoreline tangent
+      // the ocean sits + which way the server numbers transects — both
+      // vary by real beach). The component now flips which end renders at
+      // the top when the OTHER handedness is served, so the data grid and
+      // the photo always agree. The tests below DERIVE the expected
+      // direction from this fixture's own real lat/lon values (via the
+      // SAME exported fitGroundTransform this file's other WIRING checks
+      // already use, plus an independently re-derived cross-product sign
+      // check — never importing the component's own
+      // alongshoreFlipNeeded/foldAlongM), rather than assuming a fixed
+      // top-to-bottom direction.
+      function expectedAlongFlip(origins: { lat: number; lon: number; alongshoreM: number; bearingDeg: number | null }[]): boolean {
+        const transform = fitGroundTransform(origins)!;
+        const cross2D = transform.offshoreUnit.east * transform.tangentUnit.north
+          - transform.offshoreUnit.north * transform.tangentUnit.east;
+        return cross2D < 0;
+      }
+
       it('row 0 is REALLY south of a later row (independent latitude comparison) — the HB pier ground-truth anchor', () => {
         // OK_RESPONSE_5_ROWS_WITH_ORIGINS rows are built from real HB-pier-
         // area coordinates (33.6534,-118.0039 area per the plan's named
@@ -1425,21 +1511,41 @@ describe('HeatMapCard', () => {
         expect(rows[0].originLat!).toBeLessThan(rows[4].originLat!);
       });
 
-      it('the rendered row ORDER agrees with the real latitude order (row 0 renders at/above a later row, matching south->north)', () => {
+      it('the rendered row ORDER agrees with the FITTED GEOMETRY\'s own handedness (H0 fix — was wrongly hard-coded "row 0 always on top")', () => {
         const { container } = render(
           <HeatMapCard {...baseProps} distanceUnit="m" data={OK_RESPONSE_5_ROWS_WITH_ORIGINS} loading={false} />,
         );
         // Row separator lines are drawn at each band boundary, top to
-        // bottom, in row order — the first (topmost) separator's y must be
-        // <= the last (bottommost) separator's y, and there must be exactly
-        // N+1 of them (one per row boundary).
+        // bottom, in row order — there must be exactly N+1 of them (one per
+        // row boundary), and they must be monotonic (either direction).
         const seps = Array.from(container.querySelectorAll('svg > line'))
           .filter((l) => l.getAttribute('stroke-opacity') === '0.12')
           .map((l) => Number(l.getAttribute('y1')));
         expect(seps.length).toBe(6); // N=5 rows -> 6 boundaries
-        expect(seps[0]).toBeLessThan(seps[seps.length - 1]);
-        // Monotonic non-decreasing — real alongshore order preserved exactly.
-        for (let i = 1; i < seps.length; i++) expect(seps[i]).toBeGreaterThanOrEqual(seps[i - 1]);
+
+        // This fixture's own handedness (derived independently, never
+        // assumed) determines which direction is correct: "row 0 on top"
+        // was only ever true for ONE handedness, and this fixture happens
+        // to BE that handedness pre-H0-fix's discovery — post-fix, a real
+        // photo can never be mirrored, so the alongshore axis flips instead
+        // (row 0 now renders at the BOTTOM for this fixture's geometry) so
+        // the data grid stays registered with the photo.
+        const origins = OK_RESPONSE_5_ROWS_WITH_ORIGINS.profiles!.map((r) => ({
+          lat: r.originLat!, lon: r.originLon!, alongshoreM: r.alongshoreM!, bearingDeg: r.transectBearingDeg,
+        }));
+        const flip = expectedAlongFlip(origins);
+        if (flip) {
+          expect(seps[0]).toBeGreaterThan(seps[seps.length - 1]);
+          for (let i = 1; i < seps.length; i++) expect(seps[i]).toBeLessThanOrEqual(seps[i - 1]);
+        } else {
+          expect(seps[0]).toBeLessThan(seps[seps.length - 1]);
+          for (let i = 1; i < seps.length; i++) expect(seps[i]).toBeGreaterThanOrEqual(seps[i - 1]);
+        }
+        // This fixture is the flip-needed handedness (confirmed, not
+        // assumed) — pin that fact so a future fixture change that
+        // silently swaps handedness doesn't make this test degenerate to
+        // only ever exercising the else-branch.
+        expect(flip).toBe(true);
       });
 
       // C3S acceptance (2026-08-09 PM) — row 0's origin (33.65587,
@@ -1503,8 +1609,34 @@ describe('HeatMapCard', () => {
         // independently-checkable S: this fixture's own buildRow() gives
         // dataMin=10m, dataMax=100m -> S = 748 / ((100+50)-(10-50)).
         const expectedS = 748 / ((100 + 50) - (10 - 50));
-        const row0CenterY = seps[1] - (25 * expectedS); // midpoint(0,1) minus half the 50m pitch = row0's own center
-        const expectedRow0Y = PAD_TOP + 50 * expectedS; // alongMToY(0, alongMin=0, S)
+
+        // H0 FIX (2026-08-10) — "row 0 is near the frame TOP" only holds
+        // for one fitted-geometry handedness; derive which one this
+        // fixture actually is (never assumed) via the SAME independent
+        // re-derivation used elsewhere in this describe block.
+        const origins = [
+          { lat: ROW0_ORIGIN.lat, lon: ROW0_ORIGIN.lon, alongshoreM: 0, bearingDeg: 245 },
+          { lat: ROW1_ORIGIN.lat, lon: ROW1_ORIGIN.lon, alongshoreM: 50, bearingDeg: 245 },
+        ];
+        const flip = expectedAlongFlip(origins);
+        // Pin the fact this fixture IS the flip-needed handedness (same
+        // 335°-tangent/245°-offshore convention as the rest of this file's
+        // ground-truth fixtures) — a future change to these bearings that
+        // silently flips handedness should be caught here, not silently
+        // pass by exercising only the untested branch below.
+        expect(flip).toBe(true);
+
+        // midpoint(0,1) is exactly halfway between row0's and row1's own
+        // centers regardless of which is "on top" — so row0's own center
+        // is the midpoint MINUS the half-pitch when row0 renders above the
+        // midpoint (no flip), or PLUS the half-pitch when row0 renders
+        // below it (flip needed, row0 is the "later"/bottom row now).
+        const row0CenterY = flip ? seps[1] + (25 * expectedS) : seps[1] - (25 * expectedS);
+        // alongMToY(foldAlongM(0, alongMinM=0, alongMaxM=50, flip), 0, S) —
+        // restated here (not imported): fold(0,0,50,true)=50, so row0's
+        // expected Y sits at the FAR (bottom) buffer offset when flipped,
+        // the NEAR (top) buffer offset otherwise.
+        const expectedRow0Y = flip ? PAD_TOP + 100 * expectedS : PAD_TOP + 50 * expectedS;
         expect(row0CenterY).toBeCloseTo(expectedRow0Y, 0);
         // Within the ±15m*S tolerance the brief specifies.
         expect(Math.abs(row0CenterY - expectedRow0Y)).toBeLessThan(15 * expectedS);
@@ -1540,7 +1672,13 @@ describe('HeatMapCard', () => {
         // seps[1]..seps[2] = the midpoint boundary between rows (0,1) to the
         // midpoint boundary between rows (1,2) = exactly ONE origin-to-
         // origin pitch (rows 1->2), unaffected by the outer mirror edges.
-        const pixelGap = seps[2] - seps[1];
+        // H0 FIX (2026-08-10): the SIGN of this gap depends on this
+        // fixture's own fitted-geometry handedness (row order can render
+        // top-to-bottom or bottom-to-top — see the "rendered row ORDER"
+        // test above) — only the MAGNITUDE is a geometry-independent
+        // ground-truth fact, so this test measures magnitude via Math.abs,
+        // not the old (fixture-handedness-accidental) positive-only gap.
+        const pixelGap = Math.abs(seps[2] - seps[1]);
 
         // Expected S — independently, from this fixture's OWN known data
         // extents (buildRow: 10..100m cross-shore) + the 50m ground buffer,
@@ -1571,6 +1709,168 @@ describe('HeatMapCard', () => {
         const pxPerMeterX = (xs[xs.length - 1] - xs[0]) / (100 - 10); // full data-extent tick span, 90m known
         expect(pxPerMeterX).toBeCloseTo(expectedS, 1);
       });
+    });
+  });
+
+  // ── H0 (2026-08-10, MARINE-PAGE-FIXIT-PLAN §H0) — registration
+  //    known-answer check. THE C3S RECORDED NEXT-SESSION ACTION: project ONE
+  //    ground anchor (the pier-base transect origin served by the profile
+  //    endpoint) through (a) the data-layer ground->chart transform and
+  //    (b) the imagery-tile ground->pixel math; the two must agree within
+  //    <=10m ground-equivalent. PERMANENT regression KAT — stays in the
+  //    suite forever, never deleted/reworked around on failure (plan rule).
+  //    Falsifiable: a wrong S, a dropped/duplicated rotation, or a mosaic
+  //    pivot that isn't the tile group's own true-scale center on EITHER
+  //    path throws this off by far more than 10m (verified by hand: the
+  //    frame here is ~190m across at S=748/190px/m — a 10m tolerance is
+  //    ~5% of the frame, well inside anything but a genuine wiring defect). ──
+  describe('H0 — registration known-answer check (permanent)', () => {
+    function tileXToLonIndependent(x: number, z: number): number {
+      return (x / 2 ** z) * 360 - 180;
+    }
+    function tileYToLatIndependent(y: number, z: number): number {
+      const n = Math.PI - (2 * Math.PI * y) / 2 ** z;
+      return (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+    }
+
+    it('the pier-base ground anchor projects to the SAME ground position via the data transform and the rendered imagery tiles, within 10m', () => {
+      mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
+      const { container } = render(
+        <HeatMapCard
+          {...baseProps}
+          distanceUnit="m"
+          data={H0_RESPONSE}
+          loading={false}
+          spotLat={H0_PIER_BASE.lat}
+          spotLon={H0_PIER_BASE.lon}
+        />,
+      );
+
+      // ── Path (a): the data-layer ground->chart transform. Row 0's real
+      //    origin IS the pier-base anchor (H0_RESPONSE construction), so its
+      //    ground-frame position relative to the fitted transform's own
+      //    origin0 must be exactly (0,0) — verified via the EXPORTED
+      //    groundFrameCoords, the same pure function the component itself
+      //    uses to place the imagery bbox corners in ground space,
+      //    reconstructed here from the fixture's own served origins (never
+      //    read off component internal state).
+      const origins = H0_RESPONSE.profiles!.map((r) => ({
+        lat: r.originLat!, lon: r.originLon!, alongshoreM: r.alongshoreM!, bearingDeg: r.transectBearingDeg,
+      }));
+      const transform = fitGroundTransform(origins)!;
+      expect(transform).not.toBeNull();
+      const { alongshoreM: aAlong, crossM: aCross } = groundFrameCoords(transform, H0_PIER_BASE);
+      expect(aAlong).toBeCloseTo(0, 6);
+      expect(aCross).toBeCloseTo(0, 6);
+
+      // The SAME single ground scale S every element on this chart uses
+      // (C3S rule) — computed independently from this fixture's OWN known
+      // data extents (10..100m cross-shore, row alongshoreM 0/50) + the 50m
+      // ground buffer, never imported from HeatMapCard.tsx.
+      const H0_PAD_LEFT = 60;
+      const H0_PAD_TOP = 28;
+      const H0_CHART_W = 748;
+      const H0_BUFFER_M = 50;
+      const dataMinM = 10;
+      const dataMaxM = 100;
+      const alongMinM = 0;
+      const alongMaxM = 50;
+      const frameMaxM = dataMaxM + H0_BUFFER_M;
+      const frameSpanM = (dataMaxM + H0_BUFFER_M) - (dataMinM - H0_BUFFER_M);
+      const S = H0_CHART_W / frameSpanM;
+
+      // H0 FIX (2026-08-10) — a single photo rotation can only align BOTH
+      // the offshore direction (chart-left) AND the alongshore/tangent
+      // direction (chart-down) simultaneously for ONE handedness of the
+      // fitted (offshoreUnit, tangentUnit) pair; the component now folds
+      // the alongshore axis (flips which end renders at the chart top) when
+      // the OTHER handedness is served, so a single unchanged rotation
+      // formula still works and the two layers register. This test derives
+      // the SAME handedness fact independently (never importing the
+      // component's own alongshoreFlipNeeded/foldAlongM) so the assertion
+      // direction is DERIVED, not copied from the fix under test.
+      const cross2D = transform.offshoreUnit.east * transform.tangentUnit.north
+        - transform.offshoreUnit.north * transform.tangentUnit.east;
+      const alongFlipExpected = cross2D < 0;
+
+      // ── Path (b): the imagery-tile ground->pixel math, read from the
+      //    ACTUAL rendered <image> tiles (never the component's internal
+      //    geometry) — same independent Web Mercator re-derivation the
+      //    C3S "imagery px/m equals S" block above uses, extended here to
+      //    locate ONE specific ground point (the pier base) rather than
+      //    just measuring scale.
+      const images = Array.from(container.querySelectorAll('svg image'));
+      expect(images.length).toBeGreaterThan(0);
+      const tiles = images.map((img) => {
+        const href = img.getAttribute('href')!;
+        const m = href.match(/\/(\d+)\/(\d+)\/(\d+)$/)!;
+        return {
+          z: Number(m[1]), x: Number(m[2]), y: Number(m[3]),
+          sx: Number(img.getAttribute('x')), sy: Number(img.getAttribute('y')),
+          sw: Number(img.getAttribute('width')), sh: Number(img.getAttribute('height')),
+        };
+      });
+      const z = tiles[0].z;
+      const xMin = Math.min(...tiles.map((t) => t.x));
+      const xMax = Math.max(...tiles.map((t) => t.x));
+      const yMin = Math.min(...tiles.map((t) => t.y));
+      const yMax = Math.max(...tiles.map((t) => t.y));
+      const mosaicWest = tileXToLonIndependent(xMin, z);
+      const mosaicEast = tileXToLonIndependent(xMax + 1, z);
+      const mosaicNorth = tileYToLatIndependent(yMin, z);
+      const mosaicSouth = tileYToLatIndependent(yMax + 1, z);
+
+      const screenXMin = Math.min(...tiles.map((t) => t.sx));
+      const screenXMax = Math.max(...tiles.map((t) => t.sx + t.sw));
+      const screenYMin = Math.min(...tiles.map((t) => t.sy));
+      const screenYMax = Math.max(...tiles.map((t) => t.sy + t.sh));
+
+      // Where the pier-base lat/lon falls within the ACTUAL rendered mosaic
+      // (linear interpolation across its real lon/lat bbox — the same
+      // lonToScreenX/latToScreenY mapping the component uses, restated
+      // independently here, not imported).
+      const fracLon = (H0_PIER_BASE.lon - mosaicWest) / (mosaicEast - mosaicWest);
+      const fracLatFromTop = (mosaicNorth - H0_PIER_BASE.lat) / (mosaicNorth - mosaicSouth);
+      const localX = screenXMin + fracLon * (screenXMax - screenXMin);
+      const localY = screenYMin + fracLatFromTop * (screenYMax - screenYMin);
+
+      // The rendered tile group is wrapped in ONE rotate(deg, pivotX,
+      // pivotY) transform — pivot = the mosaic's own true-scale ground
+      // center, i.e. the rendered rect's own geometric center (read from
+      // the SAME tile extents, not a component-internal value). Rotation
+      // angle: the SAME exported pure function the component calls
+      // (computeImageryRotationDeg), fed the SAME fitted transform's
+      // bearing reconstructed above — this test checks WIRING/registration
+      // (does the rotated tile land where the ground math says the anchor
+      // is), not the pure rotation-formula math (covered by the
+      // "computeImageryRotationDeg" cases in the C3 block above).
+      const rotationDeg = computeImageryRotationDeg(transform.offshoreBearingDeg);
+      const pivotX = (screenXMin + screenXMax) / 2;
+      const pivotY = (screenYMin + screenYMax) / 2;
+      const rad = (rotationDeg * Math.PI) / 180;
+      const dx = localX - pivotX;
+      const dy = localY - pivotY;
+      const finalX = pivotX + dx * Math.cos(rad) - dy * Math.sin(rad);
+      const finalY = pivotY + dx * Math.sin(rad) + dy * Math.cos(rad);
+
+      // Convert the FINAL (post-rotation) screen pixel back to ground
+      // metres, through the exact algebraic inverse of the data layer's own
+      // crossMToX/alongMToY formulas (restated here, not imported):
+      //   x = PAD_LEFT + (frameMaxM - crossM) * S
+      //     => crossM = frameMaxM - (x - PAD_LEFT) / S
+      //   y = PAD_TOP + (foldedAlongM - alongMinM + BUFFER) * S
+      //     => foldedAlongM = alongMinM + (y - PAD_TOP) / S - BUFFER
+      // The recovered value is the FOLDED alongM (H0 fix) when this
+      // fixture's handedness needs the flip — un-fold it (the fold is its
+      // own inverse: reflecting twice about the same midpoint recovers the
+      // original value) to get the TRUE alongM this ground point is at,
+      // for comparison against aAlong (also a true, unfolded value).
+      const bCross = frameMaxM - (finalX - H0_PAD_LEFT) / S;
+      const bAlongFolded = alongMinM + (finalY - H0_PAD_TOP) / S - H0_BUFFER_M;
+      const bAlong = alongFlipExpected ? (alongMinM + alongMaxM - bAlongFolded) : bAlongFolded;
+
+      const groundDeltaM = Math.hypot(bCross - aCross, bAlong - aAlong);
+      expect(groundDeltaM).toBeLessThanOrEqual(10);
     });
   });
 });
