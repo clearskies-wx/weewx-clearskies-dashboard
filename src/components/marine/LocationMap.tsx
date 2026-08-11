@@ -34,7 +34,8 @@
 // dimming — `light_only_labels` is already a transparent label-only layer
 // by design, so darkening it would just make the text harder to read.
 
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
@@ -47,7 +48,7 @@ import { cn } from '../../lib/utils';
 import '../../lib/leaflet-setup';
 import { useTheme } from '../../lib/theme-provider';
 import { OSM_ATTRIBUTION, CARTO_OSM_ATTRIBUTION } from '../../lib/map-attribution';
-import type { LatLngBoundsExpression } from 'leaflet';
+import type { LatLngBoundsExpression, TileLayer as LeafletTileLayer } from 'leaflet';
 import type { MarineLocationSummary } from '../../api/types';
 
 /** CARTO `light_only_labels` — transparent label-only overlay (place/water
@@ -76,6 +77,64 @@ const TILE_CONFIG = {
 
 const PIN_BASE_SIZE = 24;
 const PIN_HOVER_SCALE = 1.3;
+
+// Tile-error handling (M1, DASHBOARD-MANUAL §12 map layer contract, fixit
+// Item 6): a failed base-tile server previously produced silent gray — no
+// error handling, no retry, no visible signal. These three constants are
+// fixed by MARINE-PAGE-FIXIT-PLAN-2026-08-10 §Named constants and are not
+// re-derivable.
+const TILE_ERROR_BANNER_THRESHOLD = 3; // consecutive tileerror events on a layer before the banner shows
+const TILE_ERROR_RETRY_BACKOFF_MS = 5000;
+const TILE_ERROR_MAX_RETRIES_PER_MOUNT = 3;
+
+/**
+ * Tracks consecutive `tileerror` events on a single TileLayer and drives its
+ * retry-with-backoff behavior (M1). On reaching `TILE_ERROR_BANNER_THRESHOLD`
+ * consecutive errors, `showBanner` becomes true and a redraw of the layer is
+ * scheduled `TILE_ERROR_RETRY_BACKOFF_MS` later (up to
+ * `TILE_ERROR_MAX_RETRIES_PER_MOUNT` times for this mount). Any successful
+ * `tileload` resets the consecutive-error count and clears the banner
+ * immediately. State is per-mount by construction — a full remount (e.g. the
+ * M2 theme-keyed MapContainer) creates a fresh hook instance with a fresh
+ * counter, not a manual reset.
+ */
+function useTileErrorRecovery(layerRef: RefObject<LeafletTileLayer | null>) {
+  const consecutiveErrorsRef = useRef(0);
+  const retryCountRef = useRef(0);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const [showBanner, setShowBanner] = useState(false);
+
+  useEffect(
+    () => () => {
+      if (retryTimeoutRef.current !== undefined) {
+        clearTimeout(retryTimeoutRef.current);
+      }
+    },
+    [],
+  );
+
+  const handleTileError = useCallback(() => {
+    consecutiveErrorsRef.current += 1;
+    if (consecutiveErrorsRef.current < TILE_ERROR_BANNER_THRESHOLD) {
+      return;
+    }
+    setShowBanner(true);
+    if (retryCountRef.current >= TILE_ERROR_MAX_RETRIES_PER_MOUNT) {
+      return;
+    }
+    retryCountRef.current += 1;
+    retryTimeoutRef.current = setTimeout(() => {
+      layerRef.current?.redraw();
+    }, TILE_ERROR_RETRY_BACKOFF_MS);
+  }, [layerRef]);
+
+  const handleTileLoad = useCallback(() => {
+    consecutiveErrorsRef.current = 0;
+    setShowBanner(false);
+  }, []);
+
+  return { showBanner, handleTileError, handleTileLoad };
+}
 
 /**
  * Builds a numbered divIcon pin (T3.5): 24×24px circle, operator-accent
@@ -158,6 +217,16 @@ export function LocationMap({
   const { resolved: resolvedTheme } = useTheme();
   const baseTile = TILE_CONFIG[resolvedTheme];
 
+  // M1: per-layer consecutive-tileerror tracking + retry-with-backoff for
+  // both the base map layer and the label overlay layer. Either layer
+  // reaching the threshold shows the shared banner (silent gray becomes
+  // impossible: tiles or banner, never neither).
+  const baseLayerRef = useRef<LeafletTileLayer | null>(null);
+  const labelLayerRef = useRef<LeafletTileLayer | null>(null);
+  const baseTileRecovery = useTileErrorRecovery(baseLayerRef);
+  const labelTileRecovery = useTileErrorRecovery(labelLayerRef);
+  const showTileErrorBanner = baseTileRecovery.showBanner || labelTileRecovery.showBanner;
+
   const isHero = variant === 'hero';
   const showBackButton = isHero && Boolean(onBack);
 
@@ -210,6 +279,13 @@ export function LocationMap({
       aria-label={ariaLabel}
     >
       <MapContainer
+        // M2 (DASHBOARD-MANUAL §12 map layer contract): keyed on
+        // resolvedTheme instead of the per-layer `key={baseTile.url}` that
+        // used to live on the base TileLayer alone. A theme flip (including
+        // the sunrise/sunset auto-theme's self-correction) now remounts the
+        // whole map atomically, so the label layer can never outlive the
+        // base layer.
+        key={resolvedTheme}
         center={isHero ? heroCenter : undefined}
         zoom={isHero ? HERO_ZOOM : undefined}
         bounds={isHero ? undefined : bounds}
@@ -223,12 +299,28 @@ export function LocationMap({
         boxZoom={!isHero}
         keyboard={!isHero}
       >
-        <TileLayer key={baseTile.url} url={baseTile.url} attribution={baseTile.attribution} />
+        <TileLayer
+          ref={baseLayerRef}
+          url={baseTile.url}
+          attribution={baseTile.attribution}
+          eventHandlers={{
+            tileerror: baseTileRecovery.handleTileError,
+            tileload: baseTileRecovery.handleTileLoad,
+          }}
+        />
 
         {/* Marine feature label overlay (T4.2) — water body / coastal place
             name labels only, no buoys/channels/depth soundings. Rendered
             above the basemap on both variants. */}
-        <TileLayer url={LABEL_OVERLAY_URL} attribution={CARTO_OSM_ATTRIBUTION} />
+        <TileLayer
+          ref={labelLayerRef}
+          url={LABEL_OVERLAY_URL}
+          attribution={CARTO_OSM_ATTRIBUTION}
+          eventHandlers={{
+            tileerror: labelTileRecovery.handleTileError,
+            tileload: labelTileRecovery.handleTileLoad,
+          }}
+        />
 
         {/* Hero mode renders only the selected location's marker (T5.2) —
             not every configured location. */}
@@ -271,6 +363,27 @@ export function LocationMap({
           );
         })}
       </MapContainer>
+
+      {/* Tile-error banner (M1) — non-blocking overlay, same
+          bg-background/80 + backdrop-blur-sm convention as the back-to-map
+          button and the radar card's overlay controls below. Does not cover
+          the map (silent gray becomes impossible: tiles render, or this is
+          visible — never neither), and does not intercept pointer events so
+          the map underneath stays interactive while retrying. */}
+      {showTileErrorBanner && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={[
+            'pointer-events-none absolute top-2 right-2 left-2 z-[1000]',
+            'mx-auto w-fit max-w-[90%] rounded-md border bg-background/80 px-3 py-2',
+            'text-center font-semibold text-foreground backdrop-blur-sm',
+          ].join(' ')}
+          style={{ fontSize: 'var(--text-label)' }}
+        >
+          {t('map.tileError')}
+        </div>
+      )}
 
       {/* Back-to-map overlay button (T4.4) — lives inside the map container,
           top-left, like the radar card's own overlay controls (RadarLegend /
