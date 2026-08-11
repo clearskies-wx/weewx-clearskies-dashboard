@@ -422,50 +422,74 @@ describe('SurfingTab — 3-stat dl structure (D9, 2026-08-02)', () => {
   });
 });
 
-// C1 (L1-BOUNDARY-REBUILD-PLAN Phase C, P13, 2026-08-08) — Current Swell
-// Conditions card: dumb-renderer range display over server-computed
-// swellHeightMinFt/MaxFt, faceHeightMinFt/MaxFt, combinedPeriodS. No
+// C1 (L1-BOUNDARY-REBUILD-PLAN Phase C, P13, 2026-08-08); rebound S2 (PA2,
+// ruled 2026-08-10, MARINE-PAGE-FIXIT-PLAN Phase S, dashboard `1d37593+`) —
+// Current Swell Conditions card: dumb-renderer range display over
+// server-computed swellHeightMinFt/MaxFt (unchanged), modelSurfHeightMin/Max
+// (Breaking Face Height's new binding — the retired faceHeightMinFt/MaxFt
+// per-swell-train pair is gone from the wire and the type), and
+// periodMinS/periodMaxS (Period's new binding, replacing the retired
+// energy-weighted combinedPeriodS — "the period should never be combining
+// periods, that is not how the physics works", operator verbatim). No
 // client-side eligibility logic — these tests only pin the RENDER contract
 // (range text, collapse-to-one-number, null fallback), not any eligibility
 // rule (that's server-side/API-repo scope).
-describe('SurfingTab — swell-conditions card range fields (C1, P13)', () => {
-  it('renders "min–max ft" for swell height and face height, and the combined period, when all P13 fields are present', () => {
+describe('SurfingTab — swell-conditions card range fields (C1/S2, PA2)', () => {
+  it('renders "min–max" for swell height (Ft pair), face height (modelSurfHeightMin/Max), and period (periodMinS/MaxS), when all fields are present', () => {
+    // Face-height values deliberately distinct from the pre-S2 fixture's
+    // faceHeightMinFt/MaxFt pair (2.5-3.1) so this fixture provably
+    // distinguishes the new direct modelSurfHeightMin/Max binding from the
+    // old (now-removed) faceHeightMinFt/MaxFt path: against pre-change
+    // SurfingTab.tsx, this test's face-height range (4.2-5.8) would not
+    // render at all (faceHeightRangeFt would be null, falling back to
+    // getDisplayHeight's single value) — falsifiable per S2.
     surfData = buildSurfData(buildEntry({
       swellHeightMinFt: 1.1,
       swellHeightMaxFt: 1.5,
-      faceHeightMinFt: 2.5,
-      faceHeightMaxFt: 3.1,
-      combinedPeriodS: 15.1,
+      modelSurfHeightMin: 4.2,
+      modelSurfHeightMax: 5.8,
+      periodMinS: 11.3,
+      periodMaxS: 15.1,
     }));
     const { container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
     expect(container.textContent).toMatch(/1\.1.{0,2}–.{0,2}1\.5/);
-    expect(container.textContent).toMatch(/2\.5.{0,2}–.{0,2}3\.1/);
-    expect(container.textContent).toContain('15.1');
+    expect(container.textContent).toMatch(/4\.2.{0,2}–.{0,2}5\.8/);
+    expect(container.textContent).toMatch(/11\.3.{0,2}–.{0,2}15\.1/);
   });
 
-  it('collapses to a single number when min === max', () => {
+  it('collapses to a single number when min === max (swell height, face height, and period each independently)', () => {
     surfData = buildSurfData(buildEntry({
       swellHeightMinFt: 2.0,
       swellHeightMaxFt: 2.0,
+      modelSurfHeightMin: 3.4,
+      modelSurfHeightMax: 3.4,
+      periodMinS: 14.5,
+      periodMaxS: 14.5,
     }));
     const { container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
     expect(container.textContent).not.toMatch(/2\.0.{0,2}–.{0,2}2\.0/);
     expect(container.textContent).toMatch(/2\.0/);
+    expect(container.textContent).not.toMatch(/3\.4.{0,2}–.{0,2}3\.4/);
+    expect(container.textContent).toMatch(/3\.4/);
+    expect(container.textContent).not.toMatch(/14\.5.{0,2}–.{0,2}14\.5/);
+    expect(container.textContent).toMatch(/14\.5/);
   });
 
-  it('falls back to the pre-C1 display when the P13 fields are absent (older cached response)', () => {
+  it('falls back to the pre-range display when the range fields are absent (older cached response / no eligible swells)', () => {
     surfData = buildSurfData(buildEntry({
       swellHeightMinFt: undefined,
       swellHeightMaxFt: undefined,
-      faceHeightMinFt: undefined,
-      faceHeightMaxFt: undefined,
-      combinedPeriodS: undefined,
-      modelSurfHeightMin: 2.5,
-      modelSurfHeightMax: 3.1,
+      modelSurfHeightMin: undefined,
+      modelSurfHeightMax: undefined,
+      periodMinS: undefined,
+      periodMaxS: undefined,
+      period: 6.7,
     }));
     const { container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
-    // Old modelSurfHeightMin/Max range still renders (pre-C1 fallback path).
-    expect(container.textContent).toMatch(/2\.5.{0,2}–.{0,2}3\.1/);
+    // Face height falls back to getDisplayHeight(primary, surfHeightDisplay)
+    // (breakingFaceHeight=1.097 from buildEntry's default, single value).
+    // Period falls back to the raw entry.period (6.7), single value.
+    expect(container.textContent).toMatch(/6\.7/);
     expect(container.textContent).not.toMatch(/undefined/);
     expect(container.textContent).not.toMatch(/NaN/);
   });

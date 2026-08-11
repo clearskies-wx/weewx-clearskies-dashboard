@@ -1904,7 +1904,21 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
       : `${formatValue(min, 'default', locale)}–${formatValue(max, 'default', locale)}`;
   };
   const swellHeightRangeFt = primary ? formatMinMaxFt(primary.swellHeightMinFt, primary.swellHeightMaxFt) : null;
-  const faceHeightRangeFt = primary ? formatMinMaxFt(primary.faceHeightMinFt, primary.faceHeightMaxFt) : null;
+  // PA2 (ruled 2026-08-10, MARINE-PAGE-FIXIT-PLAN Phase S) — Breaking Face
+  // Height rebinds directly to modelSurfHeightMin/Max (the best-surf-strip
+  // pair, already served — WC-D3), not the retired faceHeightMinFt/MaxFt
+  // (per-swell-train spread). Same hawaiian-display guard as the card's
+  // other modelSurfHeightMin/Max readout (:1563) — those fields are
+  // face-scale, not Hawaiian-scaled, so they're only shown as a range when
+  // the operator's display preference is 'face'.
+  const faceHeightRangeVal = (primary && surfHeightDisplay !== 'hawaiian')
+    ? formatMinMaxFt(primary.modelSurfHeightMin, primary.modelSurfHeightMax)
+    : null;
+  // PA2 — Period range replaces the retired energy-weighted combinedPeriodS:
+  // "the period should never be combining periods, that is not how the
+  // physics works" (operator, verbatim). periodMinS/periodMaxS are the
+  // lowest/highest peak period across the eligible surfable swells.
+  const periodRangeS = primary ? formatMinMaxFt(primary.periodMinS, primary.periodMaxS) : null;
 
   // ── Swell components — nearest entry WITH multiSwell data.
   // Not every forecast entry has spectral decomposition: full SWAN runs (4×/day)
@@ -2146,17 +2160,15 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                     {
                       icon: <Waves weight="bold" />,
                       label: t('surfing.faceBreakHeightLabel', { defaultValue: 'Breaking Face Height' }),
-                      value: faceHeightRangeFt !== null
-                        ? faceHeightRangeFt
-                        : (surfHeightDisplay !== 'hawaiian' && primary.modelSurfHeightMin != null && primary.modelSurfHeightMax != null && primary.modelSurfHeightMin !== primary.modelSurfHeightMax
-                            ? `${formatValue(primary.modelSurfHeightMin, 'default', locale)}–${formatValue(primary.modelSurfHeightMax, 'default', locale)}`
-                            : formatValue(getDisplayHeight(primary, surfHeightDisplay), 'default', locale)),
-                      unit: faceHeightRangeFt !== null ? 'ft' : heightUnit,
+                      value: faceHeightRangeVal !== null
+                        ? faceHeightRangeVal
+                        : formatValue(getDisplayHeight(primary, surfHeightDisplay), 'default', locale),
+                      unit: heightUnit,
                     },
                     {
                       icon: <Timer weight="bold" />,
                       label: t('surfing.period'),
-                      value: primary.combinedPeriodS != null ? formatValue(primary.combinedPeriodS, 'default', locale) : formatValue(primary.period, 'default', locale),
+                      value: periodRangeS !== null ? periodRangeS : formatValue(primary.period, 'default', locale),
                       unit: periodUnit,
                     },
                   ].map((s) => (

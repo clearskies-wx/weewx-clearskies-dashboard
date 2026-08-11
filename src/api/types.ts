@@ -1371,21 +1371,32 @@ export interface SurfForecast {
    * card-aggregate fields for the Current Swell Conditions card. Eligibility
    * (wind swell with period < 5.0 s excluded, unless that would exclude
    * every component) is computed server-side; the dashboard is a dumb
-   * renderer — no client-side eligibility re-derivation. All five nullable/
+   * renderer — no client-side eligibility re-derivation. All four nullable/
    * optional: absent on pre-C1 cached responses, in which case the card
-   * keeps its pre-C1 rendering (single swellHeight / modelSurfHeightMin-Max
-   * range / period value).
+   * keeps its pre-C1 rendering (single swellHeight / period value). PA2
+   * (MARINE-PAGE-FIXIT-PLAN Phase S, 2026-08-10/11) retired the original
+   * `faceHeightMinFt`/`faceHeightMaxFt` pair (Breaking Face Height rebinds
+   * to `modelSurfHeightMin`/`modelSurfHeightMax` above) and `combinedPeriodS`
+   * (replaced by the `periodMinS`/`periodMaxS` range below).
    */
   /** Min deep-water swell height (ft) across eligible components. Pair with {@link swellHeightMaxFt}; render "min–max ft" (equal values collapse to one number). */
   swellHeightMinFt?: number | null;
   /** Max deep-water swell height (ft) across eligible components. See {@link swellHeightMinFt}. */
   swellHeightMaxFt?: number | null;
-  /** Min breaking face height (ft) across eligible components' representative breaks. Pair with {@link faceHeightMaxFt}. */
-  faceHeightMinFt?: number | null;
-  /** Max breaking face height (ft) across eligible components' representative breaks. See {@link faceHeightMinFt}. */
-  faceHeightMaxFt?: number | null;
-  /** Energy-weighted (Hs²) mean period (s) over eligible components. One number, render to one decimal. */
-  combinedPeriodS?: number | null;
+  /**
+   * PA2 (ruled 2026-08-10, MARINE-PAGE-FIXIT-PLAN Phase S). Lowest peak
+   * period (s) across the ELIGIBLE surfable swell components (same
+   * eligibility rule as {@link swellHeightMinFt}/{@link swellHeightMaxFt}).
+   * Pair with {@link periodMaxS}; render "min–max s" (equal values collapse
+   * to one number, same rule as the height ranges). Replaces the retired
+   * energy-weighted `combinedPeriodS` — periods of separate wave trains do
+   * not combine into a meaningful average (operator ruling, verbatim: "the
+   * period should never be combining periods, that is not how the physics
+   * works"). `null` when no deep-water reference exists for this timestep.
+   */
+  periodMinS?: number | null;
+  /** Highest peak period (s) across the ELIGIBLE surfable swell components. See {@link periodMinS}. */
+  periodMaxS?: number | null;
   // BD-7/BD-9 (2026-08-01, ADR-093 Amendment 7, marine `9719db1`+`732e87d`).
   // Main-break-zone headline + its representative transect. All five fields
   // are additive/nullable (D4.1/D4.2, MARINE-FORWARD-PLAN) — absent on
