@@ -123,6 +123,9 @@ function useTileErrorRecovery(layerRef: RefObject<LeafletTileLayer | null>) {
       return;
     }
     retryCountRef.current += 1;
+    if (retryTimeoutRef.current !== undefined) {
+      clearTimeout(retryTimeoutRef.current);
+    }
     retryTimeoutRef.current = setTimeout(() => {
       layerRef.current?.redraw();
     }, TILE_ERROR_RETRY_BACKOFF_MS);
