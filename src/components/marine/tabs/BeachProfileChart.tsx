@@ -907,18 +907,28 @@ export function BeachProfileChart({
           );
         })}
 
-        {/* ── Y-axis elevation labels ── */}
-        {elevationTicks.map((e) => (
-          <text
-            key={`ylabel-${e}`}
-            x={PAD_LEFT - 6} y={yOf(e)}
-            textAnchor="end" dominantBaseline="middle"
-            aria-hidden="true"
-            style={axisLabelStyle}
-          >
-            {e === 0 ? '0' : (e > 0 ? `+${e}` : `${e}`)}
-          </text>
-        ))}
+        {/* ── Y-axis elevation labels ──
+         *  H6 (2026-08-10, MARINE-PAGE-FIXIT-PLAN, fixit log Item 4.6) —
+         *  suppress any elevation tick label whose y lands within 12 SVG
+         *  units of the x-axis label row (y = chartBottom + 16, see the
+         *  X-axis distance labels below) — kills the "-10492" collision
+         *  (a Y-axis "-10" label overprinting an X-axis "492" label) at
+         *  any render width. The gridline itself (drawn earlier, keyed off
+         *  the same elevationTicks) is untouched — only the TEXT label is
+         *  suppressed when it would collide. */}
+        {elevationTicks
+          .filter((e) => Math.abs(yOf(e) - (chartBottom + 16)) >= 12)
+          .map((e) => (
+            <text
+              key={`ylabel-${e}`}
+              x={PAD_LEFT - 6} y={yOf(e)}
+              textAnchor="end" dominantBaseline="middle"
+              aria-hidden="true"
+              style={axisLabelStyle}
+            >
+              {e === 0 ? '0' : (e > 0 ? `+${e}` : `${e}`)}
+            </text>
+          ))}
 
         {/* ── Y-axis title (rotated) ── */}
         <text

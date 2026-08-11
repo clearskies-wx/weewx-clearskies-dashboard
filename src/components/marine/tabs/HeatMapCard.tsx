@@ -47,10 +47,10 @@
 // positional index across the row window, clamped per-row at that row's
 // own point-array-length edge).
 
-import { useMemo, useId } from 'react';
+import { useMemo, useId, useState, useRef, useEffect } from 'react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Warning } from '@phosphor-icons/react';
+import { Warning, Info, X } from '@phosphor-icons/react';
 import type { HeatMapProfileData, HeatMapTransectData, HeatMapBreakPoint, HeatMapEnvelopePoint } from '../../../api/types';
 import { useImageryConfig } from '../../../hooks/useImageryConfig';
 
@@ -113,6 +113,17 @@ export interface HeatMapCardProps {
   spotLat?: number | null;
   /** See {@link spotLat}. */
   spotLon?: number | null;
+  /**
+   * H4 (2026-08-10, MARINE-PAGE-FIXIT-PLAN, fixit log Item 5) — true when
+   * this render is the copy mounted inside `ChartFullscreenOverlay`
+   * (SurfingTab.tsx owns the overlay open/close state and renders a SECOND
+   * `HeatMapCard` instance inside the overlay, mirroring the existing
+   * `ConfigDrivenGroup.tsx` fullscreen pattern). Only effect: the vertical
+   * scroll-height constraint on the chart area (see `HEATMAP_SCROLL_MAX_HEIGHT`)
+   * is skipped in this mode, since the overlay already gives the chart the
+   * full viewport instead of the card's own bounded height.
+   */
+  isFullscreen?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -250,6 +261,17 @@ const IMAGERY_VISIBLE_BUFFER_M = 50;
 const HEATMAP_CELL_OPACITY_ON_ORTHO = 0.55;
 /** Base heat-map colour-cell fill opacity with no ortho background — UNCHANGED from pre-LM-2 (0.85), preserves KAT (b) byte-identity. */
 const HEATMAP_CELL_OPACITY_DEFAULT = 0.85;
+/**
+ * H4 (2026-08-10, MARINE-PAGE-FIXIT-PLAN, fixit log Item 5) — max height
+ * (CSS value) of the chart area's own scroll container in the NORMAL
+ * (non-fullscreen) card render, so a true-scale chart taller than this
+ * scrolls vertically inside the card instead of pushing the rest of the
+ * page down. Skipped entirely when `isFullscreen` (the overlay-mounted
+ * copy gets the full viewport instead). Named/documented, easily tuned at
+ * the operator eyeball step, same convention as the IMAGERY_* constants
+ * above.
+ */
+const HEATMAP_SCROLL_MAX_HEIGHT = '32rem';
 
 const METERS_PER_DEGREE_LAT = 111320;
 
@@ -973,6 +995,136 @@ function ColorLegend({ maxHs, heightUnit, locale, svgY }: LegendProps): ReactEle
 }
 
 // ---------------------------------------------------------------------------
+// H3 (2026-08-10, MARINE-PAGE-FIXIT-PLAN, fixit log Item 5) — info-icon
+// modal. Both lines previously rendered below the SVG (the imagery
+// attribution and the D7s smoothing note) move here — "nothing below the
+// legends" (operator's words). The attribution string still renders
+// VERBATIM (never through t(), same PROVIDER-MANUAL §16.2 ESRI ToS
+// compliance the pre-H3 render already had — only WHERE it renders
+// changes). A11y pattern (DESIGN-MANUAL §"Info affordance") mirrors
+// SurfingTab.tsx's `ScoringExplainerModal`: role="dialog" + aria-modal,
+// focus moves to close button on open, Tab/Shift-Tab trapped, Escape
+// closes, backdrop click closes, ≥44px close touch target.
+// ---------------------------------------------------------------------------
+
+interface HeatMapInfoModalProps {
+  onClose: () => void;
+  /** Verbatim ToS attribution string, or null when no imagery background is active this render. */
+  attribution: string | null;
+}
+
+function HeatMapInfoModal({ onClose, attribution }: HeatMapInfoModalProps): ReactElement {
+  const { t } = useTranslation('marine');
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+
+  useEffect(() => {
+    closeButtonRef.current?.focus();
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose();
+        return;
+      }
+      if (e.key === 'Tab' && dialogRef.current) {
+        const focusable = Array.from(
+          dialogRef.current.querySelectorAll<HTMLElement>(
+            'button:not([disabled]),a[href],[tabindex]:not([tabindex="-1"])',
+          ),
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  function handleOverlayClick(e: React.MouseEvent<HTMLDivElement>) {
+    if (e.target === overlayRef.current) onClose();
+  }
+
+  return (
+    <div
+      ref={overlayRef}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{
+        background: 'rgba(0,0,0,0.60)',
+        backdropFilter: 'blur(4px)',
+        WebkitBackdropFilter: 'blur(4px)',
+      }}
+      onClick={handleOverlayClick}
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="relative card-glass rounded-xl ring-1 ring-foreground/10 max-w-lg w-full"
+        style={{
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          maxHeight: '80vh',
+          overflowY: 'auto',
+        }}
+      >
+        <div
+          className="sticky top-0 flex items-center justify-between border-b border-border card-glass"
+          style={{ padding: 'var(--card-pad)', paddingBottom: '0.75rem' }}
+        >
+          <h2
+            id={titleId}
+            className="font-heading font-semibold"
+            style={{ fontSize: 'var(--text-card-title)' }}
+          >
+            {t('surfing.heatMap.infoModalTitle', 'About the Surf Height Map')}
+          </h2>
+          <button
+            ref={closeButtonRef}
+            type="button"
+            onClick={onClose}
+            aria-label={t('surfing.heatMap.infoModalClose', 'Close')}
+            className="shrink-0 flex items-center justify-center text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus:outline-none rounded ml-2"
+            style={{ minWidth: '44px', minHeight: '44px' }}
+          >
+            <X size={18} aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-4" style={{ padding: 'var(--card-pad)' }}>
+          {/* D7s — plain-words smoothing note (standing operator request; H3 moved it here from below the SVG). */}
+          <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>
+            {t('surfing.heatMap.smoothingNote', "Values are smoothed across neighboring transects so isolated model dropouts don't appear as gaps.")}
+          </p>
+
+          {/* LM-2 imagery attribution — ToS-mandated text, rendered verbatim
+           *  (never through t(), PROVIDER-MANUAL §16.2 / API-MANUAL §12:
+           *  textTranslatable is false for every provider in v0.1). Absent
+           *  entirely when no imagery background is active this render. */}
+          {attribution && (
+            <p className="text-muted-foreground" style={{ fontSize: 'var(--text-micro)' }}>
+              {attribution}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 
@@ -981,11 +1133,14 @@ export function HeatMapCard({
   mainBreakZoneStartIndex = null, mainBreakZoneEndIndex = null,
   spotLat = null, spotLon = null,
   representativeTransectIndex = null,
+  isFullscreen = false,
 }: HeatMapCardProps): ReactElement | null {
   const { t } = useTranslation('marine');
   const { t: tCommon } = useTranslation('common');
   const titleId = useId();
   const descId  = useId();
+  // H3 (2026-08-10) — info-icon modal open state, self-contained (mirrors ScoringExplainerModal in SurfingTab.tsx).
+  const [showInfo, setShowInfo] = useState(false);
 
   // LM-2 (2026-08-03): orthophoto background imagery config. React hooks
   // constraint (DASHBOARD-MANUAL §6) — called unconditionally, before any
@@ -1529,13 +1684,30 @@ export function HeatMapCard({
 
   return (
     <div className="rounded-xl bg-[var(--card-glass)] p-[var(--card-pad)]">
-      {/* Card header */}
-      <h3 className="font-semibold text-[var(--foreground)] mb-3 text-sm">
-        {t('surfing.heatMapTitle', 'Surf Height Map')}
-      </h3>
+      {/* Card header — H3 (2026-08-10) adds the info-icon trigger next to the title (DESIGN-MANUAL info-affordance pattern). */}
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-semibold text-[var(--foreground)] text-sm">
+          {t('surfing.heatMapTitle', 'Surf Height Map')}
+        </h3>
+        <button
+          type="button"
+          onClick={() => setShowInfo(true)}
+          aria-label={t('surfing.heatMap.infoButtonLabel', 'About this map')}
+          className="shrink-0 flex items-center justify-center text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus:outline-none rounded"
+          style={{ minWidth: '44px', minHeight: '44px' }}
+        >
+          <Info size={18} aria-hidden="true" />
+        </button>
+      </div>
 
-      {/* SVG heat map */}
-      <div className="w-full overflow-x-auto">
+      {/* SVG heat map — H4 (2026-08-10): scrolls vertically inside the card
+       *  when the true-scale chart exceeds HEATMAP_SCROLL_MAX_HEIGHT;
+       *  skipped when this is the fullscreen-overlay-mounted copy (which
+       *  gets the full viewport instead). */}
+      <div
+        className="w-full overflow-x-auto overflow-y-auto"
+        style={isFullscreen ? undefined : { maxHeight: HEATMAP_SCROLL_MAX_HEIGHT }}
+      >
         <svg
           role="img"
           aria-labelledby={`${titleId} ${descId}`}
@@ -1823,28 +1995,21 @@ export function HeatMapCard({
         </svg>
       </div>
 
-      {/* LM-2: imagery attribution — ToS-mandated text, rendered verbatim
-       *  (never through t(), DASHBOARD-MANUAL §7 / API-MANUAL §12:
-       *  textTranslatable is false for every provider in v0.1). Visible
-       *  (not sr-only) — mirrors the radar card's own inline attribution
-       *  line styling (DESIGN-MANUAL §19). Absent entirely when no imagery
-       *  config (KAT b DOM identity). */}
-      {hasImageryBackground && (
-        <p
-          className="mt-1 text-[var(--muted-foreground)]"
-          style={{ fontSize: 'var(--text-micro)' }}
-        >
-          {imageryConfig!.attribution}
-        </p>
-      )}
-
-      {/* D7s — plain-words smoothing note (standing operator request). */}
-      <p className="mt-1 text-[var(--muted-foreground)]" style={{ fontSize: 'var(--text-micro)' }}>
-        {t('surfing.heatMap.smoothingNote', "Values are smoothed across neighboring transects so isolated model dropouts don't appear as gaps.")}
-      </p>
+      {/* H3 (2026-08-10, MARINE-PAGE-FIXIT-PLAN, fixit log Item 5) —
+       *  nothing renders below the legends (operator's words). The imagery
+       *  attribution and the D7s smoothing note both moved into the
+       *  info-icon modal above (see HeatMapInfoModal) — same text, same
+       *  ToS-verbatim attribution rendering, only WHERE changed. */}
 
       {/* sr-only data table for assistive technology */}
       {srTable}
+
+      {showInfo && (
+        <HeatMapInfoModal
+          onClose={() => setShowInfo(false)}
+          attribution={hasImageryBackground ? imageryConfig!.attribution : null}
+        />
+      )}
     </div>
   );
 }

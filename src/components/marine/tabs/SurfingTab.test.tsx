@@ -12,7 +12,7 @@
 // / HeatMapCard.test.tsx for those sub-components independently).
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, fireEvent } from '@testing-library/react';
 import { SurfingTab } from './SurfingTab';
 import type { SurfDetailData, SurfForecast, HeatMapProfileData, HeatMapProfileDataOk } from '../../../api/types';
 
@@ -251,9 +251,16 @@ describe('SurfingTab — HeatMapCard BD-7/9 overlay prop-threading (D5.2)', () =
     }));
     heatMapData = HEATMAP_OK;
     const { container } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    // H4 (2026-08-10) — ChartFullscreenOverlay always mounts its children
+    // in the DOM (even closed, for CSS transitions), so a SECOND
+    // HeatMapCard instance (identical props) now renders inside it,
+    // matching the ConfigDrivenGroup.tsx fullscreen pattern. Scope to the
+    // inline (non-overlay) instance only — the one visible without opening
+    // fullscreen — by excluding anything inside the overlay's role="dialog".
     // HeatMapCard.tsx's MAIN_BREAK_ZONE_FILL constant, restated (not exported).
     const bandRects = Array.from(container.querySelectorAll('svg rect'))
-      .filter((r) => r.getAttribute('fill') === 'rgba(168, 85, 247, 0.75)' && r.getAttribute('width') === '6');
+      .filter((r) => r.getAttribute('fill') === 'rgba(168, 85, 247, 0.75)' && r.getAttribute('width') === '6')
+      .filter((r) => !r.closest('[role="dialog"]'));
     expect(bandRects.length).toBe(1);
   });
 
@@ -618,12 +625,23 @@ describe('SurfingTab — ScoreBar fill width, fixed 0-100 denominator (S4, ADR-0
     expect(queryByText('surfing.scoring.timeOfDay')).toBeNull();
   });
 
-  // ADR-101 visitor explainer caption — the ADR's exact sentence, rendered
-  // whenever scoring data is present (via the mocked t() literal key).
-  it('renders the geometric-mean visitor explainer caption', () => {
+  // H5 (2026-08-10, MARINE-PAGE-FIXIT-PLAN, fixit log Item 3) — the
+  // always-visible footer caption repeating the geometric-mean explainer
+  // is DELETED (it duplicated the info-icon modal's own text). This test
+  // previously asserted the caption rendered unconditionally; it now
+  // asserts the OPPOSITE (no caption on the closed card) plus the i18n key
+  // + modal usage staying intact, per the plan's "i18n key and the info-
+  // modal usage stay" instruction — same commit as the behavior change.
+  it('does NOT render the geometric-mean explainer as a footer caption (H5 — duplicated the info-icon modal)', () => {
     surfData = buildSurfData(buildEntry({ scoring: SCORING() }));
-    const { getByText } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
-    // getByText throws if not found — no dedicated matcher needed (repo convention, this file).
+    const { queryByText } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    expect(queryByText('surfing.scoring.geometricMeanExplainer')).toBeNull();
+  });
+
+  it('the geometric-mean explainer text still renders inside the info-icon modal (i18n key + modal usage UNCHANGED by H5)', () => {
+    surfData = buildSurfData(buildEntry({ scoring: SCORING() }));
+    const { getByLabelText, getByText } = render(<SurfingTab locationId="huntington-city-beach-pier" />);
+    fireEvent.click(getByLabelText('surfing.scoringExplainer.title'));
     getByText('surfing.scoring.geometricMeanExplainer');
   });
 });

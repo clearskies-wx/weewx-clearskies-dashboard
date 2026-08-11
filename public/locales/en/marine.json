@@ -335,7 +335,10 @@
       "mainBreakZoneDesc": "Main break zone spans transects {{start}} to {{end}}.",
       "representativeDesc": "Transect {{n}} is the representative transect.",
       "orthoImageryDesc": "An aerial photo of the beach is shown as a background for geographic context.",
-      "smoothingNote": "Values are smoothed across neighboring transects so isolated model dropouts don't appear as gaps."
+      "smoothingNote": "Values are smoothed across neighboring transects so isolated model dropouts don't appear as gaps.",
+      "infoButtonLabel": "About this map",
+      "infoModalTitle": "About the Surf Height Map",
+      "infoModalClose": "Close"
     },
     "peelAngle": "Peel Angle",
     "peelAngleLabel": "Peel",

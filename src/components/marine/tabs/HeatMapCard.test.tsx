@@ -12,7 +12,7 @@
 //     rule applied to BeachProfileCardBody.
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, within } from '@testing-library/react';
+import { render, within, fireEvent } from '@testing-library/react';
 import {
   HeatMapCard,
   computeImageryRotationDeg,
@@ -744,8 +744,8 @@ describe('HeatMapCard', () => {
       expect(bandA.length).toBe(0);
       expect(bandB.length).toBe(0);
       // Same total SVG markup length either way (explicit null vs. omitted prop) — proves the default-prop path and explicit-null path are identical, and neither adds the overlay legend's extra bottom padding.
-      expect(withOverlay.container.querySelector('svg')?.getAttribute('viewBox'))
-        .toBe(withoutOverlayProp.container.querySelector('svg')?.getAttribute('viewBox'));
+      expect(withOverlay.container.querySelector('svg[role="img"]')?.getAttribute('viewBox'))
+        .toBe(withoutOverlayProp.container.querySelector('svg[role="img"]')?.getAttribute('viewBox'));
     });
 
     // BD-9 removed from the render (operator ruling 2026-08-02) — the
@@ -950,7 +950,15 @@ describe('HeatMapCard', () => {
     // 50m ground buffer both sides, replacing the old tier-clipped
     // stretch-to-fill values. Captured via a throwaway render + innerHTML
     // dump, not hand-typed (same capture method as the original KAT (b)).
-    const GOLDEN_NO_IMAGERY_HTML = '<div class="rounded-xl bg-[var(--card-glass)] p-[var(--card-pad)]"><h3 class="font-semibold text-[var(--foreground)] mb-3 text-sm">surfing.heatMapTitle</h3><div class="w-full overflow-x-auto"><svg role="img" aria-labelledby="_r_0_ _r_1_" viewBox="0 0 820 320" width="100%" style="display: block; min-width: 260px;"><title id="_r_0_">surfing.heatMapAriaLabel</title><desc id="_r_1_">surfing.heatMapDesc</desc><defs></defs><rect x="60" y="28" width="748" height="240" fill="var(--card-glass)" opacity="0.3"></rect><line x1="60" y1="28" x2="808" y2="28" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="76" x2="808" y2="76" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="124" x2="808" y2="124" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="172" x2="808" y2="172" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="220" x2="808" y2="220" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="268" x2="808" y2="268" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><rect x="353.4898632810631" y="28" width="161.0202734378737" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="353.4898632810631" y="76" width="161.0202734378737" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="353.4898632810631" y="124" width="161.0202734378737" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="353.4898632810631" y="172" width="161.0202734378737" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="353.4898632810631" y="220" width="161.0202734378737" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><text x="56" y="55.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">0</text><text x="56" y="103.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">1</text><text x="56" y="151.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">2</text><text x="56" y="199.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">3</text><text x="56" y="247.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">4</text><text transform="rotate(-90)" x="-148" y="10" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">surfing.heatMap.transectAxisLabel</text><g><line x1="514.5101367189368" y1="268" x2="514.5101367189368" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="514.5101367189368" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">10</text></g><g><line x1="385.65634657150235" y1="268" x2="385.65634657150235" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="385.65634657150235" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">82</text></g><text x="434" y="294" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">surfing.beachProfile.distanceAxisLabel</text><text x="806" y="22" font-size="9" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">surfing.shore</text><text x="62" y="22" font-size="9" fill="var(--muted-foreground)" text-anchor="start" aria-hidden="true">surfing.offshore</text><defs><linearGradient id="heatmap-legend-gradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgb(59,130,246)"></stop><stop offset="25%" stop-color="rgb(13,148,159)"></stop><stop offset="50%" stop-color="rgb(34,197,94)"></stop><stop offset="75%" stop-color="rgb(234,179,8)"></stop><stop offset="100%" stop-color="rgb(220,38,38)"></stop></linearGradient></defs><rect x="648" y="296" width="160" height="10" fill="url(#heatmap-legend-gradient)" rx="3" opacity="0.85"></rect><text x="648" y="318" font-size="9" fill="var(--muted-foreground)" text-anchor="start">0 ft</text><text x="808" y="318" font-size="9" fill="var(--muted-foreground)" text-anchor="end">1.2 ft</text></svg></div><p class="mt-1 text-[var(--muted-foreground)]" style="font-size: var(--text-micro);">surfing.heatMap.smoothingNote</p><table class="sr-only"><caption>surfing.heatMapAriaLabel</caption><thead><tr><th scope="col">surfing.heatMap.transectIndex</th><th scope="col">surfing.heatMap.openTransect</th><th scope="col">surfing.heatMap.breakHeight</th><th scope="col">surfing.heatMap.breakDistance</th><th scope="col">surfing.heatMap.breakerType</th></tr></thead><tbody><tr><th scope="row">0</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">1</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">2</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">3</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">4</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr></tbody></table></div>';
+    // H3/H4 (2026-08-10, MARINE-PAGE-FIXIT-PLAN) re-capture — same capture
+    // method as before (throwaway render + innerHTML dump, not hand-typed).
+    // Changes from the prior golden: the header row now includes the
+    // info-icon trigger button (H3); the SVG wrapper carries the H4 scroll
+    // constraint (overflow-y-auto + max-height); the smoothing-note <p>
+    // below the SVG is GONE (H3 — moved into the info-icon modal, which
+    // renders nothing in the DOM until opened, so this "no imagery" golden
+    // is unaffected by the modal's own content).
+    const GOLDEN_NO_IMAGERY_HTML = '<div class="rounded-xl bg-[var(--card-glass)] p-[var(--card-pad)]"><div class="flex items-center justify-between mb-3"><h3 class="font-semibold text-[var(--foreground)] text-sm">surfing.heatMapTitle</h3><button type="button" aria-label="surfing.heatMap.infoButtonLabel" class="shrink-0 flex items-center justify-center text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus:outline-none rounded" style="min-width: 44px; min-height: 44px;"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"></path></svg></button></div><div class="w-full overflow-x-auto overflow-y-auto" style="max-height: 32rem;"><svg role="img" aria-labelledby="_r_0_ _r_1_" viewBox="0 0 820 320" width="100%" style="display: block; min-width: 260px;"><title id="_r_0_">surfing.heatMapAriaLabel</title><desc id="_r_1_">surfing.heatMapDesc</desc><defs></defs><rect x="60" y="28" width="748" height="240" fill="var(--card-glass)" opacity="0.3"></rect><line x1="60" y1="28" x2="808" y2="28" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="76" x2="808" y2="76" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="124" x2="808" y2="124" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="172" x2="808" y2="172" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="220" x2="808" y2="220" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="268" x2="808" y2="268" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><rect x="353.4898632810631" y="28" width="161.0202734378737" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="353.4898632810631" y="76" width="161.0202734378737" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="353.4898632810631" y="124" width="161.0202734378737" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="353.4898632810631" y="172" width="161.0202734378737" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><rect x="353.4898632810631" y="220" width="161.0202734378737" height="48" fill="rgba(220,38,38,0.85)"><title>1.2 ft</title></rect><text x="56" y="55.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">0</text><text x="56" y="103.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">1</text><text x="56" y="151.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">2</text><text x="56" y="199.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">3</text><text x="56" y="247.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">4</text><text transform="rotate(-90)" x="-148" y="10" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">surfing.heatMap.transectAxisLabel</text><g><line x1="514.5101367189368" y1="268" x2="514.5101367189368" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="514.5101367189368" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">10</text></g><g><line x1="385.65634657150235" y1="268" x2="385.65634657150235" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="385.65634657150235" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">82</text></g><text x="434" y="294" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">surfing.beachProfile.distanceAxisLabel</text><text x="806" y="22" font-size="9" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">surfing.shore</text><text x="62" y="22" font-size="9" fill="var(--muted-foreground)" text-anchor="start" aria-hidden="true">surfing.offshore</text><defs><linearGradient id="heatmap-legend-gradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgb(59,130,246)"></stop><stop offset="25%" stop-color="rgb(13,148,159)"></stop><stop offset="50%" stop-color="rgb(34,197,94)"></stop><stop offset="75%" stop-color="rgb(234,179,8)"></stop><stop offset="100%" stop-color="rgb(220,38,38)"></stop></linearGradient></defs><rect x="648" y="296" width="160" height="10" fill="url(#heatmap-legend-gradient)" rx="3" opacity="0.85"></rect><text x="648" y="318" font-size="9" fill="var(--muted-foreground)" text-anchor="start">0 ft</text><text x="808" y="318" font-size="9" fill="var(--muted-foreground)" text-anchor="end">1.2 ft</text></svg></div><table class="sr-only"><caption>surfing.heatMapAriaLabel</caption><thead><tr><th scope="col">surfing.heatMap.transectIndex</th><th scope="col">surfing.heatMap.openTransect</th><th scope="col">surfing.heatMap.breakHeight</th><th scope="col">surfing.heatMap.breakDistance</th><th scope="col">surfing.heatMap.breakerType</th></tr></thead><tbody><tr><th scope="row">0</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">1</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">2</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">3</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">4</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr></tbody></table></div>';
 
     it('KAT (a): fixture WITH imagery config -> ortho tiles render behind the heat map, colour cells at reduced opacity', () => {
       mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
@@ -973,7 +981,7 @@ describe('HeatMapCard', () => {
       }
 
       // Tiles render BEHIND (before, in SVG paint order) the colour cells.
-      const svgHtml = container.querySelector('svg')!.innerHTML;
+      const svgHtml = container.querySelector('svg[role="img"]')!.innerHTML;
       const firstImageIdx = svgHtml.indexOf('<image');
       const firstReducedOpacityCellIdx = svgHtml.indexOf(`,${HEATMAP_CELL_OPACITY_ON_ORTHO})`);
       expect(firstImageIdx).toBeGreaterThanOrEqual(0);
@@ -986,7 +994,12 @@ describe('HeatMapCard', () => {
         expect(r.getAttribute('fill')).toMatch(/,0\.55\)$/);
       }
 
-      // Attribution renders verbatim (never through t()).
+      // H3 (2026-08-10) — attribution no longer renders below the SVG by
+      // default; it moved into the info-icon modal (rendered inline, not a
+      // portal). Open it and check the verbatim text is still there (never
+      // through t()).
+      expect(container.textContent).not.toContain(NAIP_CONFIG.attribution);
+      fireEvent.click(within(container).getByLabelText('surfing.heatMap.infoButtonLabel'));
       expect(container.textContent).toContain(NAIP_CONFIG.attribution);
     });
 
@@ -1024,6 +1037,8 @@ describe('HeatMapCard', () => {
       const { container } = render(
         <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS_WITH_ORIGINS} loading={false} spotLat={51.5} spotLon={-0.12} />,
       );
+      // H3 (2026-08-10) — attribution renders inside the info-icon modal now, not below the SVG by default.
+      fireEvent.click(within(container).getByLabelText('surfing.heatMap.infoButtonLabel'));
       expect(container.textContent).toContain(ESRI_CONFIG.attribution);
 
       const images = Array.from(container.querySelectorAll('svg image'));
@@ -1051,7 +1066,7 @@ describe('HeatMapCard', () => {
       const { container, getByText } = render(
         <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS_WITH_ORIGINS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
       );
-      const svg = container.querySelector('svg')!;
+      const svg = container.querySelector('svg[role="img"]')!;
       expect(svg.getAttribute('role')).toBe('img');
       expect(svg.getAttribute('aria-labelledby')).toBeTruthy();
 
@@ -1064,7 +1079,9 @@ describe('HeatMapCard', () => {
         expect(img.closest('[aria-hidden="true"]')).not.toBeNull();
       }
 
-      // Attribution: real, visible DOM text (findable by AT and sighted users alike).
+      // Attribution: real, visible DOM text (findable by AT and sighted
+      // users alike) once the H3 info-icon modal is opened.
+      fireEvent.click(within(container).getByLabelText('surfing.heatMap.infoButtonLabel'));
       const attribution = getByText(NAIP_CONFIG.attribution);
       expect(attribution.closest('[aria-hidden="true"]')).toBeNull();
       expect(attribution.className).not.toContain('sr-only');
@@ -1143,10 +1160,12 @@ describe('HeatMapCard', () => {
       expect(titles[4]).toBe('1.3 ft');  // row4: median([0.0,1.3,1.4]) = 1.3
     });
 
-    it('the smoothing note renders in plain words', () => {
-      const { getByText } = render(
+    it('the smoothing note renders in plain words inside the info-icon modal (H3, 2026-08-10 — moved from below the SVG)', () => {
+      const { container, getByText, queryByText } = render(
         <HeatMapCard {...baseProps} data={OK_RESPONSE_SMOOTHING} loading={false} />,
       );
+      expect(queryByText('surfing.heatMap.smoothingNote')).toBeNull();
+      fireEvent.click(within(container).getByLabelText('surfing.heatMap.infoButtonLabel'));
       expect(getByText('surfing.heatMap.smoothingNote')).toBeDefined();
     });
 
@@ -1272,7 +1291,7 @@ describe('HeatMapCard', () => {
       const y = Number(clipRect!.getAttribute('y'));
       const w = Number(clipRect!.getAttribute('width'));
       const h = Number(clipRect!.getAttribute('height'));
-      const svg = container.querySelector('svg')!;
+      const svg = container.querySelector('svg[role="img"]')!;
       const viewBoxH = Number(svg.getAttribute('viewBox')!.split(' ')[3]);
       expect(x).toBeCloseTo(PAD_LEFT, 5);
       expect(y).toBeCloseTo(PAD_TOP, 5);
@@ -1375,7 +1394,7 @@ describe('HeatMapCard', () => {
       );
       const title = getByText('surfing.heatMap.transectAxisLabel');
       expect(title.getAttribute('transform')).toBe('rotate(-90)');
-      expect(container.querySelector('svg')!.contains(title)).toBe(true);
+      expect(container.querySelector('svg[role="img"]')!.contains(title)).toBe(true);
     });
 
     // ── C3-fix (2026-08-09, lead-measured live-DOM defect) — the prior

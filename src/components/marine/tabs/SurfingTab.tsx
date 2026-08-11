@@ -58,6 +58,7 @@ import { useTranslation } from 'react-i18next';
 import { Info, Waves, Timer, X, Thermometer, Drop, Snowflake } from '@phosphor-icons/react';
 import { useSurfDetail, useBeachProfile, useBeachProfileAll, useMarineDetail, useStation, useObservation, useForecast } from '../../../hooks/useWeatherData';
 import { HeatMapCard } from './HeatMapCard';
+import { ChartFullscreenButton, ChartFullscreenOverlay } from '../../ui/chart-fullscreen';
 import { BeachProfileCardBody, computeBeachProfileState } from './BeachProfileCardBody';
 import { WindSymbol } from '../../forecast/WindSymbol';
 import { toWmoCode } from '../../../utils/weather-code';
@@ -1762,6 +1763,8 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
 
   // ── Scoring explainer modal ───────────────────────────────────────────────
   const [showExplainer, setShowExplainer] = useState(false);
+  // H4 (2026-08-10, MARINE-PAGE-FIXIT-PLAN, fixit log Item 5) — Heat Map fullscreen overlay state.
+  const [heatMapFullscreen, setHeatMapFullscreen] = useState(false);
   // ── Beach profile transect selector (T5.3 element 9) ─────────────────────
   // Controlled state; the selected transect is passed to BeachProfileChart.
   // NOTE: API re-fetch is NOT wired up — useBeachProfile does not yet accept
@@ -2096,17 +2099,13 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
                   ))}
                 </div>
 
-                {/* ADR-101 visitor explainer — geometric mean behavior.
-                 *  Placed as an always-visible caption (DESIGN-MANUAL card
-                 *  anatomy §6 "info affordance or caption" — caption chosen
-                 *  so it's readable without opening the modal; the existing
-                 *  info button + modal above still carries the full
-                 *  per-factor explanation). */}
-                {scoringBreakdown.factors.length > 0 && (
-                  <p className="text-muted-foreground" style={{ fontSize: 'var(--text-micro)' }}>
-                    {t('surfing.scoring.geometricMeanExplainer')}
-                  </p>
-                )}
+                {/* H5 (2026-08-10, MARINE-PAGE-FIXIT-PLAN, fixit log Item 3)
+                 *  — the always-visible footer caption repeating the
+                 *  geometric-mean explainer is DELETED: it duplicated the
+                 *  same text already in the info-icon modal above (see
+                 *  `surfing.scoring.geometricMeanExplainer` usage near
+                 *  :385). i18n key + modal usage are UNCHANGED, per the
+                 *  plan — only this render-only duplicate is removed. */}
               </>
             )}
           </CardContent>
@@ -2487,8 +2486,16 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
           </CardContent>
         </Card>
 
-        {/* ── T7.1: Heat Map — full width ── */}
-        <Card footprint="full">
+        {/* ── T7.1: Heat Map — H4 (2026-08-10, MARINE-PAGE-FIXIT-PLAN,
+         *  fixit log Item 5): 4x2 (footprint="full" rowSpan={2}) + header
+         *  fullscreen expand button opening the existing
+         *  ChartFullscreenOverlay (same pattern as ConfigDrivenGroup.tsx —
+         *  a second HeatMapCard instance is mounted inside the overlay when
+         *  open; state lives here). ── */}
+        <Card footprint="full" rowSpan={2}>
+          <CardHeader className="justify-end">
+            <ChartFullscreenButton onClick={() => setHeatMapFullscreen(true)} />
+          </CardHeader>
           <CardContent className="pt-[var(--card-pad)]">
             <HeatMapCard
               data={heatMapData}
@@ -2513,6 +2520,28 @@ export function SurfingTab({ locationId, alerts = [] }: SurfingTabProps) {
             />
           </CardContent>
         </Card>
+
+        <ChartFullscreenOverlay
+          isOpen={heatMapFullscreen}
+          onClose={() => setHeatMapFullscreen(false)}
+          aria-label={t('surfing.heatMapTitle')}
+        >
+          <HeatMapCard
+            data={heatMapData}
+            loading={heatMapLoading}
+            error={heatMapError}
+            onRetry={refetchHeatMap}
+            heightUnit={heightUnit}
+            distanceUnit={distanceUnit}
+            locale={locale}
+            mainBreakZoneStartIndex={primary?.mainBreakZoneStartIndex ?? null}
+            mainBreakZoneEndIndex={primary?.mainBreakZoneEndIndex ?? null}
+            representativeTransectIndex={primary?.representativeTransectIndex ?? null}
+            spotLat={data?.coordinates?.lat ?? null}
+            spotLon={data?.coordinates?.lon ?? null}
+            isFullscreen
+          />
+        </ChartFullscreenOverlay>
 
         {/* ── Card 5: 72-Hour Surf Forecast — full width ── */}
         <Card footprint="full" className="!overflow-visible">
