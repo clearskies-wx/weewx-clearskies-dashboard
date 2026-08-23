@@ -376,11 +376,7 @@
     "shadowFaceHeightLabel": "In pier shadow: {{height}} {{unit}}",
     "peelAngleRowLabel": "Peel",
     "waveShapeRowLabel": "Shape",
-    "bestPeakRowLabel": "Best Peak",
-    "setTimingLabel": "Sets every ~{{minutes}} min",
-    "setAmplitudeLabel": "Sets ~{{height}}{{unit}} bigger",
-    "setTimingRowLabel": "Set Timing",
-    "setTimingCellFormat": "~{{n}}min"
+    "bestPeakRowLabel": "Best Peak"
   },
   "fishing": {
     "loading": "Loading fishing data…",

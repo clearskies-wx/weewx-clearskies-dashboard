@@ -3337,7 +3337,7 @@ components:
         shape: { type: integer, minimum: 0, maximum: 100, description: "Wave Shape component. Peel angle (0.6) + breaker type/Iribarren (0.4). Closeout ruin pin <= 10 (shape = min(blend, 0.10) when peel < 15 deg, S-SPEC-1/S1c)." }
         conditions: { type: integer, minimum: 0, maximum: 100, description: "Conditions component. Wind (0.6) + DSPR (0.25) + cross-swell (0.15). Blown-out ruin pin <= 5." }
         power: { type: integer, minimum: 0, maximum: 100, description: "Swell Power component. Dominant multiSwell partition period (0.7) + height-as-energy-expression (0.3). Never Tm01." }
-        consistency: { type: integer, minimum: 0, maximum: 100, description: "Consistency component. SurfBeat set timing (0.6) + amplitude (0.4); swell-dominance ratio substitutes when SurfBeat unavailable." }
+        consistency: { type: integer, minimum: 0, maximum: 100, description: "Consistency component: swell-dominance bucketing." }
         weights:
           type: object
           description: "The five EFFECTIVE (sum-normalized) weights actually used to compute the total this timestep — reflects operator config."
@@ -3413,9 +3413,6 @@ components:
         transectCount: { type: integer, nullable: true, description: "Total number of transects (open + structure-affected). Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T7.1." }
         openTransectCount: { type: integer, nullable: true, description: "Number of open (structure-free) transects. Since 2026-08-01 (BD-8 rescinded, ADR-093 Amendment 7): metadata/map-UI count ONLY, plays no role in any aggregation field. Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T7.1." }
         waveShapeClassification: { type: string, nullable: true, description: "Dominant wave shape from waveform + Iribarren analysis: hollow_plunging | steep_crumbly | walled_closeout | mushy_slow. Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T7.2b." }
-        setTimingMinutes: { type: number, nullable: true, description: "SurfBeat set timing — minutes between wave sets (IG spectral peak). Null when SurfBeat disabled or unavailable. Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T4.1/T4.2." }
-        setAmplitudeM: { type: number, nullable: true, description: "SurfBeat set amplitude — IG wave height in display units (already unit-converted despite the 'M' suffix). Null when SurfBeat disabled or unavailable. Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T4.1/T4.2." }
-        igWaveHeightM: { type: number, nullable: true, description: "Infragravity significant wave height at shoreline, in display units (already unit-converted despite the 'M' suffix). Null when SurfBeat disabled or unavailable. Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T4.1/T4.2." }
       required: [time, waveHeightAtBreak, period, direction, qualityStars, qualityLabel, conditionsText, windQuality, swellDominance]
 
     FishingForecast:

@@ -916,8 +916,6 @@ const SURF_ROW_H = {
   peelAngle:   22,
   /** T7.2b: wave shape classification row in 72h forecast scroll. */
   waveShape:   22,
-  /** T4.2: set timing row in 72h forecast scroll (SurfBeat IG). Hidden when SurfBeat disabled. */
-  setTiming:   22,
 } as const;
 
 const ROW_HEADER_STYLE: React.CSSProperties = {
@@ -1014,8 +1012,6 @@ function SurfScrollForecast({
 
   // Flatten all items across day groups for the unified wave height chart.
   const allItems = useMemo(() => dayGroups.flatMap((g) => g.items), [dayGroups]);
-  // T4.2: Show set timing row only when at least one forecast entry has SurfBeat data.
-  const hasSurfBeat = allItems.some((it) => it.entry.setTimingMinutes != null);
   const allWaveHeights = allItems.map((it) => getDisplayHeight(it.entry, surfHeightDisplay));
   const validAllH = allWaveHeights.filter((h): h is number => h != null && !isNaN(h));
   const globalMaxH = validAllH.length > 0 ? Math.max(...validAllH) : 1;
@@ -1188,8 +1184,6 @@ function SurfScrollForecast({
             {rowHeader(SURF_ROW_H.peelAngle, t('surfing.peelAngleRowLabel', { defaultValue: 'Peel' }))}
             {/* T7.2b: wave shape */}
             {rowHeader(SURF_ROW_H.waveShape, t('surfing.waveShapeRowLabel', { defaultValue: 'Shape' }))}
-            {/* T4.2: set timing — hidden when SurfBeat disabled */}
-            {hasSurfBeat && rowHeader(SURF_ROW_H.setTiming, t('surfing.setTimingRowLabel', { defaultValue: 'Set Timing' }))}
           </div>
 
           {/* ── Scrollable data columns ── */}
@@ -1480,18 +1474,6 @@ function SurfScrollForecast({
                 mushy_slow: 'Mushy',
               };
               return <span style={microText}>{abbr[shape] ?? shape}</span>;
-            })}
-
-            {/* T4.2: Set timing row — hidden when SurfBeat disabled.
-             *  Carry-forward values (between 3-hour SurfBeat runs) appear identical
-             *  to actual values — no visual distinction needed (design decision). */}
-            {hasSurfBeat && renderRow('setTiming', SURF_ROW_H.setTiming, (item) => {
-              const n = item.entry.setTimingMinutes;
-              return (
-                <span style={microText}>
-                  {n != null ? t('surfing.setTimingCellFormat', { n: Math.round(n), defaultValue: '~{{n}}min' }) : '—'}
-                </span>
-              );
             })}
           </div>
         </div>
