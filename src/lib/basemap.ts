@@ -120,22 +120,31 @@ const DARK_FLAVOR: Flavor = namedFlavor('dark');
  * `minor_road`/`other`/`path`/`rail`
  * (docs/reference/pmtiles-protomaps-reference.md §"Protomaps basemap layer
  * names"; node_modules/protomaps-leaflet/src/default_style/style.ts:398).
- * Drawn at every zoom of the local tier (from z7) so the interstate network
- * shows at the seismic page's initial zoom, not just at street zooms —
- * overrides the flavor's own much-higher default road minzoom.
+ * Drawn from z6 (the world tier's own max zoom, and the radar map's initial
+ * zoom) through the local tier so the interstate network shows at the
+ * seismic/radar pages' initial zoom, not just at street zooms — overrides
+ * the flavor's own much-higher default road minzoom.
+ *
+ * Colour/width restyle (coordinator ruling 2026-08-27, after live render
+ * review found the original `DARK.highway` #474747 at 0.6px unreadable at
+ * z7): `#a0a0a0`, verified ≥3:1 WCAG contrast against both dark-base fills
+ * it can sit over — 6.30:1 vs `DARK.earth` #1f1f1f, 4.70:1 vs `DARK.water`
+ * #31353f (relative-luminance formula, computed and cited in the M1-DASH
+ * closeout, not eyeballed).
  */
 const FREEWAY_RULE: PaintRule = {
   dataLayer: 'roads',
   symbolizer: new LineSymbolizer({
-    color: DARK_FLAVOR.highway,
+    color: '#a0a0a0',
     width: exp(1.6, [
-      [7, 0.6],
-      [10, 1.2],
-      [13, 2.5],
-      [15, 4],
+      [6, 1.4],
+      [8, 2.0],
+      [10, 2.6],
+      [13, 3.4],
+      [15, 4.5],
     ]),
   }),
-  minzoom: 7,
+  minzoom: 6,
   filter: (_zoom: number, feature: { props: Record<string, unknown> }) => feature.props['kind'] === 'highway',
 };
 
@@ -148,19 +157,22 @@ const FREEWAY_RULE: PaintRule = {
  * literal string "primary" does not exist anywhere as a `kind` or
  * `kind_detail` value in this schema version, so that filter would never
  * match. The schema's actual second road tier is `kind === 'major_road'` —
- * confirmed correct against the plan's own colour instruction ("same colour
- * family one step dimmer"): `DARK.major` is `#3d3d3d` vs `DARK.highway`
- * `#474747` (node_modules/@protomaps/basemaps/src/flavors.ts:261,263).
- * Coordinator-approved 2026-08-27 (M1-DASH round) — plan text corrected to
+ * coordinator-approved 2026-08-27 (M1-DASH round), plan text corrected to
  * match.
+ *
+ * Colour/width restyle (coordinator ruling 2026-08-27, same pass as
+ * FREEWAY_RULE above): `#6f6f6f` initially measured 2.45:1 against
+ * `DARK.water` #31353f (below the 3:1 floor) — coordinator directed
+ * `#828282` instead, re-measured: 4.29:1 vs `DARK.earth` #1f1f1f, 3.20:1 vs
+ * `DARK.water` #31353f (relative-luminance formula; both clear 3:1).
  */
 const PRIMARY_ROAD_RULE: PaintRule = {
   dataLayer: 'roads',
   symbolizer: new LineSymbolizer({
-    color: DARK_FLAVOR.major,
+    color: '#828282',
     width: exp(1.6, [
-      [11, 0.8],
-      [15, 2.5],
+      [11, 1.0],
+      [15, 2.6],
     ]),
   }),
   minzoom: 11,
