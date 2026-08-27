@@ -2304,12 +2304,16 @@ export interface HeatMapProfileDataUnavailable {
   metadata: BeachProfileMetadata;
 }
 
-// ─── Imagery (Phase LM, 2026-08-03) ────────────────────────────────────────
-// GET /api/v1/imagery/config?lat=&lon= — orthophoto background imagery for
+// ─── Imagery (Phase LM, 2026-08-03; rewritten to the product basemap by
+// SURF-MAP-BASEMAP, PA9/Q5, MARINE-AND-MAPS-PLAN §M4, 2026-08-27) ─────────
+// GET /api/v1/imagery/config?lat=&lon= — the surf height map's background,
 // DISPLAY-ONLY geographic context (PROVIDER-MANUAL §16, API-MANUAL §12a).
-// Consumed by HeatMapCard.tsx (LM-2) as a background layer behind the Hs
-// heat map. Never feeds SWAN, the 1D model, transect selection, or any
-// physics path — display rendering only.
+// Consumed by HeatMapCard.tsx as a background layer behind the Hs heat map.
+// Never feeds SWAN, the 1D model, transect selection, or any physics path —
+// display rendering only. As of §M4, `provider` is always `"basemap"` — the
+// orthophoto providers (naip/esri) were retired from user-facing use
+// (directive 15: no Esri, no aerial photography, on any user-facing
+// surface).
 
 /** Approximate lat/lon bounding rectangle for a provider's coverage area. */
 export interface ImageryBounds {
@@ -2317,6 +2321,25 @@ export interface ImageryBounds {
   west: number;
   north: number;
   east: number;
+}
+
+/** Light-theme tile source for the surf height map's product basemap (§M4). */
+export interface ImageryLightSource {
+  tileUrl: string;
+  attribution: string;
+}
+
+/**
+ * Dark-theme tile source for the surf height map's product basemap (§M4).
+ * `pmtilesUrl` is the LOCAL basemap tier (`/basemap/local/tiles`) —
+ * `maxDataZoom` is that tier's vector data ceiling (z15); zoom above that is
+ * client-side vector magnification (`src/lib/basemap.ts`
+ * `rasterizeBasemapTile`), not additional fetched data.
+ */
+export interface ImageryDarkSource {
+  pmtilesUrl: string;
+  maxDataZoom: number;
+  attribution: string;
 }
 
 /**
@@ -2328,23 +2351,30 @@ export interface ImageryBounds {
  * no `freshness` block, no `stationClock`.
  */
 export interface ImageryConfigResponse {
-  provider: 'naip' | 'esri';
+  /** Always `"basemap"` as of §M4 — naip/esri/map/auto retired from user-facing use. */
+  provider: 'basemap';
   /**
-   * NAIP (`proxyMode: "api"`): our own proxy path template
-   * (`/api/v1/imagery/tiles/{z}/{x}/{y}`) — never the upstream USGS URL.
-   * ESRI (`proxyMode: "direct"`): the ESRI XYZ URL template for the browser
-   * to fetch directly. Both use `{z}`/`{x}`/`{y}` placeholder tokens, but
-   * NOT necessarily in that path order (ESRI's own template places `{y}`
-   * before `{x}`) — substitute by token, never assume position.
+   * Legacy top-level field carrying the `light` theme's `tileUrl`, for
+   * old-client compatibility (§M4). Current clients read `light.tileUrl` /
+   * `dark.pmtilesUrl` by theme instead.
    */
   tileUrl: string;
   /**
-   * ToS-mandated attribution text. Render verbatim — this is NOT translatable
-   * (DASHBOARD-MANUAL §7 / API-MANUAL §12: `textTranslatable` is `false` for
-   * every imagery provider in v0.1), never pass through `t()`.
+   * Legacy top-level field carrying the `light` theme's `attribution`, for
+   * old-client compatibility (§M4). ToS-mandated attribution text — render
+   * verbatim, never through `t()` (DASHBOARD-MANUAL §7 / API-MANUAL §12:
+   * `textTranslatable` is `false`).
    */
   attribution: string;
-  proxyMode: 'api' | 'direct';
-  /** NAIP: CONUS bounding rectangle. ESRI (global coverage): always null. */
+  /** Always `"direct"` as of §M4 (the product basemap is never proxied). */
+  proxyMode: 'direct';
   bounds: ImageryBounds | null;
+  /** Light-theme source (§M4) — present on every §M4 response; optional only for old-cache tolerance. */
+  light?: ImageryLightSource;
+  /** Dark-theme source (§M4) — present on every §M4 response; optional only for old-cache tolerance. */
+  dark?: ImageryDarkSource;
+  /** Basemap-wide supported zoom floor (§M4), e.g. 0. */
+  zoomMin?: number;
+  /** Basemap-wide supported zoom ceiling (§M4), e.g. 19. */
+  zoomMax?: number;
 }

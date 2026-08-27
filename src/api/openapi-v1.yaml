@@ -91,7 +91,13 @@ tags:
   - name: Radar
     description: Radar tile proxy and frame metadata per ADR-015.
   - name: Imagery
-    description: Orthophoto background imagery config + NAIP tile proxy (Phase LM, display-only, API-MANUAL §12a).
+    description: |
+      `/imagery/config` answers with the Clear Skies product basemap
+      (`provider: "basemap"`) for the surf height map -- orthophotography
+      (NAIP/Esri/Esri-Topo) was retired from user-facing use by
+      SURF-MAP-BASEMAP (PA9, Q5, §M4, 2026-08-27). `/imagery/tiles`
+      remains the NAIP tile proxy, unreferenced by any user-facing
+      surface after that round (Q10-6 open).
   - name: Station
     description: Station identity, location, time zone, units.
   - name: Capabilities
@@ -1278,7 +1284,8 @@ paths:
         default: { $ref: '#/components/responses/Problem' }
 
   # -------------------------------------------------------------------
-  # Imagery (Phase LM, 2026-08-03) — orthophoto background imagery for
+  # Imagery (Phase LM, 2026-08-03; /imagery/config rewritten to the
+  # product basemap by SURF-MAP-BASEMAP, PA9/Q5, §M4, 2026-08-27) —
   # DISPLAY-ONLY geographic context. Never feeds SWAN, the 1D model,
   # transect selection, or any physics path (PROVIDER-MANUAL §16 /
   # API-MANUAL §12a hard rule).
@@ -1287,14 +1294,20 @@ paths:
   /imagery/config:
     get:
       tags: [Imagery]
-      summary: Active imagery provider's tile source config
+      summary: Surf height map basemap config
       description: |
-        Returns the active provider's tile URL template, attribution, and
-        proxy mode for the given coordinates. NAIP (US, `proxyMode: "api"`)
-        points `tileUrl` at this API's own tile proxy. ESRI (global,
-        `proxyMode: "direct"`) points `tileUrl` at ESRI's own XYZ template
-        for the browser to fetch directly — the API never proxies or
-        caches ESRI tile bytes.
+        Always answers 200 with the product basemap
+        (`provider: "basemap"`) -- never 404s, and does not vary by
+        coordinates. `lat`/`lon` are still validated (422 outside
+        range) but no longer select a provider; `[imagery] provider`
+        (naip/esri/map/auto) is no longer read by this endpoint (PA9).
+        `dark.pmtilesUrl` is the **local** basemap tier
+        (`/basemap/{tier}/tiles`, `tier=local`) -- the surf map lives
+        inside the local box by construction. Top-level
+        `tileUrl`/`attribution` are legacy fields carrying the `light`
+        values, for old-client compatibility. Flat response shape --
+        NOT the usual data+envelope wrapper (intentional deviation,
+        unchanged from Phase LM).
       operationId: getImageryConfig
       parameters:
         - name: lat
@@ -1307,12 +1320,10 @@ paths:
           schema: { type: number, minimum: -180, maximum: 180 }
       responses:
         '200':
-          description: Imagery provider config
+          description: Product basemap config
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ImageryConfigResponse' }
-        '404':
-          description: No `[imagery]` config / provider unset — imagery disabled.
         default: { $ref: '#/components/responses/Problem' }
 
   /imagery/tiles/{z}/{x}/{y}:
@@ -3004,30 +3015,55 @@ components:
         east: { type: number }
       required: [south, west, north, east]
 
+    ImageryLightSource:
+      type: object
+      description: Light-theme tile source for the surf height map's product basemap (§M4).
+      properties:
+        tileUrl: { type: string }
+        attribution: { type: string }
+      required: [tileUrl, attribution]
+
+    ImageryDarkSource:
+      type: object
+      description: |
+        Dark-theme tile source for the surf height map's product basemap
+        (§M4). pmtilesUrl is the LOCAL basemap tier
+        (`/basemap/local/tiles`); maxDataZoom is the local tier's vector
+        data ceiling (z15) -- zoom above that is client-side vector
+        magnification, not additional data.
+      properties:
+        pmtilesUrl: { type: string }
+        maxDataZoom: { type: integer }
+        attribution: { type: string }
+      required: [pmtilesUrl, maxDataZoom, attribution]
+
     ImageryConfigResponse:
       type: object
       description: |
         Flat shape — NOT the usual `data`+envelope wrapper (intentional
         deviation per Phase LM's pinned contract sketch; see the docstring
         on the API's response model). No `units`/`freshness`/`stationClock`.
+        provider is always "basemap" as of §M4 (SURF-MAP-BASEMAP, PA9) --
+        naip/esri/map/auto retired from user-facing use. Top-level
+        tileUrl/attribution are legacy fields carrying the light theme's
+        values, for old-client compatibility.
       properties:
-        provider: { type: string, enum: [naip, esri] }
+        provider: { type: string, enum: [basemap] }
         tileUrl:
           type: string
-          description: |
-            NAIP (proxyMode "api"): our own proxy path template
-            (`/api/v1/imagery/tiles/{z}/{x}/{y}`). ESRI (proxyMode
-            "direct"): the ESRI XYZ URL template for the browser to fetch
-            directly. Substitute `{z}`/`{x}`/`{y}` by token — the two
-            providers do not use the same path order.
+          description: Legacy field carrying `light.tileUrl`, for old-client compatibility.
         attribution:
           type: string
-          description: ToS-mandated attribution text. Render verbatim, never translated.
-        proxyMode: { type: string, enum: [api, direct] }
+          description: Legacy field carrying `light.attribution`. ToS-mandated attribution text. Render verbatim, never translated.
+        proxyMode: { type: string, enum: [direct] }
         bounds:
           oneOf:
             - { $ref: '#/components/schemas/ImageryBounds' }
             - type: 'null'
+        light: { $ref: '#/components/schemas/ImageryLightSource' }
+        dark: { $ref: '#/components/schemas/ImageryDarkSource' }
+        zoomMin: { type: integer }
+        zoomMax: { type: integer }
       required: [provider, tileUrl, attribution, proxyMode, bounds]
 
     AlmanacPlanetsResponse:
