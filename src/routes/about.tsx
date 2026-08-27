@@ -11,7 +11,6 @@ import {
 } from '../components/ui/card';
 import { PageLayout } from '../components/layout/page-layout';
 import { useStation, useCapabilities, useMarineLocations } from '../hooks/useWeatherData';
-import { useImageryConfig } from '../hooks/useImageryConfig';
 import { useBranding } from '../lib/branding-provider';
 import { SCENE_ASSET_MAP } from '../components/background/scene-background-types';
 
@@ -113,27 +112,15 @@ export function AboutPage() {
       }));
   }, [marinePhotos, marineLocations]);
 
-  // LM-3 (2026-08-04): imagery-provider attribution — reuses HeatMapCard's
-  // own useImageryConfig data path (LM-2), resolved for the primary marine
-  // location (marineLocations[0], the same "primary marine location"
-  // convention marine-summary-card.tsx already uses for its Now-page tile).
-  // No marine location / fetch failure / feature disabled all collapse to
-  // `imageryConfig: null` inside useImageryConfig itself — the credit entry
-  // below is then simply absent, same resilience posture as
-  // marinePhotoCredits above.
-  const primaryMarineLocation = marineLocations?.[0] ?? null;
-  const { data: imageryConfig } = useImageryConfig(
-    primaryMarineLocation?.coordinates.lat ?? null,
-    primaryMarineLocation?.coordinates.lon ?? null,
-  );
-  const imageryCredit = imageryConfig
-    ? {
-        name: t(`dataProviders.imagery.${imageryConfig.provider}`, { defaultValue: imageryConfig.provider }),
-        // ToS-mandated text (API-MANUAL §12a / types.ts ImageryConfigResponse
-        // doc comment) — rendered verbatim, never through t().
-        attribution: imageryConfig.attribution,
-      }
-    : null;
+  // LM-3 (2026-08-04) imagery-provider attribution block REMOVED by M4
+  // (SURF-MAP-BASEMAP, PA9/Q5, MARINE-AND-MAPS-PLAN §M4, 2026-08-27):
+  // `/imagery/config` now always answers `provider: "basemap"` — the
+  // Esri/NAIP attribution this block existed to show no longer applies to
+  // any user-facing surface (directive 15). Its would-be replacement
+  // (OpenStreetMap + Protomaps, the product basemap's own attribution) is
+  // already listed above via STATIC_PROVIDERS' `baseMaps` domain entries —
+  // re-adding a dynamic per-marine-location credit here would only
+  // duplicate that static row.
 
   const groupedProviders = useMemo(() => {
     if (!capabilities || capabilities.providers.length === 0) return null;
@@ -309,29 +296,6 @@ export function AboutPage() {
               <p className="text-muted-foreground" style={{ fontSize: 'var(--text-body)' }}>{t('dataProviders.empty')}</p>
             )}
 
-            {/* Imagery provider attribution — only rendered when an imagery
-                config resolves for the primary marine location (ToS-mandated
-                text, rendered verbatim). Absent entirely otherwise. */}
-            {imageryCredit && (
-              <>
-                <h3
-                  className="font-heading font-semibold text-foreground mt-4 pt-4 border-t border-border"
-                  style={{ fontSize: 'var(--text-body)' }}
-                >
-                  {t('dataProviders.domain.imagery', { defaultValue: 'Imagery' })}
-                </h3>
-                <dl className="mt-2 grid grid-cols-1 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
-                  <div>
-                    <dt className="text-muted-foreground uppercase font-semibold" style={{ fontSize: 'var(--text-label)' }}>
-                      {imageryCredit.name}
-                    </dt>
-                    <dd className="mt-0.5 text-foreground" style={{ fontSize: 'var(--text-body)' }}>
-                      {imageryCredit.attribution}
-                    </dd>
-                  </div>
-                </dl>
-              </>
-            )}
           </CardContent>
         </Card>
 
