@@ -228,10 +228,16 @@ export function LocationMap({
   // extracted yet, show the same non-blocking banner with a distinct
   // message, same as the light-theme tile-error path never leaves silent
   // gray (tiles render, or a banner is visible — never neither).
-  const { data: basemapStatus } = useBasemapStatus();
+  // Gate M1-DASH D16 (2026-08-27): a FAILED status request (API down, 502,
+  // network) is the same "server unreachable" condition that also kills the
+  // tile fetches — it must raise the banner too, not leave `basemapStatus`
+  // null and the box silently gray. `Boolean(error)` (not `!== null`) so a
+  // stub or hook that omits the field never trips it.
+  const { data: basemapStatus, error: basemapStatusError } = useBasemapStatus();
   const basemapUnavailable =
-    basemapStatus !== null &&
-    (basemapStatus.tiers.world.available === false || basemapStatus.tiers.local.available === false);
+    Boolean(basemapStatusError) ||
+    (basemapStatus !== null &&
+      (basemapStatus.tiers.world.available === false || basemapStatus.tiers.local.available === false));
   const showTileErrorBanner = baseTileRecovery.showBanner || basemapUnavailable;
   const tileErrorMessage = baseTileRecovery.showBanner ? t('map.tileError') : t('map.basemapUnavailable');
 

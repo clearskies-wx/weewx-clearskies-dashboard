@@ -175,22 +175,30 @@ vi.mock('../../lib/basemap', () => {
   // nested under a `tiers` key, not flat (genuine test-side fix after the
   // dev's commit landed; originally guessed flat, ahead of the
   // implementation).
-  const useBasemapStatus = () => ({
-    data: {
-      tiers: {
-        world: { available: true },
-        local: { available: true },
-        radar: { available: true },
+  // Per-test override (Gate M1-DASH D16, 2026-08-27): the D16 tests below
+  // swap in a failed status request / an unavailable tier via
+  // `basemapStatusOverride`; every other test sees "every tier available".
+  const useBasemapStatus = () =>
+    basemapStatusOverride.value ?? {
+      data: {
+        tiers: {
+          world: { available: true },
+          local: { available: true },
+          radar: { available: true },
+        },
+        updating: false,
+        lastError: null,
       },
-      updating: false,
-      lastError: null,
-    },
-    loading: false,
-    error: null,
-  });
+      loading: false,
+      error: null,
+    };
 
   return { ProtomapsLayer, BASEMAP_TIERS, useBasemapStatus };
 });
+
+const basemapStatusOverride = vi.hoisted(() => ({
+  value: null as null | { data: unknown; loading: boolean; error: Error | null },
+}));
 
 const LOCATIONS: MarineLocationSummary[] = [
   {
@@ -231,7 +239,55 @@ beforeEach(() => {
   tileLayerHandlersByUrl.clear();
   mapContainerMountSpy.mockClear();
   protomapsLayerCalls.length = 0;
+  basemapStatusOverride.value = null;
   mockUseTheme.mockReturnValue({ resolved: 'light' });
+});
+
+// Gate M1-DASH D16 (2026-08-27, auditor finding, lead-direct fix): the
+// banner must fire when the basemap STATUS request itself fails (API down,
+// 502, network) — the same outage that kills the tile fetches — not only
+// when a successful status call reports a tier unavailable. Pre-change
+// (43afaee) the first test below failed: `basemapUnavailable` was gated on
+// `basemapStatus !== null`, so a failed fetch left the box silently gray.
+describe('LocationMap — basemap status banner (D16)', () => {
+  it('shows the basemapUnavailable banner when the status request fails', () => {
+    basemapStatusOverride.value = { data: null, loading: false, error: new Error('502') };
+    mockUseTheme.mockReturnValue({ resolved: 'dark' });
+    render(
+      <LocationMap locations={LOCATIONS} selectedId={null} onSelectLocation={vi.fn()} variant="full" />,
+    );
+    const banner = screen.getByRole('status');
+    expect(within(banner).getByText('map.basemapUnavailable')).not.toBeNull();
+  });
+
+  it('shows the basemapUnavailable banner when a successful status call reports the local tier unavailable', () => {
+    basemapStatusOverride.value = {
+      data: {
+        tiers: {
+          world: { available: true },
+          local: { available: false },
+          radar: { available: true },
+        },
+        updating: false,
+        lastError: null,
+      },
+      loading: false,
+      error: null,
+    };
+    render(
+      <LocationMap locations={LOCATIONS} selectedId={null} onSelectLocation={vi.fn()} variant="full" />,
+    );
+    const banner = screen.getByRole('status');
+    expect(within(banner).getByText('map.basemapUnavailable')).not.toBeNull();
+  });
+
+  it('shows no banner while the status request is still loading (data null, no error)', () => {
+    basemapStatusOverride.value = { data: null, loading: true, error: null };
+    render(
+      <LocationMap locations={LOCATIONS} selectedId={null} onSelectLocation={vi.fn()} variant="full" />,
+    );
+    expect(screen.queryByRole('status')).toBeNull();
+  });
 });
 
 describe('LocationMap — M1 tile-error banner', () => {
