@@ -22,21 +22,25 @@ vi.mock('./useIdleDetector', () => ({
   useIsIdle: () => false,
 }));
 
-const NAIP_CONFIG: ImageryConfigResponse = {
+// Deliberately the PRE-M4 wire shapes (legacy pass-through cases); the
+// `provider`/`proxyMode` literals sit outside the narrowed union by design —
+// cast, because `tsc -b` type-checks test files in the production build
+// (deploy 2026-08-27).
+const NAIP_CONFIG = {
   provider: 'naip',
   tileUrl: '/api/v1/imagery/tiles/{z}/{x}/{y}',
   attribution: 'USGS National Agriculture Imagery Program (NAIP) — public domain',
   proxyMode: 'api',
   bounds: { south: 24.396308, west: -125.0, north: 49.384358, east: -66.93457 },
-};
+} as unknown as ImageryConfigResponse;
 
-const ESRI_CONFIG: ImageryConfigResponse = {
+const ESRI_CONFIG = {
   provider: 'esri',
   tileUrl: 'https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
   attribution: 'Source: Esri, Vantor, Earthstar Geographics, and the GIS User Community',
   proxyMode: 'direct',
   bounds: null,
-};
+} as unknown as ImageryConfigResponse;
 
 describe('useImageryConfig', () => {
   beforeEach(() => {

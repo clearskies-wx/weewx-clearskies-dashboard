@@ -89,13 +89,18 @@ beforeEach(() => {
 // light/dark-theme equivalents, not left pointing at a provider the API can
 // no longer serve (`/imagery/config` always answers `provider: "basemap"`
 // as of M4-API).
-const NAIP_CONFIG: ImageryConfigResponse = {
+// Deliberately the PRE-M4 wire shape (an old API answering an M4 client):
+// exercises the legacy top-level-field fallback path. The `provider`/
+// `proxyMode` literals are outside the narrowed `ImageryConfigResponse`
+// union by design — hence the cast (deploy 2026-08-27: `tsc -b` type-checks
+// test files, so an annotated literal fails the production build).
+const NAIP_CONFIG = {
   provider: 'naip',
   tileUrl: '/api/v1/imagery/tiles/{z}/{x}/{y}',
   attribution: 'USGS National Agriculture Imagery Program (NAIP) — public domain',
   proxyMode: 'api',
   bounds: { south: 24.396308, west: -125.0, north: 49.384358, east: -66.93457 },
-};
+} as unknown as ImageryConfigResponse;
 
 // M4-DASH (SURF-MAP-BASEMAP, PA9) — the ACTUAL shape `/imagery/config` now
 // serves (docs/contracts/openapi-v1.yaml ImageryConfigResponse, meta commit

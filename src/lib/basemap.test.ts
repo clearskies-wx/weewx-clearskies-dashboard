@@ -51,7 +51,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { exp } from 'protomaps-leaflet';
-import type { PaintRule, LabelRule } from 'protomaps-leaflet';
+import type { Feature, PaintRule, LabelRule } from 'protomaps-leaflet';
 import {
   BASEMAP_TIERS,
   darkBasePaintRules,
@@ -192,8 +192,11 @@ describe('rasterizeBasemapTile(z, x, y, size) — memo hit/miss (mocked View/pai
 // verified against radar-map.tsx's existing GEO_FEATURES_PAINT_RULES filters
 // (:504-518) and protomaps-leaflet's Feature type (src/tilecache.ts).
 // ---------------------------------------------------------------------------
-function feature(props: Record<string, unknown>): { props: Record<string, unknown> } {
-  return { props };
+// Minimal stand-in for protomaps-leaflet's `Feature` -- the rules under test
+// read only `props`. Cast because `tsc -b` type-checks test files in the
+// production build (deploy 2026-08-27).
+function feature(props: Record<string, unknown>): Feature {
+  return { props } as unknown as Feature;
 }
 
 /**
