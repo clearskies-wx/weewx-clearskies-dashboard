@@ -39,6 +39,10 @@ import {
   labelRules,
   LineSymbolizer,
   exp,
+  View,
+  TileCache,
+  PmtilesSource,
+  paint,
 } from 'protomaps-leaflet';
 import type { PaintRule, LabelRule, LeafletLayerOptions } from 'protomaps-leaflet';
 import { namedFlavor } from '@protomaps/basemaps';
@@ -191,6 +195,156 @@ const DARK_BASE_DROPPED_LAYERS = new Set(['buildings', 'landuse', 'pois', 'roads
 export function darkBasePaintRules(): PaintRule[] {
   const flavorRules = paintRules(DARK_FLAVOR).filter((rule) => !DARK_BASE_DROPPED_LAYERS.has(rule.dataLayer));
   return [...flavorRules, FREEWAY_RULE, PRIMARY_ROAD_RULE];
+}
+
+// ---------------------------------------------------------------------------
+// rasterizeBasemapTile — dark-theme surf height map background (M4
+// SURF-MAP-BASEMAP, PA9/Q5, MARINE-AND-MAPS-PLAN §M4 lead mechanics).
+// Rasterizes ONE local-tier basemap tile to a PNG data URL, browser-side,
+// mirroring protomaps-leaflet's own `GridLayer.renderTile()` call sequence
+// (node_modules/protomaps-leaflet/src/frontends/leaflet.ts) — `getDisplayTile`
+// then `paint()` on an offscreen canvas — with two deliberate differences
+// from that reference: no labeler/labelData (no labels in surf-map dark
+// tiles — per-tile label placement without cross-tile collision handling
+// clips text; the map is a 50m-buffered study rectangle, not a navigational
+// map) and `clip=true` (renderTile's own `clip=false` is safe there because
+// Leaflet clips the DOM tile element itself; here the canvas IS the whole
+// output, so `paint()` must clip internally).
+//
+// Sole consumer: HeatMapCard.tsx's dark theme (light theme fetches OSM
+// raster tiles directly). Only the LOCAL basemap tier is used — the surf
+// map's ground extent lives inside the local box by construction (same as
+// `dark.pmtilesUrl` in the API's `/imagery/config` response, which resolves
+// to this same tier).
+// ---------------------------------------------------------------------------
+
+/** Lazy module-level `View`, one per tier URL — only the `local` tier is
+ *  used today (the surf map's own ground box), but keyed by tier so a
+ *  future consumer of another tier does not collide. Created on first call
+ *  so importing this module never opens the PMTiles archive before it's
+ *  actually needed. */
+const rasterizeViews = new Map<BasemapTier, View>();
+
+function getRasterizeView(tier: BasemapTier): View {
+  let view = rasterizeViews.get(tier);
+  if (!view) {
+    view = new View(
+      new TileCache(new PmtilesSource(BASEMAP_TIERS[tier].url, true), 1024),
+      BASEMAP_TIERS[tier].maxZoom,
+      2,
+    );
+    rasterizeViews.set(tier, view);
+  }
+  return view;
+}
+
+/** Bounded LRU memo (rules/coding.md §12: never an unbounded cache) — data
+ *  URLs are cheap to re-derive but not free (one PMTiles fetch + a canvas
+ *  paint each), so repeated animation/re-render passes over the same tile
+ *  (e.g. a theme toggle back and forth) don't re-rasterize. */
+const RASTERIZE_MEMO_MAX_ENTRIES = 256;
+const rasterizeMemo = new Map<string, string>();
+
+function rasterizeMemoKey(z: number, x: number, y: number, size: number): string {
+  return `${z}/${x}/${y}/${size}`;
+}
+
+function rasterizeMemoGet(key: string): string | undefined {
+  const hit = rasterizeMemo.get(key);
+  if (hit === undefined) return undefined;
+  // Refresh recency: delete + re-insert moves this entry to the END of the
+  // Map's iteration order, which the eviction below reads as "most recently
+  // used" (Map iterates insertion order, so the FIRST key is the LRU one).
+  rasterizeMemo.delete(key);
+  rasterizeMemo.set(key, hit);
+  return hit;
+}
+
+function rasterizeMemoSet(key: string, value: string): void {
+  rasterizeMemo.set(key, value);
+  if (rasterizeMemo.size > RASTERIZE_MEMO_MAX_ENTRIES) {
+    const oldestKey = rasterizeMemo.keys().next().value;
+    if (oldestKey !== undefined) rasterizeMemo.delete(oldestKey);
+  }
+}
+
+/** `OffscreenCanvas` has no synchronous `toDataURL` — `convertToBlob()` +
+ *  `FileReader` is the standard bridge to a data URL string. */
+function offscreenCanvasToDataUrl(canvas: OffscreenCanvas): Promise<string> {
+  return canvas.convertToBlob({ type: 'image/png' }).then(
+    (blob) =>
+      new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(reader.error ?? new Error('rasterizeBasemapTile: FileReader failed'));
+        reader.readAsDataURL(blob);
+      }),
+  );
+}
+
+/**
+ * Rasterizes one dark-theme local-tier basemap tile to a PNG data URL, for
+ * HeatMapCard's dark-theme surf height map background. Errors reject — the
+ * caller renders nothing for that tile (no fallback to a remote provider —
+ * directive 15: no Esri, no aerial photography, on any user-facing
+ * surface).
+ */
+export async function rasterizeBasemapTile(
+  z: number,
+  x: number,
+  y: number,
+  size = 256,
+): Promise<string> {
+  const memoKey = rasterizeMemoKey(z, x, y, size);
+  const cached = rasterizeMemoGet(memoKey);
+  if (cached !== undefined) return cached;
+
+  const view = getRasterizeView('local');
+  const tile = await view.getDisplayTile({ z, x, y });
+
+  const useOffscreen = typeof OffscreenCanvas !== 'undefined';
+  const canvas: HTMLCanvasElement | OffscreenCanvas = useOffscreen
+    ? new OffscreenCanvas(size, size)
+    : document.createElement('canvas');
+  if (!useOffscreen) {
+    (canvas as HTMLCanvasElement).width = size;
+    (canvas as HTMLCanvasElement).height = size;
+  }
+  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D | null;
+  if (!ctx) throw new Error('rasterizeBasemapTile: failed to get 2D canvas context');
+  // Scale the 256-unit paint()/bbox space onto a size!=256 physical canvas
+  // (the identity transform for the default size=256 is a no-op, skipped).
+  // No `clearRect` — this canvas is freshly created every call, never
+  // reused across tiles (unlike Leaflet's own pooled tile elements in
+  // renderTile), so there is nothing to clear.
+  if (size !== 256) {
+    ctx.setTransform(size / 256, 0, 0, size / 256, 0, 0);
+  }
+
+  const buf = 16;
+  const bbox = {
+    minX: 256 * x - buf,
+    minY: 256 * y - buf,
+    maxX: 256 * (x + 1) + buf,
+    maxY: 256 * (y + 1) + buf,
+  };
+  const origin = { x: 256 * x, y: 256 * y };
+
+  // `paint()`'s `origin` param types as protomaps-leaflet's own internal
+  // `@mapbox/point-geometry` Point class, not exported from this package's
+  // public API (same cross-package type friction as the `url: ... as any`
+  // cast above). Verified against the installed source (painter.ts) that
+  // `origin` is read ONLY via `.x`/`.y` — a plain `{x,y}` object is
+  // runtime-correct; the cast bridges the type only.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  paint(ctx, z, new Map([['', [tile]]]), null, darkBasePaintRules(), bbox, origin as any, true);
+
+  const dataUrl = useOffscreen
+    ? await offscreenCanvasToDataUrl(canvas as OffscreenCanvas)
+    : (canvas as HTMLCanvasElement).toDataURL('image/png');
+
+  rasterizeMemoSet(memoKey, dataUrl);
+  return dataUrl;
 }
 
 // ---------------------------------------------------------------------------
