@@ -58,6 +58,27 @@ function feature(props: Record<string, unknown>): { props: Record<string, unknow
   return { props };
 }
 
+/**
+ * Whether `rule` actually draws `props` at zoom `z` — combining the rule's
+ * `minzoom`/`maxzoom` fields with its `filter`, exactly as protomaps-leaflet's
+ * own renderer does (`painter.ts:35-36,82`: `if (rule.minzoom && z <
+ * rule.minzoom) continue; if (rule.maxzoom && z > rule.maxzoom) continue;
+ * ... if (rule.filter && !rule.filter(z, feature)) continue;`). A zoom
+ * threshold ("freeway from z7", "major_road from z11") may be implemented as
+ * a `minzoom` field OR as a z-check inside `filter` — both are valid
+ * protomaps-leaflet usage (the package's own default style.ts uses the
+ * `minzoom` field, not a filter-side z-check, for its analogous road-label
+ * zoom thresholds). Calling `rule.filter?.(z, ...)` alone would wrongly fail
+ * a correct `minzoom`-based implementation, so every zoom-threshold
+ * assertion below goes through this combined check instead.
+ */
+function ruleApplies(rule: PaintRule, z: number, props: Record<string, unknown>): boolean {
+  if (rule.minzoom !== undefined && z < rule.minzoom) return false;
+  if (rule.maxzoom !== undefined && z > rule.maxzoom) return false;
+  if (rule.filter && !rule.filter(z, feature(props))) return false;
+  return true;
+}
+
 function widthAt(rule: PaintRule, z: number): number {
   // LineSymbolizer stores width as a NumberAttr; .get(z) resolves both the
   // constant and exp()-function forms (protomaps-leaflet src/attribute.ts:32-37).
@@ -113,26 +134,25 @@ describe('darkBasePaintRules() — sparse look + freeway/primary roads only', ()
   describe('freeway rule', () => {
     function freewayRule(): PaintRule {
       const roadsRules = rules.filter((r) => r.dataLayer === 'roads');
-      // The freeway rule is the one whose filter accepts a highway-kind
-      // feature — identified by behavior, not array position, since the
-      // plan does not fix an order.
-      const found = roadsRules.find(
-        (r) => r.filter?.(7, feature({ kind: 'highway' })) === true,
-      );
-      if (!found) throw new Error('no roads rule accepted {kind: "highway"}');
+      // The freeway rule is the one that actually draws a highway-kind
+      // feature at a zoom safely inside its documented z>=7 range —
+      // identified by behavior, not array position, since the plan does not
+      // fix an order.
+      const found = roadsRules.find((r) => ruleApplies(r, 10, { kind: 'highway' }));
+      if (!found) throw new Error('no roads rule drew {kind: "highway"} at z10');
       return found;
     }
 
     it('accepts {kind: "highway"} at z7 and z15', () => {
       const rule = freewayRule();
-      expect(rule.filter?.(7, feature({ kind: 'highway' }))).toBe(true);
-      expect(rule.filter?.(15, feature({ kind: 'highway' }))).toBe(true);
+      expect(ruleApplies(rule, 7, { kind: 'highway' })).toBe(true);
+      expect(ruleApplies(rule, 15, { kind: 'highway' })).toBe(true);
     });
 
     it('rejects {kind: "minor_road"}', () => {
       const rule = freewayRule();
-      expect(rule.filter?.(7, feature({ kind: 'minor_road' }))).toBe(false);
-      expect(rule.filter?.(15, feature({ kind: 'minor_road' }))).toBe(false);
+      expect(ruleApplies(rule, 7, { kind: 'minor_road' })).toBe(false);
+      expect(ruleApplies(rule, 15, { kind: 'minor_road' })).toBe(false);
     });
 
     it('width matches exp(1.6, [[7,0.6],[10,1.2],[13,2.5],[15,4]]) at z7/z11/z15', () => {
@@ -153,24 +173,25 @@ describe('darkBasePaintRules() — sparse look + freeway/primary roads only', ()
   describe('major_road rule', () => {
     function majorRoadRule(): PaintRule {
       const roadsRules = rules.filter((r) => r.dataLayer === 'roads');
-      const found = roadsRules.find(
-        (r) => r.filter?.(11, feature({ kind: 'major_road' })) === true,
-      );
-      if (!found) throw new Error('no roads rule accepted {kind: "major_road"} at z11');
+      // Identified at z13 (safely inside the documented z>=11 range) rather
+      // than z11 itself, so this finder doesn't depend on the boundary
+      // value under test below.
+      const found = roadsRules.find((r) => ruleApplies(r, 13, { kind: 'major_road' }));
+      if (!found) throw new Error('no roads rule drew {kind: "major_road"} at z13');
       return found;
     }
 
     it('accepts {kind: "major_road"} only from z >= 11', () => {
       const rule = majorRoadRule();
-      expect(rule.filter?.(11, feature({ kind: 'major_road' }))).toBe(true);
-      expect(rule.filter?.(15, feature({ kind: 'major_road' }))).toBe(true);
-      expect(rule.filter?.(10, feature({ kind: 'major_road' }))).toBe(false);
-      expect(rule.filter?.(7, feature({ kind: 'major_road' }))).toBe(false);
+      expect(ruleApplies(rule, 11, { kind: 'major_road' })).toBe(true);
+      expect(ruleApplies(rule, 15, { kind: 'major_road' })).toBe(true);
+      expect(ruleApplies(rule, 10, { kind: 'major_road' })).toBe(false);
+      expect(ruleApplies(rule, 7, { kind: 'major_road' })).toBe(false);
     });
 
     it('rejects {kind: "minor_road"} at z >= 11', () => {
       const rule = majorRoadRule();
-      expect(rule.filter?.(11, feature({ kind: 'minor_road' }))).toBe(false);
+      expect(ruleApplies(rule, 11, { kind: 'minor_road' })).toBe(false);
     });
 
     it('width matches exp(1.6, [[11,0.8],[15,2.5]]) at z11/z15', () => {
