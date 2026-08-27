@@ -25,7 +25,6 @@ interface MarinePhotosConfig {
 
 const STATIC_PROVIDERS: Array<{ domain: string; name: string; url: string }> = [
   { domain: 'baseMaps',     name: 'OpenStreetMap',                              url: 'https://www.openstreetmap.org/copyright' },
-  { domain: 'baseMaps',     name: 'CARTO',                                     url: 'https://carto.com/attributions' },
   { domain: 'baseMaps',     name: 'Protomaps',                                 url: 'https://protomaps.com' },
   { domain: 'earthquakes',  name: 'GEM Global Active Faults Database',         url: 'https://github.com/GEMScienceTools/gem-global-active-faults' },
   { domain: 'astronomical', name: 'Skyfield + NASA JPL Ephemerides',           url: 'https://rhodesmill.org/skyfield/' },

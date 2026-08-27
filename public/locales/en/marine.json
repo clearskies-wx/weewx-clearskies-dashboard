@@ -35,7 +35,8 @@
     "viewDetails": "View details",
     "ariaLabel": "Map of marine activity locations",
     "selectedAriaLabel": "Selected location map",
-    "tileError": "Map imagery failed to load — retrying"
+    "tileError": "Map imagery failed to load — retrying",
+    "basemapUnavailable": "Detailed map imagery unavailable"
   },
   "backToMap": "Back to map",
   "placeholder": {

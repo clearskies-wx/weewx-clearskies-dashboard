@@ -34,7 +34,8 @@
   "map": {
     "viewDetails": "View details",
     "ariaLabel": "Map of marine activity locations",
-    "selectedAriaLabel": "Selected location map"
+    "selectedAriaLabel": "Selected location map",
+    "basemapUnavailable": "Detailed map imagery unavailable"
   },
   "backToMap": "Back to map",
   "placeholder": {

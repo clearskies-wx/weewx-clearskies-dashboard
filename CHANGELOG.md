@@ -7,6 +7,23 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- **Product basemap replaces CARTO (M1 CS-BASEMAP / M3 RADAR-REBASE)** — the
+  marine, seismic, and radar/satellite maps' dark theme now renders a
+  self-served Protomaps vector basemap (`src/lib/basemap.ts`,
+  `ProtomapsLayer`) instead of CARTO's `dark_all`/`light_only_labels`/
+  `voyager_only_labels` tiles, which CARTO began watermarking and is
+  retiring. Light theme is unchanged (OSM raster). The radar page's
+  satellite view now draws boundaries/roads/water outlines + labels from the
+  same basemap family (one combined layer) instead of the former
+  CARTO-labels overlay plus the separate ADR-078 geographic-features vector
+  overlay — the ADR-078 feature is absorbed into this basemap machinery.
+  Freeways (motorway + trunk) are visible on the dark basemap from the local
+  tier's minimum zoom (z7), not just at street zooms. Attribution changes
+  from "OpenStreetMap contributors © CARTO" to "OpenStreetMap contributors
+  © Protomaps" on affected maps.
+
 ### Added
 
 - **Custom background image** — when the operator uploads a background photo
