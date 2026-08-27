@@ -170,11 +170,18 @@ vi.mock('../../lib/basemap', () => {
     radar: { minZoom: 0, maxZoom: 12, url: '/api/v1/basemap/radar/tiles' },
   };
 
+  // Shape verified against the real consumer (LocationMap.tsx:231-234):
+  // `basemapStatus.tiers.world.available` / `.tiers.local.available` — tiers
+  // nested under a `tiers` key, not flat (genuine test-side fix after the
+  // dev's commit landed; originally guessed flat, ahead of the
+  // implementation).
   const useBasemapStatus = () => ({
     data: {
-      world: { available: true },
-      local: { available: true },
-      radar: { available: true },
+      tiers: {
+        world: { available: true },
+        local: { available: true },
+        radar: { available: true },
+      },
       updating: false,
       lastError: null,
     },
