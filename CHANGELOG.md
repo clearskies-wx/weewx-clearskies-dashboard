@@ -24,6 +24,17 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   from "OpenStreetMap contributors © CARTO" to "OpenStreetMap contributors
   © Protomaps" on affected maps.
 
+- **Surf height map background replaces Esri/NAIP orthophotography with the
+  product basemap (M4 SURF-MAP-BASEMAP, PA9/Q5)** — the Surfing tab's heat
+  map background is no longer aerial photography: light theme now shows the
+  same OSM raster tiles used elsewhere on the dashboard, dark theme shows a
+  PNG rasterized in the browser from the local Protomaps basemap tier
+  (`src/lib/basemap.ts` `rasterizeBasemapTile`, `src/hooks/useRasterizedTiles.ts`).
+  Mosaic geometry (tile placement, rotation, buffer) is unchanged. The
+  About page's imagery-provider attribution row is removed — the product
+  basemap's OpenStreetMap/Protomaps attribution is already listed under Base
+  Maps.
+
 ### Added
 
 - **Custom background image** — when the operator uploads a background photo
