@@ -53,6 +53,8 @@ import { useTranslation } from 'react-i18next';
 import { Warning, Info, X } from '@phosphor-icons/react';
 import type { HeatMapProfileData, HeatMapTransectData, HeatMapBreakPoint, HeatMapEnvelopePoint } from '../../../api/types';
 import { useImageryConfig } from '../../../hooks/useImageryConfig';
+import { useRasterizedTiles } from '../../../hooks/useRasterizedTiles';
+import { useTheme } from '../../../lib/theme-provider';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -1090,9 +1092,10 @@ function ColorLegend({ maxHs, heightUnit, locale, svgY }: LegendProps): ReactEle
 // modal. Both lines previously rendered below the SVG (the imagery
 // attribution and the D7s smoothing note) move here — "nothing below the
 // legends" (operator's words). The attribution string still renders
-// VERBATIM (never through t(), same PROVIDER-MANUAL §16.2 ESRI ToS
-// compliance the pre-H3 render already had — only WHERE it renders
-// changes). A11y pattern (DESIGN-MANUAL §"Info affordance") mirrors
+// VERBATIM (never through t()) — M4 (SURF-MAP-BASEMAP, PA9/Q5) switched the
+// source from Esri/NAIP to the product basemap's `light`/`dark` attribution
+// text (theme-selected), same verbatim-rendering discipline. A11y pattern
+// (DESIGN-MANUAL §"Info affordance") mirrors
 // SurfingTab.tsx's `ScoringExplainerModal`: role="dialog" + aria-modal,
 // focus moves to close button on open, Tab/Shift-Tab trapped, Escape
 // closes, backdrop click closes, ≥44px close touch target.
@@ -1240,6 +1243,12 @@ export function HeatMapCard({
   // on any fetch failure (404 "imagery disabled", network error) — every
   // "no imagery" reason collapses to the same byte-identical render path.
   const { data: imageryConfig } = useImageryConfig(spotLat, spotLon);
+  // M4 (SURF-MAP-BASEMAP, PA9/Q5) — theme drives WHICH source the mosaic
+  // tiles read from: light = OSM raster (`imageryConfig.light.tileUrl`,
+  // fetched directly), dark = the local basemap tier rasterized in the
+  // browser (`useRasterizedTiles` below). Read unconditionally (React hooks
+  // constraint), same as `useImageryConfig` above.
+  const { resolved: resolvedTheme } = useTheme();
 
   // Compute derived geometry once.
   // SURF-PUBLISH-RESULTS-ONLY §3.6 (2026-07-25): `data.profiles` is null,
@@ -1411,6 +1420,19 @@ export function HeatMapCard({
 
     return { tiles, rotationDeg, pivotX, pivotY, screenX, screenY, screenW, screenH };
   }, [imageryConfig, geometry]);
+
+  // M4 (SURF-MAP-BASEMAP, PA9/Q5) — dark-theme mosaic tiles are rasterized
+  // in the browser from the local basemap tier (src/lib/basemap.ts
+  // `rasterizeBasemapTile`), keyed `"{z}/{x}/{y}"`, resolved incrementally.
+  // Same `imageryLayer.tiles` z/x/y set the light theme's mosaic uses —
+  // geometry (imageryLayer) and rasterization are fully decoupled, only the
+  // `<image href>` source differs by theme (below). `enabled=false` in the
+  // light theme (or with no imagery background this render) does no
+  // rasterization work.
+  const rasterizedTiles = useRasterizedTiles(
+    imageryLayer?.tiles ?? [],
+    resolvedTheme === 'dark' && !!imageryLayer && imageryLayer.tiles.length > 0,
+  );
 
   // X-axis tick values — over the REAL cross-shore data extent (dataMinM,
   // dataMaxM), shared tick-step ladder with the Y axis (computeAxisTicks).
@@ -1892,17 +1914,30 @@ export function HeatMapCard({
           {hasImageryBackground && imageryLayer ? (
             <g aria-hidden="true" clipPath={`url(#${imageryClipId})`}>
               <g transform={`rotate(${imageryLayer.rotationDeg} ${imageryLayer.pivotX} ${imageryLayer.pivotY})`}>
-                {imageryLayer.tiles.map((tile) => (
-                  <image
-                    key={`ortho-${tile.z}-${tile.x}-${tile.y}`}
-                    href={substituteTileUrl(imageryConfig!.tileUrl, tile.z, tile.x, tile.y)}
-                    x={tile.sx}
-                    y={tile.sy}
-                    width={tile.sw}
-                    height={tile.sh}
-                    preserveAspectRatio="none"
-                  />
-                ))}
+                {imageryLayer.tiles.map((tile) => {
+                  // M4 (SURF-MAP-BASEMAP, PA9/Q5) — light theme: OSM raster
+                  // fetched directly by the browser (unchanged mechanism).
+                  // Dark theme: a data URL rasterized in the browser from
+                  // the local basemap tier (useRasterizedTiles above); a
+                  // tile not yet resolved is OMITTED (no placeholder, no
+                  // fallback to a remote provider — directive 15), and
+                  // appears once its own rasterization settles.
+                  const href = resolvedTheme === 'dark'
+                    ? rasterizedTiles[`${tile.z}/${tile.x}/${tile.y}`]
+                    : substituteTileUrl(imageryConfig!.light?.tileUrl ?? imageryConfig!.tileUrl, tile.z, tile.x, tile.y);
+                  if (!href) return null;
+                  return (
+                    <image
+                      key={`ortho-${tile.z}-${tile.x}-${tile.y}`}
+                      href={href}
+                      x={tile.sx}
+                      y={tile.sy}
+                      width={tile.sw}
+                      height={tile.sh}
+                      preserveAspectRatio="none"
+                    />
+                  );
+                })}
               </g>
             </g>
           ) : (
@@ -2136,7 +2171,13 @@ export function HeatMapCard({
       {showInfo && (
         <HeatMapInfoModal
           onClose={() => setShowInfo(false)}
-          attribution={hasImageryBackground ? imageryConfig!.attribution : null}
+          attribution={
+            hasImageryBackground
+              ? (resolvedTheme === 'dark'
+                  ? (imageryConfig!.dark?.attribution ?? imageryConfig!.attribution)
+                  : (imageryConfig!.light?.attribution ?? imageryConfig!.attribution))
+              : null
+          }
         />
       )}
     </div>
