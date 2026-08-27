@@ -21,7 +21,8 @@ import {
   useMap,
 } from 'react-leaflet';
 import { useTheme } from '../lib/theme-provider';
-import { OSM_ATTRIBUTION, CARTO_OSM_ATTRIBUTION } from '../lib/map-attribution';
+import { OSM_ATTRIBUTION } from '../lib/map-attribution';
+import { ProtomapsLayer } from '../lib/basemap';
 import type { PathOptions, LatLngBoundsExpression } from 'leaflet';
 import type { GeoJsonObject } from 'geojson';
 import {
@@ -120,9 +121,10 @@ function MapFlyTo({ earthquakes, selectedId }: MapFlyToProps) {
 }
 
 // ---------------------------------------------------------------------------
-// Basemap tile configurations for light and dark themes.
-// Light: standard OpenStreetMap tiles.
-// Dark: CartoDB dark_all — free, no API key required.
+// Basemap tile configuration — light theme only (OSM raster, unchanged by
+// M1 CS-BASEMAP). Dark theme renders the Clear Skies product basemap
+// instead (ProtomapsLayer mode="dark-base" + "labels", src/lib/basemap.ts —
+// same two-tier world/local pattern as the marine map's LocationMap.tsx).
 // The key prop on TileLayer forces Leaflet to re-mount when the URL changes
 // because Leaflet's TileLayer does not support dynamic URL updates in-place.
 // ---------------------------------------------------------------------------
@@ -131,10 +133,6 @@ const TILE_CONFIG = {
   light: {
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: OSM_ATTRIBUTION,
-  },
-  dark: {
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    attribution: CARTO_OSM_ATTRIBUTION,
   },
 } as const;
 
@@ -156,7 +154,7 @@ export function SeismicPage() {
   const { t, i18n } = useTranslation('seismic');
   const locale = i18n.language;
   const { resolved: resolvedTheme } = useTheme();
-  const baseTile = TILE_CONFIG[resolvedTheme];
+  const baseTile = TILE_CONFIG.light;
 
   const { data: earthquakes, units: eqUnits, loading, error, refetch } = useEarthquakes();
   const { data: station } = useStation();
@@ -290,11 +288,23 @@ export function SeismicPage() {
                   className="h-full w-full"
                   scrollWheelZoom={true}
                 >
-                  <TileLayer
-                    key={baseTile.url}
-                    url={baseTile.url}
-                    attribution={`${baseTile.attribution}${faultAttribution ? ' | ' + faultAttribution : ''}`}
-                  />
+                  {resolvedTheme === 'light' ? (
+                    <TileLayer
+                      key={baseTile.url}
+                      url={baseTile.url}
+                      attribution={`${baseTile.attribution}${faultAttribution ? ' | ' + faultAttribution : ''}`}
+                    />
+                  ) : (
+                    <>
+                      {/* Dark theme base (M1 CS-BASEMAP) — world under local,
+                          same two-tier pattern as the marine map. Fault
+                          attribution carried on the fault GeoJSON layer
+                          below (its own `attribution` option) since there's
+                          no TileLayer to attach a combined string to here. */}
+                      <ProtomapsLayer tier="world" mode="dark-base" />
+                      <ProtomapsLayer tier="local" mode="dark-base" minZoom={7} />
+                    </>
+                  )}
 
                   {/* Station marker */}
                   {hasStation && (
@@ -340,12 +350,20 @@ export function SeismicPage() {
                     );
                   })}
 
-                  {/* Fault line overlay — GEM GAF-DB, CC-BY-SA 4.0 (ADR-046) */}
+                  {/* Fault line overlay — GEM GAF-DB, CC-BY-SA 4.0 (ADR-046).
+                      Dark theme has no TileLayer to combine the fault
+                      attribution string onto (M1 CS-BASEMAP) — carried here
+                      instead via the layer's own `attribution` option, which
+                      Leaflet's attribution control merges in regardless of
+                      source layer type. Light theme keeps the combined
+                      string on the TileLayer above (unchanged) so this stays
+                      undefined there to avoid showing it twice. */}
                   {showFaults && faults && faults.features.length > 0 && (
                     <GeoJSON
                       key={showFaults ? 'faults-on' : 'faults-off'}
                       data={faults as unknown as GeoJsonObject}
                       style={FAULT_STYLE}
+                      attribution={resolvedTheme === 'dark' ? faultAttribution : undefined}
                       onEachFeature={(feature, layer) => {
                         const props = feature.properties as {
                           name?: string | null;
