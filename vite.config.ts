@@ -30,6 +30,18 @@ export default defineConfig({
                   .replace(/^\/api\/v1\/basemap\/(\w+)\/tiles$/, "/basemap-$1.pmtiles")
                   .replace(/^\/api\/v1\/basemap\/status$/, "/status.json"),
             },
+            // M4 SURF-MAP-BASEMAP dev-only, same gate as the block above —
+            // the live API hasn't deployed the M4 `/imagery/config` shape
+            // yet (deploy pending the operator's "push"), so this round's
+            // render needs a local stand-in for that one endpoint too.
+            // Static file (the contract no longer varies by lat/lon) served
+            // from the SAME local http-server as the basemap tiers.
+            "/api/v1/imagery/config": {
+              target: process.env.BASEMAP_DEV_ORIGIN,
+              changeOrigin: true,
+              secure: false,
+              rewrite: () => "/imagery-config.json",
+            },
           }
         : {}),
       // clearskies-api service (REST).  Default bind_port: 8765.
