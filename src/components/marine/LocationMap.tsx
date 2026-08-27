@@ -24,15 +24,19 @@
 // keyboard-reachable interaction is the LocationCard grid (real <button>
 // elements) rendered alongside the map, not the map markers themselves.
 //
-// Marine feature label overlay (T4.2, DASHBOARD-MANUAL §12 / FIX-8): a
-// second TileLayer renders CARTO's `light_only_labels` layer — clean
-// geographic name labels (water body names, coastal place names) sourced
-// from OSM data — above the basemap, on both variants. This replaces the
-// prior OpenSeaMap seamark overlay, which showed navigational features
-// (buoys, channels, harbor markers, depth contours) that read as clutter
-// rather than the "clean marine feature labels" the page wants. No opacity
-// dimming — `light_only_labels` is already a transparent label-only layer
-// by design, so darkening it would just make the text harder to read.
+// Marine feature label overlay (T4.2, DASHBOARD-MANUAL §12 / FIX-8; M1
+// CS-BASEMAP 2026-08-27): a two-tier `ProtomapsLayer mode="labels"` pair
+// (world z0–6 / local z7–15, src/lib/basemap.ts) renders clean geographic
+// name labels (place names, water body names) sourced from the Clear Skies
+// product basemap — above the base layer, on both themes and both variants.
+// Formerly CARTO's `light_only_labels` tile overlay; CARTO is retired
+// (M1 CS-BASEMAP). No opacity dimming — the labels-only rule set has no
+// fills/lines by design, so darkening it would just make the text harder
+// to read.
+//
+// Dark theme base (M1 CS-BASEMAP): a two-tier `ProtomapsLayer
+// mode="dark-base"` pair (world under local) replaces the former CARTO
+// `dark_all` tile source. Light theme keeps the OSM raster base unchanged.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { RefObject } from 'react';
@@ -47,31 +51,23 @@ import { cn } from '../../lib/utils';
 // when main.tsx already imported it).
 import '../../lib/leaflet-setup';
 import { useTheme } from '../../lib/theme-provider';
-import { OSM_ATTRIBUTION, CARTO_OSM_ATTRIBUTION } from '../../lib/map-attribution';
+import { OSM_ATTRIBUTION } from '../../lib/map-attribution';
+import { ProtomapsLayer, useBasemapStatus } from '../../lib/basemap';
 import type { LatLngBoundsExpression, TileLayer as LeafletTileLayer } from 'leaflet';
 import type { MarineLocationSummary } from '../../api/types';
-
-/** CARTO `light_only_labels` — transparent label-only overlay (place/water
- *  names), served over `{s}.basemaps.cartocdn.com`. Same CARTO product
- *  family as the existing dark basemap tiles, so the existing
- *  CARTO_OSM_ATTRIBUTION string covers it — no new attribution string
- *  needed (T4.2). */
-const LABEL_OVERLAY_URL = 'https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png';
 
 /** Hero variant (T5.2): fixed zoom on the selected location — coastal
  *  features (pier, harbor entrance, breakwater) are visible at this level. */
 const HERO_ZOOM = 14;
 
-// Basemap tile configuration — same OSM/CartoDB pair used by the Seismic
-// and Radar pages (src/routes/seismic.tsx, src/components/shared/radar-map.tsx).
+// Light-theme basemap tile configuration (OSM raster, unchanged by M1
+// CS-BASEMAP). Dark theme renders the Clear Skies product basemap instead
+// (ProtomapsLayer mode="dark-base", src/lib/basemap.ts) — see the render
+// below.
 const TILE_CONFIG = {
   light: {
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: OSM_ATTRIBUTION,
-  },
-  dark: {
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    attribution: CARTO_OSM_ATTRIBUTION,
   },
 } as const;
 
@@ -218,17 +214,26 @@ export function LocationMap({
 }: LocationMapProps) {
   const { t } = useTranslation('marine');
   const { resolved: resolvedTheme } = useTheme();
-  const baseTile = TILE_CONFIG[resolvedTheme];
+  const baseTile = TILE_CONFIG.light;
 
-  // M1: per-layer consecutive-tileerror tracking + retry-with-backoff for
-  // both the base map layer and the label overlay layer. Either layer
-  // reaching the threshold shows the shared banner (silent gray becomes
-  // impossible: tiles or banner, never neither).
+  // M1: consecutive-tileerror tracking + retry-with-backoff for the light-
+  // theme OSM base layer (unchanged mechanism). Dark theme has no TileLayer
+  // to attach this to — the product basemap's own availability (below)
+  // covers it instead.
   const baseLayerRef = useRef<LeafletTileLayer | null>(null);
-  const labelLayerRef = useRef<LeafletTileLayer | null>(null);
   const baseTileRecovery = useTileErrorRecovery(baseLayerRef);
-  const labelTileRecovery = useTileErrorRecovery(labelLayerRef);
-  const showTileErrorBanner = baseTileRecovery.showBanner || labelTileRecovery.showBanner;
+
+  // M1 CS-BASEMAP: the world/local ProtomapsLayer tiers back BOTH the dark
+  // base and the labels overlay (in both themes) — if either tier isn't
+  // extracted yet, show the same non-blocking banner with a distinct
+  // message, same as the light-theme tile-error path never leaves silent
+  // gray (tiles render, or a banner is visible — never neither).
+  const { data: basemapStatus } = useBasemapStatus();
+  const basemapUnavailable =
+    basemapStatus !== null &&
+    (basemapStatus.tiers.world.available === false || basemapStatus.tiers.local.available === false);
+  const showTileErrorBanner = baseTileRecovery.showBanner || basemapUnavailable;
+  const tileErrorMessage = baseTileRecovery.showBanner ? t('map.tileError') : t('map.basemapUnavailable');
 
   const isHero = variant === 'hero';
   const showBackButton = isHero && Boolean(onBack);
@@ -302,28 +307,33 @@ export function LocationMap({
         boxZoom={!isHero}
         keyboard={!isHero}
       >
-        <TileLayer
-          ref={baseLayerRef}
-          url={baseTile.url}
-          attribution={baseTile.attribution}
-          eventHandlers={{
-            tileerror: baseTileRecovery.handleTileError,
-            tileload: baseTileRecovery.handleTileLoad,
-          }}
-        />
+        {resolvedTheme === 'light' ? (
+          <TileLayer
+            ref={baseLayerRef}
+            url={baseTile.url}
+            attribution={baseTile.attribution}
+            eventHandlers={{
+              tileerror: baseTileRecovery.handleTileError,
+              tileload: baseTileRecovery.handleTileLoad,
+            }}
+          />
+        ) : (
+          <>
+            {/* Dark theme base (M1 CS-BASEMAP) — world under local, world has
+                no maxZoom so its z6 data keeps rendering (overzoomed) as the
+                ground beyond the local tier's box. */}
+            <ProtomapsLayer tier="world" mode="dark-base" />
+            <ProtomapsLayer tier="local" mode="dark-base" minZoom={7} />
+          </>
+        )}
 
-        {/* Marine feature label overlay (T4.2) — water body / coastal place
-            name labels only, no buoys/channels/depth soundings. Rendered
-            above the basemap on both variants. */}
-        <TileLayer
-          ref={labelLayerRef}
-          url={LABEL_OVERLAY_URL}
-          attribution={CARTO_OSM_ATTRIBUTION}
-          eventHandlers={{
-            tileerror: labelTileRecovery.handleTileError,
-            tileload: labelTileRecovery.handleTileLoad,
-          }}
-        />
+        {/* Marine feature label overlay (T4.2; M1 CS-BASEMAP) — water body /
+            coastal place name labels only, no buoys/channels/depth
+            soundings, no road shields, no POIs. Rendered above the basemap
+            on both themes and both variants. World labels cap at z6, local
+            labels start at z7 — never both at one zoom. */}
+        <ProtomapsLayer tier="world" mode="labels" theme={resolvedTheme} maxZoom={6} />
+        <ProtomapsLayer tier="local" mode="labels" theme={resolvedTheme} minZoom={7} />
 
         {/* Hero mode renders only the selected location's marker (T5.2) —
             not every configured location. */}
@@ -384,7 +394,7 @@ export function LocationMap({
           ].join(' ')}
           style={{ fontSize: 'var(--text-label)' }}
         >
-          {t('map.tileError')}
+          {tileErrorMessage}
         </div>
       )}
 
