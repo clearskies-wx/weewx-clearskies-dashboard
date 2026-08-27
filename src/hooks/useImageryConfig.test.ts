@@ -104,3 +104,72 @@ describe('useImageryConfig', () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// M4-DASH (SURF-MAP-BASEMAP, PA9, 2026-08-27) — the API's /imagery/config
+// response gains optional light/dark/zoomMin/zoomMax fields (meta contract
+// docs/contracts/openapi-v1.yaml ImageryConfigResponse/ImageryLightSource/
+// ImageryDarkSource, verified against the synced meta contract at commit
+// 897a79b3 before writing this fixture). useImageryConfig.ts itself is
+// "unchanged except the type" per the round brief — this hook does not
+// inspect or reshape the response, so this is a production-shaped
+// pass-through guard (the real response the API now serves), not a probe
+// for new hook logic. Fixture matches the plan §M4 "Lead mechanics" response
+// literally: provider "basemap", legacy tileUrl/attribution carrying the
+// light theme's values (old-client compatibility), light.tileUrl the OSM
+// template with {s} pre-expanded to "a", dark.pmtilesUrl the LOCAL basemap
+// tier path, dark.maxDataZoom 15 (the local tier's vector data ceiling),
+// zoomMin 0 / zoomMax 19.
+//
+// Pre-change result (run at HEAD 43afaee, before src/api/types.ts gained the
+// optional fields — useImageryConfig.ts is untyped JS at runtime and does
+// not strip unknown properties, so this already PASSES pre-change; recorded
+// here per the round brief's "pre-change transcripts in module comments"
+// instruction, not because a code change was needed to make it pass):
+//
+//   $ npx vitest run src/hooks/useImageryConfig.test.ts
+//   ✓ useImageryConfig > M4-DASH — /imagery/config basemap response >
+//     passes through light/dark/zoomMin/zoomMax fields unchanged
+//   Test Files  1 passed (1)
+//        Tests  8 passed (8)   [7 pre-existing + this 1 new test]
+// ---------------------------------------------------------------------------
+const BASEMAP_CONFIG: ImageryConfigResponse = {
+  provider: 'basemap',
+  tileUrl: 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  attribution: '© OpenStreetMap contributors',
+  proxyMode: 'direct',
+  bounds: null,
+  light: {
+    tileUrl: 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '© OpenStreetMap contributors',
+  },
+  dark: {
+    pmtilesUrl: '/api/v1/basemap/local/tiles',
+    maxDataZoom: 15,
+    attribution: '© OpenStreetMap contributors © Protomaps',
+  },
+  zoomMin: 0,
+  zoomMax: 19,
+};
+
+describe('useImageryConfig — M4-DASH /imagery/config basemap response (PA9)', () => {
+  beforeEach(() => {
+    mockFetchApi.mockReset();
+  });
+
+  it('passes through light/dark/zoomMin/zoomMax fields unchanged', async () => {
+    mockFetchApi.mockResolvedValue(BASEMAP_CONFIG);
+    // Distinct coordinates from every other test in this file — see the
+    // module-level cache-key note on the 404 test above.
+    const { result } = renderHook(() => useImageryConfig(12.0, 22.0));
+    await waitFor(() => expect(result.current.data).toEqual(BASEMAP_CONFIG));
+    expect(result.current.data?.light).toEqual(BASEMAP_CONFIG.light);
+    expect(result.current.data?.dark).toEqual(BASEMAP_CONFIG.dark);
+    expect(result.current.data?.zoomMin).toBe(0);
+    expect(result.current.data?.zoomMax).toBe(19);
+    // Legacy top-level fields still carry the light theme's values, for an
+    // old client that has not been updated to read `.light`.
+    expect(result.current.data?.tileUrl).toBe(BASEMAP_CONFIG.light!.tileUrl);
+    expect(result.current.data?.attribution).toBe(BASEMAP_CONFIG.light!.attribution);
+  });
+});
