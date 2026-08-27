@@ -47,11 +47,48 @@ vi.mock('../../../hooks/useImageryConfig', () => ({
   useImageryConfig: (...args: unknown[]) => mockUseImageryConfig(...args),
 }));
 
+// M4-DASH (SURF-MAP-BASEMAP, PA9, 2026-08-27) — HeatMapCard now also reads
+// the resolved theme (light -> OSM raster via light.tileUrl; dark -> browser-
+// rasterized local-tier tiles via useRasterizedTiles) unconditionally
+// (React hooks rule), same reasoning as the LM-2 useImageryConfig mock
+// above: mocked at the module level so every PRE-EXISTING test keeps its
+// exact render (default 'light' — the theme the pre-M4 imagery tests were
+// all written against, since the old code had no theme concept at all) and
+// the new theme-specific KATs get synchronous control. Mock path
+// `../../../lib/theme-provider` / `../../../hooks/useRasterizedTiles`
+// mirrors the existing convention in LocationMap.test.tsx (`mockUseTheme`,
+// `vi.mock('../../lib/theme-provider', ...)`).
+const mockUseTheme = vi.fn();
+vi.mock('../../../lib/theme-provider', () => ({
+  useTheme: (...args: unknown[]) => mockUseTheme(...args),
+}));
+const mockUseRasterizedTiles = vi.fn();
+vi.mock('../../../hooks/useRasterizedTiles', () => ({
+  useRasterizedTiles: (...args: unknown[]) => mockUseRasterizedTiles(...args),
+}));
+
 beforeEach(() => {
   mockUseImageryConfig.mockReset();
   mockUseImageryConfig.mockReturnValue({ data: null, loading: false });
+  mockUseTheme.mockReset();
+  mockUseTheme.mockReturnValue({ resolved: 'light' });
+  mockUseRasterizedTiles.mockReset();
+  mockUseRasterizedTiles.mockReturnValue({});
 });
 
+// LM-2-era fixtures (provider: naip/esri, no `.light`/`.dark`) — RETAINED
+// (not stale) for the tests below that exercise the LEGACY top-level
+// tileUrl/attribution fallback path ("an old client that has not been
+// updated to read `.light`", plan §M4) under the light theme (the default
+// theme mock above): `imageryConfig.light?.tileUrl ?? imageryConfig.tileUrl`
+// resolves to the top-level field exactly as before when `.light` is
+// absent, so these fixtures still exercise a real, named code path post-M4.
+// The tests that specifically pinned Esri/NAIP AS THE ACTIVE PROVIDER's own
+// tileUrl-substitution behavior (KAT (a), KAT (c) below) are stale-by-design
+// per the round brief and are REPLACED with BASEMAP_CONFIG-driven
+// light/dark-theme equivalents, not left pointing at a provider the API can
+// no longer serve (`/imagery/config` always answers `provider: "basemap"`
+// as of M4-API).
 const NAIP_CONFIG: ImageryConfigResponse = {
   provider: 'naip',
   tileUrl: '/api/v1/imagery/tiles/{z}/{x}/{y}',
@@ -60,12 +97,30 @@ const NAIP_CONFIG: ImageryConfigResponse = {
   bounds: { south: 24.396308, west: -125.0, north: 49.384358, east: -66.93457 },
 };
 
-const ESRI_CONFIG: ImageryConfigResponse = {
-  provider: 'esri',
-  tileUrl: 'https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-  attribution: 'Source: Esri, Vantor, Earthstar Geographics, and the GIS User Community',
+// M4-DASH (SURF-MAP-BASEMAP, PA9) — the ACTUAL shape `/imagery/config` now
+// serves (docs/contracts/openapi-v1.yaml ImageryConfigResponse, meta commit
+// 897a79b3; plan §M4 "Lead mechanics" response block, verbatim field
+// values). `light.tileUrl` is DELIBERATELY DIFFERENT from the legacy
+// top-level `tileUrl` (which still carries an old NAIP-shaped value here) so
+// tests below can prove the component reads `.light.tileUrl` FIRST, not the
+// legacy fallback.
+const BASEMAP_CONFIG: ImageryConfigResponse = {
+  provider: 'basemap',
+  tileUrl: '/api/v1/imagery/tiles/{z}/{x}/{y}', // legacy fallback value — distinct from light.tileUrl below, on purpose
+  attribution: 'USGS National Agriculture Imagery Program (NAIP) — public domain', // legacy fallback value
   proxyMode: 'direct',
   bounds: null,
+  light: {
+    tileUrl: 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '© OpenStreetMap contributors',
+  },
+  dark: {
+    pmtilesUrl: '/api/v1/basemap/local/tiles',
+    maxDataZoom: 15,
+    attribution: '© OpenStreetMap contributors © Protomaps',
+  },
+  zoomMin: 0,
+  zoomMax: 19,
 };
 
 // React's useId() prefixes its id string with an internal render-root
@@ -992,6 +1047,57 @@ describe('HeatMapCard', () => {
     const SPOT_LAT = 33.6595;
     const SPOT_LON = -118.0064;
 
+    // M4-DASH (SURF-MAP-BASEMAP, PA9) — the EXACT `imageryLayer.tiles`
+    // geometry (z/x/y + screen sx/sy/sw/sh) for OK_RESPONSE_5_ROWS_WITH_ORIGINS
+    // + spotLat/spotLon=(SPOT_LAT,SPOT_LON), captured pre-change at HEAD
+    // 43afaee (`git show 43afaee:src/components/marine/tabs/HeatMapCard.tsx`
+    // was the code under test) via a throwaway render + DOM extraction (the
+    // rotate transform's own attribute string, and each rendered <image>'s
+    // x/y/width/height plus z/x/y parsed from its href) — same capture
+    // method the pre-existing KAT (b) golden above already uses, NOT hand-
+    // typed. Used below by (1) the geometry-unchanged pin (proves the M4
+    // theme/rasterization change did not touch `computeImageryTiles`/
+    // `snapImageryBBoxToTiles`/rotation/pivot — brief: "the imageryLayer
+    // memo... is NOT touched — byte-identical imageryLayer output is a gate
+    // row") and (2) the dark-theme KAT (c) below (same tile SET, different
+    // href source per theme — per m4dash-dev, "same tile grid, different
+    // href source per theme").
+    const IMAGERY_GEOMETRY_SNAPSHOT_43afaee = {
+      transform: 'rotate(24.99979234675385 353.7893432774101 797.0952238430508)',
+      tiles: [
+        { z: 19, x: 90281, y: 210029, sx: '-579.827202077467', sy: '-323.24463026453316', sw: '373.44661814195086', sh: '373.44041647189823' },
+        { z: 19, x: 90281, y: 210030, sx: '-579.827202077467', sy: '50.195786207365074', sw: '373.44661814195086', sh: '373.4428971247216' },
+        { z: 19, x: 90281, y: 210031, sx: '-579.827202077467', sy: '423.63868333208666', sw: '373.44661814195086', sh: '373.4453777589737' },
+        { z: 19, x: 90281, y: 210032, sx: '-579.827202077467', sy: '797.0840610910603', sw: '373.44661814195086', sh: '373.4478583746537' },
+        { z: 19, x: 90281, y: 210033, sx: '-579.827202077467', sy: '1170.531919465714', sw: '373.44661814195086', sh: '373.45033895783445' },
+        { z: 19, x: 90281, y: 210034, sx: '-579.827202077467', sy: '1543.9822584235485', sw: '373.44661814195086', sh: '373.4528195270864' },
+        { z: 19, x: 90282, y: 210029, sx: '-206.38058393551609', sy: '-323.24463026453316', sw: '373.44661814195086', sh: '373.44041647189823' },
+        { z: 19, x: 90282, y: 210030, sx: '-206.38058393551609', sy: '50.195786207365074', sw: '373.44661814195086', sh: '373.4428971247216' },
+        { z: 19, x: 90282, y: 210031, sx: '-206.38058393551609', sy: '423.63868333208666', sw: '373.44661814195086', sh: '373.4453777589737' },
+        { z: 19, x: 90282, y: 210032, sx: '-206.38058393551609', sy: '797.0840610910603', sw: '373.44661814195086', sh: '373.4478583746537' },
+        { z: 19, x: 90282, y: 210033, sx: '-206.38058393551609', sy: '1170.531919465714', sw: '373.44661814195086', sh: '373.45033895783445' },
+        { z: 19, x: 90282, y: 210034, sx: '-206.38058393551609', sy: '1543.9822584235485', sw: '373.44661814195086', sh: '373.4528195270864' },
+        { z: 19, x: 90283, y: 210029, sx: '167.06603420643478', sy: '-323.24463026453316', sw: '373.4466181419508', sh: '373.44041647189823' },
+        { z: 19, x: 90283, y: 210030, sx: '167.06603420643478', sy: '50.195786207365074', sw: '373.4466181419508', sh: '373.4428971247216' },
+        { z: 19, x: 90283, y: 210031, sx: '167.06603420643478', sy: '423.63868333208666', sw: '373.4466181419508', sh: '373.4453777589737' },
+        { z: 19, x: 90283, y: 210032, sx: '167.06603420643478', sy: '797.0840610910603', sw: '373.4466181419508', sh: '373.4478583746537' },
+        { z: 19, x: 90283, y: 210033, sx: '167.06603420643478', sy: '1170.531919465714', sw: '373.4466181419508', sh: '373.45033895783445' },
+        { z: 19, x: 90283, y: 210034, sx: '167.06603420643478', sy: '1543.9822584235485', sw: '373.4466181419508', sh: '373.4528195270864' },
+        { z: 19, x: 90284, y: 210029, sx: '540.5126523483856', sy: '-323.24463026453316', sw: '373.4466181419509', sh: '373.44041647189823' },
+        { z: 19, x: 90284, y: 210030, sx: '540.5126523483856', sy: '50.195786207365074', sw: '373.4466181419509', sh: '373.4428971247216' },
+        { z: 19, x: 90284, y: 210031, sx: '540.5126523483856', sy: '423.63868333208666', sw: '373.4466181419509', sh: '373.4453777589737' },
+        { z: 19, x: 90284, y: 210032, sx: '540.5126523483856', sy: '797.0840610910603', sw: '373.4466181419509', sh: '373.4478583746537' },
+        { z: 19, x: 90284, y: 210033, sx: '540.5126523483856', sy: '1170.531919465714', sw: '373.4466181419509', sh: '373.45033895783445' },
+        { z: 19, x: 90284, y: 210034, sx: '540.5126523483856', sy: '1543.9822584235485', sw: '373.4466181419509', sh: '373.4528195270864' },
+        { z: 19, x: 90285, y: 210029, sx: '913.9592704903365', sy: '-323.24463026453316', sw: '373.4466181419508', sh: '373.44041647189823' },
+        { z: 19, x: 90285, y: 210030, sx: '913.9592704903365', sy: '50.195786207365074', sw: '373.4466181419508', sh: '373.4428971247216' },
+        { z: 19, x: 90285, y: 210031, sx: '913.9592704903365', sy: '423.63868333208666', sw: '373.4466181419508', sh: '373.4453777589737' },
+        { z: 19, x: 90285, y: 210032, sx: '913.9592704903365', sy: '797.0840610910603', sw: '373.4466181419508', sh: '373.4478583746537' },
+        { z: 19, x: 90285, y: 210033, sx: '913.9592704903365', sy: '1170.531919465714', sw: '373.4466181419508', sh: '373.45033895783445' },
+        { z: 19, x: 90285, y: 210034, sx: '913.9592704903365', sy: '1543.9822584235485', sw: '373.4466181419508', sh: '373.4528195270864' },
+      ],
+    };
+
     // KAT (b) golden fixture — C3S (2026-08-09 PM, single-scale fix)
     // RE-CAPTURED against the new component (OK_RESPONSE_5_ROWS + baseProps,
     // no ground-origin fields -> falls back to the pre-C3 uniform-index Y
@@ -1010,8 +1116,9 @@ describe('HeatMapCard', () => {
     // is unaffected by the modal's own content).
     const GOLDEN_NO_IMAGERY_HTML = '<div class="rounded-xl bg-[var(--card-glass)] p-[var(--card-pad)]"><div class="flex items-center justify-between mb-3"><h3 class="font-semibold text-[var(--foreground)] text-sm">surfing.heatMapTitle</h3><button type="button" aria-label="surfing.heatMap.infoButtonLabel" class="shrink-0 flex items-center justify-center text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus:outline-none rounded" style="min-width: 44px; min-height: 44px;"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"></path></svg></button></div><div class="w-full overflow-x-auto overflow-y-auto" style="max-height: 32rem;"><svg role="img" aria-labelledby="_r_0_ _r_1_" viewBox="0 0 820 320" width="100%" style="display: block; min-width: 260px;"><title id="_r_0_">surfing.heatMapAriaLabel</title><desc id="_r_1_">surfing.heatMapDesc</desc><defs></defs><rect x="60" y="28" width="748" height="240" fill="var(--card-glass)" opacity="0.3"></rect><line x1="60" y1="28" x2="808" y2="28" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="76" x2="808" y2="76" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="124" x2="808" y2="124" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="172" x2="808" y2="172" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="220" x2="808" y2="220" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><line x1="60" y1="268" x2="808" y2="268" stroke="var(--muted-foreground)" stroke-opacity="0.12" stroke-width="0.5"></line><rect x="504.4463696290697" y="28" width="10.063767089867099" height="24" fill="rgba(176,184,33,0.85)"><title>0.8 ft</title></rect><rect x="504.4463696290697" y="52" width="10.063767089867099" height="24" fill="rgba(176,184,33,0.85)"><title>0.8 ft</title></rect><rect x="494.3826025392026" y="28" width="10.063767089867099" height="24" fill="rgba(192,183,26,0.85)"><title>0.8 ft</title></rect><rect x="494.3826025392026" y="52" width="10.063767089867099" height="24" fill="rgba(192,183,26,0.85)"><title>0.8 ft</title></rect><rect x="484.3188354493355" y="28" width="10.063767089867099" height="24" fill="rgba(209,181,19,0.85)"><title>0.9 ft</title></rect><rect x="484.3188354493355" y="52" width="10.063767089867099" height="24" fill="rgba(209,181,19,0.85)"><title>0.9 ft</title></rect><rect x="474.25506835946845" y="28" width="10.063767089867042" height="24" fill="rgba(226,180,12,0.85)"><title>0.9 ft</title></rect><rect x="474.25506835946845" y="52" width="10.063767089867042" height="24" fill="rgba(226,180,12,0.85)"><title>0.9 ft</title></rect><rect x="464.19130126960124" y="28" width="10.063767089867213" height="24" fill="rgba(233,173,9,0.85)"><title>0.9 ft</title></rect><rect x="464.19130126960124" y="52" width="10.063767089867213" height="24" fill="rgba(233,173,9,0.85)"><title>0.9 ft</title></rect><rect x="454.1275341797342" y="28" width="10.063767089867042" height="24" fill="rgba(232,161,12,0.85)"><title>0.9 ft</title></rect><rect x="454.1275341797342" y="52" width="10.063767089867042" height="24" fill="rgba(232,161,12,0.85)"><title>0.9 ft</title></rect><rect x="444.0637670898671" y="28" width="10.063767089867099" height="24" fill="rgba(231,150,14,0.85)"><title>1 ft</title></rect><rect x="444.0637670898671" y="52" width="10.063767089867099" height="24" fill="rgba(231,150,14,0.85)"><title>1 ft</title></rect><rect x="433.99999999999994" y="28" width="10.063767089867156" height="24" fill="rgba(230,138,17,0.85)"><title>1 ft</title></rect><rect x="433.99999999999994" y="52" width="10.063767089867156" height="24" fill="rgba(230,138,17,0.85)"><title>1 ft</title></rect><rect x="423.93623291013284" y="28" width="10.063767089867099" height="24" fill="rgba(229,126,19,0.85)"><title>1 ft</title></rect><rect x="423.93623291013284" y="52" width="10.063767089867099" height="24" fill="rgba(229,126,19,0.85)"><title>1 ft</title></rect><rect x="413.87246582026575" y="28" width="10.063767089867099" height="24" fill="rgba(228,114,22,0.85)"><title>1 ft</title></rect><rect x="413.87246582026575" y="52" width="10.063767089867099" height="24" fill="rgba(228,114,22,0.85)"><title>1 ft</title></rect><rect x="403.80869873039865" y="28" width="10.063767089867099" height="24" fill="rgba(226,103,24,0.85)"><title>1.1 ft</title></rect><rect x="403.80869873039865" y="52" width="10.063767089867099" height="24" fill="rgba(226,103,24,0.85)"><title>1.1 ft</title></rect><rect x="393.74493164053155" y="28" width="10.063767089867099" height="24" fill="rgba(225,91,27,0.85)"><title>1.1 ft</title></rect><rect x="393.74493164053155" y="52" width="10.063767089867099" height="24" fill="rgba(225,91,27,0.85)"><title>1.1 ft</title></rect><rect x="383.6811645506644" y="28" width="10.063767089867156" height="24" fill="rgba(224,79,29,0.85)"><title>1.1 ft</title></rect><rect x="383.6811645506644" y="52" width="10.063767089867156" height="24" fill="rgba(224,79,29,0.85)"><title>1.1 ft</title></rect><rect x="373.6173974607973" y="28" width="10.063767089867099" height="24" fill="rgba(223,67,32,0.85)"><title>1.1 ft</title></rect><rect x="373.6173974607973" y="52" width="10.063767089867099" height="24" fill="rgba(223,67,32,0.85)"><title>1.1 ft</title></rect><rect x="363.55363037093025" y="28" width="10.063767089867042" height="24" fill="rgba(222,56,34,0.85)"><title>1.2 ft</title></rect><rect x="363.55363037093025" y="52" width="10.063767089867042" height="24" fill="rgba(222,56,34,0.85)"><title>1.2 ft</title></rect><rect x="353.4898632810631" y="28" width="10.063767089867156" height="24" fill="rgba(221,44,37,0.85)"><title>1.2 ft</title></rect><rect x="353.4898632810631" y="52" width="10.063767089867156" height="24" fill="rgba(221,44,37,0.85)"><title>1.2 ft</title></rect><rect x="504.4463696290697" y="76" width="10.063767089867099" height="24" fill="rgba(176,184,33,0.85)"><title>0.8 ft</title></rect><rect x="504.4463696290697" y="100" width="10.063767089867099" height="24" fill="rgba(176,184,33,0.85)"><title>0.8 ft</title></rect><rect x="494.3826025392026" y="76" width="10.063767089867099" height="24" fill="rgba(192,183,26,0.85)"><title>0.8 ft</title></rect><rect x="494.3826025392026" y="100" width="10.063767089867099" height="24" fill="rgba(192,183,26,0.85)"><title>0.8 ft</title></rect><rect x="484.3188354493355" y="76" width="10.063767089867099" height="24" fill="rgba(209,181,19,0.85)"><title>0.9 ft</title></rect><rect x="484.3188354493355" y="100" width="10.063767089867099" height="24" fill="rgba(209,181,19,0.85)"><title>0.9 ft</title></rect><rect x="474.25506835946845" y="76" width="10.063767089867042" height="24" fill="rgba(226,180,12,0.85)"><title>0.9 ft</title></rect><rect x="474.25506835946845" y="100" width="10.063767089867042" height="24" fill="rgba(226,180,12,0.85)"><title>0.9 ft</title></rect><rect x="464.19130126960124" y="76" width="10.063767089867213" height="24" fill="rgba(233,173,9,0.85)"><title>0.9 ft</title></rect><rect x="464.19130126960124" y="100" width="10.063767089867213" height="24" fill="rgba(233,173,9,0.85)"><title>0.9 ft</title></rect><rect x="454.1275341797342" y="76" width="10.063767089867042" height="24" fill="rgba(232,161,12,0.85)"><title>0.9 ft</title></rect><rect x="454.1275341797342" y="100" width="10.063767089867042" height="24" fill="rgba(232,161,12,0.85)"><title>0.9 ft</title></rect><rect x="444.0637670898671" y="76" width="10.063767089867099" height="24" fill="rgba(231,150,14,0.85)"><title>1 ft</title></rect><rect x="444.0637670898671" y="100" width="10.063767089867099" height="24" fill="rgba(231,150,14,0.85)"><title>1 ft</title></rect><rect x="433.99999999999994" y="76" width="10.063767089867156" height="24" fill="rgba(230,138,17,0.85)"><title>1 ft</title></rect><rect x="433.99999999999994" y="100" width="10.063767089867156" height="24" fill="rgba(230,138,17,0.85)"><title>1 ft</title></rect><rect x="423.93623291013284" y="76" width="10.063767089867099" height="24" fill="rgba(229,126,19,0.85)"><title>1 ft</title></rect><rect x="423.93623291013284" y="100" width="10.063767089867099" height="24" fill="rgba(229,126,19,0.85)"><title>1 ft</title></rect><rect x="413.87246582026575" y="76" width="10.063767089867099" height="24" fill="rgba(228,114,22,0.85)"><title>1 ft</title></rect><rect x="413.87246582026575" y="100" width="10.063767089867099" height="24" fill="rgba(228,114,22,0.85)"><title>1 ft</title></rect><rect x="403.80869873039865" y="76" width="10.063767089867099" height="24" fill="rgba(226,103,24,0.85)"><title>1.1 ft</title></rect><rect x="403.80869873039865" y="100" width="10.063767089867099" height="24" fill="rgba(226,103,24,0.85)"><title>1.1 ft</title></rect><rect x="393.74493164053155" y="76" width="10.063767089867099" height="24" fill="rgba(225,91,27,0.85)"><title>1.1 ft</title></rect><rect x="393.74493164053155" y="100" width="10.063767089867099" height="24" fill="rgba(225,91,27,0.85)"><title>1.1 ft</title></rect><rect x="383.6811645506644" y="76" width="10.063767089867156" height="24" fill="rgba(224,79,29,0.85)"><title>1.1 ft</title></rect><rect x="383.6811645506644" y="100" width="10.063767089867156" height="24" fill="rgba(224,79,29,0.85)"><title>1.1 ft</title></rect><rect x="373.6173974607973" y="76" width="10.063767089867099" height="24" fill="rgba(223,67,32,0.85)"><title>1.1 ft</title></rect><rect x="373.6173974607973" y="100" width="10.063767089867099" height="24" fill="rgba(223,67,32,0.85)"><title>1.1 ft</title></rect><rect x="363.55363037093025" y="76" width="10.063767089867042" height="24" fill="rgba(222,56,34,0.85)"><title>1.2 ft</title></rect><rect x="363.55363037093025" y="100" width="10.063767089867042" height="24" fill="rgba(222,56,34,0.85)"><title>1.2 ft</title></rect><rect x="353.4898632810631" y="76" width="10.063767089867156" height="24" fill="rgba(221,44,37,0.85)"><title>1.2 ft</title></rect><rect x="353.4898632810631" y="100" width="10.063767089867156" height="24" fill="rgba(221,44,37,0.85)"><title>1.2 ft</title></rect><rect x="504.4463696290697" y="124" width="10.063767089867099" height="24" fill="rgba(176,184,33,0.85)"><title>0.8 ft</title></rect><rect x="504.4463696290697" y="148" width="10.063767089867099" height="24" fill="rgba(176,184,33,0.85)"><title>0.8 ft</title></rect><rect x="494.3826025392026" y="124" width="10.063767089867099" height="24" fill="rgba(192,183,26,0.85)"><title>0.8 ft</title></rect><rect x="494.3826025392026" y="148" width="10.063767089867099" height="24" fill="rgba(192,183,26,0.85)"><title>0.8 ft</title></rect><rect x="484.3188354493355" y="124" width="10.063767089867099" height="24" fill="rgba(209,181,19,0.85)"><title>0.9 ft</title></rect><rect x="484.3188354493355" y="148" width="10.063767089867099" height="24" fill="rgba(209,181,19,0.85)"><title>0.9 ft</title></rect><rect x="474.25506835946845" y="124" width="10.063767089867042" height="24" fill="rgba(226,180,12,0.85)"><title>0.9 ft</title></rect><rect x="474.25506835946845" y="148" width="10.063767089867042" height="24" fill="rgba(226,180,12,0.85)"><title>0.9 ft</title></rect><rect x="464.19130126960124" y="124" width="10.063767089867213" height="24" fill="rgba(233,173,9,0.85)"><title>0.9 ft</title></rect><rect x="464.19130126960124" y="148" width="10.063767089867213" height="24" fill="rgba(233,173,9,0.85)"><title>0.9 ft</title></rect><rect x="454.1275341797342" y="124" width="10.063767089867042" height="24" fill="rgba(232,161,12,0.85)"><title>0.9 ft</title></rect><rect x="454.1275341797342" y="148" width="10.063767089867042" height="24" fill="rgba(232,161,12,0.85)"><title>0.9 ft</title></rect><rect x="444.0637670898671" y="124" width="10.063767089867099" height="24" fill="rgba(231,150,14,0.85)"><title>1 ft</title></rect><rect x="444.0637670898671" y="148" width="10.063767089867099" height="24" fill="rgba(231,150,14,0.85)"><title>1 ft</title></rect><rect x="433.99999999999994" y="124" width="10.063767089867156" height="24" fill="rgba(230,138,17,0.85)"><title>1 ft</title></rect><rect x="433.99999999999994" y="148" width="10.063767089867156" height="24" fill="rgba(230,138,17,0.85)"><title>1 ft</title></rect><rect x="423.93623291013284" y="124" width="10.063767089867099" height="24" fill="rgba(229,126,19,0.85)"><title>1 ft</title></rect><rect x="423.93623291013284" y="148" width="10.063767089867099" height="24" fill="rgba(229,126,19,0.85)"><title>1 ft</title></rect><rect x="413.87246582026575" y="124" width="10.063767089867099" height="24" fill="rgba(228,114,22,0.85)"><title>1 ft</title></rect><rect x="413.87246582026575" y="148" width="10.063767089867099" height="24" fill="rgba(228,114,22,0.85)"><title>1 ft</title></rect><rect x="403.80869873039865" y="124" width="10.063767089867099" height="24" fill="rgba(226,103,24,0.85)"><title>1.1 ft</title></rect><rect x="403.80869873039865" y="148" width="10.063767089867099" height="24" fill="rgba(226,103,24,0.85)"><title>1.1 ft</title></rect><rect x="393.74493164053155" y="124" width="10.063767089867099" height="24" fill="rgba(225,91,27,0.85)"><title>1.1 ft</title></rect><rect x="393.74493164053155" y="148" width="10.063767089867099" height="24" fill="rgba(225,91,27,0.85)"><title>1.1 ft</title></rect><rect x="383.6811645506644" y="124" width="10.063767089867156" height="24" fill="rgba(224,79,29,0.85)"><title>1.1 ft</title></rect><rect x="383.6811645506644" y="148" width="10.063767089867156" height="24" fill="rgba(224,79,29,0.85)"><title>1.1 ft</title></rect><rect x="373.6173974607973" y="124" width="10.063767089867099" height="24" fill="rgba(223,67,32,0.85)"><title>1.1 ft</title></rect><rect x="373.6173974607973" y="148" width="10.063767089867099" height="24" fill="rgba(223,67,32,0.85)"><title>1.1 ft</title></rect><rect x="363.55363037093025" y="124" width="10.063767089867042" height="24" fill="rgba(222,56,34,0.85)"><title>1.2 ft</title></rect><rect x="363.55363037093025" y="148" width="10.063767089867042" height="24" fill="rgba(222,56,34,0.85)"><title>1.2 ft</title></rect><rect x="353.4898632810631" y="124" width="10.063767089867156" height="24" fill="rgba(221,44,37,0.85)"><title>1.2 ft</title></rect><rect x="353.4898632810631" y="148" width="10.063767089867156" height="24" fill="rgba(221,44,37,0.85)"><title>1.2 ft</title></rect><rect x="504.4463696290697" y="172" width="10.063767089867099" height="24" fill="rgba(176,184,33,0.85)"><title>0.8 ft</title></rect><rect x="504.4463696290697" y="196" width="10.063767089867099" height="24" fill="rgba(176,184,33,0.85)"><title>0.8 ft</title></rect><rect x="494.3826025392026" y="172" width="10.063767089867099" height="24" fill="rgba(192,183,26,0.85)"><title>0.8 ft</title></rect><rect x="494.3826025392026" y="196" width="10.063767089867099" height="24" fill="rgba(192,183,26,0.85)"><title>0.8 ft</title></rect><rect x="484.3188354493355" y="172" width="10.063767089867099" height="24" fill="rgba(209,181,19,0.85)"><title>0.9 ft</title></rect><rect x="484.3188354493355" y="196" width="10.063767089867099" height="24" fill="rgba(209,181,19,0.85)"><title>0.9 ft</title></rect><rect x="474.25506835946845" y="172" width="10.063767089867042" height="24" fill="rgba(226,180,12,0.85)"><title>0.9 ft</title></rect><rect x="474.25506835946845" y="196" width="10.063767089867042" height="24" fill="rgba(226,180,12,0.85)"><title>0.9 ft</title></rect><rect x="464.19130126960124" y="172" width="10.063767089867213" height="24" fill="rgba(233,173,9,0.85)"><title>0.9 ft</title></rect><rect x="464.19130126960124" y="196" width="10.063767089867213" height="24" fill="rgba(233,173,9,0.85)"><title>0.9 ft</title></rect><rect x="454.1275341797342" y="172" width="10.063767089867042" height="24" fill="rgba(232,161,12,0.85)"><title>0.9 ft</title></rect><rect x="454.1275341797342" y="196" width="10.063767089867042" height="24" fill="rgba(232,161,12,0.85)"><title>0.9 ft</title></rect><rect x="444.0637670898671" y="172" width="10.063767089867099" height="24" fill="rgba(231,150,14,0.85)"><title>1 ft</title></rect><rect x="444.0637670898671" y="196" width="10.063767089867099" height="24" fill="rgba(231,150,14,0.85)"><title>1 ft</title></rect><rect x="433.99999999999994" y="172" width="10.063767089867156" height="24" fill="rgba(230,138,17,0.85)"><title>1 ft</title></rect><rect x="433.99999999999994" y="196" width="10.063767089867156" height="24" fill="rgba(230,138,17,0.85)"><title>1 ft</title></rect><rect x="423.93623291013284" y="172" width="10.063767089867099" height="24" fill="rgba(229,126,19,0.85)"><title>1 ft</title></rect><rect x="423.93623291013284" y="196" width="10.063767089867099" height="24" fill="rgba(229,126,19,0.85)"><title>1 ft</title></rect><rect x="413.87246582026575" y="172" width="10.063767089867099" height="24" fill="rgba(228,114,22,0.85)"><title>1 ft</title></rect><rect x="413.87246582026575" y="196" width="10.063767089867099" height="24" fill="rgba(228,114,22,0.85)"><title>1 ft</title></rect><rect x="403.80869873039865" y="172" width="10.063767089867099" height="24" fill="rgba(226,103,24,0.85)"><title>1.1 ft</title></rect><rect x="403.80869873039865" y="196" width="10.063767089867099" height="24" fill="rgba(226,103,24,0.85)"><title>1.1 ft</title></rect><rect x="393.74493164053155" y="172" width="10.063767089867099" height="24" fill="rgba(225,91,27,0.85)"><title>1.1 ft</title></rect><rect x="393.74493164053155" y="196" width="10.063767089867099" height="24" fill="rgba(225,91,27,0.85)"><title>1.1 ft</title></rect><rect x="383.6811645506644" y="172" width="10.063767089867156" height="24" fill="rgba(224,79,29,0.85)"><title>1.1 ft</title></rect><rect x="383.6811645506644" y="196" width="10.063767089867156" height="24" fill="rgba(224,79,29,0.85)"><title>1.1 ft</title></rect><rect x="373.6173974607973" y="172" width="10.063767089867099" height="24" fill="rgba(223,67,32,0.85)"><title>1.1 ft</title></rect><rect x="373.6173974607973" y="196" width="10.063767089867099" height="24" fill="rgba(223,67,32,0.85)"><title>1.1 ft</title></rect><rect x="363.55363037093025" y="172" width="10.063767089867042" height="24" fill="rgba(222,56,34,0.85)"><title>1.2 ft</title></rect><rect x="363.55363037093025" y="196" width="10.063767089867042" height="24" fill="rgba(222,56,34,0.85)"><title>1.2 ft</title></rect><rect x="353.4898632810631" y="172" width="10.063767089867156" height="24" fill="rgba(221,44,37,0.85)"><title>1.2 ft</title></rect><rect x="353.4898632810631" y="196" width="10.063767089867156" height="24" fill="rgba(221,44,37,0.85)"><title>1.2 ft</title></rect><rect x="504.4463696290697" y="220" width="10.063767089867099" height="24" fill="rgba(176,184,33,0.85)"><title>0.8 ft</title></rect><rect x="504.4463696290697" y="244" width="10.063767089867099" height="24" fill="rgba(176,184,33,0.85)"><title>0.8 ft</title></rect><rect x="494.3826025392026" y="220" width="10.063767089867099" height="24" fill="rgba(192,183,26,0.85)"><title>0.8 ft</title></rect><rect x="494.3826025392026" y="244" width="10.063767089867099" height="24" fill="rgba(192,183,26,0.85)"><title>0.8 ft</title></rect><rect x="484.3188354493355" y="220" width="10.063767089867099" height="24" fill="rgba(209,181,19,0.85)"><title>0.9 ft</title></rect><rect x="484.3188354493355" y="244" width="10.063767089867099" height="24" fill="rgba(209,181,19,0.85)"><title>0.9 ft</title></rect><rect x="474.25506835946845" y="220" width="10.063767089867042" height="24" fill="rgba(226,180,12,0.85)"><title>0.9 ft</title></rect><rect x="474.25506835946845" y="244" width="10.063767089867042" height="24" fill="rgba(226,180,12,0.85)"><title>0.9 ft</title></rect><rect x="464.19130126960124" y="220" width="10.063767089867213" height="24" fill="rgba(233,173,9,0.85)"><title>0.9 ft</title></rect><rect x="464.19130126960124" y="244" width="10.063767089867213" height="24" fill="rgba(233,173,9,0.85)"><title>0.9 ft</title></rect><rect x="454.1275341797342" y="220" width="10.063767089867042" height="24" fill="rgba(232,161,12,0.85)"><title>0.9 ft</title></rect><rect x="454.1275341797342" y="244" width="10.063767089867042" height="24" fill="rgba(232,161,12,0.85)"><title>0.9 ft</title></rect><rect x="444.0637670898671" y="220" width="10.063767089867099" height="24" fill="rgba(231,150,14,0.85)"><title>1 ft</title></rect><rect x="444.0637670898671" y="244" width="10.063767089867099" height="24" fill="rgba(231,150,14,0.85)"><title>1 ft</title></rect><rect x="433.99999999999994" y="220" width="10.063767089867156" height="24" fill="rgba(230,138,17,0.85)"><title>1 ft</title></rect><rect x="433.99999999999994" y="244" width="10.063767089867156" height="24" fill="rgba(230,138,17,0.85)"><title>1 ft</title></rect><rect x="423.93623291013284" y="220" width="10.063767089867099" height="24" fill="rgba(229,126,19,0.85)"><title>1 ft</title></rect><rect x="423.93623291013284" y="244" width="10.063767089867099" height="24" fill="rgba(229,126,19,0.85)"><title>1 ft</title></rect><rect x="413.87246582026575" y="220" width="10.063767089867099" height="24" fill="rgba(228,114,22,0.85)"><title>1 ft</title></rect><rect x="413.87246582026575" y="244" width="10.063767089867099" height="24" fill="rgba(228,114,22,0.85)"><title>1 ft</title></rect><rect x="403.80869873039865" y="220" width="10.063767089867099" height="24" fill="rgba(226,103,24,0.85)"><title>1.1 ft</title></rect><rect x="403.80869873039865" y="244" width="10.063767089867099" height="24" fill="rgba(226,103,24,0.85)"><title>1.1 ft</title></rect><rect x="393.74493164053155" y="220" width="10.063767089867099" height="24" fill="rgba(225,91,27,0.85)"><title>1.1 ft</title></rect><rect x="393.74493164053155" y="244" width="10.063767089867099" height="24" fill="rgba(225,91,27,0.85)"><title>1.1 ft</title></rect><rect x="383.6811645506644" y="220" width="10.063767089867156" height="24" fill="rgba(224,79,29,0.85)"><title>1.1 ft</title></rect><rect x="383.6811645506644" y="244" width="10.063767089867156" height="24" fill="rgba(224,79,29,0.85)"><title>1.1 ft</title></rect><rect x="373.6173974607973" y="220" width="10.063767089867099" height="24" fill="rgba(223,67,32,0.85)"><title>1.1 ft</title></rect><rect x="373.6173974607973" y="244" width="10.063767089867099" height="24" fill="rgba(223,67,32,0.85)"><title>1.1 ft</title></rect><rect x="363.55363037093025" y="220" width="10.063767089867042" height="24" fill="rgba(222,56,34,0.85)"><title>1.2 ft</title></rect><rect x="363.55363037093025" y="244" width="10.063767089867042" height="24" fill="rgba(222,56,34,0.85)"><title>1.2 ft</title></rect><rect x="353.4898632810631" y="220" width="10.063767089867156" height="24" fill="rgba(221,44,37,0.85)"><title>1.2 ft</title></rect><rect x="353.4898632810631" y="244" width="10.063767089867156" height="24" fill="rgba(221,44,37,0.85)"><title>1.2 ft</title></rect><text x="56" y="55.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">0</text><text x="56" y="103.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">1</text><text x="56" y="151.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">2</text><text x="56" y="199.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">3</text><text x="56" y="247.5" font-size="10" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">4</text><text transform="rotate(-90)" x="-148" y="10" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">surfing.heatMap.transectAxisLabel</text><g><line x1="514.5101367189368" y1="268" x2="514.5101367189368" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="514.5101367189368" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">10</text></g><g><line x1="385.65634657150235" y1="268" x2="385.65634657150235" y2="272" stroke="var(--muted-foreground)" stroke-opacity="0.5"></line><text x="385.65634657150235" y="282" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">82</text></g><text x="434" y="294" font-size="9" fill="var(--muted-foreground)" text-anchor="middle" aria-hidden="true">surfing.beachProfile.distanceAxisLabel</text><text x="806" y="22" font-size="9" fill="var(--muted-foreground)" text-anchor="end" aria-hidden="true">surfing.shore</text><text x="62" y="22" font-size="9" fill="var(--muted-foreground)" text-anchor="start" aria-hidden="true">surfing.offshore</text><defs><linearGradient id="heatmap-legend-gradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgb(59,130,246)"></stop><stop offset="25%" stop-color="rgb(13,148,159)"></stop><stop offset="50%" stop-color="rgb(34,197,94)"></stop><stop offset="75%" stop-color="rgb(234,179,8)"></stop><stop offset="100%" stop-color="rgb(220,38,38)"></stop></linearGradient></defs><rect x="648" y="296" width="160" height="10" fill="url(#heatmap-legend-gradient)" rx="3" opacity="0.85"></rect><text x="648" y="318" font-size="9" fill="var(--muted-foreground)" text-anchor="start">0 ft</text><text x="808" y="318" font-size="9" fill="var(--muted-foreground)" text-anchor="end">1.2 ft</text></svg></div><table class="sr-only"><caption>surfing.heatMapAriaLabel</caption><thead><tr><th scope="col">surfing.heatMap.transectIndex</th><th scope="col">surfing.heatMap.openTransect</th><th scope="col">surfing.heatMap.breakHeight</th><th scope="col">surfing.heatMap.breakDistance</th><th scope="col">surfing.heatMap.breakerType</th></tr></thead><tbody><tr><th scope="row">0</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">1</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">2</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">3</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr><tr><th scope="row">4</th><td>yes</td><td>—</td><td>—</td><td>—</td></tr></tbody></table></div>';
 
-    it('KAT (a): fixture WITH imagery config -> ortho tiles render behind the heat map, colour cells at reduced opacity', () => {
-      mockUseImageryConfig.mockReturnValue({ data: NAIP_CONFIG, loading: false });
+    it('KAT (a) — light theme: fixture WITH imagery config -> ortho tiles render behind the heat map from light.tileUrl (the PRIMARY read, not the legacy top-level fallback — BASEMAP_CONFIG.tileUrl is deliberately a different value), colour cells at reduced opacity', () => {
+      mockUseTheme.mockReturnValue({ resolved: 'light' });
+      mockUseImageryConfig.mockReturnValue({ data: BASEMAP_CONFIG, loading: false });
       const { container } = render(
         <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS_WITH_ORIGINS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
       );
@@ -1021,7 +1128,7 @@ describe('HeatMapCard', () => {
       expect(images.length).toBeLessThanOrEqual(IMAGERY_MOSAIC_MAX_TILES_PER_SIDE ** 2);
       for (const img of images) {
         const href = img.getAttribute('href') ?? '';
-        const m = href.match(/^\/api\/v1\/imagery\/tiles\/(\d+)\/(\d+)\/(\d+)$/);
+        const m = href.match(/^https:\/\/a\.tile\.openstreetmap\.org\/(\d+)\/(\d+)\/(\d+)\.png$/);
         expect(m).not.toBeNull();
         const z = Number(m![1]);
         expect(z).toBeGreaterThanOrEqual(IMAGERY_ZOOM_MIN);
@@ -1046,11 +1153,13 @@ describe('HeatMapCard', () => {
 
       // H3 (2026-08-10) — attribution no longer renders below the SVG by
       // default; it moved into the info-icon modal (rendered inline, not a
-      // portal). Open it and check the verbatim text is still there (never
-      // through t()).
-      expect(container.textContent).not.toContain(NAIP_CONFIG.attribution);
+      // portal). Open it and check the verbatim LIGHT attribution is there
+      // (never through t()) — and NOT the legacy top-level attribution,
+      // proving `.light.attribution` is read first, same as tileUrl.
+      expect(container.textContent).not.toContain(BASEMAP_CONFIG.light!.attribution);
       fireEvent.click(within(container).getByLabelText('surfing.heatMap.infoButtonLabel'));
-      expect(container.textContent).toContain(NAIP_CONFIG.attribution);
+      expect(container.textContent).toContain(BASEMAP_CONFIG.light!.attribution);
+      expect(container.textContent).not.toContain(BASEMAP_CONFIG.attribution);
     });
 
     it('KAT (b): fixture WITHOUT imagery config -> byte-identical DOM to the pre-LM-2 render', () => {
@@ -1082,33 +1191,99 @@ describe('HeatMapCard', () => {
       expect(container.textContent).not.toContain(NAIP_CONFIG.attribution);
     });
 
-    it('KAT (c): ESRI provider active -> ESRI attribution text renders, tile hrefs use the ESRI XYZ template with tokens substituted (z/y/x order, not z/x/y)', () => {
-      mockUseImageryConfig.mockReturnValue({ data: ESRI_CONFIG, loading: false });
+    it('KAT (c) — dark theme: tile hrefs come from useRasterizedTiles (data URLs, keyed "z/x/y"), NOT any tileUrl template; dark.attribution renders, not light\'s', () => {
+      mockUseTheme.mockReturnValue({ resolved: 'dark' });
+      mockUseImageryConfig.mockReturnValue({ data: BASEMAP_CONFIG, loading: false });
+      // Every tile in this fixture's own mosaic resolved — the SAME tile set
+      // as IMAGERY_GEOMETRY_SNAPSHOT_43afaee.tiles (same fixture/coords).
+      const rasterized: Record<string, string> = {};
+      for (const t of IMAGERY_GEOMETRY_SNAPSHOT_43afaee.tiles) {
+        rasterized[`${t.z}/${t.x}/${t.y}`] = `data:image/png;base64,DARK_${t.z}_${t.x}_${t.y}`;
+      }
+      mockUseRasterizedTiles.mockReturnValue(rasterized);
+
       const { container } = render(
-        <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS_WITH_ORIGINS} loading={false} spotLat={51.5} spotLon={-0.12} />,
+        <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS_WITH_ORIGINS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
       );
-      // H3 (2026-08-10) — attribution renders inside the info-icon modal now, not below the SVG by default.
-      fireEvent.click(within(container).getByLabelText('surfing.heatMap.infoButtonLabel'));
-      expect(container.textContent).toContain(ESRI_CONFIG.attribution);
 
       const images = Array.from(container.querySelectorAll('svg image'));
-      expect(images.length).toBeGreaterThan(0);
+      expect(images.length).toBe(IMAGERY_GEOMETRY_SNAPSHOT_43afaee.tiles.length);
       for (const img of images) {
         const href = img.getAttribute('href') ?? '';
-        expect(href.startsWith(
-          'https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/',
-        )).toBe(true);
-        expect(href).not.toContain('{z}');
-        expect(href).not.toContain('{x}');
-        expect(href).not.toContain('{y}');
-        // Token-based substitution, not position-based — ESRI's own path
-        // order is {z}/{y}/{x}, distinguishing it from NAIP's {z}/{x}/{y}.
-        const tail = href.replace(
-          'https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/',
-          '',
-        );
-        expect(tail).toMatch(/^\d+\/\d+\/\d+$/);
+        expect(href).toMatch(/^data:image\/png;base64,DARK_19_\d+_\d+$/);
+        // Never a tileUrl template — no light/legacy tile source leaks
+        // through in the dark theme.
+        expect(href).not.toContain('openstreetmap.org');
+        expect(href).not.toContain('/api/v1/imagery/tiles');
       }
+
+      fireEvent.click(within(container).getByLabelText('surfing.heatMap.infoButtonLabel'));
+      // Full dark attribution renders (the real production value DOES share
+      // a common "© OpenStreetMap contributors" prefix with light's — the
+      // distinguishing check is the dark-only " © Protomaps" suffix, and
+      // that the LEGACY top-level attribution (a wholly different string,
+      // the retained NAIP-era fallback text) is absent).
+      expect(container.textContent).toContain(BASEMAP_CONFIG.dark!.attribution);
+      expect(container.textContent).toContain('© Protomaps');
+      expect(container.textContent).not.toContain(BASEMAP_CONFIG.attribution);
+    });
+
+    it('dark theme: a tile with no entry yet in the rasterized record is OMITTED from the DOM (no placeholder <image>, no fallback tile source — per the design, "tile omitted until resolved")', () => {
+      mockUseTheme.mockReturnValue({ resolved: 'dark' });
+      mockUseImageryConfig.mockReturnValue({ data: BASEMAP_CONFIG, loading: false });
+      const allTiles = IMAGERY_GEOMETRY_SNAPSHOT_43afaee.tiles;
+      // Resolve every tile EXCEPT the first — proves partial resolution
+      // renders only what's ready, never blocked on the full set nor
+      // falling back to a placeholder source for the missing one.
+      const rasterized: Record<string, string> = {};
+      for (const t of allTiles.slice(1)) {
+        rasterized[`${t.z}/${t.x}/${t.y}`] = `data:image/png;base64,DARK_${t.z}_${t.x}_${t.y}`;
+      }
+      mockUseRasterizedTiles.mockReturnValue(rasterized);
+
+      const { container } = render(
+        <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS_WITH_ORIGINS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
+      );
+
+      const images = Array.from(container.querySelectorAll('svg image'));
+      expect(images.length).toBe(allTiles.length - 1);
+      const unresolved = allTiles[0];
+      const unresolvedKey = `${unresolved.z}/${unresolved.x}/${unresolved.y}`;
+      for (const img of images) {
+        const href = img.getAttribute('href') ?? '';
+        expect(href).not.toBe(unresolvedKey);
+      }
+    });
+
+    it('geometry pin (KAT b lineage): imageryLayer tile placement + rotation are BYTE-IDENTICAL to the pre-M4 render at HEAD 43afaee (theme/rasterization change does not touch computeImageryTiles/snapImageryBBoxToTiles/rotation/pivot)', () => {
+      // Light theme — geometry does not depend on theme; asserting under
+      // light keeps this test independent from the dark-theme rasterizer
+      // mock (every tile always renders in light theme, so nothing here is
+      // gated behind a resolved/unresolved distinction).
+      mockUseTheme.mockReturnValue({ resolved: 'light' });
+      mockUseImageryConfig.mockReturnValue({ data: BASEMAP_CONFIG, loading: false });
+      const { container } = render(
+        <HeatMapCard {...baseProps} data={OK_RESPONSE_5_ROWS_WITH_ORIGINS} loading={false} spotLat={SPOT_LAT} spotLon={SPOT_LON} />,
+      );
+
+      const g = container.querySelector('svg g[transform^="rotate("]');
+      expect(g).not.toBeNull();
+      expect(g!.getAttribute('transform')).toBe(IMAGERY_GEOMETRY_SNAPSHOT_43afaee.transform);
+
+      const images = Array.from(container.querySelectorAll('svg image'));
+      const actualTiles = images.map((img) => {
+        const href = img.getAttribute('href') ?? '';
+        const m = href.match(/\/(\d+)\/(\d+)\/(\d+)\.png$/)!;
+        return {
+          z: Number(m[1]), x: Number(m[2]), y: Number(m[3]),
+          sx: img.getAttribute('x'), sy: img.getAttribute('y'),
+          sw: img.getAttribute('width'), sh: img.getAttribute('height'),
+        };
+      });
+      const sortKey = (t: { z: number; x: number; y: number }) => `${t.z}/${t.x}/${t.y}`;
+      const sortedActual = [...actualTiles].sort((a, b) => sortKey(a).localeCompare(sortKey(b)));
+      const sortedExpected = [...IMAGERY_GEOMETRY_SNAPSHOT_43afaee.tiles].sort((a, b) => sortKey(a).localeCompare(sortKey(b)));
+      expect(sortedActual).toEqual(sortedExpected);
     });
 
     it('KAT (d) a11y: decorative tile group is aria-hidden, attribution is visible accessible text (not sr-only), svg role/labelling unchanged', () => {
