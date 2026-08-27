@@ -144,31 +144,37 @@ describe('darkBasePaintRules() — sparse look + freeway/primary roads only', ()
     });
   });
 
-  describe('primary rule', () => {
-    function primaryRule(): PaintRule {
+  // Contract correction (coordinator, verified against the installed
+  // @protomaps/basemaps schema, accepted): the second roads rule filters
+  // `kind === 'major_road'` at z >= 11 — `kind_detail === 'primary'` does
+  // not exist in the Protomaps roads schema (`kind` values on the `roads`
+  // layer are `highway`, `major_road`, `medium_road`, `minor_road`, `path`,
+  // `ferry` per docs/reference/pmtiles-protomaps-reference.md:118).
+  describe('major_road rule', () => {
+    function majorRoadRule(): PaintRule {
       const roadsRules = rules.filter((r) => r.dataLayer === 'roads');
       const found = roadsRules.find(
-        (r) => r.filter?.(11, feature({ kind_detail: 'primary' })) === true,
+        (r) => r.filter?.(11, feature({ kind: 'major_road' })) === true,
       );
-      if (!found) throw new Error('no roads rule accepted {kind_detail: "primary"} at z11');
+      if (!found) throw new Error('no roads rule accepted {kind: "major_road"} at z11');
       return found;
     }
 
-    it('accepts {kind_detail: "primary"} only from z >= 11', () => {
-      const rule = primaryRule();
-      expect(rule.filter?.(11, feature({ kind_detail: 'primary' }))).toBe(true);
-      expect(rule.filter?.(15, feature({ kind_detail: 'primary' }))).toBe(true);
-      expect(rule.filter?.(10, feature({ kind_detail: 'primary' }))).toBe(false);
-      expect(rule.filter?.(7, feature({ kind_detail: 'primary' }))).toBe(false);
+    it('accepts {kind: "major_road"} only from z >= 11', () => {
+      const rule = majorRoadRule();
+      expect(rule.filter?.(11, feature({ kind: 'major_road' }))).toBe(true);
+      expect(rule.filter?.(15, feature({ kind: 'major_road' }))).toBe(true);
+      expect(rule.filter?.(10, feature({ kind: 'major_road' }))).toBe(false);
+      expect(rule.filter?.(7, feature({ kind: 'major_road' }))).toBe(false);
     });
 
-    it('rejects a non-primary kind_detail at z >= 11', () => {
-      const rule = primaryRule();
-      expect(rule.filter?.(11, feature({ kind_detail: 'secondary' }))).toBe(false);
+    it('rejects {kind: "minor_road"} at z >= 11', () => {
+      const rule = majorRoadRule();
+      expect(rule.filter?.(11, feature({ kind: 'minor_road' }))).toBe(false);
     });
 
     it('width matches exp(1.6, [[11,0.8],[15,2.5]]) at z11/z15', () => {
-      const rule = primaryRule();
+      const rule = majorRoadRule();
       const reference = exp(1.6, [[11, 0.8], [15, 2.5]]);
       expect(widthAt(rule, 11)).toBeCloseTo(reference(11), 6);
       expect(widthAt(rule, 15)).toBeCloseTo(reference(15), 6);
