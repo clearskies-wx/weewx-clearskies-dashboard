@@ -5,13 +5,11 @@ import 'leaflet-responsive-popup';
 import 'leaflet-responsive-popup/leaflet.responsive.popup.css';
 import { MapContainer, TileLayer, CircleMarker, Tooltip, GeoJSON, ScaleControl, useMap } from 'react-leaflet';
 import { Play, Pause, CaretLeft, CaretRight } from '@phosphor-icons/react';
-import { leafletLayer, LineSymbolizer } from 'protomaps-leaflet';
-import type { PaintRule } from 'protomaps-leaflet';
-import { PMTiles } from 'pmtiles';
 import { useCapabilities, useRadarFrames } from '../../hooks/useWeatherData';
 import type { CapabilityDeclaration, RadarFrame } from '../../api/types';
 import { useTheme } from '../../lib/theme-provider';
-import { OSM_ATTRIBUTION, CARTO_OSM_ATTRIBUTION, OSM_ODBL_ATTRIBUTION } from '../../lib/map-attribution';
+import { OSM_ATTRIBUTION } from '../../lib/map-attribution';
+import { ProtomapsLayer } from '../../lib/basemap';
 import type { FeatureCollection, Feature, Geometry } from 'geojson';
 import type { TFunction } from 'i18next';
 
@@ -384,9 +382,14 @@ function FrameProgressBar({
   );
 }
 
-// Basemap tile configurations for light and dark themes.
-// Light: standard OpenStreetMap tiles.
-// Dark: CartoDB dark_all — free, no API key required.
+// Basemap tile configuration — light theme only (OSM raster, unchanged by
+// M3 RADAR-REBASE). Dark theme (non-satellite) renders the Clear Skies
+// product basemap instead (ProtomapsLayer tier="radar" mode="dark-base",
+// src/lib/basemap.ts) — the radar tier only (Q8/directive 14), sized to the
+// radar provider's own coverage box, never the world/local tiers. Satellite
+// view's labels+outlines overlay is ProtomapsLayer tier="radar"
+// mode="satellite-outlines" (formerly the CARTO voyager_only_labels overlay
+// + the ADR-078 GeoFeaturesLayer, now one layer).
 // The key prop on TileLayer forces Leaflet to re-mount when the URL changes
 // because Leaflet's TileLayer does not support dynamic URL updates in-place.
 const TILE_CONFIG = {
@@ -394,14 +397,7 @@ const TILE_CONFIG = {
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: OSM_ATTRIBUTION,
   },
-  dark: {
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    attribution: CARTO_OSM_ATTRIBUTION,
-  },
 } as const;
-
-const SATELLITE_OVERLAY_ATTRIBUTION = CARTO_OSM_ATTRIBUTION;
-const SATELLITE_LABELS_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png';
 
 /**
  * Inner component that applies maxBounds dynamically to the Leaflet map.
@@ -467,108 +463,6 @@ function BoundsMask({ bounds }: { bounds: [[number, number], [number, number]] }
   return null;
 }
 
-
-/**
- * GeoFeaturesLayer — adds a protomaps-leaflet Canvas vector tile layer for geographic
- * context (boundaries, roads, water) when satellite view is active.
- *
- * Self-contained: checks /api/v1/geographic-features/status on mount. If available is
- * false (PMTiles file not yet downloaded), does nothing — no error, no console warning.
- * Renders null (no DOM output); the layer is added imperatively to the Leaflet map.
- * Sits below alert polygons (zIndex 350, alerts use Leaflet default SVG overlay above).
- */
-const GEO_FEATURES_PAINT_RULES: PaintRule[] = [
-  {
-    dataLayer: 'earth',
-    symbolizer: new LineSymbolizer({
-      color: '#ffffff',
-      width: 1.5,
-      opacity: 0.7,
-    }),
-  },
-  {
-    dataLayer: 'boundaries',
-    symbolizer: new LineSymbolizer({
-      color: '#ffffff',
-      width: 1.5,
-      opacity: 0.7,
-    }),
-  },
-  {
-    dataLayer: 'roads',
-    symbolizer: new LineSymbolizer({
-      color: '#999999',
-      width: 1,
-      opacity: 0.5,
-    }),
-    filter: (_zoom: number, feature: { props: Record<string, unknown> }) => {
-      const kind = feature.props['kind'];
-      return kind === 'highway' || kind === 'major_road';
-    },
-  },
-  {
-    dataLayer: 'water',
-    symbolizer: new LineSymbolizer({
-      color: '#4a90d9',
-      width: 1,
-      opacity: 0.6,
-    }),
-    filter: (_zoom: number, feature: { props: Record<string, unknown> }) => {
-      return feature.props['kind'] !== 'ocean';
-    },
-  },
-];
-
-function GeoFeaturesLayer() {
-  const map = useMap();
-
-  useEffect(() => {
-    let cancelled = false;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let layer: any = null;
-
-    async function init() {
-      try {
-        const resp = await fetch('/api/v1/geographic-features/status');
-        if (!resp.ok || cancelled) return;
-        const status = await resp.json() as { available?: boolean };
-        if (!status.available || cancelled) return;
-
-        // Create a custom pane above satellite/radar tiles (z200) and labels (z300)
-        // but below alert polygons (overlay pane, z400).
-        if (!map.getPane('geoFeaturesPane')) {
-          const pane = map.createPane('geoFeaturesPane');
-          pane.style.zIndex = '350';
-        }
-
-        // PMTiles v4 from our dependency vs v3 bundled in protomaps-leaflet —
-        // runtime-compatible but types diverge. Cast to satisfy both.
-        const pmtiles = new PMTiles('/api/v1/geographic-features/tiles');
-        layer = leafletLayer({
-          url: pmtiles as any,  // eslint-disable-line @typescript-eslint/no-explicit-any
-          paintRules: GEO_FEATURES_PAINT_RULES,
-          labelRules: [],
-          attribution: OSM_ODBL_ATTRIBUTION,
-          pane: 'geoFeaturesPane',
-        });
-        layer.addTo(map);
-      } catch {
-        // Geographic features are non-critical — never surface errors to users.
-      }
-    }
-
-    void init();
-
-    return () => {
-      cancelled = true;
-      if (layer !== null) {
-        map.removeLayer(layer);
-      }
-    };
-  }, [map]);
-
-  return null;
-}
 
 /**
  * Builds the alert popup HTML for `features[index]`.  When more than one
@@ -822,7 +716,7 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
   const arrowStyle: 'light' | 'dark' | null = !showWind ? null
     : (satelliteActive || resolvedTheme === 'dark') ? 'light' : 'dark';
 
-  const baseTile = TILE_CONFIG[resolvedTheme];
+  const baseTile = TILE_CONFIG.light;
 
   const tileHost = radarFrameList?.tileHost ?? null;
 
@@ -1281,12 +1175,22 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
         >
           <MapBoundsEnforcer bounds={maxBounds} />
           {maxBounds && <BoundsMask bounds={maxBounds} />}
+          {/* Base ground (M3 RADAR-REBASE) — light theme keeps OSM raster;
+              dark theme is the Clear Skies product basemap, radar tier only
+              (Q8/directive 14 — never world/local, never a box derived from
+              the provider). Neither renders in satellite view: trap #6, the
+              dark base stays OFF under opaque satellite frames — only the
+              outlines+labels layer below draws above them. */}
           {!satelliteActive && (
-            <TileLayer
-              key={baseTile.url}
-              url={baseTile.url}
-              attribution={baseTile.attribution}
-            />
+            resolvedTheme === 'light' ? (
+              <TileLayer
+                key={baseTile.url}
+                url={baseTile.url}
+                attribution={baseTile.attribution}
+              />
+            ) : (
+              <ProtomapsLayer tier="radar" mode="dark-base" />
+            )
           )}
           <ScaleControl position="topleft" imperial metric={false} />
           {/* Station location marker */}
@@ -1342,19 +1246,14 @@ export function RadarMap({ center, zoom = 7, stationTz, expanded = false, maxBou
               />
             );
           })}
-          {/* Labels overlay — city/state names on top of everything so they're
-              always readable. Voyager labels have bolder text than Positron. */}
+          {/* Satellite outlines + labels (M3 RADAR-REBASE) — one layer
+              replacing BOTH the former CARTO voyager_only_labels TileLayer
+              AND the ADR-078 GeoFeaturesLayer: boundaries/roads/water
+              outlines plus place/water name labels, drawn above the
+              satellite frames so they stay readable. */}
           {satelliteActive && (
-            <TileLayer
-              url={SATELLITE_LABELS_URL}
-              attribution={SATELLITE_OVERLAY_ATTRIBUTION}
-              zIndex={300}
-            />
+            <ProtomapsLayer tier="radar" mode="satellite-outlines" zIndex={300} />
           )}
-          {/* Geographic features vector tile overlay (ADR-078) — boundaries, roads, water.
-              Rendered below alert polygons and wind arrows. Only active in satellite view
-              (basemap already includes roads/boundaries; no overlay needed). */}
-          {satelliteActive && <GeoFeaturesLayer />}
           {/* Wind arrows (T4.7) — rendered via ?arrows=light|dark query param on
               radar tiles (see buildTileUrl). No separate layer needed. */}
 
