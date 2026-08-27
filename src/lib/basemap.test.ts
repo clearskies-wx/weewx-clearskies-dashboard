@@ -12,8 +12,10 @@
 // seismic/radar maps): freeway now applies from z6 (was z7), width
 // exp(1.6, [[6,1.4],[8,2.0],[10,2.6],[13,3.4],[15,4.5]]), colour #a0a0a0;
 // major_road unchanged minzoom (z>=11), width exp(1.6,[[11,1.0],[15,2.6]]),
-// colour #6f6f6f. Every width/colour/minzoom assertion below reflects the
-// restyle; "exactly two roads rules" and "major_road rejected below z11"
+// colour #828282 (revised from an initial #6f6f6f ruling, which failed 3:1
+// contrast over DARK.water). Every width/colour/minzoom assertion below
+// reflects the restyle; "exactly two roads rules" and "major_road rejected
+// below z11"
 // are the pins the coordinator asked to keep unchanged through the restyle.
 //
 // Width/zoom-stop assertions use protomaps-leaflet's OWN `exp()` interpolator
@@ -215,10 +217,11 @@ describe('darkBasePaintRules() — sparse look + freeway/primary roads only', ()
     });
 
     // Ruled restyle (coordinator, lead render review 2026-08-27): new width
-    // stops, colour #6f6f6f. minzoom (z>=11) is unchanged — pinned above.
-    it('colour is #6f6f6f', () => {
+    // stops, colour #828282 (not #6f6f6f — that failed 3:1 contrast over
+    // DARK.water). minzoom (z>=11) is unchanged — pinned above.
+    it('colour is #828282', () => {
       const rule = majorRoadRule();
-      expect(colorOf(rule)).toBe('#6f6f6f');
+      expect(colorOf(rule)).toBe('#828282');
     });
 
     it('width matches exp(1.6, [[11,1.0],[15,2.6]]) at z11/z15', () => {
