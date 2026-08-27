@@ -3,9 +3,18 @@
 // Guards src/lib/basemap.ts against the plan's "Lead mechanics — dashboard
 // side" design block: BASEMAP_TIERS URLs/zoom ranges, darkBasePaintRules()
 // (buildings/landuse/pois dropped, roads replaced by exactly two rules —
-// freeway + primary), labelRulesFor(theme) (places/water only, no road
+// freeway + major_road), labelRulesFor(theme) (places/water only, no road
 // shields), and SATELLITE_OUTLINE_PAINT_RULES (the four ADR-078 rules moved
 // verbatim from radar-map.tsx:480-520).
+//
+// Freeway/major_road minzoom+width+colour were RESTYLED (coordinator, lead
+// render review 2026-08-27 — freeways were unreadable on the dark
+// seismic/radar maps): freeway now applies from z6 (was z7), width
+// exp(1.6, [[6,1.4],[8,2.0],[10,2.6],[13,3.4],[15,4.5]]), colour #a0a0a0;
+// major_road unchanged minzoom (z>=11), width exp(1.6,[[11,1.0],[15,2.6]]),
+// colour #6f6f6f. Every width/colour/minzoom assertion below reflects the
+// restyle; "exactly two roads rules" and "major_road rejected below z11"
+// are the pins the coordinator asked to keep unchanged through the restyle.
 //
 // Width/zoom-stop assertions use protomaps-leaflet's OWN `exp()` interpolator
 // as the independent reference, called here with the plan's literal stop
@@ -143,23 +152,34 @@ describe('darkBasePaintRules() — sparse look + freeway/primary roads only', ()
       return found;
     }
 
-    it('accepts {kind: "highway"} at z7 and z15', () => {
+    // Ruled restyle (coordinator, lead render review 2026-08-27 — freeways
+    // were unreadable on the dark seismic/radar maps): freeway now applies
+    // from z6 (was z7), new width stops, colour #a0a0a0.
+    it('accepts {kind: "highway"} only from z >= 6', () => {
       const rule = freewayRule();
-      expect(ruleApplies(rule, 7, { kind: 'highway' })).toBe(true);
+      expect(ruleApplies(rule, 6, { kind: 'highway' })).toBe(true);
       expect(ruleApplies(rule, 15, { kind: 'highway' })).toBe(true);
+      expect(ruleApplies(rule, 5, { kind: 'highway' })).toBe(false);
     });
 
     it('rejects {kind: "minor_road"}', () => {
       const rule = freewayRule();
-      expect(ruleApplies(rule, 7, { kind: 'minor_road' })).toBe(false);
+      expect(ruleApplies(rule, 6, { kind: 'minor_road' })).toBe(false);
       expect(ruleApplies(rule, 15, { kind: 'minor_road' })).toBe(false);
     });
 
-    it('width matches exp(1.6, [[7,0.6],[10,1.2],[13,2.5],[15,4]]) at z7/z11/z15', () => {
+    it('colour is #a0a0a0', () => {
       const rule = freewayRule();
-      const reference = exp(1.6, [[7, 0.6], [10, 1.2], [13, 2.5], [15, 4]]);
-      expect(widthAt(rule, 7)).toBeCloseTo(reference(7), 6);
-      expect(widthAt(rule, 11)).toBeCloseTo(reference(11), 6);
+      expect(colorOf(rule)).toBe('#a0a0a0');
+    });
+
+    it('width matches exp(1.6, [[6,1.4],[8,2.0],[10,2.6],[13,3.4],[15,4.5]]) at z6/z8/z10/z13/z15', () => {
+      const rule = freewayRule();
+      const reference = exp(1.6, [[6, 1.4], [8, 2.0], [10, 2.6], [13, 3.4], [15, 4.5]]);
+      expect(widthAt(rule, 6)).toBeCloseTo(reference(6), 6);
+      expect(widthAt(rule, 8)).toBeCloseTo(reference(8), 6);
+      expect(widthAt(rule, 10)).toBeCloseTo(reference(10), 6);
+      expect(widthAt(rule, 13)).toBeCloseTo(reference(13), 6);
       expect(widthAt(rule, 15)).toBeCloseTo(reference(15), 6);
     });
   });
@@ -194,9 +214,16 @@ describe('darkBasePaintRules() — sparse look + freeway/primary roads only', ()
       expect(ruleApplies(rule, 11, { kind: 'minor_road' })).toBe(false);
     });
 
-    it('width matches exp(1.6, [[11,0.8],[15,2.5]]) at z11/z15', () => {
+    // Ruled restyle (coordinator, lead render review 2026-08-27): new width
+    // stops, colour #6f6f6f. minzoom (z>=11) is unchanged — pinned above.
+    it('colour is #6f6f6f', () => {
       const rule = majorRoadRule();
-      const reference = exp(1.6, [[11, 0.8], [15, 2.5]]);
+      expect(colorOf(rule)).toBe('#6f6f6f');
+    });
+
+    it('width matches exp(1.6, [[11,1.0],[15,2.6]]) at z11/z15', () => {
+      const rule = majorRoadRule();
+      const reference = exp(1.6, [[11, 1.0], [15, 2.6]]);
       expect(widthAt(rule, 11)).toBeCloseTo(reference(11), 6);
       expect(widthAt(rule, 15)).toBeCloseTo(reference(15), 6);
     });
