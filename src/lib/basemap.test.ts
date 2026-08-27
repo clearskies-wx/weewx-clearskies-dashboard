@@ -49,7 +49,7 @@
 //   Test Files  1 failed (1)
 //        Tests  no tests
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { exp } from 'protomaps-leaflet';
 import type { PaintRule, LabelRule } from 'protomaps-leaflet';
 import {
@@ -58,6 +58,133 @@ import {
   labelRulesFor,
   SATELLITE_OUTLINE_PAINT_RULES,
 } from './basemap';
+
+// ---------------------------------------------------------------------------
+// M4-DASH (SURF-MAP-BASEMAP, PA9) additions below — `rasterizeBasemapTile`
+// memo hit/miss with a mocked View/paint. Real `paintRules`/`labelRules`/
+// `LineSymbolizer`/`exp` stay live (`importOriginal` spread) so the
+// PRE-EXISTING tests above are unaffected; only `View`/`TileCache`/
+// `PmtilesSource`/`paint` are stubbed, per the plan's "Lead mechanics —
+// dashboard side" call sequence (mirrors protomaps-leaflet's own
+// `frontends/leaflet.ts` `renderTile`, verified against the installed
+// package source, node_modules/protomaps-leaflet/src/frontends/leaflet.ts:
+// 120-227, src/view.ts:205, src/tilecache.ts:133-169, src/painter.ts:19-29).
+//
+// jsdom (this project's `vitest.config.ts` `environment: 'jsdom'`) has no
+// real <canvas> 2D context (`canvas` npm package is not installed —
+// verified: `ls node_modules/canvas` -> not found) — `getContext('2d')`
+// returns null and would throw inside rasterizeBasemapTile before ever
+// reaching `paint()`. `HTMLCanvasElement.prototype.getContext`/`toDataURL`
+// are stubbed below, scoped to this describe block only, so the OTHER tests
+// in this file (none of which touch canvas) are unaffected.
+//
+// Each test dynamically re-imports './basemap' after `vi.resetModules()` so
+// the module-level lazy View singleton and the bounded rasterization memo
+// (both by design persistent across calls WITHIN one module load, per the
+// plan's "one module-level View per tier URL (lazy)... Bounded in-memory
+// memo" text) do not leak state between tests — without this, a later
+// test's assertion about a FRESH View construction or a memo MISS would
+// silently pass or fail depending on unrelated test execution order.
+//
+// Pre-change failure transcript (run at HEAD 43afaee, `rasterizeBasemapTile`
+// did not exist yet — this file's PRE-EXISTING 19 tests still pass,
+// unaffected):
+//
+//   $ npx vitest run src/lib/basemap.test.ts
+//   FAIL  rasterizeBasemapTile(z,x,y,size) — memo hit/miss (mocked View/paint)
+//     > constructs exactly ONE View for the local tier...
+//     > memo HIT: the SAME (z,x,y,size) resolves the view only once...
+//     > memo MISS: a different (z,x,y) tile triggers a fresh getDisplayTile call
+//     > memo MISS: a different size for the SAME (z,x,y)...
+//     > a rejected getDisplayTile rejects rasterizeBasemapTile...
+//     > resolves via View.getDisplayTile -> paint() -> canvas.toDataURL()...
+//   TypeError: rasterizeBasemapTile is not a function
+//   Test Files  1 failed (1)
+//        Tests  6 failed | 19 passed (25)
+// ---------------------------------------------------------------------------
+
+const mockGetDisplayTile = vi.fn();
+const mockViewCtor = vi.fn();
+const mockPaint = vi.fn();
+
+vi.mock('protomaps-leaflet', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('protomaps-leaflet')>();
+  return {
+    ...actual,
+    View: vi.fn().mockImplementation((...args: unknown[]) => {
+      mockViewCtor(...args);
+      return { getDisplayTile: mockGetDisplayTile };
+    }),
+    TileCache: vi.fn(),
+    PmtilesSource: vi.fn(),
+    paint: (...args: unknown[]) => mockPaint(...args),
+  };
+});
+
+describe('rasterizeBasemapTile(z, x, y, size) — memo hit/miss (mocked View/paint)', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    mockGetDisplayTile.mockReset();
+    mockViewCtor.mockReset();
+    mockPaint.mockReset();
+    mockGetDisplayTile.mockResolvedValue({
+      data: new Map(), z: 15, dataTile: { z: 15, x: 0, y: 0 }, scale: 1, dim: 256, origin: { x: 0, y: 0 },
+    });
+    mockPaint.mockReturnValue(0);
+    // Minimal 2D-context stand-in — only the two methods
+    // rasterizeBasemapTile actually calls on it directly (`setTransform`,
+    // `clearRect`); the drawing itself happens inside the mocked `paint()`
+    // above, which never touches this object's real behavior.
+    HTMLCanvasElement.prototype.getContext = vi.fn(() => ({
+      setTransform: vi.fn(),
+      clearRect: vi.fn(),
+    })) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.toDataURL = vi.fn(() => 'data:image/png;base64,MOCK');
+  });
+
+  it('constructs exactly ONE View for the local tier, lazily, reused across distinct tile calls', async () => {
+    const { rasterizeBasemapTile } = await import('./basemap');
+    await rasterizeBasemapTile(15, 1, 1, 256);
+    await rasterizeBasemapTile(14, 2, 2, 256);
+    expect(mockViewCtor).toHaveBeenCalledTimes(1);
+  });
+
+  it('memo HIT: the SAME (z,x,y,size) resolves the view only once and returns the same data URL', async () => {
+    const { rasterizeBasemapTile } = await import('./basemap');
+    const first = await rasterizeBasemapTile(15, 100, 200, 256);
+    const second = await rasterizeBasemapTile(15, 100, 200, 256);
+    expect(first).toBe(second);
+    expect(mockGetDisplayTile).toHaveBeenCalledTimes(1);
+  });
+
+  it('memo MISS: a different (z,x,y) tile triggers a fresh getDisplayTile call', async () => {
+    const { rasterizeBasemapTile } = await import('./basemap');
+    await rasterizeBasemapTile(15, 100, 200, 256);
+    await rasterizeBasemapTile(15, 100, 201, 256);
+    expect(mockGetDisplayTile).toHaveBeenCalledTimes(2);
+  });
+
+  it('memo MISS: a different size for the SAME (z,x,y) triggers a fresh getDisplayTile call (size is part of the cache key)', async () => {
+    const { rasterizeBasemapTile } = await import('./basemap');
+    await rasterizeBasemapTile(15, 5, 5, 256);
+    await rasterizeBasemapTile(15, 5, 5, 512);
+    expect(mockGetDisplayTile).toHaveBeenCalledTimes(2);
+  });
+
+  it('a rejected getDisplayTile rejects rasterizeBasemapTile — no fallback to a remote provider (directive 15)', async () => {
+    const { rasterizeBasemapTile } = await import('./basemap');
+    mockGetDisplayTile.mockRejectedValueOnce(new Error('pmtiles fetch failed'));
+    await expect(rasterizeBasemapTile(15, 999, 999, 256)).rejects.toThrow('pmtiles fetch failed');
+  });
+
+  it('resolves via View.getDisplayTile -> paint() -> canvas.toDataURL(), in that order, returning the canvas data URL', async () => {
+    const { rasterizeBasemapTile } = await import('./basemap');
+    const result = await rasterizeBasemapTile(15, 7, 7, 256);
+    expect(mockGetDisplayTile).toHaveBeenCalledWith({ z: 15, x: 7, y: 7 });
+    expect(mockPaint).toHaveBeenCalledTimes(1);
+    expect(result).toBe('data:image/png;base64,MOCK');
+  });
+});
 
 // ---------------------------------------------------------------------------
 // Minimal feature stand-ins. PaintRule.filter signature is
