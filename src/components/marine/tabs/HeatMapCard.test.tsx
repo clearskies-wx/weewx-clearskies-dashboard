@@ -1033,7 +1033,49 @@ describe('HeatMapCard', () => {
   });
 
   // ── LM-2 (2026-08-03) — orthophoto background imagery. Plan §LM-2 KATs
-  //    (a)-(d) plus plan item (e) null-safety, verbatim from the brief. ──
+  //    (a)-(d) plus plan item (e) null-safety, verbatim from the brief.
+  //
+  //    M4-DASH (SURF-MAP-BASEMAP, PA9, 2026-08-27) pre-change evidence for
+  //    the three NEW tests below (KAT (c) dark-theme, the dark
+  //    unresolved-tile-omitted test, and the geometry pin) — the dev's edit
+  //    to HeatMapCard.tsx landed in the same working tree before this test
+  //    file's SECOND verification pass, so a live "run these 3 tests
+  //    against 43afaee" transcript could not be captured without a
+  //    forbidden checkout/stash of another agent's in-progress work. Per
+  //    "Pre-change evidence comes from git show <base>:<file> into scratch"
+  //    (mandatory-blocks git-safety rule), the exact pre-change source was
+  //    extracted instead: `git show 43afaee:src/components/marine/tabs/
+  //    HeatMapCard.tsx` (scratch/m4-dash-test-author/HeatMapCard-43afaee.tsx)
+  //    shows, verbatim:
+  //      line 1898: href={substituteTileUrl(imageryConfig!.tileUrl, tile.z, tile.x, tile.y)}
+  //      line 2139: attribution={hasImageryBackground ? imageryConfig!.attribution : null}
+  //    — no `useTheme`, no `resolvedTheme`, no `useRasterizedTiles`
+  //    anywhere in that file (grep confirms zero hits). Against that exact
+  //    code, with the BASEMAP_CONFIG fixture below (legacy tileUrl
+  //    '/api/v1/imagery/tiles/{z}/{x}/{y}', no '.png'):
+  //      - KAT (c) [dark theme, expects `data:image/png;base64,DARK_...`
+  //        hrefs]: every href would instead be
+  //        '/api/v1/imagery/tiles/19/<x>/<y>' -> the
+  //        `/^data:image\/png;base64,DARK_19_\d+_\d+$/` regex fails to
+  //        match on every tile -> FAILS.
+  //      - the unresolved-tile-omitted test: pre-change renders ALL 30
+  //        tiles unconditionally (no resolved-record concept exists) ->
+  //        `images.length` is 30, not 29 -> FAILS.
+  //      - the geometry pin: pre-change hrefs have no '.png' suffix -> the
+  //        `/\/(\d+)\/(\d+)\/(\d+)\.png$/` match against a
+  //        '/api/v1/imagery/tiles/19/x/y' href returns null -> the `!`
+  //        non-null assertion on the match throws -> FAILS (throws before
+  //        any assertion runs).
+  //    KAT (a)'s BASEMAP_CONFIG-driven light-theme rewrite is ALSO a real
+  //    guard by the same evidence: pre-change line 2139 reads
+  //    `imageryConfig!.attribution` unconditionally (no `.light`/`.dark`
+  //    cascade existed at all) -> the modal would show the LEGACY
+  //    (NAIP-era) attribution string, not `BASEMAP_CONFIG.light.attribution`
+  //    -> KAT (a)'s post-open `toContain(BASEMAP_CONFIG.light!.attribution)`
+  //    assertion would FAIL.
+  //    basemap.test.ts and useRasterizedTiles.test.ts (this round's other
+  //    two files) DO have live pre-change run transcripts, captured before
+  //    the dev's edit landed — see those files' own module comments. ──
   describe('LM-2 — orthophoto background imagery', () => {
     // Mirrors HeatMapCard.tsx's IMAGERY_ZOOM_MIN/MAX/MOSAIC_MAX_TILES_PER_SIDE
     // and HEATMAP_CELL_OPACITY_ON_ORTHO/DEFAULT — not exported, restated here
