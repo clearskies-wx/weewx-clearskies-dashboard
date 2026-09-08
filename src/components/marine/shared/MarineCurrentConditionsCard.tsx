@@ -49,7 +49,7 @@ export function MarineCurrentConditionsCard({ observation, locale, stationTz, un
       <MarineStatTile icon={<Wind />} label={t('boating.gust')} value={display(observation?.windGust, 'wind', locale)} unit={observation?.windGust == null ? undefined : units?.windSpeed} />
       <MarineStatTile label={t('boating.direction')} value={windCardinal ? tCommon(`directions.${windCardinal}`) : '—'} />
       <MarineStatTile icon={<Gauge />} label={t('boating.pressure')} value={display(observation?.pressure, 'barometer', locale)} unit={observation?.pressure == null ? undefined : units?.pressure} />
-      <MarineStatTile icon={trendIcon} label={t('fishing.pressureTrend')} value={trend} />
+      <MarineStatTile icon={trendIcon} label={t('fishing.pressure')} value={trend} />
       <MarineStatTile icon={<Thermometer />} label={t('waterTemp')} value={display(observation?.waterTemp, 'temperature', locale)} unit={observation?.waterTemp == null ? undefined : units?.temperature} />
       <MarineStatTile icon={<Waves />} label={t('tide.predictedTide')} value={display(observation?.tideLevel, 'waterLevel', locale)} unit={observation?.tideLevel == null ? undefined : units?.height} />
     </dl>
