@@ -110,9 +110,9 @@ import type {
   SurfDetailData,
   BeachProfileData,
   HeatMapProfileData,
-  FishingDetailData,
   BeachSafetyDetailData,
 } from '../api/types';
+import type { components } from '../api/generated-types';
 
 // ---------------------------------------------------------------------------
 // Shared result shape
@@ -280,10 +280,12 @@ export function useAlerts(): HookResult<AlertRecord[]> {
 // useAlmanac — /almanac
 // ---------------------------------------------------------------------------
 
-export function useAlmanac(date?: string): HookResult<AlmanacSnapshot> {
+export interface AlmanacCoordinates { lat: number; lon: number; }
+
+export function useAlmanac(date?: string, coordinates?: AlmanacCoordinates): HookResult<AlmanacSnapshot> {
   const { data, loading, error, refetch } = useApiQuery<{ data: AlmanacSnapshot }>(
-    (signal) => getAlmanac(date, signal),
-    { skip: isMockMode(), deps: [date] },
+    (signal) => getAlmanac(date, coordinates, signal),
+    { skip: isMockMode(), deps: [date, coordinates?.lat, coordinates?.lon] },
   );
 
   if (isMockMode()) {
@@ -1068,11 +1070,11 @@ export function useEarthquakeFaults(): HookResult<FaultFeatureCollection> {
 // useAlmanacPositions — /almanac/positions (60-second polling)
 // ---------------------------------------------------------------------------
 
-export function useAlmanacPositions(): HookResult<PositionsSnapshot> {
+export function useAlmanacPositions(coordinates?: AlmanacCoordinates): HookResult<PositionsSnapshot> {
   // pollInterval replaces the previous manual setInterval/pollTick pattern (ADR-075).
   const { data, loading, error, refetch, freshness: apiFreshness } = useApiQuery<{ data: PositionsSnapshot }>(
-    (signal) => getAlmanacPositions(signal),
-    { skip: isMockMode(), pollInterval: 60 },
+    (signal) => getAlmanacPositions(coordinates, signal),
+    { skip: isMockMode(), pollInterval: 60, deps: [coordinates?.lat, coordinates?.lon] },
   );
 
   if (isMockMode()) {
@@ -1336,16 +1338,16 @@ export function useBeachProfileAll(locationId: string | null): HookResult<HeatMa
 export function useFishingDetail(
   locationId: string | null,
   selectedSpecies: string | null = null,
-): HookResult<FishingDetailData> {
+): HookResult<components['schemas']['FishingData']> {
   const skip = isMockMode() || locationId === null;
 
-  const { data, loading, error, refetch } = useApiQuery<{ data: FishingDetailData; units?: UnitsBlock }>(
+  const { data, loading, error, refetch } = useApiQuery<{ data: components['schemas']['FishingData']; units?: UnitsBlock }>(
     (signal) => getFishingDetail(locationId as string, selectedSpecies, signal),
     { skip, deps: [locationId, selectedSpecies], pollInterval: 120 },
   );
 
   if (isMockMode()) {
-    return mockResult<FishingDetailData | null>(null) as HookResult<FishingDetailData>;
+    return mockResult<components['schemas']['FishingData'] | null>(null) as HookResult<components['schemas']['FishingData']>;
   }
 
   return {

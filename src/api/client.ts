@@ -37,12 +37,12 @@ import type {
   MarineBundle,
   TideBundle,
   SurfDetailData,
-  FishingDetailData,
   BeachSafetyDetailData,
   BeachProfileData,
   HeatMapProfileData,
   SolunarTimes,
 } from './types';
+import type { components } from './generated-types';
 // ---------------------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------------------
@@ -208,11 +208,18 @@ export function getAlerts(signal?: AbortSignal): Promise<ApiResponse<AlertList>>
 
 export function getAlmanac(
   date?: string,
+  coordinatesOrSignal?: { lat: number; lon: number } | AbortSignal,
   signal?: AbortSignal,
 ): Promise<ApiResponse<AlmanacSnapshot>> {
+  const coordinates = coordinatesOrSignal instanceof AbortSignal ? undefined : coordinatesOrSignal;
+  const requestSignal = coordinatesOrSignal instanceof AbortSignal ? coordinatesOrSignal : signal;
   const p: Record<string, string> = {};
   if (date) p['date'] = date;
-  return fetchApi<ApiResponse<AlmanacSnapshot>>('/almanac', p, signal);
+  if (coordinates) {
+    p['lat'] = String(coordinates.lat);
+    p['lon'] = String(coordinates.lon);
+  }
+  return fetchApi<ApiResponse<AlmanacSnapshot>>('/almanac', p, requestSignal);
 }
 
 export function getEarthquakes(signal?: AbortSignal): Promise<ApiResponse<EarthquakeRecord[]>> {
@@ -442,9 +449,15 @@ export function getAlmanacMeteorShowers(
 // ---------------------------------------------------------------------------
 
 export function getAlmanacPositions(
+  coordinates?: { lat: number; lon: number },
   signal?: AbortSignal,
 ): Promise<ApiResponse<PositionsSnapshot>> {
-  return fetchApi<ApiResponse<PositionsSnapshot>>('/almanac/positions', {}, signal);
+  const p: Record<string, string> = {};
+  if (coordinates) {
+    p['lat'] = String(coordinates.lat);
+    p['lon'] = String(coordinates.lon);
+  }
+  return fetchApi<ApiResponse<PositionsSnapshot>>('/almanac/positions', p, signal);
 }
 
 // ---------------------------------------------------------------------------
@@ -501,9 +514,9 @@ export function getFishingDetail(
   locationId: string,
   selectedSpecies?: string | null,
   signal?: AbortSignal,
-): Promise<ApiResponse<FishingDetailData>> {
+): Promise<ApiResponse<components['schemas']['FishingData']>> {
   const query = selectedSpecies ? `?selectedSpecies=${encodeURIComponent(selectedSpecies)}` : '';
-  return fetchApi<ApiResponse<FishingDetailData>>(`/fishing/${encodeURIComponent(locationId)}${query}`, undefined, signal);
+  return fetchApi<ApiResponse<components['schemas']['FishingData']>>(`/fishing/${encodeURIComponent(locationId)}${query}`, undefined, signal);
 }
 
 export function getBeachSafetyDetail(

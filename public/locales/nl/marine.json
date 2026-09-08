@@ -1,4 +1,4 @@
-﻿{
+{
   "title": "Marine Activities",
   "unableToLoad": "Unable to load marine data",
   "selectLocation": "Select a location to view details",
@@ -72,7 +72,9 @@
     "waveForecastAriaLabel": "Wave height and period forecast for the next 72 hours at {{location}}",
     "wavePeriod": "Wave Period",
     "secondsAbbr": "s",
-    "station": "Station {{id}}",
+    "windTitle": "Wind",
+    "visibility": "Zichtbaarheid",
+    "dewpoint": "Dauwpunt",
     "dominantPeriod": "Dominant Period",
     "pressure": "Barometric Pressure",
     "pressureRising": "Rising",
@@ -403,6 +405,60 @@
     "noteColumn": "Notes",
     "solunarArcAriaLabel": "Moon rise-to-set arc with major and minor fishing periods highlighted",
     "moonBelowHorizon": "Moon is below the horizon",
-    "periodGridScrollAriaLabel": "Scrollable 3-day fishing forecast"
+    "periodGridScrollAriaLabel": "Scrollable 3-day fishing forecast",
+    "secondsAbbr": "s",
+    "scoreCardTitle": "Fishing Score",
+    "periodButtonAriaLabel": "{{weekday}}, {{date}} — {{period}}: score {{score}} of 100. {{wind}}{{swell}}View species detail.",
+    "periodDetailHeading": "Species scores for {{weekday}}, {{date}} — {{period}}",
+    "periodWindAriaLabel": "Wind {{speed}} {{unit}} {{direction}}",
+    "periodWindGustAriaLabel": "Wind {{speed}} {{unit}} {{direction}}, gusting {{gust}} {{unit}}",
+    "periodSwellAriaLabel": "Swell {{height}} {{heightUnit}} at {{period}} {{periodUnit}}",
+    "periodGustAbbr": "G",
+    "factorUnavailable": "Niet beschikbaar",
+    "provenanceType": {
+      "observed": "Waargenomen",
+      "forecast": "Voorspeld",
+      "modeled": "Gemodelleerd",
+      "unavailable": "Niet beschikbaar"
+    },
+    "adjustmentFactor": {
+      "time_of_day": "Tijdstip",
+      "season": "Seizoen",
+      "solunar_major": "Grote solunaire periode",
+      "solunar_minor": "Kleine solunaire periode",
+      "solunar_active_tide": "Actieve getijdenstand",
+      "solunar_full_moon": "Volle maan"
+    },
+    "adjustmentState": {
+      "preferred": "Voorkeur",
+      "normal": "Normaal",
+      "low_activity": "Lagere activiteit"
+    },
+    "hardStop": {
+      "temperature_outside_active_range": "De watertemperatuur ligt buiten het actieve bereik van deze soort."
+    },
+    "status": {
+      "active": "Actief",
+      "less_active": "Minder actief",
+      "low_activity": "Lagere activiteit",
+      "inactive": "Inactief",
+      "unavailable": "Niet beschikbaar",
+      "unknown": "Onbekend"
+    },
+    "tideState": {
+      "rising": "Stijgend",
+      "falling": "Dalend",
+      "slack": "Kentering",
+      "neutral": "Neutraal",
+      "unavailable": "Niet beschikbaar",
+      "unknown": "Onbekend"
+    },
+    "solunarState": {
+      "major": "Groot",
+      "minor": "Klein",
+      "none": "Geen",
+      "unavailable": "Niet beschikbaar",
+      "unknown": "Onbekend"
+    }
   }
 }

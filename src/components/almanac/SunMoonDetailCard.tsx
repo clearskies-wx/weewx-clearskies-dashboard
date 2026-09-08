@@ -27,7 +27,7 @@
 // Time: formatLocalTime from src/utils/time.ts (ADR-020).
 // Units: no unit knowledge in dashboard (ADR-042).
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import type { AlmanacSnapshot, MoonNameData, PositionsSnapshot } from '../../api/types';
@@ -264,6 +264,8 @@ export interface SunMoonDetailCardProps {
   stationTz: string;
   loading: boolean;
   error: string | null;
+  /** Optional activity-specific detail rendered inside the shared card. */
+  overlay?: ReactNode;
 }
 
 // ---------------------------------------------------------------------------
@@ -1017,6 +1019,7 @@ export function SunMoonDetailCard({
   stationTz,
   loading,
   error,
+  overlay,
 }: SunMoonDetailCardProps) {
   const { t, i18n } = useTranslation('almanac');
   const locale = i18n.language;
@@ -1065,6 +1068,12 @@ export function SunMoonDetailCard({
                 <MoonPanel almanac={almanac} tomorrow={almanacTomorrow} positions={positions} tz={stationTz} locale={locale} />
               </div>
             </div>
+
+            {overlay && (
+              <div className="mt-4 border-t border-border pt-4">
+                {overlay}
+              </div>
+            )}
 
             {/* Footer row: Next Solstice / Next Equinox */}
             {(almanac.sun.nextSolstice || almanac.sun.nextEquinox) && (

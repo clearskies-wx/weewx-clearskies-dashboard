@@ -3319,13 +3319,16 @@ export interface components {
             selectedChoiceId: string;
             choices: components["schemas"]["FishingSpeciesChoice"][];
         };
-        /** @description TARGET (Fishing and Boating remediation Phase 1; not yet shipped): live per-location Fishing pressure-series compatibility result. */
+        /** @description Provider pressure-series coverage represented by this Fishing response. It is not a fresh setup-time compatibility check. */
         FishingPressureCheck: {
             locationId: string;
             supported: boolean;
             provider: string;
-            /** Format: date-time */
-            checkedAt: string;
+            /**
+             * Format: date-time
+             * @description Present only for a separately performed setup-time compatibility check; null on forecast responses.
+             */
+            checkedAt: string | null;
             /** Format: date-time */
             validFrom?: string | null;
             /** Format: date-time */
@@ -3906,6 +3909,10 @@ export interface operations {
             query?: {
                 /** @description ISO date (YYYY-MM-DD). Default = station-local today. */
                 date?: string;
+                /** @description Latitude. Supply with `lon` to compute for that location; omit both for the station. */
+                lat?: number;
+                /** @description Longitude. Supply with `lat` to compute for that location; omit both for the station. */
+                lon?: number;
             };
             header?: never;
             path?: never;
@@ -4133,7 +4140,12 @@ export interface operations {
     };
     getAlmanacPositions: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Latitude. Supply with `lon` to compute for that location; omit both for the station. */
+                lat?: number;
+                /** @description Longitude. Supply with `lat` to compute for that location; omit both for the station. */
+                lon?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -4404,7 +4416,7 @@ export interface operations {
     getFishingLocation: {
         parameters: {
             query?: {
-                /** @description One eligible configured Fishing species choice for this location. When omitted, the service scores the first configured choice. */
+                /** @description One eligible configured Fishing species choice for this location. When omitted, the service scores the first configured choice. An unknown or ineligible choice is rejected; the browser never calculates a replacement score. */
                 selectedSpecies?: string;
             };
             header?: never;

@@ -9,31 +9,31 @@ info:
     `weewx-clearskies-dashboard` SPA.
 
     The api reads from a weewx archive database and from per-domain
-    provider plugin modules per [ADR-038](../decisions/ADR-038-data-provider-module-organization.md);
-    it returns canonical types per [ADR-010](../decisions/ADR-010-canonical-data-model.md).
+    provider plugin modules per [ADR-038](../archive/decisions/ADR-038-data-provider-module-organization.md);
+    it returns canonical types per [ADR-010](../archive/decisions/ADR-010-canonical-data-model.md).
 
     **Versioning** — URL path. Major bump only on breaking changes per
-    [ADR-018](../decisions/ADR-018-api-versioning-policy.md). No support-window
-    promise (AS-IS under GPL v3 per [ADR-003](../decisions/ADR-003-license.md)).
+    [ADR-018](../archive/decisions/ADR-018-api-versioning-policy.md). No support-window
+    promise (AS-IS under GPL v3 per [ADR-003](../archive/decisions/ADR-003-license.md)).
 
     **Errors** — every non-2xx response is `application/problem+json`
     (RFC 9457). Provider-domain errors carry `providerId`, `domain`,
-    and `errorCode` (one of the [ADR-038](../decisions/ADR-038-data-provider-module-organization.md)
+    and `errorCode` (one of the [ADR-038](../archive/decisions/ADR-038-data-provider-module-organization.md)
     taxonomy strings).
 
     **Auth** — no end-user authentication per
-    [ADR-008](../decisions/ADR-008-auth-model.md). Optional shared secret
+    [ADR-008](../archive/decisions/ADR-008-auth-model.md). Optional shared secret
     in `X-Clearskies-Proxy-Auth` for cross-host proxy↔inner-service trust;
     browser SPAs do not send this.
 
     **Units** — every unit-bearing response includes a `units` object
     naming the unit per field per
-    [ADR-019](../decisions/ADR-019-units-handling.md) and
-    [ADR-010](../decisions/ADR-010-canonical-data-model.md). Server passes
+    [ADR-019](../archive/decisions/ADR-019-units-handling.md) and
+    [ADR-010](../archive/decisions/ADR-010-canonical-data-model.md). Server passes
     weewx `target_unit` through; no server-side conversion at v0.1.
 
     **Time** — UTC ISO-8601 with `Z` suffix on the wire. Display TZ is
-    station-local per [ADR-020](../decisions/ADR-020-time-zone-handling.md).
+    station-local per [ADR-020](../archive/decisions/ADR-020-time-zone-handling.md).
 
     **Realtime** — the SSE stream from `weewx-clearskies-realtime` is
     documented separately. Both services share the `Observation` schema.
@@ -90,14 +90,6 @@ tags:
     description: Operator-authored markdown content (About, Legal).
   - name: Radar
     description: Radar tile proxy and frame metadata per ADR-015.
-  - name: Imagery
-    description: |
-      `/imagery/config` answers with the Clear Skies product basemap
-      (`provider: "basemap"`) for the surf height map -- orthophotography
-      (NAIP/Esri/Esri-Topo) was retired from user-facing use by
-      SURF-MAP-BASEMAP (PA9, Q5, §M4, 2026-08-27). `/imagery/tiles`
-      remains the NAIP tile proxy, unreferenced by any user-facing
-      surface after that round (Q10-6 open).
   - name: Station
     description: Station identity, location, time zone, units.
   - name: Capabilities
@@ -108,6 +100,21 @@ tags:
     description: Operator branding configuration (site title, logo, favicon, social links).
   - name: Health
     description: Health and readiness probes per ADR-030.
+  - name: Basemap
+    description: |
+      Clear Skies product basemap (Protomaps-derived PMTiles, three
+      zoom tiers) for every map surface — replaces CARTO. Generalises
+      ADR-078's single-file geographic-features overlay, which is removed
+      (ADR-078 Amendment 2, Accepted 2026-08-27, M5 removal round).
+  - name: Imagery
+    description: |
+      `/imagery/config` answers with the Clear Skies product basemap
+      (`provider: "basemap"`) for the surf height map — orthophotography
+      was retired from user-facing use by SURF-MAP-BASEMAP (PA9, Q5, plan
+      `MARINE-AND-MAPS-PLAN-2026-08-27.md` §M4, 2026-08-27). The prior
+      provider-selection machinery (the orthophoto tile proxy, its
+      `[imagery]` config/modules/admin/wizard) was removed entirely by
+      Q10-6, 2026-08-27 ("if we dont need it then get rid of it").
 
 security:
   - {}                       # Default: no auth required (browser SPA case).
@@ -126,13 +133,36 @@ paths:
       description: |
         Returns the most recent archive record from the weewx database
         (the latest record within a small look-back window).
+
+        `?units=si` (C-47, 2026-07-25): returns canonical SI values for a
+        fixed field set (windSpeed, windGust in m/s; outTemp in °C;
+        barometer in hPa; windDir/windGustDir in degrees, unconverted)
+        instead of the operator's configured display units — for companion
+        services (the marine service) that work in SI only and must not
+        round-trip through a display unit. Response shape in this mode is
+        `data: {timestamp, windSpeed, windDir, windGust, windGustDir,
+        outTemp, barometer}` with raw scalar values (not the default
+        `{value, label, formatted}` wrapper) plus a `units` block of fixed
+        SI labels. Absent the parameter, the response is unchanged.
       operationId: getCurrent
+      parameters:
+        - name: units
+          in: query
+          required: false
+          description: >-
+            "si" returns canonical SI values for a fixed field set instead
+            of the operator's display units (C-47). Omit for the default,
+            unchanged behaviour.
+          schema:
+            type: string
+            enum: [si]
       responses:
         '200':
           description: Current observation
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ObservationResponse' }
+        '422': { $ref: '#/components/responses/Problem' }
         '503': { $ref: '#/components/responses/ProviderUnavailable' }
         default: { $ref: '#/components/responses/Problem' }
 
@@ -157,6 +187,16 @@ paths:
         - { $ref: '#/components/parameters/Limit' }
         - { $ref: '#/components/parameters/Cursor' }
         - { $ref: '#/components/parameters/Page' }
+        - name: agg
+          in: query
+          required: false
+          description: >-
+            Aggregation function override for interval=day and interval=hour.
+            When omitted, per-field defaults apply (e.g., outTemp uses avg).
+            For interval=raw, this parameter is silently ignored.
+          schema:
+            type: string
+            enum: [min, max, avg, sum, count]
       responses:
         '200':
           description: Archive page
@@ -407,6 +447,16 @@ paths:
           required: false
           description: ISO date (YYYY-MM-DD). Default = station-local today.
           schema: { type: string, format: date }
+        - name: lat
+          in: query
+          required: false
+          description: Latitude. Supply with `lon` to compute for that location; omit both for the station.
+          schema: { type: number, minimum: -90, maximum: 90 }
+        - name: lon
+          in: query
+          required: false
+          description: Longitude. Supply with `lat` to compute for that location; omit both for the station.
+          schema: { type: number, minimum: -180, maximum: 180 }
       responses:
         '200':
           description: Almanac snapshot
@@ -590,6 +640,15 @@ paths:
           required: false
           description: Four-digit year. Default = current year.
           schema: { type: integer, minimum: 1900 }
+        - name: min_radiant_alt
+          in: query
+          required: false
+          description: |
+            Minimum radiant altitude in degrees at local midnight on the peak
+            night. Showers whose radiant is below this threshold are excluded.
+            When omitted, all showers in the window are returned regardless of
+            altitude.
+          schema: { type: number }
       responses:
         '200':
           description: Meteor shower list
@@ -619,6 +678,17 @@ paths:
       operationId: getAlmanacPositions
       tags:
         - Almanac
+      parameters:
+        - name: lat
+          in: query
+          required: false
+          description: Latitude. Supply with `lon` to compute for that location; omit both for the station.
+          schema: { type: number, minimum: -90, maximum: 90 }
+        - name: lon
+          in: query
+          required: false
+          description: Longitude. Supply with `lat` to compute for that location; omit both for the station.
+          schema: { type: number, minimum: -180, maximum: 180 }
       responses:
         '200':
           description: Current positions
@@ -682,10 +752,13 @@ paths:
       description: |
         List of configured `[marine]` locations, one summary card each
         (`MarineLocationSummary`). `currentConditions`/`currentTide`/
-        `activeAlerts`/`surfRating`/`beachSafetyLevel` are always `null`
-        on this list route — full per-location population is deferred
-        until a cache-warmer exists to make it cheap. Use
-        `GET /marine/{locationId}` for live data on one location.
+        `surfRating`/`beachSafetyLevel` are always `null` on this list
+        route — full per-location population is deferred until a
+        cache-warmer exists to make it cheap. `activeAlerts` IS populated
+        on this route (T3.5): the NWS alerts provider caches for 5
+        minutes, so a per-location fetch here is cheap enough not to need
+        the cache warmer. Use `GET /marine/{locationId}` for live data on
+        one location.
       operationId: listMarineLocations
       responses:
         '200':
@@ -702,12 +775,19 @@ paths:
       tags: [Marine]
       summary: Marine conditions for one location
       description: |
-        Aggregates NDBC buoy observation (if `ndbc_station_ids` configured),
-        WaveWatch III offshore forecast (always attempted), and NWS marine
-        zone text forecast (if `nws_marine_zone_id` configured). Each
-        provider call is independently best-effort — a single provider
-        outage never fails the whole response. Tide data is NOT included
-        here; see `GET /tides/{locationId}`.
+        TARGET (Fishing and Boating remediation Phase 1; not yet shipped):
+        returns one normalized Current Conditions payload for the selected
+        location, the provider-neutral `regularForecast` at the marine
+        coordinates, the model wave forecast when the location is a configured
+        surf spot, and NWS marine-zone periods when configured. Current
+        weather is station-served within the station-service radius and uses
+        the configured forecast provider at the location otherwise. The API
+        assigns CWF UTC bounds and `marineAdditions` only when a CWF label maps
+        to an existing regular-forecast day/night column; unmatched periods
+        retain null bounds and remain unavailable for alignment. CWF fields do
+        not replace location weather. An offshore NDBC observation remains
+        separately labelled context. Tide data is returned by
+        `GET /tides/{locationId}`.
       operationId: getMarineLocation
       parameters:
         - { $ref: '#/components/parameters/LocationId' }
@@ -787,15 +867,13 @@ paths:
       tags: [Marine]
       summary: Surf forecast for a location
       description: |
-        SWAN nearshore wave data (corrected by the four wave_transform.py
-        supplements: shoaling, γ correction, structure effects, topographic focusing),
-        falling back to WaveWatch III offshore data when SWAN is unavailable
-        (no correction applied to the fallback).
-        Scored by enrichment/surf_scorer.py. `forecast` has up to 144 hourly
-        entries from SWAN (72-hour window), or 0–1 entries when
-        falling back to WaveWatch III. Also returns NDBC spectral swell
-        decomposition, an NWS SRF zone forecast, and a CO-OPS tide overlay
-        (informational, not scored).
+        NWPS nearshore wave data (corrected by the four wave_transform.py
+        supplements), falling back to WaveWatch III offshore data when
+        NWPS is unavailable (no correction applied to the fallback).
+        Scored by enrichment/surf_scorer.py. `forecast` has 0 or 1 entries
+        depending on provider availability. Also returns NDBC spectral
+        swell decomposition, an NWS SRF zone forecast, and a CO-OPS tide
+        overlay (informational, not scored).
       operationId: getSurfLocation
       parameters:
         - { $ref: '#/components/parameters/LocationId' }
@@ -807,67 +885,6 @@ paths:
               schema: { $ref: '#/components/schemas/SurfResponse' }
         '404':
           description: Location not found among `surf`-enabled locations, or has no surf spot configuration
-        default: { $ref: '#/components/responses/Problem' }
-
-  /surf/{locationId}/profile:
-    get:
-      tags: [Marine]
-      summary: Cross-shore beach profile with 1D model output
-      description: |
-        Full cross-shore output of the per-partition 1D SwellTrack pipeline
-        for the forecast timestep closest to now (ADR-097, T5.2; vocabulary
-        unified T4A.1 — Marine Service Separation Plan Phase 4A). Hs envelope
-        at 3-5m resolution (`distance`/`depth`/`hs`), break points with
-        breaker type and face height, wave shapes, classified surf zones,
-        jacking factors, and per-partition break overlay.
-
-        `transect_index` selects the response shape:
-        - `best` (default) or a non-negative integer index: single-transect
-          response, `data` matches BeachProfileData.
-        - `all`: array of every transect's profile, `data` matches
-          BeachProfileAllData (`profiles[]` instead of the spread-in
-          per-transect fields).
-
-        SURF-PUBLISH-RESULTS-ONLY §3.6 (2026-07-25): the 404-for-everything
-        behavior above is superseded. A missing profile used to raise 404,
-        which read as "wrong URL" when the truth was "the model has no
-        answer for this hour." Now:
-        - **200 with `modelStatus: "unavailable"` and every per-transect
-          field null** (or `profiles: null` in `all` mode) when no SWAN data
-          is cached yet, no forecast timesteps exist, or the 1D pipeline
-          produced nothing for the requested timestep. This is a model gap,
-          not an error — the response envelope (stationClock/freshness/
-          units/generatedAt) is still fully populated.
-        - **404** stays reserved for genuine configuration errors: the
-          location doesn't exist or lacks `surf` activity, no surf spot
-          configuration is present, or no transects are available (segment
-          has zero length). These are NOT model gaps and must stay
-          distinguishable from the 200-with-null case on the client.
-      operationId: getBeachProfile
-      parameters:
-        - { $ref: '#/components/parameters/LocationId' }
-        - name: transect_index
-          in: query
-          required: false
-          description: "'best' (default, highest-face-height open transect), 'all' (all transect profiles), or a non-negative integer transect index."
-          schema: { type: string, default: best }
-      responses:
-        '200':
-          description: |
-            Single-transect or all-transect beach profile, depending on
-            transect_index. `data.modelStatus` distinguishes a successful
-            run ("ok") from a model gap ("unavailable", every per-transect
-            field null) — see the operation description.
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - { $ref: '#/components/schemas/BeachProfileResponse' }
-                  - { $ref: '#/components/schemas/BeachProfileAllResponse' }
-        '404':
-          description: "Configuration error only (SURF-PUBLISH-RESULTS-ONLY §3.6) — location/surf-spot not found, or no transects available. No cached SWAN data / no forecast timesteps / a degraded 1D pipeline are NOT 404s anymore; they are 200 responses with modelStatus: \"unavailable\"."
-        '422':
-          description: Invalid transect_index (not 'best', 'all', or a non-negative integer)
         default: { $ref: '#/components/responses/Problem' }
 
   /fishing:
@@ -891,12 +908,26 @@ paths:
       tags: [Marine]
       summary: 3-day fishing forecast for a location
       description: |
-        3 days × 6 periods/day (dawn/morning/midday/afternoon/evening/night),
-        scored by enrichment/fishing_scorer.py from NDBC pressure trend,
-        CO-OPS tide state, water temperature, and solunar intensity.
-        Species and habitat features come from the location's
-        `FishingSpotConfig` and CUDEM bathymetric profile (reused from the
-        location's `surf` sub-block, if configured).
+        TARGET (Fishing and Boating remediation Phase 1; not yet shipped):
+        returns 3 days × 6 time-matched periods. Each period carries only the
+        selected-species score and explanation, using the provider-neutral
+        hourly pressure series, location-first nearshore weather, CO-OPS tide
+        state, depth-appropriate water temperature, and solunar marker. NDBC
+        pressure and offshore weather never determine Harbour-local inputs.
+        Species choices and their complete effective profiles come from the
+        location's derived global species-matrix selection; setup blocks a
+        location when its selected provider cannot supply the required hourly
+        pressure series. TARGET storage boundary (not yet shipped): the
+        internal selection source will be the target candidate, once the
+        framework receives operator sign-off:
+        `repos/weewx-clearskies-marine/weewx_clearskies_marine/data/fishing_species_matrix.xlsx`,
+        generated into its sibling target
+        `repos/weewx-clearskies-marine/weewx_clearskies_marine/data/fishing_species_matrix.sqlite`;
+        the API and marine service do not parse Excel at runtime. The current
+        YAML catalogue and loader stay only until the Phase 4 equivalence,
+        independent review, and live
+        behavior gates pass, after which they are removed. This adds no API
+        field or endpoint.
       operationId: getFishingLocation
       parameters:
         - { $ref: '#/components/parameters/LocationId' }
@@ -980,6 +1011,24 @@ paths:
         registry. Every array is either 12 elements (one per month,
         Jan–Dec) or omitted entirely — no partial arrays.
       operationId: getClimatologyMonthly
+      parameters:
+        - name: fields
+          in: query
+          required: false
+          description: |
+            Comma-separated list of canonical field names to include
+            (e.g. `outTemp,rain`). Omit to return all available fields.
+          schema: { type: string }
+        - name: agg
+          in: query
+          required: false
+          description: |
+            Aggregation type to apply. Omit to use the server default
+            (`avg_max` / `avg_min` pair for temperatures, `avg_monthly_total`
+            for rain).
+          schema:
+            type: string
+            enum: [avg_max, avg_min, avg, avg_monthly_total, sum]
       responses:
         '200':
           description: Monthly climatology averages
@@ -1009,7 +1058,12 @@ paths:
     get:
       tags: [Branding]
       summary: Operator branding configuration
+      deprecated: true
       description: |
+        **Deprecated** — branding config moves to static file served by Caddy
+        (`/branding.json`). See ADR-022 amendment 2026-06-10. This endpoint
+        will be removed in a future release.
+
         Returns the operator-configured branding metadata: site title,
         logo (light and dark variants), favicon URL, and social media
         profile links. Fields are omitted when not configured.
@@ -1101,6 +1155,62 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ChartGroupResponse' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /charts/config:
+    get:
+      tags: [Charts]
+      summary: Full chart configuration
+      description: |
+        Returns the full operator chart configuration tree including all
+        groups, charts, and series that survived pruning against the
+        ColumnRegistry at startup.
+      operationId: getChartsConfig
+      responses:
+        '200':
+          description: Full chart configuration
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ChartsConfigResponse' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /charts/custom-query/{series_id}:
+    get:
+      tags: [Charts]
+      summary: Custom SQL query chart data
+      description: |
+        Execute a pre-validated custom SQL query defined in `charts.conf`.
+        The SQL never crosses the HTTP boundary — the `series_id` path
+        parameter maps to a query loaded and validated at API startup.
+        Security: read-only transaction, 10s timeout, DDL keyword blocklist.
+      operationId: getCustomQuery
+      parameters:
+        - name: series_id
+          in: path
+          required: true
+          schema: { type: string }
+          description: Identifier of the custom query series from `charts.conf`.
+        - name: from
+          in: query
+          required: false
+          schema: { type: string, format: date-time }
+          description: ISO 8601 start datetime (passed as `:from_ts` bind parameter if the query uses it).
+        - name: to
+          in: query
+          required: false
+          schema: { type: string, format: date-time }
+          description: ISO 8601 end datetime (passed as `:to_ts` bind parameter if the query uses it).
+      responses:
+        '200':
+          description: Custom query result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CustomQueryResponse' }
+        '404':
+          description: No validated query found for the given series_id
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
         default: { $ref: '#/components/responses/Problem' }
 
   # -------------------------------------------------------------------
@@ -1293,11 +1403,120 @@ paths:
         default: { $ref: '#/components/responses/Problem' }
 
   # -------------------------------------------------------------------
+  # Basemap (CS-BASEMAP, plan MARINE-AND-MAPS-PLAN-2026-08-27 §M1;
+  # generalises ADR-078's geographic-features overlay into three
+  # zoom-tiered PMTiles files -- ADR-078 Amendment 2, Proposed)
+  # -------------------------------------------------------------------
+
+  /basemap/{tier}/tiles:
+    get:
+      tags: [Basemap]
+      summary: Serve one basemap tier's PMTiles file
+      description: |
+        Public, unauthenticated. `tier` selects one of three zoom-tiered
+        Protomaps-derived PMTiles archives covering every Clear Skies map
+        surface (marine, seismic, radar/satellite, surf height map):
+        `world` (z0-6, global fallback), `local` (z7-15, station +
+        earthquake radius + marine locations), `radar` (z0-12, the radar
+        provider's declared coverage box, or the station box if none).
+        Served via HTTP Range requests (206 Partial Content), same
+        mechanism ADR-078's geographic-features tiles endpoint uses.
+      operationId: getBasemapTile
+      security: []
+      parameters:
+        - name: tier
+          in: path
+          required: true
+          description: One of `world`, `local`, `radar`.
+          schema: { type: string, enum: [world, local, radar] }
+      responses:
+        '200':
+          description: PMTiles archive bytes (or a 206 partial range)
+          headers:
+            Accept-Ranges: { schema: { type: string, example: bytes } }
+            Cache-Control: { schema: { type: string, example: 'public, max-age=86400' } }
+          content:
+            application/octet-stream: { schema: { type: string, format: binary } }
+        '404':
+          description: |
+            Unknown tier (RFC 9457 problem+json), OR a known tier not yet
+            extracted / `[basemap] enabled=false` (plain JSON
+            `{"detail": "..."}`, ADR-078's own shape — not problem+json).
+        default: { $ref: '#/components/responses/Problem' }
+
+  /basemap/status:
+    get:
+      tags: [Basemap]
+      summary: Per-tier basemap availability + extraction state
+      description: |
+        Public, unauthenticated. Availability/size/mtime are read fresh
+        from disk on every call; `bounds`/`minzoom`/`maxzoom` come from
+        the in-memory record of the last successful extraction (or the
+        tier's static minzoom/maxzoom before any extraction has run).
+      operationId: getBasemapStatus
+      security: []
+      responses:
+        '200':
+          description: Per-tier status + overall extraction-run state
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BasemapStatusResponse' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  /setup/basemap/update:
+    post:
+      tags: [Basemap]
+      summary: Start a background basemap extraction (world + local + radar)
+      description: |
+        NOT under the `/api/v1` prefix (setup channel, ADR-038) — see the
+        `servers` override below. Starts one background daemon thread
+        that extracts all three tiers in sequence (world -> local ->
+        radar); never two extractions at once. A failing tier leaves its
+        previous file in place and is recorded in `last_error`
+        (`GET /basemap/status`) -- the other tiers still run. Extent is
+        always derived (station + earthquake radius + marine locations
+        for `local`; the radar provider's declared coverage box, or the
+        station box, for `radar`) -- never operator-typed.
+      operationId: postBasemapUpdate
+      security:
+        - proxySecret: []
+      servers:
+        - url: /
+      responses:
+        '202':
+          description: Extraction started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { status: { type: string, enum: [started] } }
+        '409':
+          description: An extraction is already running
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { status: { type: string, enum: [already_running] } }
+        '401':
+          description: Missing or invalid X-Clearskies-Proxy-Auth header
+        '503':
+          description: Proxy secret not configured -- admin operations unavailable
+        default: { $ref: '#/components/responses/Problem' }
+
+  # -------------------------------------------------------------------
   # Imagery (Phase LM, 2026-08-03; /imagery/config rewritten to the
-  # product basemap by SURF-MAP-BASEMAP, PA9/Q5, §M4, 2026-08-27) —
-  # DISPLAY-ONLY geographic context. Never feeds SWAN, the 1D model,
-  # transect selection, or any physics path (PROVIDER-MANUAL §16 /
-  # API-MANUAL §12a hard rule).
+  # product basemap by SURF-MAP-BASEMAP, PA9/Q5, §M4, 2026-08-27; the
+  # /imagery/tiles NAIP proxy and its provider-selection machinery were
+  # removed by Q10-6, 2026-08-27 -- "if we dont need it then get rid of
+  # it". Closed a pre-existing doc-code gap when first documented: neither
+  # /imagery path was ever added to this contract in the Phase LM or
+  # IMAGERY-MAP rounds.)
+  # -------------------------------------------------------------------
+  # Geographic features (ADR-078) — REMOVED. The three legacy routes
+  # (/geographic-features/tiles, /geographic-features/status,
+  # /setup/geographic-features/update) were deleted from the API (M5,
+  # ADR-078 Amendment 2, Accepted 2026-08-27) and are no longer part of
+  # this contract. Superseded by the Basemap endpoints above.
   # -------------------------------------------------------------------
 
   /imagery/config:
@@ -1310,13 +1529,13 @@ paths:
         coordinates. `lat`/`lon` are still validated (422 outside
         range) but no longer select a provider; `[imagery] provider`
         (naip/esri/map/auto) is no longer read by this endpoint (PA9).
-        `dark.pmtilesUrl` is the **local** basemap tier
-        (`/basemap/{tier}/tiles`, `tier=local`) -- the surf map lives
-        inside the local box by construction. Top-level
-        `tileUrl`/`attribution` are legacy fields carrying the `light`
-        values, for old-client compatibility. Flat response shape --
-        NOT the usual data+envelope wrapper (intentional deviation,
-        unchanged from Phase LM).
+        `dark.pmtilesUrl` is the **local** basemap tier (`/basemap/{tier}/tiles`,
+        `tier=local`) -- the surf map lives inside the local box by
+        construction. Top-level `tileUrl`/`attribution` are legacy
+        fields carrying the `light` values, for old-client
+        compatibility. Flat response shape -- NOT the usual
+        data+envelope wrapper (intentional deviation, unchanged from
+        Phase LM).
       operationId: getImageryConfig
       parameters:
         - name: lat
@@ -1333,46 +1552,6 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ImageryConfigResponse' }
-        default: { $ref: '#/components/responses/Problem' }
-
-  /imagery/tiles/{z}/{x}/{y}:
-    get:
-      tags: [Imagery]
-      summary: NAIP orthophoto tile proxy
-      description: |
-        NAIP only — fetches from USGS, caches, serves the tile bytes.
-        ESRI tiles never transit this endpoint (`[imagery] provider`
-        absent or `esri` → 404).
-      operationId: getImageryTile
-      parameters:
-        - name: z
-          in: path
-          required: true
-          description: Slippy-map zoom level.
-          schema: { type: integer, minimum: 0, maximum: 20 }
-        - name: x
-          in: path
-          required: true
-          description: Slippy-map tile X. Validated against [0, 2^z).
-          schema: { type: integer, minimum: 0 }
-        - name: y
-          in: path
-          required: true
-          description: Slippy-map tile Y. Validated against [0, 2^z).
-          schema: { type: integer, minimum: 0 }
-      responses:
-        '200':
-          description: Tile image bytes
-          content:
-            image/png: { schema: { type: string, format: binary } }
-        '400':
-          description: x/y outside [0, 2^z) for the given zoom.
-        '404':
-          description: Tile not available, or NAIP is not the active provider.
-        '422':
-          description: z outside [0, 20].
-        '502': { $ref: '#/components/responses/ProviderError' }
-        '503': { $ref: '#/components/responses/ProviderUnavailable' }
         default: { $ref: '#/components/responses/Problem' }
 
   # -------------------------------------------------------------------
@@ -1439,7 +1618,7 @@ components:
       in: header
       name: X-Clearskies-Proxy-Auth
       description: |
-        Shared secret per [ADR-008](../decisions/ADR-008-auth-model.md).
+        Shared secret per [ADR-008](../archive/decisions/ADR-008-auth-model.md).
         For PROXY-to-INNER-SERVICE trust on cross-host deploys only.
         Browser SPAs MUST NOT send this header. When the inner service
         has `WEEWX_CLEARSKIES_PROXY_SECRET` unset, the header is
@@ -1486,8 +1665,8 @@ components:
       name: limit
       in: query
       required: false
-      description: Maximum records per page. Omit for no limit (all matching records returned).
-      schema: { type: integer, minimum: 1, maximum: 50000, nullable: true }
+      description: Maximum records per page.
+      schema: { type: integer, minimum: 1, maximum: 10000, default: 1000 }
     Cursor:
       name: cursor
       in: query
@@ -1636,11 +1815,11 @@ components:
         windSpeedAvg10m:
           type: number
           nullable: true
-          description: BFF-derived 10-minute sustained average wind speed (in operator display units)
+          description: API-derived 10-minute sustained average wind speed (in operator display units)
         windGustMax10m:
           type: number
           nullable: true
-          description: BFF-derived 10-minute maximum gust (in operator display units)
+          description: API-derived 10-minute maximum gust (in operator display units)
         barometer: { type: number, nullable: true }
         pressure: { type: number, nullable: true }
         altimeter: { type: number, nullable: true }
@@ -1772,6 +1951,18 @@ components:
         windSpeed: { type: number, nullable: true }
         windDir: { type: number, nullable: true }
         windGust: { type: number, nullable: true }
+        pressure:
+          type: number
+          nullable: true
+          description: "TARGET (Fishing and Boating remediation Phase 1; not yet shipped): provider-neutral hourly mean-sea-level pressure in hPa."
+        pressureSource:
+          type: string
+          nullable: true
+          description: "TARGET: provider identifier for the time-matched pressure value; null when pressure is unavailable."
+        marineAdditions:
+          nullable: true
+          allOf: [{ $ref: '#/components/schemas/MarineForecastAugmentation' }]
+          description: "TARGET: regional NWS marine additions attached only when a CWF label maps to this existing regular-forecast column; null when no matching period exists."
         precipProbability: { type: number, nullable: true, minimum: 0, maximum: 100 }
         precipAmount: { type: number, nullable: true }
         precipType: { type: string, nullable: true }
@@ -1815,6 +2006,28 @@ components:
         source: { type: string }
         extras: { $ref: '#/components/schemas/Observation/properties/extras' }
       required: [validDate, source]
+
+    MarineForecastAugmentation:
+      type: object
+      description: |
+        TARGET (Fishing and Boating remediation Phase 1; not yet shipped):
+        regional marine information from an NWS Coastal Waters Forecast period
+        that maps to the parent regular-forecast column. The API assigns the
+        explicit UTC bounds from that existing column; these additions never
+        replace location weather fields on the parent point.
+      properties:
+        source: { type: string, example: "nws_cwf" }
+        validTime: { type: string, format: date-time }
+        periodStart: { type: string, format: date-time }
+        periodEnd: { type: string, format: date-time }
+        periodName: { type: string, description: "CWF period label used for the existing-column match" }
+        issuanceTime: { type: string, format: date-time, nullable: true, description: "UTC time when NWS issued the CWF product" }
+        wind: { type: string, nullable: true }
+        seas: { type: string, nullable: true }
+        visibility: { type: string, nullable: true }
+        weather: { type: string, nullable: true }
+        text: { type: string }
+      required: [source, validTime, periodStart, periodEnd, periodName, text]
 
     ForecastDiscussion:
       type: object
@@ -1919,7 +2132,10 @@ components:
         depth:
           type: number
           nullable: true
-          description: Kilometers below surface.
+          description: >-
+            Depth below surface, in the operator's configured group_distance
+            unit (mile or km — see the response's `units.depth`). Converted
+            from the provider's native km value; not a fixed unit.
         place:
           type: string
           nullable: true
@@ -1945,6 +2161,13 @@ components:
           description: Review status (provider-dependent vocabulary).
         extras: { $ref: '#/components/schemas/Observation/properties/extras' }
         source: { type: string }
+        distance:
+          type: number
+          nullable: true
+          description: >-
+            Haversine distance from the operator's station to the epicenter,
+            in the operator's configured group_distance unit (mile or km —
+            see the response's `units.distance`).
       required: [id, time, latitude, longitude, magnitude, source]
 
     AQIReading:
@@ -1968,6 +2191,14 @@ components:
         pollutantNO2: { type: number, nullable: true }
         pollutantSO2: { type: number, nullable: true }
         pollutantCO: { type: number, nullable: true }
+        pollutantSubIndices:
+          type: object
+          nullable: true
+          description: |
+            Per-pollutant AQI sub-index values on the same scale as `aqi`.
+            Keys are canonical pollutant ids (PM2.5, PM10, O3, NO2, SO2, CO).
+            Null when provider doesn't supply (IQAir free tier, weewx Path A).
+          additionalProperties: { type: number, nullable: true }
         observedAt: { type: string, format: date-time }
         source:
           type: string
@@ -2166,7 +2397,7 @@ components:
           type: number
           nullable: true
           description: Angular distance from the Sun in degrees.
-        # BFF-enriched fields (Task 3 — planet viewing quality)
+        # API-enriched fields (Task 3 — planet viewing quality)
         viewingQuality:
           type: string
           nullable: true
@@ -2715,7 +2946,7 @@ components:
         providerId: { type: string }
         domain:
           type: string
-          enum: [forecast, alerts, aqi, earthquakes, radar]
+          enum: [forecast, alerts, aqi, earthquakes, radar, marine, tides, buoy, ocean, nearshore]
         suppliedCanonicalFields:
           type: array
           items: { type: string }
@@ -2724,6 +2955,10 @@ components:
           description: '"global" or operator-meaningful region descriptor.'
         defaultPollIntervalSeconds: { type: integer, minimum: 0 }
         operatorNotes: { type: string, nullable: true }
+        fishingPressure:
+          nullable: true
+          allOf: [{ $ref: '#/components/schemas/FishingPressureCapability' }]
+          description: "TARGET: provider capability for the required hourly mean-sea-level pressure series used by Fishing."
         tileUrlTemplate:
           type: string
           nullable: true
@@ -2745,6 +2980,16 @@ components:
           nullable: true
           description: 'Operator-supplied iframe URL. iframe radar provider only.'
       required: [providerId, domain, suppliedCanonicalFields, geographicCoverage]
+
+    FishingPressureCapability:
+      type: object
+      description: Provider-level Fishing pressure-series capability metadata.
+      properties:
+        supported: { type: boolean }
+        locationSpecific:
+          type: boolean
+          description: "True when setup must perform a live check at each Fishing location before saving."
+      required: [supported, locationSpecific]
 
     CapabilityRegistry:
       type: object
@@ -2925,6 +3170,14 @@ components:
         data:
           type: array
           items: { $ref: '#/components/schemas/EarthquakeRecord' }
+        units:
+          type: object
+          nullable: true
+          description: >-
+            {"depth": "mi"|"km", "distance": "mi"|"km", "magnitude": ""} —
+            reflects the operator's configured group_distance unit. Magnitude
+            has no unit (dimensionless).
+          additionalProperties: { type: string }
         source: { type: string }
         generatedAt: { type: string, format: date-time }
       required: [data, source, generatedAt]
@@ -3014,15 +3267,40 @@ components:
         generatedAt: { type: string, format: date-time }
       required: [data, generatedAt]
 
-    ImageryBounds:
+    BasemapTierStatus:
       type: object
-      description: Approximate lat/lon bounding rectangle for a provider's coverage area.
+      description: One tier's on-disk availability + last-extraction metadata.
       properties:
-        south: { type: number }
-        west: { type: number }
-        north: { type: number }
-        east: { type: number }
-      required: [south, west, north, east]
+        available: { type: boolean }
+        size_bytes: { type: integer, nullable: true }
+        updated_at: { type: string, format: date-time, nullable: true }
+        bounds:
+          type: string
+          nullable: true
+          description: '"west,south,east,north" bbox used for the last successful extraction.'
+        minzoom: { type: integer }
+        maxzoom: { type: integer }
+      required: [available, size_bytes, updated_at, bounds, minzoom, maxzoom]
+
+    BasemapStatusResponse:
+      type: object
+      description: Envelope for GET /basemap/status. NOT the usual data+envelope wrapper (flat shape).
+      properties:
+        tiers:
+          type: object
+          properties:
+            world: { $ref: '#/components/schemas/BasemapTierStatus' }
+            local: { $ref: '#/components/schemas/BasemapTierStatus' }
+            radar: { $ref: '#/components/schemas/BasemapTierStatus' }
+          required: [world, local, radar]
+        updating: { type: boolean }
+        last_error:
+          type: string
+          nullable: true
+          description: '"; "-joined per-tier failure messages from the last extraction run, or null.'
+        last_started_at: { type: string, format: date-time, nullable: true }
+        last_finished_at: { type: string, format: date-time, nullable: true }
+      required: [tiers, updating, last_error, last_started_at, last_finished_at]
 
     ImageryLightSource:
       type: object
@@ -3049,31 +3327,30 @@ components:
     ImageryConfigResponse:
       type: object
       description: |
-        Flat shape — NOT the usual `data`+envelope wrapper (intentional
-        deviation per Phase LM's pinned contract sketch; see the docstring
-        on the API's response model). No `units`/`freshness`/`stationClock`.
-        provider is always "basemap" as of §M4 (SURF-MAP-BASEMAP, PA9) --
-        naip/esri/map/auto retired from user-facing use. Top-level
-        tileUrl/attribution are legacy fields carrying the light theme's
-        values, for old-client compatibility.
+        GET /imagery/config response. Flat shape -- NOT the usual
+        data+envelope wrapper. provider is always "basemap" as of §M4
+        (SURF-MAP-BASEMAP, PA9) -- naip/esri/map/auto retired from
+        user-facing use. Top-level tileUrl/attribution are legacy
+        fields carrying the light theme's values, for old-client
+        compatibility.
       properties:
         provider: { type: string, enum: [basemap] }
-        tileUrl:
-          type: string
-          description: Legacy field carrying `light.tileUrl`, for old-client compatibility.
-        attribution:
-          type: string
-          description: Legacy field carrying `light.attribution`. ToS-mandated attribution text. Render verbatim, never translated.
+        tileUrl: { type: string }
+        attribution: { type: string }
         proxyMode: { type: string, enum: [direct] }
         bounds:
-          oneOf:
-            - { $ref: '#/components/schemas/ImageryBounds' }
-            - type: 'null'
+          type: object
+          nullable: true
+          properties:
+            south: { type: number }
+            west: { type: number }
+            north: { type: number }
+            east: { type: number }
         light: { $ref: '#/components/schemas/ImageryLightSource' }
         dark: { $ref: '#/components/schemas/ImageryDarkSource' }
         zoomMin: { type: integer }
         zoomMax: { type: integer }
-      required: [provider, tileUrl, attribution, proxyMode, bounds]
+      required: [provider, tileUrl, attribution, proxyMode]
 
     AlmanacPlanetsResponse:
       type: object
@@ -3231,6 +3508,173 @@ components:
         generatedAt: { type: string, format: date-time }
       required: [data, generatedAt]
 
+    # ---------- Charts config ----------
+
+    SeriesConfigResponse:
+      type: object
+      description: One data series configuration within a chart.
+      properties:
+        seriesId: { type: string }
+        observationType: { type: string, nullable: true }
+        name: { type: string, nullable: true }
+        color: { type: string, nullable: true }
+        type: { type: string, nullable: true }
+        zIndex: { type: integer, nullable: true }
+        yAxis: { type: integer, nullable: true }
+        yAxisMin: { type: number, nullable: true }
+        yAxisMax: { type: number, nullable: true }
+        yAxisLabel: { type: string, nullable: true }
+        yAxisTickInterval: { type: number, nullable: true }
+        lineWidth: { type: integer, nullable: true }
+        connectNulls: { type: boolean, nullable: true }
+        visible: { type: boolean, nullable: true }
+        opacity: { type: number, nullable: true }
+        stacking: { type: string, nullable: true }
+        aggregateType: { type: string, nullable: true }
+        averageType: { type: string, nullable: true }
+        markerEnabled: { type: boolean, nullable: true }
+        markerRadius: { type: integer, nullable: true }
+        beaufortColors:
+          type: object
+          description: Map of Beaufort scale integer (as string key) to hex color string.
+          additionalProperties: { type: string }
+        rangeType: { type: string, nullable: true }
+        areaDisplay: { type: integer, nullable: true }
+        useCustomSql: { type: boolean }
+        customSqlQuery: { type: string, nullable: true }
+        xColumn: { type: string, nullable: true }
+        yColumn: { type: string, nullable: true }
+        yAxisSoftMin: { type: number, nullable: true }
+        yAxisSoftMax: { type: number, nullable: true }
+        borderWidth: { type: integer, nullable: true }
+        numberFormat:
+          type: object
+          nullable: true
+          description: Number formatting options (decimals, decimalPoint, thousandsSep).
+          properties:
+            decimals: { type: integer, nullable: true }
+            decimalPoint: { type: string, nullable: true }
+            thousandsSep: { type: string, nullable: true }
+      required: [seriesId, useCustomSql]
+
+    ChartConfigResponse:
+      type: object
+      description: One chart configuration within a group.
+      properties:
+        chartId: { type: string }
+        title: { type: string, nullable: true }
+        type: { type: string, nullable: true }
+        connectNulls: { type: boolean, nullable: true }
+        yAxisMin: { type: number, nullable: true }
+        aggregateType: { type: string, nullable: true }
+        aggregateInterval: { type: integer, nullable: true }
+        xAxisGroupby: { type: string, nullable: true }
+        xAxisCategories:
+          type: array
+          items: { type: string }
+        forceFullYear: { type: boolean, nullable: true }
+        series:
+          type: array
+          items: { $ref: '#/components/schemas/SeriesConfigResponse' }
+      required: [chartId]
+
+    ChartGroupConfigResponse:
+      type: object
+      description: One chart group (tab) configuration.
+      properties:
+        groupId: { type: string }
+        title: { type: string, nullable: true }
+        showButton: { type: boolean }
+        buttonText: { type: string, nullable: true }
+        type: { type: string, nullable: true }
+        enableDateRanges: { type: boolean }
+        rollingRanges:
+          type: array
+          items: { type: string }
+        availableYears:
+          type: array
+          items: { type: integer }
+        enableMonthlyBreakdown: { type: boolean }
+        timeLength:
+          oneOf:
+            - { type: integer }
+            - { type: string }
+            - { type: 'null' }
+          description: Time window length (integer seconds or string shorthand, e.g. "1y").
+        timespanStart: { type: integer, nullable: true }
+        timespanStop: { type: integer, nullable: true }
+        tooltipDateFormat: { type: string, nullable: true }
+        gapsize: { type: integer, nullable: true }
+        aggregateInterval: { type: integer, nullable: true }
+        aggregateType: { type: string, nullable: true }
+        forceFullYear: { type: boolean }
+        startAtBeginningOfMonth: { type: boolean }
+        pageContent: { type: string, nullable: true }
+        generate: { type: string, nullable: true }
+        charts:
+          type: array
+          items: { $ref: '#/components/schemas/ChartConfigResponse' }
+      required: [groupId, showButton, enableDateRanges, enableMonthlyBreakdown, forceFullYear, startAtBeginningOfMonth]
+
+    ChartsConfigData:
+      type: object
+      description: Full charts configuration tree (global defaults + all groups).
+      properties:
+        aggregateType: { type: string, nullable: true }
+        timeLength:
+          oneOf:
+            - { type: integer }
+            - { type: string }
+            - { type: 'null' }
+          description: Global default time window length.
+        type:
+          type: string
+          description: Default chart type (e.g. "line").
+        colors:
+          type: array
+          items: { type: string }
+          description: Global default color palette (hex strings).
+        tooltipDateFormat: { type: string, nullable: true }
+        groups:
+          type: array
+          items: { $ref: '#/components/schemas/ChartGroupConfigResponse' }
+      required: [type]
+
+    ChartsConfigResponse:
+      type: object
+      description: Envelope for GET /charts/config.
+      properties:
+        data: { $ref: '#/components/schemas/ChartsConfigData' }
+        generatedAt: { type: string, format: date-time }
+      required: [data, generatedAt]
+
+    CustomQueryPoint:
+      type: object
+      description: One (x, y) data point from a custom SQL query.
+      properties:
+        x:
+          oneOf:
+            - { type: number }
+            - { type: string }
+            - { type: 'null' }
+        y:
+          oneOf:
+            - { type: number }
+            - { type: string }
+            - { type: 'null' }
+
+    CustomQueryResponse:
+      type: object
+      description: Envelope for GET /charts/custom-query/{series_id}.
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/CustomQueryPoint' }
+        seriesId: { type: string }
+        source: { type: string, default: weewx }
+        generatedAt: { type: string, format: date-time }
+      required: [data, seriesId, source, generatedAt]
+
     # ---------- Marine & Coastal (ADR-083, T8.3) ----------
     #
     # StationClock / FreshnessInfo below are genuinely used by every marine
@@ -3277,14 +3721,30 @@ components:
         classification:
           type: string
           enum: [groundswell, swell, wind_swell]
+        nu: { type: number, nullable: true, description: "Added S2 (2026-08-27, ADR-101 Amendment 1). Longuet-Higgins spectral width parameter (sqrt(m0*m2/m1^2 - 1)) over this partition's half-way band. Null when no band could be computed this hour." }
+        qp: { type: number, nullable: true, description: "Added S2. Goda (1970) spectral peakedness over this partition's band. Null under the same conditions as nu." }
+        kappa: { type: number, nullable: true, description: "Added S2. Battjes & van Vledder (1984) successive-height correlation at lag tm02S, divided by m0. Null under the same conditions as nu." }
+        tm02S: { type: number, nullable: true, description: "Added S2. Mean zero-up-crossing period (Tm02 = sqrt(m0/m2)) over this partition's band, seconds. Null under the same conditions as nu." }
+        nRep: { type: number, nullable: true, description: "Added S2. Kimura (1980) mean total run length (waves) at threshold H > H1/10 (rho = 1.80). Null under the same conditions as nu." }
+        tSetS: { type: number, nullable: true, description: "Added S2. Set interval, T_set = nRep * tm02S, seconds -- feeds the Consistency factor's timing term. Null under the same conditions as nu." }
+        bandHz:
+          type: array
+          nullable: true
+          items: { type: number }
+          minItems: 2
+          maxItems: 2
+          description: "Added S2. [f_lo, f_hi] half-way band edges (ADR-101 Amendment 1 ruling C) used to compute this partition's group statistics. Null under the same conditions as nu."
       required: [height, period, direction, energy, frequencyRange, classification]
 
     MarineObservation:
       type: object
       description: |
-        Single buoy observation snapshot from NDBC standard met data.
-        Every field except stationId/time may be null (genuinely absent
-        from a given buoy's payload).
+        TARGET (Fishing and Boating remediation Phase 1; not yet shipped):
+        normalized current-conditions payload for the selected marine
+        location. It is not a buoy-only payload. Station hardware is used
+        within the configured station-service radius; otherwise the selected
+        forecast provider is used at the marine coordinates. Missing source
+        values remain null and are explained by provenance.
       properties:
         windSpeed: { type: number, nullable: true, description: "group_ocean_speed" }
         windDirection: { type: number, nullable: true, description: "Degrees true north" }
@@ -3295,18 +3755,69 @@ components:
         meanWaveDirection: { type: number, nullable: true, description: "Degrees true north" }
         pressure: { type: number, nullable: true, description: "group_pressure; sea-level pressure" }
         airTemp: { type: number, nullable: true, description: "group_temperature" }
+        feelsLike: { type: number, nullable: true, description: "group_temperature; apparent air temperature" }
+        humidity: { type: number, nullable: true, description: "Relative humidity percentage" }
         waterTemp: { type: number, nullable: true, description: "group_temperature; sea surface temperature" }
         dewpoint: { type: number, nullable: true, description: "group_temperature" }
         visibility: { type: number, nullable: true, description: "group_visibility" }
         pressureTendency: { type: number, nullable: true, description: "group_pressure; 3-hour tendency" }
         tideLevel: { type: number, nullable: true, description: "group_water_level; where reported" }
-        stationId: { type: string }
+        weatherCode: { type: string, nullable: true, description: "Normalized weather-state code" }
+        weatherText: { type: string, nullable: true, description: "Normalized weather-state description" }
+        isDay: { type: boolean, nullable: true }
         time: { type: string, format: date-time }
-        spectralComponents:
-          type: array
-          nullable: true
-          items: { $ref: '#/components/schemas/SpectralWaveComponent' }
-      required: [stationId, time]
+        source:
+          type: string
+          description: "Normalized selected-location source role: station, forecast_provider, mixed, or unavailable"
+        provenance:
+          type: object
+          description: "Per-domain provenance for conditions, pressure, water temperature, and tide/current context."
+          properties:
+            conditions:
+              nullable: true
+              allOf: [{ $ref: '#/components/schemas/MarineFieldProvenance' }]
+            pressure:
+              nullable: true
+              allOf: [{ $ref: '#/components/schemas/MarineFieldProvenance' }]
+            waterTemperature:
+              nullable: true
+              allOf: [{ $ref: '#/components/schemas/WaterTemperatureProvenance' }]
+            tideCurrent:
+              nullable: true
+              allOf: [{ $ref: '#/components/schemas/MarineFieldProvenance' }]
+          required: [conditions, pressure, waterTemperature, tideCurrent]
+      required: [time, source, provenance]
+
+    MarineFieldProvenance:
+      type: object
+      description: Provenance for one normalized marine field group.
+      properties:
+        available: { type: boolean }
+        source: { type: string, description: "Source identifier or role" }
+        sourceType: { type: string, enum: [observed, forecast, modeled, unavailable] }
+        validTime: { type: string, format: date-time, nullable: true }
+        distanceKm: { type: number, nullable: true, minimum: 0 }
+        unit: { type: string, nullable: true }
+      required: [available, source, sourceType, validTime, unit]
+
+    WaterTemperatureProvenance:
+      type: object
+      description: >-
+        Water-temperature source, coverage, valid time, and depth. Selection is
+        coverage-aware at the chosen point: local sensor first; WCOFS only where
+        its West-Coast coverage includes that point; configured regional model
+        or ERDDAP sources and national fallbacks elsewhere; a buoy or tide-station
+        observation is last resort. The selected source, valid time, and depth
+        are carried with the value.
+      properties:
+        available: { type: boolean }
+        source: { type: string }
+        sourceType: { type: string, enum: [observed, modeled, forecast, unavailable] }
+        validTime: { type: string, format: date-time, nullable: true }
+        coverageTier: { type: string, nullable: true, enum: [local_sensor, ofs, regional_erddap, rtofs, mur_sst, observed, unavailable] }
+        depthM: { type: number, nullable: true, minimum: 0 }
+        unit: { type: string, nullable: true }
+      required: [available, source, sourceType, validTime, coverageTier, depthM, unit]
 
     TidePrediction:
       type: object
@@ -3333,7 +3844,11 @@ components:
 
     MarineForecastPoint:
       type: object
-      description: Single timestep from a WaveWatch III wave forecast.
+      description: |
+        TARGET (Fishing and Boating remediation Phase 1; not yet shipped):
+        single timestep from a configured surf-spot model wave forecast. Its
+        water temperature is selected by the coverage-aware resolver rather
+        than assumed to be OFS, and its selected source record remains attached.
       properties:
         time: { type: string, format: date-time, description: "Forecast valid time" }
         waveHeight: { type: number, nullable: true, description: "group_wave_height; significant wave height" }
@@ -3347,13 +3862,27 @@ components:
         windWaveHeight: { type: number, nullable: true, description: "group_wave_height" }
         windWavePeriod: { type: number, nullable: true, description: "group_wave_period" }
         windWaveDirection: { type: number, nullable: true }
-      required: [time]
+        waterTemp: { type: number, nullable: true, description: "group_temperature; coverage-aware location/depth-appropriate forecast water temperature; null when no eligible source supplies it" }
+        waterTempProvenance:
+          allOf: [{ $ref: '#/components/schemas/WaterTemperatureProvenance' }]
+          description: "Selected water-temperature source, source type, valid time, coverage tier, depth, and unit; unavailable is explicit. WCOFS is eligible only for a point within its West-Coast coverage."
+      required: [time, waterTempProvenance]
 
     MarineTextForecast:
       type: object
-      description: Single period from an NWS marine zone text forecast.
+      description: |
+        TARGET (Fishing and Boating remediation Phase 1; not yet shipped):
+        one NWS Coastal Waters Forecast period. The provider preserves
+        issuanceTime but does not infer UTC bounds from a prose label. The API
+        assigns explicit bounds only when the label maps to an existing
+        regular-forecast day/night column; otherwise both bounds remain null
+        and the period is unavailable for alignment. It augments, and never
+        replaces, location weather.
       properties:
+        periodStart: { type: string, format: date-time, nullable: true, description: "UTC validity start assigned from a matching existing regular-forecast column; null when unmatched" }
+        periodEnd: { type: string, format: date-time, nullable: true, description: "UTC validity end assigned from a matching existing regular-forecast column; null when unmatched" }
         periodName: { type: string, description: "e.g. Tonight, Thursday" }
+        issuanceTime: { type: string, format: date-time, nullable: true, description: "UTC time when NWS issued the CWF product" }
         text: { type: string, description: "Full forecast narrative" }
         wind: { type: string, nullable: true }
         seas: { type: string, nullable: true }
@@ -3361,129 +3890,105 @@ components:
         weather: { type: string, nullable: true }
       required: [periodName, text]
 
-    SurfForecastScoring:
-      type: object
-      description: >
-        Per-factor scoring breakdown returned inside SurfForecast.scoring.
-        RESHAPED 2026-08-05 (Round S, ADR-101 — BREAKING wire change; audit
-        F1 sync). Weighted geometric mean of five 0-100 components:
-        score = 100 x size^w1 x shape^w2 x conditions^w3 x power^w4 x
-        consistency^w5, weights normalized by their sum at computation time
-        (shipped defaults 0.25/0.25/0.20/0.20/0.10, operator-configurable
-        system-wide). Bars do NOT sum to the total; any factor at 0 -> total
-        0. Deleted with this reshape (no longer on the wire): waveHeight,
-        wavePeriod, waveOrganization, organizationWind,
-        organizationSwellDominance, organizationDirectionalSpread,
-        organizationCrossSwell, beachAlignment, directionalExposure,
-        timeOfDay — the adjustments concept itself is gone, not renamed.
-        See API-MANUAL.md #SurfScoringBreakdown and ADR-101.
-      properties:
-        size: { type: integer, minimum: 0, maximum: 100, description: "Wave Size component. Face-height band curve; beach alignment + directional exposure act inside it as internal modifiers (never displayed separately)." }
-        shape: { type: integer, minimum: 0, maximum: 100, description: "Wave Shape component. Peel angle (0.6) + breaker type/Iribarren (0.4). Closeout ruin pin <= 10 (shape = min(blend, 0.10) when peel < 15 deg, S-SPEC-1/S1c)." }
-        conditions: { type: integer, minimum: 0, maximum: 100, description: "Conditions component. Wind (0.6) + DSPR (0.25) + cross-swell (0.15). Blown-out ruin pin <= 5." }
-        power: { type: integer, minimum: 0, maximum: 100, description: "Swell Power component. Dominant multiSwell partition period (0.7) + height-as-energy-expression (0.3). Never Tm01." }
-        consistency: { type: integer, minimum: 0, maximum: 100, description: "Consistency component: swell-dominance bucketing." }
-        weights:
-          type: object
-          description: "The five EFFECTIVE (sum-normalized) weights actually used to compute the total this timestep — reflects operator config."
-          properties:
-            size: { type: number, minimum: 0, maximum: 1 }
-            shape: { type: number, minimum: 0, maximum: 1 }
-            conditions: { type: number, minimum: 0, maximum: 1 }
-            power: { type: number, minimum: 0, maximum: 1 }
-            consistency: { type: number, minimum: 0, maximum: 1 }
-          required: [size, shape, conditions, power, consistency]
-      required: [size, shape, conditions, power, consistency, weights]
-
     SurfForecast:
       type: object
       description: Surf quality forecast for one spot at one timestep (post wave_transform + surf_scorer).
       properties:
         time: { type: string, format: date-time }
-        waveHeightAtBreak: { type: number, nullable: true, description: "group_wave_height; after SWAN wave_transform.py supplements (shoaling, γ correction, structure effects, topographic focusing). Legacy field retained for backward compatibility. Nullable (T4A.4, Phase 4A): becoming SwellTrack-derived, null exactly when breakingFaceHeight is null (model failure) — never render null as 0." }
+        # KNOWN CONTRACT DIVERGENCE, not introduced by the 2026-07-27 marine fixes and not
+        # resolved by them: endpoints/surf.py emits `waveHeightAtBreak: null` whenever
+        # SwellTrack produced no face height for the timestep (since marine fa1c482), while
+        # this schema declares the field required and non-nullable. Left as declared pending
+        # an operator ruling on which side moves — flipping `nullable` here is a data-contract
+        # change, not a doc sync.
+        waveHeightAtBreak: { type: number, description: "group_wave_height; Hs at the SwellTrack break point (breakingFaceHeight / 1.27). There is no SWAN-transect fallback." }
+        swellHeight: { type: number, nullable: true, description: "group_wave_height; height of the dominant multiSwell partition, sampled at the SWAN deep-water reference point (L2, the spot's measured ~15 m contour). Falls back to the cross-shore transect reference point's HSWELL when that timestep has no deep-water reference. Absent on WW3 fallback responses." }
+        breakingFaceHeight: { type: number, nullable: true, description: "Trough-to-crest breaking wave face height via breaker formula (Komar-Gaughan or Caldwell per per-spot config). Primary surfer-scale height; display when surfHeightDisplay='face'. Absent on WW3 fallback." }
+        breakingHawaiianHeight: { type: number, nullable: true, description: "Back-of-wave (Hawaiian) scale = breakingFaceHeight × 0.5. Display when surfHeightDisplay='hawaiian'. Null when breakingFaceHeight is null." }
         period: { type: number, description: "group_wave_period; dominant period" }
         direction: { type: number, description: "Degrees true north; dominant swell direction" }
-        qualityStars: { type: integer, nullable: true, minimum: 1, maximum: 5, description: "Nullable (T4A.4, Phase 4A): score_surf() returns no rating when the 1D model fails, rather than a confident 0/low rating. Null must render as the existing no-data treatment, never as 0 filled stars (indistinguishable from a genuine 0-star rating) or an empty star row." }
+        qualityStars: { type: integer, minimum: 1, maximum: 5 }
         qualityLabel:
           type: string
-          nullable: true
           enum: [Poor, Fair, Good, Very Good, Epic]
-          description: "Null together with qualityStars."
-        qualityScore: { type: integer, nullable: true, minimum: 0, maximum: 100, description: "Added 2026-08-05 (Round S, ADR-101 — audit F1 sync). The scorer's true geometric-mean total, rounded to an int. NOT derivable from qualityStars — qualityStars is stars = round(score/20) floored at 1, an independent rounding of the same underlying float, so reconstructing qualityScore from qualityStars (e.g. stars*20) can be off by up to 19. Consumers needing the numeric total must read this field directly, never reconstruct it by summing scoring.{size,shape,conditions,power,consistency} (those no longer sum to the total under the geometric mean). Null together with qualityStars/qualityLabel when the 1D model failed, or absent on a pre-Round-S server." }
-        conditionsText: { type: string, description: "Always a non-null string. When the score is unavailable, the API resolves its own locale key into localized 'conditions unavailable' text rather than sending null — the dashboard renders this field as-is, with no separate no-data handling." }
+        conditionsText: { type: string }
         windQuality:
           type: string
           enum: [offshore, cross_offshore, cross, cross_onshore, onshore]
+        windSource: { type: string, nullable: true, description: "Wind data source for this timestep: 'hrrr' for forecast timesteps, 'station' or 'forecast_provider' for current-conditions." }
         swellDominance: { type: number, minimum: 0, maximum: 1, description: "Continuous ratio (marine a751c9a): energy of ALL spectral components with period > 10s over total spectral energy, not just the primary component" }
         multiSwell:
           type: array
           nullable: true
+          description: >-
+            Swell partitions sampled at the SWAN deep-water reference point — one per spot,
+            in the Level 2 (100 m) grid, on the spot's own measured ~15 m contour. Partitions
+            are SWAN's own watershed output (companion TABLE PT* columns), not a decomposition
+            of the SPECOUT energy matrix. Never sampled at the SwellTrack handoff, which sits
+            in or beside the surf zone. Null when the deep-water reference is unavailable for
+            this timestep (no ~15 m contour locatable for the spot, or no PT* row for the
+            point/timestep) — the handoff partitions are never substituted.
           items: { $ref: '#/components/schemas/SpectralWaveComponent' }
-        scoring:
-          allOf: [{ $ref: '#/components/schemas/SurfForecastScoring' }]
-          nullable: true
-          description: "Per-factor scoring breakdown, provided by surf_scorer.py when available. Null when the API does not yet include scoring (e.g. older server versions). Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since Phase 4A."
-        swellHeight: { type: number, nullable: true, description: "Raw SWAN Hsig (significant wave height) before wave_transform.py supplements. Absent on WW3 fallback responses." }
-        breakingFaceHeight: { type: number, nullable: true, description: "Trough-to-crest breaking wave face height. Primary surfer-scale height; display when surfHeightDisplay='face'. Absent on WW3 fallback. Since 2026-08-01 (BD-7, ADR-093 Amendment 7): mainBreakZoneFaceHeight when > 0, else bestPeakFaceHeight — no longer simply 'best peak across open transects' (formula description corrected 2026-08-02, D4.1)." }
-        breakingHawaiianHeight: { type: number, nullable: true, description: "Back-of-wave (Hawaiian) scale = breakingFaceHeight × 0.5. Display when surfHeightDisplay='hawaiian'. Null when breakingFaceHeight is null." }
-        modelSurfHeightMin: { type: number, nullable: true, description: "WC-D3 (2026-08-07). Smallest per-partition face height across the main break zone's qualifying transects (Tp >= 5s). group_wave_height. Distinct from NWS SRF surfHeightMin." }
-        modelSurfHeightMax: { type: number, nullable: true, description: "WC-D3 (2026-08-07). Largest per-partition face height across the main break zone's qualifying transects. Same value as breakingFaceHeight. group_wave_height. Distinct from NWS SRF surfHeightMax." }
-        periodMinS: { type: number, nullable: true, description: "PA2 (ruled 2026-08-10, MARINE-PAGE-FIXIT-PLAN Phase S). Lowest peak period across the ELIGIBLE surfable swell components (component eligible unless classified wind swell AND period < 5.0 s; no-qualifier fallback to all components unchanged). Pair with periodMaxS; single eligible component collapses min=max. One decimal. group_wave_period. Replaces the retired combinedPeriodS (periods of separate wave trains do not combine)." }
-        periodMaxS: { type: number, nullable: true, description: "PA2 (ruled 2026-08-10, MARINE-PAGE-FIXIT-PLAN Phase S). Highest peak period across the ELIGIBLE surfable swell components. See periodMinS." }
-        mainBreakZoneFaceHeight: { type: number, nullable: true, description: "NEW 2026-08-01 (BD-7, ADR-093 Amendment 7). THE headline face height — mean of the qualifying per-transect face heights within the main break zone. 0.0 when nothing broke anywhere; null only when no transects were computed at all, or absent entirely on a pre-Round-2 cache entry. Added to this schema 2026-08-02 (D4.1/D4.2 catch-up)." }
-        mainBreakZoneStartIndex: { type: integer, nullable: true, description: "NEW 2026-08-01 (BD-7). Inclusive start transect index of the main break zone. Added 2026-08-02 (D4.1/D4.2)." }
-        mainBreakZoneEndIndex: { type: integer, nullable: true, description: "NEW 2026-08-01 (BD-7). Inclusive end transect index of the main break zone. Not guaranteed every index between start and end is a zone member in the rare scattered-failure fallback case (PROVIDER-MANUAL §14.15). Added 2026-08-02 (D4.1/D4.2)." }
-        mainBreakZoneQualifyingCount: { type: integer, nullable: true, description: "NEW 2026-08-01 (BD-7). Count of in-zone transects that met the qualifying threshold and fed mainBreakZoneFaceHeight; always >= 1 when non-null. Added 2026-08-02 (D4.1/D4.2)." }
-        representativeTransectIndex: { type: integer, nullable: true, description: "NEW 2026-08-01 (BD-9). The transect index whose cross-section the beach-profile endpoint renders (transect_index=best default already resolves this server-side — the dashboard does not pass it back). Added 2026-08-02 (D4.1/D4.2)." }
-        modelStatus: { type: string, nullable: true, enum: [ok, no_breaking, unavailable, partial, degraded_bulk], description: "T4A.4 (Phase 4A): replaces the removed boolean 'degraded' flag. 'ok' = full SwellTrack pipeline ran; 'no_breaking' = model ran, genuinely flat (breakingFaceHeight=0.0); 'unavailable' = model failed (breakingFaceHeight=null) — never render null as flat; 'partial' (C4/G7.5 2026-08-03) = <25% of transects on bulk Hs/Tp/Dir and none headline-feeding — minor caveat; 'degraded_bulk' = ≥25% of transects on bulk parameters OR a headline-feeding (main-break-zone qualifying) transect is." }
-        windSource: { type: string, nullable: true, description: "Wind data source for this timestep's surf scoring: 'hrrr' for forecast timesteps, 'station' for t=0. Null when nearshore model is unavailable." }
-        breakPoints:
-          type: array
-          nullable: true
-          items: { $ref: '#/components/schemas/BeachProfileBreakPoint' }
-          description: "QB-peak break locations along the reference transect at this timestep (surf.py per-timestep pipeline scan — distinct from the beach-profile endpoint's per-transect break points, same schema/vocabulary). faceHeight/breakerType/iribarren/partitionInfo are never populated by this pipeline (always absent here). Null when no QB peak >= 0.25 detected. Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since Phase 4A."
-        directionalSpread: { type: number, nullable: true, description: "DSPR at the cross-shore transect reference point, in degrees (ADR-095). Added 2026-08-02 catch-up (D4.1)." }
-        setup: { type: number, nullable: true, description: "Wave-induced setup. Currently always null — SWAN SETUP command removed. Field retained for API contract stability. Added 2026-08-02 catch-up (D4.1)." }
-        perPartitionBreaks:
-          type: array
-          nullable: true
-          items: { $ref: '#/components/schemas/BeachProfilePerPartitionBreak' }
-          description: "Per-partition break info — what each incoming swell component does at the beach. Reuses the SAME schema/serializer as the beach-profile endpoint's BeachProfileData.perPartitionBreaks (D10.2 ruling (1) — one schema for one concept, replacing the deleted bespoke PartitionBreakInfo/partitionBreakInfo type removed by D1 `54b1563`). Null when the 1D model per-partition pipeline is unavailable, OR when the list would be empty — the server never sends an empty array here. Added D10.2 2026-08-03 — served since marine `69d831a`."
-        shadowFaceHeight: { type: number, nullable: true, description: "Face height in the structure shadow zone, in display units — a SECONDARY, non-headline readout (D10.2 ruling (2): a legitimate is_structure_affected metadata consumer under BD-8's headline-aggregation demotion). Null when no structure shadow is present at this timestep. Added D10.2 2026-08-03 — served since marine `69d831a`." }
-        peelAngle: { type: number, nullable: true, description: "Peel angle in degrees, from break point spatial variation across adjacent transects. Null when insufficient transect data. Since 2026-08-01: across ALL successful transects, not just open ones (BD-8 rescinded). Added 2026-08-02 catch-up (D4.1)." }
-        peelClassification: { type: string, nullable: true, enum: [closeout, fast, fast_right, fast_left, fast_a_frame, good, good_right, good_left, good_a_frame, mellow, mellow_right, mellow_left, mellow_a_frame], description: "Peel angle classification: base quality class closeout (<30°) / fast (30-45°) / good (45-66°) / mellow (>66°), with a direction suffix (_right/_left/_a_frame) appended when direction is determined AND the class is not closeout — plain base when direction is undetermined. closeout is ALWAYS plain, never suffixed. Re-corrected 2026-08-02 (D8, supersedes the D4.1 audit description) — that pass's 'plain, undirected' correction was a sampling artifact from an all-closeout-hours capture; live-confirmed against marine surf_1d_pipeline.py:750-786 2026-08-02. Direction is ALSO available independently via peelDirection below (served even on closeout hours) — do not parse this field for direction." }
-        peelDirection: { type: string, nullable: true, enum: [right, left, a_frame], description: "Break direction descriptor, computed INDEPENDENTLY of peelClassification — served even on closeout hours (a geometry descriptor, not gated by peel quality; live-confirmed 2026-08-02: 36/36 hours closeout + a_frame on the same day). Re-corrected 2026-08-02 (D8, supersedes the D4.1 audit description, which called this an open/opaque string pending more observed values) — as-built enum closed to right/left/a_frame, live-confirmed against marine surf_1d_pipeline.py:750-786. A consumer that wants 'does this wave peel' must still check peelClassification != 'closeout' separately." }
-        bestPeakFaceHeight: { type: number, nullable: true, description: "Highest single-transect face height across the WHOLE study area. Since 2026-08-01: true single-transect max over ALL successful transects (BD-8 rescinded). Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T7.3." }
-        spotAverageFaceHeight: { type: number, nullable: true, description: "Mean face height across the WHOLE study area. Since 2026-08-01: mean across ALL successful transects (BD-8 rescinded). Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T7.3." }
-        transectCount: { type: integer, nullable: true, description: "Total number of transects (open + structure-affected). Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T7.1." }
-        openTransectCount: { type: integer, nullable: true, description: "Number of open (structure-free) transects. Since 2026-08-01 (BD-8 rescinded, ADR-093 Amendment 7): metadata/map-UI count ONLY, plays no role in any aggregation field. Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T7.1." }
-        waveShapeClassification: { type: string, nullable: true, description: "Dominant wave shape from waveform + Iribarren analysis: hollow_plunging | steep_crumbly | walled_closeout | mushy_slow. Added 2026-08-02 catch-up (D4.1) — present in dashboard types.ts since T7.2b." }
+        swellHeightMinFt: { type: number, nullable: true, description: "LIVE 2026-08-09 (L1-BOUNDARY-REBUILD-PLAN Phase C, P13). Min deep-water swell height (already display-unit feet) across ELIGIBLE swell components (wind swell with period < 5.0s excluded unless none eligible). Additive field; see API-MANUAL.md SurfForecast table." }
+        swellHeightMaxFt: { type: number, nullable: true, description: "LIVE 2026-08-09 (L1-BOUNDARY-REBUILD-PLAN Phase C, P13). Max deep-water swell height (already display-unit feet) across ELIGIBLE swell components. Additive field; see API-MANUAL.md SurfForecast table." }
+        periodMinS: { type: number, nullable: true, description: "LIVE (Phase S of MARINE-PAGE-FIXIT-PLAN-2026-08-10, ADR-106 R2, PA2). Lowest peak period (s) across ELIGIBLE surfable swell components (same eligibility rule as swellHeightMinFt/MaxFt). Single eligible component collapses min=max. Replaces the retired combinedPeriodS field. See API-MANUAL.md SurfForecast table." }
+        periodMaxS: { type: number, nullable: true, description: "LIVE (Phase S of MARINE-PAGE-FIXIT-PLAN-2026-08-10, ADR-106 R2, PA2). Highest peak period (s) across ELIGIBLE surfable swell components. Replaces the retired combinedPeriodS field. See API-MANUAL.md SurfForecast table." }
       required: [time, waveHeightAtBreak, period, direction, qualityStars, qualityLabel, conditionsText, windQuality, swellDominance]
 
     FishingForecast:
       type: object
-      description: Fishing conditions forecast for one spot/period (enrichment/fishing_scorer.py). Wind/swell fields are informational, not inputs to overallScore.
+      description: |
+        TARGET (Fishing and Boating remediation Phase 1; not yet shipped):
+        selected-species conditions forecast for one location and time window.
+        There is no generic or overall score; `score` belongs only to the
+        selected species.
       properties:
         periodStart: { type: string, format: date-time }
         periodEnd: { type: string, format: date-time }
         periodLabel: { type: string, description: "e.g. Early Morning, Late Afternoon" }
-        overallScore: { type: integer, minimum: 0, maximum: 100 }
-        pressureScore: { type: integer, minimum: 0, maximum: 100 }
-        tideScore: { type: integer, minimum: 0, maximum: 100 }
-        solunarScore: { type: integer, minimum: 0, maximum: 100 }
-        waterTempScore: { type: integer, minimum: 0, maximum: 100 }
-        timeofdayScore: { type: integer, minimum: 0, maximum: 100 }
-        speciesScores:
+        selectedSpecies: { type: string }
+        profileLevel: { type: string, enum: [direct_species, collapsed_group, functional_category] }
+        score: { type: integer, nullable: true, minimum: 0, maximum: 100 }
+        status: { type: string, nullable: true, enum: [active, less_active, low_activity, inactive] }
+        coreScore: { type: number, nullable: true, minimum: 0 }
+        temperatureSuitability: { type: number, nullable: true, minimum: 0, maximum: 1 }
+        tideCurrentSuitability: { type: number, nullable: true, minimum: 0, maximum: 1 }
+        pressureSuitability: { type: number, nullable: true, minimum: 0, maximum: 1.1 }
+        factorProvenance:
+          type: object
+          description: "Required availability, source, valid-time, unit, and fallback record for every scored environmental factor. A runtime outage retains available=false and its actual source record; any numeric suitability is the documented profile fallback, never a disguised observation."
+          properties:
+            temperature:
+              allOf: [{ $ref: '#/components/schemas/WaterTemperatureProvenance' }]
+            tideCurrent:
+              allOf: [{ $ref: '#/components/schemas/MarineFieldProvenance' }]
+            pressure:
+              allOf: [{ $ref: '#/components/schemas/MarineFieldProvenance' }]
+          required: [temperature, tideCurrent, pressure]
+        pressureTrend: { type: number, nullable: true, description: "group_pressure; time-matched 3-hour mean-sea-level pressure change in hPa" }
+        tideState: { type: string, nullable: true }
+        solunarState: { type: string, enum: [major, minor, none] }
+        appliedAdjustments:
           type: array
-          nullable: true
           items: { type: object, additionalProperties: true }
+        hardStopReason: { type: string, nullable: true }
+        waterTemperature: { type: number, nullable: true, description: "group_temperature; depth-appropriate selected-species value" }
+        waterTemperatureProvenance:
+          allOf: [{ $ref: '#/components/schemas/WaterTemperatureProvenance' }]
+          description: "Selected water-temperature source, type, valid time, coverage tier, depth, and unit; unavailable is explicit."
         conditionsText: { type: string }
-        windSpeed: { type: number, nullable: true, description: "group_ocean_speed; informational, not scored" }
+        windSpeed: { type: number, nullable: true, description: "group_ocean_speed; time-matched nearshore wind, informational" }
         windDirection: { type: number, nullable: true }
-        windGust: { type: number, nullable: true, description: "group_ocean_speed; informational" }
-        swellHeight: { type: number, nullable: true, description: "group_wave_height; informational, not scored" }
-        swellPeriod: { type: number, nullable: true, description: "group_wave_period; informational" }
-      required: [periodStart, periodEnd, periodLabel, overallScore, pressureScore, tideScore, solunarScore, waterTempScore, timeofdayScore, conditionsText]
+        windGust: { type: number, nullable: true, description: "group_ocean_speed; time-matched nearshore gust, informational" }
+        weatherProvenance:
+          allOf: [{ $ref: '#/components/schemas/MarineFieldProvenance' }]
+          description: "Nearshore weather source and valid time for wind and gust; unavailable is explicit."
+        swellHeight: { type: number, nullable: true, description: "group_wave_height; time-matched swell, informational" }
+        swellPeriod: { type: number, nullable: true, description: "group_wave_period; time-matched swell, informational" }
+        swellProvenance:
+          allOf: [{ $ref: '#/components/schemas/MarineFieldProvenance' }]
+          description: "Swell source and valid time; unavailable is explicit."
+      required: [periodStart, periodEnd, periodLabel, selectedSpecies, profileLevel, score, status, coreScore, temperatureSuitability, tideCurrentSuitability, pressureSuitability, factorProvenance, solunarState, appliedAdjustments, waterTemperatureProvenance, weatherProvenance, swellProvenance, conditionsText]
 
     SolunarTimes:
       type: object
@@ -3498,6 +4003,8 @@ components:
         moonset: { type: string, format: date-time, nullable: true, description: "null if the moon doesn't set this day" }
         moonTransit: { type: string, format: date-time, description: "Highest point" }
         moonUnderfoot: { type: string, format: date-time, description: "Opposite transit" }
+        sunrise: { type: string, format: date-time, nullable: true, description: "C-47: for this request's lat/lon, not the station's; null on polar day/night" }
+        sunset: { type: string, format: date-time, nullable: true, description: "C-47: for this request's lat/lon, not the station's; null on polar day/night" }
         majorPeriods:
           type: array
           description: "2/day, on transit/underfoot"
@@ -3540,7 +4047,9 @@ components:
       properties:
         safetyLevel:
           type: string
+          nullable: true
           enum: [safe, caution, dangerous]
+          description: "Always null in v1 (T9.1). The composite safe/caution/dangerous classifier was rejected in favor of the individual hazard fields below (ripCurrentRisk, waveHeight, wavePeriod, uvIndex, comfortLevel, etc.); kept in the schema for backward compatibility."
         waveHeight: { type: number, nullable: true, description: "group_wave_height; current/forecast" }
         wavePeriod: { type: number, nullable: true, description: "group_wave_period; current/forecast" }
         ripCurrentRisk:
@@ -3580,7 +4089,7 @@ components:
         currentConditions:
           nullable: true
           allOf: [{ $ref: '#/components/schemas/MarineObservation' }]
-          description: "Latest buoy observation, if buoy-capable. Always null on the current list-route implementation (deferred pending a cache warmer)."
+          description: "Normalized current-conditions payload when populated; it is not restricted to buoy data. The list route may remain null when no list-route fetch is performed."
         currentTide:
           type: object
           nullable: true
@@ -3592,14 +4101,32 @@ components:
         activeAlerts:
           type: array
           nullable: true
-          items: { type: string }
+          description: "Active marine alerts, each tagged with an alertType bucket for dashboard per-tab filtering (T3.5)."
+          items:
+            type: object
+            properties:
+              headline: { type: string, description: "NWS alert headline text" }
+              alertType: { type: string, enum: [marineZone, coastalFlood, beachHazard] }
+            required: [headline, alertType]
         surfRating: { type: integer, nullable: true, minimum: 1, maximum: 5 }
         beachSafetyLevel: { type: string, nullable: true, enum: [safe, caution, dangerous] }
+        photoUrl:
+          type: string
+          nullable: true
+          description: "/marine-photos/{locationId}.webp when the operator has uploaded a location photo (T4.1-T4.3), else null."
       required: [locationId, name, coordinates, activities]
 
     MarineBundle:
       type: object
-      description: Container for GET /marine/{locationId}. Matches models/responses.py exactly.
+      description: |
+        TARGET (Fishing and Boating remediation Phase 1; not yet shipped):
+        container for GET /marine/{locationId}. `observation` is the
+        normalized Current Conditions payload. `regularForecast` is the
+        configured forecast provider's hourly series at the marine location's
+        coordinates. `textForecast` periods preserve NWS issuance time and
+        nullable bounds; the API fills bounds and attaches regional additions
+        only for labels that map to an existing `regularForecast` day/night
+        column.
       properties:
         locationId: { type: string }
         locationName: { type: string }
@@ -3609,15 +4136,61 @@ components:
         observation:
           nullable: true
           allOf: [{ $ref: '#/components/schemas/MarineObservation' }]
+          description: "Normalized Current Conditions payload for the selected location."
+        offshoreObservations:
+          allOf: [{ $ref: '#/components/schemas/OffshoreObservationContext' }]
+          description: "TARGET: selected offshore-buoy context and every configured NDBC record, separately labelled and never selected-point weather or wave conditions."
         forecast:
           type: array
           items: { $ref: '#/components/schemas/MarineForecastPoint' }
+          description: Model wave forecast entries for configured surf spots only; empty for non-surf locations.
+        regularForecast:
+          type: array
+          items: { $ref: '#/components/schemas/HourlyForecastPoint' }
+          description: "TARGET: provider-neutral hourly forecast at the configured marine location coordinates; empty when no usable provider series is returned. NDBC is not a fallback."
         textForecast:
           type: array
           items: { $ref: '#/components/schemas/MarineTextForecast' }
         source: { type: string, example: "ndbc+wavewatch+nws_marine" }
         generatedAt: { type: string, format: date-time }
-      required: [locationId, locationName, coordinates, forecast, textForecast, source, generatedAt]
+      required: [locationId, locationName, coordinates, offshoreObservations, forecast, regularForecast, textForecast, source, generatedAt]
+
+    OffshoreMarineObservation:
+      type: object
+      description: |
+        One configured NDBC offshore context record. This is offshore
+        navigation/exit context, not `MarineObservation` and never selected
+        location conditions. An unavailable record preserves its station
+        identity and explicit data state without borrowing local metadata.
+      properties:
+        stationId: { type: string }
+        distanceKm: { type: number, nullable: true, minimum: 0 }
+        dataState: { type: string, enum: [available, no_observation, provider_failure] }
+        source: { type: string, enum: [ndbc, unavailable] }
+        validTime: { type: string, format: date-time, nullable: true }
+        waterTemp: { type: number, nullable: true, description: "group_temperature; offshore buoy observation only" }
+        airTemp: { type: number, nullable: true, description: "group_temperature; offshore buoy observation only" }
+        pressure: { type: number, nullable: true, description: "group_pressure; offshore buoy observation only" }
+        windSpeed: { type: number, nullable: true, description: "group_ocean_speed; offshore buoy observation only" }
+        windDirection: { type: number, nullable: true, description: "Degrees true north; offshore buoy observation only" }
+        windGust: { type: number, nullable: true, description: "group_ocean_speed; offshore buoy observation only" }
+        waveHeight: { type: number, nullable: true, description: "group_wave_height; offshore buoy observation only" }
+        wavePeriod: { type: number, nullable: true, description: "group_wave_period; offshore buoy observation only" }
+        spectralComponents:
+          type: array
+          nullable: true
+          items: { $ref: '#/components/schemas/SpectralWaveComponent' }
+      required: [stationId, distanceKm, dataState, source, validTime]
+
+    OffshoreObservationContext:
+      type: object
+      description: Selected offshore-buoy context state, distinct from individual station records.
+      properties:
+        selectionState: { type: string, enum: [no_buoy_selected, selected_buoy_no_observation, provider_failure, observations_available] }
+        observations:
+          type: array
+          items: { $ref: '#/components/schemas/OffshoreMarineObservation' }
+      required: [selectionState, observations]
 
     TideBundle:
       type: object
@@ -3638,14 +4211,16 @@ components:
         generatedAt: { type: string, format: date-time }
       required: [locationId, locationName, coordinates, predictions, waterLevels, source, generatedAt]
 
-    # ---------- Surf / Fishing / Beach-safety: actual endpoint shapes ----------
+    # ---------- Surf and Beach-safety: actual endpoint shapes; Fishing: Phase 1 target contract ----------
     #
-    # SurfBundle/FishingBundle/BeachSafetyBundle exist as Pydantic classes in
-    # models/responses.py but are NOT constructed by their endpoints (Phase
-    # 0C models written ahead of Phase 5 endpoint implementations - tracked
-    # cleanup item, not a Phase 8 blocker). The schemas below are the actual
-    # ground-truth shapes, read directly from endpoints/surf.py,
-    # endpoints/fishing.py, endpoints/beach_safety.py. See API-MANUAL §16.
+    # There are no SurfBundle/FishingBundle/BeachSafetyBundle Pydantic models
+    # (Phase 0C drafts of those classes, written ahead of the Phase 5 endpoint
+    # implementations, were removed from models/responses.py - T4.3, Phase 4
+    # cleanup). Surf and Beach-safety schemas below are actual ground-truth
+    # shapes, read directly from endpoints/surf.py and endpoints/beach_safety.py.
+    # Fishing schemas below are explicitly marked Phase 1 target contracts and
+    # must not be read as the current endpoints/fishing.py response. See
+    # API-MANUAL §16.
 
     ExternalLink:
       type: object
@@ -3678,294 +4253,71 @@ components:
         forecast:
           type: array
           items: { $ref: '#/components/schemas/SurfForecast' }
-          description: "Up to 144 hourly entries from SWAN (72-hour window); 0 or 1 entries when falling back to WaveWatch III."
+          description: "Up to 144 timesteps of surf forecast data from SWAN + SwellTrack. Empty array when SWAN is unavailable."
         zoneForecast:
           nullable: true
           allOf: [{ $ref: '#/components/schemas/SurfZoneForecast' }]
+        waterTemp: { type: number, nullable: true, description: "group_temperature; sourced from ocean_data_resolver.resolve(needs=\"surface\") (tiered: on-premises sensor -> OFS -> regional ERDDAP -> RTOFS/MUR SST), falling back to zoneForecast.waterTemp (NWS SRF text product) only when the resolver returns nothing" }
         spectralComponents:
           type: array
           items: { $ref: '#/components/schemas/SpectralWaveComponent' }
         tidePredictions:
           type: array
           items: { $ref: '#/components/schemas/TidePrediction' }
-          description: "Informational overlay, not scored. Not present on the SurfBundle Pydantic class."
-        source: { type: string, example: "swan+ndbc+coops+nws_srf" }
-        generatedAt: { type: string, format: date-time }
-        nearshoreModel: { type: string, nullable: true, example: "SWAN + SwellTrack", description: "Identifies the nearshore model in use. 'SWAN + SwellTrack' when active; absent/null for WW3 fallback responses." }
+          description: "Informational overlay, not scored."
+        nearshoreModel: { type: string, nullable: true, example: "SWAN + SwellTrack", description: "Identifies the nearshore model in use. 'SWAN + SwellTrack' when active; absent/null when SWAN is not installed." }
         lastRunTime: { type: string, format: date-time, nullable: true, description: "UTC ISO-8601 timestamp when the last SWAN model run completed." }
-        dataAge: { type: number, nullable: true, description: "Seconds elapsed since the last SWAN model run completed." }
         breakerFormula: { type: string, enum: [komar_gaughan, caldwell], nullable: true, description: "Per-spot configured breaker formula used for breakingFaceHeight calculation." }
         surfHeightDisplay: { type: string, enum: [face, hawaiian], nullable: true, description: "Operator-configured height display preference: 'face' for trough-to-crest, 'hawaiian' for back-of-wave scale." }
-      required: [locationId, locationName, coordinates, forecast, spectralComponents, tidePredictions, source, generatedAt]
+        source: { type: string, example: "swan+ndbc+coops+nws_srf" }
+        generatedAt: { type: string, format: date-time }
+      required: [locationId, locationName, coordinates, forecast, waterTemp, spectralComponents, tidePredictions, source, generatedAt]
 
-    # ---------- Beach profile (GET /surf/{locationId}/profile, T4A.1 + T4A.6) ----------
-    #
-    # Ground-truth shapes read directly from endpoints/beach_profile.py
-    # (_build_transect_profile() and get_beach_profile()), post T4A.1 rename
-    # and T4A.6 shape reconciliation. Unified vocabulary: distance/depth/hs
-    # everywhere (Marine Service Separation Plan Phase 4A). T4A.6 items (a)-
-    # (g) closed every API<->dashboard shape mismatch this schema had
-    # previously documented as a gap; see each schema's description for the
-    # item it corresponds to. Remaining pre-existing gap NOT part of T4A.6:
-    # BeachProfileData.transects is never populated by beach_profile.py.
-
-    BeachProfilePoint:
+    FishingSpeciesChoice:
       type: object
-      description: One cross-shore transect point. Field names match BeachProfilePoint (dashboard types.ts) and the model's own vocabulary (Analytical1DResult).
+      description: "TARGET (Fishing and Boating remediation Phase 1; not yet shipped): derived practical Fishing choice from the global species matrix."
       properties:
-        distance: { type: number, description: "Cross-shore distance from shore, in display units (0 = shore, larger = further offshore). Can be negative (TA-C19, ADR-093 Amendment 4): since the HAT landward extension, a point can lie landward of the reference waterline and is reported as a negative distance. Consumers must accept negatives; treat a negative value as at/onshore of the shoreline, never clamp or abs() it. Note added 2026-08-02 (D4.1/D4.2) — confirmed live." }
-        depth: { type: number, description: "Depth below the water surface, in display units (positive = deeper)." }
-        hs: { type: number, nullable: true, description: "Significant wave height at this point, in display units." }
-        swellHeight: { type: number, nullable: true, description: "Swell height (HSWELL) at this point, in display units." }
-        breakingFraction: { type: number, nullable: true, minimum: 0, maximum: 1, description: "Fraction of waves breaking at this point (QB)." }
-        breakingDissipation: { type: number, nullable: true, description: "Breaking dissipation (DISSURF) in W/m²." }
-      required: [distance, depth, hs]
-
-    BeachProfilePartitionInfo:
-      type: object
-      description: Per-partition metadata attached to a break point (which incoming swell component broke here). Nested inside BeachProfileBreakPoint.partitionInfo. T4A.6 item (c) — matches dashboard types.ts BeachProfilePartitionInfo, replacing the old flat `partitionLabel` string (never populated by any endpoint) as of T4A.6.
-      nullable: true
-      properties:
-        partitionIndex: { type: integer }
-        periodS: { type: number, nullable: true }
-        directionDeg: { type: number, nullable: true }
-        classification: { type: string, nullable: true, description: "groundswell | swell | wind_swell" }
-        heightM: { type: number, description: "NOTE: field name keeps the 'M' (meter) suffix from the internal dataclass despite being unit-converted to the operator's display unit — a pre-existing naming quirk, not part of T4A.1." }
-
-    BeachProfileBreakPoint:
-      type: object
-      description: One break location along a transect. Field names match BeachProfileBreakPoint (dashboard types.ts).
-      properties:
-        distance: { type: number, description: "Distance from shore at this break location, in display units. Can be negative — same TA-C19 / ADR-093 Amendment 4 semantics as BeachProfilePoint.distance above. Note added 2026-08-02 (D4.1/D4.2)." }
-        depth: { type: number, description: "Depth at the break location, in display units." }
-        hs: { type: number, nullable: true, description: "Significant wave height at this break location, in display units." }
-        faceHeight: { type: number, nullable: true, description: "Face height (K-G/Caldwell H1/10 or pipeline-computed) at this break point, in display units." }
-        breakerType: { type: string, nullable: true, enum: [spilling, plunging, surging], description: "Iribarren classification." }
-        iribarren: { type: number, description: "Iribarren number (surf similarity parameter). T4A.6 item (c) — now in the dashboard TS type as an optional field (optional because this same schema also backs surf.py's per-timestep SurfForecast.breakPoints, which never populates it)." }
-        partitionInfo:
-          allOf: [{ $ref: '#/components/schemas/BeachProfilePartitionInfo' }]
-          nullable: true
-          description: "T4A.6 item (c) — now consumed by the dashboard TS type (optional, for the same surf.py-sharing reason as iribarren above)."
-      required: [distance, depth, hs]
-
-    BeachProfileWaveShapePoint:
-      type: object
-      description: |
-        One point of the dominant-partition wave-surface cross-section
-        (Stokes/cnoidal/bore), returned as a TOP-LEVEL array on the transect
-        result (`waveShapes`). T4A.6 item (a) — the dashboard TS type now
-        matches this shape exactly (top-level array, not nested per-point);
-        the chart's "show wave shapes" toggle renders from it directly.
-      properties:
-        distance: { type: number }
-        depth: { type: number }
-        regime: { type: string, description: "e.g. Stokes, cnoidal, bore — from run_1d_analytical()." }
-        surface:
+        choiceId: { type: string }
+        displayName: { type: string }
+        candidateGroup: { type: string, nullable: true }
+        memberSpecies:
           type: array
-          nullable: true
-          description: "[phase, elevation] pairs, both in display units / radians."
-          items:
-            type: array
-            items: { type: number }
-            minItems: 2
-            maxItems: 2
-      required: [distance, depth, regime]
+          items: { type: string }
+        profileLevel:
+          type: string
+          enum: [direct_species, collapsed_group, functional_category]
+        completeProfileMatch: { type: boolean }
+      required: [choiceId, displayName, memberSpecies, profileLevel, completeProfileMatch]
 
-    BeachProfileJackingFactor:
+    FishingSpeciesSelection:
       type: object
       description: |
-        One bar's jacking factor (Hs at bar crest / approach Hs), returned as
-        a TOP-LEVEL array on the transect result (`jackingFactors`). T4A.6
-        item (b) — the dashboard TS type now matches this shape exactly
-        (top-level array keyed by barIndex/distance, not a scalar on each
-        break point); the chart renders jacking annotations at each bar's
-        own crest distance rather than at break-point distances.
+        TARGET (Fishing and Boating remediation Phase 1; not yet shipped):
+        setup-derived species selection for a location. The API resolves the
+        region and category, compares complete score-affecting and legal
+        profiles, and returns the resulting choices. The Dashboard does not
+        perform geographic eligibility or grouping.
       properties:
-        barIndex: { type: integer }
-        distance: { type: number }
-        factor: { type: number }
-      required: [barIndex, distance, factor]
-
-    BeachProfileSurfZoneExtent:
-      type: object
-      description: Extent of one classified surf zone along the transect. Field set mirrors SurfZoneExtent (dashboard types.ts). T4A.6 item (d) / LC-R2-12 — verified against services/surf_1d_analytical.py `_classify_zones()`, `width_m` is populated ONLY on `total_surf_zone` (the other three zone dicts never carry the key at all, so it is simply absent from their serialized output, not null).
-      properties:
-        startDistance: { type: number, description: "Outer boundary, farther from shore, display units." }
-        endDistance: { type: number, description: "Inner boundary, closer to shore, display units." }
-        startDepth: { type: number, nullable: true }
-        endDepth: { type: number, nullable: true }
-        widthM: { type: number, nullable: true, description: "Only ever present on totalSurfZone (see description above); absent (not null) on impactZone/foamZone/reformTrough. Now in the dashboard TS SurfZoneExtent type as optional (T4A.6 item d)." }
-      required: [startDistance, endDistance]
-
-    BeachProfileSurfZones:
-      type: object
-      nullable: true
-      description: Classified surf zones for one transect. Null (or omitted — API returns None rather than an all-null object) when the 1D model has not classified any zone.
-      properties:
-        impactZone: { allOf: [{ $ref: '#/components/schemas/BeachProfileSurfZoneExtent' }], nullable: true }
-        foamZone: { allOf: [{ $ref: '#/components/schemas/BeachProfileSurfZoneExtent' }], nullable: true }
-        totalSurfZone: { allOf: [{ $ref: '#/components/schemas/BeachProfileSurfZoneExtent' }], nullable: true }
-        reformTrough: { allOf: [{ $ref: '#/components/schemas/BeachProfileSurfZoneExtent' }], nullable: true }
-
-    BeachProfilePerPartitionBreak:
-      type: object
-      description: |
-        Per-partition break overlay — what each incoming swell component does
-        at the beach, common to both single-transect and all-transect
-        responses (`perPartitionBreaks`). T4A.6 item (e) — now referenced by
-        BeachProfileData.perPartitionBreaks (dashboard types.ts).
-      properties:
-        partitionIndex: { type: integer }
-        periodS: { type: number, nullable: true }
-        directionDeg: { type: number, nullable: true }
-        heightM: { type: number, description: "Unit-converted to display units despite the 'M' suffix (see BeachProfilePartitionInfo note)." }
-        classification: { type: string, nullable: true }
-        meanBreakDistanceM: { type: number, nullable: true, description: "Unit-converted to display units." }
-        meanFaceHeightM: { type: number, nullable: true, description: "Unit-converted to display units." }
-        peakFaceHeightM: { type: number, nullable: true, description: "Unit-converted to display units." }
-        meanBreakDepthM: { type: number, nullable: true, description: "Unit-converted to display units." }
-        dominantBreakerType: { type: string, nullable: true, enum: [spilling, plunging, surging] }
-      required: [partitionIndex, heightM]
-
-    BeachProfileMetadata:
-      type: object
-      description: Common metadata block, present on both single-transect and all-transect responses.
-      properties:
-        axisUnits:
-          type: object
-          properties: { x: { type: string }, y: { type: string } }
-          required: [x, y]
-        verticalDatum: { type: string, nullable: true, example: "NAVD88", description: "F3 (reopened 2026-07-25): read from the per-spot profile cache B2's apply-time chain writes (endpoints/setup.py). Null (not a fabricated literal) when that cache is missing, unreadable, or its own datum resolution failed — HB is covered by DEM tiles in two different datums (NAVD88 and MHW), so a hardcoded default would silently mislabel depths from the MHW tile." }
-        transectCount: { type: integer, nullable: true, description: "SURF-PUBLISH-RESULTS-ONLY §3.6: null when modelStatus is \"unavailable\" — there is no transect count when the model produced nothing for this hour." }
-        openTransectCount: { type: integer, nullable: true, description: "Same null-when-unavailable rule as transectCount (§3.6)." }
-        handoffDepthM: { type: number, nullable: true, description: "T4A.6 item (g) / LC-R2-13. Per-hour handoff depth (1.3 x Hs(hour) / gamma) actually used, for the response's representative (best-peak) transect, in display units. Null until B1's T4A.9/T4A.10 lands handoff_depth_m on the pipeline's TransectResult — beach_profile.py degrades to null via getattr() rather than erroring in the interim." }
-        handoffSourceLevel: { type: string, nullable: true, enum: [L4, L3, L2], description: "T4A.6 item (g) / LC-R2-13. Which SWAN level the handoff spectrum for the representative transect actually came from. Same null-until-B1-lands caveat as handoffDepthM. Widened to include L4 2026-08-02 (D4.1 audit) — confirmed live (E5 ruling D3, first-match-wins L4 -> L3 -> L2)." }
-      required: [axisUnits, verticalDatum, transectCount, openTransectCount]
-
-    BeachProfileTransectResult:
-      type: object
-      description: |
-        One transect's full 1D-model output. Used both as the spread-in
-        fields of the single-transect response `data` object, and as each
-        item of the all-transect response's `profiles` array
-        (_build_transect_profile() is the single builder for both — T4A.1
-        Decision: "both responses come from the same builder").
-      properties:
-        transectIndex: { type: integer, description: "Zero-based transect index." }
-        isStructureAffected: { type: boolean }
-        transectBearingDeg: { type: number, nullable: true }
-        transect:
+        region: { type: string }
+        targetCategory: { type: string, enum: [saltwater_inshore, bottom_fish, freshwater_sport, salmonids] }
+        selectedChoiceId: { type: string }
+        choices:
           type: array
-          items: { $ref: '#/components/schemas/BeachProfilePoint' }
-          description: "Ordered cross-shore transect, offshore (index 0) toward shore. Array key renamed hsEnvelope -> transect at some point before this round (T4A.1 pre-round verification); already correct on the API side."
-        breakPoints:
-          type: array
-          items: { $ref: '#/components/schemas/BeachProfileBreakPoint' }
-        waveShapes:
-          type: array
-          items: { $ref: '#/components/schemas/BeachProfileWaveShapePoint' }
-          description: "T4A.6 item (a) — see BeachProfileWaveShapePoint."
-        surfZones: { $ref: '#/components/schemas/BeachProfileSurfZones' }
-        jackingFactors:
-          type: array
-          items: { $ref: '#/components/schemas/BeachProfileJackingFactor' }
-          description: "T4A.6 item (b) — see BeachProfileJackingFactor."
-        handoffDepthM: { type: number, nullable: true, description: "T4A.6 item (g) / LC-R2-13. This transect's per-hour handoff depth, in display units. See BeachProfileMetadata.handoffDepthM for the null-until-B1-lands caveat." }
-        handoffSourceLevel: { type: string, nullable: true, enum: [L4, L3, L2], description: "T4A.6 item (g) / LC-R2-13. Which SWAN level this transect's handoff came from. Widened to include L4 2026-08-02 (D4.1 audit) — see the identical note above." }
-      required: [transectIndex, isStructureAffected, transect, breakPoints, waveShapes, jackingFactors]
+          items: { $ref: '#/components/schemas/FishingSpeciesChoice' }
+      required: [region, targetCategory, selectedChoiceId, choices]
 
-    BeachProfileData:
+    FishingPressureCheck:
       type: object
-      description: |
-        `data` shape for GET /surf/{locationId}/profile with transect_index
-        = "best" (default) or an explicit integer index. T4A.6 item (e) —
-        `perPartitionBreaks` and `metadata` are now on the dashboard's
-        BeachProfileData TS type, matching these real top-level response
-        fields. Pre-existing, separate gap NOT part of T4A.6: `transects`
-        (TS: BeachProfileTransectInfo[], for the transect-selector dropdown)
-        is never populated by this endpoint — no code path in
-        beach_profile.py returns it.
-
-        SURF-PUBLISH-RESULTS-ONLY §3.6 (2026-07-25): `modelStatus` is the
-        discriminant. When `"ok"`, every field below is populated exactly as
-        described. When `"unavailable"` (the model has no answer for this
-        hour — HTTP 200, not 404), `transectIndex`/`isStructureAffected`/
-        `transectBearingDeg`/`transect`/`breakPoints`/`waveShapes`/
-        `surfZones`/`jackingFactors`/`handoffDepthM`/`handoffSourceLevel`/
-        `perPartitionBreaks` are ALL null, and `metadata` carries only
-        `axisUnits` (its own fields are null too — see BeachProfileMetadata).
-        Only `locationId`/`timestep`/`modelStatus`/`metadata` are guaranteed
-        non-null; `timestep` itself may be null (see
-        `_unavailable_profile_response()`). Dashboard TS types this as a
-        discriminated union (`BeachProfileDataOk` | `BeachProfileDataUnavailable`)
-        rather than an all-nullable flat shape — branch on `modelStatus`,
-        never infer the unavailable case from a null `transect`.
-      allOf:
-        - type: object
-          properties:
-            locationId: { type: string }
-            timestep: { type: string, format: date-time, nullable: true, description: "The forecast timestep this profile was computed for (closest to now). Null when modelStatus is \"unavailable\" and no forecast timesteps were found at all." }
-            modelStatus: { type: string, enum: [ok, unavailable], description: "SURF-PUBLISH-RESULTS-ONLY §3.6. This endpoint only emits these two values — never the surf endpoint's \"no_breaking\"/\"degraded_bulk\"." }
-        - $ref: '#/components/schemas/BeachProfileTransectResult'
-        - type: object
-          properties:
-            perPartitionBreaks:
-              type: array
-              nullable: true
-              items: { $ref: '#/components/schemas/BeachProfilePerPartitionBreak' }
-            metadata: { $ref: '#/components/schemas/BeachProfileMetadata' }
-          required: [metadata]
-      required: [locationId, modelStatus]
-
-    BeachProfileAllData:
-      type: object
-      description: |
-        `data` shape for GET /surf/{locationId}/profile?transect_index=all.
-
-        SURF-PUBLISH-RESULTS-ONLY §3.6 (2026-07-25): same `modelStatus`
-        discriminant as BeachProfileData. When `"unavailable"`, `profiles`
-        is null (not an empty array) and `perPartitionBreaks` is null too.
+      description: "Provider pressure-series coverage represented by this Fishing response. It is not a fresh setup-time compatibility check."
       properties:
         locationId: { type: string }
-        timestep: { type: string, format: date-time, nullable: true, description: "Null when modelStatus is \"unavailable\" and no forecast timesteps were found at all." }
-        modelStatus: { type: string, enum: [ok, unavailable] }
-        profiles:
-          type: array
-          nullable: true
-          items: { $ref: '#/components/schemas/BeachProfileTransectResult' }
-        perPartitionBreaks:
-          type: array
-          nullable: true
-          items: { $ref: '#/components/schemas/BeachProfilePerPartitionBreak' }
-        metadata: { $ref: '#/components/schemas/BeachProfileMetadata' }
-      required: [locationId, modelStatus, metadata]
-
-    BeachProfileResponse:
-      type: object
-      properties:
-        data: { $ref: '#/components/schemas/BeachProfileData' }
-        stationClock: { $ref: '#/components/schemas/StationClock' }
-        freshness: { $ref: '#/components/schemas/FreshnessInfo' }
-        units:
-          type: object
-          description: "Keys distance/depth/hs (renamed from waveHeight -> hs, T4A.1) mapping to display-unit symbols, e.g. {distance: 'ft', depth: 'ft', hs: 'ft'}."
-          properties: { distance: { type: string }, depth: { type: string }, hs: { type: string } }
-          required: [distance, depth, hs]
-        generatedAt: { type: string, format: date-time }
-      required: [data, stationClock, freshness, units, generatedAt]
-
-    BeachProfileAllResponse:
-      type: object
-      properties:
-        data: { $ref: '#/components/schemas/BeachProfileAllData' }
-        stationClock: { $ref: '#/components/schemas/StationClock' }
-        freshness: { $ref: '#/components/schemas/FreshnessInfo' }
-        units:
-          type: object
-          properties: { distance: { type: string }, depth: { type: string }, hs: { type: string } }
-          required: [distance, depth, hs]
-        generatedAt: { type: string, format: date-time }
-      required: [data, stationClock, freshness, units, generatedAt]
+        supported: { type: boolean }
+        provider: { type: string }
+        checkedAt: { type: string, format: date-time, nullable: true, description: "Present only for a separately performed setup-time compatibility check; null on forecast responses." }
+        validFrom: { type: string, format: date-time, nullable: true }
+        validTo: { type: string, format: date-time, nullable: true }
+        reason: { type: string, nullable: true }
+      required: [locationId, supported, provider, checkedAt]
 
     FishingDayEntry:
       type: object
@@ -3980,9 +4332,10 @@ components:
     FishingData:
       type: object
       description: |
-        Actual GET /fishing/{locationId} data shape (see components/schemas
-        note above). Structurally different from the FishingBundle Pydantic
-        class - no flat top-level forecast list or singular solunar.
+        TARGET (Fishing and Boating remediation Phase 1; not yet shipped):
+        proposed GET /fishing/{locationId} contract. It is not the current
+        endpoint shape. Nested by day - no flat top-level forecast list or
+        singular top-level solunar field.
       properties:
         locationId: { type: string }
         locationName: { type: string }
@@ -3999,6 +4352,10 @@ components:
         targetCategory:
           type: string
           enum: [saltwater_inshore, bottom_fish, freshwater_sport, salmonids]
+        speciesSelection:
+          $ref: '#/components/schemas/FishingSpeciesSelection'
+        pressureCompatibility:
+          $ref: '#/components/schemas/FishingPressureCheck'
         habitatFeatures:
           type: object
           nullable: true
@@ -4009,7 +4366,7 @@ components:
           items: { $ref: '#/components/schemas/TidePrediction' }
         source: { type: string, example: "ndbc+coops+solunar" }
         generatedAt: { type: string, format: date-time }
-      required: [locationId, locationName, coordinates, days, species, targetCategory, tidePredictions, source, generatedAt]
+      required: [locationId, locationName, coordinates, days, species, targetCategory, speciesSelection, pressureCompatibility, tidePredictions, source, generatedAt]
 
     FishingLocationCard:
       type: object
@@ -4029,7 +4386,7 @@ components:
         name: { type: string }
         lat: { type: number }
         lon: { type: number }
-        safetyLevel: { type: string, nullable: true, enum: [safe, caution, dangerous] }
+        safetyLevel: { type: string, nullable: true, enum: [safe, caution, dangerous], description: "Always null in v1 (T9.1) - see BeachSafetyAssessment.safetyLevel" }
         ripCurrentRisk: { type: string, nullable: true, enum: [low, moderate, high] }
         waterTemp: { type: number, nullable: true, description: "Fahrenheit - informational value, no operator unit conversion" }
       required: [locationId, name, lat, lon]

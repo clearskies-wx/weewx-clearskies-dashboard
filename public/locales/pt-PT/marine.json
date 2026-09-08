@@ -1,4 +1,4 @@
-﻿{
+{
   "title": "Marine Activities",
   "unableToLoad": "Unable to load marine data",
   "selectLocation": "Select a location to view details",
@@ -72,7 +72,9 @@
     "waveForecastAriaLabel": "Wave height and period forecast for the next 72 hours at {{location}}",
     "wavePeriod": "Wave Period",
     "secondsAbbr": "s",
-    "station": "Station {{id}}",
+    "windTitle": "Vento",
+    "visibility": "Visibilidade",
+    "dewpoint": "Ponto de orvalho",
     "dominantPeriod": "Dominant Period",
     "pressure": "Barometric Pressure",
     "pressureRising": "Rising",
@@ -403,6 +405,60 @@
     "noteColumn": "Notes",
     "solunarArcAriaLabel": "Moon rise-to-set arc with major and minor fishing periods highlighted",
     "moonBelowHorizon": "Moon is below the horizon",
-    "periodGridScrollAriaLabel": "Scrollable 3-day fishing forecast"
+    "periodGridScrollAriaLabel": "Scrollable 3-day fishing forecast",
+    "secondsAbbr": "s",
+    "scoreCardTitle": "Fishing Score",
+    "periodButtonAriaLabel": "{{weekday}}, {{date}} — {{period}}: score {{score}} of 100. {{wind}}{{swell}}View species detail.",
+    "periodDetailHeading": "Species scores for {{weekday}}, {{date}} — {{period}}",
+    "periodWindAriaLabel": "Wind {{speed}} {{unit}} {{direction}}",
+    "periodWindGustAriaLabel": "Wind {{speed}} {{unit}} {{direction}}, gusting {{gust}} {{unit}}",
+    "periodSwellAriaLabel": "Swell {{height}} {{heightUnit}} at {{period}} {{periodUnit}}",
+    "periodGustAbbr": "G",
+    "factorUnavailable": "Indisponível",
+    "provenanceType": {
+      "observed": "Observado",
+      "forecast": "Previsão",
+      "modeled": "Modelado",
+      "unavailable": "Indisponível"
+    },
+    "adjustmentFactor": {
+      "time_of_day": "Hora do dia",
+      "season": "Estação",
+      "solunar_major": "Período solunar principal",
+      "solunar_minor": "Período solunar secundário",
+      "solunar_active_tide": "Alinhamento com maré ativa",
+      "solunar_full_moon": "Lua cheia"
+    },
+    "adjustmentState": {
+      "preferred": "Preferido",
+      "normal": "Normal",
+      "low_activity": "Menor atividade"
+    },
+    "hardStop": {
+      "temperature_outside_active_range": "A temperatura da água está fora do intervalo ativo desta espécie."
+    },
+    "status": {
+      "active": "Ativo",
+      "less_active": "Menos ativo",
+      "low_activity": "Menor atividade",
+      "inactive": "Inativo",
+      "unavailable": "Indisponível",
+      "unknown": "Desconhecido"
+    },
+    "tideState": {
+      "rising": "A subir",
+      "falling": "A descer",
+      "slack": "Água parada",
+      "neutral": "Neutra",
+      "unavailable": "Indisponível",
+      "unknown": "Desconhecido"
+    },
+    "solunarState": {
+      "major": "Principal",
+      "minor": "Secundário",
+      "none": "Nenhum",
+      "unavailable": "Indisponível",
+      "unknown": "Desconhecido"
+    }
   }
 }

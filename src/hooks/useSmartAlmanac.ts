@@ -14,7 +14,7 @@
 // Rule: body data does not change until the body sets.
 
 import { useMemo } from 'react';
-import { useAlmanac } from './useWeatherData';
+import { useAlmanac, type AlmanacCoordinates } from './useWeatherData';
 import { addDays, stationTimeMs } from '../utils/station-clock';
 import type { AlmanacSnapshot } from '../api/types';
 
@@ -33,13 +33,16 @@ function isoMs(iso: string | null): number | null {
   return Number.isNaN(t) ? null : t;
 }
 
-export function useSmartAlmanac(): SmartAlmanacResult {
-  const today = useAlmanac();
+export function useSmartAlmanac(
+  coordinates?: AlmanacCoordinates,
+  date?: string,
+): SmartAlmanacResult {
+  const today = useAlmanac(date, coordinates);
   const stationClock = today.stationClock;
 
   const now = stationClock ? stationTimeMs(stationClock) : Date.now();
 
-  const todayDate = stationClock?.date ?? '';
+  const todayDate = date ?? stationClock?.date ?? '';
 
   const yesterdayStr = useMemo(
     () => (todayDate ? addDays(todayDate, -1) : undefined),
@@ -107,8 +110,8 @@ export function useSmartAlmanac(): SmartAlmanacResult {
 
   // Hooks are always called (React rules); pass undefined to get today's
   // default data when the adjacent day isn't needed (harmless duplicate).
-  const yesterday = useAlmanac(needsYesterday ? yesterdayStr : undefined);
-  const tomorrow = useAlmanac(needsTomorrow ? tomorrowStr : undefined);
+  const yesterday = useAlmanac(needsYesterday ? yesterdayStr : undefined, coordinates);
+  const tomorrow = useAlmanac(needsTomorrow ? tomorrowStr : undefined, coordinates);
 
   const merged = useMemo<AlmanacSnapshot | null>(() => {
     if (!today.data) return null;

@@ -1,4 +1,4 @@
-﻿{
+{
   "title": "Marine Activities",
   "unableToLoad": "Unable to load marine data",
   "selectLocation": "Select a location to view details",
@@ -72,7 +72,9 @@
     "waveForecastAriaLabel": "Wave height and period forecast for the next 72 hours at {{location}}",
     "wavePeriod": "Wave Period",
     "secondsAbbr": "s",
-    "station": "Station {{id}}",
+    "windTitle": "风",
+    "visibility": "能见度",
+    "dewpoint": "露点",
     "dominantPeriod": "Dominant Period",
     "pressure": "Barometric Pressure",
     "pressureRising": "Rising",
@@ -403,6 +405,60 @@
     "noteColumn": "Notes",
     "solunarArcAriaLabel": "Moon rise-to-set arc with major and minor fishing periods highlighted",
     "moonBelowHorizon": "Moon is below the horizon",
-    "periodGridScrollAriaLabel": "Scrollable 3-day fishing forecast"
+    "periodGridScrollAriaLabel": "Scrollable 3-day fishing forecast",
+    "secondsAbbr": "s",
+    "scoreCardTitle": "Fishing Score",
+    "periodButtonAriaLabel": "{{weekday}}, {{date}} — {{period}}: score {{score}} of 100. {{wind}}{{swell}}View species detail.",
+    "periodDetailHeading": "Species scores for {{weekday}}, {{date}} — {{period}}",
+    "periodWindAriaLabel": "Wind {{speed}} {{unit}} {{direction}}",
+    "periodWindGustAriaLabel": "Wind {{speed}} {{unit}} {{direction}}, gusting {{gust}} {{unit}}",
+    "periodSwellAriaLabel": "Swell {{height}} {{heightUnit}} at {{period}} {{periodUnit}}",
+    "periodGustAbbr": "G",
+    "factorUnavailable": "不可用",
+    "provenanceType": {
+      "observed": "实测",
+      "forecast": "预报",
+      "modeled": "模型计算",
+      "unavailable": "不可用"
+    },
+    "adjustmentFactor": {
+      "time_of_day": "时段",
+      "season": "季节",
+      "solunar_major": "主要月相时段",
+      "solunar_minor": "次要月相时段",
+      "solunar_active_tide": "活跃潮汐匹配",
+      "solunar_full_moon": "满月"
+    },
+    "adjustmentState": {
+      "preferred": "首选",
+      "normal": "正常",
+      "low_activity": "低活跃度"
+    },
+    "hardStop": {
+      "temperature_outside_active_range": "水温超出该物种的活跃范围。"
+    },
+    "status": {
+      "active": "活跃",
+      "less_active": "较不活跃",
+      "low_activity": "低活跃度",
+      "inactive": "不活跃",
+      "unavailable": "不可用",
+      "unknown": "未知"
+    },
+    "tideState": {
+      "rising": "涨潮",
+      "falling": "落潮",
+      "slack": "平潮",
+      "neutral": "中性",
+      "unavailable": "不可用",
+      "unknown": "未知"
+    },
+    "solunarState": {
+      "major": "主要",
+      "minor": "次要",
+      "none": "无",
+      "unavailable": "不可用",
+      "unknown": "未知"
+    }
   }
 }

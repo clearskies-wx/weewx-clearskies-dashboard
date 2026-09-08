@@ -447,6 +447,29 @@
     },
     "statusColumn": "Status",
     "noteColumn": "Notes",
+    "status": {
+      "active": "Active",
+      "less_active": "Less active",
+      "low_activity": "Lower activity",
+      "inactive": "Inactive",
+      "unavailable": "Unavailable",
+      "unknown": "Unknown"
+    },
+    "tideState": {
+      "rising": "Rising",
+      "falling": "Falling",
+      "slack": "Slack",
+      "neutral": "Neutral",
+      "unavailable": "Unavailable",
+      "unknown": "Unknown"
+    },
+    "solunarState": {
+      "major": "Major",
+      "minor": "Minor",
+      "none": "None",
+      "unavailable": "Unavailable",
+      "unknown": "Unknown"
+    },
     "solunarArcAriaLabel": "Moon rise-to-set arc with major and minor fishing periods highlighted",
     "moonBelowHorizon": "Moon is below the horizon",
     "periodGridScrollAriaLabel": "Scrollable 3-day fishing forecast",
@@ -456,6 +479,29 @@
     "periodWindAriaLabel": "Wind {{speed}} {{unit}} {{direction}}",
     "periodWindGustAriaLabel": "Wind {{speed}} {{unit}} {{direction}}, gusting {{gust}} {{unit}}",
     "periodSwellAriaLabel": "Swell {{height}} {{heightUnit}} at {{period}} {{periodUnit}}",
-    "periodGustAbbr": "G"
+    "periodGustAbbr": "G",
+    "factorUnavailable": "Unavailable",
+    "provenanceType": {
+      "observed": "Observed",
+      "forecast": "Forecast",
+      "modeled": "Modeled",
+      "unavailable": "Unavailable"
+    },
+    "adjustmentFactor": {
+      "time_of_day": "Time of day",
+      "season": "Season",
+      "solunar_major": "Major solunar period",
+      "solunar_minor": "Minor solunar period",
+      "solunar_active_tide": "Active-tide alignment",
+      "solunar_full_moon": "Full moon"
+    },
+    "adjustmentState": {
+      "preferred": "Preferred",
+      "normal": "Normal",
+      "low_activity": "Lower activity"
+    },
+    "hardStop": {
+      "temperature_outside_active_range": "Water temperature is outside this species’ active range."
+    }
   }
 }

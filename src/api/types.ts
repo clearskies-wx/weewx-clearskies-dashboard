@@ -1533,25 +1533,6 @@ export interface SurfForecast {
   waveShapeClassification?: string | null;
 }
 
-export interface FishingForecast {
-  periodStart: string;
-  periodEnd: string;
-  periodLabel: string;
-  overallScore: number;
-  pressureScore: number;
-  tideScore: number;
-  solunarScore: number;
-  waterTempScore: number;
-  timeofdayScore: number;
-  speciesScores: Array<Record<string, unknown>> | null;
-  conditionsText: string;
-  windSpeed: number | null;
-  windDirection: number | null;
-  windGust: number | null;
-  swellHeight: number | null;
-  swellPeriod: number | null;
-}
-
 export interface SolunarTimes {
   date: string;
   moonPhase: string;
@@ -1695,26 +1676,6 @@ export interface SurfDetailData {
    * Null → default to "face" behavior.
    */
   surfHeightDisplay?: 'face' | 'hawaiian' | null;
-}
-
-export interface FishingDay {
-  date: string;
-  periods: FishingForecast[];
-  solunar: SolunarTimes;
-}
-
-/** Fishing detail — returned by GET /fishing/{locationId}. */
-export interface FishingDetailData {
-  locationId: string;
-  locationName: string;
-  coordinates: { lat: number; lon: number };
-  days: FishingDay[];
-  species: string[];
-  targetCategory: string;
-  habitatFeatures: string[];
-  tidePredictions: TidePrediction[];
-  source: string;
-  generatedAt: string;
 }
 
 /** Beach safety detail — returned by GET /beach-safety/{locationId}. */

@@ -1,4 +1,4 @@
-﻿{
+{
   "title": "Marine Activities",
   "unableToLoad": "Unable to load marine data",
   "selectLocation": "Select a location to view details",
@@ -72,7 +72,9 @@
     "waveForecastAriaLabel": "Wave height and period forecast for the next 72 hours at {{location}}",
     "wavePeriod": "Wave Period",
     "secondsAbbr": "s",
-    "station": "Station {{id}}",
+    "windTitle": "Ветер",
+    "visibility": "Видимость",
+    "dewpoint": "Точка росы",
     "dominantPeriod": "Dominant Period",
     "pressure": "Barometric Pressure",
     "pressureRising": "Rising",
@@ -403,6 +405,60 @@
     "noteColumn": "Notes",
     "solunarArcAriaLabel": "Moon rise-to-set arc with major and minor fishing periods highlighted",
     "moonBelowHorizon": "Moon is below the horizon",
-    "periodGridScrollAriaLabel": "Scrollable 3-day fishing forecast"
+    "periodGridScrollAriaLabel": "Scrollable 3-day fishing forecast",
+    "secondsAbbr": "s",
+    "scoreCardTitle": "Fishing Score",
+    "periodButtonAriaLabel": "{{weekday}}, {{date}} — {{period}}: score {{score}} of 100. {{wind}}{{swell}}View species detail.",
+    "periodDetailHeading": "Species scores for {{weekday}}, {{date}} — {{period}}",
+    "periodWindAriaLabel": "Wind {{speed}} {{unit}} {{direction}}",
+    "periodWindGustAriaLabel": "Wind {{speed}} {{unit}} {{direction}}, gusting {{gust}} {{unit}}",
+    "periodSwellAriaLabel": "Swell {{height}} {{heightUnit}} at {{period}} {{periodUnit}}",
+    "periodGustAbbr": "G",
+    "factorUnavailable": "Недоступно",
+    "provenanceType": {
+      "observed": "Наблюдение",
+      "forecast": "Прогноз",
+      "modeled": "Модельный",
+      "unavailable": "Недоступно"
+    },
+    "adjustmentFactor": {
+      "time_of_day": "Время суток",
+      "season": "Сезон",
+      "solunar_major": "Основной лунный период",
+      "solunar_minor": "Малый лунный период",
+      "solunar_active_tide": "Совпадение с активным приливом",
+      "solunar_full_moon": "Полнолуние"
+    },
+    "adjustmentState": {
+      "preferred": "Предпочтительно",
+      "normal": "Нормально",
+      "low_activity": "Низкая активность"
+    },
+    "hardStop": {
+      "temperature_outside_active_range": "Температура воды вне активного диапазона этого вида."
+    },
+    "status": {
+      "active": "Активен",
+      "less_active": "Менее активен",
+      "low_activity": "Низкая активность",
+      "inactive": "Неактивен",
+      "unavailable": "Недоступно",
+      "unknown": "Неизвестно"
+    },
+    "tideState": {
+      "rising": "Прилив",
+      "falling": "Отлив",
+      "slack": "Стоячая вода",
+      "neutral": "Нейтрально",
+      "unavailable": "Недоступно",
+      "unknown": "Неизвестно"
+    },
+    "solunarState": {
+      "major": "Основной",
+      "minor": "Малый",
+      "none": "Нет",
+      "unavailable": "Недоступно",
+      "unknown": "Неизвестно"
+    }
   }
 }
