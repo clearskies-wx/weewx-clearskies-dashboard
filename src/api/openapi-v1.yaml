@@ -900,6 +900,15 @@ paths:
       operationId: getFishingLocation
       parameters:
         - { $ref: '#/components/parameters/LocationId' }
+        - name: selectedSpecies
+          in: query
+          required: false
+          description: >
+            One eligible configured Fishing species choice for this location.
+            When omitted, the service scores the first configured choice.
+            An unknown or ineligible choice is rejected; the browser never
+            calculates a replacement score.
+          schema: { type: string, minLength: 1 }
       responses:
         '200':
           description: Fishing forecast bundle

@@ -499,9 +499,11 @@ export function getBeachProfileAll(
 
 export function getFishingDetail(
   locationId: string,
+  selectedSpecies?: string | null,
   signal?: AbortSignal,
 ): Promise<ApiResponse<FishingDetailData>> {
-  return fetchApi<ApiResponse<FishingDetailData>>(`/fishing/${encodeURIComponent(locationId)}`, undefined, signal);
+  const query = selectedSpecies ? `?selectedSpecies=${encodeURIComponent(selectedSpecies)}` : '';
+  return fetchApi<ApiResponse<FishingDetailData>>(`/fishing/${encodeURIComponent(locationId)}${query}`, undefined, signal);
 }
 
 export function getBeachSafetyDetail(

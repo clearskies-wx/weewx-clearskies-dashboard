@@ -3,7 +3,7 @@
 // page's config-driven group tabs (src/routes/charts.tsx) — Left/Right/Home/
 // End move focus and activate the tab; roving tabIndex.
 
-import { useCallback, useRef, useState } from 'react';
+import { cloneElement, isValidElement, useCallback, useRef, useState } from 'react';
 import type { ActivityDef } from './activity-types';
 
 interface ActivityTabsProps {
@@ -14,6 +14,7 @@ interface ActivityTabsProps {
 
 export function ActivityTabs({ activities, ariaLabel }: ActivityTabsProps) {
   const [activeId, setActiveId] = useState<string | undefined>(activities[0]?.id);
+  const [selectedFishingSpecies, setSelectedFishingSpecies] = useState('');
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const handleKeyDown = useCallback(
@@ -97,7 +98,9 @@ export function ActivityTabs({ activities, ariaLabel }: ActivityTabsProps) {
           hidden={activeId !== activity.id}
           className="pt-4"
         >
-          {activeId === activity.id && activity.content}
+          {activeId === activity.id && activity.id === 'fishing' && isValidElement<{ selectedSpecies?: string; onSelectedSpeciesChange?: (species: string) => void }>(activity.content)
+            ? cloneElement(activity.content, { selectedSpecies: selectedFishingSpecies, onSelectedSpeciesChange: setSelectedFishingSpecies })
+            : activeId === activity.id && activity.content}
         </div>
       ))}
     </div>

@@ -1333,12 +1333,15 @@ export function useBeachProfileAll(locationId: string | null): HookResult<HeatMa
 }
 
 // useFishingDetail — /fishing/{locationId}
-export function useFishingDetail(locationId: string | null): HookResult<FishingDetailData> {
+export function useFishingDetail(
+  locationId: string | null,
+  selectedSpecies: string | null = null,
+): HookResult<FishingDetailData> {
   const skip = isMockMode() || locationId === null;
 
   const { data, loading, error, refetch } = useApiQuery<{ data: FishingDetailData; units?: UnitsBlock }>(
-    (signal) => getFishingDetail(locationId as string, signal),
-    { skip, deps: [locationId], pollInterval: 120 },
+    (signal) => getFishingDetail(locationId as string, selectedSpecies, signal),
+    { skip, deps: [locationId, selectedSpecies], pollInterval: 120 },
   );
 
   if (isMockMode()) {
