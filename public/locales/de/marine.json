@@ -4,6 +4,8 @@
   "selectLocation": "Select a location to view details",
   "noLocations": "No marine locations configured",
   "lastUpdated": "Updated {{time}}",
+  "scrollLeft": "Nach links scrollen",
+  "scrollRight": "Nach rechts scrollen",
   "waveHeight": "Wave Height",
   "windSpeed": "Wind",
   "waterTemp": "Water Temp",
@@ -74,6 +76,8 @@
     "secondsAbbr": "s",
     "windTitle": "Wind",
     "visibility": "Sichtweite",
+    "measurement": "{{value}} {{unit}}",
+    "windMeasurement": "{{value}} {{unit}} {{direction}}",
     "dewpoint": "Taupunkt",
     "dominantPeriod": "Dominante Periode",
     "pressure": "Barometerdruck",
@@ -436,6 +440,8 @@
       "low_activity": "Geringere Aktivität"
     },
     "forecastTitle": "Angelprognose", "explanation": "Warum", "periodControlAriaLabel": "{{period}}, {{start}} bis {{end}}, {{species}}: {{score}}, {{status}}. {{explanation}} Details anzeigen.", "periodDetailHeading": "Details für {{period}}", "adjustmentUnknown": "Unbekannt",
+    "periodTimeRange": "{{start}} bis {{end}}",
+    "measurement": "{{value}} {{unit}}",
     "hardStop": {
       "temperature_outside_active_range": "Die Wassertemperatur liegt außerhalb des aktiven Bereichs dieser Art."
     },
@@ -448,6 +454,11 @@
       "unknown": "Unbekannt"
     },
     "tideState": {
+      "incoming": "Auflaufende Tide",
+      "outgoing": "Ablaufende Tide",
+      "slack_high": "Stillwasser bei Hochwasser",
+      "slack_low": "Stillwasser bei Niedrigwasser",
+      "peak_flow": "Stärkste Strömung",
       "rising": "Steigend",
       "falling": "Fallend",
       "slack": "Stillwasser",

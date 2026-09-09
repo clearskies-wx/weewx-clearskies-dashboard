@@ -4,6 +4,8 @@
   "selectLocation": "Select a location to view details",
   "noLocations": "No marine locations configured",
   "lastUpdated": "Updated {{time}}",
+  "scrollLeft": "Scroll left",
+  "scrollRight": "Scroll right",
   "waveHeight": "Wave Height",
   "windSpeed": "Wind",
   "waterTemp": "Water Temp",
@@ -100,7 +102,7 @@
     "windTitle": "Wind",
     "visibility": "Visibility",
     "dewpoint": "Dewpoint"
-    ,"currentConditions": "Current Conditions", "forecastTitle": "Boating Forecast", "forecastAriaLabel": "Boating forecast for {{location}} with location weather and regional marine additions", "periodControlAriaLabel": "Forecast period {{period}}. Location conditions: {{conditions}}. Show details.", "periodDetailsTitle": "Details for {{period}}", "unavailable": "Unavailable", "regionalSource": "Regional NWS", "detailsAvailable": "Details available", "offshoreTitle": "Offshore Observations", "offshoreContextWarning": "Offshore observations are route and exit context only; they are not conditions at this selected location.", "offshoreSelectionState": { "no_buoy_selected": "No offshore buoy is configured for this location.", "selected_buoy_no_observation": "The configured offshore buoy has no current observation.", "provider_failure": "Offshore observations are currently unavailable from their provider.", "observations_available": "Selected offshore station observations are shown below." }, "offshoreDataState": { "available": "Observation available", "no_observation": "No observation available", "provider_failure": "Provider error" }, "distanceKm": "{{distance}} km", "distanceUnavailable": "Distance unavailable"
+    ,"currentConditions": "Current Conditions", "forecastTitle": "Boating Forecast", "forecastAriaLabel": "Boating forecast for {{location}} with location weather and regional marine additions", "periodControlAriaLabel": "Forecast period {{period}}. Location conditions: {{conditions}}. Show details.", "periodDetailsTitle": "Details for {{period}}", "unavailable": "Unavailable", "regionalSource": "Regional NWS", "detailsAvailable": "Details available", "offshoreTitle": "Offshore Observations", "offshoreContextWarning": "Offshore observations are route and exit context only; they are not conditions at this selected location.", "offshoreSelectionState": { "no_buoy_selected": "No offshore buoy is configured for this location.", "selected_buoy_no_observation": "The configured offshore buoy has no current observation.", "provider_failure": "Offshore observations are currently unavailable from their provider.", "observations_available": "Selected offshore station observations are shown below." }, "offshoreDataState": { "available": "Observation available", "no_observation": "No observation available", "provider_failure": "Provider error" }, "distanceKm": "{{distance}} km", "distanceUnavailable": "Distance unavailable", "measurement": "{{value}} {{unit}}", "windMeasurement": "{{value}} {{unit}} {{direction}}"
   },
   "beachSafety": {
     "title": "Beach Safety",
@@ -457,6 +459,11 @@
       "unknown": "Unknown"
     },
     "tideState": {
+      "incoming": "Incoming tide",
+      "outgoing": "Outgoing tide",
+      "slack_high": "High-water slack",
+      "slack_low": "Low-water slack",
+      "peak_flow": "Peak flow",
       "rising": "Rising",
       "falling": "Falling",
       "slack": "Slack",
@@ -501,7 +508,7 @@
       "normal": "Normal",
       "low_activity": "Lower activity"
     },
-    "forecastTitle": "Fishing Forecast", "explanation": "Why", "periodControlAriaLabel": "{{period}}, {{start}} to {{end}}, {{species}}: {{score}}, {{status}}. {{explanation}} Show details.", "periodDetailHeading": "Details for {{period}}", "adjustmentUnknown": "Unknown",
+    "forecastTitle": "Fishing Forecast", "explanation": "Why", "periodControlAriaLabel": "{{period}}, {{start}} to {{end}}, {{species}}: {{score}}, {{status}}. {{explanation}} Show details.", "periodDetailHeading": "Details for {{period}}", "periodTimeRange": "{{start}} to {{end}}", "measurement": "{{value}} {{unit}}", "adjustmentUnknown": "Unknown",
     "hardStop": {
       "temperature_outside_active_range": "Water temperature is outside this species’ active range."
     }

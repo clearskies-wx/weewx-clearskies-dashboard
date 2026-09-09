@@ -4,6 +4,8 @@
   "selectLocation": "Select a location to view details",
   "noLocations": "No marine locations configured",
   "lastUpdated": "Updated {{time}}",
+  "scrollLeft": "左にスクロール",
+  "scrollRight": "右にスクロール",
   "waveHeight": "Wave Height",
   "windSpeed": "Wind",
   "waterTemp": "Water Temp",
@@ -74,6 +76,8 @@
     "secondsAbbr": "s",
     "windTitle": "風",
     "visibility": "視程",
+    "measurement": "{{value}}{{unit}}",
+    "windMeasurement": "{{direction}} {{value}}{{unit}}",
     "dewpoint": "露点",
     "dominantPeriod": "ドミナント・ピリオド",
     "pressure": "気圧",
@@ -436,6 +440,8 @@
       "low_activity": "アクティビティの低下"
     },
     "forecastTitle": "釣り予報", "explanation": "理由", "periodControlAriaLabel": "{{period}}、{{start}} から {{end}}、{{species}}: {{score}}、{{status}}。{{explanation}} 詳細を表示します。", "periodDetailHeading": "{{period}} の詳細", "adjustmentUnknown": "不明",
+    "periodTimeRange": "{{start}} から {{end}}",
+    "measurement": "{{value}}{{unit}}",
     "hardStop": {
       "temperature_outside_active_range": "水温がこの種の活動範囲外です。"
     },
@@ -448,6 +454,11 @@
       "unknown": "不明"
     },
     "tideState": {
+      "incoming": "上げ潮",
+      "outgoing": "下げ潮",
+      "slack_high": "満潮時の停潮",
+      "slack_low": "干潮時の停潮",
+      "peak_flow": "最強流",
       "rising": "上げ潮",
       "falling": "下げ潮",
       "slack": "停潮",

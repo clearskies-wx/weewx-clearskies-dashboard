@@ -4,6 +4,8 @@
   "selectLocation": "Select a location to view details",
   "noLocations": "No marine locations configured",
   "lastUpdated": "Updated {{time}}",
+  "scrollLeft": "Naar links scrollen",
+  "scrollRight": "Naar rechts scrollen",
   "waveHeight": "Wave Height",
   "windSpeed": "Wind",
   "waterTemp": "Water Temp",
@@ -74,6 +76,8 @@
     "secondsAbbr": "s",
     "windTitle": "Wind",
     "visibility": "Zichtbaarheid",
+    "measurement": "{{value}} {{unit}}",
+    "windMeasurement": "{{value}} {{unit}} {{direction}}",
     "dewpoint": "Dauwpunt",
     "dominantPeriod": "Dominant Period",
     "pressure": "Barometric Pressure",
@@ -436,6 +440,8 @@
       "low_activity": "Lagere activiteit"
     },
     "forecastTitle": "Visverwachting", "explanation": "Waarom", "periodControlAriaLabel": "{{period}}, {{start}} tot {{end}}, {{species}}: {{score}}, {{status}}. {{explanation}} Toon details.", "periodDetailHeading": "Details voor {{period}}", "adjustmentUnknown": "Onbekend",
+    "periodTimeRange": "{{start}} tot {{end}}",
+    "measurement": "{{value}} {{unit}}",
     "hardStop": {
       "temperature_outside_active_range": "De watertemperatuur ligt buiten het actieve bereik van deze soort."
     },
@@ -448,6 +454,11 @@
       "unknown": "Onbekend"
     },
     "tideState": {
+      "incoming": "Opkomend getij",
+      "outgoing": "Aflopend getij",
+      "slack_high": "Kentering bij hoogwater",
+      "slack_low": "Kentering bij laagwater",
+      "peak_flow": "Sterkste stroming",
       "rising": "Stijgend",
       "falling": "Dalend",
       "slack": "Kentering",

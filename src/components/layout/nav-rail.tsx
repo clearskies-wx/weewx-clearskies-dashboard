@@ -106,11 +106,12 @@ const FOCUSABLE_SELECTOR = [
 function ThemeRowButton() {
   const { preference, setTheme } = useTheme();
   const { t } = useTranslation('nav');
-  const modeLabel = t(`theme.${preference === 'system' ? 'auto' : preference}`);
+  const preferenceKey = preference === 'system' ? 'Auto' : `${preference.charAt(0).toUpperCase()}${preference.slice(1)}`;
+  const modeLabel = t(`theme.${preferenceKey.toLowerCase()}`);
   return (
     <button
       type="button"
-      aria-label={t(`theme.aria${preference.charAt(0).toUpperCase()}${preference.slice(1)}`)}
+      aria-label={t(`theme.aria${preferenceKey}`)}
       onClick={() => setTheme(NEXT_PREFERENCE[preference])}
       className={[
         'flex items-center gap-3 px-4 rounded-lg w-full',
@@ -133,10 +134,11 @@ function ThemeRowButton() {
 function DesktopThemeButton() {
   const { preference, setTheme } = useTheme();
   const { t } = useTranslation('nav');
+  const preferenceKey = preference === 'system' ? 'Auto' : `${preference.charAt(0).toUpperCase()}${preference.slice(1)}`;
   return (
     <button
       type="button"
-      aria-label={t(`theme.aria${preference.charAt(0).toUpperCase()}${preference.slice(1)}`)}
+      aria-label={t(`theme.aria${preferenceKey}`)}
       onClick={() => setTheme(NEXT_PREFERENCE[preference])}
       className={[
         'flex flex-col items-center justify-center gap-1 rounded-lg px-2 py-3 w-full',

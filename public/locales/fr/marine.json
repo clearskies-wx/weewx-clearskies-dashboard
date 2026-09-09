@@ -4,6 +4,8 @@
   "selectLocation": "Select a location to view details",
   "noLocations": "No marine locations configured",
   "lastUpdated": "Updated {{time}}",
+  "scrollLeft": "Faire défiler vers la gauche",
+  "scrollRight": "Faire défiler vers la droite",
   "waveHeight": "Wave Height",
   "windSpeed": "Wind",
   "waterTemp": "Water Temp",
@@ -74,6 +76,8 @@
     "secondsAbbr": "s",
     "windTitle": "Vent",
     "visibility": "Visibilité",
+    "measurement": "{{value}} {{unit}}",
+    "windMeasurement": "{{value}} {{unit}} {{direction}}",
     "dewpoint": "Point de rosée",
     "dominantPeriod": "Période dominante",
     "pressure": "Pression barométrique",
@@ -436,6 +440,8 @@
       "low_activity": "Baisse de l'activité"
     },
     "forecastTitle": "Prévisions de pêche", "explanation": "Pourquoi", "periodControlAriaLabel": "{{period}}, de {{start}} à {{end}}, {{species}} : {{score}}, {{status}}. {{explanation}} Afficher les détails.", "periodDetailHeading": "Détails pour {{period}}", "adjustmentUnknown": "Inconnu",
+    "periodTimeRange": "{{start}} à {{end}}",
+    "measurement": "{{value}} {{unit}}",
     "hardStop": {
       "temperature_outside_active_range": "La température de l'eau est en dehors de la plage active de cette espèce."
     },
@@ -448,6 +454,11 @@
       "unknown": "Inconnu"
     },
     "tideState": {
+      "incoming": "Marée montante",
+      "outgoing": "Marée descendante",
+      "slack_high": "Étale de pleine mer",
+      "slack_low": "Étale de basse mer",
+      "peak_flow": "Courant maximal",
       "rising": "Montante",
       "falling": "Descendante",
       "slack": "Étale",

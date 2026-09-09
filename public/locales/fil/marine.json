@@ -4,6 +4,8 @@
   "selectLocation": "Select a location to view details",
   "noLocations": "No marine locations configured",
   "lastUpdated": "Updated {{time}}",
+  "scrollLeft": "Mag-scroll pakaliwa",
+  "scrollRight": "Mag-scroll pakanan",
   "waveHeight": "Wave Height",
   "windSpeed": "Wind",
   "waterTemp": "Water Temp",
@@ -74,6 +76,8 @@
     "secondsAbbr": "s",
     "windTitle": "Hangin",
     "visibility": "Tanaw",
+    "measurement": "{{value}} {{unit}}",
+    "windMeasurement": "{{value}} {{unit}} {{direction}}",
     "dewpoint": "Punto ng hamog",
     "dominantPeriod": "Dominanteng Panahon",
     "pressure": "Presyong barometriko",
@@ -436,6 +440,8 @@
       "low_activity": "Mas mababang aktibidad"
     },
     "forecastTitle": "Pagtataya sa pangingisda", "explanation": "Bakit", "periodControlAriaLabel": "{{period}}, {{start}} hanggang {{end}}, {{species}}: {{score}}, {{status}}. {{explanation}} Ipakita ang detalye.", "periodDetailHeading": "Detalye para sa {{period}}", "adjustmentUnknown": "Hindi alam",
+    "periodTimeRange": "{{start}} hanggang {{end}}",
+    "measurement": "{{value}} {{unit}}",
     "hardStop": {
       "temperature_outside_active_range": "Ang temperatura ng tubig ay nasa labas ng aktibong hanay ng species na ito."
     },
@@ -448,6 +454,11 @@
       "unknown": "Di-kilala"
     },
     "tideState": {
+      "incoming": "Papasok na tubig",
+      "outgoing": "Papalabas na tubig",
+      "slack_high": "Mahinang agos sa mataas na tubig",
+      "slack_low": "Mahinang agos sa mababang tubig",
+      "peak_flow": "Pinakamalakas na agos",
       "rising": "Tumataas",
       "falling": "Bumababa",
       "slack": "Payapang tubig",
