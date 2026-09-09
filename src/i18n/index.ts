@@ -64,6 +64,11 @@ i18n
     },
     backend: {
       loadPath: "/locales/{{lng}}/{{ns}}.json",
+      // Revalidate cached translations so deployments do not leave new UI
+      // strings rendering as raw keys until a browser cache expires.
+      requestOptions: {
+        cache: "no-cache",
+      },
     },
     react: {
       // Suspense handles loading state; components can use useTranslation()
