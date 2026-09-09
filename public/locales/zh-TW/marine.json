@@ -4,6 +4,8 @@
   "selectLocation": "Select a location to view details",
   "noLocations": "No marine locations configured",
   "lastUpdated": "Updated {{time}}",
+  "scrollLeft": "向左捲動",
+  "scrollRight": "向右捲動",
   "waveHeight": "Wave Height",
   "windSpeed": "Wind",
   "waterTemp": "Water Temp",
@@ -74,6 +76,8 @@
     "secondsAbbr": "s",
     "windTitle": "風",
     "visibility": "能見度",
+    "measurement": "{{value}}{{unit}}",
+    "windMeasurement": "{{direction}} {{value}}{{unit}}",
     "dewpoint": "露點",
     "dominantPeriod": "Dominant Period",
     "pressure": "Barometric Pressure",
@@ -436,6 +440,8 @@
       "low_activity": "較低活躍度"
     },
     "forecastTitle": "釣魚預報", "explanation": "原因", "periodControlAriaLabel": "{{period}}，{{start}} 至 {{end}}，{{species}}：{{score}}，{{status}}。{{explanation}} 顯示詳細資料。", "periodDetailHeading": "{{period}} 的詳細資料", "adjustmentUnknown": "未知",
+    "periodTimeRange": "{{start}}至{{end}}",
+    "measurement": "{{value}}{{unit}}",
     "hardStop": {
       "temperature_outside_active_range": "水溫超出此物種的活躍範圍。"
     },
@@ -448,6 +454,11 @@
       "unknown": "未知"
     },
     "tideState": {
+      "incoming": "漲潮",
+      "outgoing": "退潮",
+      "slack_high": "滿潮停流",
+      "slack_low": "低潮停流",
+      "peak_flow": "最大流速",
       "rising": "漲潮",
       "falling": "退潮",
       "slack": "平潮",

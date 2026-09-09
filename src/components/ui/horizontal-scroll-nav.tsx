@@ -15,6 +15,7 @@
 
 import * as React from 'react';
 import { CaretLeft, CaretRight } from '@phosphor-icons/react';
+import { useTranslation } from 'react-i18next';
 
 export interface HorizontalScrollNavProps {
   children: React.ReactNode;
@@ -29,6 +30,7 @@ export function HorizontalScrollNav({
   ariaLabel,
   className,
 }: HorizontalScrollNavProps) {
+  const { t } = useTranslation('marine');
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = React.useState(false);
   const [canScrollRight, setCanScrollRight] = React.useState(false);
@@ -71,7 +73,7 @@ export function HorizontalScrollNav({
         <button
           type="button"
           onClick={() => scroll('left')}
-          aria-label="Scroll left"
+          aria-label={t('scrollLeft')}
           className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full card-glass shadow-md ring-1 ring-foreground/10 text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
         >
           <CaretLeft size={16} weight="bold" aria-hidden="true" />
@@ -81,7 +83,7 @@ export function HorizontalScrollNav({
         <button
           type="button"
           onClick={() => scroll('right')}
-          aria-label="Scroll right"
+          aria-label={t('scrollRight')}
           className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full card-glass shadow-md ring-1 ring-foreground/10 text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
         >
           <CaretRight size={16} weight="bold" aria-hidden="true" />

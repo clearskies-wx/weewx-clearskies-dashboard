@@ -4,6 +4,8 @@
   "selectLocation": "Select a location to view details",
   "noLocations": "No marine locations configured",
   "lastUpdated": "Updated {{time}}",
+  "scrollLeft": "Desplazarse a la izquierda",
+  "scrollRight": "Desplazarse a la derecha",
   "waveHeight": "Wave Height",
   "windSpeed": "Wind",
   "waterTemp": "Water Temp",
@@ -74,6 +76,8 @@
     "secondsAbbr": "s",
     "windTitle": "Viento",
     "visibility": "Visibilidad",
+    "measurement": "{{value}} {{unit}}",
+    "windMeasurement": "{{value}} {{unit}} {{direction}}",
     "dewpoint": "Punto de rocío",
     "dominantPeriod": "Periodo dominante",
     "pressure": "presión barométrica",
@@ -436,6 +440,8 @@
       "low_activity": "Menor actividad"
     },
     "forecastTitle": "Pronóstico de pesca", "explanation": "Por qué", "periodControlAriaLabel": "{{period}}, {{start}} a {{end}}, {{species}}: {{score}}, {{status}}. {{explanation}} Mostrar detalles.", "periodDetailHeading": "Detalles de {{period}}", "adjustmentUnknown": "Desconocido",
+    "periodTimeRange": "{{start}} a {{end}}",
+    "measurement": "{{value}} {{unit}}",
     "hardStop": {
       "temperature_outside_active_range": "La temperatura del agua está fuera del rango activo de esta especie."
     },
@@ -448,6 +454,11 @@
       "unknown": "Desconocido"
     },
     "tideState": {
+      "incoming": "Marea entrante",
+      "outgoing": "Marea saliente",
+      "slack_high": "Agua muerta en pleamar",
+      "slack_low": "Agua muerta en bajamar",
+      "peak_flow": "Corriente máxima",
       "rising": "Ascendente",
       "falling": "Bajada",
       "slack": "Marea en calma",

@@ -4,6 +4,8 @@
   "selectLocation": "Select a location to view details",
   "noLocations": "No marine locations configured",
   "lastUpdated": "Updated {{time}}",
+  "scrollLeft": "Прокрутить влево",
+  "scrollRight": "Прокрутить вправо",
   "waveHeight": "Wave Height",
   "windSpeed": "Wind",
   "waterTemp": "Water Temp",
@@ -74,6 +76,8 @@
     "secondsAbbr": "s",
     "windTitle": "Ветер",
     "visibility": "Видимость",
+    "measurement": "{{value}} {{unit}}",
+    "windMeasurement": "{{value}} {{unit}} {{direction}}",
     "dewpoint": "Точка росы",
     "dominantPeriod": "Dominant Period",
     "pressure": "Barometric Pressure",
@@ -436,6 +440,8 @@
       "low_activity": "Низкая активность"
     },
     "forecastTitle": "Прогноз рыбалки", "explanation": "Почему", "periodControlAriaLabel": "{{period}}, {{start}}–{{end}}, {{species}}: {{score}}, {{status}}. {{explanation}} Показать подробности.", "periodDetailHeading": "Подробности для {{period}}", "adjustmentUnknown": "Неизвестно",
+    "periodTimeRange": "{{start}}–{{end}}",
+    "measurement": "{{value}} {{unit}}",
     "hardStop": {
       "temperature_outside_active_range": "Температура воды вне активного диапазона этого вида."
     },
@@ -448,6 +454,11 @@
       "unknown": "Неизвестно"
     },
     "tideState": {
+      "incoming": "Прилив",
+      "outgoing": "Отлив",
+      "slack_high": "Затишье при полной воде",
+      "slack_low": "Затишье при малой воде",
+      "peak_flow": "Максимальное течение",
       "rising": "Прилив",
       "falling": "Отлив",
       "slack": "Стоячая вода",

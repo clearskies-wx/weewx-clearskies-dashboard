@@ -4,6 +4,8 @@
   "selectLocation": "Select a location to view details",
   "noLocations": "No marine locations configured",
   "lastUpdated": "Updated {{time}}",
+  "scrollLeft": "Scorri a sinistra",
+  "scrollRight": "Scorri a destra",
   "waveHeight": "Wave Height",
   "windSpeed": "Wind",
   "waterTemp": "Water Temp",
@@ -74,6 +76,8 @@
     "secondsAbbr": "s",
     "windTitle": "Vento",
     "visibility": "Visibilità",
+    "measurement": "{{value}} {{unit}}",
+    "windMeasurement": "{{value}} {{unit}} {{direction}}",
     "dewpoint": "Punto di rugiada",
     "dominantPeriod": "Periodo dominante",
     "pressure": "Pressione barometrica.",
@@ -436,6 +440,8 @@
       "low_activity": "Attività ridotta"
     },
     "forecastTitle": "Previsioni di pesca", "explanation": "Perché", "periodControlAriaLabel": "{{period}}, da {{start}} a {{end}}, {{species}}: {{score}}, {{status}}. {{explanation}} Mostra dettagli.", "periodDetailHeading": "Dettagli per {{period}}", "adjustmentUnknown": "Sconosciuto",
+    "periodTimeRange": "{{start}}–{{end}}",
+    "measurement": "{{value}} {{unit}}",
     "hardStop": {
       "temperature_outside_active_range": "La temperatura dell'acqua è al di fuori dell'intervallo attivo di questa specie."
     },
@@ -448,6 +454,11 @@
       "unknown": "Sconosciuto"
     },
     "tideState": {
+      "incoming": "Marea montante",
+      "outgoing": "Marea calante",
+      "slack_high": "Stanca d'alta marea",
+      "slack_low": "Stanca di bassa marea",
+      "peak_flow": "Corrente massima",
       "rising": "Crescente",
       "falling": "Calante",
       "slack": "Stanca",

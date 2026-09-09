@@ -4,6 +4,8 @@
   "selectLocation": "Select a location to view details",
   "noLocations": "No marine locations configured",
   "lastUpdated": "Updated {{time}}",
+  "scrollLeft": "Deslocar para a esquerda",
+  "scrollRight": "Deslocar para a direita",
   "waveHeight": "Wave Height",
   "windSpeed": "Wind",
   "waterTemp": "Water Temp",
@@ -74,6 +76,8 @@
     "secondsAbbr": "s",
     "windTitle": "Vento",
     "visibility": "Visibilidade",
+    "measurement": "{{value}} {{unit}}",
+    "windMeasurement": "{{value}} {{unit}} {{direction}}",
     "dewpoint": "Ponto de orvalho",
     "dominantPeriod": "Dominant Period",
     "pressure": "Barometric Pressure",
@@ -436,6 +440,8 @@
       "low_activity": "Menor atividade"
     },
     "forecastTitle": "Previsão de pesca", "explanation": "Porquê", "periodControlAriaLabel": "{{period}}, {{start}} a {{end}}, {{species}}: {{score}}, {{status}}. {{explanation}} Mostrar detalhes.", "periodDetailHeading": "Detalhes para {{period}}", "adjustmentUnknown": "Desconhecido",
+    "periodTimeRange": "{{start}} a {{end}}",
+    "measurement": "{{value}} {{unit}}",
     "hardStop": {
       "temperature_outside_active_range": "A temperatura da água está fora do intervalo ativo desta espécie."
     },
@@ -448,6 +454,11 @@
       "unknown": "Desconhecido"
     },
     "tideState": {
+      "incoming": "Maré enchente",
+      "outgoing": "Maré vazante",
+      "slack_high": "Estofa de preia-mar",
+      "slack_low": "Estofa de baixa-mar",
+      "peak_flow": "Corrente máxima",
       "rising": "A subir",
       "falling": "A descer",
       "slack": "Água parada",

@@ -36,13 +36,13 @@ function BoatingForecast({ forecast, locationName, locale, stationTz, units }: {
     {columns.length === 0 ? <p className="text-muted-foreground">{t('boating.noForecastData')}</p> : <>
       <HorizontalScrollNav ariaLabel={t('boating.forecastAriaLabel', { location: locationName })}>
         <div data-testid="boating-period-cards" className="flex w-max min-w-full gap-3 pb-2">
-          {columns.map((period) => { const selectedPeriod = selected?.validTime === period.validTime; const periodTime = timeText(period.validTime, locale, stationTz); return <article key={period.validTime} className={`flex w-72 shrink-0 flex-col rounded-lg border bg-card p-4 shadow-sm ${selectedPeriod ? 'border-primary' : 'border-border'}`}>
-            <h4 className="font-semibold">{periodTime}</h4>
+          {columns.map((period) => { const selectedPeriod = selected?.validTime === period.validTime; const periodTime = timeText(period.validTime, locale, stationTz); return <Card key={period.validTime} footprint="tile" className={`w-72 shrink-0 ${selectedPeriod ? 'ring-2 ring-primary' : ''}`}>
+            <CardHeader><CardTitle as="h4">{periodTime}</CardTitle></CardHeader><CardContent>
             <dl className="mt-3 space-y-3" style={{ fontSize: 'var(--text-label)' }}>
               <div><dt className="text-muted-foreground">{t('boating.conditions')}</dt><dd className="mt-0.5 font-medium">{period.weatherText ?? '—'}</dd></div>
-              <div><dt className="text-muted-foreground">{t('airTemp')}</dt><dd className="mt-0.5">{`${display(period.outTemp, 'temperature', locale)}${period.outTemp == null ? '' : ` ${units?.temperature ?? ''}`}`}</dd></div>
-              <div><dt className="text-muted-foreground">{t('windSpeed')}</dt><dd className="mt-0.5">{`${display(period.windSpeed, 'wind', locale)}${period.windSpeed == null ? '' : ` ${units?.windSpeed ?? ''}`} ${compass(period.windDir, tCommon)}`}</dd></div>
-              <div><dt className="text-muted-foreground">{t('boating.gust')}</dt><dd className="mt-0.5">{`${display(period.windGust, 'wind', locale)}${period.windGust == null ? '' : ` ${units?.windSpeed ?? ''}`}`}</dd></div>
+              <div><dt className="text-muted-foreground">{t('airTemp')}</dt><dd className="mt-0.5">{period.outTemp == null ? '—' : t('boating.measurement', { value: display(period.outTemp, 'temperature', locale), unit: units?.temperature ?? '' })}</dd></div>
+              <div><dt className="text-muted-foreground">{t('windSpeed')}</dt><dd className="mt-0.5">{period.windSpeed == null ? '—' : t('boating.windMeasurement', { value: display(period.windSpeed, 'wind', locale), unit: units?.windSpeed ?? '', direction: compass(period.windDir, tCommon) })}</dd></div>
+              <div><dt className="text-muted-foreground">{t('boating.gust')}</dt><dd className="mt-0.5">{period.windGust == null ? '—' : t('boating.measurement', { value: display(period.windGust, 'wind', locale), unit: units?.windSpeed ?? '' })}</dd></div>
             </dl>
             <section className="mt-4 border-t border-border pt-3" aria-label={t('boating.regionalSource')}>
               <h5 className="font-semibold text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>{t('boating.regionalSource')}</h5>
@@ -54,7 +54,7 @@ function BoatingForecast({ forecast, locationName, locale, stationTz, units }: {
               </dl>
             </section>
             <button type="button" onClick={() => setSelectedTime((current) => current === period.validTime ? null : period.validTime)} aria-expanded={selectedPeriod} aria-controls={detailId(period.validTime)} aria-label={t('boating.periodControlAriaLabel', { period: periodTime, conditions: period.weatherText ?? t('boating.unavailable') })} className="mt-4 rounded-md border border-border px-3 py-2 text-left font-semibold hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1">{t('boating.periodDetailsTitle', { period: periodTime })}</button>
-          </article>; })}
+          </CardContent></Card>; })}
         </div>
       </HorizontalScrollNav>
       {selected && <section id={selectedDetailId} aria-live="polite" className="mt-3 border-t border-border pt-3"><h4 className="font-semibold">{t('boating.periodDetailsTitle', { period: timeText(selected.validTime, locale, stationTz) })}</h4><dl className="mt-2 grid gap-3 sm:grid-cols-3"><MarineStatTile label={t('boating.conditions')} value={selected.weatherText ?? '—'} /><MarineStatTile label={t('boating.forecastWind')} value={selected.marineAdditions?.wind ?? '—'} /><MarineStatTile label={t('boating.forecastSeas')} value={selected.marineAdditions?.seas ?? '—'} /><MarineStatTile label={t('boating.forecastVisibility')} value={selected.marineAdditions?.visibility ?? '—'} /></dl>{selected.marineAdditions?.weather && <div className="mt-3"><h5 className="font-medium">{t('boating.forecastWeather')}</h5><p className="mt-1 text-muted-foreground">{selected.marineAdditions.weather}</p></div>}</section>}
@@ -69,10 +69,10 @@ function OffshoreObservations({ context, locale, stationTz, units }: { context: 
 }
 
 export function BoatingTab({ locationId, alerts = [] }: BoatingTabProps) {
-  const { t, i18n } = useTranslation('marine'); const { data: rawMarine, units, loading, error, refetch } = useMarineDetail(locationId); const { data: tideData } = useTideDetail(locationId); const { data: station } = useStation();
+  const { t, i18n } = useTranslation('marine'); const { t: tCommon } = useTranslation('common'); const { data: rawMarine, units, loading, error, refetch } = useMarineDetail(locationId); const { data: tideData } = useTideDetail(locationId); const { data: station } = useStation();
   const stationTz = station?.timezone ?? 'UTC'; const marine = rawMarine as unknown as MarineBundle | null; const unitMap = units as Record<string, string> | undefined;
   if (loading) return <span role="status" className="sr-only">{t('boating.loading')}</span>;
-  if (error) return <div role="alert"><p className="text-destructive">{t('boating.unableToLoad')}</p><button type="button" onClick={refetch} className="focus-visible:ring-2 focus-visible:ring-ring">{t('lastUpdated', { time: '' })}</button></div>;
+  if (error) return <div role="alert"><p className="text-destructive">{t('boating.unableToLoad')}</p><button type="button" onClick={refetch} className="focus-visible:ring-2 focus-visible:ring-ring">{tCommon('retry')}</button></div>;
   if (!marine) return <p className="text-muted-foreground">{t('boating.noData')}</p>;
   return <div className="flex flex-col gap-[var(--gap-grid)]"><AlertsPanel alerts={alerts} filterTypes={BOATING_ALERT_TYPES} /><Grid className="md:!auto-rows-[auto]"><MarineCurrentConditionsCard observation={marine.observation} locale={i18n.language} stationTz={stationTz} units={unitMap} title={t('boating.currentConditions')} /><BoatingForecast forecast={marine.regularForecast ?? []} locationName={marine.locationName} locale={i18n.language} stationTz={stationTz} units={unitMap} /><OffshoreObservations context={marine.offshoreObservations} locale={i18n.language} stationTz={stationTz} units={unitMap} /><Card footprint="full"><CardHeader><CardTitle as="h3">{t('boating.tideForecastTitle')}</CardTitle></CardHeader><CardContent><TideChart predictions={tideData?.predictions ?? []} locale={i18n.language} stationTz={stationTz} heightUnit={unitMap?.height ?? 'ft'} ariaLabel={t('boating.tideForecastAriaLabel', { location: marine.locationName })} /></CardContent></Card></Grid></div>;
 }
