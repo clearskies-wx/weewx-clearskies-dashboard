@@ -23,7 +23,7 @@ jobs:
         run: |
           set -eu
           if [ -f package.json ] && [ -f package-lock.json ]; then
-            npm ci
+            npm ci --legacy-peer-deps
             npm audit --audit-level=high
           else
             echo "No package.json + package-lock.json yet — placeholder repo. Audit will run automatically once dependencies are added."
