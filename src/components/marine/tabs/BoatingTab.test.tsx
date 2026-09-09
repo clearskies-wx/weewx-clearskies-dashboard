@@ -6,7 +6,7 @@ import { BoatingTab } from './BoatingTab';
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string, values?: Record<string, unknown>) => values ? `${key}:${Object.values(values).join(' ')}` : key, i18n: { language: 'en' } }) }));
 vi.mock('@/components/ui/card', () => ({ Card: ({ children }: { children: ReactNode }) => <section>{children}</section>, CardHeader: ({ children }: { children: ReactNode }) => <header>{children}</header>, CardContent: ({ children }: { children: ReactNode }) => <div>{children}</div>, CardTitle: ({ children }: { children: ReactNode }) => <h3>{children}</h3> }));
 vi.mock('@/components/layout/grid', () => ({ Grid: ({ children }: { children: ReactNode }) => <div data-testid="marine-grid">{children}</div> }));
-vi.mock('@/components/ui/horizontal-scroll-nav', () => ({ HorizontalScrollNav: ({ children }: { children: ReactNode }) => <div data-testid="horizontal-periods">{children}</div> }));
+vi.mock('@/components/ui/horizontal-scroll-nav', () => ({ HorizontalScrollNav: ({ children, ariaLabel }: { children: ReactNode; ariaLabel: string }) => <div data-testid="horizontal-periods" role="region" aria-label={ariaLabel}>{children}</div> }));
 vi.mock('./shared/AlertsPanel', () => ({ AlertsPanel: () => <div data-testid="alerts" /> }));
 vi.mock('./shared/TideChart', () => ({ TideChart: () => <div data-testid="tides" /> }));
 vi.mock('../shared/MarineCurrentConditionsCard', () => ({ MarineCurrentConditionsCard: () => <section data-testid="current-conditions" /> }));
@@ -18,12 +18,19 @@ vi.mock('../../../hooks/useWeatherData', () => ({
 }));
 
 describe('BoatingTab presentation', () => {
-  it('uses the localized truthful forecast title in a Grid without a primary table', () => {
+  it('uses horizontally scrollable individual period cards instead of a primary forecast table', () => {
     const { container, getByTestId, getByText } = render(<BoatingTab locationId="harbour" />);
     expect(getByTestId('marine-grid')).toBeTruthy();
     expect(getByText('boating.forecastTitle')).toBeTruthy();
     expect(container.querySelector('table')).toBeNull();
     expect(getByTestId('horizontal-periods')).toBeTruthy();
+    expect(getByTestId('boating-period-cards').querySelectorAll('article')).toHaveLength(1);
+  });
+
+  it('keeps the period detail button linked to its expanded detail region', () => {
+    const { getByRole } = render(<BoatingTab locationId="harbour" />);
+    const control = getByRole('button', { name: /boating\.periodControlAriaLabel/i });
+    expect(control.getAttribute('aria-controls')).toMatch(/^boating-period-detail-/);
   });
 
   it('makes the selected offshore station state explicit', () => {
