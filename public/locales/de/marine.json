@@ -93,6 +93,7 @@
     "conditions": "Bedingungen",
     "meanWaveDirection": "Wellenrichtung",
     "waterLevelOffset": "Wasserstandsversatz"
+    ,"currentConditions": "Aktuelle Bedingungen", "forecastTitle": "Bootsprognose", "forecastAriaLabel": "Bootsprognose für {{location}} mit Ortswetter und regionalen Marineergänzungen", "periodControlAriaLabel": "Prognosezeitraum {{period}}. Bedingungen vor Ort: {{conditions}}. Details anzeigen.", "periodDetailsTitle": "Details für {{period}}", "unavailable": "Nicht verfügbar", "regionalSource": "Regionaler NWS", "detailsAvailable": "Details verfügbar", "offshoreTitle": "Offshore-Beobachtungen", "offshoreContextWarning": "Offshore-Beobachtungen sind nur Kontext für Route und Ausfahrt; sie sind keine Bedingungen am ausgewählten Ort.", "offshoreSelectionState": { "no_buoy_selected": "Für diesen Ort ist keine Offshore-Boje konfiguriert.", "selected_buoy_no_observation": "Die konfigurierte Offshore-Boje hat keine aktuelle Beobachtung.", "provider_failure": "Offshore-Beobachtungen sind beim Anbieter derzeit nicht verfügbar.", "observations_available": "Beobachtungen der ausgewählten Offshore-Station werden unten angezeigt." }, "offshoreDataState": { "available": "Beobachtung verfügbar", "no_observation": "Keine Beobachtung verfügbar", "provider_failure": "Anbieterfehler" }, "distanceKm": "{{distance}} km", "distanceUnavailable": "Entfernung nicht verfügbar"
   },
   "beachSafety": {
     "title": "Beach Safety",
@@ -434,6 +435,7 @@
       "normal": "Normal",
       "low_activity": "Geringere Aktivität"
     },
+    "forecastTitle": "Angelprognose", "explanation": "Warum", "periodControlAriaLabel": "{{period}}, {{start}} bis {{end}}, {{species}}: {{score}}, {{status}}. {{explanation}} Details anzeigen.", "periodDetailHeading": "Details für {{period}}", "adjustmentUnknown": "Unbekannt",
     "hardStop": {
       "temperature_outside_active_range": "Die Wassertemperatur liegt außerhalb des aktiven Bereichs dieser Art."
     },

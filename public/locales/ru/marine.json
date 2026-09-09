@@ -93,6 +93,7 @@
     "conditions": "Conditions",
     "meanWaveDirection": "Wave Direction",
     "waterLevelOffset": "Water Level Offset"
+    ,"currentConditions": "Текущие условия", "forecastTitle": "Прогноз для судовождения", "forecastAriaLabel": "Прогноз для судовождения в {{location}} с местной погодой и региональными морскими дополнениями", "periodControlAriaLabel": "Период прогноза {{period}}. Местные условия: {{conditions}}. Показать подробности.", "periodDetailsTitle": "Подробности для {{period}}", "unavailable": "Недоступно", "regionalSource": "Региональный NWS", "detailsAvailable": "Подробности доступны", "offshoreTitle": "Морские наблюдения", "offshoreContextWarning": "Морские наблюдения являются только контекстом маршрута и выхода; это не условия выбранного места.", "offshoreSelectionState": { "no_buoy_selected": "Для этого места не настроен морской буй.", "selected_buoy_no_observation": "Настроенный буй не имеет текущего наблюдения.", "provider_failure": "Морские наблюдения сейчас недоступны у поставщика.", "observations_available": "Наблюдения выбранной морской станции показаны ниже." }, "offshoreDataState": { "available": "Наблюдение доступно", "no_observation": "Наблюдение недоступно", "provider_failure": "Ошибка поставщика" }, "distanceKm": "{{distance}} км", "distanceUnavailable": "Расстояние недоступно"
   },
   "beachSafety": {
     "title": "Beach Safety",
@@ -434,6 +435,7 @@
       "normal": "Нормально",
       "low_activity": "Низкая активность"
     },
+    "forecastTitle": "Прогноз рыбалки", "explanation": "Почему", "periodControlAriaLabel": "{{period}}, {{start}}–{{end}}, {{species}}: {{score}}, {{status}}. {{explanation}} Показать подробности.", "periodDetailHeading": "Подробности для {{period}}", "adjustmentUnknown": "Неизвестно",
     "hardStop": {
       "temperature_outside_active_range": "Температура воды вне активного диапазона этого вида."
     },

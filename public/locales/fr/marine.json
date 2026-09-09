@@ -93,6 +93,7 @@
     "conditions": "Problèmes :",
     "meanWaveDirection": "Direction de vague moyenne",
     "waterLevelOffset": "Décalage du niveau d'eau"
+    ,"currentConditions": "Conditions actuelles", "forecastTitle": "Prévisions de navigation", "forecastAriaLabel": "Prévisions de navigation pour {{location}} avec météo locale et ajouts marins régionaux", "periodControlAriaLabel": "Période {{period}}. Conditions locales : {{conditions}}. Afficher les détails.", "periodDetailsTitle": "Détails pour {{period}}", "unavailable": "Indisponible", "regionalSource": "NWS régional", "detailsAvailable": "Détails disponibles", "offshoreTitle": "Observations au large", "offshoreContextWarning": "Les observations au large servent uniquement de contexte de route et de sortie ; elles ne décrivent pas ce lieu.", "offshoreSelectionState": { "no_buoy_selected": "Aucune bouée au large n’est configurée pour ce lieu.", "selected_buoy_no_observation": "La bouée configurée n’a pas d’observation actuelle.", "provider_failure": "Les observations au large sont actuellement indisponibles auprès du fournisseur.", "observations_available": "Les observations de la station au large sélectionnée sont affichées ci-dessous." }, "offshoreDataState": { "available": "Observation disponible", "no_observation": "Aucune observation disponible", "provider_failure": "Erreur du fournisseur" }, "distanceKm": "{{distance}} km", "distanceUnavailable": "Distance indisponible"
   },
   "beachSafety": {
     "title": "Beach Safety",
@@ -434,6 +435,7 @@
       "normal": "Normale",
       "low_activity": "Baisse de l'activité"
     },
+    "forecastTitle": "Prévisions de pêche", "explanation": "Pourquoi", "periodControlAriaLabel": "{{period}}, de {{start}} à {{end}}, {{species}} : {{score}}, {{status}}. {{explanation}} Afficher les détails.", "periodDetailHeading": "Détails pour {{period}}", "adjustmentUnknown": "Inconnu",
     "hardStop": {
       "temperature_outside_active_range": "La température de l'eau est en dehors de la plage active de cette espèce."
     },

@@ -93,6 +93,7 @@
     "conditions": "Conditions",
     "meanWaveDirection": "Wave Direction",
     "waterLevelOffset": "Water Level Offset"
+    ,"currentConditions": "目前狀況", "forecastTitle": "航船預報", "forecastAriaLabel": "{{location}} 的航船預報，含當地天氣和區域海洋補充資訊", "periodControlAriaLabel": "預報時段 {{period}}。當地狀況：{{conditions}}。顯示詳細資料。", "periodDetailsTitle": "{{period}} 的詳細資料", "unavailable": "無法使用", "regionalSource": "區域 NWS", "detailsAvailable": "可查看詳細資料", "offshoreTitle": "離岸觀測", "offshoreContextWarning": "離岸觀測僅供航線和出港參考，並非此選定地點的狀況。", "offshoreSelectionState": { "no_buoy_selected": "此地點未設定離岸浮標。", "selected_buoy_no_observation": "已設定的離岸浮標沒有目前觀測。", "provider_failure": "目前無法從提供者取得離岸觀測。", "observations_available": "下方顯示所選離岸測站的觀測。" }, "offshoreDataState": { "available": "有可用觀測", "no_observation": "沒有可用觀測", "provider_failure": "提供者錯誤" }, "distanceKm": "{{distance}} 公里", "distanceUnavailable": "距離無法使用"
   },
   "beachSafety": {
     "title": "Beach Safety",
@@ -434,6 +435,7 @@
       "normal": "正常",
       "low_activity": "較低活躍度"
     },
+    "forecastTitle": "釣魚預報", "explanation": "原因", "periodControlAriaLabel": "{{period}}，{{start}} 至 {{end}}，{{species}}：{{score}}，{{status}}。{{explanation}} 顯示詳細資料。", "periodDetailHeading": "{{period}} 的詳細資料", "adjustmentUnknown": "未知",
     "hardStop": {
       "temperature_outside_active_range": "水溫超出此物種的活躍範圍。"
     },

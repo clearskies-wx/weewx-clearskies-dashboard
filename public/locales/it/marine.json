@@ -93,6 +93,7 @@
     "conditions": "Disturbi",
     "meanWaveDirection": "Direzione delle onde;",
     "waterLevelOffset": "Offset del livello dell'acqua"
+    ,"currentConditions": "Condizioni attuali", "forecastTitle": "Previsioni di navigazione", "forecastAriaLabel": "Previsioni di navigazione per {{location}} con meteo locale e integrazioni marine regionali", "periodControlAriaLabel": "Periodo {{period}}. Condizioni locali: {{conditions}}. Mostra dettagli.", "periodDetailsTitle": "Dettagli per {{period}}", "unavailable": "Non disponibile", "regionalSource": "NWS regionale", "detailsAvailable": "Dettagli disponibili", "offshoreTitle": "Osservazioni al largo", "offshoreContextWarning": "Le osservazioni al largo sono solo contesto di rotta e uscita; non sono condizioni in questa posizione.", "offshoreSelectionState": { "no_buoy_selected": "Nessuna boa al largo è configurata per questa posizione.", "selected_buoy_no_observation": "La boa configurata non ha un’osservazione attuale.", "provider_failure": "Le osservazioni al largo non sono al momento disponibili dal fornitore.", "observations_available": "Le osservazioni della stazione al largo selezionata sono mostrate sotto." }, "offshoreDataState": { "available": "Osservazione disponibile", "no_observation": "Nessuna osservazione disponibile", "provider_failure": "Errore del fornitore" }, "distanceKm": "{{distance}} km", "distanceUnavailable": "Distanza non disponibile"
   },
   "beachSafety": {
     "title": "Beach Safety",
@@ -434,6 +435,7 @@
       "normal": "Normale",
       "low_activity": "Attività ridotta"
     },
+    "forecastTitle": "Previsioni di pesca", "explanation": "Perché", "periodControlAriaLabel": "{{period}}, da {{start}} a {{end}}, {{species}}: {{score}}, {{status}}. {{explanation}} Mostra dettagli.", "periodDetailHeading": "Dettagli per {{period}}", "adjustmentUnknown": "Sconosciuto",
     "hardStop": {
       "temperature_outside_active_range": "La temperatura dell'acqua è al di fuori dell'intervallo attivo di questa specie."
     },
