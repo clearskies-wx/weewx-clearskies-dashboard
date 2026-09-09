@@ -74,5 +74,8 @@
     "vite": "^8.0.12",
     "vitest": "^3.2.4"
   },
+  "overrides": {
+    "js-yaml": "4.3.2"
+  },
   "browserslist": ">0.5%, last 2 years, not dead, not op_mini all"
 }

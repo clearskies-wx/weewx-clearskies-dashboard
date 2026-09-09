@@ -93,6 +93,7 @@
     "conditions": "不調・疾患",
     "meanWaveDirection": "波の方向",
     "waterLevelOffset": "水位オフセット"
+    ,"currentConditions": "現在の状況", "forecastTitle": "ボート予報", "forecastAriaLabel": "{{location}} のボート予報。地点の天気と地域の海洋情報を表示します", "periodControlAriaLabel": "予報期間 {{period}}。地点の状況: {{conditions}}。詳細を表示します。", "periodDetailsTitle": "{{period}} の詳細", "unavailable": "利用不可", "regionalSource": "地域NWS", "detailsAvailable": "詳細あり", "offshoreTitle": "沖合観測", "offshoreContextWarning": "沖合観測は航路と出港の参考情報であり、選択地点の状況ではありません。", "offshoreSelectionState": { "no_buoy_selected": "この地点には沖合ブイが設定されていません。", "selected_buoy_no_observation": "設定された沖合ブイには現在の観測がありません。", "provider_failure": "沖合観測は現在プロバイダーから利用できません。", "observations_available": "選択された沖合観測所の観測を以下に表示します。" }, "offshoreDataState": { "available": "観測あり", "no_observation": "観測なし", "provider_failure": "プロバイダーエラー" }, "distanceKm": "{{distance}} km", "distanceUnavailable": "距離は利用不可"
   },
   "beachSafety": {
     "title": "Beach Safety",
@@ -434,6 +435,7 @@
       "normal": "標準",
       "low_activity": "アクティビティの低下"
     },
+    "forecastTitle": "釣り予報", "explanation": "理由", "periodControlAriaLabel": "{{period}}、{{start}} から {{end}}、{{species}}: {{score}}、{{status}}。{{explanation}} 詳細を表示します。", "periodDetailHeading": "{{period}} の詳細", "adjustmentUnknown": "不明",
     "hardStop": {
       "temperature_outside_active_range": "水温がこの種の活動範囲外です。"
     },

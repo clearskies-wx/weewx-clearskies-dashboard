@@ -388,31 +388,33 @@ export function TideChart({
       {/* sr-only data table fallback — WCAG 1.1.1 (rules/coding.md §5.5).
           Unchanged: lists every interpolated point for maximum screen-reader
           coverage. The visible table below shows extrema only. */}
-      <table className="sr-only">
-        <caption>{ariaLabel}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{t('tide.srTimeColumn')}</th>
-            <th scope="col">{t('tide.srHeightColumn', { unit: heightUnit })}</th>
-            <th scope="col">{t('tide.srTypeColumn')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {predictions.map((p, i) => (
-            <tr key={`${p.time}-${i}`}>
-              <td>{formatTime(new Date(p.time), locale, stationTz)}</td>
-              <td>{formatValue(p.height, 'default', locale)}</td>
-              <td>
-                {p.type === 'high'
-                  ? t('tide.tideHigh')
-                  : p.type === 'low'
-                    ? t('tide.tideLow')
-                    : '—'}
-              </td>
+      <div className="sr-only">
+        <table>
+          <caption>{ariaLabel}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{t('tide.srTimeColumn')}</th>
+              <th scope="col">{t('tide.srHeightColumn', { unit: heightUnit })}</th>
+              <th scope="col">{t('tide.srTypeColumn')}</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {predictions.map((p, i) => (
+              <tr key={`${p.time}-${i}`}>
+                <td>{formatTime(new Date(p.time), locale, stationTz)}</td>
+                <td>{formatValue(p.height, 'default', locale)}</td>
+                <td>
+                  {p.type === 'high'
+                    ? t('tide.tideHigh')
+                    : p.type === 'low'
+                      ? t('tide.tideLow')
+                      : '—'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {/* Visible tide table — date-column layout aligned with the chart.
           Columns = one per day. Rows = High, Low, Moon.

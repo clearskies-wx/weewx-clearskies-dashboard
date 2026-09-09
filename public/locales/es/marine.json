@@ -93,6 +93,7 @@
     "conditions": "Condiciones",
     "meanWaveDirection": "Dirección de la Oleada",
     "waterLevelOffset": "Compensación del nivel de agua"
+    ,"currentConditions": "Condiciones actuales", "forecastTitle": "Pronóstico de navegación", "forecastAriaLabel": "Pronóstico de navegación para {{location}} con tiempo local y aportes marinos regionales", "periodControlAriaLabel": "Período de pronóstico {{period}}. Condiciones locales: {{conditions}}. Mostrar detalles.", "periodDetailsTitle": "Detalles de {{period}}", "unavailable": "No disponible", "regionalSource": "NWS regional", "detailsAvailable": "Detalles disponibles", "offshoreTitle": "Observaciones mar adentro", "offshoreContextWarning": "Las observaciones mar adentro son solo contexto de ruta y salida; no son condiciones en esta ubicación seleccionada.", "offshoreSelectionState": { "no_buoy_selected": "No hay boya mar adentro configurada para esta ubicación.", "selected_buoy_no_observation": "La boya mar adentro configurada no tiene observación actual.", "provider_failure": "Las observaciones mar adentro no están disponibles actualmente del proveedor.", "observations_available": "Las observaciones de la estación mar adentro seleccionada se muestran abajo." }, "offshoreDataState": { "available": "Observación disponible", "no_observation": "No hay observación disponible", "provider_failure": "Error del proveedor" }, "distanceKm": "{{distance}} km", "distanceUnavailable": "Distancia no disponible"
   },
   "beachSafety": {
     "title": "Beach Safety",
@@ -434,6 +435,7 @@
       "normal": "Normal",
       "low_activity": "Menor actividad"
     },
+    "forecastTitle": "Pronóstico de pesca", "explanation": "Por qué", "periodControlAriaLabel": "{{period}}, {{start}} a {{end}}, {{species}}: {{score}}, {{status}}. {{explanation}} Mostrar detalles.", "periodDetailHeading": "Detalles de {{period}}", "adjustmentUnknown": "Desconocido",
     "hardStop": {
       "temperature_outside_active_range": "La temperatura del agua está fuera del rango activo de esta especie."
     },

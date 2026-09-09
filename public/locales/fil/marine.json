@@ -93,6 +93,7 @@
     "conditions": "Mga Kundisyon",
     "meanWaveDirection": "Direksyon ng Wave",
     "waterLevelOffset": "Offset ng Antas ng Tubig"
+    ,"currentConditions": "Kasalukuyang kondisyon", "forecastTitle": "Pagtataya sa paglalayag", "forecastAriaLabel": "Pagtataya sa paglalayag para sa {{location}} na may lokal na panahon at mga panrehiyong dagdag-dagat", "periodControlAriaLabel": "Panahon ng pagtataya {{period}}. Lokal na kondisyon: {{conditions}}. Ipakita ang detalye.", "periodDetailsTitle": "Detalye para sa {{period}}", "unavailable": "Hindi magagamit", "regionalSource": "Panrehiyong NWS", "detailsAvailable": "May detalye", "offshoreTitle": "Mga obserbasyon sa malayong dagat", "offshoreContextWarning": "Ang mga obserbasyon sa malayong dagat ay para lamang sa ruta at paglabas; hindi ito kondisyon sa napiling lokasyon.", "offshoreSelectionState": { "no_buoy_selected": "Walang buoy sa malayong dagat na naka-configure para sa lokasyong ito.", "selected_buoy_no_observation": "Walang kasalukuyang obserbasyon ang naka-configure na buoy.", "provider_failure": "Hindi kasalukuyang magagamit mula sa provider ang mga obserbasyon sa malayong dagat.", "observations_available": "Ipinapakita sa ibaba ang mga obserbasyon ng napiling estasyon." }, "offshoreDataState": { "available": "May obserbasyon", "no_observation": "Walang obserbasyon", "provider_failure": "Error ng provider" }, "distanceKm": "{{distance}} km", "distanceUnavailable": "Hindi magagamit ang layo"
   },
   "beachSafety": {
     "title": "Beach Safety",
@@ -434,6 +435,7 @@
       "normal": "Karaniwan",
       "low_activity": "Mas mababang aktibidad"
     },
+    "forecastTitle": "Pagtataya sa pangingisda", "explanation": "Bakit", "periodControlAriaLabel": "{{period}}, {{start}} hanggang {{end}}, {{species}}: {{score}}, {{status}}. {{explanation}} Ipakita ang detalye.", "periodDetailHeading": "Detalye para sa {{period}}", "adjustmentUnknown": "Hindi alam",
     "hardStop": {
       "temperature_outside_active_range": "Ang temperatura ng tubig ay nasa labas ng aktibong hanay ng species na ito."
     },

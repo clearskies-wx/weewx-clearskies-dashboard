@@ -93,6 +93,7 @@
     "conditions": "Conditions",
     "meanWaveDirection": "Wave Direction",
     "waterLevelOffset": "Water Level Offset"
+    ,"currentConditions": "当前状况", "forecastTitle": "航船预报", "forecastAriaLabel": "{{location}} 的航船预报，含当地天气和区域海洋补充信息", "periodControlAriaLabel": "预报时段 {{period}}。当地状况：{{conditions}}。显示详情。", "periodDetailsTitle": "{{period}} 的详情", "unavailable": "不可用", "regionalSource": "区域 NWS", "detailsAvailable": "可查看详情", "offshoreTitle": "离岸观测", "offshoreContextWarning": "离岸观测仅供航线和出港参考，并非此选定地点的状况。", "offshoreSelectionState": { "no_buoy_selected": "此地点未配置离岸浮标。", "selected_buoy_no_observation": "已配置的离岸浮标没有当前观测。", "provider_failure": "离岸观测目前无法从提供商获得。", "observations_available": "下方显示所选离岸站的观测。" }, "offshoreDataState": { "available": "有可用观测", "no_observation": "没有可用观测", "provider_failure": "提供商错误" }, "distanceKm": "{{distance}} 千米", "distanceUnavailable": "距离不可用"
   },
   "beachSafety": {
     "title": "Beach Safety",
@@ -434,6 +435,7 @@
       "normal": "正常",
       "low_activity": "低活跃度"
     },
+    "forecastTitle": "钓鱼预报", "explanation": "原因", "periodControlAriaLabel": "{{period}}，{{start}} 至 {{end}}，{{species}}：{{score}}，{{status}}。{{explanation}} 显示详情。", "periodDetailHeading": "{{period}} 的详情", "adjustmentUnknown": "未知",
     "hardStop": {
       "temperature_outside_active_range": "水温超出该物种的活跃范围。"
     },

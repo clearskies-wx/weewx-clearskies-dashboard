@@ -93,6 +93,7 @@
     "conditions": "Conditions",
     "meanWaveDirection": "Wave Direction",
     "waterLevelOffset": "Water Level Offset"
+    ,"currentConditions": "Huidige omstandigheden", "forecastTitle": "Vaarverwachting", "forecastAriaLabel": "Vaarverwachting voor {{location}} met lokaal weer en regionale mariene aanvullingen", "periodControlAriaLabel": "Verwachtingsperiode {{period}}. Lokale omstandigheden: {{conditions}}. Toon details.", "periodDetailsTitle": "Details voor {{period}}", "unavailable": "Niet beschikbaar", "regionalSource": "Regionale NWS", "detailsAvailable": "Details beschikbaar", "offshoreTitle": "Waarnemingen op zee", "offshoreContextWarning": "Waarnemingen op zee zijn alleen route- en vertrekcontext; het zijn geen omstandigheden op deze locatie.", "offshoreSelectionState": { "no_buoy_selected": "Voor deze locatie is geen boei op zee geconfigureerd.", "selected_buoy_no_observation": "De geconfigureerde boei heeft geen actuele waarneming.", "provider_failure": "Waarnemingen op zee zijn momenteel niet beschikbaar van de provider.", "observations_available": "Waarnemingen van het geselecteerde station worden hieronder getoond." }, "offshoreDataState": { "available": "Waarneming beschikbaar", "no_observation": "Geen waarneming beschikbaar", "provider_failure": "Providerfout" }, "distanceKm": "{{distance}} km", "distanceUnavailable": "Afstand niet beschikbaar"
   },
   "beachSafety": {
     "title": "Beach Safety",
@@ -434,6 +435,7 @@
       "normal": "Normaal",
       "low_activity": "Lagere activiteit"
     },
+    "forecastTitle": "Visverwachting", "explanation": "Waarom", "periodControlAriaLabel": "{{period}}, {{start}} tot {{end}}, {{species}}: {{score}}, {{status}}. {{explanation}} Toon details.", "periodDetailHeading": "Details voor {{period}}", "adjustmentUnknown": "Onbekend",
     "hardStop": {
       "temperature_outside_active_range": "De watertemperatuur ligt buiten het actieve bereik van deze soort."
     },
