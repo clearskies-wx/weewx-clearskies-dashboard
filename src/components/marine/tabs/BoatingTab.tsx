@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Waves, Wind } from '@phosphor-icons/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,8 +17,6 @@ import type { components } from '../../../api/generated-types';
 
 export interface BoatingTabProps { locationId: string; alerts?: MarineAlertSummary[]; }
 const BOATING_ALERT_TYPES = new Set(['marineZone', 'coastalFlood']);
-const BOATING_COLUMN_WIDTH = 132;
-const BOATING_ROW_LABEL_WIDTH = 108;
 type MarineBundle = components['schemas']['MarineBundle'];
 type HourlyForecastPoint = components['schemas']['HourlyForecastPoint'];
 type OffshoreObservation = components['schemas']['OffshoreMarineObservation'];
@@ -28,30 +26,35 @@ function compass(value: number | null | undefined, t: (key: string) => string): 
 function timeText(value: string | null | undefined, locale: string, stationTz: string): string { return value && !Number.isNaN(new Date(value).getTime()) ? formatTime(new Date(value), locale, stationTz) : '—'; }
 function detailId(validTime: string): string { return `boating-period-detail-${encodeURIComponent(validTime)}`; }
 
-function ForecastRow({ label, children, regionalLabel }: { label: string; children: ReactNode; regionalLabel?: string }) {
-  return <div className="flex border-t border-border"><div className="sticky left-0 z-10 flex shrink-0 items-center justify-end bg-card pr-2 text-right font-medium text-muted-foreground" style={{ width: BOATING_ROW_LABEL_WIDTH, fontSize: 'var(--text-micro)' }}>{label}{regionalLabel && <span className="ml-1 text-[0.65rem]">{regionalLabel}</span>}</div>{children}</div>;
-}
-
 function BoatingForecast({ forecast, locationName, locale, stationTz, units }: { forecast: HourlyForecastPoint[]; locationName: string; locale: string; stationTz: string; units: Record<string, string> | undefined }) {
   const { t } = useTranslation('marine'); const { t: tCommon } = useTranslation('common');
   const columns = useMemo(() => forecast.slice(0, 18), [forecast]);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const selected = columns.find((period) => period.validTime === selectedTime) ?? null;
   const selectedDetailId = selected ? detailId(selected.validTime) : undefined;
-  const cell = (period: HourlyForecastPoint, content: ReactNode) => <div key={period.validTime} className="flex shrink-0 items-center justify-center px-2 py-2 text-center" style={{ width: BOATING_COLUMN_WIDTH, minHeight: 34, fontSize: 'var(--text-micro)' }}>{content}</div>;
   return <Card footprint="full"><CardHeader><CardTitle as="h3">{t('boating.forecastTitle')}</CardTitle></CardHeader><CardContent className="overflow-visible">
     {columns.length === 0 ? <p className="text-muted-foreground">{t('boating.noForecastData')}</p> : <>
       <HorizontalScrollNav ariaLabel={t('boating.forecastAriaLabel', { location: locationName })}>
-        <div className="w-max min-w-full pb-2">
-          <div className="flex border-b border-border"><div className="sticky left-0 z-10 shrink-0 bg-card" style={{ width: BOATING_ROW_LABEL_WIDTH }} />{columns.map((period) => { const selectedPeriod = selected?.validTime === period.validTime; return <button key={period.validTime} type="button" onClick={() => setSelectedTime((current) => current === period.validTime ? null : period.validTime)} aria-expanded={selectedPeriod} aria-controls={detailId(period.validTime)} aria-label={t('boating.periodControlAriaLabel', { period: timeText(period.validTime, locale, stationTz), conditions: period.weatherText ?? t('boating.unavailable') })} className="shrink-0 rounded-sm px-2 py-2 text-center font-semibold focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1" style={{ width: BOATING_COLUMN_WIDTH, borderTop: `2px solid ${selectedPeriod ? 'var(--primary)' : 'transparent'}`, fontSize: 'var(--text-label)' }}>{timeText(period.validTime, locale, stationTz)}</button>; })}</div>
-          <ForecastRow label={t('boating.conditions')}>{columns.map((period) => cell(period, period.weatherText ?? '—'))}</ForecastRow>
-          <ForecastRow label={t('airTemp')}>{columns.map((period) => cell(period, `${display(period.outTemp, 'temperature', locale)}${period.outTemp == null ? '' : ` ${units?.temperature ?? ''}`}`))}</ForecastRow>
-          <ForecastRow label={t('windSpeed')}>{columns.map((period) => cell(period, `${display(period.windSpeed, 'wind', locale)}${period.windSpeed == null ? '' : ` ${units?.windSpeed ?? ''}`} ${compass(period.windDir, tCommon)}`))}</ForecastRow>
-          <ForecastRow label={t('boating.gust')}>{columns.map((period) => cell(period, `${display(period.windGust, 'wind', locale)}${period.windGust == null ? '' : ` ${units?.windSpeed ?? ''}`}`))}</ForecastRow>
-          <ForecastRow label={t('boating.forecastWind')} regionalLabel={t('boating.regionalSource')}>{columns.map((period) => cell(period, period.marineAdditions?.wind ?? '—'))}</ForecastRow>
-          <ForecastRow label={t('boating.forecastSeas')} regionalLabel={t('boating.regionalSource')}>{columns.map((period) => cell(period, period.marineAdditions?.seas ?? '—'))}</ForecastRow>
-          <ForecastRow label={t('boating.forecastVisibility')} regionalLabel={t('boating.regionalSource')}>{columns.map((period) => cell(period, period.marineAdditions?.visibility ?? '—'))}</ForecastRow>
-          <ForecastRow label={t('boating.forecastWeather')} regionalLabel={t('boating.regionalSource')}>{columns.map((period) => cell(period, period.marineAdditions?.weather ? t('boating.detailsAvailable') : '—'))}</ForecastRow>
+        <div data-testid="boating-period-cards" className="flex w-max min-w-full gap-3 pb-2">
+          {columns.map((period) => { const selectedPeriod = selected?.validTime === period.validTime; const periodTime = timeText(period.validTime, locale, stationTz); return <article key={period.validTime} className={`flex w-72 shrink-0 flex-col rounded-lg border bg-card p-4 shadow-sm ${selectedPeriod ? 'border-primary' : 'border-border'}`}>
+            <h4 className="font-semibold">{periodTime}</h4>
+            <dl className="mt-3 space-y-3" style={{ fontSize: 'var(--text-label)' }}>
+              <div><dt className="text-muted-foreground">{t('boating.conditions')}</dt><dd className="mt-0.5 font-medium">{period.weatherText ?? '—'}</dd></div>
+              <div><dt className="text-muted-foreground">{t('airTemp')}</dt><dd className="mt-0.5">{`${display(period.outTemp, 'temperature', locale)}${period.outTemp == null ? '' : ` ${units?.temperature ?? ''}`}`}</dd></div>
+              <div><dt className="text-muted-foreground">{t('windSpeed')}</dt><dd className="mt-0.5">{`${display(period.windSpeed, 'wind', locale)}${period.windSpeed == null ? '' : ` ${units?.windSpeed ?? ''}`} ${compass(period.windDir, tCommon)}`}</dd></div>
+              <div><dt className="text-muted-foreground">{t('boating.gust')}</dt><dd className="mt-0.5">{`${display(period.windGust, 'wind', locale)}${period.windGust == null ? '' : ` ${units?.windSpeed ?? ''}`}`}</dd></div>
+            </dl>
+            <section className="mt-4 border-t border-border pt-3" aria-label={t('boating.regionalSource')}>
+              <h5 className="font-semibold text-muted-foreground" style={{ fontSize: 'var(--text-label)' }}>{t('boating.regionalSource')}</h5>
+              <dl className="mt-2 space-y-2" style={{ fontSize: 'var(--text-label)' }}>
+                <div><dt className="text-muted-foreground">{t('boating.forecastWind')}</dt><dd>{period.marineAdditions?.wind ?? '—'}</dd></div>
+                <div><dt className="text-muted-foreground">{t('boating.forecastSeas')}</dt><dd>{period.marineAdditions?.seas ?? '—'}</dd></div>
+                <div><dt className="text-muted-foreground">{t('boating.forecastVisibility')}</dt><dd>{period.marineAdditions?.visibility ?? '—'}</dd></div>
+                <div><dt className="text-muted-foreground">{t('boating.forecastWeather')}</dt><dd>{period.marineAdditions?.weather ?? '—'}</dd></div>
+              </dl>
+            </section>
+            <button type="button" onClick={() => setSelectedTime((current) => current === period.validTime ? null : period.validTime)} aria-expanded={selectedPeriod} aria-controls={detailId(period.validTime)} aria-label={t('boating.periodControlAriaLabel', { period: periodTime, conditions: period.weatherText ?? t('boating.unavailable') })} className="mt-4 rounded-md border border-border px-3 py-2 text-left font-semibold hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1">{t('boating.periodDetailsTitle', { period: periodTime })}</button>
+          </article>; })}
         </div>
       </HorizontalScrollNav>
       {selected && <section id={selectedDetailId} aria-live="polite" className="mt-3 border-t border-border pt-3"><h4 className="font-semibold">{t('boating.periodDetailsTitle', { period: timeText(selected.validTime, locale, stationTz) })}</h4><dl className="mt-2 grid gap-3 sm:grid-cols-3"><MarineStatTile label={t('boating.conditions')} value={selected.weatherText ?? '—'} /><MarineStatTile label={t('boating.forecastWind')} value={selected.marineAdditions?.wind ?? '—'} /><MarineStatTile label={t('boating.forecastSeas')} value={selected.marineAdditions?.seas ?? '—'} /><MarineStatTile label={t('boating.forecastVisibility')} value={selected.marineAdditions?.visibility ?? '—'} /></dl>{selected.marineAdditions?.weather && <div className="mt-3"><h5 className="font-medium">{t('boating.forecastWeather')}</h5><p className="mt-1 text-muted-foreground">{selected.marineAdditions.weather}</p></div>}</section>}
