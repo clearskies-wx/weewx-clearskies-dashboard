@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render } from '@testing-library/react';
 import { FishingTab } from './FishingTab';
 
-const mockState = vi.hoisted(() => ({ error: false, refetch: vi.fn() }));
+const mockState = vi.hoisted(() => ({ error: false, loading: false, refetch: vi.fn() }));
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string, values?: Record<string, unknown>) => values ? `${key}:${Object.values(values).join(' ')}` : key, i18n: { language: 'en' } }) }));
 vi.mock('@/components/ui/card', () => ({ Card: ({ children, footprint }: { children: ReactNode; footprint?: string }) => <section data-footprint={footprint}>{children}</section>, CardHeader: ({ children }: { children: ReactNode }) => <header>{children}</header>, CardContent: ({ children }: { children: ReactNode }) => <div>{children}</div>, CardTitle: ({ children, as }: { children: ReactNode; as?: 'h3' | 'h4' }) => as === 'h4' ? <h4>{children}</h4> : <h3>{children}</h3> }));
@@ -24,13 +24,21 @@ const period = {
 const secondPeriod = { ...period, periodStart: '2026-09-09T15:00:00Z', periodEnd: '2026-09-09T18:00:00Z', periodLabel: 'Afternoon', score: 64, status: 'less_active', conditionsText: 'Less active during the afternoon.' };
 
 vi.mock('../../../hooks/useWeatherData', () => ({
-  useFishingDetail: () => ({ data: { locationName: 'Harbour', coordinates: { lat: 1, lon: 2 }, species: ['kelp_bass', 'white_seabass'], days: [{ date: '2026-09-09', periods: [period, secondPeriod], solunar: { majorPeriods: [], minorPeriods: [] } }], tidePredictions: [] }, units: { temperature: '°C', windSpeed: 'kt', waveHeight: 'ft', wavePeriod: 's', height: 'ft' }, loading: false, error: mockState.error ? new Error('unavailable') : null, refetch: mockState.refetch }),
+  useFishingDetail: () => ({ data: { locationName: 'Harbour', coordinates: { lat: 1, lon: 2 }, species: ['kelp_bass', 'white_seabass'], days: [{ date: '2026-09-09', periods: [period, secondPeriod], solunar: { majorPeriods: [], minorPeriods: [] } }], tidePredictions: [] }, units: { temperature: '°C', windSpeed: 'kt', waveHeight: 'ft', wavePeriod: 's', height: 'ft' }, loading: mockState.loading, error: mockState.error ? new Error('unavailable') : null, refetch: mockState.refetch }),
   useMarineDetail: () => ({ data: { observation: null } }), useStation: () => ({ data: { timezone: 'UTC' } }), useAlmanac: () => ({ data: null, loading: false, error: null }), useAlmanacMoonNames: () => ({ data: null }), useAlmanacPositions: () => ({ data: null }),
 }));
 vi.mock('../../../hooks/useSmartAlmanac', () => ({ useSmartAlmanac: () => ({ data: null }) }));
 
 describe('FishingTab presentation', () => {
-  beforeEach(() => { mockState.error = false; mockState.refetch.mockReset(); period.tideState = 'incoming'; });
+  beforeEach(() => { mockState.error = false; mockState.loading = false; mockState.refetch.mockReset(); period.tideState = 'incoming'; });
+
+  it('renders a visible forecast shell while Fishing data loads', () => {
+    mockState.loading = true;
+    const { container, getByText, getByRole } = render(<FishingTab locationId="harbour" />);
+    expect(getByText('fishing.forecastTitle')).toBeTruthy();
+    expect(getByRole('status').textContent).toBe('fishing.loading');
+    expect(container.querySelector('.animate-pulse')).toBeTruthy();
+  });
 
   it('uses one accessible Fish dropdown that updates the selected species', () => {
     const onSelectedSpeciesChange = vi.fn();
