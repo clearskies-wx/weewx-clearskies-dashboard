@@ -21,9 +21,10 @@ const period = {
   tideState: 'incoming', solunarState: 'major', appliedAdjustments: [], hardStopReason: null, waterTemperature: 18, waterTemperatureProvenance: { available: false }, conditionsText: 'Active because temperature and the incoming tide support kelp bass.',
   windSpeed: 5, windDirection: 90, windGust: 7, weatherProvenance: { available: false }, swellHeight: 1, swellPeriod: 8, swellProvenance: { available: false },
 };
+const secondPeriod = { ...period, periodStart: '2026-09-09T15:00:00Z', periodEnd: '2026-09-09T18:00:00Z', periodLabel: 'Afternoon', score: 64, status: 'less_active', conditionsText: 'Less active during the afternoon.' };
 
 vi.mock('../../../hooks/useWeatherData', () => ({
-  useFishingDetail: () => ({ data: { locationName: 'Harbour', coordinates: { lat: 1, lon: 2 }, species: ['kelp_bass', 'white_seabass'], days: [{ date: '2026-09-09', periods: [period], solunar: { majorPeriods: [], minorPeriods: [] } }], tidePredictions: [] }, units: { temperature: '°C', windSpeed: 'kt', waveHeight: 'ft', wavePeriod: 's', height: 'ft' }, loading: false, error: mockState.error ? new Error('unavailable') : null, refetch: mockState.refetch }),
+  useFishingDetail: () => ({ data: { locationName: 'Harbour', coordinates: { lat: 1, lon: 2 }, species: ['kelp_bass', 'white_seabass'], days: [{ date: '2026-09-09', periods: [period, secondPeriod], solunar: { majorPeriods: [], minorPeriods: [] } }], tidePredictions: [] }, units: { temperature: '°C', windSpeed: 'kt', waveHeight: 'ft', wavePeriod: 's', height: 'ft' }, loading: false, error: mockState.error ? new Error('unavailable') : null, refetch: mockState.refetch }),
   useMarineDetail: () => ({ data: { observation: null } }), useStation: () => ({ data: { timezone: 'UTC' } }), useAlmanac: () => ({ data: null, loading: false, error: null }), useAlmanacMoonNames: () => ({ data: null }), useAlmanacPositions: () => ({ data: null }),
 }));
 vi.mock('../../../hooks/useSmartAlmanac', () => ({ useSmartAlmanac: () => ({ data: null }) }));
@@ -31,14 +32,23 @@ vi.mock('../../../hooks/useSmartAlmanac', () => ({ useSmartAlmanac: () => ({ dat
 describe('FishingTab presentation', () => {
   beforeEach(() => { mockState.error = false; mockState.refetch.mockReset(); period.tideState = 'incoming'; });
 
-  it('uses scrollable shared-card period strips instead of a primary forecast table', () => {
+  it('uses one accessible Fish dropdown that updates the selected species', () => {
+    const onSelectedSpeciesChange = vi.fn();
+    const { getByRole } = render(<FishingTab locationId="harbour" onSelectedSpeciesChange={onSelectedSpeciesChange} />);
+    const select = getByRole('combobox', { name: 'fishing.species' });
+    fireEvent.change(select, { target: { value: 'white_seabass' } });
+    expect(onSelectedSpeciesChange).toHaveBeenCalledWith('white_seabass');
+  });
+
+  it('uses the Surf-style forecast grid rather than tile cards', () => {
     const { container, getByTestId } = render(<FishingTab locationId="harbour" />);
-    const speciesStrip = getByTestId('fishing-species-strip');
-    expect(speciesStrip.getAttribute('class')).toContain('w-max');
-    expect(speciesStrip.getAttribute('class')).not.toContain('flex-wrap');
-    expect(getByTestId('fishing-period-cards').querySelectorAll('[data-footprint="tile"]')).toHaveLength(1);
-    expect(getByTestId('fishing-period-cards').querySelector('article')).toBeNull();
-    expect(container.querySelector('table')).toBeTruthy();
+    const grid = getByTestId('fishing-forecast-grid');
+    const labels = getByTestId('fishing-row-labels');
+    const columns = grid.querySelectorAll('[data-testid="fishing-period-column"]');
+    expect(labels.getAttribute('style')).toContain('position: sticky');
+    expect(columns).toHaveLength(2);
+    expect(columns[0].getAttribute('style')).toContain('width: 132px');
+    expect(container.querySelectorAll('[data-footprint="tile"]')).toHaveLength(0);
   });
 
   it('uses accessible species-aware period controls linked to their detail region', () => {
@@ -52,8 +62,8 @@ describe('FishingTab presentation', () => {
   });
 
   it('maps API tide states and uses an honest fallback for an unknown state', () => {
-    const { getByText, rerender } = render(<FishingTab locationId="harbour" />);
-    expect(getByText('fishing.tideState.incoming')).toBeTruthy();
+    const { getAllByText, getByText, rerender } = render(<FishingTab locationId="harbour" />);
+    expect(getAllByText('fishing.tideState.incoming')).toHaveLength(2);
     period.tideState = 'unrecognized_state';
     rerender(<FishingTab locationId="harbour" />);
     expect(getByText('fishing.tideState.unavailable')).toBeTruthy();
@@ -62,7 +72,7 @@ describe('FishingTab presentation', () => {
 
   it('uses the retry action and renders the solunar date through locale-aware formatting', () => {
     const normal = render(<FishingTab locationId="harbour" />);
-    expect(normal.getByText('September 9, 2026')).toBeTruthy();
+    expect(normal.getAllByText('September 9, 2026')).toHaveLength(2);
     mockState.error = true;
     const errorView = render(<FishingTab locationId="harbour" />);
     fireEvent.click(errorView.getByRole('button', { name: 'retry' }));
